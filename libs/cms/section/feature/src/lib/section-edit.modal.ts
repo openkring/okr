@@ -2,11 +2,11 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, SectionModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent} from '@bk2/shared-ui';
+import { ChangeConfirmation, Header} from '@bk2/shared-ui';
 import { coerceBoolean, deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { AppStore } from '@bk2/shared-feature';
-import { SectionFormComponent } from '@bk2/cms-section-ui';
+import { SectionForm } from '@bk2/cms-section-ui';
 
 
 /**
@@ -20,7 +20,7 @@ import { SectionFormComponent } from '@bk2/cms-section-ui';
     selector: 'bk-section-edit-modal',
     standalone: true,
     imports: [
-      ChangeConfirmationComponent, HeaderComponent, SectionFormComponent,
+      ChangeConfirmation, Header, SectionForm,
       IonContent
     ],
     template: `
@@ -45,7 +45,7 @@ import { SectionFormComponent } from '@bk2/cms-section-ui';
       </ion-content>
   `
 })
-export class SectionEditModalComponent {
+export class SectionEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
 
@@ -75,7 +75,7 @@ export class SectionEditModalComponent {
     effect(() => {
       const orig = this.section();
       this.initialData.set(safeStructuredClone(orig));
-      console.log('SectionEditModalComponent initialized', orig);
+      console.log('SectionEditModal initialized', orig);
     });
     effect(() => {
       const current = this.formData();

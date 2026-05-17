@@ -4,7 +4,7 @@ import { IonAccordion, IonButton, IonGrid, IonIcon, IonItem, IonLabel } from '@i
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 
-import { CommentsListComponent } from '@bk2/comment-ui';
+import { CommentsList } from '@bk2/comment-ui';
 
 import { CommentListStore } from './comment-list.store';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -16,7 +16,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonAccordion, IonItem, IonLabel, IonGrid, IonButton, IonIcon,
-    CommentsListComponent
+    CommentsList
   ],
   providers: [CommentListStore],
   template: `
@@ -36,7 +36,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
     </div>
   `
 })
-export class CommentsAccordionComponent {
+export class CommentsAccordion {
   private readonly commentListStore = inject(CommentListStore);
 
   public name = input('comment'); // mandatory name for the form control

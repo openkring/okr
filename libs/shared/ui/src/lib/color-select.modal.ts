@@ -41,7 +41,7 @@ class ColorPickerConfiguration implements IColorPickerConfig {
     </ion-content>
   `
 })
-export class ColorSelectModalComponent implements OnInit{
+export class ColorSelectModal implements OnInit{
   private readonly modalController = inject(ModalController);
 
   // inputs

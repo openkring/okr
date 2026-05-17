@@ -2,7 +2,7 @@ import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, IonThumbnail, ModalController } from '@ionic/angular/standalone';
 
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, HeaderComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, Header, ListFilter, Spinner } from '@bk2/shared-ui';
 
 import { ICON_SETS, IconStore } from './icon.store';
 
@@ -10,7 +10,7 @@ import { ICON_SETS, IconStore } from './icon.store';
   selector: 'bk-icon-select-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ListFilterComponent, SpinnerComponent, EmptyListComponent,
+    Header, ListFilter, Spinner, EmptyList,
     SvgIconPipe, FileSizePipe, PrettyDatePipe,
     IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonThumbnail
   ],
@@ -80,7 +80,7 @@ import { ICON_SETS, IconStore } from './icon.store';
     </ion-content>
   `
 })
-export class IconSelectModalComponent implements OnInit {
+export class IconSelectModal implements OnInit {
   protected readonly store = inject(IconStore);
   private readonly modalController = inject(ModalController);
 

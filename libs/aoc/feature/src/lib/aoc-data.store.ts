@@ -15,6 +15,7 @@ import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventM
   AvatarInfo, AVATAR_INFO_SHAPE, CategoryListModel, ResponsibilityModel, ResponsibilityCollection } from '@bk2/shared-models';
 import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
 import { confirm } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@bk2/subject-address-util';
 import { commentValidations, getCommentIndex } from '@bk2/comment-util';
@@ -37,6 +38,8 @@ import { getUserIndex, userValidations } from '@bk2/user-util';
 import { categoryListValidations } from '@bk2/category-util';
 import { getGroupIndex, groupValidations, isAdminMember } from '@bk2/subject-group-util';
 import { getResponsibilityIndex } from '@bk2/relationship-responsibility-util';
+
+import { PFX } from './scope';
 
 export interface FavMismatch {
   personKey: string;
@@ -65,9 +68,16 @@ export const AocDataStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
-    alertController: inject(AlertController)
+    alertController: inject(AlertController),
+    i18nService: inject(I18nService)
   })),
   withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      check_console: PFX + 'data.check.console',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     dataResource: rxResource({
       params: () => ({
         modelType: store.modelType(),
@@ -136,8 +146,8 @@ export const AocDataStore = signalStore(
         console.log(`  - fieldsToFixTypes: ${fieldsToFixTypes}`);
         // end of configuration -> you will also need to adapt the applied fixes below
 
-        const result = await confirm(store.alertController, 'Bitte Konfiguration im Console log prüfen und bestätigen', true);
-        if (result !== true) return;
+        const ok = await confirm(store.alertController, store.i18n.check_console(), store.i18n.ok(), store.i18n.cancel(), true);
+        if (!ok) return;
 
         // reading the collection and iterating over all documents
         console.log(`AocDataStore.fixModels: fixing all documents of collection ${collectionName}...`);

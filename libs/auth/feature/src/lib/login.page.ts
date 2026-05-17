@@ -6,7 +6,7 @@ import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AuthCredentials } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
@@ -17,7 +17,11 @@ import { LoginForm } from '@bk2/auth-ui';
 @Component({
   selector: 'bk-login-page',
   standalone: true,
-  imports: [TranslatePipe, AsyncPipe, HeaderComponent, LoginForm, IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton],
+  imports: [
+    TranslatePipe, AsyncPipe, 
+    Header, LoginForm, 
+    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton
+  ],
   styles: `
   .background-image { filter: blur(8px); -webkit-filter: blur(8px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; z-index: 1;}
   .title { text-align: center; font-size: 2rem; padding: 20px; }
@@ -60,7 +64,7 @@ import { LoginForm } from '@bk2/auth-ui';
     </ion-content>
   `,
 })
-export class LoginPageComponent {
+export class LoginPage {
   private readonly router = inject(Router);
   protected readonly appStore = inject(AppStore);
   protected readonly authService = inject(AuthService);

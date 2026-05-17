@@ -2,8 +2,9 @@ import { Component, computed, effect, inject, input, linkedSignal } from '@angul
 import { IonContent, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { GroupModel, GroupModelName, UserModel } from '@bk2/shared-models';
-import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { MultiAvatarComponent } from '@bk2/cms-menu-ui';
+import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
+
+import { MultiAvatar } from '@bk2/cms-menu-ui';
 
 import { GroupSelectStore } from './group-select.store';
 
@@ -11,7 +12,7 @@ import { GroupSelectStore } from './group-select.store';
   selector: 'bk-group-select-modal',
   standalone: true,
   imports: [
-    HeaderComponent, SpinnerComponent, EmptyListComponent, MultiAvatarComponent,
+    Header, Spinner, EmptyList, MultiAvatar,
     IonContent, IonList,
   ],
   providers: [GroupSelectStore],
@@ -44,7 +45,7 @@ import { GroupSelectStore } from './group-select.store';
     </ion-content>
   `
 })
-export class GroupSelectModalComponent {
+export class GroupSelectModal {
   protected readonly groupSelectStore = inject(GroupSelectStore);
   private readonly modalController = inject(ModalController);
 

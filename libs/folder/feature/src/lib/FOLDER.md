@@ -36,14 +36,14 @@ The `FolderStore` (NgRx Signal Store) holds:
 
 Notable store actions:
 - `add()` — creates a new empty `FolderModel` and opens the edit modal
-- `edit(folder, readOnly)` — opens `FolderEditModalComponent`; creates or updates on confirm
+- `edit(folder, readOnly)` — opens `FolderEditModal`; creates or updates on confirm
 - `delete(folder)` — confirmation-guarded deletion
 
 ## Key Components
 | Component | Selector / Role |
 |---|---|
-| `FolderListComponent` | Admin list view with search filter and CRUD |
-| `FolderEditModalComponent` | Edit/view modal for a single folder |
+| `FolderList` | Admin list view with search filter and CRUD |
+| `FolderEditModal` | Edit/view modal for a single folder |
 
 ## Data Access
 `FolderService` (`@bk2/folder-data-access`) is the Firestore gateway:

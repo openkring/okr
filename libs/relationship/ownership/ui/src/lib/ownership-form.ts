@@ -4,7 +4,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
 import { DEFAULT_CURRENCY } from '@bk2/shared-constants';
-import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { Chips, DateInput, NotesInput, NumberInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
@@ -14,7 +14,7 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
   standalone: true,
   imports: [
     vestForms,
-    ChipsComponent, NotesInputComponent, DateInputComponent, TextInputComponent, NumberInputComponent,
+    Chips, NotesInput, DateInput, TextInput, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -87,13 +87,13 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
         }
     
         @if(hasRole('admin')) {
-          <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }
   `
 })
-export class OwnershipFormComponent {
+export class OwnershipForm {
   // inputs
   public readonly formData = model.required<OwnershipModel>();
   public readonly currentUser = input<UserModel>();

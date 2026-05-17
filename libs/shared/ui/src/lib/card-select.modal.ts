@@ -3,18 +3,18 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryItemModel, CategoryListModel, CategoryModel } from '@bk2/shared-models';
-
+import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
 import { ENV } from '@bk2/shared-config';
-import { HeaderComponent } from './header.component';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+
+import { Header } from './header';
 
 @Component({
   selector: 'bk-card-select-modal',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    HeaderComponent,
+    Header,
     IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonImg
   ],
   styles: [`
@@ -46,7 +46,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
     }
   `,
 })
-export class CardSelectModalComponent {
+export class CardSelectModal {
   private readonly env = inject(ENV);
   private readonly modalController = inject(ModalController);
 

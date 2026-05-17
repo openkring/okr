@@ -3,7 +3,7 @@
 ## Overview
 `AddressModel` stores contact and communication details for any subject (person or org). Each address belongs to exactly one parent subject via `parentKey` (format: `modelType.key`, e.g. `org.abc123` or `person.xyz789`). A single subject can have multiple addresses of different channels (email, phone, postal, web, social media, bank account, Twint).
 
-Addresses are shown in the `AddressesAccordionComponent` inside the org-edit and person-edit modals, and in the `AddressesListComponent` for standalone list views.
+Addresses are shown in the `AddressesAccordion` inside the org-edit and person-edit modals, and in the `AddressesList` for standalone list views.
 
 ## Firestore Collection
 Collection name: `addresses`
@@ -74,8 +74,8 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | Method | Description |
 |---|---|
 | `setParentKey(key)` | Loads addresses for a given parent |
-| `add(readOnly)` | Opens `AddressEditModalComponent` for a new address |
-| `edit(address, readOnly)` | Opens `AddressEditModalComponent` for an existing address |
+| `add(readOnly)` | Opens `AddressEditModal` for a new address |
+| `edit(address, readOnly)` | Opens `AddressEditModal` for an existing address |
 | `delete(address, readOnly)` | Confirms then deletes |
 | `copy(address)` | Copies address string to clipboard |
 | `use(address)` | Executes the channel-specific action (open URL, call, show map, etc.) |
@@ -85,9 +85,9 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 ## Components
 | Component | Description |
 |---|---|
-| `AddressEditModalComponent` | Ionic modal; hosts `AddressFormComponent` from `@bk2/subject-address-ui`; dismisses with `'confirm'` role |
-| `AddressesListComponent` | Standalone list with search/filter |
-| `AddressesAccordionComponent` | Accordion panel embedded in org/person edit modals |
+| `AddressEditModal` | Ionic modal; hosts `AddressForm` from `@bk2/subject-address-ui`; dismisses with `'confirm'` role |
+| `AddressesList` | Standalone list with search/filter |
+| `AddressesAccordion` | Accordion panel embedded in org/person edit modals |
 
 ## Validation (`@bk2/subject-address-util`)
 Vest validation suites cover: `email`, `phone`, `iban`, and the composite `address` suite.

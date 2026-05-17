@@ -67,7 +67,7 @@ Key resource:
 Computed per-type filtered lists (e.g. `filteredBoats`, `filteredRboats`, `filteredLockers`, etc.) apply text search, sub-type, gender, and tag filters.
 
 Key actions:
-- `add(isTypeEditable, readOnly)` / `edit(resource, isTypeEditable, readOnly)` — open `ResourceEditModalComponent`.
+- `add(isTypeEditable, readOnly)` / `edit(resource, isTypeEditable, readOnly)` — open `ResourceEditModal`.
 - `delete(resource, readOnly)` — call `ResourceService.delete`.
 - `export(type)` — not yet implemented.
 
@@ -79,12 +79,12 @@ Separate NgRx Signal Store for the edit page (`resource-edit.page.ts`) used when
 
 | Component | Description |
 |---|---|
-| `ResourceListComponent` | Generic filterable list |
-| `KeyListComponent` | Specialised list view for keys (`type = 'key'`) |
-| `LockerListComponent` | Specialised list view for lockers (`type = 'locker'`) |
-| `RowingBoatListComponent` | Specialised list view for rowing boats (`type = 'rboat'`) |
-| `ResourceEditModalComponent` | Full-modal edit form (used by list) |
-| `ResourceEditPageComponent` | Full-page edit form (standalone route) |
+| `ResourceList` | Generic filterable list |
+| `KeyList` | Specialised list view for keys (`type = 'key'`) |
+| `LockerList` | Specialised list view for lockers (`type = 'locker'`) |
+| `RowingBoatList` | Specialised list view for rowing boats (`type = 'rboat'`) |
+| `ResourceEditModal` | Full-modal edit form (used by list) |
+| `ResourceEditPage` | Full-page edit form (standalone route) |
 
 ## Related Libraries
 

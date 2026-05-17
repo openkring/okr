@@ -20,7 +20,6 @@ export * from './lib/label.pipe';
 export * from './lib/logo.pipe';
 export * from './lib/multi-avatar.pipe';
 export * from './lib/part.pipe';
-export * from './lib/prefix-name.pipe';
 export * from './lib/pretty-date.pipe';
 export * from './lib/pretty-json.pipe';
 export * from './lib/round-float.pipe';

@@ -11,7 +11,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
-import { MenuComponent } from '@bk2/cms-menu-feature';
+import { Menu } from '@bk2/cms-menu-feature';
 import { SectionStore } from '@bk2/cms-section-feature';
 
 import { PageStore } from './page.store';
@@ -27,7 +27,7 @@ import { BlogStream } from './blog-stream';
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe,
-    MenuComponent,
+    Menu,
     BlogMinimal, BlogGrid, BlogClassic, BlogMagazine, BlogBento, BlogStream,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonItem, IonLabel, IonPopover

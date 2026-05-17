@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { IonButton, IonIcon } from '@ionic/angular/standalone';
 
 import { ButtonSection } from '@bk2/shared-models';

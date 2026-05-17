@@ -8,7 +8,7 @@ import { PageService } from '@bk2/cms-page-data-access';
 import { SectionService } from '@bk2/cms-section-data-access';
 import { CategoryListModel, MenuItemModel, PageModel, SectionModel } from '@bk2/shared-models';
 import { downloadTextFile, exportXlsx, getExportFileName } from '@bk2/shared-util-angular';
-import { getCategoryIcon, getCategoryItemNames } from '@bk2/shared-util-core';
+import { getCategoryIcon } from '@bk2/shared-util-core';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types

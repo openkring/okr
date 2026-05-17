@@ -3,36 +3,36 @@ import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, OrgModel, OrgModelName, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_TITLE } from '@bk2/shared-constants';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
 
-import { AvatarToolbarComponent } from '@bk2/avatar-feature';
+import { AvatarToolbar } from '@bk2/avatar-feature';
 import { AvatarService } from '@bk2/avatar-data-access';
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { CommentsAccordion } from '@bk2/comment-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
-import { DocumentsAccordionComponent } from '@bk2/document-feature';
+import { DocumentsAccordion } from '@bk2/document-feature';
 
 import { BillAccordion } from '@bk2/finance-bill-feature';
 
-import { MembersAccordionComponent, MembershipAccordionComponent } from '@bk2/relationship-membership-feature';
-import { OwnershipAccordionComponent } from '@bk2/relationship-ownership-feature';
-import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
+import { MembersAccordion, MembershipAccordion } from '@bk2/relationship-membership-feature';
+import { OwnershipAccordion } from '@bk2/relationship-ownership-feature';
+import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
 
-import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
-import { OrgFormComponent } from '@bk2/subject-org-ui';
+import { AddressesAccordion } from '@bk2/subject-address-feature';
+import { OrgForm } from '@bk2/subject-org-ui';
 import { OrgStore } from 'libs/subject/org/feature/src/lib/org.store';
 
 @Component({
   selector: 'bk-org-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent,
-    AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent,
-    OwnershipAccordionComponent, OrgFormComponent, MembershipAccordionComponent, MembersAccordionComponent,
-    ReservationsAccordionComponent, DocumentsAccordionComponent, BillAccordion,
+    Header, ChangeConfirmation,
+    AvatarToolbar, AddressesAccordion, CommentsAccordion,
+    OwnershipAccordion, OrgForm, MembershipAccordion, MembersAccordion,
+    ReservationsAccordion, DocumentsAccordion, BillAccordion,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [OrgStore],
@@ -86,7 +86,7 @@ import { OrgStore } from 'libs/subject/org/feature/src/lib/org.store';
     </ion-content>
   `
 })
-export class OrgEditModalComponent {
+export class OrgEditModal {
   protected readonly store = inject(OrgStore);
   private readonly modalController = inject(ModalController);
   private readonly avatarService = inject(AvatarService);

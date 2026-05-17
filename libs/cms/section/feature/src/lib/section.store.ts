@@ -2,25 +2,25 @@ import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getApp } from 'firebase/app';
 
 import { AppStore } from '@bk2/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@bk2/shared-models';
-import { CardSelectModalComponent } from '@bk2/shared-ui';
+import { CardSelectModal } from '@bk2/shared-ui';
 import { chipMatches, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
 import { confirm, showToast } from '@bk2/shared-util-angular';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { UploadService } from '@bk2/avatar-data-access';
-
 import { SectionService } from '@bk2/cms-section-data-access';
 import { createSection, narrowSection } from '@bk2/cms-section-util';
 
-import { SectionEditModalComponent } from './section-edit.modal';
+import { SectionEditModal } from './section-edit.modal';
 import { MessageCenterModal } from './message-center.modal';
-import { bkTranslate } from '@bk2/shared-i18n';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { getApp } from 'firebase/app';
+import { PFX } from './scope';
 
 export type SectionState = {
   sectionId: string;
@@ -51,9 +51,18 @@ export const _SectionStore = signalStore(
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
-    firestoreService: inject(FirestoreService)
+    firestoreService: inject(FirestoreService),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      send_confirm1: PFX + 'send.confirm1',
+      send_confirm2: PFX + 'send.confirm2',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     sectionsResource: rxResource({
       stream: () => {
         return store.sectionService.list();
@@ -163,7 +172,7 @@ export const _SectionStore = signalStore(
       async add(readOnly = true): Promise<string | undefined> {
         if (readOnly) return;
         const modal = await store.modalController.create({
-          component: CardSelectModalComponent,
+          component: CardSelectModal,
           cssClass: 'full-modal',
           componentProps: { 
             category: store.sectionTypes(),
@@ -187,7 +196,7 @@ export const _SectionStore = signalStore(
         const roles = this.getRoles();
         const states = store.appStore.getCategory('content_state');
         const modal = await store.modalController.create({
-          component: SectionEditModalComponent,
+          component: SectionEditModal,
           cssClass: 'full-modal',
           componentProps: {
             section,
@@ -214,7 +223,7 @@ export const _SectionStore = signalStore(
 
       async delete(section?: SectionModel, readOnly = true): Promise<void> {
         if (readOnly || !section) return;
-        const result = await confirm(store.alertController, '@content.section.operation.delete.confirm', true);
+        const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           await store.sectionService.delete(section, store.currentUser());
           this.reset();
@@ -300,12 +309,12 @@ export const _SectionStore = signalStore(
           const bccs = data.bcc as string[];
           const nrEmails = tos.length + ccs.length + bccs.length;
 
-          const message = bkTranslate('@content.section.operation.send.confirm', { amount: nrEmails });
+          const message = computed(() => store.i18n.send_confirm1() + ' ' + nrEmails + ' ' + store.i18n.send_confirm2());
           console.log(`MessageCenterModal: sending to:${tos.length}, cc:${ccs.length}, bcc:${bccs.length}`);
           console.log('     - tos: ', tos);
           console.log('     - ccs: ', ccs);
           console.log('     - bccs: ', bccs);
-          const result = await confirm(store.alertController, message, true);
+          const result = await confirm(store.alertController, message(), store.i18n.ok(), store.i18n.cancel(), true);
           if (result === true) {
             console.log('SectionStore: sending ' + data.to.length + ' emails from ' + data.from);
             await this.sendEmail(data.to, data.subject, this.buildEmailHtml(section), data.from, data.cc, data.bcc, data.provider, data.template);

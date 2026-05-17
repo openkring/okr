@@ -5,14 +5,14 @@ import { IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
-import { HeaderComponent } from './header.component';
+import { Header } from './header';
 
 @Component({
-  selector: 'bk-label-select',
+  selector: 'bk-label-select-modal',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    HeaderComponent,
+    Header,
     IonIcon, IonContent, IonItem, IonLabel
   ],
   template: `
@@ -29,7 +29,7 @@ import { HeaderComponent } from './header.component';
       </ion-content>
   `
 })
-export class LabelSelectModalComponent {
+export class LabelSelectModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

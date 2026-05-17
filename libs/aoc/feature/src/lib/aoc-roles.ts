@@ -6,12 +6,12 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ChipsComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
+import { Chips, Header, ResultLog } from '@bk2/shared-ui';
 import { getCategoryItemNames } from '@bk2/shared-util-core';
 import { AvatarInfo } from '@bk2/shared-models';
 
 import { flattenRoles, structureRoles } from '@bk2/user-util';
-import { AvatarDisplayComponent } from '@bk2/avatar-ui';
+import { AvatarDisplay } from '@bk2/avatar-ui';
 
 import { AocRolesStore } from './aoc-roles.store';
 
@@ -21,8 +21,8 @@ import { AocRolesStore } from './aoc-roles.store';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, 
     FormsModule, 
-    HeaderComponent, AvatarDisplayComponent, ResultLogComponent, 
-    IonContent, ChipsComponent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon, IonNote, IonInput, IonInputPasswordToggle, IonItem
+    Header, AvatarDisplay, ResultLog, Chips,
+    IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon, IonNote, IonInput, IonInputPasswordToggle, IonItem
   ],
   providers: [AocRolesStore],
   template: `
@@ -234,7 +234,7 @@ import { AocRolesStore } from './aoc-roles.store';
     </ion-content>
   `,
 })
-export class AocRolesComponent {
+export class AocRoles {
   protected readonly aocRolesStore = inject(AocRolesStore);
   protected pwdValue = signal<string>('');
   protected emailValue = signal<string>('');

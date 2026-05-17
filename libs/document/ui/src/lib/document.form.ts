@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, Toa
 import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, NotesInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
@@ -20,7 +20,7 @@ import { documentValidations } from '@bk2/document-util';
     vestForms,
     FormsModule,
     SvgIconPipe, ThumbnailUrlPipe, FileLogoPipe,
-    TextInputComponent, DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
+    TextInput, DateInput, CategorySelect, Chips, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonIcon, IonItem
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -134,13 +134,13 @@ import { documentValidations } from '@bk2/document-util';
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
       @if(hasRole('admin')) {
-        <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
   `
 })
-export class DocumentFormComponent {
+export class DocumentForm {
   private toastController = inject(ToastController);
   private env = inject(ENV);
 

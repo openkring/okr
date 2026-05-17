@@ -2,24 +2,23 @@ import { Component, computed, inject, linkedSignal, signal } from '@angular/core
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CalEventModel, PersonModelName, ReservationApplyModel, ResourceModelName, RoleName } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { getAvatarName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { getAvatarName, hasRole } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { AppStore } from '@bk2/shared-feature';
 
-import { CalEventEditModalComponent } from '@bk2/calevent-feature';
+import { CalEventEditModal } from '@bk2/calevent-feature';
 import { isCalEvent } from '@bk2/calevent-util';
 
 import { ReservationApplyForm } from '@bk2/relationship-reservation-ui';
-import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
+import { RelationshipToolbar } from '@bk2/avatar-ui';
 import { convertApplyToReservation, getNewReservationApply } from '@bk2/relationship-reservation-util';
 
 @Component({
   selector: 'bk-reservation-apply-modal',
   standalone: true,
   imports: [
-    RelationshipToolbarComponent, HeaderComponent,
-    ChangeConfirmationComponent, ReservationApplyForm,
+    RelationshipToolbar, Header, ChangeConfirmation, ReservationApplyForm,
     IonContent
 ],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -114,7 +113,7 @@ export class ReservationApplyModal {
 
   async selectCalevent(): Promise<void> {
     const modal = await this.modalController.create({
-      component: CalEventEditModalComponent,
+      component: CalEventEditModal,
       cssClass: 'wide-modal',
       componentProps: {
             calevent: this.calevent() ?? new CalEventModel(this.tenantId()),

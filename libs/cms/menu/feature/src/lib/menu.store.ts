@@ -20,7 +20,7 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { MenuService } from '@bk2/cms-menu-data-access';
 import { getTarget, isMenuItem } from '@bk2/cms-menu-util';
 
-import { MenuItemModalComponent } from './menu.modal';
+import { MenuModal } from './menu.modal';
 
 export type MenuState = {
   searchTerm: string;
@@ -157,7 +157,7 @@ export const _MenuStore = signalStore(
         // we need to clone the menuItem to avoid changing the original object (NG0100: ExpressionChangeAfterItHasBeenCheckedError)
         const _menuItem = safeStructuredClone(menuItem) ?? new MenuItemModel(store.env.tenantId);
         const modal = await store.modalController.create({
-          component: MenuItemModalComponent,
+          component: MenuModal,
           componentProps: {
             menuItem: _menuItem,
             currentUser: store.currentUser(),

@@ -5,6 +5,7 @@ import { Photo } from '@capacitor/camera';
 import { of, take } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@bk2/shared-models';
 import { AhvFormat, AppNavigationService, formatAhv } from '@bk2/shared-util-angular';
 import { debugItemLoaded } from '@bk2/shared-util-core';
@@ -13,6 +14,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 
 import { PersonService } from '@bk2/subject-person-data-access';
+import { PFX } from './scope';
 
 /**
  * the personEditPage is setting the personKey.
@@ -35,6 +37,13 @@ export const ProfileEditStore = signalStore(
     appStore: inject(AppStore),
     avatarService: inject(AvatarService),
     firestoreService: inject(FirestoreService),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      update_conf:  PFX + 'operation.update.conf',
+      update_error: PFX + 'operation.update.error',
+    }),
   })),
 
   withProps((store) => ({
@@ -88,10 +97,10 @@ export const ProfileEditStore = signalStore(
         if (person) {
           const newPerson = structuredClone(person);
           newPerson.ssnId = formatAhv(newPerson.ssnId ?? '', AhvFormat.Electronic);
-          await store.firestoreService.updateModel<PersonModel>(PersonCollection, newPerson, false, undefined, user);
+          await store.firestoreService.updateModel<PersonModel>(PersonCollection, newPerson, false, undefined, undefined, user);
         }
         if (user) {
-          await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, '@profile.operation.update', user);
+          await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, store.i18n.update_conf(), store.i18n.update_error(), user);
         }
       },
 

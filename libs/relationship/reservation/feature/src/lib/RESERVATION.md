@@ -101,13 +101,13 @@ An NgRx Signal Store managing all reservation state.
 | `setReserverId(reserverId, reserverModelType)` | Scopes to a specific reserver |
 | `setResourceId(resourceId)` | Scopes to a specific resource |
 | `add(readOnly)` | Creates a new `ReservationModel` pre-filled with current reserver/resource and opens the edit modal |
-| `edit(reservation, readOnly, isSelectable)` | Opens `ReservationEditModalComponent` |
+| `edit(reservation, readOnly, isSelectable)` | Opens `ReservationEditModal` |
 | `end(reservation?, readOnly)` | Picks an end date and sets `endDate` |
 | `delete(reservation?, readOnly)` | Confirms and hard-deletes a reservation |
 
 ## Components
 
-### `ReservationEditModalComponent`
+### `ReservationEditModal`
 
 An Ionic modal for creating or editing a `ReservationModel`. Receives `reservation`, `currentUser`, `tags`, `reasons`, `states`, `periodicities`, `locale`, `isSelectable`, `readOnly`.
 
@@ -115,6 +115,6 @@ An Ionic modal for creating or editing a `ReservationModel`. Receives `reservati
 
 A public-facing modal that allows a user to submit a booking/application for the default resource. Uses `ReservationApplyForm` from `@bk2/relationship-reservation-ui`. A confirmation toolbar is shown once the form is valid and `isConfirmed` is set. On confirm, converts `ReservationApplyModel` to `ReservationModel` via `convertApplyToReservation()`.
 
-### `ReservationListComponent`
+### `ReservationList`
 
 A standalone list view of reservations with search, year, reason, state, and tag filters.

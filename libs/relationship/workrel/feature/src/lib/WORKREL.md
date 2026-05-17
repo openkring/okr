@@ -83,12 +83,12 @@ An NgRx Signal Store managing work relationships, supporting two parallel loadin
 | `setOrgKey(orgKey)` | Scopes to an org and reloads |
 | `setShowMode(showOnlyCurrent)` | Toggles current/all view |
 | `add(readOnly)` | Creates a new `WorkrelModel` pre-filled with current person and default org, opens edit modal |
-| `edit(workrel, readOnly)` | Opens `WorkrelEditModalComponent` |
+| `edit(workrel, readOnly)` | Opens `WorkrelEditModal` |
 | `end(workrel?, readOnly)` | Picks an end date and sets `validTo` |
 | `delete(workrel?, readOnly)` | Confirms and hard-deletes a work relationship |
 
 ## Components
 
-### `WorkrelEditModalComponent`
+### `WorkrelEditModal`
 
 An Ionic modal for creating or editing a `WorkrelModel`. Receives `workrel`, `currentUser`, `tags`, `types`, `states`, `periodicities`, `tenantId`, `readOnly`.

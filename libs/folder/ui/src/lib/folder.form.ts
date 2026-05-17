@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { vestForms } from 'ngx-vest-forms';
 
 import { FolderModel, UserModel } from '@bk2/shared-models';
-import { ChipsComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { Chips, NotesInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
@@ -16,7 +16,7 @@ import { folderValidations } from '@bk2/folder-util';
   imports: [
     vestForms,
     FormsModule,
-    TextInputComponent, NotesInputComponent, ChipsComponent,
+    TextInput, NotesInput, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -46,7 +46,7 @@ import { folderValidations } from '@bk2/folder-util';
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)"
+                  <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)"
                     label="@folder.field.description.label" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
@@ -62,7 +62,7 @@ import { folderValidations } from '@bk2/folder-util';
     }
   `
 })
-export class FolderFormComponent {
+export class FolderForm {
   // inputs
   public readonly formData = input.required<FolderModel>();
   public readonly currentUser = input<UserModel | undefined>();

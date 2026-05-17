@@ -1,41 +1,43 @@
 import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
 
 import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
-import { ChipsComponent, ImageConfigComponent, NotesInputComponent } from '@bk2/shared-ui';
+import { Chips, NotesInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { ModelSelectService } from '@bk2/shared-feature';
 
-import { SectionConfigComponent } from './section-config';
-import { EditorConfigComponent } from './editor-config';
-import { ImageStyleComponent } from './image-style';
-import { AlbumConfigComponent } from './album-config';
-import { IframeConfigComponent } from './iframe-config';
-import { PeopleConfigComponent } from './people-config';
-import { ResponsibilityConfigComponent } from './responsibility-config';
-import { VideoConfigComponent } from './video-config';
-import { ButtonStyleComponent } from './button-style';
-import { ButtonActionComponent } from './button-action';
-import { IconConfigComponent } from './icon-config';
-import { ChatConfigComponent } from './chat-config';
-import { MapConfigComponent } from './map-config';
-import { TrackerConfigComponent } from './tracker-config';
-import { TableGridComponent } from './table-grid';
-import { TableStyleComponent } from './table-style';
-import { TableDataComponent } from './table-data';
-import { EventsConfigComponent } from './events-config';
-import { InvitationsConfigComponent } from './invitations-config';
-import { ImagesConfigComponent } from './images-config';
+import { SectionConfiguration } from './section-configuration';
+import { EditorConfiguration } from './editor-configuration';
+import { ImageStyleConfiguration } from './image-style-configuration';
+import { AlbumConfiguration } from './album-configuration';
+import { IframeConfiguration } from './iframe-configuration';
+import { PeopleConfiguration } from './people-configuration';
+import { ResponsibilityConfiguration } from './responsibility-configuration';
+import { VideoConfiguration } from './video-configuration';
+import { ButtonStyleConfiguration } from './button-style-configuration';
+import { ButtonActionConfiguration } from './button-action-configuration';
+import { IconConfiguration } from './icon-configuration';
+import { ChatConfiguration } from './chat-configuration';
+import { MapConfiguration } from './map-configuration';
+import { TableGridConfiguration } from './table-grid-configuration';
+import { TableStyleConfiguration } from './table-style-configuration';
+import { TableBody } from './table-body';
+import { EventsConfiguration } from './events-configuration';
+import { InvitationsConfiguration } from './invitations-configuration';
+import { ImagesConfiguration } from './images-configuration';
+import { TableHeader } from './table-header';
+import { TrackerConfiguration } from './tracker-configuration';
 
 @Component({
   selector: 'bk-section-form',
   standalone: true,
   imports: [
-    ChipsComponent, NotesInputComponent,
-    SectionConfigComponent, EditorConfigComponent, ImageConfigComponent, ImageStyleComponent, AlbumConfigComponent,
-    IframeConfigComponent, PeopleConfigComponent, ResponsibilityConfigComponent, VideoConfigComponent, ButtonStyleComponent, ButtonActionComponent, IconConfigComponent,
-    ChatConfigComponent, MapConfigComponent, TrackerConfigComponent, TableGridComponent, TableStyleComponent, TableDataComponent,
-    EventsConfigComponent, InvitationsConfigComponent, ImagesConfigComponent
+    Chips, NotesInput,
+    SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
+    IframeConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration, 
+    ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration, 
+    MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader, 
+    TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -160,8 +162,8 @@ import { ImagesConfigComponent } from './images-config';
           @if(bodyStyle(); as bodyStyle) {
             <bk-table-style name="body" [formData]="bodyStyle" (formDataChange)="onBodyStyleChange($event)" [readOnly]="isReadOnly()" />
           }
-          <bk-table-data name="tableHeader" [formData]="headerData()" (formDataChange)="onTableHeaderChange($event)" [readOnly]="isReadOnly()" />
-          <bk-table-data name="tableBody" [formData]="bodyData()" (formDataChange)="onTableBodyChange($event)" [readOnly]="isReadOnly()" />
+          <bk-table-header [formData]="headerData()" (formDataChange)="onTableHeaderChange($event)" [readOnly]="isReadOnly()" />
+          <bk-table-body [formData]="bodyData()" (formDataChange)="onTableBodyChange($event)" [readOnly]="isReadOnly()" />
         }
         @case('tracker') {
           @if(trackerConfig(); as trackerConfig) {
@@ -179,7 +181,7 @@ import { ImagesConfigComponent } from './images-config';
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
       }
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     }
   `
@@ -187,7 +189,7 @@ import { ImagesConfigComponent } from './images-config';
 /** 
  * Because vest validation is type specific and we want to have a generic section form component for all union types, we do not use vest here.
  */
-export class SectionFormComponent {
+export class SectionForm {
   private readonly modelSelectService = inject(ModelSelectService);
 
   // inputs

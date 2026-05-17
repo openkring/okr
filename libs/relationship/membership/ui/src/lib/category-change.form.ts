@@ -5,7 +5,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, DateInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, DateInput } from '@bk2/shared-ui';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
 import { coerceBoolean, debugFormErrors, debugFormModel } from '@bk2/shared-util-core';
 
@@ -18,7 +18,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    DateInputComponent, CategorySelectComponent,
+    DateInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonIcon, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -71,7 +71,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
     </form>
   `
 })
-export class CategoryChangeFormComponent {
+export class CategoryChangeForm {
   // inputs
   public formData = model.required<CategoryChangeFormModel>();
   public currentUser = input<UserModel | undefined>();

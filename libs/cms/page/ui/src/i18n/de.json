@@ -1,19 +1,9 @@
 {
-  "content": {
-    "page": {
-      "forms": {
-        "title": "Webseite",
-        "section": {
-          "label": "Sektionen"
-        }
-      }
-    },
-    "section": {
-      "operation": {
-        "add": {
-          "label": "Neue Sektion hinzufügen"
-        }
-      }
+  "title": "Webseite",
+  "section": {
+    "label": "Sektionen",
+    "add": {
+      "label": "Neue Sektion hinzufügen"
     }
   }
 }

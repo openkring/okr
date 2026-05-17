@@ -5,7 +5,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
 import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, NotesInput, TextInput } from '@bk2/shared-ui';
 import { areNotesVisible, areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
 import { personValidations } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
@@ -17,7 +17,7 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
   imports: [
     vestForms,
     FormsModule,
-    TextInputComponent, DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
+    TextInput, DateInput, CategorySelect, Chips, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -93,13 +93,13 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
       }
       
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
   `
 })
-export class PersonFormComponent {  
+export class PersonForm {  
   // inputs
   public readonly formData = model.required<PersonModel>();
   public readonly currentUser = input<UserModel | undefined>();

@@ -5,9 +5,11 @@ import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { UserCollection, UserModel } from '@bk2/shared-models';
 import { findAllByField, findByField, findByKey, getFullName, getSystemQuery } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { getUserIndex, getUserIndexInfo } from '@bk2/user-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 @Injectable({
     providedIn: 'root'
@@ -16,6 +18,17 @@ export class UserService  {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
+  private i18nService = inject(I18nService);
+
+  // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    create_conf: PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf: PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf: PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error'
+  });
 
   /* ---------------------- Standard CRUD operations -------------------------------*/
   /**
@@ -27,7 +40,7 @@ export class UserService  {
    */
   public async create(user: UserModel, currentUser?: UserModel): Promise<string | undefined> {
     user.index = this.getIndex(user);
-    const key = await this.firestoreService.createModel<UserModel>(UserCollection, user, '@user.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<UserModel>(UserCollection, user, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${user.loginEmail}: ${getFullName(user.firstName, user.lastName)}`;
     void this.activityService.log('user', 'create', currentUser, payload);
     return key;
@@ -72,9 +85,9 @@ export class UserService  {
    * @param confirmMessage an optional confirmation message to show in the UI
    * @returns a Promise of the key of the updated model or undefined if the operation failed
    */
-  public async update(user: UserModel, currentUser?: UserModel, confirmMessage = '@user.operation.update'): Promise<string | undefined> {
+  public async update(user: UserModel, currentUser?: UserModel): Promise<string | undefined> {
     user.index = this.getIndex(user);
-    const key = await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${user.loginEmail}: ${getFullName(user.firstName, user.lastName)}`;
     void this.activityService.log('user', 'update', currentUser, payload);
     return key;
@@ -88,7 +101,7 @@ export class UserService  {
    */
   public async delete(user: UserModel, currentUser?: UserModel): Promise<void> {
     const payload = `${user.bkey}: ${user.loginEmail}: ${getFullName(user.firstName, user.lastName)}`;
-    await this.firestoreService.deleteModel<UserModel>(UserCollection, user, '@user.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<UserModel>(UserCollection, user, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('user', 'delete', currentUser, payload);
   }
 

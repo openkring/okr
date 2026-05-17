@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { MatrixPollData } from '@bk2/chat-data-access';
 import { PollCreateForm } from '@bk2/chat-ui';
 
@@ -9,7 +9,7 @@ import { PollCreateForm } from '@bk2/chat-ui';
   selector: 'bk-poll-create-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, PollCreateForm,
+    Header, ChangeConfirmation, PollCreateForm,
     IonContent
   ],
   template: `

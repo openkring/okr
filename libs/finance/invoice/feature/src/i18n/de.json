@@ -1,53 +1,27 @@
 {
-  "finance": {
-    "invoice": {
-      "field": {
-        "empty": "Keine Rechnungen gefunden",
-        "invoiceId": {
-          "label": "Rechnungsnummer"
-        },
-        "title": {
-          "label": "Betreff"
-        },
-        "invoiceDate": {
-          "label": "Rechnungsdatum"
-        },
-        "dueDate": {
-          "label": "Zahlbar bis"
-        },
-        "amount": {
-          "label": "Betrag"
-        },
-        "state": {
-          "label": "Rechnungsstatus"
-        },
-        "paymentDate": {
-          "label": "Bezahlt am"
-        },
-        "notes": {
-          "label": "Notizen"
-        }
-      },
-      "operation": {
-        "create": {
-          "label": "Rechnung hinzufügen",
-          "error": "Die Rechnung konnte nicht erstellt werden."
-        },
-        "update": {
-          "label": "Rechnung ändern"
-        },
-        "view": {
-          "label": "Rechnung anzeigen"
-        }
-      },
-      "list": {
-        "title": "Rechnungsübersicht"
-      }
-    }
+  "invoices": "Debitoren Rechnungen",
+  "empty": "Keine Rechnungen gefunden",
+  "invoiceId": "Rechnungsnummer",
+  "title": "Betreff",
+  "invoiceDate": "Rechnungsdatum",
+  "dueDate": "Zahlbar bis",
+  "amount": "Betrag",
+  "state": "Rechnungsstatus",
+  "paymentDate": "Bezahlt am",
+  "notes": "Notizen",
+  "create": {
+    "label": "Rechnung hinzufügen",
+    "error": "Die Rechnung konnte nicht erstellt werden."
+  },
+  "update": "Rechnung ändern",
+  "delete": {
+    "confirm": "Soll die Rechnung wirklich gelöscht werden ?"
+  },
+  "view": "Rechnung anzeigen",
+  "list": {
+    "title": "Rechnungsübersicht"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion"
   }
 }

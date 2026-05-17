@@ -1,33 +1,21 @@
 {
-  "icon": {
-    "plural": "Icons",
-    "operation": {
-      "create": {
-        "label": "Icon hinzufügen"
-      },
-      "exportRaw": {
-        "label": "Icons exportieren"
-      },
-      "sync": {
-        "label": "Icons synchronisieren"
-      },
-      "select": {
-        "label": "Icon auswählen"
-      }
-    },
-    "field": {
-      "name": {
-        "label": "Icon Name"
-      },
-      "type": {
-        "label": "Icon Set"
-      }
-    },
-    "empty": "Keine Icons gefunden."
+  "icons": "Icons",
+  "name": "Icon Name",
+  "type": "Icon Set",
+  "empty": "Keine Icons gefunden.",
+  "create": {
+    "label": "Icon hinzufügen"
+  },
+  "exportRaw": {
+    "label": "Icons exportieren"
+  },
+  "sync": {
+    "label": "Icons synchronisieren"
+  },
+  "select": {
+    "label": "Icon auswählen"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion"
   }
 }

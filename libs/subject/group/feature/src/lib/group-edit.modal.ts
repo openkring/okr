@@ -2,19 +2,20 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AVATAR_INFO_SHAPE, GroupModel, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
-
-import { GroupFormComponent } from '@bk2/subject-group-ui';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { PersonSelectModalComponent } from '@bk2/shared-feature';
-import { GroupStore } from 'libs/subject/group/feature/src/lib/group.store';
+import { PersonSelectModal } from '@bk2/shared-feature';
+
+import { GroupForm } from '@bk2/subject-group-ui';
+
+import { GroupStore } from './group.store';
 
 @Component({
   selector: 'bk-group-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, GroupFormComponent,
+    Header, ChangeConfirmation, GroupForm,
     IonContent
   ],
   providers: [GroupStore],
@@ -44,7 +45,7 @@ import { GroupStore } from 'libs/subject/group/feature/src/lib/group.store';
     </ion-content>
   `
 })
-export class GroupEditModalComponent {
+export class GroupEditModal {
   private readonly modalController = inject(ModalController);
   private readonly store = inject(GroupStore);
 
@@ -107,7 +108,7 @@ export class GroupEditModalComponent {
 
   async selectPersonModal(): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',

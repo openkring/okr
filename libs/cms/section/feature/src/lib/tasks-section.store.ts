@@ -9,7 +9,7 @@ import { TaskCollection, TaskModel } from '@bk2/shared-models';
 import { getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { TaskService } from '@bk2/task-data-access';
-import { TaskEditModalComponent } from '@bk2/task-feature';
+import { TaskEditModal } from '@bk2/task-feature';
 import { isTask } from '@bk2/task-util';
 
 export type TasksState = {
@@ -75,7 +75,7 @@ export const TasksStore = signalStore(
 
     async edit(task: TaskModel, readOnly = true): Promise<void> {
       const modal = await store.modalController.create({
-        component: TaskEditModalComponent,
+        component: TaskEditModal,
         componentProps: {
           task,
           currentUser: store.currentUser(),

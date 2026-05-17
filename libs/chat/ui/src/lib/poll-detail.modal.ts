@@ -4,7 +4,7 @@ import { IonAvatar, IonContent, IonItem, IonLabel, IonList } from '@ionic/angula
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MatrixReadReceipt } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { hashUserIdToColor } from '@bk2/chat-util';
 
 @Component({
@@ -13,7 +13,7 @@ import { hashUserIdToColor } from '@bk2/chat-util';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AsyncPipe, TranslatePipe,
-    HeaderComponent,
+    Header,
     IonContent, IonList, IonItem, IonLabel, IonAvatar,
   ],
   styles: [`

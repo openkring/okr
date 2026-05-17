@@ -5,8 +5,9 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { MembershipModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { showToast } from '@bk2/shared-util-angular';
+
 import { BexioInvoiceFormModel, BexioInvoicePosition, newInvoiceFormModel } from '@bk2/finance-invoice-util';
 import { BexioInvoiceNewForm } from '@bk2/finance-invoice-ui';
 
@@ -14,7 +15,7 @@ import { BexioInvoiceNewForm } from '@bk2/finance-invoice-ui';
   selector: 'bk-invoice-new-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, BexioInvoiceNewForm,
+    Header, ChangeConfirmation, BexioInvoiceNewForm,
     IonContent,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],

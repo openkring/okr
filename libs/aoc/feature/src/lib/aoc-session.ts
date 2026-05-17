@@ -2,7 +2,7 @@
 import { Component, inject } from '@angular/core';
 import { IonBadge, IonButton, IonButtons, IonCard, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonItem, IonLabel, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { SpinnerComponent } from '@bk2/shared-ui';
+import { Spinner } from '@bk2/shared-ui';
 import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
 
 import { AocSessionStore, DateFilter } from './aoc-session.store';
@@ -11,7 +11,7 @@ import { AocSessionStore, DateFilter } from './aoc-session.store';
   selector: 'bk-aoc-session',
   standalone: true,
   imports: [
-    SpinnerComponent,
+    Spinner,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonButton, IonTitle,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonBadge,
   ],

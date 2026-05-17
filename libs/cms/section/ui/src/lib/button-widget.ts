@@ -43,7 +43,7 @@ import { IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
     </div>
   `
 })
-export class ButtonWidgetComponent {
+export class ButtonWidget {
   private readonly modalController = inject(ModalController);
   private readonly router = inject(Router);
   protected readonly env = inject(ENV);

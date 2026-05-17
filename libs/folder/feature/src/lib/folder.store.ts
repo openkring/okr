@@ -15,7 +15,7 @@ import { FolderService } from '@bk2/folder-data-access';
 import { newFolderModel } from '@bk2/folder-util';
 
 // Inline import to avoid circular dependency (same lib)
-import { FolderEditModalComponent } from './folder-edit.modal';
+import { FolderEditModal } from './folder-edit.modal';
 
 export type FolderState = {
   folderKey: string;
@@ -93,7 +93,7 @@ export const FolderStore = signalStore(
 
     async edit(folder: FolderModel, readOnly = true): Promise<void> {
       const modal = await store.modalController.create({
-        component: FolderEditModalComponent,
+        component: FolderEditModal,
         componentProps: {
           folder,
           currentUser: store.currentUser(),

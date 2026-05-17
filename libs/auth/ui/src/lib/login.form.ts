@@ -4,7 +4,7 @@ import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AuthCredentials } from '@bk2/shared-models';
-import { EmailInputComponent, ErrorNoteComponent, PasswordInputComponent } from '@bk2/shared-ui';
+import { EmailInput, ErrorNote, PasswordInput } from '@bk2/shared-ui';
 
 import { authCredentialsValidations, emailValidations, loginValidations, passwordValidations } from '@bk2/auth-util';
 
@@ -21,7 +21,7 @@ import { authCredentialsValidations, emailValidations, loginValidations, passwor
   imports: [
     vestForms, 
     FormsModule, 
-    EmailInputComponent, PasswordInputComponent, ErrorNoteComponent,
+    EmailInput, PasswordInput, ErrorNote,
     IonGrid, IonRow, IonCol
   ],
   template: `

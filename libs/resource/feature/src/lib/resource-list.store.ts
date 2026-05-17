@@ -10,7 +10,7 @@ import { chipMatches, getSystemQuery, isResource, nameMatches } from '@bk2/share
 import { ResourceService } from '@bk2/resource-data-access';
 import { FirestoreService } from '@bk2/shared-data-access';
 
-import { ResourceEditModalComponent } from './resource-edit.modal';
+import { ResourceEditModal } from './resource-edit.modal';
 
 export type ResourceListState = {
   searchTerm: string;
@@ -185,7 +185,7 @@ export const ResourceListStore = signalStore(
 
       async edit(resource: ResourceModel, isTypeEditable = false, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-          component: ResourceEditModalComponent,
+          component: ResourceEditModal,
           componentProps: {
             resource,
             isTypeEditable,

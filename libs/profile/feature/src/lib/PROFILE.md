@@ -3,7 +3,7 @@
 ## Overview
 The profile domain allows the currently authenticated user to view and edit their own personal data and application settings. It combines editing a `PersonModel` (personal details) and a `UserModel` (application preferences and privacy settings) in a single page. The user is always the subject of this page — there is no `readOnly` mode.
 
-The profile page also surfaces the user's own addresses (via `AddressesAccordionComponent`) and supports avatar photo upload.
+The profile page also surfaces the user's own addresses (via `AddressesAccordion`) and supports avatar photo upload.
 
 ## Firestore Collections Used
 | Collection | Model | Access |
@@ -12,7 +12,7 @@ The profile page also surfaces the user's own addresses (via `AddressesAccordion
 | `users` | `UserModel` | Read + update own record |
 
 ## Store: `ProfileEditStore`
-NgRx Signal Store (`@ngrx/signals`). Provided at the `ProfileEditPageComponent` level.
+NgRx Signal Store (`@ngrx/signals`). Provided at the `ProfileEditPage` level.
 
 ### State
 | Property | Type | Description |
@@ -35,23 +35,23 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the `ProfileEditPageComponent` 
 | `save(person, user)` | Saves both `PersonModel` and `UserModel`; formats AHV number to electronic format before saving person; shows a single confirmation toast |
 | `saveAvatar(photo)` | Uploads a Capacitor camera photo as the person's avatar |
 
-## Component: `ProfileEditPageComponent`
+## Component: `ProfileEditPage`
 Route: typically `/profile` (registered users only).
 
 The page uses two independent `linkedSignal` instances to track unsaved changes:
 - `personFormData` — mirrors `profileEditStore.person()`
 - `userFormData` — mirrors `profileEditStore.currentUser()`
 
-Both signals feed into a shared `formDirty` / `formValid` state to control the `ChangeConfirmationComponent` banner.
+Both signals feed into a shared `formDirty` / `formValid` state to control the `ChangeConfirmation` banner.
 
 ### Sections (Accordion Layout)
 | Section | Component | Description |
 |---|---|---|
-| Avatar | `AvatarToolbarComponent` | Shows person avatar + name/email; supports photo upload |
-| Personal data | `ProfileDataAccordionComponent` | Edit `PersonModel` fields (name, gender, birthday, AHV, address snapshot) |
-| Addresses | `AddressesAccordionComponent` | Manage the person's addresses (parentKey = `person.<personKey>`) |
-| Settings | `ProfileSettingsAccordionComponent` | Edit `UserModel` app preferences (language, display, delivery, biometrics) |
-| Privacy | `ProfilePrivacyAccordionComponent` | Edit `UserModel` privacy usage settings per data category |
+| Avatar | `AvatarToolbar` | Shows person avatar + name/email; supports photo upload |
+| Personal data | `ProfileDataAccordion` | Edit `PersonModel` fields (name, gender, birthday, AHV, address snapshot) |
+| Addresses | `AddressesAccordion` | Manage the person's addresses (parentKey = `person.<personKey>`) |
+| Settings | `ProfileSettingsAccordion` | Edit `UserModel` app preferences (language, display, delivery, biometrics) |
+| Privacy | `ProfilePrivacyAccordion` | Edit `UserModel` privacy usage settings per data category |
 
 ### Save Behaviour
 On save, `ProfileEditStore.save(person, user)` is called with both the current `personFormData` and `userFormData`. The store updates them independently in Firestore:

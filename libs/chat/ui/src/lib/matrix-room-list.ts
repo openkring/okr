@@ -1,10 +1,14 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail } from '@ionic/angular/standalone';
 
 import { MatrixRoom } from '@bk2/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { formatMatrixTimestamp, getMatrixTypingText, isMatrixPhotoUrl } from '@bk2/chat-util';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { formatMatrixTimestamp, isMatrixPhotoUrl } from '@bk2/chat-util';
+
+import { PFX } from './scope';
 
 
 @Component({
@@ -92,7 +96,7 @@ import { formatMatrixTimestamp, getMatrixTypingText, isMatrixPhotoUrl } from '@b
       @if (rooms().length === 0) {
         <ion-item>
           <ion-label class="ion-text-center">
-            <p>No rooms yet</p>
+            <p>i18n.room_none()</p>
           </ion-label>
         </ion-item>
       }
@@ -100,16 +104,34 @@ import { formatMatrixTimestamp, getMatrixTypingText, isMatrixPhotoUrl } from '@b
   `
 })
 export class MatrixRoomList {
+  private readonly i18nService = inject(I18nService);
+
   rooms = input.required<MatrixRoom[]>();
   selectedRoomId = input<string>();
 
   roomSelected = output<string>();
 
+  private i18n = this.i18nService.translateAll({
+    isTypeing: PFX + 'isTypeing',
+    areTypeing: PFX + 'areTypeing',
+    severalTypeing: PFX + 'severalTypeing',
+    room_none: PFX + 'room.none'
+  });
+
   isPhotoUrl = isMatrixPhotoUrl;
   formatTimestamp = formatMatrixTimestamp;
-  getTypingText = getMatrixTypingText;
 
   getRoomInitial(name: string): string {
     return name ? name.charAt(0).toUpperCase() : '?';
+  }
+
+  /**
+   * Returns a human-readable "is typing" label for a list of Matrix user IDs.
+   */
+  protected getTypingText(userIds: string[]): string {
+    if (userIds.length === 0) return '';
+    if (userIds.length === 1) return this.i18n.isTypeing();
+    if (userIds.length === 2) return userIds.length + this.i18n.areTypeing();
+    return this.i18n.severalTypeing();
   }
 }

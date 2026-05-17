@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, AccountModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, ErrorNote, NotesInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { accountValidations } from '@bk2/finance-account-util';
@@ -13,7 +13,7 @@ import { accountValidations } from '@bk2/finance-account-util';
   standalone: true,
   imports: [
     vestForms,
-    CategorySelectComponent, TextInputComponent, NotesInputComponent, ErrorNoteComponent,
+    CategorySelect, TextInput, NotesInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -60,7 +60,7 @@ import { accountValidations } from '@bk2/finance-account-util';
         </ion-card>
 
         @if(hasRole('admin')) {
-          <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }

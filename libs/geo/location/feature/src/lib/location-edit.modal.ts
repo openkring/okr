@@ -3,18 +3,18 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { LocationModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { LocationFormComponent } from '@bk2/location-ui';
+import { LocationForm } from '@bk2/location-ui';
 
 
 @Component({
   selector: 'bk-location-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, LocationFormComponent,
+    Header, ChangeConfirmation, LocationForm,
     IonContent
   ],
   template: `
@@ -39,7 +39,7 @@ import { LocationFormComponent } from '@bk2/location-ui';
     </ion-content>
   `
 })
-export class LocationEditModalComponent {
+export class LocationEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
 

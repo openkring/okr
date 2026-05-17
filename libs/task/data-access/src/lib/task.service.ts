@@ -5,9 +5,11 @@ import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { GroupModel, MembershipModel, TaskCollection, TaskModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getAvatarInfo, getSystemQuery } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { getTaskIndex } from '@bk2/task-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +18,17 @@ export class TaskService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
   private readonly activityService = inject(ActivityService);
+  private i18nService = inject(I18nService);
+
+  // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    create_conf: PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf: PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf: PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error'
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -26,7 +39,7 @@ export class TaskService {
    */
   public async create(task: TaskModel, currentUser: UserModel | undefined): Promise<string | undefined> {
     task.index = getTaskIndex(task);
-    const key = await this.firestoreService.createModel<TaskModel>(TaskCollection, task, '@task.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<TaskModel>(TaskCollection, task, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${task.name}/${task.state}`;
     void this.activityService.log('task', 'create', currentUser, payload);
     return key;
@@ -45,12 +58,11 @@ export class TaskService {
    * Update a task in the database with new values.
    * @param task the TaskModel with the new values. Its key must be valid (in order to find it in the database)
    * @param currentUser the current user who performs the operation
-   * @param confirmMessage an optional confirmation message to show in the UI
    * @returns the key of the updated task or undefined if the operation failed
    */
-  public async update(task: TaskModel, currentUser?: UserModel, confirmMessage = '@task.operation.update'): Promise<string | undefined> {
+  public async update(task: TaskModel, currentUser?: UserModel): Promise<string | undefined> {
     task.index = getTaskIndex(task);
-    const key = await this.firestoreService.updateModel<TaskModel>(TaskCollection, task, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<TaskModel>(TaskCollection, task, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${task.name}/${task.state}`;
     void this.activityService.log('task', 'update', currentUser, payload);
     return key;
@@ -64,7 +76,7 @@ export class TaskService {
    */
   public async delete(task: TaskModel, currentUser?: UserModel): Promise<void> {
     const payload = `${task.bkey}: ${task.name}/${task.state}`;
-    await this.firestoreService.deleteModel<TaskModel>(TaskCollection, task, '@task.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<TaskModel>(TaskCollection, task, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('task', 'delete', currentUser, payload);
   }
 

@@ -1,21 +1,17 @@
 {
-  "category": {
-    "operation": {
-      "create": {
-        "label": "Kategorie erstellen",
-        "error": "Die Kategorie konnte nicht erstellt werden",
-        "conf": "Die Kategorie wurde erstellt."
-      },
-      "update": {
-        "label": "Kategorie ändern",
-        "error": "Die Kategorie konnte nicht geändert werden",
-        "conf": "Die Kategorie wurde geändert."
-      },
-      "delete": {
-        "label": "Kategorie löschen",
-        "error": "Die Kategorie konnte nicht gelöscht werden",
-        "conf": "Die Kategorie wurde gelöscht."
-      }
-    }
+  "create": {
+    "label": "Kategorie erstellen",
+    "error": "Die Kategorie konnte nicht erstellt werden",
+    "conf": "Die Kategorie wurde erstellt."
+  },
+  "update": {
+    "label": "Kategorie ändern",
+    "error": "Die Kategorie konnte nicht geändert werden",
+    "conf": "Die Kategorie wurde geändert."
+  },
+  "delete": {
+    "label": "Kategorie löschen",
+    "error": "Die Kategorie konnte nicht gelöscht werden",
+    "conf": "Die Kategorie wurde gelöscht."
   }
 }

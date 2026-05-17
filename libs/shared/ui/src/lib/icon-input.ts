@@ -6,14 +6,14 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
-import { TextInputComponent } from 'libs/shared/ui/src/lib/text-input.component';
+import { TextInput } from 'libs/shared/ui/src/lib/text-input';
 
 @Component({
   selector: 'bk-icon-input',
   standalone: true,
   imports: [
     SvgIconPipe,
-    TextInputComponent,
+    TextInput,
     IonItem, IonIcon
   ],
   viewProviders: [vestFormsViewProviders],

@@ -4,45 +4,45 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { HeaderComponent } from '@bk2/shared-ui';
-import { AvatarLabelComponent } from '@bk2/avatar-ui';
+import { Header, StringSelect } from '@bk2/shared-ui';
+import { AvatarLabel } from '@bk2/avatar-ui';
 import { ColorIonic } from '@bk2/shared-models';
-import { StringSelectComponent } from '@bk2/shared-ui';
 import { DateFormat, getFullName, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
 
 export const CONTACT_FILTERS = ['Alle', 'Nur Personen', 'Nur Mitglieder', 'Nur Orgs', 'Nur Abweichungen'];
 
 import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-aoc-bexio',
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe,
-    HeaderComponent, AvatarLabelComponent, StringSelectComponent,
+    Header, AvatarLabel, StringSelect,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonInput,
     IonCardSubtitle
 ],
   providers: [AocBexioStore],
   template: `
-    <bk-header title="@aoc.bexio.title" />
+    <bk-header title="{{ pfx + 'bexio.title' | translate | async}}" />
     <ion-content>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Invoices</ion-card-title>
-          <ion-card-subtitle>Diese Funktion ist für den initialen Download von Debitoren aus Bexio gedacht. Nachdem dieser initiale Sync einmal gemacht ist, werden die zukünftigen Rechnungen täglich am frühen Morgen hinzugefügt.</ion-card-subtitle>
+          <ion-card-title>{{ pfx + 'bexio.invoices.title' | translate | async}}</ion-card-title>
+          <ion-card-subtitle>{{ pfx + 'bexio.invoices.subtitle' | translate | async}}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(invoiceCount() < 0) {
-                  Loading...
+                  {{ '@loading' | translate | async}}
                 } @else if(invoiceCount() === 0) {
-                  No invoices yet. Download the full history from Bexio.
+                  {{ pfx + 'bexio.invoices.nodata' | translate | async}}
                 } @else {
-                  {{ invoiceCount() }} invoices in Firestore. Last sync: {{ lastSyncedAt() || 'unknown' }}.
+                  {{ invoiceCount() }} {{ pfx + 'bexio.invoices.status' | translate | async}} {{ lastSyncedAt() || 'unknown' }}.
                 }
               </ion-col>
               <ion-col size="3">
@@ -52,7 +52,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  Full history
+                  {{ pfx + 'bexio.invoices.history' | translate | async}}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -71,19 +71,18 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Bills</ion-card-title>
-          <ion-card-subtitle>Diese Funktion ist für den initialen Download von Kreditoren aus Bexio gedacht. Nachdem dieser initiale Sync einmal gemacht ist, werden die zukünftigen Rechnungen täglich am frühen Morgen hinzugefügt.</ion-card-subtitle>
+          <ion-card-title>{{ pfx + 'bexio.bills.title' | translate | async}}</ion-card-title>
+          <ion-card-subtitle>{{ pfx + 'bexio.bills.subtitle' | translate | async}}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(billCount() < 0) {
-                  Loading...
+                  {{ '@loading' | translate | async}}
                 } @else if(billCount() === 0) {
-                  No bills yet. Download the full history from Bexio.
-                } @else {
-                  {{ billCount() }} bills in Firestore. Last sync: {{ lastBillSyncedAt() || 'unknown' }}.
+                  {{ pfx + 'bexio.bills.nodata' | translate | async}}                } @else {
+                  {{ billCount() }} {{ pfx + 'bexio.bills.status' | translate | async}} {{ lastBillSyncedAt() || 'unknown' }}.
                 }
               </ion-col>
               <ion-col size="3">
@@ -93,7 +92,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  Full history
+                  {{ pfx + 'bexio.bills.history' | translate | async}}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -112,19 +111,19 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Journal</ion-card-title>
-          <ion-card-subtitle>Initialer Download aller Buchungsjournal-Einträge aus Bexio. Danach werden neue Einträge täglich um 06:15 Uhr synchronisiert.</ion-card-subtitle>
+          <ion-card-title>{{ pfx + 'bexio.journal.title' | translate | async}}</ion-card-title>
+          <ion-card-subtitle>{{ pfx + 'bexio.journal.subtitle' | translate | async}}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(journalCount() < 0) {
-                  Loading...
+                  {{ '@loading' | translate | async}}
                 } @else if(journalCount() === 0) {
-                  No journal entries yet. Download the full history from Bexio.
+                  {{ pfx + 'bexio.journal.nodata' | translate | async}}
                 } @else {
-                  {{ journalCount() }} journal entries in Firestore. Last sync: {{ lastJournalSyncedAt() || 'unknown' }}.
+                  {{ journalCount() }} {{ pfx + 'bexio.journal.status' | translate | async}} {{ lastJournalSyncedAt() || 'unknown' }}.
                 }
               </ion-col>
               <ion-col size="3">
@@ -134,7 +133,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  Full sync
+                  {{ pfx + 'bexio.journal.history' | translate | async}}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -153,8 +152,8 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Accounts</ion-card-title>
-          <ion-card-subtitle>Download Kontogruppen und Konten aus Bexio als hierarchische AccountModel-Struktur in die Firestore-Collection 'accounts'.</ion-card-subtitle>
+          <ion-card-title>{{ pfx + 'bexio.accounts.title' | translate | async}}</ion-card-title>
+          <ion-card-subtitle>{{ pfx + 'bexio.accounts.subtitle' | translate | async}}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -163,7 +162,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 @if(accountSyncResult()) {
                   {{ accountSyncResult() }}
                 } @else {
-                  Kontogruppen und Konten aus Bexio herunterladen und als Baum speichern.
+                  {{ pfx + 'bexio.accounts.download' | translate | async}}
                 }
               </ion-col>
               <ion-col size="3">
@@ -173,7 +172,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  Sync accounts
+                  {{ pfx + 'bexio.accounts.history' | translate | async}}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -211,12 +210,12 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.bexio.index.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ pfx + 'bexio.index.title' | translate | async }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="9">{{ '@aoc.bexio.index.content' | translate | async }}</ion-col>
+              <ion-col size="9">{{ pfx + 'bexio.index.content' | translate | async }}</ion-col>
               <ion-col size="3">
                 <ion-button (click)="buildIndex()" [disabled]="isLoading()">
                   @if(isLoading()) {
@@ -224,7 +223,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ '@aoc.bexio.index.button' | translate | async }}
+                  {{ pfx + 'bexio.index.button' | translate | async }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -300,22 +299,22 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Vendor Sync</ion-card-title>
-          <ion-card-subtitle>Verknüpft die Lieferanten der Bills mit Personen oder Orgs anhand des Namens.</ion-card-subtitle>
+          <ion-card-title>{{ pfx + 'bexio.vendor.title' | translate | async }}</ion-card-title>
+          <ion-card-subtitle>{{ pfx + 'bexio.vendor.subtitle' | translate | async }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(vendorPendingCount() < 0) {
-                  Noch nicht geprüft.
+                  {{ pfx + 'bexio.vendor.status.initial' | translate | async }}
                 } @else if(vendorPendingCount() === 0) {
-                  Alle Bills haben einen Vendor.
+                  {{ pfx + 'bexio.vendor.status.done' | translate | async }}
                 } @else {
-                  {{ vendorPendingCount() }} Bills ohne Vendor.
+                  {{ vendorPendingCount() }} {{ pfx + 'bexio.vendor.status.open' | translate | async }}
                 }
                 @if(vendorLinkedCount() >= 0) {
-                  {{ vendorLinkedCount() }} Vendors verknüpft.
+                  {{ vendorLinkedCount() }} {{ pfx + 'bexio.vendor.status.linked' | translate | async }}
                 }
               </ion-col>
               <ion-col size="3">
@@ -333,7 +332,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
               <ion-row>
                 <ion-col>
                   <ion-item lines="none">
-                    <ion-label color="warning">Keine Übereinstimmung gefunden für:</ion-label>
+                    <ion-label color="warning">{{ pfx + 'bexio.vendor.status.unmatched' | translate | async }}</ion-label>
                   </ion-item>
                   @for(name of vendorUnmatched(); track name) {
                     <ion-item lines="none">
@@ -349,21 +348,21 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Rechnungs-Empfänger</ion-card-title>
+          <ion-card-title>{{ pfx + 'bexio.receiver.title' | translate | async }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(receiverPendingCount() < 0) {
-                  Noch nicht geprüft.
+                  {{ pfx + 'bexio.receiver.status.initial' | translate | async }}
                 } @else if(receiverPendingCount() === 0) {
-                  Alle Rechnungen haben einen Empfänger.
+                  {{ pfx + 'bexio.receiver.status.done' | translate | async }}
                 } @else {
-                  {{ receiverPendingCount() }} Rechnungen ohne Empfänger.
+                  {{ receiverPendingCount() }} {{ pfx + 'bexio.receiver.status.open' | translate | async }}
                 }
                 @if(receiverLinkCount() >= 0) {
-                  {{ receiverLinkCount() }} Empfänger verknüpft.
+                  {{ receiverLinkCount() }} {{ pfx + 'bexio.receiver.status.linked' | translate | async }}
                 }
               </ion-col>
               <ion-col size="3">
@@ -373,7 +372,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'link' | svgIcon }}" slot="start" />
                   }
-                  Verknüpfen
+                  {{ pfx + 'bexio.receiver.link' | translate | async }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -416,6 +415,8 @@ export class AocBexio implements OnInit {
   protected isClearingAccounts = signal(false);
   protected clearAccountResult = signal('');
   protected clearRootName = signal('');
+
+  protected pfx = PFX;
 
   public ngOnInit(): void {
     this.store.loadInvoiceStats();

@@ -1,21 +1,23 @@
 import { Component, computed, input } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
-import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { AccordionConfig, AccordionSection, ColorIonic, SectionModel } from '@bk2/shared-models';
+
+import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { AccordionConfig, AccordionSection, ColorIonic } from '@bk2/shared-models';
 import { ColorsIonic } from '@bk2/shared-categories';
 import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AccordionItemContentComponent } from './accordion-item.component';
+
+import { AccordionItemContentComponent } from './accordion-item';
 
 @Component({
   selector: 'bk-accordion-section',
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, CategoryPlainNamePipe,
-    IonLabel, IonCard, IonCardContent, OptionalCardHeaderComponent,
+    IonLabel, IonCard, IonCardContent, OptionalCardHeader,
     IonAccordionGroup, IonAccordion, IonItem, IonLabel,
-    SpinnerComponent, AccordionItemContentComponent
+    Spinner, AccordionItemContentComponent
   ],
   styles: [`
     ion-card-content { padding: 5px; }

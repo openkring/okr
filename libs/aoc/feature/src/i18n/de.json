@@ -1,249 +1,450 @@
 {
-  "aoc": {
-    "title": "AOC - Application Operation Center",
-    "adminops": {
-      "title": "Admin Operationen",
-      "iban": {
-        "label": "IBAN Nummern auflisten",
-        "button": "Anzeigen"
-      },
-      "oldJuniors": {
-        "label": "Umzuteilende (zu alte) Junioren auflisten",
-        "button": "Anzeigen"
+  "title": "AOC - Application Operation Center",
+  "adminops": {
+    "title": "Admin Operationen",
+    "iban": {
+      "label": "IBAN Nummern auflisten",
+      "button": "Anzeigen"
+    },
+    "mcatchange": {
+      "title": "Änderungen der Mitgliederkategorie"
+    },
+    "oldJuniors": {
+      "title": "Umzuteilende (zu alte) Jugendliche",
+      "label": "Umzuteilende (zu alte) Jugendliche auflisten",
+      "button": "Anzeigen",
+      "nodob": "Kein Geburtsdatum"
+    }
+  },
+
+  "bexio": {
+    "title": "Verwaltung der Bexio Integration",
+    "invoices": {
+      "title": "Debitoren-Rechnungen (Invoices)",
+      "subtitle": "Diese Funktion ist für den initialen Download von Debitoren Rechnungen aus Bexio gedacht. Nachdem dieser initiale Sync einmal gemacht ist, werden die zukünftigen Rechnungen täglich am frühen Morgen hinzugefügt.",
+      "nodata": "Keine Rechnungen gefunden. Lade zuerst die Daten von Bexio.",
+      "status": "Rechnungen in Firestore. Letzter Sync:",
+      "history": "Daten geladen."
+    },
+    "bills": {
+      "title": "Kreditoren-Rechnungen (Bills)",
+      "subtitle": "Diese Funktion ist für den initialen Download von Kreditoren Rechnungen aus Bexio gedacht. Nachdem dieser initiale Sync einmal gemacht ist, werden die zukünftigen Rechnungen täglich am frühen Morgen hinzugefügt.",
+      "nodata": "Keine Rechnungen gefunden. Lade zuerst die Daten von Bexio.",
+      "status": "Rechnungen in Firestore. Letzter Sync:",
+      "history": "Daten geladen."
+    },
+    "journal": {
+      "title": "Journal (Buchungen)",
+      "subtitle": "Initialer Download aller Buchungsjournal-Einträge aus Bexio. Danach werden neue Einträge täglich um 06:15 Uhr synchronisiert.",
+      "nodata": "Keine Buchungen gefunden. Lade zuerst die Daten von Bexio.",
+      "status": "Buchungen in Firestore. Letzter Sync:",
+      "history": "Daten geladen."
+    },
+    "accounts": {
+      "title": "Konten",
+      "subtitle": "Download Kontogruppen und Konten aus Bexio als hierarchische AccountModel-Struktur in die Firestore-Collection accounts.",
+      "nodata": "Keine Buchungen gefunden. Lade zuerst die Daten von Bexio.",
+      "download": "Kontogruppen und Konten aus Bexio herunterladen und als Kontenplan in Baumstruktur speichern.",
+      "history": "Daten geladen."
+    },
+    "index": {
+      "title": "Bexio Kontakte synchronisieren",
+      "content": "Es werden alle Personen, Organisationen und ihre Mitgliedschaften mit der Default Organisation geladen. Die BexioID in diesen Entitäten wird abgeglichen. Dann werden alle Kontakte von Bexio geladen und in die gleiche Liste eingefügt und geprüft. Bei fehlenden Einträgen erscheint ein add Button für den Abgleich.",
+      "button": "Sync"
+    },
+    "vendor": {
+      "title": "Lieferanten (Vendor)",
+      "subtitle": "Verknüpft die Lieferanten der Bills mit Personen oder Orgs anhand des Namens.",
+      "status": {
+        "initial": "Noch nicht geprüft.",
+        "done": "Alle Bills haben einen Vendor.",
+        "open": "Bills ohne Vendor",
+        "linked": "Vendors verknüpft",
+        "unmatched": "Keine Übereinstimmung gefunden für:"
       }
     },
-    "bexio": {
-      "index": {
-        "title": "Bexio Kontakte synchronisieren",
-        "content": "Es werden alle Personen, Organisationen und ihre Mitgliedschaften mit der Default Organisation geladen. Die BexioID in diesen Entitäten wird abgeglichen. Dann werden alle Kontakte von Bexio geladen und in die gleiche Liste eingefügt und geprüft. Bei fehlenden Einträgen erscheint ein add Button für den Abgleich.",
-        "button": "Sync"
+    "receiver": {
+      "title": "Rechnungs-Empfänger",
+      "status": {
+        "initial": "Noch nicht geprüft.",
+        "done": "Alle Rechnungen haben einen Empfänger.",
+        "open": "Rechnungen ohne Empfänger.",
+        "linked": "Empfänger verknüpft",
+        "unmatched": "Keine Übereinstimmung gefunden für:"
       },
-      "title": "Verwaltung der Bexio Integration"
-    },
-    "chat": {
-      "title": "Chat Admin (Matrix)",
-      "operation": {
-        "select": {
-          "roomMember": {
-            "label": "Person wählen",
-            "description": "Wenn das Feld leer ist, werden alle Chat Räume angezeigt. Mit der Auswahl einer Person begränzst du die Auswahl auf alle Räume, wo diese Person Member ist."
-          }
-        }
+      "link": "Verknüpfen"
+    }
+  },
+
+  "chat": {
+    "title": "Chat Admin (Matrix)",
+    "rooms": "Räume",
+    "no_rooms": "Keine Räume",
+    "no_members": "Keine Mitglieder",
+    "choose_room": "Raum auswählen",
+    "details": "Details",
+    "id": "ID",
+    "name": "Name",
+    "created_by": "Erstellt von",
+    "members": "Mitglieder",
+    "invited": "Eingeladen",
+    "public": "Öffentlich",
+    "topic": "Thema",
+    "aliases": "Aliases",
+    "avatar": "Avatar",
+    "uid": "User ID",
+    "display_name": "Anzeigename",
+    "level": "Power Level",
+    "membership": "Mitgliedschaft",
+    "choose_room_or_member": "Raum oder Mitglied auswählen<br>Details anzeigen",
+    "select": {
+      "roomMember": {
+        "label": "Person wählen",
+        "description": "Wenn das Feld leer ist, werden alle Chat Räume angezeigt. Mit der Auswahl einer Person begrenzst du die Auswahl auf alle Räume, wo diese Person Member ist."
       }
     },
-    "content": {
-      "title": "Content-Management",
-      "content": "Inhalte (Pages, Sections, Menus) verwalten.",
-      "orphanedSections": {
-        "title": "Verwaiste Sektionen",
-        "content": "Liste Sektionen, welche von keiner Page verwendet werden.",
-        "hide": "Ausblenden",
-        "show": "Anzeigen"
-      },
-      "missingSections": {
-        "title": "Fehlende Sektionen",
-        "content": "Liste nicht existierende Sektionsnamen, welche von einer Page referenziert werden.",
-        "hide": "Ausblenden",
-        "show": "Anzeigen"
-      },
-      "orphanedMenus": {
-        "title": "Verwaiste Menüs",
-        "content": "Liste Menüs, welche nicht verwendet werden.",
-        "hide": "Ausblenden",
-        "show": "Anzeigen"
-      },
-      "missingMenus": {
-        "title": "Fehlende Menüs",
-        "content": "Liste nicht existierende Menüs, welche von einem anderen Menü referenziert werden.",
-        "hide": "Ausblenden",
-        "show": "Anzeigen"
-      },
-      "checkLinks": {
-        "title": "Links prüfen",
-        "content": "Prüfe alle Links in allen Pages und Sektionen auf Funktionsfähigkeit.",
-        "show": "Anzeigen"
-      }
-    },
-    "data": {
-      "title": "Daten",
-      "content": "Daten validierung und korrigieren",
-      "fix": {
-        "title": "Daten-Korrektur",
-        "content": "Bulk-Operation (adminops/fixModels) mit Korrektur-Operationen auf eine Collection. BITTE AUFPASSEN: Die Korrektur-Operationen können nicht rückgängig gemacht werden. Backup machen, Implementierung in fix-Operation testen und zuerst ein dry run ohne update machen.",
-        "operation": {
-          "fix": "Daten korrigieren"
-        }
-      },
-      "validate": {
-        "title": "Daten-Validierung",
-        "content": "Bulk-Operation (adminops/validateModels) mit Validierungs-Operationen auf eine Collection.",
-        "operation": {
-          "validate": "Daten validieren"
-        }
-      },
-      "createIndex": {
-        "title": "Index erstellen",
-        "content": "Erstellt einen Index auf einer Collection. Dies ist nützlich, wenn ein Index in der Datenbank fehlt und eine Abfrage nicht ausgeführt werden kann.",
-        "operation": {
-          "create": "Index erstellen"
-        }
-      }
-    },
-    "doc": {
-      "delete": {
-        "confirm": "Soll diese Datei aus dem Firebase Storage gelöscht werden?"
-      },
-      "title": "Dokumente prüfen",
-      "content": "Prüft ob alle Dateien in Firebase Storage einen entsprechenden Eintrag in der Datenbank haben.",
-      "checkFiles": {
-        "title": "Dateien ohne DB-Eintrag",
-        "content": "Listet alle Dateien in Firebase Storage auf, für die kein Eintrag in der Firestore docs-Kollektion existiert.",
-        "button": "Prüfen"
-      }
-    },
-    "roles": {
-      "title": "Autorisierung und Rollen",
-      "personSelect": {
-        "title": "Person auswählen",
-        "content": "Die meisten der untenstehenden Operationen basieren auf einer Person. Deshalb muss hier zuerst eine Person ausgewählt werden. Danach können die Operationen auf dieser Person durchgeführt werden."
-      },
-      "account": {
-        "select": "Person auswählen",
-        "title": "User Account erstellen",
-        "content": "Eine bestehende Person wird als User in Firebase Auth registriert, dh. das Firebase-Account und der User werden erzeugt. Falls das Firebase-Account bereits existiert, wird nur ein User erstellt, welcher das Firebase Account und die Person verlinkt.",
-        "button": "Konto erstellen"
-      },
-      "check": {
-        "title": "User Account prüfen",
-        "content": "Prüfen, ob eine Person einen User-Account in Firebase Auth hat oder ob die Voraussetzungen für die Erstellung des Accounts erfüllt sind.",
-        "button": "Prüfen"
-      },
-      "fbuser": {
-        "title": "Firebase User ändern",
-        "content": "Ändere einen bestehenden Firebase User. Die Aenderung erfolgt nur in Firebase Auth, allenfalls müssen auch das UserModel oder PersonModel geändert werden.",
-        "button": "Firebase User ändern"
-      },
-      "impersonate": {
-        "title": "Benutzer impersonifizieren",
-        "content": "Die Rolle des Users wird temporär auf den ausgewählten User gesetzt. Dadurch kann der Admin die Applikation als dieser User benutzen. Um wieder in die Admin-Rolle zurückzukehren, muss der Admin sich abmelden und wieder anmelden.",
-        "button": "Impersonate"
-      }
-    },
-    "srv": {
-      "title": "Verwaltung der SRV / Regasoft Integration",
-      "index": {
-        "title": "SRV Mitglieder synchronisieren",
-        "subtitle": "Vergleicht die aktuellen SRV-Mitgliedschaften (orgKey=srv) mit den Mitgliedern im Regasoft-Portal. Primärer Abgleich via memberId = serviceId, Fallback via Name.",
-        "reset": "Index zurücksetzen",
-        "button": "Index aufbauen"
-      }
-    },
-    "statistics": {
-      "header": "AOC Statistiken",
-      "content": "Gewisse Statistiken können hier aus den aktuellen Daten neu berechnet werden. Diese Berechnung sollte nur durchgeführt werden, wenn die Datenbank in einem stabilen Zustand ist. Die Berechnung kann einige Zeit in Anspruch nehmen. Die Statistiken sollten anschliessend überprüft werden und allenfalls manuell korrigiert werden.",
-      "title": "Statistiken aktualisieren",
-      "competitionLevels": {
-        "label": "Wettkampf-Kategorien aktualisieren",
-        "button": "Ausführen"
-      },
-      "clStats": {
-        "label": "Statistik der Wettkampf-Kategorien aktualisieren",
-        "button": "Ausführen"
-      },
-      "ageByGender": {
-        "label": "Alters-Statistik neu berechnen",
-        "button": "Ausführen"
-      },
-      "categoryByGender": {
-        "label": "Mitglieder-Struktur neu berechnen",
-        "button": "Ausführen"
-      },
-      "memberLocation": {
-        "label": "Wohnort-Statistik neu berechnen",
-        "button": "Ausführen"
-      }
-    },
-    "storage": {
-      "title": "Firebase Storage",
-      "info": {
-        "title": "Firebase Storage Info",
-        "content": "Zeigt Informationen über ein Dokument im Firebase Storage an. Dazu muss die relative URL zu diesem Dokument eingegeben werden.",
-        "buttonLabel": "Informationen anzeigen"
-      },
-      "sizes": {
-        "title": "Benutzter Speicherplatz",
-        "content": "Berechnet den Speicherplatz, den alle Dokument in einem Firebase Storage Folder belelegen. Dazu muss der relative Pfad zum Folder eingegeben werden.",
-        "buttonLabel": "Grösse berechnen"
-      }
-    },
-    "tag": {
-      "create": {
-        "header": "Neue TagList",
-        "placeholder": "Model-Typ (z.B. person, org, section)"
-      },
-      "operation": {
-        "create": {
-          "conf": "Der Tag wurde gespeichert"
-        },
-        "delete": {
-          "conf": "Der Tag wurde gelöscht"
-        },
-        "update": {
-          "conf": "Der Tag wurde geändert."
-        }
+    "room": {
+      "rename": {
+        "header": "Raum umbenennen",
+        "newname": "Neuer Name",
+        "action": "Umbenennen",
+        "conf": "Raum umbenannt"
       },
       "delete": {
-        "confirm": "Soll dieses Tag-Dokument wirklich archiviert werden?"
+        "header": "Raum löschen",
+        "askconf": "Raum ${roomId} wirklich löschen ? Alle Nachrichten werden entfernt.",
+        "action": "Löschen",
+        "conf": "Raum gelöscht."
       },
-      "string": {
-        "add": {
-          "header": "Tag hinzufügen",
-          "placeholder": "@tag.beispiel",
-          "button": "Tag hinzufügen"
-        },
-        "edit": {
-          "header": "Tag bearbeiten",
-          "placeholder": "@tag.beispiel"
-        }
-      },
-      "title": "Tag-Verwaltung",
-      "search": {
-        "placeholder": "TagList suchen..."
-      },
-      "list": {
-        "title": "TagList"
-      },
-      "strings": {
-        "title": "Tag",
-        "empty": "Keine TagList ausgewählt"
+      "invite": {
+        "header": "Person einladen",
+        "action": "Einladen",
+        "conf": "eingeladen"
       }
+    },
+    "alias": {
+      "add": {
+        "header": "Alias hinzufügen",
+        "placeholder": "alias-name (ohne # und :homeserver)",
+        "action": "Hinzufügen",
+        "conf": "Alias hinzugefügt"
+      }
+    },
+    "user": {
+      "provision": {
+        "header": "Matrix User anlegen",
+        "action": "Anlegen",
+        "conf": "User angelegt"
+      },
+      "deactivate": {
+        "header": "Matrix User deaktivieren",
+        "askconf": "${userId} deaktivieren? Der User kann sich danach nicht mehr anmelden.",
+        "action": "Deaktivieren",
+        "conf": "deaktiviert",
+        "notfound": "User nicht gefunden"
+      }
+    },
+    "member": {
+      "kick": {
+        "header": "Mitglied entfernen",
+        "askconf": "${userId} aus dem Raum entfernen ?",
+        "action": "Entfernen",
+        "conf": "entfernt."
+      }
+    },
+    "actionsheet": {
+      "title": "Wähle eine Aktion",
+      "showMembers": "Mitglieder anzeigen",
+      "showDetails": "Raum-Details anzeigen",
+      "rename": "Raum umbenennen",
+      "addAlias": "Alias hinzufügen",
+      "invite": "Person einladen",
+      "provision": "Matrix-User anlegen",
+      "delete": "Raum löschen",
+      "kick": "Mitglied entfernen",
+      "deactivate": "Mitglied deaktivieren"
+    }
+  },
+
+  "content": {
+    "title": "Content-Management",
+    "content": "Inhalte (Pages, Sections, Menus) verwalten.",
+    "orphanedSections": {
+      "title": "Verwaiste Sektionen",
+      "content": "Liste Sektionen, welche von keiner Page verwendet werden.",
+      "hide": "Ausblenden",
+      "show": "Anzeigen"
+    },
+    "missingSections": {
+      "title": "Fehlende Sektionen",
+      "content": "Liste nicht existierende Sektionsnamen, welche von einer Page referenziert werden.",
+      "hide": "Ausblenden",
+      "show": "Anzeigen"
+    },
+    "orphanedMenus": {
+      "title": "Verwaiste Menüs",
+      "content": "Liste Menüs, welche nicht verwendet werden.",
+      "hide": "Ausblenden",
+      "show": "Anzeigen"
+    },
+    "missingMenus": {
+      "title": "Fehlende Menüs",
+      "content": "Liste nicht existierende Menüs, welche von einem anderen Menü referenziert werden.",
+      "hide": "Ausblenden",
+      "show": "Anzeigen"
+    },
+    "checkLinks": {
+      "title": "Links prüfen",
+      "content": "Prüfe alle Links in allen Pages und Sektionen auf Funktionsfähigkeit.",
+      "show": "Anzeigen"
+    },
+    "section": {
+      "delete": {
+        "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
+      }
+    },
+    "menu": {
+      "delete": {
+        "conf": "Menüeintrag wurde gelöscht.",
+        "confirm": "Soll der Menueintrag wirklich gelöscht werden ?"
+      }
+    },
+    "actionsheet": {
+      "title": "Wähle eine Aktion",
+      "copy": {
+        "bkey": "Key kopieren"
+      },
+      "menu": {
+        "create": "Menü erstellen",
+        "delete": "Menü löschen",
+        "edit": "Menü bearbeiten",
+        "removeRef": "Menü Referenz entfernen"
+      },
+      "page": {
+        "edit": "Website bearbeiten"
+      },
+      "section": {
+        "create": "Sektion erstellen",
+        "delete": "Sektion löschen",
+        "edit": "Sektion bearbeiten",
+        "removeRef": "Referenz von Seite entfernen"
+      }
+    }
+  },
+
+  "data": {
+    "title": "Daten",
+    "content": "Daten validierung und korrigieren",
+    "fix": {
+      "title": "Daten-Korrektur",
+      "content": "Bulk-Operation (adminops/fixModels) mit Korrektur-Operationen auf eine Collection. BITTE AUFPASSEN: Die Korrektur-Operationen können nicht rückgängig gemacht werden. Backup machen, Implementierung in fix-Operation testen und zuerst ein dry run ohne update machen.",
+      "button": "Daten korrigieren"
+    },
+    "validate": {
+      "title": "Daten-Validierung",
+      "content": "Bulk-Operation (adminops/validateModels) mit Validierungs-Operationen auf eine Collection.",
+      "button": "Daten validieren"
+    },
+    "createIndex": {
+      "title": "Index erstellen",
+      "content": "Erstellt einen Index auf einer Collection. Dies ist nützlich, wenn ein Index in der Datenbank fehlt und eine Abfrage nicht ausgeführt werden kann.",
+      "button": "Index erstellen"
+    },
+    "check": {
+      "console": "Bitte Konfiguration in der Browser Console prüfen und bestätigen."
+    }
+  },
+
+  "doc": {
+    "create": {
+      "conf": "Dokument erstellt.",
+      "error": "Dokument konnte nicht erstellt werden."
+    },
+    "delete": {
+      "confirm": "Soll diese Datei aus dem Firebase Storage gelöscht werden?"
+    },
+    "title": "Dokumente prüfen",
+    "content": "Prüft ob alle Dateien in Firebase Storage einen entsprechenden Eintrag in der Datenbank haben.",
+    "hide": "Ausblenden",
+    "checkFiles": {
+      "title": "Dateien ohne DB-Eintrag",
+      "content": "Listet alle Dateien in Firebase Storage auf, für die kein Eintrag in der Firestore docs-Kollektion existiert.",
+      "button": "Prüfen"
+    },
+    "actionsheet": {
+      "title": "Wähle eine Aktion",
+      "document": {
+        "download": "Dokument herunterladen",
+        "create": "DB-Eintrag erstellen",
+        "delete": "Dokument löschen"
+      },
+      "copy": {
+        "path": "Speicherpfad kopieren",
+        "url": "Download-URL kopieren"
+      }
+    },
+  },
+
+  "email": {
+
+  },
+
+  "roles": {
+    "title": "Autorisierung und Rollen",
+    "personSelect": {
+      "title": "Person auswählen",
+      "content": "Die meisten der untenstehenden Operationen basieren auf einer Person. Deshalb muss hier zuerst eine Person ausgewählt werden. Danach können die Operationen auf dieser Person durchgeführt werden."
     },
     "account": {
-      "user": {
-        "delete": {
-          "confirm": "Soll der User wirklich gelöscht werden ?"
-        }
-      },
-      "fbuser": {
-        "delete": {
-          "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
-        }
+      "select": "Person auswählen",
+      "title": "User Account erstellen",
+      "content": "Eine bestehende Person wird als User in Firebase Auth registriert, dh. das Firebase-Account und der User werden erzeugt. Falls das Firebase-Account bereits existiert, wird nur ein User erstellt, welcher das Firebase Account und die Person verlinkt.",
+      "button": "Konto erstellen"
+    },
+    "check": {
+      "title": "User Account prüfen",
+      "content": "Prüfen, ob eine Person einen User-Account in Firebase Auth hat oder ob die Voraussetzungen für die Erstellung des Accounts erfüllt sind.",
+      "button": "Prüfen"
+    },
+    "fbuser": {
+      "title": "Firebase User ändern",
+      "content": "Ändere einen bestehenden Firebase User. Die Aenderung erfolgt nur in Firebase Auth, allenfalls müssen auch das UserModel oder PersonModel geändert werden.",
+      "button": "Firebase User ändern"
+    },
+    "impersonate": {
+      "title": "Benutzer impersonifizieren",
+      "content": "Die Rolle des Users wird temporär auf den ausgewählten User gesetzt. Dadurch kann der Admin die Applikation als dieser User benutzen. Um wieder in die Admin-Rolle zurückzukehren, muss der Admin sich abmelden und wieder anmelden.",
+      "button": "Impersonate"
+    }
+  },
+
+  "session": {
+
+  },
+
+  "srv": {
+    "title": "Verwaltung der SRV / Regasoft Integration",
+    "index": {
+      "title": "SRV Mitglieder synchronisieren",
+      "subtitle": "Vergleicht die aktuellen SRV-Mitgliedschaften (orgKey=srv) mit den Mitgliedern im Regasoft-Portal. Primärer Abgleich via memberId = serviceId, Fallback via Name.",
+      "reset": "Index zurücksetzen",
+      "button": "Index aufbauen"
+    }
+  },
+
+  "statistics": {
+    "header": "AOC Statistiken",
+    "content": "Gewisse Statistiken können hier aus den aktuellen Daten neu berechnet werden. Diese Berechnung sollte nur durchgeführt werden, wenn die Datenbank in einem stabilen Zustand ist. Die Berechnung kann einige Zeit in Anspruch nehmen. Die Statistiken sollten anschliessend überprüft werden und allenfalls manuell korrigiert werden.",
+    "title": "Statistiken aktualisieren",
+    "competitionLevels": {
+      "label": "Wettkampf-Kategorien aktualisieren",
+      "button": "Ausführen"
+    },
+    "clStats": {
+      "label": "Statistik der Wettkampf-Kategorien aktualisieren",
+      "button": "Ausführen"
+    },
+    "ageByGender": {
+      "label": "Alters-Statistik neu berechnen",
+      "button": "Ausführen"
+    },
+    "categoryByGender": {
+      "label": "Mitglieder-Struktur neu berechnen",
+      "button": "Ausführen"
+    },
+    "memberLocation": {
+      "label": "Wohnort-Statistik neu berechnen",
+      "button": "Ausführen"
+    }
+  },
+
+  "storage": {
+    "title": "Firebase Storage",
+    "info": {
+      "title": "Firebase Storage Info",
+      "content": "Zeigt Informationen über ein Dokument im Firebase Storage an. Dazu muss die relative URL zu diesem Dokument eingegeben werden.",
+      "buttonLabel": "Informationen anzeigen"
+    },
+    "sizes": {
+      "title": "Benutzter Speicherplatz",
+      "content": "Berechnet den Speicherplatz, den alle Dokument in einem Firebase Storage Folder belelegen. Dazu muss der relative Pfad zum Folder eingegeben werden.",
+      "buttonLabel": "Grösse berechnen"
+    }
+  },
+
+  "tag": {
+    "title": "Tag-Verwaltung",
+    "add": {
+      "header": "Tag hinzufügen",
+      "placeholder": "@tag.beispiel",
+      "button": "Tag hinzufügen",
+      "conf": "Der Tag wurde gespeichert.",
+      "error": "Der Tag konnte nicht gespeichert werden."
+    },
+    "create": {
+      "header": "Neue TagList",
+      "placeholder": "Model-Typ (z.B. person, org, section)",
+      "conf": "Der Tag wurde gespeichert",
+      "error": "Der Tag konnte nicht gespeichert werden."
+    },
+    "delete": {
+      "conf": "Der Tag wurde gelöscht",
+      "confirm": "Soll dieses Tag-Dokument wirklich archiviert werden?",
+      "error": "Der Tag konnte nicht gelöscht werden."
+    },
+    "edit": {
+      "header": "Tag bearbeiten",
+      "placeholder": "@tag.beispiel",
+      "conf": "Der Tag wurde gespeichert.",
+      "error": "Der Tag konnte nicht gespeichert werden."
+    },
+    "remove": {
+      "conf": "Der Tag wurde entfernt.",
+      "error": "Der Tag konnte nicht entfernt werden."
+    },
+    "update": {
+      "conf": "Der Tag wurde geändert.",
+      "error": "Der Tag konnte nicht geändert werden."
+    },
+    "search": {
+      "placeholder": "TagList suchen..."
+    },
+    "list": {
+      "title": "TagList"
+    },
+    "strings": {
+      "title": "Tag",
+      "empty": "Keine TagList ausgewählt"
+    }
+  },
+
+  "account": {
+    "plural": "Konti",
+    "user": {
+      "delete": {
+        "confirm": "Soll der User wirklich gelöscht werden ?"
       }
     },
-    "website": {
-      "edit": {
-        "title": "Texte ändern"
-      },
-      "key": {
-        "label": "ID"
-      },
-      "isHtml": {
-        "label": "Inhalt ist HTML"
-      },
-      "title": "Website Texte",
-      "list": {
-        "title": "Texte"
+    "fbuser": {
+      "delete": {
+        "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
       }
+    }
+  },
+
+  "website": {
+    "edit": {
+      "title": "Texte ändern"
+    },
+    "key": {
+      "label": "ID"
+    },
+    "isHtml": {
+      "label": "Inhalt ist HTML"
+    },
+    "title": "Website Texte",
+    "list": {
+      "title": "Texte"
     }
   },
   "actionsheet": {
@@ -251,45 +452,26 @@
       "choose": "Wähle eine Aktion"
     }
   },
-  "content": {
-    "section": {
-      "operation": {
-        "delete": {
-          "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
-        }
-      }
-    },
-    "menuItem": {
-      "operation": {
-        "delete": {
-          "conf": "Menüeintrag wurde gelöscht."
-        }
-      }
-    }
-  },
+
   "document": {
-    "operation": {
-      "create": {
-        "label": "Dokument hinzufügen",
-        "conf": "Das neue Dokument wurde hinzugefügt.",
-        "error": "Das Dokument konnte nicht gespeichert werden."
-      }
+    "create": {
+      "label": "Dokument hinzufügen",
+      "conf": "Das neue Dokument wurde hinzugefügt.",
+      "error": "Das Dokument konnte nicht gespeichert werden."
     }
   },
+
   "user": {
-    "operation": {
-      "update": {
-        "label": "User ändern",
-        "error": "Die Aenderungen konnten nicht gespeichert werden",
-        "conf": "Die Aenderungen wurden gespeichert."
-      }
-    },
-    "field": {
-      "loginEmail": "Login E-Mail",
-      "name": "Name",
-      "empty": "Keine User gefunden"
+    "loginEmail": "Login E-Mail",
+    "name": "Name",
+    "empty": "Keine User gefunden",
+    "update": {
+      "label": "User ändern",
+      "error": "Die Aenderungen konnten nicht gespeichert werden",
+      "conf": "Die Aenderungen wurden gespeichert."
     }
   },
+
   "input": {
     "passwordAoc": {
       "label": "Passwort",
@@ -302,21 +484,5 @@
       "label": "Login Email",
       "placeholder": "Email Adresse"
     }
-  },
-  "general": {
-    "operation": {
-      "copy": {
-        "conf": "Der Wert wurde kopiert."
-      },
-      "loading": "Wird geladen...",
-      "cancel": "Abbrechen",
-      "save": "Speichern",
-      "search": {
-        "placeholder": "Suchen..."
-      }
-    }
-  },
-  "account": {
-    "plural": "Konti"
   }
 }

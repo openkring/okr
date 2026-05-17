@@ -5,14 +5,16 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { map, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
 import { DateFormat, getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@bk2/shared-util-core';
 
 import { CalEventService } from '@bk2/calevent-data-access';
-import { CalEventEditModalComponent, CalEventViewModal } from '@bk2/calevent-feature';
+import { CalEventEditModal, CalEventViewModal } from '@bk2/calevent-feature';
 import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { PFX } from './scope';
 
 export type CalendarState = {
   calendarName: string | undefined; // all, my, or specific calendar name
@@ -35,6 +37,12 @@ export const CalendarStore = signalStore(
     membershipService: inject(MembershipService),
     modalController: inject(ModalController),
     calEventService: inject(CalEventService),
+    i18n: inject(I18nService).translateAll({
+      update_calevent_conf:       PFX + 'operation.update.calevent.conf',
+      update_calevent_error:      PFX + 'operation.update.calevent.error',
+      update_invitation_conf:     PFX + 'operation.update.invitation.conf',
+      update_invitation_error:    PFX + 'operation.update.invitation.error',
+    }),
   })),
   withProps((store) => ({
     // returns a list of unigue organization keys for the current user
@@ -227,7 +235,7 @@ export const CalendarStore = signalStore(
 
       async edit(calevent: CalEventModel, isNew = false, readOnly = true, initialDirty = false): Promise<boolean> {
         const modal = await store.modalController.create({
-          component: CalEventEditModalComponent,
+          component: CalEventEditModal,
           componentProps: {
             calevent,
             currentUser: store.currentUser(),
@@ -303,7 +311,7 @@ export const CalendarStore = signalStore(
           };
           calEvent.attendees.push(newAttendee);
         }
-        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, '@calevent.operation.update', currentUser);
+        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, store.i18n.update_calevent_conf(), store.i18n.update_calevent_error(), currentUser);
       },
 
       async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
@@ -311,7 +319,7 @@ export const CalendarStore = signalStore(
         if (!currentUser) return;
         invitation.state = newState;
         invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
-        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, '@invitation.operation.update', currentUser);
+        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, store.i18n.update_invitation_conf(), store.i18n.update_invitation_error(), currentUser);
         // this.reload();
       },
     }

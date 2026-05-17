@@ -1,19 +1,19 @@
 import { Component, computed, inject, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ModalController, IonContent, IonItem, IonLabel, IonToggle, IonButton, IonFooter, IonToolbar } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
 
 import { ContextDiagramConfig, UserModel } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-context-diagram-config-modal',
   standalone: true,
   imports: [
     FormsModule, TranslatePipe, AsyncPipe,
-    HeaderComponent,
+    Header,
     IonContent, IonItem, IonLabel, IonToggle, IonButton, IonFooter, IonToolbar,
   ],
   template: `

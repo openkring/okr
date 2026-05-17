@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { MatrixMessage, MatrixReadReceipt } from '@bk2/shared-models';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { PollMessageComponent } from './poll-message.component';
+import { PollMessage } from './poll-message';
 import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
 
 @Component({
@@ -16,7 +16,7 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
     CommonModule,
     IonIcon, IonChip, IonAvatar,
     SvgIconPipe, TranslatePipe, AsyncPipe,
-    PollMessageComponent, MatrixReadReceiptStrip
+    PollMessage, MatrixReadReceiptStrip
   ],
   styles: [`
     :host {

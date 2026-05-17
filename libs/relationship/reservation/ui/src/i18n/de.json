@@ -1,12 +1,4 @@
 {
-  "general": {
-    "operation": {
-      "select": {
-        "label": "Auswählen"
-      }
-    }
-  },
-  "reservation": {
-    "newDesc": "... möchte die folgende Resource reservieren:"
-  }
+  "select": "Auswählen",
+  "newDesc": "... möchte die folgende Resource reservieren:"
 }

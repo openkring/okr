@@ -5,7 +5,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { CategoryListModel, UserModel } from "@bk2/shared-models";
-import { CheckboxComponent, ChipsComponent } from "@bk2/shared-ui";
+import { Checkbox, Chips } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel, getCategoryItemNames } from "@bk2/shared-util-core";
 
 import { flattenRoles, UserAuthFormModel, userAuthFormValidations } from "@bk2/user-util";
@@ -16,7 +16,7 @@ import { flattenRoles, UserAuthFormModel, userAuthFormValidations } from "@bk2/u
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
-    CheckboxComponent, ChipsComponent,
+    Checkbox, Chips,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -56,7 +56,7 @@ import { flattenRoles, UserAuthFormModel, userAuthFormValidations } from "@bk2/u
     }
   `
 })
-export class UserAuthFormComponent {
+export class UserAuthForm {
   // inputs
   public formData = model.required<UserAuthFormModel>();
   public currentUser = input<UserModel | undefined>();

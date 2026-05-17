@@ -3,21 +3,21 @@ import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter } from '@ionic/angular/standalone';
 
 import { PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { DocumentsAccordionComponent } from '@bk2/document-feature';
-import { MembershipAccordionComponent } from '@bk2/relationship-membership-feature';
-import { OwnershipAccordionComponent } from '@bk2/relationship-ownership-feature';
-import { PersonalRelAccordionComponent } from '@bk2/relationship-personal-rel-feature';
-import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
-import { WorkrelAccordionComponent } from '@bk2/relationship-workrel-feature';
-import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
+import { MembershipAccordion } from '@bk2/relationship-membership-feature';
+import { OwnershipAccordion } from '@bk2/relationship-ownership-feature';
+import { PersonalRelAccordion } from '@bk2/relationship-personal-rel-feature';
+import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
+import { WorkrelAccordion } from '@bk2/relationship-workrel-feature';
 
-import { AvatarToolbarComponent } from '@bk2/avatar-feature';
-import { PersonFormComponent } from '@bk2/subject-person-ui';
+import { AddressesAccordion } from '@bk2/subject-address-feature';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { DocumentsAccordion } from '@bk2/document-feature';
+import { AvatarToolbar } from '@bk2/avatar-feature';
+import { PersonForm } from '@bk2/subject-person-ui';
 
 import { PersonStore } from './person.store';
 
@@ -25,10 +25,10 @@ import { PersonStore } from './person.store';
   selector: 'bk-person-edit-page',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent,
-    PersonFormComponent, AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent, DocumentsAccordionComponent,
-    MembershipAccordionComponent, OwnershipAccordionComponent, ReservationsAccordionComponent,
-    PersonalRelAccordionComponent, WorkrelAccordionComponent,
+    Header, ChangeConfirmation,
+    PersonForm, AvatarToolbar, AddressesAccordion, CommentsAccordion, DocumentsAccordion,
+    MembershipAccordion, OwnershipAccordion, ReservationsAccordion,
+    PersonalRelAccordion, WorkrelAccordion,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [PersonStore],

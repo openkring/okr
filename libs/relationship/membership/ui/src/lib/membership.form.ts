@@ -7,9 +7,9 @@ import { vestForms } from 'ngx-vest-forms';
 import { BexioIdMask } from '@bk2/shared-config';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON, REBATE_REASON_VALUES } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
+import { AppStore, OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
+import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@bk2/shared-models';
+import { CategorySelect, Chips, DateInput, NotesInput, NumberInput, StringSelect, TextInput } from '@bk2/shared-ui';
 import { areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, getItemLabel, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
 
 import { membershipValidations } from '@bk2/relationship-membership-util';
@@ -21,8 +21,8 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   imports: [
     vestForms, FormsModule,
     TranslatePipe, AsyncPipe, AvatarPipe,
-    TextInputComponent, DateInputComponent,
-    ChipsComponent, NotesInputComponent, CategorySelectComponent, NumberInputComponent, StringSelectComponent,
+    TextInput, DateInput,
+    Chips, NotesInput, CategorySelect, NumberInput, StringSelect,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonCard, IonCardContent, IonAvatar, IonImg, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -171,13 +171,13 @@ import { AvatarPipe } from '@bk2/avatar-ui';
           }
           
           @if(hasRole('admin')) {
-            <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
           }
         </form>
       }
   `
 })
-export class MembershipFormComponent {
+export class MembershipForm {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
@@ -263,7 +263,7 @@ export class MembershipFormComponent {
 
   protected async selectPerson(): Promise<void> {
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',
@@ -286,14 +286,14 @@ export class MembershipFormComponent {
           memberZipCode: data.favZipCode,
           memberBexioId: data.bexioId
         }));
-        debugFormErrors('MembershipNewForm.selectPerson', this.validationResult().errors, this.currentUser());
+        debugFormErrors('MembershipForm.selectPerson', this.validationResult().errors, this.currentUser());
       }
     }
   }
 
   protected async selectOrg(): Promise<void> {
     const modal = await this.modalController.create({
-      component: OrgSelectModalComponent,
+      component: OrgSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: 'all',
@@ -309,7 +309,7 @@ export class MembershipFormComponent {
           orgKey: data.bkey,
           orgName: data.name,
         }));
-        debugFormErrors('MembershipNewForm.selectOrg', this.validationResult().errors, this.currentUser());
+        debugFormErrors('MembershipForm.selectOrg', this.validationResult().errors, this.currentUser());
       }
     }
   }

@@ -1,146 +1,108 @@
 {
-  "membership": {
-    "operation": {
-      "createMember": {
-        "label": "Mitglied hinzufügen"
-      },
-      "catChange": {
-        "label": "Mitglieder-Kategorie ändern"
-      },
-      "view": {
-        "label": "Mitgliedschaft anzeigen"
-      },
-      "update": {
-        "label": "Mitgliedschaft ändern"
-      },
-      "create": {
-        "alreadyMember": "Dieses Mitglied ist bereits vorhanden.",
-        "label": "Mitgliedschaft hinzufügen",
-        "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
-        "conf": "Die Mitgliedschaft wurde erstellt."
-      },
-      "end": {
-        "select": "Austrittsdatum wählen",
-        "intro": "<p>Das Austrittsdatum ist der letzte Tag der Mitgliedschaft. Ab dem nächsten Tag ist die Person kein Mitglied mehr.<br /> Meistens ist dies der 31.12. des aktuellen Jahres.</p>"
-      },
-      "delete": {
-        "confirm": "Normalerweise sollte eine Mitgliedschaft beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Mitgliedschaft wirklich löschen?"
-      }
+  "memberships": "Mitgliedschaften",
+  "members": "Mitglieder",
+  "titleRel": "in",
+  "name": "Name",
+  "category": "Kat.",
+  "phone": "Tel.",
+  "email": "E-Mail",
+  "entryYear": "Eintrittsjahr",
+  "exitYear": "Austrittsjahr",
+  "empty": "Es sind noch keine Mitgliedschaften erfasst.",
+  "noData": {
+    "members": "Die Organisation hat keine Mitglieder.",
+    "memberships": "Es gibt keine Mitgliedschaften."
+  },
+  "add": {
+    "conf": "Die Mitgliedschaft wurde erstellt.",
+    "error": "Die Mitgliedschaft konnte nicht erstellt werden."
+  },
+  "createMember": {
+    "label": "Mitglied hinzufügen"
+  },
+  "catChange": {
+    "label": "Mitglieder-Kategorie ändern"
+  },
+  "view": {
+    "label": "Mitgliedschaft anzeigen"
+  },
+  "update": {
+    "label": "Mitgliedschaft ändern"
+  },
+  "copy": {
+    "email": {
+      "conf": "Die E-Mail Adresse wurde kopiert."
     },
-    "plural": "Mitgliedschaften",
-    "list": {
-      "header": {
-        "titleRel": "in",
-        "name": "Name",
-        "category": "Kat."
-      },
-      "entries": {
-        "yearLabel": "Eintrittsjahr"
-      },
-      "exits": {
-        "yearLabel": "Austrittsjahr"
-      }
-    },
-    "field": {
-      "empty": "Es sind noch keine Mitgliedschaften erfasst."
+    "phone": {
+      "conf": "Die Telefonnummer wurde kopiert."
     }
   },
-  "general": {
-    "noData": {
-      "members": "Die Organisation hat keine Mitglieder.",
-      "memberships": "Es gibt keine Mitgliedschaften."
-    }
+  "create": {
+    "alreadyMember": "Dieses Mitglied ist bereits vorhanden.",
+    "label": "Mitgliedschaft hinzufügen",
+    "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
+    "conf": "Die Mitgliedschaft wurde erstellt."
   },
-  "members": {
-    "plural": "Mitglieder"
+  "end": {
+    "select": "Austrittsdatum wählen",
+    "intro": "<p>Das Austrittsdatum ist der letzte Tag der Mitgliedschaft. Ab dem nächsten Tag ist die Person kein Mitglied mehr.<br /> Meistens ist dies der 31.12. des aktuellen Jahres.</p>"
+  },
+  "delete": {
+    "confirm": "Normalerweise sollte eine Mitgliedschaft beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Mitgliedschaft wirklich löschen?"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion"
+  },
+  "invoice": {
+    "create": {
+      "conf": "Die Rechnung wurde erstellt."
     }
   },
-  "subject": {
+  "scsMemberFee": {
+    "archive": {
+      "confirm": "Der Rechnungslauf wird abgeschlossen und all Rechnungen auf archiviert gesetzt.",
+      "conf": "Alle Rechnungen wurden archiviert. Du bist ready für eine neue Rechnungsgenerierung."
+    },
+    "delete": {
+      "label": "Rechnung löschen",
+      "confirm": "Soll die Rechnung wirklich gelöscht werden ?",
+      "error": "Die Rechnung konnte nicht gelöscht werden",
+      "conf": "Die Rechnung wurde gelöscht"
+    },
+    "generate": {
+      "confirm": "ACHTUNG: Alle Rechnungen werden neu generiert. Lokale Aenderungen werden überschrieben. Normalerweise wird diese Operation einmal beim Starten eines Rechnungslaufs ausgeführt. Soll die Operation ausgeführt werden ?",
+      "conf": "Die Rechnungsdaten wurden generiert."
+    },
+    "update": {
+      "label": "Rechnung ändern",
+      "conf": "Die Aenderungen wurden gespeichert."
+    },
+    "download": {
+      "enterInvoiceId": "Rechnungs-ID eingeben:"
+    },
+    "upload": {
+      "label": "Rechnungsprüfung",
+      "conf": "Rechnung wurde zu Bexio hochgeladen.",
+      "noBexioId": "Die Rechnung kann nicht hochgeladen werden, weil die BexioID fehlt."
+    },
+    "totals": {
+      "label": "Gebühren-Übersicht"
+    },
+    "export": {
+      "title": "Jahresbeitragsrechnungen"
+    },
     "list": {
-      "header": {
-        "phone": "Tel.",
-        "email": "E-Mail"
-      }
+      "title": "Mitgliedergebühren",
+      "empty": "Keine Einträge gefunden"
     },
-    "person": {
-      "operation": {
-        "copy": {
-          "email": {
-            "conf": "Die E-Mail Adresse wurde kopiert."
-          },
-          "phone": {
-            "conf": "Die Telefonnummer wurde kopiert."
-          }
-        }
-      }
-    }
-  },
-  "finance": {
-    "invoice": {
-      "operation": {
-        "create": {
-          "conf": "Die Rechnung wurde erstellt."
-        }
-      }
-    },
-    "scsMemberFee": {
-      "operation": {
-        "update": {
-          "label": "Rechnung ändern",
-          "conf": "Die Aenderungen wurden gespeichert."
-        },
-        "download": {
-          "enterInvoiceId": "Rechnungs-ID eingeben:"
-        },
-        "upload": {
-          "label": "Rechnungsprüfung",
-          "conf": "Rechnung wurde zu Bexio hochgeladen."
-        },
-        "totals": {
-          "label": "Gebühren-Übersicht"
-        },
-        "generate": {
-          "confirm": "ACHTUNG: Alle Rechnungen werden neu generiert. Lokale Aenderungen werden überschrieben. Normalerweise wird diese Operation einmal beim Starten eines Rechnungslaufs ausgeführt. Soll die Operation ausgeführt werden ?",
-          "conf": "Die Rechnungsdaten wurden generiert."
-        }
-      },
-      "list": {
-        "title": "Mitgliedergebühren",
-        "empty": "Keine Einträge gefunden"
-      },
-      "field": {
-        "jb": {
-          "label": "Jahresbeitrag"
-        },
-        "srv": {
-          "label": "SRV Beitrag"
-        },
-        "entryFee": {
-          "label": "Eintrittsgebühr"
-        },
-        "locker": {
-          "label": "Garderoben Miete"
-        },
-        "skiff": {
-          "label": "Skiff Lagerplatz Miete"
-        },
-        "skiffInsurance": {
-          "label": "Skiff Versicherungsanteil"
-        },
-        "bev": {
-          "label": "Getränke 2025"
-        },
-        "rebate": {
-          "label": "Rabatt"
-        },
-        "total": {
-          "label": "Total"
-        }
-      }
-    }
+    "jb": "Jahresbeitrag",
+    "jbp": "Verbandsbeitrag",
+    "entryFee": "Einmalige Eintrittsgebühr",
+    "locker": "Miete Garderobenkasten",
+    "skiff": "Skiff Lagerplatz Miete",
+    "skiffInsurance": "Skiff Versicherungsanteil",
+    "bev": "Getränke 2025",
+    "rebate": "Rabatt",
+    "total": "Total"
   }
 }

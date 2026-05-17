@@ -8,7 +8,7 @@ import { firstValueFrom, from, of } from 'rxjs';
 
 import { AUTH, isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
 import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
 import { debugListLoaded, debugMessage, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
@@ -16,7 +16,8 @@ import { debugListLoaded, debugMessage, findUserByPersonKey, getSystemQuery, has
 import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser } from '@bk2/aoc-util';
 import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
-import { FbuserEditModalComponent } from '@bk2/user-feature';
+import { FbuserEditModal } from '@bk2/user-feature';
+import { PFX } from './scope';
 
 export type AocRolesState = {
   calendarName: string;
@@ -156,7 +157,7 @@ export const AocRolesStore = signalStore(
 
       async selectPerson(): Promise<void> {
         const modal = await store.modalController.create({
-          component: PersonSelectModalComponent,
+          component: PersonSelectModal,
           cssClass: 'list-modal',
           componentProps: {
             selectedTag: '',
@@ -299,7 +300,7 @@ export const AocRolesStore = signalStore(
           try {
             patchState(store, { log: [], logTitle: `updating firebase user ${fbuser.uid}.` });
             const modal = await store.modalController.create({
-              component: FbuserEditModalComponent,
+              component: FbuserEditModal,
               componentProps: {
                 fbuser: fbuser,
                 currentUser: store.currentUser(),
@@ -393,7 +394,7 @@ export const AocRolesStore = signalStore(
       },
 
       async updateUser(newUser: UserModel): Promise<void> {
-        store.userService.update(newUser, store.currentUser(), '@user.operation.update');
+        store.userService.update(newUser, store.currentUser());
       },
     };
   })

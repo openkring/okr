@@ -1,7 +1,7 @@
 import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { Header, Spinner } from '@bk2/shared-ui';
 
 import { SectionStore } from './section.store';
 
@@ -12,7 +12,7 @@ import { SectionStore } from './section.store';
   selector: 'bk-section-select',
   standalone: true,
   imports: [ 
-    SpinnerComponent, HeaderComponent,
+    Spinner, Header,
     IonContent, IonItem, IonList, IonLabel
   ],
   template: `
@@ -40,7 +40,7 @@ import { SectionStore } from './section.store';
     </ion-content>
   `
 })
-export class SectionSelectModalComponent {
+export class SectionSelectModal {
   protected sectionStore = inject(SectionStore);
 
   protected searchTerm = linkedSignal(() => this.sectionStore.selSearchTerm());

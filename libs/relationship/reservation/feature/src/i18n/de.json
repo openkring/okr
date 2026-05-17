@@ -1,27 +1,15 @@
 {
-  "reservation": {
-    "list": {
-      "header": {
-        "resource": "Was",
-        "name": "Anlass",
-        "validFrom": "Datum",
-        "state": "Status",
-        "reserver": "Wer"
-      }
-    },
-    "field": {
-      "empty": "Keine Reservationen gefunden."
-    },
-    "operation": {
-      "delete": {
-        "confirm": "Normalerweise sollte eine Reservation beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Reservation wirklich löschen?"
-      }
-    },
-    "plural": "Reservationen"
+  "reservations": "Reservationen",
+  "resource": "Was",
+  "name": "Anlass",
+  "validFrom": "Datum",
+  "state": "Status",
+  "reserver": "Wer",
+  "empty": "Keine Reservationen gefunden.",
+  "delete": {
+    "confirm": "Normalerweise sollte eine Reservation beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Reservation wirklich löschen?"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion"
   }
 }

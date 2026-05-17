@@ -4,7 +4,8 @@ import { IonItem, IonInput, IonList } from '@ionic/angular/standalone';
 
 import { AnyCharacterMask } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CheckboxComponent, StringsComponent } from '@bk2/shared-ui';
+import { Checkbox, StringList } from '@bk2/shared-ui';
+
 import { MatrixPollData } from '@bk2/chat-data-access';
 
 @Component({
@@ -12,7 +13,7 @@ import { MatrixPollData } from '@bk2/chat-data-access';
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe,
-    StringsComponent, CheckboxComponent,
+    StringList, Checkbox,
     IonItem, IonInput, IonList
   ],
   template: `

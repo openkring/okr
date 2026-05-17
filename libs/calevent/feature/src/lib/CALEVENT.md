@@ -45,7 +45,7 @@ Collection name: `calevents`
 
 - A series is created by generating one `CalEventModel` document per computed recurrence date.
 - All series members share the same `seriesId` and use `seriesId + paddedIndex` as their `bkey` (e.g. `abc12300`, `abc12301`).
-- When editing a recurring event, the user chooses scope via `RegressionSelectionModalComponent`:
+- When editing a recurring event, the user chooses scope via `RegressionSelectionModal`:
   - `current` — decouple this instance from the series (clears `seriesId`, sets `periodicity = 'once'`).
   - `future` — update/delete this and all later instances in the series.
   - `all` — update/delete every instance in the series.
@@ -78,11 +78,11 @@ Key resources:
 
 | Component | Description |
 |---|---|
-| `CalEventListComponent` | List view with filter toolbar; delegates CRUD to `CalEventStore` |
-| `CalEventEditModalComponent` | Full-modal edit form for creating/editing an event |
-| `AttendeesAccordionComponent` | Shows and manages the attendees list on an event |
-| `YearlyEventsComponent` | Compact yearly calendar view grouped by month |
-| `CounterPageComponent` | Simple standalone counter (NgRx Signal Store demo) |
+| `CalEventList` | List view with filter toolbar; delegates CRUD to `CalEventStore` |
+| `CalEventEditModal` | Full-modal edit form for creating/editing an event |
+| `AttendeesAccordion` | Shows and manages the attendees list on an event |
+| `YearlyEvents` | Compact yearly calendar view grouped by month |
+| `CounterPage` | Simple standalone counter (NgRx Signal Store demo) |
 
 ## Related Libraries
 
@@ -90,7 +90,7 @@ Key resources:
 |---|---|
 | `@bk2/calevent-data-access` | `CalEventService` — Firestore CRUD for CalEventModel |
 | `@bk2/calevent-util` | `getCaleventIndex`, `calEventValidations`, `isCalEvent`, recurrence helpers |
-| `@bk2/calevent-ui` | `RegressionSelectionModalComponent` and other presentational components |
+| `@bk2/calevent-ui` | `RegressionSelectionModal` and other presentational components |
 
 ## Library Path
 

@@ -203,7 +203,7 @@ export const AocBexioStore = signalStore(
           const membership = memberships.find(m => m.bkey === item.mkey);
           if (membership) {
             membership.memberBexioId = item.bexioId;
-            await store.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, undefined, currentUser);
+            await store.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, undefined, undefined, currentUser);
             item.mbexioId = item.bexioId;
             console.log(`Updated membership ${item.mkey}: memberBexioId = ${item.bexioId}`);
           }
@@ -213,7 +213,7 @@ export const AocBexioStore = signalStore(
             const person = persons.find(p => p.bkey === item.bkey);
             if (person) {
               person.bexioId = item.mbexioId;
-              await store.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, currentUser);
+              await store.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, undefined, currentUser);
               item.bexioId = item.mbexioId;
               console.log(`Updated person ${item.bkey}: bexioId = ${item.mbexioId}`);
             }
@@ -221,7 +221,7 @@ export const AocBexioStore = signalStore(
             const org = orgs.find(o => o.bkey === item.bkey);
             if (org) {
               org.bexioId = item.mbexioId;
-              await store.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, undefined, currentUser);
+              await store.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, undefined, undefined, currentUser);
               item.bexioId = item.mbexioId;
               console.log(`Updated org ${item.bkey}: bexioId = ${item.mbexioId}`);
             }
@@ -357,14 +357,14 @@ export const AocBexioStore = signalStore(
       if (item.type === 'person') {
         const person = store.appStore.getPerson(item.bkey);
         if (person) {
-          await store.firestoreService.updateModel<PersonModel>(PersonCollection, { ...person, bexioId: bxid }, false, undefined, currentUser);
+          await store.firestoreService.updateModel<PersonModel>(PersonCollection, { ...person, bexioId: bxid }, false, undefined, undefined, currentUser);
         } else {
           console.error('addToBexio: person not found for bkey', item.bkey);
         }
       } else {
         const org = store.appStore.getOrg(item.bkey);
         if (org) {
-          await store.firestoreService.updateModel<OrgModel>(OrgCollection, { ...org, bexioId: bxid }, false, undefined, currentUser);
+          await store.firestoreService.updateModel<OrgModel>(OrgCollection, { ...org, bexioId: bxid }, false, undefined, undefined, currentUser);
         } else {
           console.error('addToBexio: org not found for bkey', item.bkey);
         }
@@ -377,7 +377,7 @@ export const AocBexioStore = signalStore(
         );
         const membership = allMemberships.find(m => m.bkey === item.mkey);
         if (membership) {
-          await store.firestoreService.updateModel<MembershipModel>(MembershipCollection, { ...membership, memberBexioId: bxid }, false, undefined, currentUser);
+          await store.firestoreService.updateModel<MembershipModel>(MembershipCollection, { ...membership, memberBexioId: bxid }, false, undefined, undefined, currentUser);
         }
       }
 
@@ -455,7 +455,7 @@ export const AocBexioStore = signalStore(
         person.firstName = item.bx_name1;
         person.lastName = item.bx_name2;
         person.bexioId = item.bx_id;
-        bkey = await store.firestoreService.createModel<PersonModel>(PersonCollection, person, undefined, currentUser);
+        bkey = await store.firestoreService.createModel<PersonModel>(PersonCollection, person, undefined, undefined, currentUser);
         const avatarKey = 'person.' + bkey;
         if (item.bx_email) {
           await this.saveAddress(createFavoriteAddress('email', 'home', item.bx_email, store.tenantId()), avatarKey);
@@ -466,7 +466,7 @@ export const AocBexioStore = signalStore(
         const org = new OrgModel(store.tenantId());
         org.name = item.bx_name2;
         org.bexioId = item.bx_id;
-        bkey = await store.firestoreService.createModel<OrgModel>(OrgCollection, org, undefined, currentUser);
+        bkey = await store.firestoreService.createModel<OrgModel>(OrgCollection, org, undefined, undefined, currentUser);
         const avatarKey = 'org.' + bkey;
         if (item.bx_email) {
           await this.saveAddress(createFavoriteAddress('email', 'work', item.bx_email, store.tenantId()), avatarKey);
@@ -500,7 +500,7 @@ export const AocBexioStore = signalStore(
 
     async saveAddress(address: AddressModel, avatarKey: string): Promise<string | undefined> {
       address.parentKey = avatarKey;
-      return await store.firestoreService.createModel<AddressModel>(AddressCollection, address, undefined, store.currentUser());
+      return await store.firestoreService.createModel<AddressModel>(AddressCollection, address, undefined, undefined, store.currentUser());
     },
 
     compareAddressData(item: BexioIndex): boolean {

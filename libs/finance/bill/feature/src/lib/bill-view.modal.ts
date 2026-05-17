@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonItem, IonLabe
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { BillModel } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 
 @Component({
@@ -12,7 +12,7 @@ import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe, PrettyDatePipe,
-    HeaderComponent,
+    Header,
     IonContent, IonCard, IonCardContent, IonIcon, IonItem, IonLabel, IonChip
   ],
   styles: [`

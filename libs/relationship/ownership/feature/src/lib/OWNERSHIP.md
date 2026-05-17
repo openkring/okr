@@ -83,22 +83,22 @@ An NgRx Signal Store that manages all ownership state for a tenant.
 
 | Method | Description |
 | --- | --- |
-| `add(owner?, ownerModelType, resource?, readOnly)` | Opens `OwnershipNewModalComponent` pre-filled with owner/resource |
-| `edit(ownership, readOnly)` | Opens `OwnershipEditModalComponent` |
+| `add(owner?, ownerModelType, resource?, readOnly)` | Opens `OwnershipNewModal` pre-filled with owner/resource |
+| `edit(ownership, readOnly)` | Opens `OwnershipEditModal` |
 | `end(ownership, readOnly)` | Picks a date and sets `validTo`, effectively ending the ownership |
 | `delete(ownership?, readOnly)` | Confirms and hard-deletes an ownership |
 | `setOwner(ownerKey, ownerModelType)` | Sets the accordion scope and reloads |
 
 ## Components
 
-### `OwnershipListComponent`
+### `OwnershipList`
 
 A standalone list view showing all ownerships with filters for resource type, owner type, gender, org type, and rowing boat sub-type.
 
-### `OwnershipEditModalComponent`
+### `OwnershipEditModal`
 
 An Ionic modal for editing an existing `OwnershipModel`.
 
-### `OwnershipNewModalComponent`
+### `OwnershipNewModal`
 
 A compact modal (small-modal CSS class) for creating a new ownership, pre-filled from context (owner + resource).

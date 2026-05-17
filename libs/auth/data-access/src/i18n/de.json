@@ -1,27 +1,15 @@
 {
-  "auth": {
-    "operation": {
-      "login": {
-        "confirmation": "Willkommen im Mitgliederbereich !",
-        "error": "Die Anmeldung war nicht erfolgreich. Bitte prüfe die E-Mail Adresse und das Passwort und versuche es nochmals."
-      },
-      "pwdreset": {
-        "confirmation": "Ein E-Mail mit Instruktionen zum zurücksetzen des Passworts wurde an die folgende E-Mail Adresse verschickt: ",
-        "error": "Das Zurücksetzen des Passworts war nicht erfolgreich"
-      },
-      "logout": {
-        "confirmation": "Du bist abgemeldet.",
-        "error": "Die Abmeldung war nicht erfolgreich. Bitte nochmals versuchen."
-      }
-    }
+  "login": {
+    "conf": "Willkommen im Mitgliederbereich !",
+    "error": "Die Anmeldung war nicht erfolgreich. Bitte prüfe die E-Mail Adresse und das Passwort und versuche es nochmals."
   },
-  "content": {
-    "menuItem": {
-      "action": {
-        "logout": {
-          "confirm": "Bist du sicher ? Du musst dann wieder mit Passwort einloggen."
-        }
-      }
-    }
+  "pwdreset": {
+    "conf": "Ein E-Mail mit Instruktionen zum zurücksetzen des Passworts wurde an die folgende E-Mail Adresse verschickt: ",
+    "error": "Das Zurücksetzen des Passworts war nicht erfolgreich."
+  },
+  "logout": {
+    "conf": "Du bist abgemeldet.",
+    "error": "Die Abmeldung war nicht erfolgreich. Bitte nochmals versuchen.",
+    "confirm": "Bist du sicher ? Du musst dann wieder mit Passwort einloggen."
   }
 }

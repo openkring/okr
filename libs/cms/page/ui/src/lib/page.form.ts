@@ -7,12 +7,11 @@ import { vestForms } from 'ngx-vest-forms';
 import { CaseInsensitiveWordMask } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, PageModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopyComponent, CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
+import { ButtonCopy, CategorySelect, Chips, ErrorNote, NotesInput, StringList, StringSelect, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@bk2/shared-constants';
 
 import { pageValidations } from '@bk2/cms-page-util';
-
 
 @Component({
   selector: 'bk-page-form',
@@ -20,8 +19,7 @@ import { pageValidations } from '@bk2/cms-page-util';
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms, FormsModule,
-    ChipsComponent, NotesInputComponent, TextInputComponent, StringsComponent, ButtonCopyComponent, 
-    ErrorNoteComponent, CategorySelectComponent, StringSelectComponent,
+    Chips, NotesInput, TextInput, StringList, ButtonCopy, ErrorNote, CategorySelect, StringSelect,
     IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -91,13 +89,13 @@ import { pageValidations } from '@bk2/cms-page-util';
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
       }
       @if(hasRole('admin')) {
-        <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
     }
   `
 })
-export class PageFormComponent {
+export class PageForm {
   // inputs
   public readonly formData = model.required<PageModel>();
   public currentUser = input<UserModel | undefined>();

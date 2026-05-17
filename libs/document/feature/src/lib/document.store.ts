@@ -4,16 +4,20 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Browser } from '@capacitor/browser';
 import { firstValueFrom, Observable, of } from 'rxjs';
+
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, DocumentCollection, DocumentModel, DocumentModelName, FolderModel } from '@bk2/shared-models';
 import { chipMatches, debugItemLoaded, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 import { confirm, AppNavigationService } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { DocumentService } from '@bk2/document-data-access';
 import { FolderService } from '@bk2/folder-data-access';
 import { newFolderModel } from '@bk2/folder-util';
 import { UploadService } from '@bk2/avatar-data-access';
+
+import { PFX } from './scope';
 
 export type DocumentState = {
   documentKey: string;
@@ -46,8 +50,15 @@ export const DocumentStore = signalStore(
     documentService: inject(DocumentService),
     folderService: inject(FolderService),
     uploadService: inject(UploadService),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     documentsResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser()
@@ -365,7 +376,7 @@ export const DocumentStore = signalStore(
 
       async delete(document?: DocumentModel, readOnly = true): Promise<void> {
         if (!document || readOnly) return;
-        const result = await confirm(store.alertController, '@document.operation.delete.confirm', true);
+        const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           await store.documentService.delete(document, store.currentUser());
           this.reset();

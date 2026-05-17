@@ -2,17 +2,17 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { FolderModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { FolderFormComponent } from '@bk2/folder-ui';
+import { FolderForm } from '@bk2/folder-ui';
 
 @Component({
   selector: 'bk-folder-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, FolderFormComponent,
+    Header, ChangeConfirmation, FolderForm,
     IonContent
   ],
   template: `
@@ -35,7 +35,7 @@ import { FolderFormComponent } from '@bk2/folder-ui';
     </ion-content>
   `
 })
-export class FolderEditModalComponent {
+export class FolderEditModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

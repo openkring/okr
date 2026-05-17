@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { OrgNewFormComponent } from '@bk2/subject-org-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { OrgNewForm } from '@bk2/subject-org-ui';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 
 import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
@@ -11,7 +11,7 @@ import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
   selector: 'bk-org-new-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, OrgNewFormComponent,
+    Header, ChangeConfirmation, OrgNewForm,
     IonContent
   ],
   template: `
@@ -34,7 +34,7 @@ import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
     </ion-content>
   `
 })
-export class OrgNewModalComponent {
+export class OrgNewModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

@@ -6,8 +6,10 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { I18nDefaultCollection, I18nDefaultModel } from '@bk2/shared-models';
 import { bkPrompt } from '@bk2/shared-util-angular';
+import { PFX } from './scope';
 
 export type I18nDefaultState = { searchTerm: string };
 const initialState: I18nDefaultState = { searchTerm: '' };
@@ -19,6 +21,17 @@ export const I18nDefaultStore = signalStore(
     firestoreService: inject(FirestoreService),
     alertController: inject(AlertController),
     modalController: inject(ModalController),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      create_conf:  PFX + 'operation.create.default.conf',
+      create_error: PFX + 'operation.create.default.error',
+      update_conf:  PFX + 'operation.update.default.conf',
+      update_error: PFX + 'operation.update.default.error',
+      delete_conf:  PFX + 'operation.delete.default.conf',
+      delete_error: PFX + 'operation.delete.default.error',
+    }),
   })),
   withProps(store => ({
     contentResource: rxResource({
@@ -61,21 +74,15 @@ export const I18nDefaultStore = signalStore(
       const item = new I18nDefaultModel();
       item.module = module.trim();
       item.key = key.trim();
-      await store.firestoreService.createModel<I18nDefaultModel>(
-        I18nDefaultCollection, item, '@i18n.default.operation.create', store.appStore.currentUser(),
-      );
+      await store.firestoreService.createModel<I18nDefaultModel>(I18nDefaultCollection, item, store.i18n.create_conf(), store.i18n.create_error(), store.appStore.currentUser());
     },
 
     async saveItem(item: I18nDefaultModel): Promise<void> {
-      await store.firestoreService.updateModel<I18nDefaultModel>(
-        I18nDefaultCollection, item, false, '@i18n.default.operation.update', store.appStore.currentUser(),
-      );
+      await store.firestoreService.updateModel<I18nDefaultModel>(I18nDefaultCollection, item, false, store.i18n.update_conf(), store.i18n.update_error(), store.appStore.currentUser());
     },
 
     async deleteItem(item: I18nDefaultModel): Promise<void> {
-      await store.firestoreService.deleteModel<I18nDefaultModel>(
-        I18nDefaultCollection, item, '@i18n.default.operation.delete', store.appStore.currentUser(),
-      );
+      await store.firestoreService.deleteModel<I18nDefaultModel>(I18nDefaultCollection, item, store.i18n.delete_conf(), store.i18n.delete_error(), store.appStore.currentUser());
     },
   })),
 );

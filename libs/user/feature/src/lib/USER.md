@@ -4,8 +4,8 @@
 `UserModel` links a Firebase Authentication account to a `PersonModel` and stores application-level settings and role-based authorization. Every user belongs to exactly one tenant. The `bkey` matches the Firebase Auth UID.
 
 The user domain covers two concerns:
-1. **Admin management** — `UserListComponent` + `UserListStore` + `UserEditPage` + `UserEditStore` for admins to view and edit all user accounts.
-2. **Firebase Auth management** — `FbuserEditModalComponent` for viewing/editing the raw Firebase Auth account (email, displayName, emailVerified, disabled).
+1. **Admin management** — `UserList` + `UserListStore` + `UserEditPage` + `UserEditStore` for admins to view and edit all user accounts.
+2. **Firebase Auth management** — `FbuserEditModal` for viewing/editing the raw Firebase Auth account (email, displayName, emailVerified, disabled).
 
 ## Firestore Collection
 Collection name: `users`
@@ -59,7 +59,7 @@ Collection name: `users`
 | `admin` | Full access |
 
 ## Firebase User (`FirebaseUserModel`)
-The `FbuserEditModalComponent` shows and edits the underlying Firebase Auth record directly. Fields: `uid`, `email`, `displayName`, `emailVerified`, `disabled`, `phone`, `photoUrl`. This model is not stored in Firestore — it is read/written via Firebase Admin SDK through a Cloud Function or directly in the admin console.
+The `FbuserEditModal` shows and edits the underlying Firebase Auth record directly. Fields: `uid`, `email`, `displayName`, `emailVerified`, `disabled`, `phone`, `photoUrl`. This model is not stored in Firestore — it is read/written via Firebase Admin SDK through a Cloud Function or directly in the admin console.
 
 ## Stores
 
@@ -96,9 +96,9 @@ Manages a single user detail page. Loaded by `userKey` input.
 ## Components
 | Component | Description |
 |---|---|
-| `UserListComponent` | List with search and tag filters; actions via ActionSheet (edit, delete, export) |
-| `UserEditPageComponent` | Full edit page for a single user's settings and roles |
-| `FbuserEditModalComponent` | Ionic modal to view/edit raw Firebase Auth account fields |
+| `UserList` | List with search and tag filters; actions via ActionSheet (edit, delete, export) |
+| `UserEditPage` | Full edit page for a single user's settings and roles |
+| `FbuserEditModal` | Ionic modal to view/edit raw Firebase Auth account fields |
 
 ## Validation (`@bk2/user-util`)
 Vest suites: `user` (full model), `userModelForm`, `userAuthForm`, `userNotificationForm`, `userPrivacyForm`, `userDisplayForm`, `fbuserForm`.

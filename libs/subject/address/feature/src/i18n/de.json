@@ -1,30 +1,268 @@
 {
-  "general": {
-    "noData": {
-      "addresses": "Es sind keine Adressen erfasst."
+  "address": "Addresse",
+  "addresses": "Adressen",
+  "nodata": "Keine Adressen gefunden",
+  "name": "Name",
+  "currency": "CHF",
+  "qrinvoice": "QR-Rechnung",
+  "description": "Kontaktinformation zu einer Person oder Organisation",
+  "create": {
+    "label": "Adresse hinzufügen",
+    "description": "Eine neue Adresse erstellen.",
+    "conf": "Die Adresse wurde gespeichert.",
+    "error": "Die Adresse konnte nicht gespeichert werden."
+  },
+  "update": {
+    "label": "Adresse ändern",
+    "description": "Eine bestehende Adresse ändern.",
+    "conf": "Die Adresse wurde geändert.",
+    "error": "Die Adresse konnte nicht geändert werden"
+  },
+  "delete": {
+    "label": "Adresse löschen",
+    "description": "Eine bestehende Adresse löschen.",
+    "conf": "Die Adresse wurde gelöscht.",
+    "error": "Die Adresse konnte nicht gelöscht werden",
+    "confirm": "Soll die Adresse wirklich gelöscht werden ?"
+  },
+  "copy": {
+    "label": "Adresse kopieren",
+    "description": "Diese Adresse kopieren, um sie beispielsweise in einem anderen Programm zu verwenden.",
+    "conf": "Die Adresse wurde kopiert.",
+    "error": "Die Adresse konnte nicht kopiert werden."
+  },
+  "emailCopy": {
+    "conf": "E-Mail Adressen wurden kopiert."
+  },
+  "view": {
+    "label": "Adresse anzeigen",
+    "description": "Die Adresse anzeigen."
+  },
+  "locate": {
+    "label": "Adresse lokalisieren",
+    "description": "Die Adresse auf einer Karte geographisch lokalisieren."
+  },
+  "call": {
+    "label": "Adresse anrufen",
+    "description": "Die Adresse per Telefon anrufen."
+  },
+  "favorite": {
+    "enable": {
+      "label": "Als Hauptadresse verwenden",
+      "description": "Diese Adresse zur Hauptadresse deklarieren. Dies bedeutet, dass sie zB in Mitgliederlisten, kopierten Email-Adressen oder in Exports verwendet wird.",
+      "conf": "Die Adresse ist neu eine Hauptadresse."
+    },
+    "disable": {
+      "label": "Keine Hauptadresse mehr",
+      "description": "Diese Adresse soll keine Hauptadresse mehr sein.",
+      "conf": "Die Adresse ist jetzt keine Hauptadresse mehr."
+    },
+    "error": "Die Adresse konnte nicht geändert werden."
+  },
+  "send": {
+    "mail": {
+      "label": "Post senden",
+      "description": "Die Informationen drucken und mit normaler Post versenden."
+    },
+    "sms": {
+      "label": "SMS Nachricht senden",
+      "description": "Eine SMS Nachricht an diese Adresse senden."
+    },
+    "email": {
+      "label": "E-Mail senden",
+      "description": "Eine E-Mail Nachricht an diese Adresse senden.",
+      "subjectPlaceholder": "Information",
+      "bodyPlaceholder": "Liebe Grüsse,\bkaiser.org"
     }
   },
-  "subject": {
-    "address": {
-      "plural": "Adressen",
-      "field": {
-        "empty": "Keine solche Adressen gefunden"
-      },
-      "operation": {
-        "delete": {
-          "askConfirmation": "Soll die Adresse wirklich gelöscht werden ?"
-        }
-      }
+  "browse": {
+    "label": "Ansehen",
+    "description": "Die Adresse als Webpage im Browser in einem externen Tab öffnen."
+  },
+  "search": {
+    "label": "Ort suchen"
+  },
+  "share": {
+    "label": "Teilen",
+    "description": "Die Adresse mit anderen Personen oder Applikationen teilen."
+  },
+  "usage": {
+    "name": "Verwendung",
+    "label": "Bezeichnung",
+    "home": {
+      "label": "Privat",
+      "description": "Es handelt sich um eine Adresse im privaten Umfeld."
     },
-    "list": {
-      "header": {
-        "name": "Name"
-      }
+    "work": {
+      "label": "Geschäft",
+      "description": "Es handelt sich um eine geschäftliche Adresse."
+    },
+    "mobile": {
+      "label": "Mobil",
+      "description": "Die Nummer ist von einem Mobil Telefon."
+    },
+    "custom": {
+      "label": "Eigene",
+      "placeholder": "Name der eigenen Verwendung",
+      "description": "Diese Adresse wird in einem speziellen Kontext verwendet und mit einem eigenen Namen bezeichnet."
+    }
+  },
+  "channel": {
+    "label": "Bezeichnung",
+    "all": {
+      "label": "Alle Arten"
+    },
+    "phone": {
+      "label": "Telefon",
+      "placeholder": "+41 nn nnn nnnn",
+      "description": "Telefonnummer"
+    },
+    "email": {
+      "label": "E-Mail",
+      "placeholder": "ssss@ssssssss.ss",
+      "description": "E-Mail Adresse"
+    },
+    "postal": {
+      "label": "Briefpost",
+      "description": "Briefpost",
+      "street": "Strasse",
+      "placeholder": "Strassenname und Nr.",
+      "zip": "PLZ",
+      "city": "Ort",
+      "country": "Land"
+    },
+    "address2": {
+      "label": "Adresszusatz",
+      "placeholder": "z.B. c/o oder Stockwerk"
+    },
+    "web": {
+      "label": "Website",
+      "placeholder": "z.B. https://www.bkaiser.org",
+      "description": "Web Adresse (URL)"
+    },
+    "twitter": {
+      "label": "Twitter",
+      "placeholder": "z.B. @staefarowing",
+      "description": "Twitter ID"
+    },
+    "linkedin": {
+      "label": "LinkedIn",
+      "placeholder": "z.b. https://linkedin.com/in/vorname-name-2345lkjl23",
+      "description": "LinkedIn URL"
+    },
+    "facebook": {
+      "label": "Facebook",
+      "placeholder": "z.B: https://www.facebook.com/user123",
+      "description": "Facebook URL"
+    },
+    "matrix": {
+      "label": "Matrix (MXID)",
+      "placeholder": "@username:domain.com",
+      "description": "Die Matrix User ID (MXID) besteht aus deinem lokalen usernamen und der Domain deines Matrix Servers."
+    },
+    "xing": {
+      "label": "Xing",
+      "placeholder": "https://www.xing.com/profile/vorname_name",
+      "description": "Xing URL"
+    },
+    "skype": {
+      "label": "Skype",
+      "placeholder": "z.B. hans34",
+      "description": "Skype ID"
+    },
+    "custom": {
+      "label": "Eigene",
+      "placeholder": "Name der eigenen Adressart",
+      "description": "Adressart kann selber benannt werden.",
+      "value": "Adresse"
+    },
+    "customValue": {
+      "label": "Adresswert",
+      "placeholder": "Adresswert"
+    },
+    "instagram": {
+      "label": "Instagram",
+      "placeholder": "z.B. https://www.instagram.com/user123",
+      "description": "Instagram URL"
+    },
+    "signal": {
+      "label": "Signal",
+      "placeholder": "Name oder Tel Nr.",
+      "description": "Signal ID"
+    },
+    "wire": {
+      "label": "Wire",
+      "placeholder": "@name",
+      "description": "Wire ID"
+    },
+    "github": {
+      "label": "Github",
+      "placeholder": "@name",
+      "description": "Github ID"
+    },
+    "threema": {
+      "label": "Threema",
+      "placeholder": "z.B. WSXnnnnn",
+      "description": "Threema ID"
+    },
+    "telegram": {
+      "label": "Telegram",
+      "placeholder": "@name or nnnnnnnnnn",
+      "description": "Telegram ID"
+    },
+    "whatsapp": {
+      "label": "Whatsapp",
+      "placeholder": "+41 nn nnn nnnn",
+      "description": "Whatsapp ID ist die Telefonnummer"
+    },
+    "bankaccount": {
+      "label": "Bankkonto",
+      "placeholder": "IBAN Nummer",
+      "description": "Bankkonto Nummer",
+      "description-placeholder": "Bankinformationen: Name, Kontakt, Adresse, Tel, Email etc."
+    },
+    "twint": {
+      "label": "Twint",
+      "placeholder": "Touchpoint name",
+      "description": "Twint QRCode"
     }
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion",
+    "view": "Adresse anzeigen",
+    "edit": "Adresse bearbeiten",
+    "copy": "Adresse kopieren",
+    "delete": "Adresse löschen",
+    "email": {
+      "send": "E-Mail senden",
+      "copy": "E-Mail Adresse kopieren"
+    },
+    "file": {
+      "upload": "Datei hochladen",
+      "view": "Datei anzeigen"
+    },
+    "phone": {
+      "call": "Anrufen",
+      "copy": "Telefonnummer kopieren",
+      "sms": "SMS senden"
+    },
+    "chat": {
+      "start": "Chat starten"
+    },
+    "postal": {
+      "view": "Auf Karte anzeigen"
+    },
+    "iban": {
+      "view": "QR EZS anzeigen",
+      "generate": "QR EZS generieren"
+    },
+    "web": {
+      "open": "Webseite öffnen",
+      "copy": "URL kopieren"
+    },
+    "subject": {
+      "edit": "Person oder Organisation ändern"
+    },
+    "hide": "Ausblenden"
   }
 }

@@ -11,12 +11,15 @@ import { AppStore } from '@bk2/shared-feature';
 import { InvoiceCollection, InvoiceModel } from '@bk2/shared-models';
 import { confirm, exportXlsx } from '@bk2/shared-util-angular';
 import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { InvoiceService } from '@bk2/finance-invoice-data-access';
 import { getInvoiceExportData, newInvoice } from '@bk2/finance-invoice-util';
 
 import { InvoiceEditModal } from './invoice-edit.modal';
-import { InvoiceViewModal } from 'libs/finance/invoice/feature/src/lib/invoice-view.modal';
+import { InvoiceViewModal } from './invoice-view.modal';
+
+import { PFX } from './scope';
 
 export type InvoiceState = {
   listId: string;         // 'all' | 'my' | personKey
@@ -47,11 +50,18 @@ export const InvoiceStore = signalStore(
       modalController: inject(ModalController),
       toastController: inject(ToastController),
       alertController: inject(AlertController),
+      i18nService: inject(I18nService),
       functions,
     };
   }),
 
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     allInvoicesResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),
@@ -162,7 +172,7 @@ export const InvoiceStore = signalStore(
     },
 
     async delete(invoice: InvoiceModel): Promise<void> {
-      const confirmed = await confirm(store.alertController, '@invoice.operation.delete.confirm', true);
+      const confirmed = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
       await store.invoiceService.delete(invoice, store.appStore.currentUser() ?? undefined);
       patchState(store, { version: store.version() + 1 });

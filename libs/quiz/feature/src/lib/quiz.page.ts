@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 
 import { QuizStore } from './quiz.store';
 
@@ -9,7 +9,7 @@ import { QuizStore } from './quiz.store';
   selector: 'bk-quiz-page',
   standalone: true,
   imports: [
-    HeaderComponent,
+    Header,
     IonContent, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonButton
   ],
   template: `
@@ -49,7 +49,7 @@ import { QuizStore } from './quiz.store';
     </ion-content>
   `
 })
-export class QuizPageComponent {
+export class QuizPage {
   // private readonly env = inject(ENV);
   //public id = input.required<string>();  
   //private readonly tenantId = this.env.tenantId;

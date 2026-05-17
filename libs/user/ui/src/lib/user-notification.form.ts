@@ -6,7 +6,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 import { DeliveryTypes } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { DeliveryType, UserModel } from "@bk2/shared-models";
-import { CategoryComponent } from "@bk2/shared-ui";
+import { CategoryOld } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificationFormValidations } from "@bk2/user-util";
@@ -17,7 +17,7 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificati
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
-    CategoryComponent,
+    CategoryOld,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle,
     IonGrid, IonRow, IonCol
   ],
@@ -39,10 +39,10 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificati
           <ion-grid>
             <ion-row>
             <ion-col size="12" size-md="6">                                                             
-              <bk-cat name="newsDelivery" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
+              <bk-category-old name="newsDelivery" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">                                                             
-              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
+              <bk-category-old name="invoiceDelivery" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
             </ion-col>
             </ion-row>
           </ion-grid>
@@ -51,7 +51,7 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificati
     </form>
   `
 })
-export class UserNotificationFormComponent {
+export class UserNotificationForm {
   public formData = model.required<UserNotificationFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

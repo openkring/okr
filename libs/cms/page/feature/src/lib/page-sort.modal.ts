@@ -2,7 +2,7 @@ import { Component, inject, input, output } from '@angular/core';
 import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular/standalone';
 
 import { SectionModel } from '@bk2/shared-models';
-import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { Header, Spinner } from '@bk2/shared-ui';
 import { arrayMove } from '@bk2/shared-util-core';
 
 /**
@@ -12,7 +12,7 @@ import { arrayMove } from '@bk2/shared-util-core';
   selector: 'bk-page-sort-modal',
   standalone: true,
   imports: [ 
-    SpinnerComponent, HeaderComponent,
+    Spinner, Header,
     IonContent, IonReorderGroup, IonReorder, IonItem
   ],
   template: `
@@ -34,7 +34,7 @@ import { arrayMove } from '@bk2/shared-util-core';
     </ion-content>
   `
 })
-export class PageSortModalComponent {
+export class PageSortModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

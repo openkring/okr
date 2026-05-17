@@ -1,1 +1,1 @@
-export * from './lib/avatar-toolbar.component';
+export * from './lib/avatar-toolbar';

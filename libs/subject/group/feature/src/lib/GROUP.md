@@ -3,7 +3,7 @@
 ## Overview
 `GroupModel` represents a named collection of persons (members), typically belonging to an organization. Groups support an optional set of collaborative features: content page, chat room, calendar, tasks, file storage, and photo album. A group can be administered by a designated group admin person.
 
-Groups are displayed in `GroupListComponent` and explored in detail via `GroupViewPageComponent`, which uses a segmented tab layout to switch between the group's features.
+Groups are displayed in `GroupList` and explored in detail via `GroupViewPage`, which uses a segmented tab layout to switch between the group's features.
 
 ## Firestore Collection
 Collection name: `groups`
@@ -55,49 +55,49 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `searchTerm` | string | Free-text filter against `index` |
 | `selectedTag` | string | Tag chip filter |
 | `groupKey` | string \| undefined | Key of the currently selected/viewed group |
-| `selectedSegment` | string \| undefined | Active tab in `GroupViewPageComponent` (default: `'content'`) |
+| `selectedSegment` | string \| undefined | Active tab in `GroupViewPage` (default: `'content'`) |
 
 ### Key Methods
 | Method | Description |
 |---|---|
 | `setGroupKey(key)` | Loads a single group by key |
 | `setSelectedSegment(segment)` | Switches the active view segment |
-| `add(readOnly)` | Opens `GroupEditModalComponent` to create a new group; provisions all related resources on confirm |
-| `edit(group, readOnly)` | Opens `GroupEditModalComponent` for an existing group |
+| `add(readOnly)` | Opens `GroupEditModal` to create a new group; provisions all related resources on confirm |
+| `edit(group, readOnly)` | Opens `GroupEditModal` for an existing group |
 | `view(group)` | Navigates to `/group-view/<groupKey>` |
 | `delete(group, readOnly)` | Confirms then deletes the group |
 | `save(group)` | Persists a group without modal |
 | `saveAvatar(photo)` | Uploads a group avatar image |
-| `addMember()` | Opens `PersonSelectModalComponent` and creates a `MembershipModel` |
+| `addMember()` | Opens `PersonSelectModal` and creates a `MembershipModel` |
 | `createGroupPage(group, postfix, name, sectionId)` | Creates a CMS page for the group |
 | `createGroupCalendar(group)` | Creates a `CalendarModel` for the group |
 
 ## Components
 | Component | Description |
 |---|---|
-| `GroupListComponent` | List with search/tag filters; shows member avatars; actions via ActionSheet (show, edit, delete, addPage); requires `'memberAdmin'` role for write actions |
-| `GroupEditModalComponent` | Ionic modal; hosts `GroupFormComponent`; supports selecting mainContact and admin persons via `PersonSelectModalComponent` |
-| `GroupViewPageComponent` | Full-page view with segmented tabs: content, chat, calendar, tasks, files, album, members; resets `PageStore.pageId` on Ionic back-navigation via `ionViewWillEnter` |
+| `GroupList` | List with search/tag filters; shows member avatars; actions via ActionSheet (show, edit, delete, addPage); requires `'memberAdmin'` role for write actions |
+| `GroupEditModal` | Ionic modal; hosts `GroupForm`; supports selecting mainContact and admin persons via `PersonSelectModal` |
+| `GroupViewPage` | Full-page view with segmented tabs: content, chat, calendar, tasks, files, album, members; resets `PageStore.pageId` on Ionic back-navigation via `ionViewWillEnter` |
 
-## Segments in `GroupViewPageComponent`
+## Segments in `GroupViewPage`
 | Segment | Component | Visibility |
 |---|---|---|
 | `content` | `PageDispatcher` (page: `<id>_content`) | when `hasContent` |
 | `chat` | `PageDispatcher` (page: `<id>_chat`) | when `hasChat` |
-| `calendar` | `CalEventListComponent` | when `hasCalendar` |
-| `tasks` | `TaskListComponent` | when `hasTasks` |
-| `files` | `DocumentListComponent` (folder: `f:<id>`) | when `hasFiles` |
-| `album` | `DocumentListComponent` (folder: `f:a_<id>`) | when `hasAlbum` |
-| `members` | `MembershipListComponent` | when `hasMembers` |
+| `calendar` | `CalEventList` | when `hasCalendar` |
+| `tasks` | `TaskList` | when `hasTasks` |
+| `files` | `DocumentList` (folder: `f:<id>`) | when `hasFiles` |
+| `album` | `DocumentList` (folder: `f:a_<id>`) | when `hasAlbum` |
+| `members` | `MembershipList` | when `hasMembers` |
 
 ## Injection Token: `GROUP_EDIT_MODAL`
 
-`GroupEditModalComponent` is also consumed by `cms-section-feature` (OrgchartSection, ContextDiagramSection) to let users edit groups directly from diagrams. To avoid a circular library dependency (`cms-section-feature` → `subject-group-feature` → `cms-page-feature` → `cms-section-feature`), the component is not imported directly there.
+`GroupEditModal` is also consumed by `cms-section-feature` (OrgchartSection, ContextDiagramSection) to let users edit groups directly from diagrams. To avoid a circular library dependency (`cms-section-feature` → `subject-group-feature` → `cms-page-feature` → `cms-section-feature`), the component is not imported directly there.
 
-Instead, an `InjectionToken<Type<unknown>>` called `GROUP_EDIT_MODAL` is defined in `@bk2/subject-group-ui` (a lower-level lib that both sides can depend on). The consuming stores inject the token and pass it as the `component` to Ionic's `ModalController.create()`. The concrete `GroupEditModalComponent` is provided once in `app.config.ts`:
+Instead, an `InjectionToken<Type<unknown>>` called `GROUP_EDIT_MODAL` is defined in `@bk2/subject-group-ui` (a lower-level lib that both sides can depend on). The consuming stores inject the token and pass it as the `component` to Ionic's `ModalController.create()`. The concrete `GroupEditModal` is provided once in `app.config.ts`:
 
 ```typescript
-{ provide: GROUP_EDIT_MODAL, useValue: GroupEditModalComponent }
+{ provide: GROUP_EDIT_MODAL, useValue: GroupEditModal }
 ```
 
 Any future feature lib that needs to open the group edit modal across a dependency boundary should follow the same pattern.
@@ -113,7 +113,7 @@ Users listed in `group.admins` receive elevated edit permissions within their gr
 
 ### How it works
 
-`GroupViewPageComponent` computes `isGroupAdmin` from the currently loaded group and the current user's `personKey`:
+`GroupViewPage` computes `isGroupAdmin` from the currently loaded group and the current user's `personKey`:
 
 ```typescript
 protected isGroupAdmin = computed(() =>
@@ -128,15 +128,15 @@ This flag is passed as `[groupAdmin]="isGroupAdmin()"` to every child component 
 | Component | Effect |
 |---|---|
 | `PageDispatcher` → `ContentPage` | Shows context menu; enables edit mode; section actions available |
-| `CalEventListComponent` | `canChange()` returns `true` |
-| `TaskListComponent` | `readOnly` becomes `false` |
-| `DocumentListComponent` | `readOnly` becomes `false` |
-| `MembershipListComponent` | Uses `isAdminMember` directly via the `group` input |
+| `CalEventList` | `canChange()` returns `true` |
+| `TaskList` | `readOnly` becomes `false` |
+| `DocumentList` | `readOnly` becomes `false` |
+| `MembershipList` | Uses `isAdminMember` directly via the `group` input |
 
-### `forceVisible` in `MenuComponent`
+### `forceVisible` in `Menu`
 
 The context menu items for the content page (e.g. `c-contentpage`) have `roleNeeded: 'contentAdmin'` in the database. Group admins do not hold that role, so the items would normally be hidden.
 
-`ContentPage` passes `[forceVisible]="groupAdmin()"` to `bk-menu`. When `forceVisible` is `true`, `MenuComponent` bypasses the `roleNeeded` check and renders all items. The flag propagates through recursive sub-menu renders automatically.
+`ContentPage` passes `[forceVisible]="groupAdmin()"` to `bk-menu`. When `forceVisible` is `true`, `Menu` bypasses the `roleNeeded` check and renders all items. The flag propagates through recursive sub-menu renders automatically.
 
-The `roleNeeded: 'contentAdmin'` configuration in the database does **not** need to change — it continues to protect the menu from regular users. Group admins get access only via the scoped `forceVisible` flag, which is only ever `true` inside `GroupViewPageComponent` for the group the user actually administers.
+The `roleNeeded: 'contentAdmin'` configuration in the database does **not** need to change — it continues to protect the menu from regular users. Group admins get access only via the scoped `forceVisible` flag, which is only ever `true` inside `GroupViewPage` for the group the user actually administers.

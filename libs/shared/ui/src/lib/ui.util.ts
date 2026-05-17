@@ -5,8 +5,8 @@ import { getDownloadURL, getMetadata, getStorage, ref, updateMetadata } from "fi
 import { Dimensions, ImageStyle, UserModel } from "@bk2/shared-models";
 import { DateFormat, debugMessage, getTodayStr, warn } from "@bk2/shared-util-core";
 
-import { DateSelectModalComponent } from "./date-select.modal";
-import { ImageViewModalComponent } from "./image-view.modal";
+import { DateSelectModal } from "./date-select.modal";
+import { ImageViewModal } from "./image-view.modal";
 
 export interface ValidationInfo {
   type: string,
@@ -28,7 +28,7 @@ export interface ValidationInfoDictionary {
 // show a zoomed version of the image in a modal
 export async function showZoomedImage(modalController: ModalController, url: string, title: string, style: ImageStyle, altText = '', cssClass = 'zoom-modal'): Promise<void> {
   const modal = await modalController.create({
-    component: ImageViewModalComponent,
+    component: ImageViewModal,
    // cssClass: cssClass,
     componentProps: {
       title,
@@ -55,7 +55,7 @@ export async function browse(url?: string): Promise<void> {
 export async function selectDate(modalController: ModalController, isoDate?: string, headerTitle?: string, intro?: string): Promise<string | undefined> {
   const cssClass = (intro && intro?.length > 0) ? 'date-modal2' : 'date-modal';
   const modal = await modalController.create({
-    component: DateSelectModalComponent,
+    component: DateSelectModal,
     cssClass,
     componentProps: {
       isoDate,

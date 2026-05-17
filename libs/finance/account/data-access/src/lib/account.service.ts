@@ -3,10 +3,12 @@ import { firstValueFrom, Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { AccountCollection, AccountModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getAccountIndex } from '@bk2/finance-account-util';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -14,26 +16,35 @@ import { getAccountIndex } from '@bk2/finance-account-util';
 export class AccountService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+  });
 
   private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(account: AccountModel, currentUser?: UserModel): Promise<string | undefined> {
     account.index = getAccountIndex(account);
-    return await this.firestoreService.createModel<AccountModel>(AccountCollection, account, '@finance.account.operation.create', currentUser);
+    return await this.firestoreService.createModel<AccountModel>(AccountCollection, account, PFX + 'operation.create.conf', PFX + 'operation.create.error', currentUser);
   }
 
   public read(key: string): Observable<AccountModel | undefined> {
     return findByKey<AccountModel>(this.list(), key);
   }
 
-  public async update(account: AccountModel, currentUser?: UserModel, confirmMessage = '@finance.account.operation.update'): Promise<string | undefined> {
+  public async update(account: AccountModel, currentUser?: UserModel): Promise<string | undefined> {
     account.index = getAccountIndex(account);
-    return await this.firestoreService.updateModel<AccountModel>(AccountCollection, account, false, confirmMessage, currentUser);
+    return await this.firestoreService.updateModel<AccountModel>(AccountCollection, account, false, PFX + 'operation.update.conf', PFX + 'operation.update.error', currentUser);
   }
 
   public async delete(account: AccountModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, '@finance.account.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, PFX + 'operation.delete.conf', PFX + 'operation.delete.error', currentUser);
   }
 
   /**

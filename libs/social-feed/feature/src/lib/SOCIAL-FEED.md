@@ -23,7 +23,7 @@ Social posts are not stored in Firestore. They are fetched via HTTP from a local
 | `image` | string | Image URL |
 | `likes` | number | Like count |
 
-## SocialFeedFeatureComponent (`bk-social-feed-feature`)
+## SocialFeedList (`bk-social-feed-list`)
 
 Standalone component. Key behaviour:
 
@@ -51,7 +51,7 @@ This endpoint is expected to be a local development server (NestJS or similar). 
 | Library | Path |
 |---|---|
 | `@bk2/social-feed-data-access` | `SocialFeedService` — HTTP client wrapper |
-| `@bk2/social-feed-ui` | `SocialPostComponent` — presentational post card component |
+| `@bk2/social-feed-ui` | `SocialPost` — presentational post card component |
 
 ## Library Path
 

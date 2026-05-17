@@ -4,14 +4,14 @@ import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } f
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 
-import { HeaderComponent } from './header.component';
+import { Header } from './header';
 
 @Component({
   selector: 'bk-time-select-modal',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
-    HeaderComponent,
+    Header,
     IonContent, IonDatetime
   ],
   template: `
@@ -28,7 +28,7 @@ import { HeaderComponent } from './header.component';
       </ion-content>
   `,
 })
-export class TimeSelectModalComponent {
+export class TimeSelectModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

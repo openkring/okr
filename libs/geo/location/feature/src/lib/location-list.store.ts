@@ -8,12 +8,12 @@ import { LocationModel } from '@bk2/shared-models';
 import { chipMatches, nameMatches } from '@bk2/shared-util-core';
 import { AlertService, copyToClipboard } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
-import { MapViewModalComponent } from '@bk2/shared-ui';
+import { MapViewModal } from '@bk2/shared-ui';
 
 import { LocationConversionService, LocationService } from '@bk2/location-data-access';
 import { isLocation } from '@bk2/location-util';
 
-import { LocationEditModalComponent } from './location-edit.modal';
+import { LocationEditModal } from './location-edit.modal';
 
 function zoomForBounds(latSpan: number, lngSpan: number): number {
   const span = Math.max(latSpan, lngSpan);
@@ -102,7 +102,7 @@ export const LocationListStore = signalStore(
 
       async edit(location: LocationModel, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-          component: LocationEditModalComponent,
+          component: LocationEditModal,
           componentProps: {
             location: location,
             currentUser: store.currentUser(),
@@ -140,7 +140,7 @@ export const LocationListStore = signalStore(
       async showOnMap(location?: LocationModel): Promise<void> {
         if (location) { // show a single location as the center of the map
           const modal = await store.modalController.create({
-            component: MapViewModalComponent,
+            component: MapViewModal,
             componentProps: {
               title: location.name,
               initialPosition: {
@@ -168,7 +168,7 @@ export const LocationListStore = signalStore(
             .map(l => ({ lat: l.latitude, lng: l.longitude }));
 
           const modal = await store.modalController.create({
-            component: MapViewModalComponent,
+            component: MapViewModal,
             componentProps: {
               initialPosition: { lat: center.latitude, lng: center.longitude },
               coordinates: otherCoords,

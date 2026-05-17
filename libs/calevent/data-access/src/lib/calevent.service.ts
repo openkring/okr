@@ -4,11 +4,13 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared-models';
 import { addTime, die, findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getCaleventIndex } from '@bk2/calevent-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root',
@@ -17,6 +19,15 @@ export class CalEventService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -27,7 +38,7 @@ export class CalEventService {
    */
   public async create(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
-    const key = await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, '@calevent.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
     void this.activityService.log('calevent', 'create', currentUser, payload);
     return key;
@@ -46,12 +57,11 @@ export class CalEventService {
    * Update a CalEvent in the database with new values.
    * @param calEvent the CalEventModel with the new values. Its key must be valid (in order to find it in the database)
    * @param currentUser the current user who performs the operation
-   * @param confirmMessage an optional confirmation message to show in the UI
    * @returns the key of the updated CalEvent or undefined if the operation failed
    */
-  public async update(calEvent: CalEventModel, currentUser?: UserModel, confirmMessage = '@calevent.operation.update'): Promise<string | undefined> {
+  public async update(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
-    const key = await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
     void this.activityService.log('calevent', 'update', currentUser, payload);
     return key;
@@ -65,7 +75,7 @@ export class CalEventService {
    */
   public async delete(calEvent: CalEventModel, currentUser?: UserModel): Promise<void> {
     const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
-    await this.firestoreService.deleteModel<CalEventModel>(CalEventCollection, calEvent, '@calevent.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<CalEventModel>(CalEventCollection, calEvent, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('calevent', 'delete', currentUser, payload);
   }
 

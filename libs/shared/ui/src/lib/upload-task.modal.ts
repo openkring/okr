@@ -8,7 +8,7 @@ import { UploadTask, getDownloadURL } from 'firebase/storage';
 import { uploadToFirebaseStorage } from '@bk2/shared-config';
 import { error } from '@bk2/shared-util-angular';
 
-import { HeaderComponent } from './header.component';
+import { Header } from './header';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
 export interface UploadEntry {
@@ -28,11 +28,11 @@ interface UploadState {
 }
 
 @Component({
-  selector: 'bk-upload-task',
+  selector: 'bk-upload-task-modal',
   standalone: true,
   imports: [
     DecimalPipe, SvgIconPipe,
-    HeaderComponent,
+    Header,
     IonContent, IonList, IonItem, IonLabel, IonProgressBar, IonIcon,
   ],
   styles: [`
@@ -87,7 +87,7 @@ interface UploadState {
     </ion-content>
   `
 })
-export class UploadTaskComponent implements OnInit {
+export class UploadTaskModal implements OnInit {
   private readonly modalController = inject(ModalController);
 
   // inputs

@@ -1,7 +1,7 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, ModalController } from '@ionic/angular/standalone';
 
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared-i18n';
 
@@ -10,7 +10,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe,
-    HeaderComponent,
+    Header,
     IonContent, IonRadioGroup, IonRadio, IonLabel, IonItem, IonList
   ],
   template: `
@@ -44,7 +44,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
     </ion-content>
   `
 })
-export class RegressionSelectionModalComponent {
+export class RegressionSelectionModal {
   private modalController = inject(ModalController);
 
   // inputs

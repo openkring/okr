@@ -10,7 +10,7 @@ import { warn } from "@bk2/shared-util-core";
 import { buildDocumentModel } from "@bk2/document-util";
 import { DocumentService } from "@bk2/document-data-access";
 import { DEFAULT_MIMETYPES } from "@bk2/shared-constants";
-import { UploadEntry, UploadTaskComponent, showZoomedImage } from "@bk2/shared-ui";
+import { UploadEntry, UploadTaskModal, showZoomedImage } from "@bk2/shared-ui";
 
 @Injectable({
     providedIn: 'root'
@@ -39,7 +39,7 @@ export class UploadService {
    */
   public async uploadFiles(uploads: UploadEntry[], title: string): Promise<(string | undefined)[] | undefined> {
     const modal = await this.modalController.create({
-      component: UploadTaskComponent,
+      component: UploadTaskModal,
       cssClass: 'upload-modal',
       componentProps: { uploads, title }
     });

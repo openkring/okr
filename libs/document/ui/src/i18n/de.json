@@ -1,9 +1,5 @@
 {
-  "general": {
-    "operation": {
-      "copy": {
-        "conf": "Der Wert wurde kopiert."
-      }
-    }
+  "copy": {
+    "conf": "Der Wert wurde kopiert."
   }
 }

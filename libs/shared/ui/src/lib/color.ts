@@ -1,0 +1,71 @@
+import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, model, output } from '@angular/core';
+import { IonChip, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { vestFormsViewProviders } from 'ngx-vest-forms';
+
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { error } from '@bk2/shared-util-angular';
+import { coerceBoolean } from '@bk2/shared-util-core';
+
+import { ColorSelectModal } from './color-select.modal';
+
+/**
+ * Color is in hex format e.g. #FF0000 for red.
+ * The color picker is a simple input field with a color picker.
+ */
+@Component({
+  selector: 'bk-color',
+  standalone: true,
+  imports: [
+    TranslatePipe, AsyncPipe,
+    IonItem, IonLabel, IonChip
+  ],
+  styles: [`
+    ion-chip {
+      width: 32px;
+      border-color: black;
+      border-style: solid;
+      border-width: 1px;
+    }
+  `],
+  viewProviders: [vestFormsViewProviders],
+  template: `
+    <ion-item lines="none">
+      <ion-label>{{ label() | translate | async }}</ion-label>
+      <ion-chip (click)="selectColor()" style="background-color: {{ hexColor() }}" />
+      <ion-label>{{ hexColor() }}</ion-label>
+    </ion-item>
+  `
+})
+export class Color {
+  private readonly modalController = inject(ModalController);
+
+  // inputs
+  public hexColor = model<string>('#ffffcc');
+  public label = input('@input.color.label');
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+
+  // actions
+  public async selectColor(): Promise<void> {
+    if (!this.isReadOnly()) {
+      const modal = await this.modalController.create({
+        component: ColorSelectModal,
+        cssClass: 'color-modal',
+        componentProps: {
+          hexColor: this.hexColor()
+        }
+      });
+      modal.present();
+      try {
+        const { data, role} = await modal.onWillDismiss();
+        if (role === 'confirm') {
+          this.hexColor.set(data);
+        }
+      }
+      catch (ex) {
+        error(undefined, 'Color.selectColor -> ERROR: ' + JSON.stringify(ex));
+      }
+    }
+  }
+}

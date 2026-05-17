@@ -7,13 +7,15 @@ import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, WorkrelModel } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isValidAt, nameMatches } from '@bk2/shared-util-core';
 import { confirm } from '@bk2/shared-util-angular';
+import { selectDate } from '@bk2/shared-ui';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { WorkrelService } from '@bk2/relationship-workrel-data-access';
 import { isWorkrel } from '@bk2/relationship-workrel-util';
 
-import { WorkrelEditModalComponent } from './workrel-edit.modal';
-import { selectDate } from '@bk2/shared-ui';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { WorkrelEditModal } from './workrel-edit.modal';
+import { PFX } from './scope';
 
 export type WorkrelState = {
   personKey: string | undefined;    // parent e.g. in accordions
@@ -43,8 +45,15 @@ export const WorkrelStore = signalStore(
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     workrelService: inject(WorkrelService),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     workrelsResource: rxResource({
       params: () => ({
         personKey: store.personKey(),
@@ -188,7 +197,7 @@ export const WorkrelStore = signalStore(
        */
       async edit(workrel: WorkrelModel, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-          component: WorkrelEditModalComponent,
+          component: WorkrelEditModal,
           componentProps: {
             workrel,
             currentUser: store.currentUser(),
@@ -228,7 +237,7 @@ export const WorkrelStore = signalStore(
 
       async delete(workrel?: WorkrelModel, readOnly = true): Promise<void> {
         if (workrel && !readOnly) {
-          const result = await confirm(store.alertController, '@workrel.operation.delete.confirm', true);
+          const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
           if (result === true) {
             await store.workrelService.delete(workrel, store.appStore.currentUser());
             store.workrelsResource.reload();

@@ -1,7 +1,6 @@
 import { Browser } from '@capacitor/browser';
 import { ToastController } from '@ionic/angular';
 
-import { bkTranslate } from '@bk2/shared-i18n';
 import { AddressModel } from '@bk2/shared-models';
 import { copyToClipboard, formatIban, IbanFormat, showToast } from '@bk2/shared-util-angular';
 import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@bk2/shared-util-core';
@@ -160,6 +159,17 @@ export function getAddressValueByChannel(address: AddressModel): string {
   }
 }
 
+
+/**
+ * Copy an address to the clipboard.
+ * @param toastController used to show a confirmation message
+ * @param address the address to copy
+ */
+export async function copyAddress(toastController: ToastController, address: AddressModel, lang: string, confMsg: string): Promise<void> {
+  await copyToClipboard(stringifyAddress(address, lang));
+  await showToast(toastController, confMsg);
+}
+
 export function stringifyAddress(address: AddressModel, lang = 'de'): string {
   if (!address) return '';
   switch (address.addressChannel) {
@@ -204,16 +214,6 @@ export async function browseUrl(url: string, prefix = ''): Promise<void> {
       throw err;
     }
   }
-}
-
-/**
- * Copy an address to the clipboard.
- * @param toastController used to show a confirmation message
- * @param address the address to copy
- */
-export async function copyAddress(toastController: ToastController, address: AddressModel, lang: string): Promise<void> {
-  await copyToClipboard(stringifyAddress(address, lang));
-  await showToast(toastController, bkTranslate('@subject.address.operation.copy.conf'));
 }
 
 /*-------------------------- favorite address cache --------------------------------*/

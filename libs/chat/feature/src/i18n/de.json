@@ -1,75 +1,67 @@
 {
-  "chat": {
-    "operation": {
-      "room": {
-        "create": {
-          "header": "Neuen Chat-Raum erstellen",
-          "conf": "Neuer Chat-Raum wurde erstellt.",
-          "error": "Der Chat-Raum konnte nicht erstellt werden."
-        },
-        "update": {
-          "header": "Chat-Raum ändern",
-          "conf": "Der Chat-Raum wurde geändert",
-          "error": "Der Chat-Raum konnte nicht geändert werden."
-        }
-      },
-      "message": {
-        "react": {
-          "header": "Reaktion wählen",
-          "cancel": "Abbrechen"
-        },
-        "report": {
-          "header": "Problem melden",
-          "placeholder": "Begründe deine Problemmeldung.",
-          "noChannel": "Channel nicht gefunden",
-          "messageFrom": "Meldung von",
-          "message": "Nachricht",
-          "comment": "Kommentar",
-          "showMessage": "Nachricht anzeigen",
-          "conf": "Problemmeldung verschickt.",
-          "error": "Die Problemmeldung konnte nicht verschickt werden."
-        },
-        "update": {
-          "header": "Mitteilung ändern",
-          "placeholder": "Schreibe deine Änderung...",
-          "conf": "Die Mitteilung wurde geändert.",
-          "error": "Die Mitteilung konnte nicht geändert werden."
-        },
-        "delete": {
-          "confirm": "Soll die Nachricht wirklich gelöscht werden ?",
-          "conf": "Die Nachricht wurde gelöscht.",
-          "error": "Die Nachricht konnte nicht gelöscht werden."
-        }
-      },
-      "thread": {
-        "reply": {
-          "header": "Im Thread antworten",
-          "placeholder": "Schreibe deine Mitteilung...",
-          "error": "Die Nachricht konnte nicht geschickt werden."
-        },
-        "empty": "Es gibt noch keine Antworten. Starte den Thread!"
-      },
-      "video": {
-        "incoming": "Eingehender Video-Anruf...",
-        "connecting": "Verbindung wird hergestellt..."
-      }
+  "reconnecting": "Wieder verbinden...",
+  "connectionError": "Verbindungsfehler",
+  "connecting": "verbinden...",
+  "selectRoom": "Wähle einen Chat-Raum, um den Chat zu starten",
+  "noRoomsError": "Keine Chat-Räume vorhanden. Erstelle einen Raum oder nimm in einem Raum teil um zu starten.",
+  "createTestRoom": "Test Raum erstellen",
+  "room": {
+    "create": {
+      "header": "Neuen Chat-Raum erstellen",
+      "conf": "Neuer Chat-Raum wurde erstellt.",
+      "error": "Der Chat-Raum konnte nicht erstellt werden."
     },
-    "fields": {
-      "reconnecting": "Wieder verbinden...",
-      "connectionError": "Verbindungsfehler",
-      "connecting": "verbinden...",
-      "selectRoom": "Wähle einen Chat-Raum, um den Chat zu starten",
-      "noRoomsError": "Keine Chat-Räume vorhanden. Erstelle einen Raum oder nimm in einem Raum teil um zu starten.",
-      "createTestRoom": "Test Raum erstellen"
-    },
-    "survey": {
-      "title": "Umfrage erstellen",
-      "create": "Umfrage erstellen"
+    "update": {
+      "header": "Chat-Raum ändern",
+      "conf": "Der Chat-Raum wurde geändert",
+      "error": "Der Chat-Raum konnte nicht geändert werden."
     }
   },
-  "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
+  "message": {
+    "react": {
+      "header": "Reaktion wählen",
+      "cancel": "Abbrechen"
+    },
+    "report": {
+      "header": "Problem melden",
+      "placeholder": "Begründe deine Problemmeldung.",
+      "noChannel": "Channel nicht gefunden",
+      "messageFrom": "Meldung von",
+      "message": "Nachricht",
+      "comment": "Kommentar",
+      "showMessage": "Nachricht anzeigen",
+      "conf": "Problemmeldung verschickt.",
+      "error": "Die Problemmeldung konnte nicht verschickt werden."
+    },
+    "update": {
+      "header": "Mitteilung ändern",
+      "placeholder": "Schreibe deine Änderung...",
+      "conf": "Die Mitteilung wurde geändert.",
+      "error": "Die Mitteilung konnte nicht geändert werden."
+    },
+    "delete": {
+      "confirm": "Soll die Nachricht wirklich gelöscht werden ?",
+      "conf": "Die Nachricht wurde gelöscht.",
+      "error": "Die Nachricht konnte nicht gelöscht werden."
     }
+  },
+  "thread": {
+    "reply": {
+      "header": "Im Thread antworten",
+      "placeholder": "Schreibe deine Mitteilung...",
+      "error": "Die Nachricht konnte nicht geschickt werden."
+    },
+    "empty": "Es gibt noch keine Antworten. Starte den Thread!"
+  },
+  "video": {
+    "incoming": "Eingehender Video-Anruf...",
+    "connecting": "Verbindung wird hergestellt..."
+  },
+  "survey": {
+    "title": "Umfrage erstellen",
+    "create": "Umfrage erstellen"
+  },
+  "actionsheet": {
+    "title": "Wähle eine Aktion"
   }
 }

@@ -1,9 +1,9 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AUTH } from '@bk2/shared-config';
-import { debugMessage } from '@bk2/shared-util-core';
 import { authState } from 'rxfire/auth';
 import { map, take } from 'rxjs/operators';
+
+import { AUTH } from '@bk2/shared-config';
 
 export const isAuthenticatedGuard: CanActivateFn = () => {
   const auth = inject(AUTH);

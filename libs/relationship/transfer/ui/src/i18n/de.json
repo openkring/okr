@@ -1,28 +1,14 @@
 {
-  "transfer": {
-    "field": {
-      "subjects": "Von",
-      "objects": "An"
-    },
-    "operation": {
-      "addSubject": {
-        "label": "Person oder Organisation hinzufügen"
-      },
-      "addObject": {
-        "label": "Person oder Organisation hinzufügen"
-      }
-    }
+  "subjects": "Von",
+  "objects": "An",
+  "addSubject": {
+    "label": "Person oder Organisation hinzufügen"
   },
-  "input": {
-    "resourceName": {
-      "label": "Name"
-    }
+  "addObject": {
+    "label": "Person oder Organisation hinzufügen"
   },
-  "general": {
-    "operation": {
-      "select": {
-        "resource": "Auswählen"
-      }
-    }
+  "resourceName": "Name",
+  "select": {
+    "resource": "Auswählen"
   }
 }

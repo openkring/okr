@@ -78,14 +78,14 @@ An NgRx Signal Store that manages all invitation state.
 | Method | Description |
 | --- | --- |
 | `invitePerson(calevent)` | Opens a person-select dialog and creates a new invitation |
-| `edit(invitation?, readOnly)` | Opens `InvitationEditModalComponent` to view or edit an invitation |
+| `edit(invitation?, readOnly)` | Opens `InvitationEditModal` to view or edit an invitation |
 | `delete(invitation, readOnly)` | Confirms and deletes an invitation |
 | `changeState(invitation, newState)` | Updates the response state and sets `respondedAt` to today |
-| `setScope(caleventKey, inviteeKey, showOnlyCurrent)` | Sets the accordion scope (used by `InviteesAccordionComponent`) |
+| `setScope(caleventKey, inviteeKey, showOnlyCurrent)` | Sets the accordion scope (used by `InviteesAccordion`) |
 
 ## Components
 
-### `InviteesAccordionComponent` (`bk-invitees-accordion`)
+### `InviteesAccordion` (`bk-invitees-accordion`)
 
 An Ionic accordion that shows all invitees of a given `CalEventModel`. Each row displays the invitee's avatar, full name, current state, and responded-at date.
 
@@ -101,10 +101,10 @@ Inputs:
 
 Tapping an invitee row opens an ActionSheet. Invitees can change the state of their own invitation (accept/decline/maybe). Admins can delete invitations; editors can open the edit modal.
 
-### `InvitationListComponent`
+### `InvitationList`
 
 A standalone list view of invitations with search, tag, and state filters. Supports add/edit/delete actions via the store.
 
-### `InvitationEditModalComponent`
+### `InvitationEditModal`
 
 An Ionic modal for editing an `InvitationModel`. Opened by `InvitationStore.edit()`.

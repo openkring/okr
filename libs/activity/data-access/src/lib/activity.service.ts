@@ -3,10 +3,12 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { ActivityCollection, ActivityModel, AVATAR_INFO_SHAPE, UserModel } from '@bk2/shared-models';
 import { findByKey, getAvatarInfo, getSystemQuery, getTodayStr, DateFormat } from '@bk2/shared-util-core';
 
 import { getActivityIndex, getActivityRoleNeeded } from '@bk2/activity-util';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +16,11 @@ import { getActivityIndex, getActivityRoleNeeded } from '@bk2/activity-util';
 export class ActivityService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    delete_conf:  PFX + 'delete.conf',
+    delete_error: PFX + 'delete.error',
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
 
@@ -40,9 +47,7 @@ export class ActivityService {
       activity.roleNeeded = getActivityRoleNeeded(scope, action);
       activity.index = getActivityIndex(activity);
 
-      return await this.firestoreService.createModel<ActivityModel>(
-        ActivityCollection, activity, undefined, currentUser
-      );
+      return await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, currentUser);
     } catch (ex) {
       console.warn(`ActivityService.log(${scope}/${action}): failed (check Firestore rules for activities collection):`, ex);
       return undefined;
@@ -63,7 +68,7 @@ export class ActivityService {
       activity.author = { ...AVATAR_INFO_SHAPE, key: '', name1: email, name2: '', modelType: 'user' };
       activity.roleNeeded = 'admin';
       activity.index = getActivityIndex(activity);
-      await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined);
+      await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, undefined);
     } catch (ex) {
       console.warn('ActivityService.logAuth: failed to log auth event (check Firestore rules for activities collection):', ex);
     }
@@ -81,7 +86,7 @@ export class ActivityService {
    */
   public async delete(activity: ActivityModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<ActivityModel>(
-      ActivityCollection, activity, '@activity.operation.delete', currentUser
+      ActivityCollection, activity, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser
     );
   }
 

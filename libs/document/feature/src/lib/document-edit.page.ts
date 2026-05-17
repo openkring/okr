@@ -2,11 +2,11 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonContent } from '@ionic/angular/standalone';
 
 import { DocumentModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { DocumentFormComponent } from '@bk2/document-ui';
+import { DocumentForm } from '@bk2/document-ui';
 import { DocumentStore } from './document.store';
 
 
@@ -14,8 +14,8 @@ import { DocumentStore } from './document.store';
   selector: 'bk-document-edit-page',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent,
-    DocumentFormComponent,
+    Header, ChangeConfirmation,
+    DocumentForm,
     IonContent
   ],
   providers: [DocumentStore],
@@ -43,7 +43,7 @@ import { DocumentStore } from './document.store';
     </ion-content>
   `
 })
-export class DocumentEditPageComponent {
+export class DocumentEditPage {
   private readonly documentStore = inject(DocumentStore);
 
   // inputs

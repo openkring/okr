@@ -9,8 +9,8 @@ export class AlertService {
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
   private readonly i18n = inject(I18nService).translateAll({
-    ok:     '@general.operation.change.ok',
-    cancel: '@general.operation.change.cancel',
+    ok:     '@ok',
+    cancel: '@cancel',
   });
 
   constructor() {

@@ -2,19 +2,18 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, MenuItemModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
+import { MenuForm } from '@bk2/cms-menu-ui';
 import { ENV } from '@bk2/shared-config';
 
 @Component({
-  selector: 'bk-menu-item-modal',
+  selector: 'bk-menu-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent,
-    MenuItemFormComponent,
+    Header, ChangeConfirmation, MenuForm,
     IonContent
   ],
   template: `
@@ -42,7 +41,7 @@ import { ENV } from '@bk2/shared-config';
     </ion-content>
   `
 })
-export class MenuItemModalComponent {
+export class MenuModal {
   private readonly modalController = inject(ModalController);
   protected readonly env = inject(ENV);
 
@@ -83,9 +82,9 @@ export class MenuItemModalComponent {
   }
 
   protected async selectIcon(): Promise<void> {
-    const { IconSelectModalComponent } = await import('@bk2/icon-feature');
+    const { IconSelectModal: IconSelectModal } = await import('@bk2/icon-feature');
     const modal = await this.modalController.create({
-      component: IconSelectModalComponent,
+      component: IconSelectModal,
       componentProps: {
         initialDir: 'icons'
       },

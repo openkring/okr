@@ -4,6 +4,7 @@ import { firstValueFrom, map, Observable, of } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { AvatarInfo, CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
 import { addDuration, DateFormat, findByKey, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
@@ -12,6 +13,7 @@ import { createComment } from '@bk2/comment-util';
 
 import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipIndex, getRelLogEntry } from '@bk2/relationship-membership-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 
 @Injectable({
@@ -21,6 +23,17 @@ export class MembershipService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+    end_conf:     PFX + 'operation.end.conf',
+    end_error:    PFX + 'operation.end.error',
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -31,7 +44,7 @@ export class MembershipService {
  */
   public async create(membership: MembershipModel, currentUser?: UserModel): Promise<string | undefined> {
     membership.index = getMembershipIndex(membership);
-    const key = await this.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${getFullName(membership.memberName1, membership.memberName2)} in ${membership.orgName}`;
     void this.activityService.log('membership', 'create', currentUser, payload);
     return key;
@@ -46,9 +59,9 @@ export class MembershipService {
     return findByKey<MembershipModel>(this.list(), key);
   }
 
-  public async update(membership: MembershipModel, currentUser?: UserModel, confirmMessage = '@membership.operation.update'): Promise<string | undefined> {
+  public async update(membership: MembershipModel, currentUser?: UserModel): Promise<string | undefined> {
     membership.index = getMembershipIndex(membership);
-    const key = await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${getFullName(membership.memberName1, membership.memberName2)} in ${membership.orgName}`;
     void this.activityService.log('membership', 'update', currentUser, payload);
     return key;
@@ -56,7 +69,7 @@ export class MembershipService {
 
   public async delete(membership: MembershipModel, currentUser?: UserModel): Promise<void> {
     const payload = `${membership.bkey}: ${getFullName(membership.memberName1, membership.memberName2)} in ${membership.orgName}`;
-    await this.firestoreService.deleteModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<MembershipModel>(MembershipCollection, membership, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('membership', 'delete', currentUser, payload);
   }
 
@@ -72,7 +85,7 @@ export class MembershipService {
       membership.dateOfExit = dateOfExit;
       membership.relIsLast = true;
       membership.relLog = getRelLogEntry(dateOfExit, 'X', membership.relLog);
-      return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, '@membership.operation.end', currentUser);
+      return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, this.i18n.end_conf(), this.i18n.end_error(), currentUser);
     }
     return undefined;
   }
@@ -262,7 +275,7 @@ export class MembershipService {
     if (index === undefined) return;
     if (index === 0) {
       await this.exportAddressesFromJoinedList('');
-      // tbd: check whether it really is a joined list. Currently, it is only callable from ScsContactsListComponent
+      // tbd: check whether it really is a joined list. Currently, it is only callable from ScsContactsList
       //await exportXlsx(this.filteredItems(), 'all', 'all');
     }
     if (index === 1) await this.exportSrvList('srv');
@@ -271,7 +284,7 @@ export class MembershipService {
 
   /*   private async selectExportType(): Promise<number | undefined> {
       const modal = await this.modalController.create({
-        component: BkLabelSelectModalComponent,
+        component: BkLabelSelectModal,
         componentProps: {
           labels: [
             '@membership.operation.select.default', 

@@ -1,25 +1,25 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { ActionSheetOptions, ActionSheetController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, IonNote } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
 
 import { ResponsibilityModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
-import { MenuComponent } from '@bk2/cms-menu-feature';
+import { Menu } from '@bk2/cms-menu-feature';
+import { AvatarDisplay } from '@bk2/avatar-ui';
 
 import { ResponsibilityStore } from './responsibility.store';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { AsyncPipe } from '@angular/common';
-import { AvatarDisplayComponent } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-responsibility-list',
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
-    ListFilterComponent, EmptyListComponent, MenuComponent, SpinnerComponent, AvatarDisplayComponent,
+    ListFilter, EmptyList, Menu, Spinner, AvatarDisplay,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonLabel, IonPopover, IonNote, IonGrid, IonRow, IonCol,
   ],

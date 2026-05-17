@@ -1,14 +1,16 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { from, of } from 'rxjs';
+import { firstValueFrom, from, of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AlertController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { showToast } from '@bk2/shared-util-angular';
+import { PFX } from './scope';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
 export interface AdminRoom {
@@ -78,6 +80,37 @@ export const AocChatStore = signalStore(
     appStore: inject(AppStore),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      cancel:                       '@operation.cancel',
+      error:                        '@operation.error',
+      room_rename_header:           PFX + 'chat.operation.room.rename.header',
+      room_rename_newname:          PFX + 'chat.operation.room.rename.newname',
+      room_rename_action:           PFX + 'chat.operation.room.rename.action',
+      room_rename_conf:             PFX + 'chat.operation.room.rename.conf',
+      room_delete_header:           PFX + 'chat.operation.room.delete.header',
+      room_delete_action:           PFX + 'chat.operation.room.delete.action',
+      room_delete_conf:             PFX + 'chat.operation.room.delete.conf',
+      alias_add_header:             PFX + 'chat.operation.alias.add.header',
+      alias_add_placeholder:        PFX + 'chat.operation.alias.add.placeholder',
+      alias_add_action:             PFX + 'chat.operation.alias.add.action',
+      alias_add_conf:               PFX + 'chat.operation.alias.add.conf',
+      room_invite_header:           PFX + 'chat.operation.room.invite.header',
+      room_invite_action:           PFX + 'chat.operation.room.invite.action',
+      room_invite_conf:             PFX + 'chat.operation.room.invite.conf',
+      user_provision_header:        PFX + 'chat.operation.user.provision.header',
+      user_provision_action:        PFX + 'chat.operation.user.provision.action',
+      user_provision_conf:          PFX + 'chat.operation.user.provision.conf',
+      member_kick_header:           PFX + 'chat.operation.member.kick.header',
+      member_kick_action:           PFX + 'chat.operation.member.kick.action',
+      member_kick_conf:             PFX + 'chat.operation.member.kick.conf',
+      user_deactivate_header:       PFX + 'chat.operation.user.deactivate.header',
+      user_deactivate_action:       PFX + 'chat.operation.user.deactivate.action',
+      user_deactivate_conf:         PFX + 'chat.operation.user.deactivate.conf',
+      user_deactivate_notfound:     PFX + 'chat.operation.user.deactivate.notfound',
+    }),
   })),
 
   // ─── rxResources ────────────────────────────────────────────────────────────
@@ -192,11 +225,11 @@ export const AocChatStore = signalStore(
 
     async renameRoom(roomId: string): Promise<void> {
       const alert = await store.alertController.create({
-        header: 'Raum umbenennen',
-        inputs: [{ name: 'name', type: 'text', placeholder: 'Neuer Name' }],
+        header: store.i18n.room_rename_header(),
+        inputs: [{ name: 'name', type: 'text', placeholder: store.i18n.room_rename_newname() }],
         buttons: [
-          { text: 'Abbrechen', role: 'cancel' },
-          { text: 'Umbenennen', role: 'confirm' },
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.room_rename_action(), role: 'confirm' },
         ],
       });
       await alert.present();
@@ -210,19 +243,20 @@ export const AocChatStore = signalStore(
         );
         await fn({ roomId, name: newName });
         store.roomsResource.reload();
-        await showToast(store.toastController, `Raum umbenannt: ${newName}`);
+        await showToast(store.toastController, `${store.i18n.room_rename_conf()}: ${newName}`);
       } catch (e) {
-        await showToast(store.toastController, `Fehler: ${(e as Error).message}`);
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
     },
 
     async deleteRoom(roomId: string): Promise<void> {
+      const message = await firstValueFrom(store.i18nService.translate(PFX + 'chat.operation.room.delete.askconf', { roomId }));
       const alert = await store.alertController.create({
-        header: 'Raum löschen',
-        message: `Raum ${roomId} wirklich löschen? Alle Nachrichten werden entfernt.`,
+        header: store.i18n.room_delete_header(),
+        message,
         buttons: [
-          { text: 'Abbrechen', role: 'cancel' },
-          { text: 'Löschen', role: 'confirm', cssClass: 'danger' },
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.room_delete_action(), role: 'confirm', cssClass: 'danger' },
         ],
       });
       await alert.present();
@@ -235,19 +269,19 @@ export const AocChatStore = signalStore(
           patchState(store, { selectedRoomId: undefined, detailsTarget: undefined });
         }
         store.roomsResource.reload();
-        await showToast(store.toastController, 'Raum gelöscht');
+        await showToast(store.toastController, store.i18n.room_delete_conf());
       } catch (e) {
-        await showToast(store.toastController, `Fehler: ${(e as Error).message}`);
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
     },
 
     async addAlias(roomId: string): Promise<void> {
       const alert = await store.alertController.create({
-        header: 'Alias hinzufügen',
-        inputs: [{ name: 'alias', type: 'text', placeholder: 'alias-name (ohne # und :homeserver)' }],
+        header: store.i18n.alias_add_header(),
+        inputs: [{ name: 'alias', type: 'text', placeholder: store.i18n.alias_add_placeholder() }],
         buttons: [
-          { text: 'Abbrechen', role: 'cancel' },
-          { text: 'Hinzufügen', role: 'confirm' },
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.alias_add_action(), role: 'confirm' },
         ],
       });
       await alert.present();
@@ -260,20 +294,20 @@ export const AocChatStore = signalStore(
           getFn(), 'addMatrixRoomAlias'
         );
         const result = await fn({ roomId, aliasName });
-        await showToast(store.toastController, `Alias hinzugefügt: ${result.data.alias}`);
+        await showToast(store.toastController, `${store.i18n.alias_add_conf()}: ${result.data.alias}`);
       } catch (e) {
-        await showToast(store.toastController, `Fehler: ${(e as Error).message}`);
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
     },
 
     async inviteToRoom(roomId: string): Promise<void> {
       const defaultPersonKey = store.selectedPersonKey() ?? '';
       const alert = await store.alertController.create({
-        header: 'Person einladen',
+        header: store.i18n.room_invite_header(),
         inputs: [{ name: 'personKey', type: 'text', value: defaultPersonKey, placeholder: 'personKey' }],
         buttons: [
-          { text: 'Abbrechen', role: 'cancel' },
-          { text: 'Einladen', role: 'confirm' },
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.room_invite_action(), role: 'confirm' },
         ],
       });
       await alert.present();
@@ -287,20 +321,20 @@ export const AocChatStore = signalStore(
         );
         await fn({ roomId, personKey: pk });
         store.membersResource.reload();
-        await showToast(store.toastController, `${pk} eingeladen`);
+        await showToast(store.toastController, `${pk} ${store.i18n.room_invite_conf()}`);
       } catch (e) {
-        await showToast(store.toastController, `Fehler: ${(e as Error).message}`);
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
     },
 
     async provisionUser(personKey?: string): Promise<void> {
       const defaultKey = personKey ?? store.selectedPersonKey() ?? '';
       const alert = await store.alertController.create({
-        header: 'Matrix User anlegen',
+        header: store.i18n.user_provision_header(),
         inputs: [{ name: 'personKey', type: 'text', value: defaultKey, placeholder: 'personKey' }],
         buttons: [
-          { text: 'Abbrechen', role: 'cancel' },
-          { text: 'Anlegen', role: 'confirm' },
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.user_provision_action(), role: 'confirm' },
         ],
       });
       await alert.present();
@@ -313,21 +347,22 @@ export const AocChatStore = signalStore(
           getFn(), 'provisionMatrixUser'
         );
         const result = await fn({ personKey: pk });
-        await showToast(store.toastController, `User angelegt: ${result.data.matrixUserId}`);
+        await showToast(store.toastController, `${store.i18n.user_provision_conf()}: ${result.data.matrixUserId}`);
       } catch (e) {
-        await showToast(store.toastController, `Fehler: ${(e as Error).message}`);
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
     },
 
     // ─── member actions ────────────────────────────────────────────────────────
 
     async kickMember(userId: string, roomId: string): Promise<void> {
+      const message = await firstValueFrom(store.i18nService.translate(PFX + 'chat.operation.member.kick.askconf', { userId }));
       const alert = await store.alertController.create({
-        header: 'Mitglied entfernen',
-        message: `${userId} aus dem Raum entfernen?`,
+        header: store.i18n.member_kick_header(),
+        message,
         buttons: [
-          { text: 'Abbrechen', role: 'cancel' },
-          { text: 'Entfernen', role: 'confirm', cssClass: 'danger' },
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.member_kick_action(), role: 'confirm', cssClass: 'danger' },
         ],
       });
       await alert.present();
@@ -342,19 +377,20 @@ export const AocChatStore = signalStore(
         );
         await fn({ roomId, personKey });
         store.membersResource.reload();
-        await showToast(store.toastController, `${userId} entfernt`);
+        await showToast(store.toastController, `${userId} ${store.i18n.member_kick_conf()}`);
       } catch (e) {
-        await showToast(store.toastController, `Fehler: ${(e as Error).message}`);
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
     },
 
     async deactivateUser(userId: string): Promise<void> {
+      const message = await firstValueFrom(store.i18nService.translate(PFX + 'chat.operation.user.deactivate.askconf', { userId }));
       const alert = await store.alertController.create({
-        header: 'Matrix User deaktivieren',
-        message: `${userId} deaktivieren? Der User kann sich danach nicht mehr anmelden.`,
+        header: store.i18n.user_deactivate_header(),
+        message,
         buttons: [
-          { text: 'Abbrechen', role: 'cancel' },
-          { text: 'Deaktivieren', role: 'confirm', cssClass: 'danger' },
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.user_deactivate_action(), role: 'confirm', cssClass: 'danger' },
         ],
       });
       await alert.present();
@@ -369,9 +405,9 @@ export const AocChatStore = signalStore(
         const result = await fn({ personKey });
         store.roomsResource.reload();
         store.membersResource.reload();
-        await showToast(store.toastController, result.data.deactivated ? `${userId} deaktiviert` : `User nicht gefunden`);
+        await showToast(store.toastController, result.data.deactivated ? `${userId} ${store.i18n.user_deactivate_conf()}` : store.i18n.user_deactivate_notfound());
       } catch (e) {
-        await showToast(store.toastController, `Fehler: ${(e as Error).message}`);
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
     },
 

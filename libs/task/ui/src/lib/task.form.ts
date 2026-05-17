@@ -1,15 +1,15 @@
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
+import { AsyncPipe } from '@angular/common';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@bk2/shared-constants';
 import { CategoryListModel, RoleName, TaskModel, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, ErrorNote, NotesInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { taskValidations } from '@bk2/task-util';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-task-form',
@@ -17,8 +17,8 @@ import { AsyncPipe } from '@angular/common';
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe,
-    DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
-    TextInputComponent, ErrorNoteComponent,
+    DateInput, CategorySelect, Chips, NotesInput,
+    TextInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonLabel, IonItem
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -84,13 +84,13 @@ import { AsyncPipe } from '@angular/common';
       }
     
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
 `
 })
-export class TaskFormComponent {
+export class TaskForm {
   // inputs
   public readonly formData = model.required<TaskModel>();
   public readonly currentUser = input<UserModel | undefined>();

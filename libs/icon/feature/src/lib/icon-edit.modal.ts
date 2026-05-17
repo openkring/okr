@@ -2,18 +2,18 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { IconModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
 
-import { IconEditFormComponent } from '@bk2/icon-ui';
+import { IconEditForm } from '@bk2/icon-ui';
 
 @Component({
   selector: 'bk-icon-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, IconEditFormComponent,
+    Header, ChangeConfirmation, IconEditForm,
     IonContent
   ],
   template: `
@@ -40,7 +40,7 @@ import { IconEditFormComponent } from '@bk2/icon-ui';
     </ion-content>
   `
 })
-export class IconEditModalComponent {
+export class IconEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly env = inject(ENV);
 

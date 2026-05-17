@@ -1,42 +1,25 @@
 {
-  "invitation": {
-    "plural": "Einladungen",
-    "list": {
-      "header": {
-        "date": "Datum",
-        "name": "Name",
-        "invitee": "Teilnehmer",
-        "inviter": "Organisator",
-        "state": "Status"
-      }
-    },
-    "field": {
-      "empty": "Es sind noch keine Einladungen erstellt worden. Erstelle eine mit Klicken des + Buttons."
-    },
-    "operation": {
-      "create": {
-        "label": "Person einladen",
-        "conf": "Die Einladung wurde hinzugefügt.",
-        "error": "Die Einladung konnte nicht hinzugefügt werden."
-      }
-    },
-    "accepted": "angenommene Einladungen"
+  "invitations": "Einladungen",
+  "date": "Datum",
+  "name": "Name",
+  "invitee": "Teilnehmer",
+  "inviter": "Organisator",
+  "state": "Status",
+  "empty": "Es sind noch keine Einladungen erstellt worden. Erstelle eine mit Klicken des + Buttons.",
+  "create": {
+    "label": "Person einladen",
+    "conf": "Die Einladung wurde hinzugefügt.",
+    "error": "Die Einladung konnte nicht hinzugefügt werden."
   },
+  "delete": {
+    "confirm": "Soll die Einladung wirklich gelöscht werden ?"
+  },
+  "invite": {
+    "conf": "Die Person wurde eingeladen.",
+    "error": "Die Person konnte nicht eingeladen werden."
+  },
+  "accepted": "angenommene Einladungen",
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
-  },
-  "calevent": {
-    "operation": {
-      "delete": {
-        "confirm": "Soll das Ereignis wirklich gelöscht werden ?"
-      }
-    }
-  },
-  "general": {
-    "noData": {
-      "invitations": "Es sind keine Einladungen vorhanden."
-    }
+    "title": "Wähle eine Aktion"
   }
 }

@@ -12,15 +12,17 @@ import { AppStore } from '@bk2/shared-feature';
 import { ExportFormat, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, ScsMemberFeesCollection, ScsMemberFeesModel } from '@bk2/shared-models';
 import { confirm, exportXlsx, showToast } from '@bk2/shared-util-angular';
 import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@bk2/shared-util-core';
+import { ExportFormats } from '@bk2/shared-categories';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { ActivityService } from '@bk2/activity-data-access';
-
 import { ScsMemberFeeService, convertMembershipToFee, getFeeTotal, getTemplateId } from '@bk2/relationship-membership-data-access';
-import { MembershipEditModalComponent } from './membership-edit.modal';
+
+import { MembershipEditModal } from './membership-edit.modal';
 import { ScsMemberFeeInvoiceIdModal } from './scs-member-fee-invoice-id.modal';
 import { ScsMemberFeeUploadModal } from './scs-member-fee-upload.modal';
 import { ScsMemberFeesTotalsModal } from './scs-member-fees-totals.modal';
-import { ExportFormats } from '@bk2/shared-categories';
+import { PFX } from './scope';
 
 export type ScsMemberFeesState = {
   searchTerm: string;
@@ -52,22 +54,37 @@ export const _ScsMemberFeesStore = signalStore(
       modalController: inject(ModalController),
       toastController: inject(ToastController),
       alertController: inject(AlertController),
+      i18nService: inject(I18nService),
       functions,
     };
   }),
 
-  withProps((state) => ({
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      archive_confirm: PFX + 'scsMemberFee.archive.confirm',
+      archive_conf: PFX + 'scsMemberFee.archive.conf',
+      generate_confirm: PFX + 'scsMemberFee.generate.confirm',
+      generate_conf: PFX + 'scsMemberFee.generate.conf',
+      export_title: PFX + 'scsMemberFee.export.title',
+      delete_confirm: PFX + 'scsMemberFee.delete.confirm',
+      update_conf: PFX + 'scsMemberFee.update.conf',
+      upload_nobexioid: PFX + 'scsMemberFee.upload.noBexioId',
+      upload_conf: PFX + 'scsMemberFee.upload.conf',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     // All memberships of this tenant (active/passive/etc.) — filtered locally
     allMembershipsResource: rxResource({
       params: () => ({
-        currentUser: state.appStore.currentUser(),
-        version: state.version(),
+        currentUser: store.appStore.currentUser(),
+        version: store.version(),
       }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
-        const query = getSystemQuery(state.appStore.tenantId());
+        const query = getSystemQuery(store.appStore.tenantId());
         query.push({ key: 'memberModelType', operator: '==', value: 'person' });
-        return state.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc').pipe(
+        return store.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc').pipe(
           debugListLoaded('ScsMemberFeesStore.allMemberships', params.currentUser)
         );
       },
@@ -76,14 +93,14 @@ export const _ScsMemberFeesStore = signalStore(
     // All locker ownerships — filtered locally by ownerKey and validTo
     allLockerOwnershipsResource: rxResource({
       params: () => ({
-        currentUser: state.appStore.currentUser(),
-        version: state.version(),
+        currentUser: store.appStore.currentUser(),
+        version: store.version(),
       }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
-        const query = getSystemQuery(state.appStore.tenantId());
+        const query = getSystemQuery(store.appStore.tenantId());
         query.push({ key: 'resourceType', operator: '==', value: 'locker' });
-        return state.firestoreService.searchData<OwnershipModel>(OwnershipCollection, query, 'ownerName2', 'asc').pipe(
+        return store.firestoreService.searchData<OwnershipModel>(OwnershipCollection, query, 'ownerName2', 'asc').pipe(
           debugListLoaded('ScsMemberFeesStore.allLockerOwnerships', params.currentUser)
         );
       },
@@ -92,30 +109,30 @@ export const _ScsMemberFeesStore = signalStore(
     // Persisted fee records from scs-memberfees collection
     feeRecordsResource: rxResource({
       params: () => ({
-        currentUser: state.appStore.currentUser(),
-        version: state.version(),
+        currentUser: store.appStore.currentUser(),
+        version: store.version(),
       }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
-        return state.scsMemberFeeService.list();
+        return store.scsMemberFeeService.list();
       },
     }),
   })),
 
-  withComputed((state) => ({
+  withComputed((store) => ({
     isLoading: computed(() =>
-      state.allMembershipsResource.isLoading() ||
-      state.allLockerOwnershipsResource.isLoading() ||
-      state.feeRecordsResource.isLoading()
+      store.allMembershipsResource.isLoading() ||
+      store.allLockerOwnershipsResource.isLoading() ||
+      store.feeRecordsResource.isLoading()
     ),
-    currentUser: computed(() => state.appStore.currentUser()),
-    tenantId: computed(() => state.appStore.tenantId()),
+    currentUser: computed(() => store.appStore.currentUser()),
+    tenantId: computed(() => store.appStore.tenantId()),
 
     // current active+passive memberships of the default org
     defaultOrgMemberships: computed(() => {
       const today = getTodayStr();
-      const orgId = state.appStore.defaultOrg()?.bkey ?? state.appStore.tenantId();
-      return state.allMembershipsResource.value()?.filter((m: MembershipModel) => 
+      const orgId = store.appStore.defaultOrg()?.bkey ?? store.appStore.tenantId();
+      return store.allMembershipsResource.value()?.filter((m: MembershipModel) => 
         m.orgKey === orgId && 
         m.orgModelType === 'org' &&
         isAfterDate(m.dateOfExit, today) &&
@@ -127,7 +144,7 @@ export const _ScsMemberFeesStore = signalStore(
     srvMembershipsByKey: computed(() => {
       const today = getTodayStr();
       const map = new Map<string, MembershipModel>();
-      state.allMembershipsResource.value()?.filter((m: MembershipModel) => 
+      store.allMembershipsResource.value()?.filter((m: MembershipModel) => 
         m.orgKey === 'srv' &&
         m.orgModelType === 'org' &&
         isAfterDate(m.dateOfExit, today)
@@ -139,7 +156,7 @@ export const _ScsMemberFeesStore = signalStore(
     lockerOwnerKeys: computed((): Set<string> => {
       const today = getTodayStr(DateFormat.StoreDate);
       const keys = new Set<string>();
-      state.allLockerOwnershipsResource.value()?.filter((o: OwnershipModel) => 
+      store.allLockerOwnershipsResource.value()?.filter((o: OwnershipModel) => 
         isAfterDate(o.validTo, today)
       ).forEach((o: OwnershipModel) => keys.add(o.ownerKey));
       return keys;
@@ -148,29 +165,29 @@ export const _ScsMemberFeesStore = signalStore(
     // persisted fee records indexed by member key
     feeRecordsByMemberKey: computed(() => {
       const map = new Map<string, ScsMemberFeesModel>();
-      state.feeRecordsResource.value()?.forEach((f: ScsMemberFeesModel) => {
+      store.feeRecordsResource.value()?.forEach((f: ScsMemberFeesModel) => {
         if (f.member?.key) map.set(f.member.key, f);
       });
       return map;
     }),
 
-    mcatScs: computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
-    mcatSrv: computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_srv')),
-    mcatScsCategory: computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
+    mcatScs: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
+    mcatSrv: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_srv')),
+    mcatScsCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
   })),
 
-  withComputed((state) => ({
+  withComputed((store) => ({
     // Merged list: persisted records take priority; generated models fill in the rest
     allFees: computed((): ScsMemberFeesModel[] => {
       const currentYear = getTodayStr(DateFormat.Year);
-      const tenantId = state.tenantId();
-      const srvMap = state.srvMembershipsByKey();
-      const lockerKeys = state.lockerOwnerKeys();
-      const feeMap = state.feeRecordsByMemberKey();
-      const mcatScs = state.mcatScs();
-      const mcatSrv = state.mcatSrv();
+      const tenantId = store.tenantId();
+      const srvMap = store.srvMembershipsByKey();
+      const lockerKeys = store.lockerOwnerKeys();
+      const feeMap = store.feeRecordsByMemberKey();
+      const mcatScs = store.mcatScs();
+      const mcatSrv = store.mcatSrv();
 
-      return state.defaultOrgMemberships().map((membership: MembershipModel) => {
+      return store.defaultOrgMemberships().map((membership: MembershipModel) => {
         const existing = feeMap.get(membership.memberKey);
         if (existing) return existing;
         return convertMembershipToFee(
@@ -186,37 +203,37 @@ export const _ScsMemberFeesStore = signalStore(
 
     membershipsByMemberKey: computed(() => {
       const map = new Map<string, MembershipModel>();
-      state.defaultOrgMemberships().forEach((m: MembershipModel) => map.set(m.memberKey, m));
+      store.defaultOrgMemberships().forEach((m: MembershipModel) => map.set(m.memberKey, m));
       return map;
     }),
 
-    mcatCategory: computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
+    mcatCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
   })),
 
-  withComputed((state) => ({
+  withComputed((store) => ({
       filteredFees: computed(() => {
-        return state.allFees()?.filter((fee: ScsMemberFeesModel) => 
-          nameMatches(fee.index, state.searchTerm()) &&
-          nameMatches(fee.category, state.selectedMcat()) &&
-          nameMatches(fee.state, state.selectedState()))
+        return store.allFees()?.filter((fee: ScsMemberFeesModel) => 
+          nameMatches(fee.index, store.searchTerm()) &&
+          nameMatches(fee.category, store.selectedMcat()) &&
+          nameMatches(fee.state, store.selectedState()))
       })
   })),
 
-  withMethods((state) => ({
+  withMethods((store) => ({
     setSearchTerm(searchTerm: string): void {
-      patchState(state, { searchTerm });
+      patchState(store, { searchTerm });
     },
 
     setSelectedMcat(selectedMcat: string): void {
-      patchState(state, { selectedMcat });
+      patchState(store, { selectedMcat });
     },
 
     setSelectedState(selectedState: string): void {
-      patchState(state, { selectedState });
+      patchState(store, { selectedState });
     },
 
     refreshData(): void {
-      patchState(state, { version: state.version() + 1 });
+      patchState(store, { version: store.version() + 1 });
     },
 
     getTotal(fee: ScsMemberFeesModel): number {
@@ -227,26 +244,26 @@ export const _ScsMemberFeesStore = signalStore(
      * Save an edited fee record to Firestore and reload.
      */
     async saveFee(fee: ScsMemberFeesModel): Promise<void> {
-      await state.scsMemberFeeService.save(fee, state.appStore.currentUser() ?? undefined);
-      patchState(state, { version: state.version() + 1 });
+      await store.scsMemberFeeService.save(fee, store.appStore.currentUser() ?? undefined);
+      patchState(store, { version: store.version() + 1 });
     },
 
     /**
      * Generate and persist fee records for all default org members that don't have one yet.
      */
     async generateFees(): Promise<void> {
-      const confirmed = await confirm(state.alertController, '@finance.scsMemberFee.operation.generate.confirm', true);
+      const confirmed = await confirm(store.alertController, store.i18n.generate_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
 
-      const tenantId = state.tenantId();
-      const srvMap = state.srvMembershipsByKey();
-      const lockerKeys = state.lockerOwnerKeys();
-      const feeMap = state.feeRecordsByMemberKey();
-      const mcatScs = state.mcatScs();
-      const mcatSrv = state.mcatSrv();
-      const currentUser = state.appStore.currentUser() ?? undefined;
+      const tenantId = store.tenantId();
+      const srvMap = store.srvMembershipsByKey();
+      const lockerKeys = store.lockerOwnerKeys();
+      const feeMap = store.feeRecordsByMemberKey();
+      const mcatScs = store.mcatScs();
+      const mcatSrv = store.mcatSrv();
+      const currentUser = store.appStore.currentUser() ?? undefined;
 
-      const members = state.defaultOrgMemberships().filter((m: MembershipModel) => !feeMap.has(m.memberKey));
+      const members = store.defaultOrgMemberships().filter((m: MembershipModel) => !feeMap.has(m.memberKey));
       const saves = members.map((m: MembershipModel) => {
           const fee = convertMembershipToFee(
             m,
@@ -256,55 +273,55 @@ export const _ScsMemberFeesStore = signalStore(
             mcatSrv,
             tenantId
           );
-          return state.scsMemberFeeService.save(fee, currentUser, false);
+          return store.scsMemberFeeService.save(fee, currentUser, false);
       });
       const msg = 'generated ' + members.length + ' scs member fees.';
-      state.activityService.log('membership', 'create', currentUser, msg);
+      store.activityService.log('membership', 'create', currentUser, msg);
 
       await Promise.all(saves);
-      patchState(state, { version: state.version() + 1 });
-      await showToast(state.toastController, '@finance.scsMemberFee.operation.generate.conf');
+      patchState(store, { version: store.version() + 1 });
+      await showToast(store.toastController, store.i18n.generate_conf());
     },
 
     async showTotals(): Promise<void> {
-      const modal = await state.modalController.create({
+      const modal = await store.modalController.create({
         component: ScsMemberFeesTotalsModal,
         componentProps: {
-          fees: state.filteredFees(),
+          fees: store.filteredFees(),
         },
       });
       await modal.present();
     },
 
     async archive(): Promise<void> {
-      const confirmed = await confirm(state.alertController, '@finance.scsMemberFee.operation.archive.confirm', true);
+      const confirmed = await confirm(store.alertController, store.i18n.archive_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
 
-      const fees = state.filteredFees();
-      const batch = state.firestoreService.getBatch();
+      const fees = store.filteredFees();
+      const batch = store.firestoreService.getBatch();
       for (const fee of fees) {
         if (!fee.bkey) continue;
-        const ref = doc(state.firestoreService.firestore, `${ScsMemberFeesCollection}/${fee.bkey}`);
+        const ref = doc(store.firestoreService.firestore, `${ScsMemberFeesCollection}/${fee.bkey}`);
         batch.update(ref, { isArchived: true });
       }
       await batch.commit();
-      patchState(state, { version: state.version() + 1 });
-      await showToast(state.toastController, '@finance.scsMemberFee.operation.archive.conf');
+      patchState(store, { version: store.version() + 1 });
+      await showToast(store.toastController, store.i18n.archive_conf());
     },
 
     async export(type: string): Promise<void> {
       if (type === 'raw') {
-        const fees = state.filteredFees();
+        const fees = store.filteredFees();
         let keys: (keyof ScsMemberFeesModel)[] = [];
         const table: string[][] = [];
         const fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
         let tableName = '';
-        keys = Object.keys(new ScsMemberFeesModel(state.appStore.tenantId())) as (keyof ScsMemberFeesModel)[];
+        keys = Object.keys(new ScsMemberFeesModel(store.appStore.tenantId())) as (keyof ScsMemberFeesModel)[];
         table.push(keys);
         for (const fee of fees) {
           table.push(getDataRow<ScsMemberFeesModel>(fee, keys));
         }
-        exportXlsx(table, fn, 'Jahresbeitragsrechnungen');
+        exportXlsx(table, fn, store.i18n.export_title());
       }
     },
 
@@ -313,18 +330,18 @@ export const _ScsMemberFeesStore = signalStore(
      */
     async deleteFee(fee: ScsMemberFeesModel): Promise<void> {
       if (!fee.bkey) return;
-      const confirmed = await confirm(state.alertController, '@finance.scsMemberFee.operation.delete.confirm', true);
+      const confirmed = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
-      await state.scsMemberFeeService.delete(fee, state.appStore.currentUser() ?? undefined);
-      patchState(state, { version: state.version() + 1 });
+      await store.scsMemberFeeService.delete(fee, store.appStore.currentUser() ?? undefined);
+      patchState(store, { version: store.version() + 1 });
     },
 
     async setStatus(fee: ScsMemberFeesModel, status: INVOICE_STATE): Promise<void> {
       if (!fee.bkey) return;
       const updated: ScsMemberFeesModel = { ...fee, state: status };
-      await state.scsMemberFeeService.save(updated, state.appStore.currentUser() ?? undefined);
-      patchState(state, { version: state.version() + 1 });
-      await showToast(state.toastController, '@finance.scsMemberFee.operation.update.conf');
+      await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
+      patchState(store, { version: store.version() + 1 });
+      await showToast(store.toastController, store.i18n.update_conf());
     },
 
     /**
@@ -332,7 +349,7 @@ export const _ScsMemberFeesStore = signalStore(
      */
     async uploadToBexio(fee: ScsMemberFeesModel): Promise<void> {
       if (!fee.memberBexioId) {
-        await showToast(state.toastController, '@finance.scsMemberFee.operation.upload.noBexioId');
+        await showToast(store.toastController, store.i18n.upload_nobexioid());
         return;
       }
 
@@ -340,7 +357,7 @@ export const _ScsMemberFeesStore = signalStore(
       if (fee.templateId?.length === 0) {
           fee.templateId = getTemplateId(fee.category);
       }
-      const modal = await state.modalController.create({
+      const modal = await store.modalController.create({
         component: ScsMemberFeeUploadModal,
         componentProps: { fee, positions },
       });
@@ -355,7 +372,7 @@ export const _ScsMemberFeesStore = signalStore(
         footer?: string;
         template_slug: string;
         positions?: { text: string; unit_price: number; account_id: number; amount: number }[];
-      }, { id: string }>(state.functions, 'createBexioInvoice');
+      }, { id: string }>(store.functions, 'createBexioInvoice');
 
       const result = await fn({
         title: `Jahresbeitrag ${getYear()}`,
@@ -368,9 +385,9 @@ export const _ScsMemberFeesStore = signalStore(
 
       // Mark as uploaded and store the Bexio invoice ID
       const updated: ScsMemberFeesModel = { ...fee, state: 'uploaded', invoiceBexioId: String(result.data.id) };
-      await state.scsMemberFeeService.save(updated, state.appStore.currentUser() ?? undefined);
-      patchState(state, { version: state.version() + 1 });
-      await showToast(state.toastController, '@finance.scsMemberFee.operation.upload.conf');
+      await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
+      patchState(store, { version: store.version() + 1 });
+      await showToast(store.toastController, store.i18n.upload_conf());
     },
 
     /**
@@ -381,7 +398,7 @@ export const _ScsMemberFeesStore = signalStore(
       let invoiceBexioId = fee.invoiceBexioId;
 
       if (!invoiceBexioId) {
-        const modal = await state.modalController.create({
+        const modal = await store.modalController.create({
           component: ScsMemberFeeInvoiceIdModal,
           componentProps: { fee },
         });
@@ -390,12 +407,12 @@ export const _ScsMemberFeesStore = signalStore(
         if (role !== 'confirm' || !data?.invoiceId) return;
         invoiceBexioId = data.invoiceId;
         const updated: ScsMemberFeesModel = { ...fee, invoiceBexioId };
-        await state.scsMemberFeeService.save(updated, state.appStore.currentUser() ?? undefined);
-        patchState(state, { version: state.version() + 1 });
+        await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
+        patchState(store, { version: store.version() + 1 });
       }
 
       const fn = httpsCallable<{ invoiceId: string }, { content: string }>(
-        state.functions, 'showInvoicePdf'
+        store.functions, 'showInvoicePdf'
       );
       const memberName = `${fee.member?.name2 ?? ''}_${fee.member?.name1 ?? ''}`;
       const result = await fn({ invoiceId: invoiceBexioId });
@@ -415,17 +432,17 @@ export const _ScsMemberFeesStore = signalStore(
     async editMembership(fee: ScsMemberFeesModel, readOnly = false): Promise<void> {
       const memberKey = fee.member?.key;
       if (!memberKey) return;
-      const membership = state.membershipsByMemberKey().get(memberKey);
+      const membership = store.membershipsByMemberKey().get(memberKey);
       if (!membership) return;
-      const mcat = state.mcatCategory();
+      const mcat = store.mcatCategory();
       if (!mcat) return;
-      const modal = await state.modalController.create({
-        component: MembershipEditModalComponent,
+      const modal = await store.modalController.create({
+        component: MembershipEditModal,
         componentProps: {
           membership: { ...membership },
-          currentUser: state.appStore.currentUser(),
+          currentUser: store.appStore.currentUser(),
           tags: '',
-          priv: state.appStore.privacySettings(),
+          priv: store.appStore.privacySettings(),
           mcat,
           isNew: false,
           readOnly,

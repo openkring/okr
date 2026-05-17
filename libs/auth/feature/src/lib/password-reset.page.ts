@@ -5,7 +5,7 @@ import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 import { AuthCredentials } from '@bk2/shared-models';
@@ -18,7 +18,7 @@ import { LoginForm } from '@bk2/auth-ui';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
-    HeaderComponent, LoginForm,
+    Header, LoginForm,
     IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton
   ],
   styles: `
@@ -61,7 +61,7 @@ import { LoginForm } from '@bk2/auth-ui';
     </ion-content>
   `,
 })
-export class PasswordResetPageComponent {
+export class PasswordResetPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);

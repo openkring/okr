@@ -5,7 +5,8 @@ import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardT
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ButtonComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
+import { Button, Header, ResultLog } from '@bk2/shared-ui';
+
 import { AocStorageStore } from './aoc-storage.store';
 
 @Component({
@@ -20,7 +21,7 @@ import { AocStorageStore } from './aoc-storage.store';
   ],
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, 
-    FormsModule, ButtonComponent, HeaderComponent, ResultLogComponent, 
+    FormsModule, Button, Header, ResultLog, 
     IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonIcon, IonCheckbox, IonButtons, IonButton, IonItem
   ],
   providers: [AocStorageStore],
@@ -100,7 +101,7 @@ import { AocStorageStore } from './aoc-storage.store';
     </ion-content>
   `,
 })
-export class AocStorageComponent {
+export class AocStorage {
   private readonly aocStorageStore = inject(AocStorageStore);
 
   protected readonly logTitle = computed(() => this.aocStorageStore.logTitle());

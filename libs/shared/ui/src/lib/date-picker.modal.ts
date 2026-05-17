@@ -35,7 +35,7 @@ import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
     </ion-modal>
   `,
 })
-export class DatePickerModalComponent {
+export class DatePickerModal {
   // inputs
   isoDate = input<string>(getTodayStr(DateFormat.IsoDate)); // yyyy-MM-dd
 

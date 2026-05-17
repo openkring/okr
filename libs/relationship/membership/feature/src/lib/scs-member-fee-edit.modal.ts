@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSign
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { getFullName, safeStructuredClone } from '@bk2/shared-util-core';
 
-import { AvatarToolbarComponent } from '@bk2/avatar-feature';
+import { AvatarToolbar } from '@bk2/avatar-feature';
 
 import { ScsMemberFeeEditForm } from '@bk2/relationship-membership-ui';
 
@@ -14,7 +14,7 @@ import { ScsMemberFeeEditForm } from '@bk2/relationship-membership-ui';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ScsMemberFeeEditForm, HeaderComponent, ChangeConfirmationComponent, AvatarToolbarComponent,
+    ScsMemberFeeEditForm, Header, ChangeConfirmation, AvatarToolbar,
     IonContent,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],

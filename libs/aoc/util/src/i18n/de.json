@@ -1,9 +1,7 @@
 {
   "auth": {
-    "operation": {
-      "create": {
-        "confirmation": "Das Benutzerkonto wurde erfolgreich erstellt"
-      }
+    "create": {
+      "conf": "Das Benutzerkonto wurde erfolgreich erstellt"
     }
   }
 }

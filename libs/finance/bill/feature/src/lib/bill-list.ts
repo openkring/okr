@@ -1,16 +1,16 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { BillModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
+import { PersonSelectModal } from '@bk2/shared-feature';
 
-import { PersonSelectModalComponent } from '@bk2/shared-feature';
 import { AvatarPipe } from '@bk2/avatar-ui';
 
 import { BillStore } from './bill.store';
@@ -22,7 +22,7 @@ import { BillStore } from './bill.store';
   providers: [BillStore],
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe, AvatarPipe,
-    SpinnerComponent, ListFilterComponent, EmptyListComponent,
+    Spinner, ListFilter, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
   ],
@@ -128,7 +128,7 @@ export class BillList {
     const currentUser = this.currentUser();
     if (!currentUser) return;
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       componentProps: { selectedTag: '', currentUser },
     });
     await modal.present();

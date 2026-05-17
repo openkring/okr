@@ -5,7 +5,7 @@ import {
   ModalController,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@bk2/shared-util-core';
 import { CalEventStore } from './calevent.store';
 
@@ -15,7 +15,7 @@ import { CalEventStore } from './calevent.store';
   imports: [
     IonContent, IonAvatar,
     AsyncPipe, TranslatePipe,
-    HeaderComponent,
+    Header,
   ],
   template: `
     <bk-header title="@schedule.tableTitle" [isModal]="true" />

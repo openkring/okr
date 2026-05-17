@@ -3,12 +3,12 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
 import { CategoryListModel, DocumentModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { DocumentService } from '@bk2/document-data-access';
-import { DocumentFormComponent } from '@bk2/document-ui';
+import { DocumentForm } from '@bk2/document-ui';
 import { DocumentStore } from './document.store';
 
 
@@ -16,8 +16,8 @@ import { DocumentStore } from './document.store';
   selector: 'bk-document-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent,
-    DocumentFormComponent,
+    Header, ChangeConfirmation,
+    DocumentForm,
     IonContent
   ],
   providers: [DocumentStore],

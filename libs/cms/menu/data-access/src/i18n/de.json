@@ -1,24 +1,18 @@
 {
-  "content": {
-    "menuItem": {
-      "operation": {
-        "create": {
-          "label": "Neuen Menüeintrag erstellen",
-          "conf": "Menüeintrag wurde erstellt.",
-          "error": "Menüeintrag konnte nicht erstellt werden."
-        },
-        "update": {
-          "label": "Menüeintrag ändern",
-          "conf": "Menüeintrag wurde geändert.",
-          "error": "Menüeintrag konnte nicht geändert werden."
-        },
-        "delete": {
-          "label": "Menüeintrag löschen",
-          "conf": "Menüeintrag wurde gelöscht.",
-          "error": "Menüeintrag konnte nicht gelöscht werden.",
-          "askConfirmation": "Soll dieser Menüeintrag wirklich gelöscht werden ?"
-        }
-      }
-    }
+  "create": {
+    "label": "Neuen Menüeintrag erstellen",
+    "conf": "Menüeintrag wurde erstellt.",
+    "error": "Menüeintrag konnte nicht erstellt werden."
+  },
+  "update": {
+    "label": "Menüeintrag ändern",
+    "conf": "Menüeintrag wurde geändert.",
+    "error": "Menüeintrag konnte nicht geändert werden."
+  },
+  "delete": {
+    "label": "Menüeintrag löschen",
+    "conf": "Menüeintrag wurde gelöscht.",
+    "error": "Menüeintrag konnte nicht gelöscht werden.",
+    "askConfirmation": "Soll dieser Menüeintrag wirklich gelöscht werden ?"
   }
 }

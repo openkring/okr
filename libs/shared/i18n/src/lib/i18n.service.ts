@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { HashMap, TranslocoService, getBrowserLang } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -45,15 +46,40 @@ export class I18nService {
 
     if (prefix.includes('/')) {
       const lang = this.translocoService.getActiveLang();
+      // Strip the scope prefix from the key — Transloco resolves scoped keys as
+      // selectTranslate(keyWithinScope, params, scope), loading scope/<lang>.json.
+      const scopeKey = translationKey.substring(prefix.length + 1);
       return this.translocoService.load(`${prefix}/${lang}`).pipe(
         switchMap(() => argument
-          ? this.translocoService.selectTranslate(translationKey, argument)
-          : this.translocoService.selectTranslate(translationKey))
+          ? this.translocoService.selectTranslate(scopeKey, argument, prefix)
+          : this.translocoService.selectTranslate(scopeKey, {}, prefix))
       );
     }
 
     return argument
       ? this.translocoService.selectTranslate(translationKey, argument)
       : this.translocoService.selectTranslate(translationKey);
+  }
+
+  /**
+   * The method maps each key in the given keys array to a value pair <key, translated value>.
+   * It returns all value pairs as signals in an array.
+   * toSignal requires an injection context, so this must be called from a class field initializer
+   * or constructor.
+   * example: 
+   * protected readonly i18n = this.i18nService.translateAll({
+       title:            PFX + 'chat.title',
+       rooms:            PFX + 'chat.rooms',
+       norooms:          PFX + 'chat.norooms',
+       cancel:  '@operation.cancel'
+      });
+    the translated values can then be used with e.g. i18n.title()
+   * @param keys 
+   * @returns 
+   */
+  public translateAll<K extends string>(keys: Record<K, string>, params?: HashMap): Record<K, Signal<string>> {
+    return Object.fromEntries(
+      Object.entries(keys).map(([k, v]) => [k, toSignal(this.translate(v as string, params), { initialValue: '' })])
+    ) as Record<K, Signal<string>>;
   }
 }

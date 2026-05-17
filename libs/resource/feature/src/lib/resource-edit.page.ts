@@ -2,25 +2,26 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
-import { CategorySelectComponent, ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared-ui';
+import { CategorySelect, ChangeConfirmation, Header, IconToolbar } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_RESOURCE_TYPE, DEFAULT_TITLE } from '@bk2/shared-constants';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
 
-import { ResourceFormComponent } from '@bk2/resource-ui';
-import { ResourceEditStore } from './resource-edit.store';
+import { ResourceForm } from '@bk2/resource-ui';
 import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@bk2/resource-util';
+
+import { ResourceEditStore } from './resource-edit.store';
 
 @Component({
   selector: 'bk-resource-edit-page',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent,
-    CommentsAccordionComponent, IconToolbarComponent, ResourceFormComponent, CategorySelectComponent,
-    ReservationsAccordionComponent,
+    Header, ChangeConfirmation,
+    CommentsAccordion, IconToolbar, ResourceForm, CategorySelect,
+    ReservationsAccordion,
     IonContent, IonAccordionGroup, IonGrid, IonRow, IonCol
   ],
   providers: [ResourceEditStore],
@@ -69,7 +70,7 @@ import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservab
     </ion-content>
   `
 })
-export class ResourceEditPageComponent {
+export class ResourceEditPage {
   private readonly resourceEditStore = inject(ResourceEditStore);
 
   // inputs

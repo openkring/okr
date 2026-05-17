@@ -1,7 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { SectionModel } from '@bk2/shared-models';
 
 import { SectionDispatcher } from "./section-dispatcher";
@@ -11,7 +11,7 @@ import { SectionDispatcher } from "./section-dispatcher";
   standalone: true,
   imports: [
     IonContent,
-    SectionDispatcher, HeaderComponent
+    SectionDispatcher, Header
 ],
   template: `
     <bk-header [title]="title()" [isModal]="true" />

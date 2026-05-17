@@ -52,7 +52,7 @@ import { SwissCitiesSearchStore } from './swisscity-search.store';
     </ion-row>
   `
 })
-export class SwissCitySearchComponent implements OnInit {
+export class SwissCitySearch implements OnInit {
   protected swissCitiesSearchStore = inject(SwissCitiesSearchStore);
   public searchTerm = input('');
   public placeholder = input('Stadt oder PLZ suchen');

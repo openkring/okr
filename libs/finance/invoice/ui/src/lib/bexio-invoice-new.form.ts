@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { DateInputComponent, NotesInputComponent, NumberInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
+import { DateInput, NotesInput, NumberInput, StringSelect, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
@@ -15,7 +15,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
   imports: [
     SvgIconPipe,
     vestForms, FormsModule,
-    TextInputComponent, DateInputComponent, NumberInputComponent, NotesInputComponent, StringSelectComponent,
+    TextInput, DateInput, NumberInput, NotesInput, StringSelect,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
     IonList, IonItem, IonButton, IonIcon,
   ],
@@ -71,7 +71,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes name="header" [value]="header()"
+                  <bk-notes-input name="header" [value]="header()"
                     (valueChange)="onFieldChange('header', $event)"
                     title="@finance.invoice.field.header.label" [showTitle]="true"
                     [readOnly]="isReadOnly()" />
@@ -79,7 +79,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes name="footer" [value]="footer()"
+                  <bk-notes-input name="footer" [value]="footer()"
                     (valueChange)="onFieldChange('footer', $event)"
                     title="@finance.invoice.field.footer.label" [showTitle]="true"
                     [readOnly]="isReadOnly()" />

@@ -1,21 +1,17 @@
 {
-  "document": {
-    "operation": {
-      "create": {
-        "label": "Dokument hinzufügen",
-        "conf": "Das neue Dokument wurde hinzugefügt.",
-        "error": "Das Dokument konnte nicht gespeichert werden."
-      },
-      "update": {
-        "label": "Dokument ändern",
-        "conf": "Das Dokument wurde geändert.",
-        "error": "Das Dokument konnte nicht geändert werden."
-      },
-      "delete": {
-        "label": "Dokument löschen",
-        "conf": "Das Dokument wurde gelöscht.",
-        "error": "Das Dokument konnte nicht gelöscht werden."
-      }
-    }
+  "create": {
+    "label": "Dokument hinzufügen",
+    "conf": "Das neue Dokument wurde hinzugefügt.",
+    "error": "Das Dokument konnte nicht gespeichert werden."
+  },
+  "update": {
+    "label": "Dokument ändern",
+    "conf": "Das Dokument wurde geändert.",
+    "error": "Das Dokument konnte nicht geändert werden."
+  },
+  "delete": {
+    "label": "Dokument löschen",
+    "conf": "Das Dokument wurde gelöscht.",
+    "error": "Das Dokument konnte nicht gelöscht werden."
   }
 }

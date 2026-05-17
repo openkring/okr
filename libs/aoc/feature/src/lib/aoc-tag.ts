@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, IonSearchbar, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
@@ -15,7 +15,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, FormsModule,
-    HeaderComponent,
+    Header,
     IonContent, IonToolbar, IonSearchbar, IonButtons, IonButton, IonIcon,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonList, IonItem, IonLabel, IonNote, IonBadge,
@@ -121,7 +121,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
     </ion-content>
   `,
 })
-export class AocTagComponent {
+export class AocTag {
   protected readonly aocTagStore = inject(AocTagStore);
   private readonly actionSheetController = inject(ActionSheetController);
 

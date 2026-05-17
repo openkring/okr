@@ -23,7 +23,7 @@ Collection name: `comments`
 | `tags` | string | Comma-separated tags |
 
 ## State (CommentListStore)
-The `CommentListStore` (NgRx Signal Store, local scope — provided in `CommentsAccordionComponent`) holds:
+The `CommentListStore` (NgRx Signal Store, local scope — provided in `CommentsAccordion`) holds:
 - `parentKey` — drives the Firestore query; updated via `setParentKey()`
 - `commentsResource` — live Firestore stream filtered by `parentKey`
 
@@ -33,11 +33,11 @@ The store exposes a single action:
 ## Key Components
 | Component | Selector | Role |
 |---|---|---|
-| `CommentsAccordionComponent` | `bk-comments-accordion` | Collapsible accordion wrapping the comment list; shows add button for non-read-only users |
-| `CommentsCardComponent` | `bk-comments-card` | Inline card embedding the comment list |
-| `CommentsListComponent` | (from `@bk2/comment-ui`) | Presentational list rendering individual comments |
+| `CommentsAccordion` | `bk-comments-accordion` | Collapsible accordion wrapping the comment list; shows add button for non-read-only users |
+| `CommentsCard` | `bk-comments-card` | Inline card embedding the comment list |
+| `CommentsList` | (from `@bk2/comment-ui`) | Presentational list rendering individual comments |
 
-### CommentsAccordionComponent Inputs
+### CommentsAccordion Inputs
 | Input | Type | Default | Description |
 |---|---|---|---|
 | `parentKey` | string | (required) | Composite key of the parent model |

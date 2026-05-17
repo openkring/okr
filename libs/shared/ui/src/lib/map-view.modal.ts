@@ -5,7 +5,7 @@ import { ENV } from '@bk2/shared-config';
 import { isBrowser } from '@bk2/shared-util-angular';
 import { coerceBoolean, die } from '@bk2/shared-util-core';
 
-import { HeaderComponent } from './header.component';
+import { Header } from './header';
 
 // Dynamic import for Capacitor Google Maps to avoid SSR issues
 let GoogleMap: any;
@@ -34,7 +34,7 @@ export interface GeoCoordinates {
 }
   `],
   imports: [
-    HeaderComponent,
+    Header,
     IonContent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -45,7 +45,7 @@ export interface GeoCoordinates {
       </ion-content>
   `
 })
-export class MapViewModalComponent implements OnInit, OnDestroy {
+export class MapViewModal implements OnInit, OnDestroy {
   private readonly env = inject(ENV);
   private readonly platformId = inject(PLATFORM_ID);
 
@@ -73,7 +73,7 @@ export class MapViewModalComponent implements OnInit, OnDestroy {
 
   async loadMap() {
     if (!isBrowser(this.platformId)) {
-      console.warn('MapSectionComponent.loadMap: Not in browser, skipping map load');
+      console.warn('MapViewModal.loadMap: Not in browser, skipping map load');
       return;
     }
     

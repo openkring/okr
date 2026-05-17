@@ -6,10 +6,10 @@ import { vestForms } from 'ngx-vest-forms';
 import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, die, getTodayStr, hasRole } from '@bk2/shared-util-core';
+import { CategorySelect, Chips, DateInput, NotesInput, NumberInput, TextInput } from '@bk2/shared-ui';
+import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
 
-import { AvatarsComponent } from '@bk2/avatar-ui';
+import { BkAvatar } from '@bk2/avatar-ui';
 import { transferValidations } from '@bk2/relationship-transfer-util';
 
 @Component({
@@ -18,8 +18,7 @@ import { transferValidations } from '@bk2/relationship-transfer-util';
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe,
-    DateInputComponent, TextInputComponent, NotesInputComponent, NumberInputComponent,
-    AvatarsComponent, CategorySelectComponent, ChipsComponent,
+    DateInput, TextInput, NotesInput, NumberInput, BkAvatar, CategorySelect, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonInput, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -130,14 +129,14 @@ import { transferValidations } from '@bk2/relationship-transfer-util';
           } 
           
           @if(hasRole('admin')) {
-            <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
           }
         }
       </form>
     }
   `,
 })
-export class TransferFormComponent {
+export class TransferForm {
   // inputs
   public readonly formData = model.required<TransferModel>();
   public currentUser = input<UserModel | undefined>();

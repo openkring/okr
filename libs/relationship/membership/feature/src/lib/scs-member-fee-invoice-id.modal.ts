@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonContent, IonFooter, IonInput, IonItem, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { ScsMemberFeesModel } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-scs-member-fee-invoice-id-modal',
@@ -11,7 +11,7 @@ import { HeaderComponent } from '@bk2/shared-ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    HeaderComponent,
+    Header,
     IonContent, IonFooter, IonToolbar, IonButtons, IonButton, IonItem, IonInput,
   ],
   template: `

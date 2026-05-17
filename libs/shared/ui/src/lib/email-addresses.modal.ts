@@ -7,7 +7,7 @@ import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, EmailEntry } from '@bk2/shared-util-angular';
 
-import { HeaderComponent } from './header.component';
+import { Header } from './header';
 
 type Segment = 'main' | 'cc';
 
@@ -17,7 +17,7 @@ type Segment = 'main' | 'cc';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule, AsyncPipe, TranslatePipe,
-    HeaderComponent,
+    Header,
     IonContent, IonFooter, IonToolbar, IonButtons, IonButton,
     IonSegment, IonSegmentButton, IonLabel,
     IonList, IonItem, IonNote,

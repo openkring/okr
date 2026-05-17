@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { IonContent, IonGrid, IonRow, IonCol, IonLabel, ModalController } from '@ionic/angular/standalone';
 
 import { ScsMemberFeesModel } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 
@@ -14,7 +14,7 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TranslatePipe, AsyncPipe,
-    HeaderComponent,
+    Header,
     IonContent, IonGrid, IonRow, IonCol, IonLabel,
   ],
   styles: [`

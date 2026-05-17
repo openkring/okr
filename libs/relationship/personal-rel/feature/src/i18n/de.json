@@ -1,17 +1,12 @@
 {
-  "personalRel": {
-    "field": {
-      "empty": "Keine persönlichen Beziehungen gefunden."
-    },
-    "plural": "Persönliche Beziehungen",
-    "list": {
-      "title": "Persönliche Beziehungen",
-      "header": {
-        "person1": "Person1",
-        "type": "Beziehungsart",
-        "person2": "Person2"
-      }
-    }
+  "personalrels": "Persönliche Beziehungen",
+  "empty": "Keine persönlichen Beziehungen gefunden.",
+  "title": "Persönliche Beziehungen",
+  "person1": "Person1",
+  "type": "Beziehungsart",
+  "person2": "Person2",
+  "delete": {
+    "confirm": "Soll diese Beziehung wirklich gelöscht werden ?"
   },
   "actionsheet": {
     "label": {

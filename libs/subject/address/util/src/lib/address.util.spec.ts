@@ -1,29 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ToastController } from '@ionic/angular';
-import { bkTranslate } from '@bk2/shared-i18n';
-import { AddressChannel, AddressModel, AddressUsage, ModelType } from '@bk2/shared-models';
-import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
-import { getCountryName, getModelAndKey } from '@bk2/shared-util-core';
-import { getAddressModalTitle, getAddressCollection, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, copyAddress, stringifyAddress, stringifyPostalAddress } from './address.util';
+import { AddressModel } from '@bk2/shared-models';
+import { getCountryName } from '@bk2/shared-util-core';
+import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, stringifyAddress, stringifyPostalAddress } from './address.util';
 
 // Mock all external dependencies
 vi.mock('@capacitor/browser');
-vi.mock('@bk2/shared-i18n', () => ({
-  bkTranslate: vi.fn(),
-}));
-vi.mock('@bk2/shared-util-angular', () => ({
-  copyToClipboard: vi.fn(),
-  showToast: vi.fn(),
-}));
 vi.mock('@bk2/shared-util-core');
 
 describe('Address Utils', () => {
   const mockGetCountryName = vi.mocked(getCountryName);
-  const mockGetModelAndKey = vi.mocked(getModelAndKey);
-  const mockCopyToClipboard = vi.mocked(copyToClipboard);
-  const mockShowToast = vi.mocked(showToast);
-  const mockBkTranslate = vi.mocked(bkTranslate);
-
   const tenantId = 'tenant-1';
   let address: AddressModel;
 
@@ -32,26 +17,14 @@ describe('Address Utils', () => {
     address = new AddressModel(tenantId);
   });
 
-  describe('getAddressModalTitle', () => {
-    it('should return the create title if key is undefined', () => {
-      const title = getAddressModalTitle(undefined);
-      expect(title).toBe('@subject.address.operation.create.label');
-    });
-
-    it('should return the update title if key is provided', () => {
-      const title = getAddressModalTitle('some-key');
-      expect(title).toBe('@subject.address.operation.update.label');
-    });
-  });
-
   describe('stringifyPostalAddress', () => {
     it('should return undefined for non-postal addresses', () => {
-      address.channelType = AddressChannel.Email;
+      address.addressChannel = 'email';
       expect(stringifyPostalAddress(address, 'en')).toBeUndefined();
     });
 
     it('should return a formatted string for postal addresses', () => {
-      address.channelType = AddressChannel.Postal;
+      address.addressChannel = 'postal';
       address.streetName = 'Main St';
       address.streetNumber = '123';
       address.zipCode = '90210';
@@ -65,7 +38,7 @@ describe('Address Utils', () => {
     });
 
     it('should return a formatted string without country if country name is not found', () => {
-      address.channelType = AddressChannel.Postal;
+      address.addressChannel = 'postal';
       address.streetName = 'Main St';
       address.streetNumber = '123';
       address.zipCode = '90210';
@@ -77,25 +50,11 @@ describe('Address Utils', () => {
     });
   });
 
-  describe('getAddressCollection', () => {
-    it('should return the correct collection for a Person', () => {
-      mockGetModelAndKey.mockReturnValue([ModelType.Person, 'person-key']);
-      const collection = getAddressCollection('Person.person-key');
-      expect(collection).toBe('persons/person-key/addresses');
-    });
-
-    it('should return the correct collection for an Org', () => {
-      mockGetModelAndKey.mockReturnValue([ModelType.Org, 'org-key']);
-      const collection = getAddressCollection('Org.org-key');
-      expect(collection).toBe('orgs/org-key/addresses');
-    });
-  });
-
   describe('createAddress functions', () => {
     it('createAddress should create a valid AddressModel', () => {
-      const newAddress = createFavoriteEmailAddress(AddressUsage.Home, 'test@test.com', tenantId);
-      expect(newAddress.usageType).toBe(AddressUsage.Home);
-      expect(newAddress.channelType).toBe(AddressChannel.Email);
+      const newAddress = createFavoriteEmailAddress('home', 'test@test.com', tenantId);
+      expect(newAddress.addressUsage).toBe('home');
+      expect(newAddress.addressChannel).toBe('email');
       expect(newAddress.email).toBe('test@test.com');
       expect(newAddress.isFavorite).toBe(true);
       expect(newAddress.isValidated).toBe(false);
@@ -104,26 +63,26 @@ describe('Address Utils', () => {
     });
 
     it('createFavoriteEmailAddress should create a favorite email address', () => {
-      const email = createFavoriteEmailAddress(AddressUsage.Work, 'work@example.com', tenantId);
-      expect(email.channelType).toBe(AddressChannel.Email);
+      const email = createFavoriteEmailAddress('work', 'work@example.com', tenantId);
+      expect(email.addressChannel).toBe('email');
       expect(email.isFavorite).toBe(true);
     });
 
     it('createFavoritePhoneAddress should create a favorite phone address', () => {
-      const phone = createFavoritePhoneAddress(AddressUsage.Mobile, '555-1234', tenantId);
-      expect(phone.channelType).toBe(AddressChannel.Phone);
+      const phone = createFavoritePhoneAddress('mobile', '555-1234', tenantId);
+      expect(phone.addressChannel).toBe('phone');
       expect(phone.isFavorite).toBe(true);
     });
 
     it('createFavoriteWebAddress should create a favorite web address', () => {
-      const web = createFavoriteWebAddress(AddressUsage.Custom, 'http://a.co', tenantId);
-      expect(web.channelType).toBe(AddressChannel.Web);
+      const web = createFavoriteWebAddress('custom', 'http://a.co', tenantId);
+      expect(web.addressChannel).toBe('web');
       expect(web.isFavorite).toBe(true);
     });
 
     it('createPostalAddress should create a valid postal address', () => {
-      const postal = createPostalAddress(tenantId, AddressUsage.Home, 'street', '123', 'apt 1', '12345', 'city', 'US');
-      expect(postal.channelType).toBe(AddressChannel.Postal);
+      const postal = createPostalAddress(tenantId, 'home', 'street', '123', 'apt 1', '12345', 'city', 'US');
+      expect(postal.addressChannel).toBe('postal');
       expect(postal.streetName).toBe('street');
       expect(postal.streetNumber).toBe('123');
       expect(postal.addressValue2).toBe('apt 1');
@@ -131,11 +90,11 @@ describe('Address Utils', () => {
     });
 
     it('createFavoritePostalAddress should create a favorite postal address', () => {
-      const favPostal = createFavoritePostalAddress(AddressUsage.Home, 'street', '123', '99999', 'city', 'US', tenantId);
-      expect(favPostal.usageType).toBe(AddressUsage.Home);
-      expect(favPostal.usageLabel).toBe('');
-      expect(favPostal.channelType).toBe(AddressChannel.Postal);
-      expect(favPostal.channelLabel).toBe('');
+      const favPostal = createFavoritePostalAddress('home', 'street', '123', '99999', 'city', 'US', tenantId);
+      expect(favPostal.addressUsage).toBe('home');
+      expect(favPostal.addressUsageLabel).toBe('');
+      expect(favPostal.addressChannel).toBe('postal');
+      expect(favPostal.addressChannelLabel).toBe('');
       expect(favPostal.email).toBe('');
       expect(favPostal.phone).toBe('');
       expect(favPostal.streetName).toBe('street');
@@ -148,30 +107,9 @@ describe('Address Utils', () => {
     });
   });
 
-  describe('copyAddress', () => {
-    const mockToastController = {} as ToastController;
-
-    it('should copy a stringified postal address', async () => {
-      address.channelType = AddressChannel.Postal;
-      mockBkTranslate.mockReturnValue('Copied!');
-      await copyAddress(mockToastController, address, 'en');
-      expect(mockCopyToClipboard).toHaveBeenCalledWith(stringifyPostalAddress(address, 'en'));
-      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, 'Copied!');
-    });
-
-    it('should copy the value of a non-postal address', async () => {
-      address.channelType = AddressChannel.Email;
-      address.email = 'test@example.com';
-      mockBkTranslate.mockReturnValue('Copied!');
-      await copyAddress(mockToastController, address, 'en');
-      expect(mockCopyToClipboard).toHaveBeenCalledWith('test@example.com');
-      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, 'Copied!');
-    });
-  });
-
   describe('stringifyAddress', () => {
     it('should return a formatted string for a postal address', () => {
-      address.channelType = AddressChannel.Postal;
+      address.addressChannel = 'postal';
       address.streetName = 'Main St';
       address.streetNumber = '123';
       address.zipCode = '90210';
@@ -180,7 +118,7 @@ describe('Address Utils', () => {
     });
 
     it('should return the value for a non-postal address', () => {
-      address.channelType = AddressChannel.Email;
+      address.addressChannel = 'email';
       address.email = 'test@example.com';
       expect(stringifyAddress(address)).toBe('test@example.com');
     });

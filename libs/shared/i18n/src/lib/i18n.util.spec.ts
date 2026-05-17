@@ -8,27 +8,7 @@ vi.mock('@jsverse/transloco', () => ({
 }));
 
 import { getBrowserLang } from '@jsverse/transloco';
-import { bkTranslate, convertCountryCode, getLabel, selectLanguage } from './i18n.util';
-
-describe('bkTranslate', () => {
-  it('returns empty string for null/undefined/empty key', () => {
-    expect(bkTranslate(null)).toBe('');
-    expect(bkTranslate(undefined)).toBe('');
-    expect(bkTranslate('')).toBe('');
-  });
-
-  it('returns translated value for @-prefixed key with argument', () => {
-    expect(bkTranslate('@test.key', { foo: 'bar' })).toBe('translated:test.key:{"foo":"bar"}');
-  });
-
-  it('returns translated value for @-prefixed key without argument', () => {
-    expect(bkTranslate('@test.key')).toBe('translated:test.key');
-  });
-
-  it('returns key as-is for non-@-prefixed key', () => {
-    expect(bkTranslate('plainKey')).toBe('plainKey');
-  });
-});
+import { convertCountryCode, getLabel, selectLanguage } from './i18n.util';
 
 describe('selectLanguage', () => {
   beforeEach(() => {
@@ -54,13 +34,13 @@ describe('selectLanguage', () => {
 });
 
 describe('getLabel', () => {
-  it('calls bkTranslate', () => {
+  it('translates an @-prefixed key', () => {
     expect(getLabel('@label.key')).toBe('translated:label.key');
   });
 });
 
 describe('convertCountryCode', () => {
-  it('calls bkTranslate with country code', () => {
+  it('translates a country code', () => {
     expect(convertCountryCode('ch')).toBe('translated:general.countries.CH');
   });
 });

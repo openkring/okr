@@ -4,7 +4,7 @@ import { IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/s
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryModel } from '@bk2/shared-models';
-import { HeaderComponent } from './header.component';
+import { Header } from './header';
 
 /**
  * A modal to select a category from a list of categories.
@@ -17,7 +17,7 @@ import { HeaderComponent } from './header.component';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
-    HeaderComponent,
+    Header,
     IonContent, IonLabel, IonItem
   ],
   template: `
@@ -31,7 +31,7 @@ import { HeaderComponent } from './header.component';
     </ion-content>
   `,
 })
-export class CategorySelectModalComponent {
+export class CategorySelectModal {
   private readonly modalController = inject(ModalController);
   public categories = input.required<CategoryModel[]>(); // mandatory view model
   

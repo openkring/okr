@@ -6,7 +6,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, NotesInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS } from '@bk2/shared-constants';
 
@@ -19,9 +19,9 @@ import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
   imports: [
     vestForms,
     AvatarPipe, AsyncPipe, FullNamePipe, TranslatePipe,
-    DateInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent,
+    DateInput, Chips, NotesInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
-    TextInputComponent
+    TextInput
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -114,13 +114,13 @@ import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
       }
 
       @if(hasRole('admin')) {
-        <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
   `
 })
-export class PersonalRelFormComponent {
+export class PersonalRelForm {
   // inputs
   public formData = model.required<PersonalRelModel>();
   public currentUser = input<UserModel | undefined>();

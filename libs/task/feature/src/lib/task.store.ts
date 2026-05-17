@@ -10,7 +10,7 @@ import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystem
 import { TaskService } from '@bk2/task-data-access';
 
 import { ModalController } from '@ionic/angular/standalone';
-import { TaskEditModalComponent } from 'libs/task/feature/src/lib/task-edit.modal';
+import { TaskEditModal } from 'libs/task/feature/src/lib/task-edit.modal';
 import { isTask } from '@bk2/task-util';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { map, of } from 'rxjs';
@@ -192,7 +192,7 @@ export const TaskStore = signalStore(
 
     async edit(task: TaskModel, readOnly = true): Promise<void> {
       const modal = await store.modalController.create({
-        component: TaskEditModalComponent,
+        component: TaskEditModal,
         componentProps: {
           task,
           currentUser: store.currentUser(),

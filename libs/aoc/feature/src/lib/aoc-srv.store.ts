@@ -9,18 +9,18 @@ import { firstValueFrom } from 'rxjs';
 
 import { isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvMismatch } from '@bk2/shared-models';
 import { debugListLoaded, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@bk2/shared-util-core';
 
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
-import { MemberNewModal, MembershipEditModalComponent } from '@bk2/relationship-membership-feature';
+import { MembershipEditModal } from '@bk2/relationship-membership-feature';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { PersonEditModal } from '@bk2/subject-person-feature';
+import { newMembershipForPerson } from '@bk2/relationship-membership-util';
 
 import { AocSrvMismatchModal } from './aoc-srv-mismatch.modal';
-import { newMembershipForPerson } from '@bk2/relationship-membership-util';
 
 export { getMismatches };
 
@@ -440,7 +440,7 @@ export const AocSrvStore = signalStore(
       const mcat = store.mcat();
       if (!membership || !mcat) return;
       const modal = await store.modalController.create({
-        component: MembershipEditModalComponent,
+        component: MembershipEditModal,
         componentProps: {
           membership: { ...membership },
           currentUser: store.appStore.currentUser(),
@@ -465,7 +465,7 @@ export const AocSrvStore = signalStore(
       const mcat = store.mcat();
       if (!membership || !mcat) return;
       const modal = await store.modalController.create({
-        component: MembershipEditModalComponent,
+        component: MembershipEditModal,
         componentProps: {
           membership: { ...membership },
           currentUser: store.appStore.currentUser(),

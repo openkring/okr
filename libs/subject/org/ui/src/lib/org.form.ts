@@ -1,11 +1,12 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
 import { CategoryListModel, OrgModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, NotesInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+
 import { orgValidations } from '@bk2/subject-org-util';
 
 @Component({
@@ -13,7 +14,7 @@ import { orgValidations } from '@bk2/subject-org-util';
   standalone: true,
   imports: [
     vestForms,
-    CategorySelectComponent, DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent,
+    CategorySelect, DateInput, TextInput, Chips, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
    styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -76,13 +77,13 @@ import { orgValidations } from '@bk2/subject-org-util';
       }
 
       @if(hasRole('admin')) { 
-        <bk-notes name="notes" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
+        <bk-notes-input name="notes" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
       }
     </form>
   }
   `
 })
-export class OrgFormComponent {
+export class OrgForm {
   // inputs
   public readonly formData = model.required<OrgModel>();
   public readonly currentUser = input<UserModel | undefined>();

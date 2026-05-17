@@ -1,66 +1,25 @@
 {
-  "input": {
-    "calendarName": {
-      "select": "Kalender wählen"
-    }
+  "calendar": {
+    "select": "Kalender wählen"
   },
-  "subject": {
-    "group": {
-      "operation": {
-        "select": {
-          "label": "Gruppe wählen"
-        }
-      },
-      "field": {
-        "empty": "Keine Gruppen gefunden."
-      }
-    },
-    "org": {
-      "field": {
-        "empty": "Keine Organisationen gefunden."
-      },
-      "operation": {
-        "select": {
-          "label": "Organisation wählen"
-        }
-      }
-    },
-    "person": {
-      "field": {
-        "empty": "Keine Personen gefunden."
-      },
-      "operation": {
-        "select": {
-          "label": "Person wählen"
-        }
-      }
-    }
+  "group": {
+    "select": "Gruppe wählen",
+    "empty": "Keine Gruppen gefunden."
   },
-  "shared": {
-    "operation": {
-      "select": {
-        "label": "Auswählen"
-      }
-    }
+  "org": {
+    "empty": "Keine Organisationen gefunden.",
+    "select": "Organisation wählen"
+  },
+  "person": {
+    "empty": "Keine Personen gefunden.",
+    "select": "Person wählen"
   },
   "resource": {
-    "operation": {
-      "select": {
-        "label": "Resource wählen"
-      }
-    },
-    "field": {
-      "empty": "Keine Resourcen gefunden."
-    }
+    "select": "Resource wählen",
+    "empty": "Keine Resourcen gefunden."
   },
   "responsibility": {
-    "operation": {
-      "select": {
-        "label": "Verantwortliche wählen"
-      }
-    },
-    "field": {
-      "empty": "Keine Verantwortungen gefunden."
-    }
+    "select": "Verantwortliche wählen",
+    "empty": "Keine Verantwortungen gefunden."
   }
 }

@@ -4,24 +4,23 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
 import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, convertDateFormatToString, DateFormat, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-
-import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
-
-import { OrgNewFormModel, orgNewFormValidations } from '@bk2/subject-org-util';
+import { CategorySelect, Chips, DateInput, EmailInput, ErrorNote, NotesInput, PhoneInput, TextInput } from '@bk2/shared-ui';
+import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
+
+import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
+import { OrgNewFormModel, orgNewFormValidations } from '@bk2/subject-org-util';
 import { ZefixCompanyDetails } from '@bk2/subject-org-data-access';
-import { ZefixLookupComponent } from './zefix-lookup.component';
+
+import { ZefixLookup } from './zefix-lookup';
 
 @Component({
   selector: 'bk-org-new-form',
   standalone: true,
   imports: [
     vestForms,
-    DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent, ErrorNoteComponent,
-    EmailInputComponent, PhoneInputComponent, SwissCitySearchComponent, CategorySelectComponent,
-    ZefixLookupComponent,
+    DateInput, TextInput, Chips, NotesInput, ErrorNote, EmailInput, PhoneInput, 
+    SwissCitySearch, CategorySelect, ZefixLookup,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -137,13 +136,13 @@ import { ZefixLookupComponent } from './zefix-lookup.component';
       }
 
       @if(hasRole('admin')) { 
-        <bk-notes name="notes" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
+        <bk-notes-input name="notes" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
       }
     </form>
   }
   `
 })
-export class OrgNewFormComponent {
+export class OrgNewForm {
 
   // inputs
   public formData = model.required<OrgNewFormModel>();

@@ -15,7 +15,7 @@ import { AddressCollection, AddressModel, AddressModelName, CategoryListModel, D
 import { AlertService, downloadToBrowser } from '@bk2/shared-util-angular';
 import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@bk2/shared-util-core';
 import { Languages } from '@bk2/shared-categories';
-import { MapViewModalComponent } from '@bk2/shared-ui';
+import { MapViewModal } from '@bk2/shared-ui';
 
 import { UploadService } from '@bk2/avatar-data-access';
 import { DocumentService } from '@bk2/document-data-access';
@@ -24,7 +24,7 @@ import { FolderService } from '@bk2/folder-data-access';
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
 import { browseUrl, copyAddress, isAddress, stringifyPostalAddress } from '@bk2/subject-address-util';
 
-import { AddressEditModalComponent } from './address-edit.modal';
+import { AddressEditModal } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
 import { I18nService } from '@bk2/shared-i18n';
 import { PFX } from 'libs/subject/address/feature/src/lib/scope';
@@ -175,7 +175,7 @@ export const AddressStore = signalStore(
        */
        async edit(address: AddressModel, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-        component: AddressEditModalComponent,
+        component: AddressEditModal,
         componentProps: {
             address,
             currentUser: store.currentUser(),
@@ -376,7 +376,7 @@ export const AddressStore = signalStore(
         const coordinates = await store.geocodeService.geocodeAddress(addressStr);
         if (!coordinates) return;
         const modal = await store.modalController.create({
-          component: MapViewModalComponent,
+          component: MapViewModal,
           componentProps: {
             title: addressStr,
             initialPosition: coordinates

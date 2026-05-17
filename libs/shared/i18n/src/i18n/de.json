@@ -1,11 +1,9 @@
 {
   "calevent": {
-    "operation": {
-      "create": {
-        "label": "Ereignis hinzufügen",
-        "conf": "Das Ereignis wurde hinzugefügt.",
-        "error": "Das Ereignis konnte nicht hinzugefügt werden."
-      }
+    "create": {
+      "label": "Ereignis hinzufügen",
+      "conf": "Das Ereignis wurde hinzugefügt.",
+      "error": "Das Ereignis konnte nicht hinzugefügt werden."
     }
   }
 }

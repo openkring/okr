@@ -4,7 +4,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_DATE, WORD_LENGTH } from '@bk2/shared-constants';
 import { ResponsibilityModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopyComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from '@bk2/shared-ui';
+import { ButtonCopy, DateInput, ErrorNote, TextInput } from '@bk2/shared-ui';
 import { debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
 import { isDelegateActive, responsibilityValidations } from '@bk2/relationship-responsibility-util';
@@ -15,7 +15,7 @@ import { LowercaseWordMask } from '@bk2/shared-config';
   standalone: true,
   imports: [
     vestForms,
-    TextInputComponent, DateInputComponent, ButtonCopyComponent, ErrorNoteComponent,
+    TextInput, DateInput, ButtonCopy, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonItem, IonLabel, IonButton, IonText
   ],

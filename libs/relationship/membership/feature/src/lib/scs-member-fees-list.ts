@@ -5,7 +5,7 @@ import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonBut
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { INVOICE_STATE_VALUES, RoleName, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { getAge, hasRole } from '@bk2/shared-util-core';
 
@@ -15,7 +15,7 @@ import { getFeeTotal } from '@bk2/relationship-membership-data-access';
 
 import { ScsMemberFeesStore } from './scs-member-fees.store';
 import { ScsMemberFeeEditModal } from './scs-member-fee-edit.modal';
-import { MenuComponent } from '@bk2/cms-menu-feature';
+import { Menu } from '@bk2/cms-menu-feature';
 
 @Component({
   selector: 'bk-scs-member-fees',
@@ -23,7 +23,7 @@ import { MenuComponent } from '@bk2/cms-menu-feature';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AsyncPipe, TranslatePipe, AvatarPipe, SvgIconPipe,
-    SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
+    Spinner, ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
     IonContent, IonItem, IonAvatar, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonChip
   ],

@@ -81,13 +81,13 @@ An NgRx Signal Store managing personal relationships for a tenant or a specific 
 | `setPerson(person)` | Sets the person scope; triggers reload of the person's relationships |
 | `setShowMode(showOnlyCurrent)` | Toggles between current and all relationships |
 | `add(readOnly)` | Creates a new `PersonalRelModel` pre-filled with the current person and opens the edit modal |
-| `edit(personalRel, readOnly)` | Opens `PersonalRelEditModalComponent` |
+| `edit(personalRel, readOnly)` | Opens `PersonalRelEditModal` |
 | `end(personalRel?, readOnly)` | Picks an end date and sets `validTo` |
 | `delete(personalRel?, readOnly)` | Confirms and hard-deletes the relationship |
 
 ## Components
 
-### `PersonalRelEditModalComponent`
+### `PersonalRelEditModal`
 
 An Ionic modal for creating or editing a `PersonalRelModel`. Receives the following props: `personalRel`, `currentUser`, `tags`, `types` (CategoryListModel), `readOnly`.
 

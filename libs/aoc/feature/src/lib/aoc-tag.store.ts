@@ -9,6 +9,9 @@ import { AppStore } from '@bk2/shared-feature';
 import { BkModel, TagCollection, TagModel } from '@bk2/shared-models';
 import { bkPrompt, confirm } from '@bk2/shared-util-angular';
 import { getSystemQuery } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { PFX } from './scope';
 
 /**
  * TagModel as it arrives from Firestore.
@@ -35,8 +38,35 @@ export const AocTagStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     alertController: inject(AlertController),
+    i18nService: inject(I18nService)
   })),
   withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      add_header: PFX + 'tag.add.header',
+      add_placeholder: PFX + 'tag.add.placeholder',
+      add_button: PFX + 'tag.add.button',
+      add_conf: PFX + 'tag.add.conf',
+      add_error: PFX + 'tag.add.error',
+      create_header: PFX + 'tag.create.header',
+      create_placeholder: PFX + 'tag.create.placeholder',
+      create_conf: PFX + 'tag.create.conf',
+      create_error: PFX + 'tag.create.error',
+      delete_conf: PFX + 'tag.delete.conf',
+      delete_confirm: PFX + 'tag.delete.confirm',
+      delete_error: PFX + 'tag.delete.error',
+      edit_header: PFX + 'tag.edit.header',
+      edit_placeholder: PFX + 'tag.edit.placeholder',
+      edit_conf: PFX + 'tag.edit.conf',
+      edit_error: PFX + 'tag.edit.error',
+      remove_conf: PFX + 'tag.remove.conf',
+      remove_error: PFX + 'tag.remove.error',
+      update_conf: PFX + 'tag.update.conf',
+      update_error: PFX + 'tag.update.error',
+      search: PFX + 'tag.search.placeholder',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     tagsResource: rxResource({
       params: () => ({
         fbUser: store.appStore.fbUser(),
@@ -84,43 +114,43 @@ export const AocTagStore = signalStore(
 
     async createTagDocument(): Promise<void> {
       const tenantId = store.appStore.env.tenantId;
-      const modelName = await bkPrompt(store.alertController, '@aoc.tag.create.header', '@aoc.tag.create.placeholder');
+      const modelName = await bkPrompt(store.alertController, store.i18n.create_header(), store.i18n.create_placeholder(), store.i18n.ok(), store.i18n.cancel());
       if (!modelName?.trim()) return;
       const tag = new TagModel(tenantId);
       tag.tagModel = modelName.trim();
       tag.tags = '';
-      await store.firestoreService.createModel<TagItem>(TagCollection, { ...tag, bkey: '' }, '@aoc.tag.operation.create', store.appStore.currentUser());
+      await store.firestoreService.createModel<TagItem>(TagCollection, { ...tag, bkey: '' }, store.i18n.create_conf(), store.i18n.create_error(), store.appStore.currentUser());
     },
 
     async archiveTagDocument(tag: TagItem): Promise<void> {
-      const ok = await confirm(store.alertController, '@aoc.tag.delete.confirm', true);
+      const ok = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!ok) return;
       if (store.selectedTagKey() === tag.bkey) {
         patchState(store, { selectedTagKey: undefined });
       }
-      await store.firestoreService.deleteModel<TagItem>(TagCollection, { ...tag }, '@aoc.tag.operation.delete', store.appStore.currentUser());
+      await store.firestoreService.deleteModel<TagItem>(TagCollection, { ...tag }, store.i18n.delete_conf(), store.i18n.delete_error(), store.appStore.currentUser());
     },
 
     async addTagString(tag: TagItem): Promise<void> {
-      const newStr = await bkPrompt(store.alertController, '@aoc.tag.string.add.header', '@aoc.tag.string.add.placeholder');
+      const newStr = await bkPrompt(store.alertController, store.i18n.add_header(), store.i18n.add_placeholder(), store.i18n.ok(), store.i18n.cancel());
       if (!newStr?.trim()) return;
       const existing = tag.tags ? tag.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
       const updated = [...existing, newStr.trim()].join(',');
-      await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags: updated }, false, '@aoc.tag.operation.update', store.appStore.currentUser());
+      await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags: updated }, false, store.i18n.add_conf(), store.i18n.add_error(), store.appStore.currentUser());
     },
 
     async removeTagString(tag: TagItem, tagStr: string): Promise<void> {
       const existing = tag.tags ? tag.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
       const updated = existing.filter(s => s !== tagStr).join(',');
-      await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags: updated }, false, '@aoc.tag.operation.update', store.appStore.currentUser());
+      await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags: updated }, false, store.i18n.remove_conf(), store.i18n.remove_error(), store.appStore.currentUser());
     },
 
     async editTagString(tag: TagItem, tagStr: string): Promise<void> {
-      const edited = await bkPrompt(store.alertController, '@aoc.tag.string.edit.header', '@aoc.tag.string.edit.placeholder', tagStr);
+      const edited = await bkPrompt(store.alertController, store.i18n.edit_header(), store.i18n.edit_placeholder(), store.i18n.ok(), store.i18n.cancel(), tagStr);
       if (!edited?.trim() || edited.trim() === tagStr) return;
       const existing = tag.tags ? tag.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
       const updated = existing.map(s => (s === tagStr ? edited.trim() : s)).join(',');
-      await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags: updated }, false, '@aoc.tag.operation.update', store.appStore.currentUser());
+      await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags: updated }, false, store.i18n.edit_conf(), store.i18n.edit_error(), store.appStore.currentUser());
     },
   }))
 );

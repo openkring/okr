@@ -5,7 +5,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { InvoiceModel, UserModel } from '@bk2/shared-models';
-import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
+import { Chips, DateInput, NotesInput, NumberInput, StringSelect, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { invoiceValidations } from '@bk2/finance-invoice-util';
@@ -18,8 +18,8 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
   standalone: true,
   imports: [
     vestForms, FormsModule,
-    TextInputComponent, DateInputComponent, NumberInputComponent,
-    StringSelectComponent, NotesInputComponent, ChipsComponent,
+    TextInput, DateInput, NumberInput,
+    StringSelect, NotesInput, Chips,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -83,7 +83,7 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+                  <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
                     label="@finance.invoice.field.notes.label" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>

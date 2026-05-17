@@ -9,6 +9,10 @@ import { die, getSystemQuery } from "@bk2/shared-util-core";
 import { getAddressIndex, getAddressValueByChannel } from "@bk2/subject-address-util";
 import { ActivityService } from '@bk2/activity-data-access';
 
+import { PFX } from "./scope";
+import { I18nService } from "@bk2/shared-i18n";
+
+
 @Injectable({
     providedIn: 'root'
 })
@@ -16,8 +20,23 @@ export class AddressService {
   private readonly env = inject(ENV);
   private readonly activityService = inject(ActivityService);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly i18nService = inject(I18nService);
 
   public groupedItems$ = of([]);
+
+  // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    create_conf: PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf: PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf: PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+    favorite_enable_conf: PFX + 'operation.favorite.enable.conf',
+    favorite_enable_error: PFX + 'operation.favorite.enable.error',
+    favorite_disable_conf: PFX + 'operation.favorite.disable.conf',
+    favorite_disable_error: PFX + 'operation.favorite.disable.error'
+  });
 
   /***************************  CRUD-operations *************************** */
   /**
@@ -28,7 +47,8 @@ export class AddressService {
    */
   public async create(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
     address.index = getAddressIndex(address);
-    const key = await this.firestoreService.createModel<AddressModel>(AddressCollection, address, '@subject.address.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<AddressModel>(AddressCollection, address, 
+      this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
     void this.activityService.log('address', 'create', currentUser, payload);
     return key;
@@ -47,12 +67,12 @@ export class AddressService {
    * Update an existing address.
    * @param address the address with new values
    * @param currentUser the current user who performs the operation
-   * @param confirmMessage an optional confirmation message to show in the UI
    * @returns the key of the updated address or undefined if the operation failed
    */
-  public async update(address: AddressModel, currentUser?: UserModel, confirmMessage = '@subject.address.operation.update'): Promise<string | undefined> {
+  public async update(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
     address.index = getAddressIndex(address);
-    const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, 
+      this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const value = getAddressValueByChannel(address);
     const payload = `${address.bkey}: ${address.addressChannel} = ${value}`;
     void this.activityService.log('address', 'update', currentUser, payload);
@@ -68,8 +88,9 @@ export class AddressService {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(address: AddressModel, currentUser?: UserModel): Promise<void> {
+    await this.firestoreService.deleteModel<AddressModel>(AddressCollection, address, 
+      this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     const payload = `${address.bkey}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
-    await this.firestoreService.deleteModel<AddressModel>(AddressCollection, address, '@subject.address.operation.delete', currentUser);
     void this.activityService.log('address', 'delete', currentUser, payload);
   }
 
@@ -77,9 +98,23 @@ export class AddressService {
    * Toggle the favorite attribute.
    * @param address the object to delete
    */
-  public async toggleFavorite(address: AddressModel, currentUser?: UserModel): Promise<void> {
+  public async toggleFavorite(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
+    let conf: string;
+    let error: string;
+    let payload: string;
+    if (address.isFavorite) {
+      conf = this.i18n.favorite_disable_conf();
+      error = this.i18n.favorite_disable_error();
+      payload = `${address.bkey}: ${address.addressChannel} = fav disabled`;
+    } else {
+      conf = this.i18n.favorite_enable_conf();
+      error = this.i18n.favorite_enable_error();
+      payload = `${address.bkey}: ${address.addressChannel} = fav enabled`;
+    }
     address.isFavorite = !address.isFavorite; // toggle
-    await this.update(address, currentUser, `@subject.address.operation.favorite.${address.isFavorite ? 'enable' : 'disable'}`);
+    const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, conf, error, currentUser);
+    void this.activityService.log('address', 'update', currentUser, payload);
+    return key;
   }
 
   /***************************  favorite address  *************************** */

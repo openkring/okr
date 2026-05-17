@@ -5,24 +5,26 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Router } from '@angular/router';
 import { addMonths, format } from 'date-fns';
 import { doc } from 'firebase/firestore';
+import { from, firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, ModelSelectService } from '@bk2/shared-feature';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, subDuration, tenantValidations, warn } from '@bk2/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, subDuration, warn } from '@bk2/shared-util-core';
 import { error, navigateByUrl, confirm } from '@bk2/shared-util-angular';
 import { yearMatches } from '@bk2/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 
 import { CalEventService } from '@bk2/calevent-data-access';
 import { getCaleventIndex, isCalEvent } from '@bk2/calevent-util';
-import { RegressionSelectionModalComponent } from '@bk2/calevent-ui';
+import { RegressionSelectionModal } from '@bk2/calevent-ui';
 
-import { CalEventEditModalComponent } from './calevent-edit.modal';
-import { from, firstValueFrom, map, of } from 'rxjs';
-import { CalEventViewModal } from 'libs/calevent/feature/src/lib/calevent-view.modal';
+import { CalEventEditModal } from './calevent-edit.modal';
+import { CalEventViewModal } from './calevent-view.modal';
+import { PFX } from './scope';
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
 
@@ -73,8 +75,21 @@ export const CalEventStore = signalStore(
     router: inject(Router),
     membershipService: inject(MembershipService),
     modelSelectService: inject(ModelSelectService),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      invite_conf: PFX + 'invite.conf',
+      invite_error: PFX + 'invite.error',
+      update_conf: PFX + 'update.conf',
+      update_error: PFX + 'update.error',
+      invitation_update_conf: PFX + 'invitation.update.conf',
+      invitation_update_error: PFX + 'invite.update.error',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     // returns a list of unigue organization keys for the current user
     // ie. all orgs that the current user is a member of
     membershipsForCurrentUserResource: rxResource({
@@ -418,7 +433,7 @@ export const CalEventStore = signalStore(
 
       async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false, skipReload = false): Promise<boolean> {
         const modal = await store.modalController.create({
-          component: CalEventEditModalComponent,
+          component: CalEventEditModal,
           componentProps: {
             calevent,
             currentUser: store.currentUser(),
@@ -489,7 +504,7 @@ export const CalEventStore = signalStore(
 
      async delete(calevent: CalEventModel, readOnly = true): Promise<void> {
         if (readOnly) return;
-        const result = await confirm(store.alertController, '@calevent.operation.delete.confirm', true);
+        const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           if (calevent.periodicity === 'once') {
             await store.calEventService.delete(calevent,  store.currentUser());
@@ -556,7 +571,7 @@ export const CalEventStore = signalStore(
 
       async askForRegressionType(): Promise<'current' | 'future' | 'all' | undefined> {
         const modal = await store.modalController.create({
-          component: RegressionSelectionModalComponent,
+          component: RegressionSelectionModal,
         });
         await modal.present();
         const { data, role } = await modal.onDidDismiss();
@@ -653,7 +668,7 @@ export const CalEventStore = signalStore(
           inv.name = calevent.name;
           inv.date = calevent.startDate;
           inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-          return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, '@invitation.operation.create', store.currentUser());
+          return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, store.i18n.invite_conf(), store.i18n.invite_error(), store.currentUser());
         }
       },
 
@@ -695,7 +710,7 @@ export const CalEventStore = signalStore(
           };
           calEvent.attendees.push(newAttendee);
         }
-        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, '@calevent.operation.update', currentUser);
+        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, store.i18n.update_conf(), store.i18n.update_error(), currentUser);
       },
 
       async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
@@ -703,7 +718,7 @@ export const CalEventStore = signalStore(
         if (!currentUser) return;
         invitation.state = newState;
         invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
-        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, '@invitation.operation.update', currentUser);
+        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, store.i18n.invitation_update_conf(), store.i18n.invitation_update_error(), currentUser);
         // this.reload();
       },
 

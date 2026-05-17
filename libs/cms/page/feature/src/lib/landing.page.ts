@@ -4,7 +4,7 @@ import { IonButton, IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonR
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 
 import { PageStore } from './page.store';
 import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
@@ -21,7 +21,7 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonContent, IonButton, IonIcon, IonImg, IonLabel,
     IonGrid, IonRow, IonCol,
-    HeaderComponent
+    Header
   ],
   styles: [`
     :host {

@@ -12,7 +12,7 @@ import { chipMatches, DateFormat, getAvatarInfo, getAvatarInfoArray, getSystemQu
 import { TransferService } from '@bk2/relationship-transfer-data-access';
 import { isTransfer } from '@bk2/relationship-transfer-util';
 
-import { TransferEditModalComponent } from './transfer-edit.modal';
+import { TransferEditModal } from './transfer-edit.modal';
 
 export type TransferState = {
   searchTerm: string;
@@ -132,7 +132,7 @@ export const TransferStore = signalStore(
       async edit(transfer?: TransferModel, readOnly = true): Promise<void> {
         if (transfer && !readOnly) {
         const modal = await store.modalController.create({
-          component: TransferEditModalComponent,
+          component: TransferEditModal,
           componentProps: {
             transfer,
             currentUser: store.currentUser(),

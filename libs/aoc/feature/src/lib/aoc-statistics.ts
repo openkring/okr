@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ButtonComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
+import { Button, Header, ResultLog } from '@bk2/shared-ui';
 import { AocStatisticsStore } from './aoc-statistics.store';
 
 @Component({
@@ -12,7 +12,7 @@ import { AocStatisticsStore } from './aoc-statistics.store';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
-    FormsModule, HeaderComponent, ResultLogComponent, ButtonComponent, 
+    FormsModule, Header, ResultLog, Button, 
     IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol
   ],
   providers: [AocStatisticsStore],
@@ -77,7 +77,7 @@ import { AocStatisticsStore } from './aoc-statistics.store';
     </ion-content>
   `,
 })
-export class AocStatisticsComponent {
+export class AocStatistics {
   protected readonly aocStatisticsStore = inject(AocStatisticsStore);
 
   protected readonly logTitle = computed(() => this.aocStatisticsStore.logTitle());

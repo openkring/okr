@@ -8,7 +8,7 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
 @Component({
@@ -19,7 +19,7 @@ import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
     IonChip, IonIcon, IonDatetime, IonModal,
     IonContent, IonItem, IonInput, IonTextarea,
     AsyncPipe, TranslatePipe, SvgIconPipe,
-    HeaderComponent,
+    Header,
   ],
   template: `
     <bk-header title="@schedule.title" [isModal]="true" />

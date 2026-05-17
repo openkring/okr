@@ -4,7 +4,7 @@ import { ActionSheetController, IonButtons, IonCol, IonContent, IonGrid, IonHead
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { BookingJournalModel } from '@bk2/shared-models';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getYearList } from '@bk2/shared-util-core';
 
@@ -17,7 +17,7 @@ import { JournalStore } from './journal.store';
   providers: [JournalStore],
   imports: [
     AsyncPipe, TranslatePipe,
-    SpinnerComponent, ListFilterComponent, EmptyListComponent,
+    Spinner, ListFilter, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton,
     IonContent, IonLabel, IonGrid, IonRow, IonCol
   ],

@@ -3,8 +3,8 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME } from '@bk2/shared-constants';
-import { CategoryListModel, ReservationApplyModel, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, CheckboxComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
+import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategorySelect, Checkbox, DateInput, NotesInput, NumberInput, TextInput, TimeInput } from '@bk2/shared-ui';
 import { debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
 import { reservationApplyValidations } from '@bk2/relationship-reservation-util';
@@ -14,9 +14,8 @@ import { reservationApplyValidations } from '@bk2/relationship-reservation-util'
   standalone: true,
   imports: [
     vestForms,
-    TextInputComponent,
-    NumberInputComponent, NotesInputComponent, CategorySelectComponent, DateInputComponent, 
-    CheckboxComponent, TimeInputComponent,
+    TextInput,
+    NumberInput, NotesInput, CategorySelect, DateInput, Checkbox, TimeInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem
   ],
   styles: [`
@@ -101,7 +100,7 @@ import { reservationApplyValidations } from '@bk2/relationship-reservation-util'
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-notes name="bhdesc" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="false" />
+      <bk-notes-input name="bhdesc" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="false" />
 
       <ion-card>
         <ion-card-header>

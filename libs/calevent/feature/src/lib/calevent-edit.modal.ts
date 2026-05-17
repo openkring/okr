@@ -2,24 +2,25 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup } from '@ionic/angular/standalone';
 
 import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
+import { CalendarSelectModal } from '@bk2/shared-feature';
 
-import { CalEventFormComponent } from '@bk2/calevent-ui';
-import { CalendarSelectModalComponent } from '@bk2/shared-feature';
-import { InviteesAccordionComponent } from '@bk2/relationship-invitation-feature';
-import { DocumentsAccordionComponent } from '@bk2/document-feature';
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { AttendeesAccordionComponent } from './attendees-accordion';
+import { CalEventForm } from '@bk2/calevent-ui';
+import { InviteesAccordion } from '@bk2/relationship-invitation-feature';
+import { DocumentsAccordion } from '@bk2/document-feature';
+import { CommentsAccordion } from '@bk2/comment-feature';
+
+import { AttendeesAccordion } from './attendees-accordion';
 
 @Component({
   selector: 'bk-calevent-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent,
-    CalEventFormComponent, InviteesAccordionComponent, DocumentsAccordionComponent, 
-    CommentsAccordionComponent, AttendeesAccordionComponent,
+    Header, ChangeConfirmation,
+    CalEventForm, InviteesAccordion, DocumentsAccordion, 
+    CommentsAccordion, AttendeesAccordion,
     IonContent, IonCard, IonCardContent, IonAccordionGroup
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -67,7 +68,7 @@ import { AttendeesAccordionComponent } from './attendees-accordion';
     
   `
 })
-export class CalEventEditModalComponent {
+export class CalEventEditModal {
   private modalController = inject(ModalController);
 
   // inputs
@@ -113,7 +114,7 @@ export class CalEventEditModalComponent {
 
   protected async selectCalendar(): Promise<void> {
     const modal = await this.modalController.create({
-      component: CalendarSelectModalComponent,
+      component: CalendarSelectModal,
       componentProps: { currentUser: this.currentUser() },
     });
     await modal.present();

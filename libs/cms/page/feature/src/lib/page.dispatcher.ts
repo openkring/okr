@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { ViewWillEnter } from '@ionic/angular';
 
 import { coerceBoolean, debugMessage, replaceSubstring } from "@bk2/shared-util-core";
-import { SpinnerComponent } from "@bk2/shared-ui";
+import { Spinner } from "@bk2/shared-ui";
 
 import { ContentPage } from "./content.page";
 import { PageStore } from "./page.store";
@@ -39,7 +39,7 @@ import { GraphPage } from "./graph.page";
   standalone: true,
   imports: [
     ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage, FilesPage, AlbumPage, GraphPage,
-    SpinnerComponent, ChatPage
+    Spinner, ChatPage
 ],
   template: `
     @if(pageStore.isLoading()) {

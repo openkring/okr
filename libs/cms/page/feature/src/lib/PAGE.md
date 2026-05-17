@@ -86,9 +86,9 @@ Section IDs in `page.sections` may contain `@TID@`, which is resolved to the ten
 | `AlbumPage` | `bk-album-page` | Photo album |
 | `GraphPage` | `bk-graph-page` | Menu-graph visualization |
 | `LandingPage` | `bk-landing-page` | Public landing page |
-| `PageListComponent` | (admin) | Admin list with search/filter and CRUD |
-| `PageEditModalComponent` | (modal) | Edit/view modal for page metadata |
-| `PageSortModalComponent` | (modal) | Drag-to-reorder sections within a page |
+| `PageList` | (admin) | Admin list with search/filter and CRUD |
+| `PageEditModal` | (modal) | Edit/view modal for page metadata |
+| `PageSortModal` | (modal) | Drag-to-reorder sections within a page |
 
 ## Data Access
 `PageService` (`@bk2/cms-page-data-access`) and `SectionService` (`@bk2/cms-section-data-access`) are the Firestore gateways. `PageStore` combines them: it first loads the `PageModel`, then fans out to individual section reads via `combineLatest`.

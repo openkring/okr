@@ -4,25 +4,25 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ImageLightboxModal, LightboxImage, SpinnerComponent } from '@bk2/shared-ui';
-
-import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
-
-import { MatrixChatStore } from './matrix-chat.store';
-import { PollCreateModal } from './poll-create.modal';
-import { MatrixPollData } from '@bk2/chat-data-access';
-import { convertHeicToJpeg, isSupportedImageFile } from '@bk2/chat-util';
+import { ImageLightboxModal, LightboxImage, Spinner } from '@bk2/shared-ui';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetOptions, downloadToBrowser, isBrowser } from '@bk2/shared-util-angular';
 import { MatrixMessage, RoleName } from '@bk2/shared-models';
+
+import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
+import { MatrixPollData } from '@bk2/chat-data-access';
+import { convertHeicToJpeg, isSupportedImageFile } from '@bk2/chat-util';
+
+import { MatrixChatStore } from './matrix-chat.store';
+import { PollCreateModal } from './poll-create.modal';
 
 @Component({
   selector: 'bk-matrix-chat-overview',
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
-    SpinnerComponent, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
+    Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
     IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge
   ],
   providers: [MatrixChatStore],

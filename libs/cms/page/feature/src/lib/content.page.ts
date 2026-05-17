@@ -11,7 +11,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
-import { MenuComponent } from '@bk2/cms-menu-feature';
+import { Menu } from '@bk2/cms-menu-feature';
 import { SectionDispatcher, SectionStore } from '@bk2/cms-section-feature';
 
 import { PageStore } from './page.store';
@@ -20,7 +20,7 @@ import { PageStore } from './page.store';
   selector: 'bk-content-page',
   standalone: true,
   imports: [
-    SectionDispatcher, MenuComponent,
+    SectionDispatcher, Menu,
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonPopover

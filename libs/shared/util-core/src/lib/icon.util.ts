@@ -1,3 +1,8 @@
+export function getSvgIconUrl(imgixBaseUrl: string, iconName: string, dir = 'icons'): string {
+  if (iconName.length === 0) return '';
+  return `${imgixBaseUrl}/logo/${dir}/${iconName}.svg`;
+}
+
 export function getIconColor(isValidated: boolean): string {
   return (isValidated ? 'gold' : '#009D53');
 }

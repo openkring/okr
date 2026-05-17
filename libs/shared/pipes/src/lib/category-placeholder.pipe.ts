@@ -1,15 +1,20 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { inject, Pipe, PipeTransform } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+
 import { getCategoryPlaceholder } from '@bk2/shared-categories';
-import { bkTranslate } from '@bk2/shared-i18n';
 import { CategoryModel } from '@bk2/shared-models';
+import { I18nService } from '@bk2/shared-i18n';
 
 @Pipe({
   name: 'categoryPlaceholder',
   standalone: true
 })
 export class CategoryPlaceholderPipe implements PipeTransform {
-  transform(categoryId: number | undefined, categories: CategoryModel[]): string {
+  private readonly i18nService = inject(I18nService);
+  
+  async transform(categoryId: number | undefined, categories: CategoryModel[]): Promise<string> {
     if (!categoryId)  return '';
-    return bkTranslate(getCategoryPlaceholder(categories, categoryId));
+    const placeholder = getCategoryPlaceholder(categories, categoryId);
+    return await firstValueFrom(this.i18nService.translate(placeholder));
   }
 }

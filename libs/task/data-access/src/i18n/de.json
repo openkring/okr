@@ -1,21 +1,17 @@
 {
-  "task": {
-    "operation": {
-      "create": {
-        "label": "Todo hinzufügen",
-        "conf": "Todo wurde hinzugefügt.",
-        "error": "Todo konnte nicht hinzugefügt werden."
-      },
-      "update": {
-        "label": "Todo ändern",
-        "conf": "Todo wurde geändert.",
-        "error": "Todo konnte nicht geändert werden."
-      },
-      "delete": {
-        "label": "Todo löschen",
-        "conf": "Todo wurde gelöscht.",
-        "error": "Todo konnte nicht gelöscht werden."
-      }
-    }
+  "create": {
+    "label": "Todo hinzufügen",
+    "conf": "Todo wurde hinzugefügt.",
+    "error": "Todo konnte nicht hinzugefügt werden."
+  },
+  "update": {
+    "label": "Todo ändern",
+    "conf": "Todo wurde geändert.",
+    "error": "Todo konnte nicht geändert werden."
+  },
+  "delete": {
+    "label": "Todo löschen",
+    "conf": "Todo wurde gelöscht.",
+    "error": "Todo konnte nicht gelöscht werden."
   }
 }

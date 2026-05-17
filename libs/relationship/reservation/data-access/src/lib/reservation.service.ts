@@ -3,11 +3,13 @@ import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { ReservationCollection, ReservationModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getFullName, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getReservationIndex } from '@bk2/relationship-reservation-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +18,17 @@ export class ReservationService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
   private readonly env = inject(ENV);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+    end_conf:     PFX + 'operation.end.conf',
+    end_error:    PFX + 'operation.end.error',
+  });
 
   /*-------------------------- CRUD operations on reservation --------------------------------*/
   /**
@@ -26,7 +39,7 @@ export class ReservationService {
    */
   public async create(reservation: ReservationModel, currentUser?: UserModel): Promise<string | undefined> {
     reservation.index = getReservationIndex(reservation);
-    const key = await this.firestoreService.createModel<ReservationModel>(ReservationCollection, reservation, '@reservation.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<ReservationModel>(ReservationCollection, reservation, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${getFullName(reservation.reserver?.name1, reservation.reserver?.name2)} of ${reservation.resource?.key}/${reservation.resource?.name2} on ${reservation.startDate}`;
     void this.activityService.log('reservation', 'create', currentUser, payload);
     return key;
@@ -45,12 +58,11 @@ export class ReservationService {
    * Update an existing reservation with new values.
    * @param reservation the reservation to update
    * @param currentUser the user who is updating the reservation
-   * @param confirmMessage the i18n key for the confirmation message to show in a toast
    * @returns the document id of the updated reservation or undefined if the operation failed
    */
-  public async update(reservation: ReservationModel, currentUser?: UserModel, confirmMessage = '@reservation.operation.update'): Promise<string | undefined> {
+  public async update(reservation: ReservationModel, currentUser?: UserModel): Promise<string | undefined> {
     reservation.index = getReservationIndex(reservation);
-    const key = await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${getFullName(reservation.reserver?.name1, reservation.reserver?.name2)} of ${reservation.resource?.key}/${reservation.resource?.name2} on ${reservation.startDate}`;
     void this.activityService.log('reservation', 'update', currentUser, payload);
     return key;
@@ -64,7 +76,7 @@ export class ReservationService {
    */
   public async delete(reservation: ReservationModel, currentUser?: UserModel): Promise<void> {
     const payload = `${reservation.bkey}: ${getFullName(reservation.reserver?.name1, reservation.reserver?.name2)} of ${reservation.resource?.key}/${reservation.resource?.name2} on ${reservation.startDate}`;
-    await this.firestoreService.deleteModel<ReservationModel>(ReservationCollection, reservation, '@reservation.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<ReservationModel>(ReservationCollection, reservation, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('reservation', 'delete', currentUser, payload);
   }
 
@@ -78,7 +90,7 @@ export class ReservationService {
   public async endReservationByDate(reservation: ReservationModel, endDate: string, currentUser?: UserModel): Promise<string | undefined> {
     if (reservation.endDate.startsWith('9999') && endDate && endDate.length === 8) {
       reservation.endDate = endDate;
-      return await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, '@reservation.operation.end', currentUser);
+      return await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, this.i18n.end_conf(), this.i18n.end_error(), currentUser);
     }
     return undefined;
   }
@@ -129,7 +141,7 @@ export class ReservationService {
 
   /*  private async selectExportType(): Promise<number | undefined> {
      const modal = await this.modalController.create({
-       component: BkLabelSelectModalComponent,
+       component: BkLabelSelectModal,
        componentProps: {
          labels: [
            '@reservation.select.raw', 

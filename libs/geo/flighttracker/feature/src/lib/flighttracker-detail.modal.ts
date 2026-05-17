@@ -1,12 +1,9 @@
 import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import {
-  IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow,
-  ModalController
-} from '@ionic/angular/standalone';
+import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
 import { FlightInfoResponse } from '@bk2/flighttracker-data-access';
@@ -16,7 +13,7 @@ import { FlightInfoResponse } from '@bk2/flighttracker-data-access';
   standalone: true,
   imports: [
     AsyncPipe, DecimalPipe, TranslatePipe,
-    HeaderComponent,
+    Header,
     IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
   template: `

@@ -1,38 +1,21 @@
 {
-  "membership": {
-    "category": {
-      "change": {
-        "helper": "Auf der linken Seite siehst du die aktuelle Mitgliederkategorie. Wähle auf der rechten Seite die neue Kategorie aus, in die das Mitglied wechseln soll.",
-        "helperDate": "Das Datum, ab dem die neue Kategorie gelten soll. Die aktuelle Mitgliedschaft wird einen Tag vorher beendet. Standardmässig wird das heutige Datum vorgeschlagen."
-      },
-      "label": "Kategorie",
-      "helper": "Die Mitgliederkategorie ist hier fix. Wenn du sie ändern willst, wähle die Aktion Kategorien-Wechsel in der Listen-Darstellung."
+  "category": {
+    "change": {
+      "helper": "Auf der linken Seite siehst du die aktuelle Mitgliederkategorie. Wähle auf der rechten Seite die neue Kategorie aus, in die das Mitglied wechseln soll.",
+      "helperDate": "Das Datum, ab dem die neue Kategorie gelten soll. Die aktuelle Mitgliedschaft wird einen Tag vorher beendet. Standardmässig wird das heutige Datum vorgeschlagen."
     },
-    "newDesc": "soll Mitglied werden bei",
-    "state": {
-      "helper": "Der Mitgliederstatus kann nicht editiert werden. Er wird automatisch von der Mitgliederkategorie abgeleitet. Der Status kann in der Kategorien-Definition pro Kategorie gesetzt werden."
-    }
+    "label": "Kategorie",
+    "helper": "Die Mitgliederkategorie ist hier fix. Wenn du sie ändern willst, wähle die Aktion Kategorien-Wechsel in der Listen-Darstellung."
   },
-  "subject": {
-    "person": {
-      "field": {
-        "details": "Angaben zur Person",
-        "address": "Adressen",
-        "misc": "Verschiedenes",
-        "membership": "Mitgliedschaft (optional)"
-      }
-    }
+  "newDesc": "soll Mitglied werden bei",
+  "state": {
+    "helper": "Der Mitgliederstatus kann nicht editiert werden. Er wird automatisch von der Mitgliederkategorie abgeleitet. Der Status kann in der Kategorien-Definition pro Kategorie gesetzt werden."
   },
-  "general": {
-    "operation": {
-      "select": {
-        "label": "Auswählen"
-      }
-    }
+  "person": {
+    "details": "Angaben zur Person",
+    "address": "Adressen",
+    "misc": "Verschiedenes",
+    "membership": "Mitgliedschaft (optional)"
   },
-  "input": {
-    "memberState": {
-      "label": "Mitgliederstatus"
-    }
-  }
+  "memberState": "Mitgliederstatus"
 }

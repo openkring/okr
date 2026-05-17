@@ -1,1 +1,1 @@
-export * from './lib/social-post.component';
+export * from './lib/social-post';

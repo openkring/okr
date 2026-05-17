@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, ColorIonic, NameDisplay } from '@bk2/shared-models';
 import { getFullName } from '@bk2/shared-util-core';
 
-import { AvatarLabelComponent } from '@bk2/avatar-ui';
+import { AvatarLabel } from '@bk2/avatar-ui';
 import { calculateCols } from '@bk2/cms-section-util';
 
 @Component({
@@ -15,7 +15,7 @@ import { calculateCols } from '@bk2/cms-section-util';
   imports: [
     TranslatePipe, AsyncPipe,
     IonGrid, IonRow, IonCol,
-    AvatarLabelComponent
+    AvatarLabel
   ],
   template: `
     <ion-grid>
@@ -38,7 +38,7 @@ import { calculateCols } from '@bk2/cms-section-util';
     </ion-grid>
   `
 })
-export class PersonsWidgetComponent {
+export class PersonsWidget {
   public persons = input.required<AvatarInfo[]>();
   public avatarConfig = input<AvatarConfig>(AVATAR_CONFIG_SHAPE);
   public editMode = input(false);

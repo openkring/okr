@@ -1,4 +1,5 @@
 export * from './lib/auth.util';
+export * from './lib/platform.util';
 export * from './lib/base-model.util';
 export * from './lib/category.util';
 export * from './lib/chip.util';

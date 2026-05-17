@@ -4,10 +4,10 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MenuItemModel, PageModel, RoleName, SectionModel } from '@bk2/shared-models';
-import { SpinnerComponent } from '@bk2/shared-ui';
+import { Spinner } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
-import { MenuComponent, MenuStore } from '@bk2/cms-menu-feature';
+import { Menu, MenuStore } from '@bk2/cms-menu-feature';
 
 import { PageStore } from './page.store';
 import { SectionStore } from '@bk2/cms-section-feature';
@@ -28,7 +28,7 @@ import { error } from '@bk2/shared-util-angular';
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe,
-    SpinnerComponent, MenuGraphNode, MenuComponent,
+    Spinner, MenuGraphNode, Menu,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonItem, IonLabel,
     IonButton, IonIcon, IonPopover
   ],

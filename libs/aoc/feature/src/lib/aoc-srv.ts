@@ -4,11 +4,11 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ListFilterComponent } from '@bk2/shared-ui';
+import { ListFilter } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat, getAge as getAgeFn } from '@bk2/shared-util-core';
 import { ColorIonic, SrvIndex } from '@bk2/shared-models';
 
-import { AvatarLabelComponent } from '@bk2/avatar-ui';
+import { AvatarLabel } from '@bk2/avatar-ui';
 
 import { AocSrvStore, getMismatches } from './aoc-srv.store';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
@@ -18,7 +18,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
   standalone: true,
   imports: [
     TranslatePipe, SvgIconPipe, AsyncPipe,
-    AvatarLabelComponent, ListFilterComponent,
+    AvatarLabel, ListFilter,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonHeader,
     IonButtons, IonMenuButton, IonTitle, IonToolbar

@@ -1,23 +1,17 @@
 {
-  "finance": {
-    "account": {
-      "operation": {
-        "create": {
-          "label": "Konto hinzufügen",
-          "error": "Das Konto konnte nicht erstellt werden.",
-          "conf": "Das Konto wurde erstellt."
-        },
-        "update": {
-          "label": "Konto ändern",
-          "error": "Die Aenderungen konnten nicht gespeichert werden",
-          "conf": "Die Aenderungen wurden gespeichert."
-        },
-        "delete": {
-          "label": "Konto löschen",
-          "error": "Das Konto konnte nicht gelöscht werden",
-          "conf": "Das Konto wurde gelöscht"
-        }
-      }
-    }
+  "create": {
+    "label": "Konto hinzufügen",
+    "error": "Das Konto konnte nicht erstellt werden.",
+    "conf": "Das Konto wurde erstellt."
+  },
+  "update": {
+    "label": "Konto ändern",
+    "error": "Die Aenderungen konnten nicht gespeichert werden",
+    "conf": "Die Aenderungen wurden gespeichert."
+  },
+  "delete": {
+    "label": "Konto löschen",
+    "error": "Das Konto konnte nicht gelöscht werden",
+    "conf": "Das Konto wurde gelöscht"
   }
 }

@@ -50,32 +50,32 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `setSelectedType(type)` | Updates the org-type filter |
 | `setSelectedTag(tag)` | Updates the tag filter |
 | `setOrgKey(key)` | Loads a single org by key |
-| `add(readOnly)` | Opens `OrgNewModalComponent`; on confirm creates org + initial addresses from the new-org form |
-| `edit(org, readOnly)` | Opens `OrgEditModalComponent` for an existing org |
+| `add(readOnly)` | Opens `OrgNewModal`; on confirm creates org + initial addresses from the new-org form |
+| `edit(org, readOnly)` | Opens `OrgEditModal` for an existing org |
 | `delete(org, readOnly)` | Confirms then deletes the org |
 | `copyEmailAddresses()` | Copies all visible orgs' favorite emails to the clipboard |
 | `export(type)` | Exports the org list (not yet implemented) |
 
 ## New Org Flow
-When creating a new org via `OrgNewModalComponent`, the form (`OrgNewFormModel`) collects basic fields plus optional initial addresses (email, phone, URL, postal). After the org document is saved, the store creates separate `AddressModel` documents for each non-empty initial address and sets `parentKey = 'org.<newKey>'`.
+When creating a new org via `OrgNewModal`, the form (`OrgNewFormModel`) collects basic fields plus optional initial addresses (email, phone, URL, postal). After the org document is saved, the store creates separate `AddressModel` documents for each non-empty initial address and sets `parentKey = 'org.<newKey>'`.
 
 ## Components
 | Component | Description |
 |---|---|
-| `OrgListComponent` | List with search, tag, and type filters; actions via ActionSheet or popover menu |
-| `OrgNewModalComponent` | Ionic modal for creating a new org with initial contact data |
-| `OrgEditModalComponent` | Ionic modal for editing an existing org; includes embedded accordions for addresses, memberships, ownerships, reservations, documents, members, and comments |
+| `OrgList` | List with search, tag, and type filters; actions via ActionSheet or popover menu |
+| `OrgNewModal` | Ionic modal for creating a new org with initial contact data |
+| `OrgEditModal` | Ionic modal for editing an existing org; includes embedded accordions for addresses, memberships, ownerships, reservations, documents, members, and comments |
 
-## Embedded Accordions in `OrgEditModalComponent`
+## Embedded Accordions in `OrgEditModal`
 | Accordion | Visibility |
 |---|---|
-| `AddressesAccordionComponent` | Always |
-| `MembershipAccordionComponent` | Always |
-| `OwnershipAccordionComponent` | `privileged` role or write mode |
-| `ReservationsAccordionComponent` | `privileged` role or write mode |
-| `DocumentsAccordionComponent` | `privileged` role or write mode |
-| `MembersAccordionComponent` | `privileged` role or write mode |
-| `CommentsAccordionComponent` | `privileged` role or write mode |
+| `AddressesAccordion` | Always |
+| `MembershipAccordion` | Always |
+| `OwnershipAccordion` | `privileged` role or write mode |
+| `ReservationsAccordion` | `privileged` role or write mode |
+| `DocumentsAccordion` | `privileged` role or write mode |
+| `MembersAccordion` | `privileged` role or write mode |
+| `CommentsAccordion` | `privileged` role or write mode |
 
 ## Validation (`@bk2/subject-org-util`)
 Vest suites: `org` (full model), `orgNewForm` (new-org creation form).

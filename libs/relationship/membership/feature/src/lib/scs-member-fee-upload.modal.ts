@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonCol, IonContent, IonFooter, IonGrid, IonItem, IonLabel, IonRow, IonTextarea, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { ScsMemberFeesModel } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { getAccountDescription } from '@bk2/relationship-membership-util';
 
 export interface BexioPosition {
@@ -21,7 +21,7 @@ const DEFAULT_FOOTER = '<span>Vielen Dank f&uuml;r die Bezahlung der Rechnung in
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    HeaderComponent,
+    Header,
     IonContent, IonFooter, IonToolbar, IonButtons, IonButton,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonTextarea,
   ],

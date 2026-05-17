@@ -2,16 +2,16 @@ import { Component, computed, inject, input, linkedSignal, signal } from "@angul
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
 import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
-import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
-
-import { FbuserFormComponent } from "@bk2/user-ui";
+import { ChangeConfirmation, Header } from "@bk2/shared-ui";
 import { hasRole, removeUndefinedFields } from "@bk2/shared-util-core";
 
+import { FbuserForm } from "@bk2/user-ui";
+
 @Component({
-  selector: 'bk-address-edit-modal',
+  selector: 'bk-fbuser-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, FbuserFormComponent,
+    Header, ChangeConfirmation, FbuserForm,
     IonContent
   ],
   template: `
@@ -31,7 +31,7 @@ import { hasRole, removeUndefinedFields } from "@bk2/shared-util-core";
     </ion-content>
   `
 })
-export class FbuserEditModalComponent {
+export class FbuserEditModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

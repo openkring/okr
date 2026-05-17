@@ -10,14 +10,16 @@ import { AppStore } from '@bk2/shared-feature';
 import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@bk2/shared-models';
 import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData } from '@bk2/shared-util-core';
 import { bkPrompt, confirm, navigateByUrl } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { PageService } from '@bk2/cms-page-data-access';
-import { SectionSelectModalComponent } from '@bk2/cms-section-feature';
+import { SectionSelectModal } from '@bk2/cms-section-feature';
 import { SectionService } from '@bk2/cms-section-data-access';
 import { isPage } from '@bk2/cms-page-util';
 
-import { PageEditModalComponent } from './page-edit.modal';
-import { PageSortModalComponent } from './page-sort.modal';
+import { PageEditModal } from './page-edit.modal';
+import { PageSortModal } from './page-sort.modal';
+import { PFX } from './scope';
 
 export type PageState = {
   pageId: string;
@@ -49,7 +51,8 @@ export const _PageStore = signalStore(
     sectionService: inject(SectionService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
-    router: inject(Router) 
+    router: inject(Router),
+    i18nService: inject(I18nService)
   })),
   withComputed((state) => {
     return {
@@ -60,6 +63,17 @@ export const _PageStore = signalStore(
     };
   }),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      page_add_label: PFX + 'page.add.label',
+      page_add_placeholder: PFX + 'page.add.placeholder',
+      page_delete_confirm: PFX + 'page.delete.confirm',
+      sort_label: PFX + 'sort.label',
+      sort_noSections: PFX + 'sort.noSections',
+      sort_onlyOneSection: PFX + 'sort.onlyOneSection',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     pagesResource: rxResource({
       params: () => ({
         currentUser: store.currentUser()
@@ -215,7 +229,7 @@ export const _PageStore = signalStore(
        */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
-        const pageName = await bkPrompt(store.alertController, '@content.page.operation.add.label', '@content.page.field.name');
+        const pageName = await bkPrompt(store.alertController, store.i18n.page_add_label(), store.i18n.page_add_placeholder(), store.i18n.ok(), store.i18n.cancel());
         if (pageName) {
           const page = new PageModel(store.tenantId());
           page.name = pageName;
@@ -230,7 +244,7 @@ export const _PageStore = signalStore(
        */
       async edit(page: PageModel, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-          component: PageEditModalComponent,
+          component: PageEditModal,
           componentProps: {
             page,
             currentUser: store.currentUser(),
@@ -261,7 +275,7 @@ export const _PageStore = signalStore(
        */
       async delete(page: PageModel, readOnly = true): Promise<void> {
         if (readOnly) return;
-        const result = await confirm(store.alertController, '@content.page.operation.delete.confirm', true);
+        const result = await confirm(store.alertController, store.i18n.page_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           await store.pageService.delete(page, store.currentUser());
           this.reload();
@@ -286,17 +300,17 @@ export const _PageStore = signalStore(
        */
       async sortSections(): Promise<void> {
         if (store.sections().length === 0) {
-          await confirm(store.alertController, '@content.page.operation.sort.noSections');
+          await confirm(store.alertController, store.i18n.sort_noSections(), store.i18n.ok(), store.i18n.cancel() );
           return;
         }
         if (store.sections().length === 1) {
-          await confirm(store.alertController, '@content.page.operation.sort.onlyOneSection');
+          await confirm(store.alertController, store.i18n.sort_onlyOneSection(), store.i18n.ok(), store.i18n.cancel());
           return;
         }
         // convert the list of sectionKeys to a list of SectionModels
         const sections = await firstValueFrom(store.sectionService.searchByKeys(store.sections()));
         const modal = await store.modalController.create({
-          component: PageSortModalComponent,
+          component: PageSortModal,
           componentProps: {
             sections: sections
           }
@@ -332,7 +346,7 @@ export const _PageStore = signalStore(
         const page = store.page();
         if (!page) return;
         const modal = await store.modalController.create({
-          component: SectionSelectModalComponent,
+          component: SectionSelectModal,
           cssClass: 'full-modal'
         });
         modal.present();

@@ -1,17 +1,17 @@
-export * from './lib/album-config';
+export * from './lib/album-configuration';
 export * from './lib/image-edit.modal';
-export * from './lib/images-config';
-export * from './lib/editor-config';
-export * from './lib/iframe-config';
-export * from './lib/image-style';
-export * from './lib/map-config';
-export * from './lib/people-config';
-export * from './lib/responsibility-config';
+export * from './lib/images-configuration';
+export * from './lib/editor-configuration';
+export * from './lib/iframe-configuration';
+export * from './lib/image-style-configuration';
+export * from './lib/map-configuration';
+export * from './lib/people-configuration';
+export * from './lib/responsibility-configuration';
 export * from './lib/responsibility-section.validations';
-export * from './lib/video-config';
+export * from './lib/video-configuration';
 
 export * from './lib/section.form';
-export * from './lib/section-config';
+export * from './lib/section-configuration';
 
 export * from './lib/button-widget';
 export * from './lib/persons-widget';

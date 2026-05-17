@@ -3,7 +3,7 @@ export * from './lib/matrix-message-list';
 export * from './lib/matrix-room-list';
 export * from './lib/room-edit.form';
 export * from './lib/poll-create.form';
-export * from './lib/poll-message.component';
+export * from './lib/poll-message';
 export * from './lib/poll-detail.modal';
 export * from './lib/image-lightbox.modal';
 export * from './lib/matrix-read-receipt-strip';

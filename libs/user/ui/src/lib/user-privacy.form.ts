@@ -6,7 +6,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 import { PrivacyUsages } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { PrivacyUsage, UserModel } from "@bk2/shared-models";
-import { CategoryComponent, CheckboxComponent } from "@bk2/shared-ui";
+import { CategoryOld, Checkbox } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidations } from "@bk2/user-util";
@@ -17,7 +17,7 @@ import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidatio
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
-    CategoryComponent, CheckboxComponent,
+    CategoryOld, Checkbox,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle,
     IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
@@ -39,22 +39,22 @@ import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidatio
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageImages" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <bk-category-old name="usageImages" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageDateOfBirth" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <bk-category-old name="usageDateOfBirth" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usagePostalAddress" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <bk-category-old name="usagePostalAddress" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageEmail" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <bk-category-old name="usageEmail" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usagePhone" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <bk-category-old name="usagePhone" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageName" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <bk-category-old name="usageName" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -77,7 +77,7 @@ import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidatio
     </form>
   `
 })
-export class UserPrivacyFormComponent {
+export class UserPrivacyForm {
   // inputs
   public formData = model.required<UserPrivacyFormModel>();
   public currentUser = input<UserModel | undefined>();

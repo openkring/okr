@@ -9,7 +9,7 @@ import { AccountModel } from '@bk2/shared-models';
 import { AccountService } from '@bk2/finance-account-data-access';
 import { flattenAccountTree, isAccount } from '@bk2/finance-account-util';
 
-import { AccountEditModalComponent } from './account-edit.modal';
+import { AccountEditModal } from './account-edit.modal';
 
 export type AccountListState = {
   selectedRootKey: string;
@@ -86,7 +86,7 @@ export const AccountStore = signalStore(
 
     async edit(account: AccountModel, readOnly = true): Promise<void> {
       const modal = await store.modalController.create({
-        component: AccountEditModalComponent,
+        component: AccountEditModal,
         componentProps: {
           account,
           currentUser: store.currentUser(),

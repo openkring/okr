@@ -5,7 +5,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
-import { CheckboxComponent, EmailInputComponent, ErrorNoteComponent, PhoneInputComponent, TextInputComponent } from "@bk2/shared-ui";
+import { Checkbox, EmailInput, ErrorNote, PhoneInput, TextInput } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util";
@@ -16,7 +16,7 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
-    CheckboxComponent, TextInputComponent, EmailInputComponent, PhoneInputComponent, ErrorNoteComponent,
+    Checkbox, TextInput, EmailInput, PhoneInput, ErrorNote,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -44,7 +44,7 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
                 <bk-text-input name="displayName" label="@input.displayName.label" placeholder="@input.displayName.placeholder"  [readOnly]="isReadOnly()" [value]="displayName()" (valueChange)="onFieldChange('displayName', $event)" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email 
+                <bk-email-input
                   [value]="email()"
                   (valueChange)="onFieldChange('email', $event)"
                   [readOnly]="isReadOnly()"
@@ -52,7 +52,7 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
                 <bk-error-note [errors]="emailError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6"> 
-                <bk-phone 
+                <bk-phone-input
                   [value]="phone()"
                   (valueChange)="onFieldChange('phone', $event)"
                   [readOnly]="isReadOnly()"
@@ -77,7 +77,7 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
     </form>
   `
 })
-export class FbuserFormComponent {
+export class FbuserForm {
   // inputs
   public formData = model.required<FirebaseUserModel>();
   public currentUser = input<UserModel | undefined>();

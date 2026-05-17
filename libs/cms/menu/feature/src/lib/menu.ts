@@ -1,0 +1,138 @@
+import { AsyncPipe } from '@angular/common';
+import { Component, computed, effect, forwardRef, inject, input } from '@angular/core';
+import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular/standalone';
+
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { MenuItemModel } from '@bk2/shared-models';
+import { Spinner } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_MENU_ACTION } from '@bk2/shared-constants';
+import { VersionCheckService } from '@bk2/shared-util-angular';
+
+import { MultiAvatar } from '@bk2/cms-menu-ui';
+
+import { MenuStore } from './menu.store';
+
+@Component({
+  selector: 'bk-menu',
+  standalone: true,
+  imports: [
+    TranslatePipe, AsyncPipe,
+    forwardRef(() => Menu), Spinner, MultiAvatar,
+    IonList, IonItem, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider
+],
+  styles: [`
+      ion-icon { color: var(--ion-color-dark); }
+    @media (prefers-color-scheme: dark) {
+      ion-icon { color: var(--ion-color-white); }
+    }
+    ::ng-deep ion-accordion ion-icon[slot="start"] { margin-inline-end: 8px; }
+    `],
+  providers: [MenuStore],
+  template: `
+    @if(menuStore.isMenuLoading()) {
+      <bk-spinner />
+    } @else {
+      @if (isVisible()) {
+        @if(menuItem(); as menuItem) {
+          @switch(action()) {
+            @case('navigate') {
+              <bk-multi-avatar [icon]="icon()" [label]="label()" [badge]="notificationCount()" (click)="select(menuItem)" />
+            }
+            @case('browse') {
+              <bk-multi-avatar [icon]="icon()" [label]="label()" [badge]="notificationCount()" (click)="select(menuItem)" />
+            }
+            @case('sub') {
+              <ion-accordion-group>
+                <ion-accordion [value]="menuItem.name" toggle-icon-slot="start" >
+                  <ion-item slot="header" color="primary">
+                    <ion-label>{{label() | translate | async}}</ion-label>
+                  </ion-item>
+                  <div slot="content">
+                    @for(menuItemName of menuItem.menuItems; track menuItemName) {
+                      <bk-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" />
+                    }
+                  </div>
+                </ion-accordion>
+              </ion-accordion-group>
+            }
+            @case('divider') {
+              <ion-item-divider color="light">
+                <ion-label>{{ label() | translate | async }}</ion-label>
+              </ion-item-divider>
+            }
+            @case('main') {
+              <ion-list>
+                @for(menuItemName of menuItem.menuItems; track menuItemName) {
+                  <bk-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" />
+                }
+              </ion-list>
+            }
+            @case('context') {
+              <ion-list>
+                @for(menuItemName of menuItem.menuItems; track menuItemName) {
+                  <bk-menu [menuName]="menuItemName" />
+                }
+              </ion-list>
+            }
+            @case('call') {
+              <bk-multi-avatar [icon]="icon()" [label]="label()" [badge]="notificationCount()" (click)="select(menuItem)" [safariWorkaround]="safariWorkaround()"/>
+            }
+          }
+        } @else {
+          <ion-item color="warning">
+            <ion-label>Missing: {{ menuName() }}</ion-label>
+          </ion-item>
+        }
+      }
+    }
+  `
+})
+export class Menu {
+  protected readonly menuStore = inject(MenuStore);
+  private versionService = inject(VersionCheckService);
+
+  // inputs
+  public menuName = input.required<string>();
+  public forceVisible = input(false);
+  public excludeNames = input<string[]>([]);
+
+  // derived signals
+
+  // restrict the workaround to known problem areas (e.g. file selection dialogue)
+  protected safariWorkaround = computed(() => this.menuName() === 'files-add'); // also used with chrome
+  protected menuItem = computed(() => this.menuStore.menu());
+  private currentUser = computed(() => this.menuStore.currentUser());
+  protected roleNeeded = computed(() => this.menuItem()?.roleNeeded);
+  protected action = computed(() => this.menuItem()?.action ?? DEFAULT_MENU_ACTION);
+  protected icon = computed(() => this.menuItem()?.icon ?? 'help-circle');
+  protected label = computed(() => {
+    const menuLabel = this.menuItem()?.label;
+    if (!menuLabel) return '';
+    // Check for version placeholder and replace it
+    if (menuLabel.includes('@VERSION@')) {
+      const appVersion = this.versionService.getCurrentVersion();
+      return menuLabel.replace('@VERSION@', 'v' + appVersion);
+    }
+    return menuLabel;
+  });
+  protected readonly isVisible = computed(() => {
+    const name = this.menuItem()?.name;
+    if (name && this.excludeNames().includes(name)) return false;
+    return this.forceVisible() || hasRole(this.roleNeeded(), this.currentUser());
+  });
+  protected readonly notificationCount = computed(() => this.menuStore.notificationCount());
+
+  constructor() {
+    effect(() => {
+      // By reading the currentUser signal, we create a dependency.
+      // This effect will now re-run whenever the user logs in or out.
+      this.currentUser();
+      this.menuStore.setMenuName(this.menuName());
+    });
+  }
+
+  protected async select(menuItem: MenuItemModel) {
+    this.menuStore.select(menuItem);
+  }
+}

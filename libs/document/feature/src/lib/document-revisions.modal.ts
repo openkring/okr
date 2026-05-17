@@ -3,14 +3,14 @@ import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/
 
 import { DocumentModel } from '@bk2/shared-models';
 import { FileNamePipe, PrettyDatePipe } from '@bk2/shared-pipes';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-document-revisions-modal',
   standalone: true,
   imports: [
     FileNamePipe, PrettyDatePipe,
-    HeaderComponent,
+    Header,
     IonContent, IonList, IonItem, IonLabel
   ],
   template: `

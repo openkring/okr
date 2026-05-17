@@ -1,63 +1,74 @@
 {
-  "subject": {
-    "group": {
-      "plural": "Gruppen",
-      "field": {
-        "empty": "Keine Gruppen gefunden."
-      },
-      "segment": {
-        "content": "Inhalt",
-        "chat": "Chat",
-        "calendar": "Kalender",
-        "tasks": "Todos",
-        "files": "Dateien",
-        "album": "Alben",
-        "members": "Mitglieder"
-      },
-      "operation": {
-        "delete": {
-          "confirm": "Soll die Gruppe wirklich gelöscht werden ?"
-        }
-      }
-    },
-    "list": {
-      "header": {
-        "name": "Name"
-      }
-    }
+  "groups": "Gruppen",
+  "empty": "Keine Gruppen gefunden.",
+  "content": "Inhalt",
+  "segment": {
+    "content": "Inhalt",
+    "chat": "Chat",
+    "calendar": "Kalender",
+    "tasks": "Todos",
+    "files": "Dateien",
+    "album": "Alben",
+    "members": "Mitglieder"
+  },
+  "list": {
+    "name": "Name"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion"
+  },
+  "group": {
+    "create": {
+      "conf": "Gruppe wurde erstellt.",
+      "error": "Gruppe konnte nicht erstellt werden.",
+      "duplicate": "Doppelte ID",
+      "exists": "Eine Gruppe mit dieser ID existiert bereits. Bitte benutze eine andere ID."
+    },
+    "delete": {
+      "confirm": "Soll die Gruppe wirklich gelöscht werden ?"
     }
   },
-  "content": {
-    "page": {
-      "operation": {
-        "create": {
-          "label": "Neue Webseite erstellen",
-          "conf": "Webseite wurde erstellt.",
-          "error": "Webseite konnte nicht erstellt werden."
-        }
-      }
+  "page": {
+    "create": {
+      "label": "Neue Webseite erstellen",
+      "conf": "Webseite wurde erstellt.",
+      "error": "Webseite konnte nicht erstellt werden."
+    }
+  },
+  "article": {
+    "title": "Artikel",
+    "content": "<p>Dies ist deine Gruppen-Homepage. </p><p>Nur Gruppenmitglieder sehen diesen Inhalt.</p><p>Der Gruppen-Administrator kann den Inhalt dieser Seite beliebig ändern. Benutze dazu die Operationen im Kontext-Menü oben rechts.</p><p>Aktuell findest du hier eine Anleitung zu den Gruppen Funktionen.</p><p>Je nach Konfiguration kann eine Gruppe folgende Funktionen enthalten:</p><ul><li><p>Homepage (diese hier): längere Zeit gleichbleibende Informationen, die für die Gruppenmitglieder relevant sind.</p></li><li><p>Kalender</p></li><li><p>Todos</p></li><li><p>Mitglieder: eine Liste der Gruppenmitglieder, der Gruppen-Administrator kann neue Mitglieder hinzufügen oder bestehende löschen.</p></li><li><p>Dateien: eine Fileablage zum Teilen von Dateien innerhalb der Gruppe</p></li></ul><p>Der Gruppen-Administrator kann diese Funktionen ein- und ausschalten.</p>",
+    "create": {
+      "label": "Neuen Artikel erstellen",
+      "conf": "Artikel wurde erstellt.",
+      "error": "Artikel konnte nicht erstellt werden."
+    }
+  },
+  "chat": {
+    "name": "Chat",
+    "group": {
+      "name": "Gruppen Chat",
+      "description": "Hier können sich alle Mitglieder der Gruppe austauschen."
     },
-    "section": {
-      "operation": {
-        "create": {
-          "label": "Neue Sektion erstellen",
-          "conf": "Sektion wurde erstellt.",
-          "error": "Sektion konnte nicht erstellt werden."
-        }
-      }
+    "create": {
+      "label": "Neue Chat-Section erstellen",
+      "conf": "Chat-Section wurde erstellt.",
+      "error": "Chat-Section konnte nicht erstellt werden."
+    }
+  },
+  "section": {
+    "create": {
+      "label": "Neue Sektion erstellen",
+      "conf": "Sektion wurde erstellt.",
+      "error": "Sektion konnte nicht erstellt werden."
     }
   },
   "calendar": {
-    "operation": {
-      "create": {
-        "label": "Kalender hinzufügen",
-        "conf": "Der Kalender wurde hinzugefügt.",
-        "error": "Der Kalender konnte nicht hinzugefügt werden."
-      }
+    "name": "Kalender für Gruppe ",
+    "create": {
+      "label": "Kalender hinzufügen",
+      "conf": "Der Kalender wurde hinzugefügt.",
+      "error": "Der Kalender konnte nicht hinzugefügt werden."
     }
   }
 }

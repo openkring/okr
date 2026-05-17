@@ -4,12 +4,14 @@ import { Observable, firstValueFrom, of } from 'rxjs';
 
 import { ENV, STORAGE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { DocumentCollection, DocumentModel, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
-import { DateFormat, convertDateFormatToString, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
+import { DateFormat, convertDateFormatToString, fileSizeUnit, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { getDocumentIndex, getDocumentStoragePath } from '@bk2/document-util';
 import { DEFAULT_DOCUMENT_SOURCE, DEFAULT_DOCUMENT_TYPE, DEFAULT_KEY, DEFAULT_NOTES } from '@bk2/shared-constants';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +20,15 @@ export class DocumentService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly storage = inject(STORAGE);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+  });
 
   private readonly tenantId = this.env.tenantId;
 
@@ -34,7 +45,7 @@ export class DocumentService {
       const existing = await firstValueFrom(this.firestoreService.readModel<DocumentModel>(DocumentCollection, document.bkey));
       if (existing) return document.bkey;
     }
-    return await this.firestoreService.createModel<DocumentModel>(DocumentCollection, document, '@document.operation.create', currentUser);
+    return await this.firestoreService.createModel<DocumentModel>(DocumentCollection, document, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
 
   /**
@@ -50,9 +61,9 @@ export class DocumentService {
    * Update an existing document with new values.
    * @param document the DocumentModel with the new values
    */
-  public async update(document: DocumentModel, currentUser?: UserModel, confirmMessage = '@document.operation.update'): Promise<string | undefined> {
+  public async update(document: DocumentModel, currentUser?: UserModel): Promise<string | undefined> {
     document.index = getDocumentIndex(document);
-    return await this.firestoreService.updateModel<DocumentModel>(DocumentCollection, document, false, confirmMessage, currentUser);
+    return await this.firestoreService.updateModel<DocumentModel>(DocumentCollection, document, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   /**
@@ -60,7 +71,7 @@ export class DocumentService {
    * @param document the DocumentModel to be deleted.
    */
   public async delete(document: DocumentModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<DocumentModel>(DocumentCollection, document, '@document.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<DocumentModel>(DocumentCollection, document, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
   }
 
   /**
@@ -72,7 +83,7 @@ export class DocumentService {
    */
   public async hardDelete(document: DocumentModel): Promise<void> {
     await deleteObject(ref(this.storage, document.fullPath));
-    await this.firestoreService.deleteObject(DocumentCollection, document.bkey, '@document.operation.delete');
+    await this.firestoreService.deleteObject(DocumentCollection, document.bkey, PFX + 'operation.remove.conf');
   }
 
  /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

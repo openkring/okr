@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } f
 import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
-import { NotesInputComponent, NumberInputComponent, StringSelectComponent } from '@bk2/shared-ui';
+import { NotesInput, NumberInput, StringSelect } from '@bk2/shared-ui';
 import { getAge } from '@bk2/shared-util-core';
 
 import { scsMemberFeeValidations } from '@bk2/relationship-membership-util';
@@ -15,7 +15,7 @@ import { scsMemberFeeValidations } from '@bk2/relationship-membership-util';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     vestForms, FormsModule,
-    NumberInputComponent, StringSelectComponent, NotesInputComponent,
+    NumberInput, StringSelect, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -97,7 +97,7 @@ import { scsMemberFeeValidations } from '@bk2/relationship-membership-util';
             </ion-grid>
           </ion-card-content>
         </ion-card>
-        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event, fd)" [readOnly]="false" />
+        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event, fd)" [readOnly]="false" />
       </form>
     }
   `
@@ -127,8 +127,6 @@ export class ScsMemberFeeEditForm {
   protected readonly suite = scsMemberFeeValidations;
   protected readonly rebateReasonList = [...REBATE_REASON_VALUES];
   protected readonly invoiceStateList = [...INVOICE_STATE_VALUES];
-
-
 
   protected onFieldChange(field: keyof ScsMemberFeesModel, value: unknown, fd: ScsMemberFeesModel): void {
     this.dirty.emit(true);

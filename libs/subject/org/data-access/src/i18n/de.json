@@ -1,18 +1,12 @@
 {
-  "subject": {
-    "org": {
-      "operation": {
-        "create": {
-          "label": "Neue Organisation",
-          "error": "Die neue Organisation konnte nicht gespeichert werden.",
-          "conf": "Die neue Organisation wurde gespeichert."
-        },
-        "update": {
-          "label": "Organisation ändern",
-          "error": "Die Aenderungen konnten nicht gespeichert werden",
-          "conf": "Die Aenderungen wurden gespeichert."
-        }
-      }
-    }
+  "create": {
+    "label": "Neue Organisation",
+    "error": "Die neue Organisation konnte nicht gespeichert werden.",
+    "conf": "Die neue Organisation wurde gespeichert."
+  },
+  "update": {
+    "label": "Organisation ändern",
+    "error": "Die Aenderungen konnten nicht gespeichert werden",
+    "conf": "Die Aenderungen wurden gespeichert."
   }
 }

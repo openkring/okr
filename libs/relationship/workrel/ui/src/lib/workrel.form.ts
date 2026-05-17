@@ -4,14 +4,13 @@ import { vestForms } from 'ngx-vest-forms';
 import { AsyncPipe } from '@angular/common';
 
 import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, NotesInput, NumberInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { FullNamePipe } from '@bk2/shared-pipes';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-
 import { workrelValidations } from '@bk2/relationship-workrel-util';
 
 @Component({
@@ -20,9 +19,9 @@ import { workrelValidations } from '@bk2/relationship-workrel-util';
   imports: [
     vestForms,
     AvatarPipe, AsyncPipe, FullNamePipe, TranslatePipe,
-    DateInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent, NumberInputComponent,
+    DateInput, Chips, NotesInput, CategorySelect, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
-    TextInputComponent
+    TextInput
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -142,13 +141,13 @@ import { workrelValidations } from '@bk2/relationship-workrel-util';
       }
 
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
   `
 })
-export class WorkrelFormComponent {
+export class WorkrelForm {
   // inputs
   public formData = model.required<WorkrelModel>();
   public readonly currentUser = input<UserModel | undefined>();

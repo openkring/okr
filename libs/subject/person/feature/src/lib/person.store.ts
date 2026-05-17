@@ -11,7 +11,7 @@ import { AppStore } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
 import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches } from '@bk2/shared-util-core';
-import { EmailAddressesModal, MapViewModalComponent } from '@bk2/shared-ui';
+import { EmailAddressesModal, MapViewModal } from '@bk2/shared-ui';
 import { Languages } from '@bk2/shared-categories';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
@@ -380,7 +380,7 @@ export const PersonStore = signalStore(
             const coordinates = await store.geocodeService.geocodeAddress(addressStr);
             if (!coordinates) return;
             const modal = await store.modalController.create({
-                component: MapViewModalComponent,
+                component: MapViewModal,
                 componentProps: {
                 title: addressStr,
                 initialPosition: coordinates

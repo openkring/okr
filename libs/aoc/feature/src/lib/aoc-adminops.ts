@@ -4,16 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonToggle } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ButtonComponent, HeaderComponent, ResultLogComponent, StringSelectComponent } from '@bk2/shared-ui';
+import { Button, Header, ResultLog, StringSelect } from '@bk2/shared-ui';
 
 import { AocAdminOpsStore } from './aoc-adminops.store';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-aoc-adminops',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
-    HeaderComponent, ButtonComponent, ResultLogComponent, StringSelectComponent,
+    Header, Button, ResultLog, StringSelect,
     IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, IonLabel, IonToggle,
     FormsModule
   ],
@@ -42,26 +43,26 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.adminops.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ pfx + 'adminops.title' | translate | async }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <!-- IBAN -->
             <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.iban.label' | translate | async }}</ion-col>
+              <ion-col size="6">{{ pfx + 'adminops.iban.label' | translate | async }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.iban.button' | translate | async }}" iconName="checkbox-circle" (click)="listIban()" />
+                <bk-button label=" {{ pfx + 'adminops.iban.button' | translate | async }}" iconName="checkbox-circle" (click)="listIban()" />
               </ion-col>
             </ion-row>
             <!-- Old Juniors -->
             <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.oldJuniors.label' | translate | async }}</ion-col>
+              <ion-col size="6">{{ pfx + 'adminops.oldJuniors.label' | translate | async }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.oldJuniors.button' | translate | async }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
+                <bk-button label=" {{ pfx + 'adminops.oldJuniors.button' | translate | async }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col><ion-label>Änderungen der Mitgliederkategorie</ion-label></ion-col>
+              <ion-col><ion-label>"{{ pfx + 'adminops.mcatchange.title' | translate | async}}"</ion-label></ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
@@ -85,7 +86,7 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
     </ion-content>
   `,
 })
-export class AocAdminOpsComponent {
+export class AocAdminOps {
   private readonly aocAdminOpsStore = inject(AocAdminOpsStore);
 
   protected readonly logTitle = computed(() => this.aocAdminOpsStore.logTitle());
@@ -95,6 +96,7 @@ export class AocAdminOpsComponent {
   protected club = signal('scs');
   protected year = signal('2025'); 
   protected enableFocusLogging = signal(false);
+  protected pfx = PFX;
 
   constructor() {
     // Setup focus event listener based on toggle

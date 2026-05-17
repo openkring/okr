@@ -1,12 +1,13 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, viewChild } from '@angular/core';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
 import { NAME_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
 import { coerceBoolean } from '@bk2/shared-util-core';
+
+import { PFX } from './scope';
 
 /**
  * Vest updates work by binding to ngModel.
@@ -18,7 +19,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   selector: 'bk-text-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     IonList, IonItem,
     IonLabel, IonInput, IonIcon, IonNote,
     IonReorderGroup, IonReorder,
@@ -27,12 +28,12 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+        <ion-card-title>{{ title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        @if((description() ?? '').length > 0) {
+        @if((description()).length > 0) {
           <ion-item lines="none">
-            <ion-note>{{ description() | translate | async }}</ion-note>
+            <ion-note>{{ description() }}</ion-note>
           </ion-item>
         }
         @if(isReadOnly()) {
@@ -49,8 +50,8 @@ import { coerceBoolean } from '@bk2/shared-util-core';
         } @else {
           <ion-item lines="none">
             <!-- we deliberately use ion-input here, because we do not want to interfere with the vest from update of strings() -->
-            <ion-input [value]="''" (ionChange)="save($event)" #textInput
-                label="{{ addLabel() | translate | async }}"
+            <ion-input value="" (ionChange)="save($event)" #textInput
+                [label]="add()"
                 labelPlacement="floating"
                 inputMode="text"
                 type="text"
@@ -88,15 +89,16 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 export class TextList {
   private readonly toastController = inject(ToastController);
   private readonly alertController = inject(AlertController);
+  private i18nService = inject(I18nService);
 
   // inputs
   public texts = model.required<string[]>(); // the keys of the menu items
-  public title = input('@input.texts.label');
-  public addLabel = input('@input.texts.addString');
+  public title = input.required<string>();
+  public add = input.required<string>();
   public copyable = input(false);
   public editable = input(false);
   public readOnly = input.required<boolean>();
-  public description = input<string>();
+  public description = input('');
   public maxLength = input(NAME_LENGTH);
 
   // coerced boolean inputs
@@ -106,6 +108,13 @@ export class TextList {
 
   // view children
   public textInput = viewChild<IonInput>('textInput');
+
+  // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    text_edit: PFX + 'text.edit',
+    ok: '@ok',
+    cancel: '@cancel'
+  });
 
   public save($event: CustomEvent): void {
     const newString = $event?.detail?.value.trim() ?? '';
@@ -137,11 +146,9 @@ export class TextList {
   }
 
   public async edit(text: string, index: number): Promise<void> {
-    const changedText = await bkPrompt(this.alertController, '@input.strings.edit', text);
+    const changedText = await bkPrompt(this.alertController, this.i18n.text_edit(), '', this.i18n.ok(), this.i18n.cancel(), text);
     if (changedText) {
-      const strings = this.texts();
-      strings[index] = changedText;
-    this.texts.set(strings); // converts array back into a comma-separated string
+      this.texts.update(arr => arr.map((t, i) => i === index ? changedText : t));
     }
   }
 

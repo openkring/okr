@@ -2,14 +2,14 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { InvitationModel, InvitationModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { ModelSelectService } from '@bk2/shared-feature';
 
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { CommentsAccordion } from '@bk2/comment-feature';
 
-import { InvitationFormComponent } from '@bk2/relationship-invitation-ui';
+import { InvitationForm } from '@bk2/relationship-invitation-ui';
 
 
 @Component({
@@ -17,7 +17,7 @@ import { InvitationFormComponent } from '@bk2/relationship-invitation-ui';
   standalone: true,
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, InvitationFormComponent, CommentsAccordionComponent, 
+    Header, ChangeConfirmation, InvitationForm, CommentsAccordion, 
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   template: `
@@ -55,7 +55,7 @@ import { InvitationFormComponent } from '@bk2/relationship-invitation-ui';
     </ion-content>
   `,
 })
-export class InvitationEditModalComponent {
+export class InvitationEditModal {
   private readonly modalController = inject(ModalController);
   private readonly modelSelectService = inject(ModelSelectService);
 

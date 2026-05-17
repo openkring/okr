@@ -1,5 +1,8 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
 import { ENV } from '@bk2/shared-config';
+import { getSvgIconUrl } from '@bk2/shared-util-core';
+
+export { getSvgIconUrl };
 
 @Pipe({
   name: 'svgIcon',
@@ -11,10 +14,4 @@ export class SvgIconPipe implements PipeTransform {
   transform(iconName: string, dir = 'icons'): string {
     return getSvgIconUrl(this.env.services.imgixBaseUrl, iconName, dir);
   }
-}
-
-
-export function getSvgIconUrl(imgixBaseUrl: string, iconName: string, dir = 'icons'): string {
-  if (iconName.length === 0) return '';
-  return `${imgixBaseUrl}/logo/${dir}/${iconName}.svg`;
 }

@@ -10,9 +10,11 @@ import { AppStore } from '@bk2/shared-feature';
 import { DocumentCollection, DocumentModel } from '@bk2/shared-models';
 import { confirm, copyToClipboardWithConfirmation, downloadToBrowser } from '@bk2/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getFullName, getTodayStr } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { DocumentService } from '@bk2/document-data-access';
-import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex, storeDateToDisplayDate } from '@bk2/document-util';
+import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@bk2/document-util';
+import { PFX } from './scope';
 
 export type StorageFileInfo = {
   fullPath: string;
@@ -54,6 +56,16 @@ export const AocDocStore = signalStore(
     documentService: inject(DocumentService),
     toastController: inject(ToastController),
     alertController: inject(AlertController),
+    i18nService: inject(I18nService)
+  })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'doc.delete.confirm',
+      create_conf: PFX + 'doc.create.conf',
+      create_error: PFX + 'doc.create.error',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
   })),
   withComputed(state => ({
     currentUser: computed(() => state.appStore.currentUser()),
@@ -110,7 +122,7 @@ export const AocDocStore = signalStore(
     },
 
     async deleteDocument(file: StorageFileInfo): Promise<void> {
-      const ok = await confirm(store.alertController, '@aoc.doc.delete.confirm', true);
+      const ok = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!ok) return;
       await deleteObject(ref(store.storage, file.fullPath));
       patchState(store, {
@@ -162,7 +174,7 @@ export const AocDocStore = signalStore(
       document.authorName = getFullName(currentUser?.firstName, currentUser?.lastName);
       document.index = getDocumentIndex(document);
       await store.firestoreService.createModel<DocumentModel>(
-        DocumentCollection, document, '@document.operation.create', currentUser
+        DocumentCollection, document, store.i18n.create_conf(), store.i18n.create_error(), currentUser
       );
       patchState(store, {
         missingDocs: store.missingDocs().filter(d => d.fullPath !== file.fullPath),

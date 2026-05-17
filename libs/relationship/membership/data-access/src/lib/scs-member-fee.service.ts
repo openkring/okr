@@ -3,10 +3,12 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { CategoryListModel, MembershipModel, ScsMemberFeesCollection, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
 import { getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat, getYear } from '@bk2/shared-util-core';
 import { ActivityService } from '@bk2/activity-data-access';
 import { BEXIO_INVOICE_TEMPLATES } from '@bk2/relationship-membership-util';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +17,15 @@ export class ScsMemberFeeService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    fee_create_conf:  PFX + 'operation.fee.create.conf',
+    fee_create_error: PFX + 'operation.fee.create.error',
+    fee_update_conf:  PFX + 'operation.fee.update.conf',
+    fee_update_error: PFX + 'operation.fee.update.error',
+    fee_delete_conf:  PFX + 'operation.fee.delete.conf',
+    fee_delete_error: PFX + 'operation.fee.delete.error',
+  });
 
   public list(): Observable<ScsMemberFeesModel[]> {
     return this.firestoreService.searchData<ScsMemberFeesModel>(
@@ -26,16 +37,13 @@ export class ScsMemberFeeService {
   }
 
   public async save(fee: ScsMemberFeesModel, currentUser?: UserModel, addActivity = true): Promise<string | undefined> {
+
     if (fee.bkey && fee.bkey.length > 0) {
-      const key = await this.firestoreService.updateModel<ScsMemberFeesModel>(
-        ScsMemberFeesCollection, fee, false, '@finance.scsMemberFee.operation.update', currentUser
-      );
+      const key = await this.firestoreService.updateModel<ScsMemberFeesModel>(ScsMemberFeesCollection, fee, false, this.i18n.fee_update_conf(), this.i18n.fee_update_error(), currentUser);
       void this.activityService.log('scs-member-fee', 'update', currentUser, fee.index);
       return key;
     } else {
-      const key = await this.firestoreService.createModel<ScsMemberFeesModel>(
-        ScsMemberFeesCollection, fee, '@finance.scsMemberFee.operation.create', currentUser
-      );
+      const key = await this.firestoreService.createModel<ScsMemberFeesModel>(ScsMemberFeesCollection, fee, this.i18n.fee_create_conf(), this.i18n.fee_create_error(), currentUser);
       if (addActivity) {
         void this.activityService.log('scs-member-fee', 'create', currentUser, fee.index);
       }
@@ -44,9 +52,7 @@ export class ScsMemberFeeService {
   }
 
   public async delete(fee: ScsMemberFeesModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<ScsMemberFeesModel>(
-      ScsMemberFeesCollection, fee, '@finance.scsMemberFee.operation.delete', currentUser
-    );
+    await this.firestoreService.deleteModel<ScsMemberFeesModel>(ScsMemberFeesCollection, fee, this.i18n.fee_delete_conf(), this.i18n.fee_delete_error(), currentUser);
     void this.activityService.log('scs-member-fee', 'delete', currentUser, fee.index);
   }
 }

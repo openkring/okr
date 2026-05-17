@@ -2,34 +2,34 @@ import { Component, computed, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { RoleName, SectionModel, UserModel } from '@bk2/shared-models';
-import { SpinnerComponent } from '@bk2/shared-ui';
+import { Spinner } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { AccordionSectionComponent } from './accordion-section';
-import { AlbumSectionComponent } from './album-section.component';
-import { ArticleSectionComponent } from './article-section.component';
-import { ButtonSectionComponent } from './button-section.component';
-import { CalendarSectionComponent } from './calendar-section.component';
-import { ChartSectionComponent } from './chart-section.component';
-import { HeroSectionComponent } from './hero-section.component';
-import { IframeSectionComponent } from './iframe-section.component';
-import { MapSectionComponent } from './map-section.component';
-import { MissingSectionComponent } from './missing-section.component';
-import { PeopleSectionComponent } from './people-section.component';
-import { SliderSectionComponent } from './slider-section.component';
-import { TableSectionComponent } from './table-section.component';
-import { TrackerSectionComponent } from './tracker-section.component';
-import { VideoSectionComponent } from './video-section.component';
-import { EventsSectionComponent } from './events-section.component';
-import { InvitationsSectionComponent } from './invitations-section.component';
-import { TasksSectionComponent } from './tasks-section.component';
-import { ActivitiesSectionComponent } from './activities-section.component';
-import { MessagesSectionComponent } from './messages-section.component';
-import { NewsSectionComponent } from './news-section.component';
-import { OrgchartSectionComponent } from './orgchart-section.component';
-import { RagSectionComponent } from './rag-section.component';
-import { ContextDiagramSectionComponent } from './context-diagram-section.component';
-import { ResponsibilitySectionComponent } from './responsibility-section.component';
+import { AlbumSectionComponent } from './album-section';
+import { ArticleSectionComponent } from './article-section';
+import { ButtonSectionComponent } from './button-section';
+import { CalendarSectionComponent } from './calendar-section';
+import { ChartSectionComponent } from './chart-section';
+import { HeroSectionComponent } from './hero-section';
+import { IframeSectionComponent } from './iframe-section';
+import { MapSectionComponent } from './map-section';
+import { MissingSectionComponent } from './missing-section';
+import { PeopleSectionComponent } from './people-section';
+import { SliderSectionComponent } from './slider-section';
+import { TableSectionComponent } from './table-section';
+import { TrackerSectionComponent } from './tracker-section';
+import { VideoSectionComponent } from './video-section';
+import { EventsSectionComponent } from './events-section';
+import { InvitationsSectionComponent } from './invitations-section';
+import { TasksSectionComponent } from './tasks-section';
+import { ActivitiesSectionComponent } from './activities-section';
+import { MessagesSectionComponent } from './messages-section';
+import { NewsSectionComponent } from './news-section';
+import { OrgchartSectionComponent } from './orgchart-section';
+import { RagSectionComponent } from './rag-section';
+import { ContextDiagramSectionComponent } from './context-diagram-section';
+import { ResponsibilitySectionComponent } from './responsibility-section';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -46,7 +46,7 @@ import { ResponsibilitySectionComponent } from './responsibility-section.compone
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
     InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent,
-    IonItem, IonLabel, SpinnerComponent,
+    IonItem, IonLabel, Spinner,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
   ],
   template: `

@@ -7,12 +7,14 @@ import { AppStore } from '@bk2/shared-feature';
 import { confirm } from '@bk2/shared-util-angular';
 import { CategoryListModel, ResponsibilityModel } from '@bk2/shared-models';
 import { debugListLoaded, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
 import { isResponsibility } from '@bk2/relationship-responsibility-util';
 
 import { ResponsibilityEditModal } from './responsibility-edit.modal';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { PFX } from './scope';
 
 export type ResponsibilityState = {
   listId: string;          // 'k_key', 'r_responsibleKey', 'all'
@@ -37,8 +39,18 @@ export const ResponsibilityStore = signalStore(
     responsibilityService: inject(ResponsibilityService),
     alertController: inject(AlertController),
     modalController: inject(ModalController),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      update_header: PFX + 'update.header',
+      update_message1: PFX + 'update.message1',
+      update_message2: PFX + 'update.message2',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     allResponsibilitiesResource: rxResource({
       params: () => ({ currentUser: store.appStore.currentUser() }),
       stream: ({ params }) =>
@@ -134,9 +146,9 @@ export const ResponsibilityStore = signalStore(
             const existingResp = store.allResponsibilities()?.find((r: ResponsibilityModel) => r.bkey === data.bkey);
             if (existingResp) {
               const alert = await store.alertController.create({
-                header: 'Duplicate ID',
-                message: `A responsibility with ID "${data.bkey}" already exists. Please use a different ID.`,
-                buttons: ['OK']
+                header: store.i18n.update_header(),
+                message: store.i18n.update_message1() + data.bkey + store.i18n.update_message2(),
+                buttons: [store.i18n.ok()]
               });
               await alert.present();
               return;
@@ -153,7 +165,7 @@ export const ResponsibilityStore = signalStore(
 
     async delete(responsibility?: ResponsibilityModel, readOnly = true): Promise<void> {
       if (!responsibility || readOnly) return;
-      const result = await confirm(store.alertController, '@responsibility.operation.delete.confirm', true);
+      const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (result === true) {
         await store.responsibilityService.delete(responsibility, store.appStore.currentUser());
         this.reload();

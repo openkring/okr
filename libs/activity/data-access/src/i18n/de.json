@@ -1,7 +1,8 @@
 {
-  "activity": {
-    "operation": {
-      "delete": "Aktivität gelöscht."
-    }
+  "delete": {
+    "label": "Aktivität löschen",
+    "conf": "Aktivität wurde gelöscht.",
+    "askconf": "Soll die Aktivität gelöscht werden ?",
+    "error": "Die Aktivität konnte nicht gelöscht werden."
   }
 }

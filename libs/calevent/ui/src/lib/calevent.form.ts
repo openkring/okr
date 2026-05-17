@@ -5,11 +5,11 @@ import { vestForms } from 'ngx-vest-forms';
 import { ChFutureDate, LowercaseWordMask } from '@bk2/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, StringsComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Checkbox, Chips, DateInput, ErrorNote, NotesInput, NumberInput, StringList, TextInput, TimeInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { ModelSelectService } from '@bk2/shared-feature';
 
-import { AvatarsComponent } from '@bk2/avatar-ui';
+import { Avatars } from '@bk2/avatar-ui';
 import { calEventValidations } from '@bk2/calevent-util';
 
 @Component({
@@ -17,8 +17,8 @@ import { calEventValidations } from '@bk2/calevent-util';
   standalone: true,
   imports: [
     vestForms,
-    CategorySelectComponent, ChipsComponent, NotesInputComponent, DateInputComponent, TimeInputComponent, NumberInputComponent,
-    TextInputComponent, ChipsComponent, ErrorNoteComponent, StringsComponent, AvatarsComponent, CheckboxComponent,
+    CategorySelect, Chips, NotesInput, DateInput, TimeInput, NumberInput,
+    TextInput, ErrorNote, StringList, Avatars, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -138,13 +138,13 @@ import { calEventValidations } from '@bk2/calevent-util';
     }
 
     @if(hasRole('admin')) {
-      <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+      <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
     }
   </form>
   }
 `
 })
-export class CalEventFormComponent {
+export class CalEventForm {
   private readonly modelSelectService = inject(ModelSelectService);
 
   // inputs

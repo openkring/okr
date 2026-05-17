@@ -93,10 +93,10 @@ An NgRx Signal Store managing all responsibilities for a tenant.
 
 An Ionic modal for creating or editing a `ResponsibilityModel`. When creating (`isNew = true`), the `bkey` is entered by the user; the store checks for duplicates before saving.
 
-### `ResponsibilityListComponent`
+### `ResponsibilityList`
 
 A standalone list view of responsibilities with search and current/all toggle.
 
-### `ResponsibilityAccordionComponent`
+### `ResponsibilityAccordion`
 
 An accordion for embedding the responsibility list within a subject detail page (e.g. an org detail page).

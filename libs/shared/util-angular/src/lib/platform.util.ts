@@ -1,11 +1,8 @@
-import { isPlatformBrowser } from '@angular/common';
+import { isBrowser } from '@bk2/shared-util-core';
+
+export { isBrowser };
 
 export type BrowserName = 'safari' | 'chrome' | 'firefox' | 'opera' | 'other';
-
-/** SSR-safe replacement for Angular's isPlatformBrowser. */
-export function isBrowser(platformId: object): boolean {
-  return isPlatformBrowser(platformId);
-}
 
 /**
  * Detects the current browser via UA string. Order matters: Opera and Firefox

@@ -3,13 +3,12 @@ import { vestForms } from 'ngx-vest-forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, ColorComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, PropertyListComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NumberInput, PropertyList, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS } from '@bk2/shared-constants';
-
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AsyncPipe } from '@angular/common';
 
+import { AsyncPipe } from '@angular/common';
 import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
 
 @Component({
@@ -18,9 +17,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe,
-    ChipsComponent, NotesInputComponent, PropertyListComponent,
-    TextInputComponent, NumberInputComponent, ErrorNoteComponent, CategorySelectComponent,
-    ColorComponent,
+    Chips, NotesInput, PropertyList, TextInput, NumberInput, ErrorNote, CategorySelect, Color,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -333,13 +330,13 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
         }
       
         @if(hasRole('admin')) {
-          <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+          <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
         }
     </form>
   }
   `
 })
-export class ResourceFormComponent {
+export class ResourceForm {
   // inputs
   public formData = model.required<ResourceModel>();
   public currentUser = input<UserModel | undefined>();

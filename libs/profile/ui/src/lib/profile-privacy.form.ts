@@ -6,7 +6,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 import { PrivacyUsages } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { PrivacyUsage, UserModel } from "@bk2/shared-models";
-import { CategoryComponent, CheckboxComponent } from "@bk2/shared-ui";
+import { CategoryOld, Checkbox } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
@@ -18,7 +18,7 @@ import { userValidations } from "@bk2/user-util";
     TranslatePipe, AsyncPipe,
     vestForms,
     IonAccordion, IonItem, IonLabel, IonGrid, IonRow, IonCol,
-    CategoryComponent, CheckboxComponent
+    CategoryOld, Checkbox
   ],
   styles: [`
     ion-icon { padding-right: 5px; }
@@ -49,22 +49,22 @@ import { userValidations } from "@bk2/user-util";
             </ion-row>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <bk-cat name="usageImages" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old name="usageImages" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="usageDateOfBirth" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old name="usageDateOfBirth" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="usagePostalAddress" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old name="usagePostalAddress" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="usageEmail" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old name="usageEmail" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="usagePhone" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old name="usagePhone" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="usageName" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old name="usageName" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -88,7 +88,7 @@ import { userValidations } from "@bk2/user-util";
   </ion-accordion>
   `,
 })
-export class ProfilePrivacyAccordionComponent {
+export class ProfilePrivacyAccordion {
   // inputs
   public formData = model.required<UserModel>();
   public readonly currentUser = input<UserModel | undefined>();

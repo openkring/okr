@@ -3,23 +3,23 @@ import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController
 
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
-import { CategorySelectComponent, ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared-ui';
+import { CategorySelect, ChangeConfirmation, Header, IconToolbar } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
 
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
 
-import { ResourceFormComponent } from '@bk2/resource-ui';
+import { ResourceForm } from '@bk2/resource-ui';
 import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@bk2/resource-util';
 
 @Component({
   selector: 'bk-resource-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, ReservationsAccordionComponent,
-    ResourceFormComponent, IconToolbarComponent, CommentsAccordionComponent, CategorySelectComponent,
+    Header, ChangeConfirmation, ReservationsAccordion,
+    ResourceForm, IconToolbar, CommentsAccordion, CategorySelect,
     IonContent, IonAccordionGroup, IonGrid, IonRow, IonCol
   ],
   template: `
@@ -66,7 +66,7 @@ import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservab
     </ion-content>
   `
 })
-export class ResourceEditModalComponent {
+export class ResourceEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
 

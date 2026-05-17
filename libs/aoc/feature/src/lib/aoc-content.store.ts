@@ -3,19 +3,22 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, first, forkJoin, of } from 'rxjs';
+import { Router } from '@angular/router';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AccordionSection, BkModel, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, UserModel } from '@bk2/shared-models';
 import { confirm, navigateByUrl } from '@bk2/shared-util-angular';
 import { getSystemQuery, replaceSubstring, safeStructuredClone } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
-import { Router } from '@angular/router';
 import { MenuService } from '@bk2/cms-menu-data-access';
-import { MenuItemModalComponent } from '@bk2/cms-menu-feature';
+import { MenuModal } from '@bk2/cms-menu-feature';
 import { PageService } from '@bk2/cms-page-data-access';
 import { SectionService } from '@bk2/cms-section-data-access';
-import { SectionEditModalComponent } from '@bk2/cms-section-feature';
+import { SectionEditModal } from '@bk2/cms-section-feature';
+
+import { PFX } from './scope';
 
 export type MissingMenuRef = {
   parent: MenuItemModel;   // menu item that contains the broken reference
@@ -59,8 +62,17 @@ export const AocContentStore = signalStore(
     pageService: inject(PageService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    i18nService: inject(I18nService)
   })),
   withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      section_delete_confirm: PFX + 'content.section.delete.confirm',
+      menu_delete_conf: PFX + 'content.menu.delete.conf',
+      menu_delete_confirm: PFX + 'content.menu.delete.confirm',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     dataResource: rxResource({
       params: () => ({
         modelType: store.modelType(),
@@ -149,7 +161,7 @@ export const AocContentStore = signalStore(
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');
         const modal = await store.modalController.create({
-          component: SectionEditModalComponent,
+          component: SectionEditModal,
           cssClass: 'full-modal',
           componentProps: { 
             section, 
@@ -170,7 +182,7 @@ export const AocContentStore = signalStore(
       },
 
       async removeSection(section: SectionModel): Promise<void> {
-        const ok = await confirm(store.alertController, '@content.section.operation.delete.confirm', true);
+        const ok = await confirm(store.alertController, store.i18n.section_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (ok) {
           await store.sectionService.delete(section, store.currentUser());
           patchState(store, {
@@ -223,7 +235,7 @@ export const AocContentStore = signalStore(
       async editMenu(menuItem: MenuItemModel): Promise<void> {
         const _menuItem = safeStructuredClone(menuItem);
         const modal = await store.modalController.create({
-          component: MenuItemModalComponent,
+          component: MenuModal,
           componentProps: {
             menuItem: _menuItem,
             currentUser: store.currentUser(),
@@ -242,7 +254,7 @@ export const AocContentStore = signalStore(
       },
 
       async removeMenu(menuItem: MenuItemModel): Promise<void> {
-        const ok = await confirm(store.alertController, '@content.menuItem.operation.delete.conf', true);
+        const ok = await confirm(store.alertController, store.i18n.menu_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (ok) {
           await store.menuService.delete(menuItem, store.currentUser());
           patchState(store, {
@@ -273,7 +285,7 @@ export const AocContentStore = signalStore(
       },
 
       async removeMissingMenuRef(ref: MissingMenuRef): Promise<void> {
-        const ok = await confirm(store.alertController, '@content.menuItem.operation.delete.conf', true);
+        const ok = await confirm(store.alertController, store.i18n.menu_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (!ok) return;
         const updated = { ...ref.parent, menuItems: (ref.parent.menuItems ?? []).filter(k => k !== ref.missingKey) };
         await store.menuService.update(updated as MenuItemModel, store.currentUser());
@@ -287,7 +299,7 @@ export const AocContentStore = signalStore(
         const states = store.appStore.getCategory('content_state');
         const newSection = { bkey: '', type: 'article', state: 'active', name: ref.resolvedKey, title: '', tenants: [store.appStore.env.tenantId] } as unknown as SectionModel;
         const modal = await store.modalController.create({
-          component: SectionEditModalComponent,
+          component: SectionEditModal,
           cssClass: 'full-modal',
           componentProps: { section: newSection, currentUser, tags, roles, states, readOnly: false, isNew: true },
         });
@@ -304,7 +316,7 @@ export const AocContentStore = signalStore(
       },
 
       async removeSectionRefFromPage(ref: MissingSectionRef): Promise<void> {
-        const ok = await confirm(store.alertController, '@content.section.operation.delete.confirm', true);
+        const ok = await confirm(store.alertController, store.i18n.section_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (!ok) return;
         const updatedSections = (ref.page.sections ?? []).filter(k => k !== ref.rawKey);
         await store.pageService.update({ ...ref.page, sections: updatedSections }, store.currentUser());

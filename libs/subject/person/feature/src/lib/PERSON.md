@@ -80,9 +80,9 @@ Manages a single person detail page. Loaded by `personKey` input.
 ## Components
 | Component | Description |
 |---|---|
-| `PersonListComponent` (person-list.ts) | List with search, tag, and gender filters; actions via ActionSheet |
+| `PersonList` (person-list.ts) | List with search, tag, and gender filters; actions via ActionSheet |
 | `PersonNewModal` | Ionic modal for creating a new person with initial contact and membership data |
-| `PersonEditPageComponent` | Full edit page for a single person; embeds addresses, memberships, ownerships, comments, and document accordions |
+| `PersonEditPage` | Full edit page for a single person; embeds addresses, memberships, ownerships, comments, and document accordions |
 
 ## Computed Subsets
 The `PersonListStore` exposes both `filteredPersons` (all persons matching filters) and `filteredDeceased` (deceased persons matching filters, i.e. `dateOfDeath` is non-empty).

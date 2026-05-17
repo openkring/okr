@@ -60,7 +60,7 @@ The `tasks` computed signal switches between resources based on `calendarName`:
 
 Key actions:
 - `add(readOnly)` — creates a new task pre-populated with the current user as both author and assignee, then opens the edit modal.
-- `edit(task, readOnly)` — opens `TaskEditModalComponent`.
+- `edit(task, readOnly)` — opens `TaskEditModal`.
 - `delete(task, readOnly)` — calls `TaskService.delete`.
 - `quickEntry(task)` — creates a task without opening the modal.
 - `setCompleted(task, readOnly)` — toggle completion state.
@@ -69,9 +69,9 @@ Key actions:
 
 | Component | Description |
 |---|---|
-| `TaskListComponent` | Full filterable task list with filter toolbar |
-| `SimpleTaskListComponent` | Compact task list suitable for embedding in dashboards; uses `maxItems` to limit results |
-| `TaskEditModalComponent` | Full-modal edit form for create/update |
+| `TaskList` | Full filterable task list with filter toolbar |
+| `SimpleTaskList` | Compact task list suitable for embedding in dashboards; uses `maxItems` to limit results |
+| `TaskEditModal` | Full-modal edit form for create/update |
 
 ## Related Libraries
 

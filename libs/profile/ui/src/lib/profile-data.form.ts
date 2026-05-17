@@ -6,7 +6,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 import { ChSsnMask } from "@bk2/shared-config";
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { CategoryListModel, PersonModel, UserModel } from "@bk2/shared-models";
-import { CategorySelectComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared-ui";
+import { CategorySelect, DateInput, ErrorNote, TextInput } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel } from "@bk2/shared-util-core";
 import { DEFAULT_GENDER } from "@bk2/shared-constants";
 import { AhvFormat, formatAhv } from "@bk2/shared-util-angular";
@@ -19,7 +19,7 @@ import { personValidations } from "@bk2/subject-person-util";
   imports: [ 
     TranslatePipe, AsyncPipe, 
     vestForms,
-    DateInputComponent, TextInputComponent, CategorySelectComponent, ErrorNoteComponent,
+    DateInput, TextInput, CategorySelect, ErrorNote,
     IonGrid, IonRow, IonCol, IonItem, IonAccordion, IonLabel
   ],
   styles: [`
@@ -88,7 +88,7 @@ import { personValidations } from "@bk2/subject-person-util";
   </ion-accordion>
   `,
 })
-export class ProfileDataAccordionComponent {
+export class ProfileDataAccordion {
   // inputs
   public formData = model.required<PersonModel>();
   public readonly currentUser = input<UserModel | undefined>();

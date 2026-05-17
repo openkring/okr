@@ -1,27 +1,31 @@
 {
-  "subject": {
-    "address": {
-      "operation": {
-        "create": {
-          "label": "Adresse hinzufügen",
-          "description": "Eine neue Adresse erstellen.",
-          "conf": "Die Adresse wurde gespeichert.",
-          "error": "Die Adresse konnte nicht gespeichert werden."
-        },
-        "update": {
-          "label": "Adresse ändern",
-          "description": "Eine bestehende Adresse ändern.",
-          "conf": "Die Adresse wurde geändert.",
-          "error": "Die Adresse konnte nicht geändert werden"
-        },
-        "delete": {
-          "label": "Adresse löschen",
-          "description": "Eine bestehende Adresse löschen.",
-          "conf": "Die Adresse wurde gelöscht.",
-          "error": "Die Adresse konnte nicht gelöscht werden",
-          "askConfirmation": "Soll die Adresse wirklich gelöscht werden ?"
-        }
-      }
+  "create": {
+    "label": "Adresse hinzufügen",
+    "description": "Eine neue Adresse erstellen.",
+    "conf": "Die Adresse wurde gespeichert.",
+    "error": "Die Adresse konnte nicht gespeichert werden."
+  },
+  "update": {
+    "label": "Adresse ändern",
+    "description": "Eine bestehende Adresse ändern.",
+    "conf": "Die Adresse wurde geändert.",
+    "error": "Die Adresse konnte nicht geändert werden."
+  },
+  "delete": {
+    "label": "Adresse löschen",
+    "description": "Eine bestehende Adresse löschen.",
+    "conf": "Die Adresse wurde gelöscht.",
+    "error": "Die Adresse konnte nicht gelöscht werden.",
+    "askConfirmation": "Soll die Adresse wirklich gelöscht werden ?"
+  },
+  "favorite": {
+    "enable": {
+      "conf": "Die Adresse ist jetzt Hauptadresse.",
+      "error": "Die Adresse konnte nicht zur Hauptadresse gemacht werden."
+    },
+    "disable": {
+      "conf": "Die Adresse ist nicht mehr Hauptadresse.",
+      "error": "Die Hauptadresse konnte nicht geändert werden."
     }
   }
 }

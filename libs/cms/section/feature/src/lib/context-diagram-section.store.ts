@@ -8,14 +8,16 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@bk2/shared-feature';
 import { ContextDiagramConfig, ContextDiagramSection, GroupModelName, MembershipModel, OrgModelName, PersonalRelModel, PersonModelName, ResponsibilityModel, WorkrelModel } from '@bk2/shared-models';
 import { getFullName, isPerson } from '@bk2/shared-util-core';
-import { PersonService } from '@bk2/subject-person-data-access';
-import { AvatarService } from '@bk2/avatar-data-access';
+
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { WorkrelService } from '@bk2/relationship-workrel-data-access';
 import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
+
+import { PersonService } from '@bk2/subject-person-data-access';
+import { AvatarService } from '@bk2/avatar-data-access';
 import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
-import { OrgEditModalComponent } from '@bk2/subject-org-feature';
+import { OrgEditModal } from '@bk2/subject-org-feature';
 
 // ---------------------------------------------------------------------------
 // Graph node / edge types
@@ -204,7 +206,7 @@ export const ContextDiagramStore = signalStore(
         const org = store.appStore.getOrg(key);
         if (!org) return;
         const modal = await store.modalController.create({
-          component: OrgEditModalComponent,
+          component: OrgEditModal,
           cssClass: 'wide-modal',
           componentProps: {
             org,

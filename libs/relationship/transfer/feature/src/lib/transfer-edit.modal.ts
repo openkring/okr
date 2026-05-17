@@ -2,12 +2,12 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, RoleName, TransferModel, TransferModelName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { TransferFormComponent } from '@bk2/relationship-transfer-ui';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { TransferForm } from '@bk2/relationship-transfer-ui';
 import { ModelSelectService } from '@bk2/shared-feature';
 
 
@@ -16,7 +16,7 @@ import { ModelSelectService } from '@bk2/shared-feature';
   standalone: true,
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, TransferFormComponent, CommentsAccordionComponent, 
+    Header, ChangeConfirmation, TransferForm, CommentsAccordion, 
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   template: `
@@ -57,7 +57,7 @@ import { ModelSelectService } from '@bk2/shared-feature';
     </ion-content>
   `,
 })
-export class TransferEditModalComponent {
+export class TransferEditModal {
   private readonly modalController = inject(ModalController);
   private readonly modelSelectService = inject(ModelSelectService);
 

@@ -5,11 +5,13 @@ import { firstValueFrom, map, Observable, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { BkModel, LogInfo, logMessage, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel, TABLE_SECTION_SHAPE } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
 import { DateFormat, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { initializeAgeByGenderStatistics, updateAgeByGenderStats } from '@bk2/aoc-util';
+import { PFX } from 'libs/aoc/feature/src/lib/scope';
 
 export type AocStatisticsState = {
   modelType: string | undefined;
@@ -28,6 +30,13 @@ export const AocStatisticsStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      age_by_gender_conf:  PFX + 'operation.ageByGender.create.conf',
+      age_by_gender_error: PFX + 'operation.ageByGender.create.error',
+    }),
   })),
   withProps(store => ({
     dataResource: rxResource({
@@ -85,7 +94,7 @@ export const AocStatisticsStore = signalStore(
           updateAgeByGenderStats(ageByGenderStats, member.memberType, member.memberDateOfBirth);
         }
         patchState(store, { log: logMessage(log, `aoc-statistics.updateAgeByGender: saving updated statistics to ${SectionCollection}/${sectionKey}...`) });
-
+        
         let section = await firstValueFrom(store.firestoreService.readModel<SectionModel>(SectionCollection, sectionKey));
         const isNew = !section;
         if (isNew) {
@@ -121,9 +130,11 @@ export const AocStatisticsStore = signalStore(
             description: ''
           },
         };
-        isNew
-          ? store.firestoreService.createModel<SectionModel>(SectionCollection, section!, 'aoc.statistics.ageByGender.conf', store.appStore.currentUser())
-          : store.firestoreService.updateModel<SectionModel>(SectionCollection, section!, false, 'aoc.statistics.ageByGender.conf', store.appStore.currentUser());
+        if (isNew) {
+          store.firestoreService.createModel<SectionModel>(SectionCollection, section!, store.i18n.age_by_gender_conf(), store.i18n.age_by_gender_error(), store.appStore.currentUser())
+        } else {
+          store.firestoreService.updateModel<SectionModel>(SectionCollection, section!, false, store.i18n.age_by_gender_conf(), store.i18n.age_by_gender_error(), store.appStore.currentUser());
+        }
       },
 
       /**

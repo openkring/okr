@@ -1,24 +1,24 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
 
 import { AppStore } from '@bk2/shared-feature';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { AlertService, navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
+import { AuthCredentials } from '@bk2/shared-models';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { AuthService } from '@bk2/auth-data-access';
 import { LoginForm } from '@bk2/auth-ui';
-import { AuthCredentials } from '@bk2/shared-models';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-confirm-password-reset-page',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    HeaderComponent, LoginForm,
+    Header, LoginForm,
     IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton, IonText,
   ],
   styles: `

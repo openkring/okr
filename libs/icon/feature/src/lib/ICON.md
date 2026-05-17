@@ -5,7 +5,7 @@ The Icon domain manages SVG icons that are stored in Firebase Storage and tracke
 
 Icons are organised into named **icon sets** (subdirectories under `logo/` in Firebase Storage, e.g. `icons`, `general`, `sport`). The list of available sets is derived at runtime from the distinct `type` values found in the Firestore `icons` collection and also from the hardcoded `ICON_SETS` constant which serves as the canonical set list for the `sync` operation.
 
-The `IconSelectModalComponent` (re-exported from this library) is used across the application wherever users need to pick an SVG icon — e.g. in menu items, section headers, and category items.
+The `IconSelectModal` (re-exported from this library) is used across the application wherever users need to pick an SVG icon — e.g. in menu items, section headers, and category items.
 
 ## Firestore Collection
 Collection name: `icons`
@@ -51,7 +51,7 @@ Notable store actions:
 | Method | Description |
 |---|---|
 | `add(readOnly)` | Picks an SVG file via `UploadService`, uploads to `logo/{selectedDir}/{name}.svg`, creates an `IconModel` in Firestore |
-| `edit(icon, isNew, readOnly)` | Opens `IconEditModalComponent`; updates the record on confirm |
+| `edit(icon, isNew, readOnly)` | Opens `IconEditModal`; updates the record on confirm |
 | `delete(icon, readOnly)` | Deletes the Firestore record (does **not** remove the file from Storage) |
 | `sync()` | Scans every entry in `ICON_SETS` via `listAll` on Firebase Storage, then creates a Firestore `IconModel` for every `.svg` file that is not yet tracked. Skips files already present (matched by `type/name`). Useful for initial population or after bulk Storage uploads. |
 | `export(type)` | Placeholder — not yet implemented |
@@ -59,16 +59,16 @@ Notable store actions:
 ## Key Components
 | Component | Selector | Role |
 |---|---|---|
-| `IconListComponent` | `bk-icon-list` | Admin list/grid view with search, icon-set filter, view toggle, CRUD action sheet, and context menu |
-| `IconEditModalComponent` | `bk-icon-edit-modal` | Edit/view modal for a single icon's metadata |
-| `IconSelectModalComponent` | `bk-icon-select-modal` | Selection modal used across the app to pick an SVG icon; returns the icon `name` string on confirm |
+| `IconList` | `bk-icon-list` | Admin list/grid view with search, icon-set filter, view toggle, CRUD action sheet, and context menu |
+| `IconEditModal` | `bk-icon-edit-modal` | Edit/view modal for a single icon's metadata |
+| `IconSelectModal` | `bk-icon-select-modal` | Selection modal used across the app to pick an SVG icon; returns the icon `name` string on confirm |
 
 ## Key Library Layers
 | Import alias | Purpose |
 |---|---|
 | `@bk2/icon-data-access` | `IconService` — Firestore CRUD for the `icons` collection |
-| `@bk2/icon-feature` | `IconStore`, `IconListComponent`, `IconEditModalComponent`, `IconSelectModalComponent` |
-| `@bk2/icon-ui` | `IconEditFormComponent` — form for editing icon metadata |
+| `@bk2/icon-feature` | `IconStore`, `IconList`, `IconEditModal`, `IconSelectModal` |
+| `@bk2/icon-ui` | `IconEditForm` — form for editing icon metadata |
 | `@bk2/icon-util` | `getIconIndex`, `getIconStoragePath`, `buildIconModel`, `buildIconModelFromStorage`, `iconValidations` |
 
 ## Data Access
@@ -82,7 +82,7 @@ Notable store actions:
 ```typescript
 // Open the icon picker from any component or store:
 const modal = await modalController.create({
-  component: IconSelectModalComponent,
+  component: IconSelectModal,
   componentProps: { initialDir: 'icons' }   // optional: pre-select an icon set
 });
 await modal.present();

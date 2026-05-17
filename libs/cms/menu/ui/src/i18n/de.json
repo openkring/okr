@@ -1,12 +1,10 @@
 {
-  "input": {
-    "url": {
-      "placeholder2": "/route/to/page",
-      "helper2": "Die URL verweist auf die Seite, die angezeigt werden soll."
-    },
-    "menuItems": {
-      "title": "Submenüs",
-      "addLabel": "Submenü hinzufügen"
-    }
+  "url": {
+    "placeholder": "/route/to/page",
+    "helper": "Die URL verweist auf die Seite, die angezeigt werden soll."
+  },
+  "menuItems": {
+    "title": "Submenüs",
+    "addLabel": "Submenü hinzufügen"
   }
 }

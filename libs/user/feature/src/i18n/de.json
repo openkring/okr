@@ -1,29 +1,19 @@
 {
-  "user": {
-    "fbuser": {
-      "edit": {
-        "title": "Firebase User ändern"
-      }
-    },
-    "plural": "Users",
-    "field": {
-      "loginEmail": "Login E-Mail",
-      "name": "Name",
-      "empty": "Keine User gefunden"
-    }
+  "users": "Firebase Users",
+  "loginEmail": "Login E-Mail",
+  "name": "Name",
+  "empty": "Keine User gefunden",
+  "edit": {
+    "title": "Firebase User ändern"
   },
   "document": {
-    "operation": {
-      "upload": {
-        "avatar": {
-          "title": "Avatar Bild hochladen"
-        }
+    "upload": {
+      "avatar": {
+        "title": "Avatar Bild hochladen"
       }
     }
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion"
   }
 }

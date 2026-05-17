@@ -6,17 +6,17 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
-import { AlbumSectionComponent } from './album-section.component';
-import { ArticleSectionComponent } from './article-section.component';
-import { ButtonSectionComponent } from './button-section.component';
-import { CalendarSectionComponent } from './calendar-section.component';
-import { HeroSectionComponent } from './hero-section.component';
-import { IframeSectionComponent } from './iframe-section.component';
-import { MapSectionComponent } from './map-section.component';
-import { PeopleSectionComponent } from './people-section.component';
-import { TableSectionComponent } from './table-section.component';
-import { VideoSectionComponent } from './video-section.component';
-import { SliderSectionComponent } from './slider-section.component';
+import { AlbumSectionComponent } from './album-section';
+import { ArticleSectionComponent } from './article-section';
+import { ButtonSectionComponent } from './button-section';
+import { CalendarSectionComponent } from './calendar-section';
+import { HeroSectionComponent } from './hero-section';
+import { IframeSectionComponent } from './iframe-section';
+import { MapSectionComponent } from './map-section';
+import { PeopleSectionComponent } from './people-section';
+import { TableSectionComponent } from './table-section';
+import { VideoSectionComponent } from './video-section';
+import { SliderSectionComponent } from './slider-section';
 
 @Component( {
   selector: 'bk-preview-modal',
@@ -89,7 +89,7 @@ import { SliderSectionComponent } from './slider-section.component';
     </ion-content>
   `
 } )
-export class PreviewModalComponent {
+export class PreviewModal {
   private readonly modalController = inject(ModalController);
   public section = input.required<SectionModel>();
   public title = input('Preview');

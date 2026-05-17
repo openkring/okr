@@ -1,22 +1,24 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@bk2/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent, UrlInputComponent, IconInput } from '@bk2/shared-ui';
+import { CategorySelect, Chips, ErrorNote, NotesInput, StringList, TextInput, UrlInput, IconInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { menuItemValidations } from '@bk2/cms-menu-util';
+import { PFX } from './scope';
 
 @Component({
-  selector: 'bk-menu-item-form',
+  selector: 'bk-menu-form',
   standalone: true,
   imports: [
     vestForms, FormsModule,
-    TextInputComponent, UrlInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
-    StringsComponent, ErrorNoteComponent,
+    TextInput, UrlInput, CategorySelect, Chips, NotesInput, StringList, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
     IconInput
 ],
@@ -56,7 +58,13 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
                 </ion-col>
 
                 <ion-col size="12">
-                  <bk-url name="url" [value]="url()" (valueChange)="onFieldChange('url', $event)" [showHelper]=true [readOnly]="isReadOnly()"  placeholder="@input.url.placeholder2" helper="@input.url.helper2" />
+                  <bk-url name="url"
+                    [value]="url()" (valueChange)="onFieldChange('url', $event)"
+                    [showHelper]=true
+                    [readOnly]="isReadOnly()" 
+                    placeholder="urlPlaceholder()"
+                    helper="urlHelper()"
+                  />
                   <bk-error-note [errors]="urlErrors()" />                                        
                 </ion-col>
               </ion-row>
@@ -91,10 +99,9 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
       <!-- sub-/context-menus -->
       @if(menuAction() === 'main' || menuAction() === 'context' || menuAction() === 'sub') {
         <bk-strings
-          [strings]="menuItems()"
-          (stringsChange)="onFieldChange('menuItems', $event)"
-          title="@input.menuItems.title"
-          addLabel="@input.menuItems.addLabel"
+          [strings]="menuItems()" (stringsChange)="onFieldChange('menuItems', $event)"
+          title="title()"
+          addLabel="addLabel()"
           [readOnly]="isReadOnly()"
         /> 
       }
@@ -104,13 +111,15 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
       }
 
       @if(hasRole('contentAdmin')) {
-        <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
 `
 })
-export class MenuItemFormComponent {
+export class MenuForm {
+  private readonly i18nService = inject(I18nService);
+
   // inputs
   public readonly formData = model.required<MenuItemModel>();
   public readonly types = input.required<CategoryListModel>();
@@ -121,6 +130,12 @@ export class MenuItemFormComponent {
   public readonly allTags = input.required<string>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+
+  // i18n
+  readonly title = toSignal(this.i18nService.translate(PFX + 'menuItems.title'), { initialValue: '' });
+  readonly addLabel = toSignal(this.i18nService.translate(PFX + 'menuItems.addLabel'), { initialValue: '' });
+  readonly urlPlaceholder = toSignal(this.i18nService.translate(PFX + 'url.placeholder'), { initialValue: '' });
+  readonly urlHelper = toSignal(this.i18nService.translate(PFX + 'url.helper'), { initialValue: '' });
 
   // signals
   public dirty = output<boolean>();

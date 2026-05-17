@@ -7,19 +7,19 @@ There is no Firestore collection owned by this domain. After successful login th
 
 ## Pages and Components
 
-### `LoginPageComponent` (`login.page.ts`)
-Full-page login form. Displays the tenant's logo and welcome banner image (served via Imgix). Collects `loginEmail` + `loginPassword` via `LoginFormComponent` from `@bk2/auth-ui`. On submit calls `AuthService.login()` which signs in with Firebase Auth and redirects to `AppConfig.rootUrl` on success, or back to `AppConfig.loginUrl` on failure.
+### `LoginPage` (`login.page.ts`)
+Full-page login form. Displays the tenant's logo and welcome banner image (served via Imgix). Collects `loginEmail` + `loginPassword` via `LoginForm` from `@bk2/auth-ui`. On submit calls `AuthService.login()` which signs in with Firebase Auth and redirects to `AppConfig.rootUrl` on success, or back to `AppConfig.loginUrl` on failure.
 
-### `LoginModalComponent` (`login.modal.ts`)
+### `LoginModal` (`login.modal.ts`)
 Ionic modal variant of the login form. Used when login needs to be embedded without full page navigation.
 
-### `PasswordResetPageComponent` (`password-reset.page.ts`)
+### `PasswordResetPage` (`password-reset.page.ts`)
 Accepts an email address and calls `AuthService.resetPassword()`, which sends a Firebase password-reset email and redirects to `AppConfig.loginUrl`.
 
-### `ConfirmPasswordResetPageComponent` (`confirm-password-reset.page.ts`)
+### `ConfirmPasswordResetPage` (`confirm-password-reset.page.ts`)
 Handles the Firebase email-action link flow for completing a password reset.
 
-### `MatrixOidcCallbackComponent` (`matrix-oidc-callback.component.ts`)
+### `MatrixOidcCallback` (`matrix-oidc-callback.ts`)
 Handles the OAuth2/OIDC redirect from the Matrix homeserver after SSO. Mounted at route `/auth/matrix-callback`.
 - Reads `loginToken` and `state` query parameters.
 - Verifies `state` against `sessionStorage.oidc_state` to prevent CSRF.
@@ -38,7 +38,7 @@ Handles the OAuth2/OIDC redirect from the Matrix homeserver after SSO. Mounted a
 `CanActivateFn` factory. Returns `true` when `hasRole('admin', currentUser)` is true. Relies on `AppStore.currentUser()`.
 
 ## AuthService (`@bk2/auth-data-access`)
-The `AuthService` is injected by `LoginPageComponent` and `PasswordResetPageComponent`. Key responsibilities:
+The `AuthService` is injected by `LoginPage` and `PasswordResetPage`. Key responsibilities:
 - `login(credentials, rootUrl, loginUrl)` — Firebase `signInWithEmailAndPassword`; redirects on success/failure.
 - `resetPassword(email, loginUrl)` — Firebase `sendPasswordResetEmail`.
 

@@ -4,25 +4,25 @@ import { IonContent, ModalController, Platform } from '@ionic/angular/standalone
 
 import { ENV } from '@bk2/shared-config';
 import { UserModel, UserModelName } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent } from '@bk2/shared-ui';
-import { getFullName, hasRole } from '@bk2/shared-util-core';
+import { ChangeConfirmation, Chips, Header } from '@bk2/shared-ui';
+import { getFullName } from '@bk2/shared-util-core';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { AvatarService, UploadService } from '@bk2/avatar-data-access';
-import { AvatarToolbarComponent } from '@bk2/avatar-feature';
+import { AvatarToolbar } from '@bk2/avatar-feature';
 import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
-import { CommentsCardComponent } from '@bk2/comment-feature';
+import { CommentsCard } from '@bk2/comment-feature';
 
-import { UserAuthFormComponent, UserDisplayFormComponent, UserModelFormComponent, UserNotificationFormComponent, UserPrivacyFormComponent } from '@bk2/user-ui';
+import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, UserPrivacyForm } from '@bk2/user-ui';
 import { convertFormsToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
 import { UserEditStore } from './user-edit.store';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-user-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, AvatarToolbarComponent, ChipsComponent, CommentsCardComponent,
-    UserModelFormComponent, UserDisplayFormComponent, UserAuthFormComponent, UserPrivacyFormComponent, UserNotificationFormComponent,
+    Header, ChangeConfirmation, AvatarToolbar, Chips, CommentsCard,
+    UserModelForm, UserDisplayForm, UserAuthForm, UserPrivacyForm, UserNotificationForm,
     IonContent
   ],
   providers: [UserEditStore],

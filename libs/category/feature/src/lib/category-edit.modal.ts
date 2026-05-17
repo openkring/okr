@@ -2,18 +2,18 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-
-import { CategoryListFormComponent } from '@bk2/category-ui';
 import { ENV } from '@bk2/shared-config';
+
+import { CategoryListForm } from '@bk2/category-ui';
 
 @Component({
   selector: 'bk-category-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, CategoryListFormComponent,
+    Header, ChangeConfirmation, CategoryListForm,
     IonContent
   ],
   template: `
@@ -40,7 +40,7 @@ import { ENV } from '@bk2/shared-config';
     </ion-content>
   `
 })
-export class CategoryEditModalComponent {
+export class CategoryEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly env = inject(ENV);
 

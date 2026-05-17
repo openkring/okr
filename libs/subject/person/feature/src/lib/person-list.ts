@@ -5,13 +5,13 @@ import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonBut
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 import { SIZE_MD } from '@bk2/shared-constants';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { MenuComponent } from '@bk2/cms-menu-feature';
+import { Menu } from '@bk2/cms-menu-feature';
 
 import { PersonStore } from './person.store';
 
@@ -20,7 +20,7 @@ import { PersonStore } from './person.store';
   standalone: true,
   imports: [
     TranslatePipe, FullNamePipe, AsyncPipe, AvatarPipe, SvgIconPipe,
-    SpinnerComponent, EmptyListComponent, ListFilterComponent, MenuComponent,
+    Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonPopover,
     IonAvatar, IonImg, IonList
@@ -147,7 +147,7 @@ export class PersonList {
       case 'add': await this.store.add(this.readOnly()); break;
       case 'exportRaw': await this.store.export('raw'); break;
       case 'copyEmailAddresses': await this.store.copyEmailAddresses(); break;
-      default: this.alertService.error(`PersonListComponent.call: unknown method ${selectedMethod}`);
+      default: this.alertService.error(`PersonList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 

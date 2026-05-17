@@ -3,7 +3,7 @@
 ## Overview
 The Menu domain manages the navigation structure of the application. Each `MenuItemModel` represents one node in the navigation tree. Menu items can navigate to internal routes, open external URLs in the browser, act as group containers for sub-menus, serve as visual dividers, or trigger in-app calls (e.g. dismiss a popover with a value). Menu items are filtered by the `roleNeeded` field so that only users with the required role can see them.
 
-The `MenuComponent` (`bk-menu`) is the primary rendering component. It receives a menu item name as input, loads the item from the `MenuStore`, and switches on the `action` field to render the appropriate UI (leaf item, sub-menu accordion, divider, main list, or context list). It is recursive: sub-menus render nested `<bk-menu>` components.
+The `Menu` (`bk-menu`) is the primary rendering component. It receives a menu item name as input, loads the item from the `MenuStore`, and switches on the `action` field to render the appropriate UI (leaf item, sub-menu accordion, divider, main list, or context list). It is recursive: sub-menus render nested `<bk-menu>` components.
 
 ## Firestore Collection
 Collection name: `menuItems`
@@ -50,9 +50,9 @@ The `MenuStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
 ## Key Components
 | Component | Selector | Role |
 |---|---|---|
-| `MenuComponent` | `bk-menu` | Recursive renderer; switches on `action` type |
-| `MenuListComponent` | `bk-menu-item-all-list` | Admin list with search/filter and CRUD action sheet |
-| `MenuItemModalComponent` | (modal) | Edit/view modal for a single menu item |
+| `Menu` | `bk-menu` | Recursive renderer; switches on `action` type |
+| `MenuList` | `bk-menu-item-all-list` | Admin list with search/filter and CRUD action sheet |
+| `MenuItemModal` | (modal) | Edit/view modal for a single menu item |
 
 ## Data Access
 `MenuService` (`@bk2/cms-menu-data-access`) is the Firestore gateway. It exposes:

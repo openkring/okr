@@ -4,7 +4,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@bk2/shared-config';
 import { CategoryListModel, LocationModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Chips, ErrorNote, NotesInput, NumberInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { locationValidations } from '@bk2/location-util';
@@ -14,8 +14,7 @@ import { locationValidations } from '@bk2/location-util';
   standalone: true,
   imports: [
     vestForms,
-    CategorySelectComponent, TextInputComponent, NumberInputComponent, ChipsComponent, 
-    NotesInputComponent, ErrorNoteComponent,
+    CategorySelect, TextInput, NumberInput, Chips, NotesInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -86,13 +85,13 @@ import { locationValidations } from '@bk2/location-util';
         }
 
         @if(hasRole('admin')) {
-          <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }
 `
 })
-export class LocationFormComponent {
+export class LocationForm {
   // inputs
   public readonly formData = model.required<LocationModel>();
   public readonly currentUser = input<UserModel | undefined>();

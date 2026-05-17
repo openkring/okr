@@ -1,18 +1,19 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryChangeFormComponent } from '@bk2/relationship-membership-ui';
+import { CategoryChangeForm } from '@bk2/relationship-membership-ui';
 import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm } from '@bk2/relationship-membership-util';
 import { AvatarInfo, CategoryListModel, MembershipModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { getFullName, newAvatarInfo } from '@bk2/shared-util-core';
-import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
+
+import { RelationshipToolbar } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-category-change-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, CategoryChangeFormComponent, RelationshipToolbarComponent,
+    Header, ChangeConfirmation, CategoryChangeForm, RelationshipToolbar,
     IonContent
 ],
   template: `
@@ -45,7 +46,7 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
     </ion-content>
   `,
 })
-export class CategoryChangeModalComponent {
+export class CategoryChangeModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

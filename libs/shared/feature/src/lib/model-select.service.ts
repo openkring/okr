@@ -1,12 +1,10 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { AppStore, GroupSelectModalComponent, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent, ResponsibilitySelectModal } from "@bk2/shared-feature";
+import { AppStore, GroupSelectModal, OrgSelectModal, PersonSelectModal, ResourceSelectModal, ResponsibilitySelectModal } from "@bk2/shared-feature";
 import { isOrg, isPerson, isResource } from "@bk2/shared-util-core";
 import { AvatarInfo, GroupModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@bk2/shared-models";
 import { DEFAULT_LABEL, DEFAULT_TAGS } from "@bk2/shared-constants";
-
-
 
 @Injectable({
     providedIn: 'root'
@@ -18,7 +16,7 @@ export class ModelSelectService {
 /***************************  person  *************************** */
   public async selectPerson(selectedTag = DEFAULT_TAGS): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',
@@ -54,7 +52,7 @@ export class ModelSelectService {
 /***************************  org  *************************** */
   public async selectOrg(selectedTag = DEFAULT_TAGS): Promise<OrgModel | undefined> {
     const modal = await this.modalController.create({
-      component: OrgSelectModalComponent,
+      component: OrgSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag,
@@ -90,7 +88,7 @@ export class ModelSelectService {
 /***************************  resource  *************************** */
   public async selectResource(selectedTag = DEFAULT_TAGS): Promise<ResourceModel | undefined> {
     const modal = await this.modalController.create({
-      component: ResourceSelectModalComponent,
+      component: ResourceSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag,
@@ -109,7 +107,7 @@ export class ModelSelectService {
 
   public async selectGroup(selectedTag = DEFAULT_TAGS): Promise<GroupModel | undefined> {
     const modal = await this.modalController.create({
-      component: GroupSelectModalComponent,
+      component: GroupSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag,

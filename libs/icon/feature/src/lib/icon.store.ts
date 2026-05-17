@@ -14,7 +14,7 @@ import { UploadService } from '@bk2/avatar-data-access';
 import { IconService } from '@bk2/icon-data-access';
 import { buildIconModel, buildIconModelFromStorage, getIconStoragePath } from '@bk2/icon-util';
 
-import { IconEditModalComponent } from './icon-edit.modal';
+import { IconEditModal } from './icon-edit.modal';
 
 export const ICON_SETS = ['filetypes', 'general', 'icons', 'models', 'section'];
 
@@ -123,7 +123,7 @@ export const IconStore = signalStore(
 
       async edit(icon: IconModel, isNew: boolean, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-          component: IconEditModalComponent,
+          component: IconEditModal,
           componentProps: {
             icon,
             currentUser: store.currentUser(),
@@ -184,7 +184,7 @@ export const IconStore = signalStore(
                 metadata.size,
                 updatedDate
               );
-              await store.iconService.create(icon, currentUser, '');
+              await store.iconService.create(icon, currentUser);
               created++;
             })
           );

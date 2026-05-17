@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal } from '@angul
 import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonList, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { CalendarModel, UserModel } from '@bk2/shared-models';
-import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 
 import { CalendarSelectStore } from './calendar-select.store';
 
@@ -10,7 +10,7 @@ import { CalendarSelectStore } from './calendar-select.store';
   selector: 'bk-calendar-select-modal',
   standalone: true,
   imports: [
-    HeaderComponent, SpinnerComponent, EmptyListComponent,
+    Header, Spinner, EmptyList,
     IonContent, IonList, IonItem, IonLabel, IonGrid, IonRow, IonCol,
   ],
   providers: [CalendarSelectStore],
@@ -55,7 +55,7 @@ import { CalendarSelectStore } from './calendar-select.store';
     </ion-content>
   `
 })
-export class CalendarSelectModalComponent {
+export class CalendarSelectModal {
   private readonly calendarSelectStore = inject(CalendarSelectStore);
   private readonly modalController = inject(ModalController);
 

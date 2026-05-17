@@ -1,17 +1,12 @@
 {
-  "workrel": {
-    "field": {
-      "empty": "Keine Arbeits-Beziehungen gefunden."
-    },
-    "plural": "Beschäftigungen",
-    "list": {
-      "title": "Beschäftigungen",
-      "header": {
-        "subject": "Person",
-        "type": "Beziehungsart",
-        "object": "Organisation"
-      }
-    }
+  "workrels": "Beschäftigungen",
+  "empty": "Keine Arbeits-Beziehungen gefunden.",
+  "title": "Beschäftigungen",
+  "subject": "Person",
+  "type": "Beziehungsart",
+  "object": "Organisation",
+  "delete": {
+    "confirm": "Soll diese Beschäftigung wirklich gelöscht werden ?"
   },
   "actionsheet": {
     "label": {

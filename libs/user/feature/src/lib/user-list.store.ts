@@ -96,11 +96,9 @@ export const UserListStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data) {
           if (isUser(data, store.appStore.tenantId())) {
-            await store.userService.update(data, store.currentUser(), '');
+            await store.userService.update(data, store.currentUser());
           }
         }
-        //store.appNavigationService.pushLink('/user/all' );
-        //await navigateByUrl(store.router, `/user/${user.bkey}`, { readOnly } );
         this.reload();
       },
 

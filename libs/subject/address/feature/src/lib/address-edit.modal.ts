@@ -2,17 +2,19 @@ import { Component, computed, inject, input, linkedSignal, signal } from "@angul
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
 import { AddressModel, CategoryListModel, UserModel } from "@bk2/shared-models";
-import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
+import { ChangeConfirmation, Header } from "@bk2/shared-ui";
 import { coerceBoolean, safeStructuredClone } from "@bk2/shared-util-core";
 import { getTitleLabel } from "@bk2/shared-util-angular";
 
-import { AddressFormComponent } from "@bk2/subject-address-ui";
+import { AddressForm } from "@bk2/subject-address-ui";
+
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-address-edit-modal',
   standalone: true,
   imports: [
-    AddressFormComponent, HeaderComponent, ChangeConfirmationComponent,
+    AddressForm, Header, ChangeConfirmation,
     IonContent
   ],
   template: `
@@ -41,7 +43,7 @@ import { AddressFormComponent } from "@bk2/subject-address-ui";
     </ion-content>
   `
 })
-export class AddressEditModalComponent {
+export class AddressEditModal {
   private readonly modalController = inject(ModalController);
 
   // inputs
@@ -62,7 +64,7 @@ export class AddressEditModalComponent {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('subject.address', this.address().bkey, this.isReadOnly()));
+  protected readonly headerTitle = computed(() => getTitleLabel(PFX, this.address().bkey, this.isReadOnly()));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

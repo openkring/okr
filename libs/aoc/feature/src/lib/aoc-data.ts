@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ButtonComponent, CategorySelectComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
+import { Button, CategorySelect, Header, ResultLog } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
-
-import { AocDataStore, FavMismatch } from './aoc-data.store';
 import { PersonModelName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+
+import { AocDataStore, FavMismatch } from './aoc-data.store';
 
 @Component({
   selector: 'bk-aoc-data',
@@ -17,7 +17,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     FormsModule,
-    HeaderComponent, ResultLogComponent, ButtonComponent, CategorySelectComponent,
+    Header, ResultLog, Button, CategorySelect,
     IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonItem, IonIcon
   ],
   providers: [AocDataStore],
@@ -146,7 +146,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
     </ion-content>
   `,
 })
-export class AocDataComponent {
+export class AocData {
   protected readonly aocDataStore = inject(AocDataStore);
 
   protected modelType = linkedSignal(() => this.aocDataStore.modelType() ?? PersonModelName);

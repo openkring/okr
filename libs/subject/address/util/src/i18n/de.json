@@ -1,12 +1,6 @@
 {
-  "subject": {
-    "address": {
-      "operation": {
-        "copy": {
-          "conf": "Die Adresse wurde kopiert."
-        }
-      }
-    }
+  "copy": {
+    "conf": "Die Adresse wurde kopiert."
   },
   "validation": {
     "validIban": "Die IBAN muss ein gültiges Format haben."

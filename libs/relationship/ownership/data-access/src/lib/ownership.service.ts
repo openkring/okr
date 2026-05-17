@@ -3,11 +3,13 @@ import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getFullName, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getOwnershipIndex } from '@bk2/relationship-ownership-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +18,17 @@ export class OwnershipService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+    end_conf:     PFX + 'operation.end.conf',
+    end_error:    PFX + 'operation.end.error',
+  });
   private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations Ownership --------------------------------*/
@@ -27,7 +40,7 @@ export class OwnershipService {
    */
   public async create(ownership: OwnershipModel, currentUser?: UserModel): Promise<string | undefined> {
     ownership.index = getOwnershipIndex(ownership);
-    const key = await this.firestoreService.createModel<OwnershipModel>(OwnershipCollection, ownership, '@ownership.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<OwnershipModel>(OwnershipCollection, ownership, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
     void this.activityService.log('ownership', 'create', currentUser, payload);
     return key;
@@ -46,12 +59,11 @@ export class OwnershipService {
    * Update an existing ownership with new values.
    * @param ownership the ownership to update
    * @param currentUser the current user performing the operation
-   * @param confirmMessage the i18n key for the confirmation message
    * @return the document id of the updated ownership in the database or undefined if the operation failed
    */
-  public async update(ownership: OwnershipModel, currentUser?: UserModel, confirmMessage = '@ownership.operation.update'): Promise<string | undefined> {
+  public async update(ownership: OwnershipModel, currentUser?: UserModel): Promise<string | undefined> {
     ownership.index = getOwnershipIndex(ownership);
-    const key = await this.firestoreService.updateModel<OwnershipModel>(OwnershipCollection, ownership, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<OwnershipModel>(OwnershipCollection, ownership, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
     void this.activityService.log('ownership', 'update', currentUser, payload);
     return key;
@@ -59,7 +71,7 @@ export class OwnershipService {
 
   public async delete(ownership: OwnershipModel, currentUser?: UserModel): Promise<void> {
     const payload = `${ownership.bkey}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
-    await this.firestoreService.deleteModel<OwnershipModel>(OwnershipCollection, ownership, '@ownership.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<OwnershipModel>(OwnershipCollection, ownership, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('ownership', 'delete', currentUser, payload);
   }
 
@@ -73,7 +85,7 @@ export class OwnershipService {
   public async endOwnershipByDate(ownership: OwnershipModel, validTo: string, currentUser?: UserModel): Promise<string | undefined> {
     if (ownership.validTo.startsWith('9999') && validTo && validTo.length === 8) {
       ownership.validTo = validTo;
-      return await this.firestoreService.updateModel<OwnershipModel>(OwnershipCollection, ownership, false, '@comment.message.ownership.deleted', currentUser);
+      return await this.firestoreService.updateModel<OwnershipModel>(OwnershipCollection, ownership, false, this.i18n.end_conf(), this.i18n.end_error(), currentUser);
     }
     return undefined;
   }
@@ -109,7 +121,7 @@ export class OwnershipService {
 
   /*  private async selectExportType(): Promise<number | undefined> {
      const modal = await this.modalController.create({
-       component: BkLabelSelectModalComponent,
+       component: BkLabelSelectModal,
        componentProps: {
          labels: [
            '@ownership.select.raw', 

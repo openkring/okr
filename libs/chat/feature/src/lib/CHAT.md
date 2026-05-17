@@ -77,7 +77,7 @@ Singleton service (`providedIn: 'root'`). Called once from `APP_BOOTSTRAP_LISTEN
 
 Modal form for creating and editing Matrix rooms. Props: `roomId` (undefined = create new), `currentUser`.
 
-## MatrixChatComponent (`matrix-chat.ts`)
+## MatrixChat (`matrix-chat.ts`)
 
 Main chat UI component. Uses the `_MatrixChatStore` to render the room list, message thread, and toolbar.
 
@@ -117,7 +117,7 @@ All polls created by this app are `disclosed` (`org.matrix.msc3381.poll.disclose
 
 ### Voting
 
-Users tap an answer in `PollMessageComponent` (rendered by `MatrixMessageList` for `poll.start` event types). The tap emits up through `MatrixMessageList.pollVoteClicked` → `MatrixChat.onPollVoteClicked()` → `MatrixChatStore.sendPollResponse()` → `MatrixChatService.sendPollResponse()`, which sends an `org.matrix.msc3381.poll.response` event:
+Users tap an answer in `PollMessage` (rendered by `MatrixMessageList` for `poll.start` event types). The tap emits up through `MatrixMessageList.pollVoteClicked` → `MatrixChat.onPollVoteClicked()` → `MatrixChatStore.sendPollResponse()` → `MatrixChatService.sendPollResponse()`, which sends an `org.matrix.msc3381.poll.response` event:
 
 ```json
 {

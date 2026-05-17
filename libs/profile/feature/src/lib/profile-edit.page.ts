@@ -5,13 +5,13 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLab
 import { firstValueFrom } from 'rxjs';
 
 import { I18nService } from '@bk2/shared-i18n';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 
-import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
+import { AddressesAccordion } from '@bk2/subject-address-feature';
 
-import { AvatarToolbarComponent } from '@bk2/avatar-feature';
+import { AvatarToolbar } from '@bk2/avatar-feature';
 
-import { ProfileDataAccordionComponent, ProfilePrivacyAccordionComponent, ProfileSettingsAccordionComponent } from '@bk2/profile-ui';
+import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
 import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { ProfileEditStore } from './profile-edit.store';
 import { getTitleLabel } from '@bk2/shared-util-angular';
@@ -22,8 +22,8 @@ import { safeStructuredClone } from '@bk2/shared-util-core';
   standalone: true,
   imports: [
     AsyncPipe,
-    AvatarToolbarComponent, HeaderComponent, AddressesAccordionComponent, ProfileDataAccordionComponent,
-    ChangeConfirmationComponent, ProfileSettingsAccordionComponent, ProfilePrivacyAccordionComponent,
+    AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
+    ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileEditStore],
@@ -97,7 +97,7 @@ import { safeStructuredClone } from '@bk2/shared-util-core';
     </ion-content>
   `
 })
-export class ProfileEditPageComponent {
+export class ProfileEditPage {
   private readonly profileEditStore = inject(ProfileEditStore);
   private readonly i18nService = inject(I18nService);
 

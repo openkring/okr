@@ -3,17 +3,18 @@ import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalControl
 
 import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
+
 import { PersonSelectStore } from './person-select.store';
 
 @Component({
   selector: 'bk-person-select-modal',
   standalone: true,
   imports: [
-    HeaderComponent, SpinnerComponent,
-    FullNamePipe, AvatarPipe, EmptyListComponent,
+    Header, Spinner,
+    FullNamePipe, AvatarPipe, EmptyList,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
   ],
   providers: [PersonSelectStore],
@@ -52,7 +53,7 @@ import { PersonSelectStore } from './person-select.store';
     </ion-content>
   `
 })
-export class PersonSelectModalComponent {
+export class PersonSelectModal {
   protected readonly personSelectStore = inject(PersonSelectStore);
   private readonly modalController = inject(ModalController);
 

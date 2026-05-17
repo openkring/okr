@@ -5,9 +5,11 @@ import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { OrgCollection, OrgModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { getOrgIndex } from '@bk2/subject-org-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +18,17 @@ export class OrgService  {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
+  private i18nService = inject(I18nService);
+
+  // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    create_conf: PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf: PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf: PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error'
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -26,7 +39,7 @@ export class OrgService  {
    */
   public async create(org: OrgModel, currentUser?: UserModel): Promise<string | undefined> {
     org.index = getOrgIndex(org);
-    const key = await this.firestoreService.createModel<OrgModel>(OrgCollection, org, '@subject.org.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<OrgModel>(OrgCollection, org, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${org.name}/${org.type}`;
     void this.activityService.log('org', 'create', currentUser, payload);
     return key;
@@ -59,12 +72,11 @@ export class OrgService  {
    * Updates an existing organization in the database.
    * @param org the OrgModel to update
    * @param currentUser the current user who performs the operation
-   * @param confirmMessage the message to display in the confirmation dialog
    * @returns the unique key of the updated organization or undefined if the operation failed
    */
-  public async update(org: OrgModel, currentUser?: UserModel, confirmMessage = '@subject.org.operation.update'): Promise<string | undefined> {
+  public async update(org: OrgModel, currentUser?: UserModel): Promise<string | undefined> {
     org.index = getOrgIndex(org);
-    const key = await this.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${org.name}/${org.type}`;
     void this.activityService.log('org', 'update', currentUser, payload);
     return key;
@@ -78,7 +90,7 @@ export class OrgService  {
    */
   public async delete(org: OrgModel, currentUser?: UserModel): Promise<void> {
     const payload = `${org.bkey}: ${org.name}/${org.type}`;
-    await this.firestoreService.deleteModel<OrgModel>(OrgCollection, org, '@subject.org.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<OrgModel>(OrgCollection, org, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('org', 'delete', currentUser, payload);
   }
 

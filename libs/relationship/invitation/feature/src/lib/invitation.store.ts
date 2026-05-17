@@ -8,11 +8,13 @@ import { AppStore, ModelSelectService } from '@bk2/shared-feature';
 import { AvatarInfo, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
 import { chipMatches, DateFormat, extractSecondPartOfOptionalTupel, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
 import { confirm } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { InvitationService } from '@bk2/relationship-invitation-data-access';
 import { isInvitation } from '@bk2/relationship-invitation-util';
 
-import { InvitationEditModalComponent } from './invitation-edit.modal';
+import { InvitationEditModal } from './invitation-edit.modal';
+import { PFX } from './scope';
 
 export type InvitationState = {
   showOnlyCurrent: boolean;  // whether to show only current memberships or all memberships that ever existed
@@ -45,8 +47,17 @@ export const InvitationStore = signalStore(
     modalController: inject(ModalController),
     modelSelectService: inject(ModelSelectService),
     alertController: inject(AlertController),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      invite_conf: PFX + 'invite.conf',
+      invite_error: PFX + 'invite.error',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     invitationsResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<InvitationModel>(InvitationCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
@@ -146,7 +157,7 @@ export const InvitationStore = signalStore(
           inv.name = calevent.name;
           inv.date = calevent.startDate;
           inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-          return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, '@invitation.operation.create', store.currentUser());
+          return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, store.i18n.invite_conf(), store.i18n.invite_error(), store.currentUser());
         }
 
       },
@@ -157,7 +168,7 @@ export const InvitationStore = signalStore(
        */
       async edit(invitation?: InvitationModel, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-          component: InvitationEditModalComponent,
+          component: InvitationEditModal,
           componentProps: {
             invitation,
             currentUser: store.currentUser(),
@@ -180,7 +191,7 @@ export const InvitationStore = signalStore(
 
       async delete(invitation: InvitationModel, readOnly = true): Promise<void> {
         if (readOnly) return;
-        const result = await confirm(store.alertController, '@calevent.operation.delete.confirm', true);
+        const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           await store.invitationService.delete(invitation, store.currentUser());
           this.reload();

@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
 import { MatrixRoom, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { safeStructuredClone } from '@bk2/shared-util-core';
 
 import { RoomEditForm } from '@bk2/chat-ui';
@@ -12,7 +12,7 @@ import { RoomEditForm } from '@bk2/chat-ui';
   selector: 'bk-room-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, RoomEditForm,
+    Header, ChangeConfirmation, RoomEditForm,
     IonContent
 ],
   template: `

@@ -2,7 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { InvoiceModel } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
@@ -13,7 +13,7 @@ import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe,
-    HeaderComponent,
+    Header,
     IonContent, IonCard, IonIcon, IonLabel, IonCardContent, IonItem, IonChip
   ],
   styles: [`

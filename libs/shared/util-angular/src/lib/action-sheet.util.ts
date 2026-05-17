@@ -1,5 +1,4 @@
-import { getSvgIconUrl } from "@bk2/shared-pipes";
-import { bkTranslate } from "@bk2/shared-i18n";
+import { getSvgIconUrl } from "@bk2/shared-util-core";
 import { ActionSheetButton, ActionSheetOptions } from "@ionic/angular";
 
 export function createActionSheetOptions(
@@ -12,7 +11,7 @@ export function createActionSheetOptions(
     keyboardClose = true
 ): ActionSheetOptions {
     return {
-        header: bkTranslate(header),
+        header: header,
         subHeader,
         cssClass,
         buttons: [],
@@ -33,11 +32,12 @@ export function createActionSheetOptions(
  */
 export function createActionSheetButton(
     name: string,
+    text: string,
     imgixBaseUrl: string,
     iconName?: string
 ): ActionSheetButton {
     return {
-        text: bkTranslate(`@actionsheet.${name}`),
+        text,
         icon: iconName ? getSvgIconUrl(imgixBaseUrl, iconName) : undefined,
         role: getRole(name),
         data: {

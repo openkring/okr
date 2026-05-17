@@ -89,28 +89,28 @@ A large NgRx Signal Store managing all membership data for a tenant.
 | `setOrgId(orgId, orgType)` | Sets the active org and resets all filters |
 | `setListId(listId)` | Sets the active list view |
 | `add(readOnly)` | Opens `MemberNewModal` to create a new person + membership |
-| `addMembership(member, readOnly)` | Opens `MembershipEditModalComponent` to add a membership to an existing member |
-| `edit(membership, readOnly)` | Opens `MembershipEditModalComponent` to edit an existing membership |
-| `changeCategory(membership, readOnly)` | Opens `CategoryChangeModalComponent` to change the membership category |
+| `addMembership(member, readOnly)` | Opens `MembershipEditModal` to add a membership to an existing member |
+| `edit(membership, readOnly)` | Opens `MembershipEditModal` to edit an existing membership |
+| `changeCategory(membership, readOnly)` | Opens `CategoryChangeModal` to change the membership category |
 | `end(membership, readOnly)` | Picks a date and sets `dateOfExit`, ending the membership |
 | `delete(membership?, readOnly)` | Confirms and hard-deletes a membership |
 | `export(type)` | Exports membership data (e.g. to XLSX, Clubdesk import, SRV format) |
 
 ## Components
 
-### `MembersComponent` (`bk-members`)
+### `Members` (`bk-members`)
 
 A flat list view of all members of a given org/group. Inputs: `orgKey` (required), `orgType`, `readOnly`. Tapping a member opens an ActionSheet with view/edit/end/delete actions. Privileged users see all historical memberships; others see only current ones.
 
-### `MembersAccordionComponent`
+### `MembersAccordion`
 
-An Ionic accordion embedding `MembersComponent` for use within a parent detail page.
+An Ionic accordion embedding `Members` for use within a parent detail page.
 
-### `MembershipListComponent`
+### `MembershipList`
 
 A full-featured list view with segmented tabs (all, active, passive, applied, cancelled, deceased, entries, exits) and filters for category, gender, year, and tags.
 
-### `MembershipEditModalComponent`
+### `MembershipEditModal`
 
 An Ionic modal for editing an existing `MembershipModel`.
 
@@ -118,10 +118,10 @@ An Ionic modal for editing an existing `MembershipModel`.
 
 An Ionic modal for creating a new person together with their first membership in one step.
 
-### `CategoryChangeModalComponent`
+### `CategoryChangeModal`
 
 A focused modal for changing only the membership category, which creates a new linked-list record.
 
-### `MembershipAccordionComponent`
+### `MembershipAccordion`
 
 An accordion showing the memberships of a single member (person/org/group), used in member detail pages.

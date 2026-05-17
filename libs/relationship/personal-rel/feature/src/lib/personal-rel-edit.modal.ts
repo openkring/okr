@@ -2,24 +2,23 @@ import { Component, computed, inject, input, linkedSignal, signal, Type } from '
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
 import { ENV } from '@bk2/shared-config';
+
 import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
-
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { DocumentsAccordionComponent } from '@bk2/document-feature';
-
-import { PersonalRelFormComponent } from '@bk2/relationship-personal-rel-ui';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { DocumentsAccordion } from '@bk2/document-feature';
+import { PersonalRelForm } from '@bk2/relationship-personal-rel-ui';
 
 @Component({
   selector: 'bk-personal-rel-edit-modal',
   standalone: true,
   imports: [
-    CommentsAccordionComponent, HeaderComponent, DocumentsAccordionComponent,
-    ChangeConfirmationComponent, PersonalRelFormComponent,
+    CommentsAccordion, Header, DocumentsAccordion,
+    ChangeConfirmation, PersonalRelForm,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -58,7 +57,7 @@ import { PersonalRelFormComponent } from '@bk2/relationship-personal-rel-ui';
     </ion-content>
   `
 })
-export class PersonalRelEditModalComponent {
+export class PersonalRelEditModal {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
   protected readonly env = inject(ENV);
@@ -143,7 +142,7 @@ export class PersonalRelEditModalComponent {
 
   async selectPersonModal(): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',

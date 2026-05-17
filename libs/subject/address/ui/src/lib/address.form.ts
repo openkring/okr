@@ -3,11 +3,11 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { vestForms } from 'ngx-vest-forms';
 
 import { AddressModel, CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, CheckboxComponent, ChipsComponent, EmailInputComponent, ErrorNoteComponent, IbanComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Checkbox, Chips, EmailInput, ErrorNote, IbanInput, NotesInput, PhoneInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
-import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
+import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 import { addressValidations } from '@bk2/subject-address-util';
 
 @Component({
@@ -15,8 +15,8 @@ import { addressValidations } from '@bk2/subject-address-util';
   standalone: true,
   imports: [
     vestForms,
-    CategorySelectComponent, TextInputComponent, CheckboxComponent, SwissCitySearchComponent, NotesInputComponent,
-    EmailInputComponent, PhoneInputComponent, IbanComponent, ErrorNoteComponent, ChipsComponent,
+    CategorySelect, TextInput, Checkbox, SwissCitySearch, NotesInput,
+    EmailInput, PhoneInput, IbanInput, ErrorNote, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -171,13 +171,13 @@ import { addressValidations } from '@bk2/subject-address-util';
     }
     
     @if(hasRole('admin')) {
-      <bk-notes [value]="notes()" [readOnly]="isReadOnly()" />
+      <bk-notes-input [value]="notes()" [readOnly]="isReadOnly()" />
     }
   </form>
   }
 ` 
 })
-export class AddressFormComponent {  
+export class AddressForm {  
   // inputs
   public readonly formData = model.required<AddressModel>();  
   public readonly currentUser = input<UserModel>();

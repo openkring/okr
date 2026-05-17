@@ -1,10 +1,8 @@
 {
   "document": {
-    "operation": {
-      "upload": {
-        "avatar": {
-          "title": "Avatar Bild hochladen"
-        }
+    "upload": {
+      "avatar": {
+        "title": "Avatar Bild hochladen"
       }
     }
   }

@@ -3,11 +3,13 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { TransferCollection, TransferModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getTransferIndex } from '@bk2/relationship-transfer-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +18,15 @@ export class TransferService  {
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
   private readonly env = inject(ENV);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
     /**
@@ -26,7 +37,7 @@ export class TransferService  {
    */
   public async create(transfer: TransferModel, currentUser?: UserModel): Promise<string | undefined> {
     transfer.index = getTransferIndex(transfer);
-    const key = await this.firestoreService.createModel<TransferModel>(TransferCollection, transfer, '@transfer.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<TransferModel>(TransferCollection, transfer, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${transfer.name}/${transfer.type} on ${transfer.dateOfTransfer}`;
     void this.activityService.log('transfer', 'create', currentUser, payload);
     return key;
@@ -48,9 +59,9 @@ export class TransferService  {
    * @param confirmMessage the i18n key for the confirmation message to show in a toast
    * @returns the document id of the updated transfer or undefined if the operation failed
    */
-  public async update(transfer: TransferModel, currentUser?: UserModel, confirmMessage = '@transfer.operation.update'): Promise<string | undefined> {
+  public async update(transfer: TransferModel, currentUser?: UserModel): Promise<string | undefined> {
     transfer.index = getTransferIndex(transfer);
-    const key = await this.firestoreService.updateModel<TransferModel>(TransferCollection, transfer, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<TransferModel>(TransferCollection, transfer, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${transfer.name}/${transfer.type} on ${transfer.dateOfTransfer}`;
     void this.activityService.log('transfer', 'update', currentUser, payload);
     return key;
@@ -64,7 +75,7 @@ export class TransferService  {
    */
   public async delete(transfer: TransferModel, currentUser?: UserModel): Promise<void> {
     const payload = `${transfer.bkey}: ${transfer.name}/${transfer.type} on ${transfer.dateOfTransfer}`;
-    await this.firestoreService.deleteModel<TransferModel>(TransferCollection, transfer, '@transfer.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<TransferModel>(TransferCollection, transfer, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('transfer', 'delete', currentUser, payload);
   }
 

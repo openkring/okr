@@ -7,14 +7,13 @@ import { vestForms } from 'ngx-vest-forms';
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, EmailInput, ErrorNote, NotesInput, PhoneInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
-
+import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-membership-util';
 
 @Component({
@@ -24,9 +23,9 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
     vestForms,
     FormsModule,
     AvatarPipe, AsyncPipe, TranslatePipe,
-    TextInputComponent, DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
-    ErrorNoteComponent, PhoneInputComponent, EmailInputComponent,
-    SwissCitySearchComponent,
+    TextInput, DateInput, CategorySelect, Chips, NotesInput,
+    ErrorNote, PhoneInput, EmailInput,
+    SwissCitySearch,
     IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonImg, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
   styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
@@ -185,7 +184,7 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
     
       <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   `

@@ -1,24 +1,18 @@
 {
-  "subject": {
-    "person": {
-      "operation": {
-        "create": {
-          "label": "Neue Person erfassen",
-          "error": "Die neue Person konnte nicht erstellt werden.",
-          "conf": "Die neue Person wurde erstellt."
-        },
-        "update": {
-          "label": "Person ändern",
-          "error": "Die Aenderungen konnten nicht gespeichert werden",
-          "conf": "Die Aenderungen wurden gespeichert."
-        },
-        "delete": {
-          "label": "Person entfernen",
-          "error": "Die Person konnte nicht entfernt werden.",
-          "conf": "Die Person wurde entfernt.",
-          "confirm": "Soll die Person wirklich gelöscht werden ?"
-        }
-      }
-    }
+  "create": {
+    "label": "Neue Person erfassen",
+    "error": "Die neue Person konnte nicht erstellt werden.",
+    "conf": "Die neue Person wurde erstellt."
+  },
+  "update": {
+    "label": "Person ändern",
+    "error": "Die Aenderungen konnten nicht gespeichert werden",
+    "conf": "Die Aenderungen wurden gespeichert."
+  },
+  "delete": {
+    "label": "Person entfernen",
+    "error": "Die Person konnte nicht entfernt werden.",
+    "conf": "Die Person wurde entfernt.",
+    "confirm": "Soll die Person wirklich gelöscht werden ?"
   }
 }

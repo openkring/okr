@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CommentModel } from '@bk2/shared-models';
 
-import { CommentHeaderComponent, CommentInputComponent, CommentsListComponent } from '@bk2/comment-ui';
+import { CommentHeader, CommentInput, CommentsList } from '@bk2/comment-ui';
 
 import { CommentListStore } from './comment-list.store';
 
@@ -16,7 +16,7 @@ import { CommentListStore } from './comment-list.store';
   imports: [
     TranslatePipe, AsyncPipe,
     IonGrid, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
-    CommentInputComponent, CommentHeaderComponent, CommentsListComponent
+    CommentInput, CommentHeader, CommentsList
 ],
   providers: [CommentListStore],
   template: `
@@ -36,7 +36,7 @@ import { CommentListStore } from './comment-list.store';
     </ion-card>
 `
 })
-export class CommentsCardComponent {
+export class CommentsCard {
   private readonly commentListStore = inject(CommentListStore);
 
   public name = input('comment'); // mandatory name for the form control

@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal } from '@angul
 import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { ResponsibilityModel, UserModel } from '@bk2/shared-models';
-import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 
 import { ResponsibilitySelectStore } from './responsibility-select.store';
 
@@ -10,7 +10,7 @@ import { ResponsibilitySelectStore } from './responsibility-select.store';
   selector: 'bk-responsibility-select-modal',
   standalone: true,
   imports: [
-    HeaderComponent, SpinnerComponent, EmptyListComponent,
+    Header, Spinner, EmptyList,
     IonContent, IonItem, IonLabel, IonList,
   ],
   providers: [ResponsibilitySelectStore],

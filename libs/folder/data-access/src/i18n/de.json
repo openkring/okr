@@ -1,11 +1,7 @@
 {
-  "folder": {
-    "operation": {
-      "create": {
-        "label": "Ordner hinzufügen",
-        "conf": "Der Ordner wurde hinzugefügt.",
-        "error": "Der Ordner konnte nicht hinzugefügt werden."
-      }
-    }
+  "create": {
+    "label": "Ordner hinzufügen",
+    "conf": "Der Ordner wurde hinzugefügt.",
+    "error": "Der Ordner konnte nicht hinzugefügt werden."
   }
 }

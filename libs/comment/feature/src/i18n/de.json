@@ -1,11 +1,7 @@
 {
-  "comment": {
-    "operation": {
-      "add": {
-        "title": "Schreibe hier deinen Kommentar",
-        "placeholder": "Text"
-      }
-    },
-    "plural": "Kommentare"
+  "comments": "Kommentare",
+  "add": {
+    "title": "Schreibe hier deinen Kommentar",
+    "placeholder": "Text"
   }
 }

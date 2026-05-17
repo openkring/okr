@@ -1,102 +1,81 @@
 {
-  "general": {
-    "operation": {
-      "copy": {
-        "conf": "Der Wert wurde kopiert.",
-        "label": "Kopieren"
-      },
-      "select": {
-        "category": "Kategorie wählen",
-        "date": "Datum wählen",
-        "tag": "Tag wählen",
-        "time": "Zeit wählen"
-      },
-      "change": {
-        "confirm": "Speichern ?",
-        "ok": "OK",
-        "cancel": "Abbrechen"
-      },
-      "deleteContent": "Inhalt löschen",
-      "search": {
-        "placeholder": "Suchen...",
-        "byTag": "Tag"
-      }
-    },
-    "util": {
-      "allYears": "Alle Jahre",
-      "year": "Jahr"
-    }
+  "map": "Karte",
+  "allYears": "Alle Jahre",
+  "year": "Jahr",
+  "copy": {
+    "conf": "Der Wert wurde kopiert.",
+    "label": "Kopieren"
   },
-  "input": {
-    "categoryItems": {
-      "empty": "Es sind noch keine Elemente in dieser Kategorie definiert.",
-      "title": "Elemente",
-      "subTitle": "Die einzelnen Elemente einer Kategorie. Jedes Element wird in einer eigenen Zeile angezeigt."
-    },
-    "color": {
-      "select": "Farbwahl",
-      "label": "Farbe"
-    },
-    "meta": {
-      "empty": "Keine MetaTags vorhanden.",
-      "label": "MetaTags (SEO)"
-    },
-    "strings": {
-      "addString": "Wort hinzufügen"
-    }
+  "select": {
+    "category": "Kategorie wählen",
+    "date": "Datum wählen",
+    "tag": "Tag wählen",
+    "time": "Zeit wählen"
   },
-  "menu": {
-    "connection": {
-      "title": "Internet Verbindungsstatus",
-      "intro": "Dein Verbindungsstatus zum Internet wird laufend aktualisiert und farblich wie folgt dargestellt:",
-      "good": "Gute Verbindung",
-      "goodExplanation": "Alle Funktionen der App stehen uneingeschränkt zur Verfügung. Du kannst problemlos Inhalte laden, Daten übertragen und mit anderen Benutzern interagieren.",
-      "slow": "Langsame Verbindung",
-      "slowExplanation": "Einige Funktionen der App sind möglicherweise eingeschränkt. Das Laden von Inhalten kann länger dauern, und es kann zu Verzögerungen bei der Datenübertragung kommen.",
-      "offline": "Keine Verbindung",
-      "offlineExplanation": "Du bist derzeit offline. Einige Funktionen der App sind nicht verfügbar, und du kannst keine neuen Daten laden oder übertragen. Bitte überprüfe deine Internetverbindung."
-    },
-    "main": {
-      "info": {
-        "map": "Karte"
-      }
-    }
+  "deleteContent": "Inhalt löschen",
+  "search": {
+    "placeholder": "Suchen...",
+    "byTag": "Tag"
   },
-  "membership": {
-    "operation": {
-      "emailAddresses": {
-        "title": "E-Mail Adressen",
-        "empty": "Keine E-Mail Adressen",
-        "copy": "Kopieren"
-      }
-    }
+  "categoryItems": {
+    "empty": "Es sind noch keine Elemente in dieser Kategorie definiert.",
+    "title": "Elemente",
+    "subTitle": "Die einzelnen Elemente einer Kategorie. Jedes Element wird in einer eigenen Zeile angezeigt."
+  },
+  "color": {
+    "select": "Farbwahl",
+    "label": "Farbe"
+  },
+  "meta": {
+    "empty": "Keine MetaTags vorhanden.",
+    "label": "MetaTags (SEO)"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion"
   },
-  "subject": {
-    "address": {
-      "operation": {
-        "emailCopy": {
-          "conf": "E-Mail Adressen wurden kopiert."
-        }
+  "address": {
+    "email": {
+      "title": "E-Mail Adressen",
+      "empty": "Keine E-Mail Adressen",
+      "copy": {
+        "label": "Kopieren",
+        "conf": "E-Mail Adressen wurden kopiert."
       }
     }
   },
-  "content": {
-    "section": {
-      "forms": {
-        "imageConfig": {
-          "title": "Konfiguration des Bildes (Datei)"
-        }
+  "section": {
+    "forms": {
+      "imageConfig": {
+        "title": "Konfiguration des Bildes (Datei)"
       }
     }
   },
-  "aoc": {
-    "result": {
-      "title": "Resultat"
+  "text": {
+    "edit": "Text ändern"
+  },
+  "string": {
+    "title": "Liste von Wörtern",
+    "edit": "Wort ändern",
+    "add": "Wort hinzufügen"
+  },
+  "connection": {
+    "title": "Internet Verbindungsstatus",
+    "intro": "Dein Verbindungsstatus zum Internet wird laufend aktualisiert und farblich wie folgt dargestellt:",
+    "good": "Gute Verbindung",
+    "goodExplanation": "Alle Funktionen der App stehen uneingeschränkt zur Verfügung. Du kannst problemlos Inhalte laden, Daten übertragen und mit anderen Benutzern interagieren.",
+    "slow": "Langsame Verbindung",
+    "slowExplanation": "Einige Funktionen der App sind möglicherweise eingeschränkt. Das Laden von Inhalten kann länger dauern, und es kann zu Verzögerungen bei der Datenübertragung kommen.",
+    "offline": "Keine Verbindung",
+    "offlineExplanation": "Du bist derzeit offline. Einige Funktionen der App sind nicht verfügbar, und du kannst keine neuen Daten laden oder übertragen. Bitte überprüfe deine Internetverbindung."
+  },
+  "notes": {
+    "notes": "Notizen",
+    "placeholder": "",
+    "label": "",
+    "pwd": {
+      "header": "Passwort eingeben",
+      "message": "Achtung: wenn du das Passwort vergisst, kann der Text nicht mehr entschlüsselt werden !",
+      "placeholder": "Passwort"
     }
   }
 }

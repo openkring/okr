@@ -1,22 +1,18 @@
 {
-  "responsibility": {
-    "operation": {
-      "create": {
-        "label": "Verantwortlichkeit hinzufügen",
-        "conf": "Verantwortlichkeit wurde erstellt.",
-        "error": "Verantwortlichkeit konnte nicht erstellt werden."
-      },
-      "update": {
-        "label": "Verantwortlichkeit ändern",
-        "conf": "Verantwortlichkeit wurde geändert.",
-        "error": "Verantwortlichkeit konnte nicht geändert werden."
-      },
-      "delete": {
-        "label": "Verantwortlichkeit löschen",
-        "conf": "Verantwortlichkeit wurde gelöscht.",
-        "error": "Verantwortlichkeit konnte nicht gelöscht werden.",
-        "confirm": "Möchtest du die Verantwortlichkeit wirklich löschen?"
-      }
-    }
+  "create": {
+    "label": "Verantwortlichkeit hinzufügen",
+    "conf": "Verantwortlichkeit wurde erstellt.",
+    "error": "Verantwortlichkeit konnte nicht erstellt werden."
+  },
+  "update": {
+    "label": "Verantwortlichkeit ändern",
+    "conf": "Verantwortlichkeit wurde geändert.",
+    "error": "Verantwortlichkeit konnte nicht geändert werden."
+  },
+  "delete": {
+    "label": "Verantwortlichkeit löschen",
+    "conf": "Verantwortlichkeit wurde gelöscht.",
+    "error": "Verantwortlichkeit konnte nicht gelöscht werden.",
+    "confirm": "Möchtest du die Verantwortlichkeit wirklich löschen?"
   }
 }

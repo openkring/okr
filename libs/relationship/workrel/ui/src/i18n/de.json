@@ -1,9 +1,5 @@
 {
-  "general": {
-    "operation": {
-      "select": {
-        "label": "Auswählen"
-      }
-    }
+  "select": {
+    "label": "Auswählen"
   }
 }

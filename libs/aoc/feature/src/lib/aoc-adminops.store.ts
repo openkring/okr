@@ -5,9 +5,11 @@ import { Observable, of, take } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { AddressCollection, AddressModel, BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@bk2/shared-util-core';
 import { getMembershipCategoryChanges } from '@bk2/relationship-membership-util';
+import { PFX } from './scope';
 
 export type AocAdminOpsState = {
   modelType: string | undefined;
@@ -26,6 +28,15 @@ export const AocAdminOpsStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      oldjuniors_title:   PFX + 'adminops.oldjuniors.title',
+      oldjuniors_nodob:   PFX + 'adminops.oldJuniors.nodob',
+      title:              PFX + 'title',
+      mcatchange_title:   PFX + 'adminops.mcatchange.title',
+    }),
   })),
   withProps(store => ({
     dataResource: rxResource({
@@ -39,7 +50,6 @@ export const AocAdminOpsStore = signalStore(
           case 'org':
             return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc');
           case 'membership':
-            console.log('AocAdminOpsStore: loading memberships ...');
             return store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.env.tenantId), 'memberName2', 'asc');
           default:
             return of(undefined);
@@ -87,6 +97,7 @@ export const AocAdminOpsStore = signalStore(
       },
 
       listJuniorsOlderThan(age = 18, orgKey = 'scs', refYear = getYear()): void {
+        const title = store.i18n.oldjuniors_title();
         if (store.modelType() === 'membership') {
           const log = store
             .data()
@@ -103,18 +114,19 @@ export const AocAdminOpsStore = signalStore(
               return false;
             })
             .map(model => {
+              const nodob = store.i18n.oldjuniors_nodob();
               if (isMembership(model, store.appStore.env.tenantId)) {
                 const m = model as MembershipModel;
                 const name = getFullName(m.memberName1, m.memberName2);
                 const age = getAge(m.memberDateOfBirth, false, refYear);
-                const message = age < 0 ? 'no dateOfBirth' : `old junior: ${m.memberDateOfBirth} -> ${age}`;
-                if (age < 0) return { id: m.bkey, name: name, message: 'no dateOfBirth' };
+                const message = age < 0 ? nodob : `${title}}: ${m.memberDateOfBirth} -> ${age}`;
+                if (age < 0) return { id: m.bkey, name: name, message: nodob };
                 return { id: m.bkey, name: name, message: message };
               }
               const m = model as BkModel;
               return { id: m.bkey, name: '', message: 'not a membership ?' };
             });
-          patchState(store, { log: log, logTitle: 'old juniors' });
+          patchState(store, { log: log, logTitle: store.i18n.title() });
         } else {
           console.error('AocAdminOpsStore.listJuniorsOlderThan: modelType is not membership');
         }
@@ -133,7 +145,7 @@ export const AocAdminOpsStore = signalStore(
           for (const change of changes) {
             log.push({ id: change.memberKey, name: getFullName(change.memberName1, change.memberName2), message: `${change.dateOfChange}: ${change.oldCategory} -> ${change.newCategory}` }); 
           }
-          patchState(store, { log: log, logTitle: 'Änderungen der Mitgliederkategorie' });
+          patchState(store, { log: log, logTitle: store.i18n.mcatchange_title() });
         } else {
           console.error('AocAdminOpsStore.showMembershipCategoryChanges: modelType is not membership');
         }

@@ -9,7 +9,7 @@ import {
 } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { I18nTenantOverrideModel } from '@bk2/shared-models';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -22,7 +22,7 @@ import { I18nOverrideEditModal } from './i18n-override-edit.modal';
   standalone: true,
   imports: [
     AsyncPipe, SlicePipe, FormsModule, TranslatePipe, SvgIconPipe,
-    HeaderComponent,
+    Header,
     IonContent, IonToolbar, IonSearchbar, IonButtons, IonButton, IonIcon,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonList, IonItem, IonLabel, IonBadge, IonChip,

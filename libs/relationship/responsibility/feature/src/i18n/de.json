@@ -1,20 +1,15 @@
 {
+  "responsibilities": "Verantwortlichkeiten",
+  "empty": "Keine Verantwortungen gefunden.",
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion"
   },
-  "responsibility": {
-    "list": {
-      "title": "Verantwortlichkeiten"
-    },
-    "field": {
-      "empty": "Keine Verantwortungen gefunden."
-    },
-    "operation": {
-      "delete": {
-        "confirm": "Möchtest du die Verantwortlichkeit wirklich löschen?"
-      }
-    }
+  "delete": {
+    "confirm": "Möchtest du die Verantwortlichkeit wirklich löschen?"
+  },
+  "update": {
+    "header": "Doppelte ID",
+    "message1": "Eine Verantwortlichkeit mit ID ",
+    "message2": " existiert bereits. Bitte benutze eine andere ID."
   }
 }

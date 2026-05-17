@@ -2,23 +2,22 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ENV, LowercaseWordMask } from '@bk2/shared-config';
-import { AvatarInfo, CategoryListModel, GroupModel, PersonModel, RoleName, TaskModel, TaskModelName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent, StringsComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isGroup, isPerson, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
-
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-
-import { TaskFormComponent } from '@bk2/task-ui';
+import { CategoryListModel, PersonModel, RoleName, TaskModel, TaskModelName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmation, Header, StringList } from '@bk2/shared-ui';
+import { coerceBoolean, hasRole, isPerson, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
+import { PersonSelectModal } from '@bk2/shared-feature';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { PersonSelectModalComponent } from '@bk2/shared-feature';
-import { AvatarSelectComponent } from '@bk2/avatar-ui';
+
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { TaskForm } from '@bk2/task-ui';
+import { AvatarSelect } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-task-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, TaskFormComponent, CommentsAccordionComponent,
-    AvatarSelectComponent, StringsComponent,
+    Header, ChangeConfirmation, TaskForm, CommentsAccordion,
+    AvatarSelect, StringList,
     IonContent, IonAccordionGroup
   ],
   template: `
@@ -65,7 +64,7 @@ import { AvatarSelectComponent } from '@bk2/avatar-ui';
     </ion-content>
   `
 })
-export class TaskEditModalComponent {
+export class TaskEditModal {
   private readonly modalController = inject(ModalController);
   private readonly env = inject(ENV);
 
@@ -136,7 +135,7 @@ export class TaskEditModalComponent {
 
   async selectPersonModal(): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',

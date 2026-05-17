@@ -1,45 +1,30 @@
 {
-  "general": {
-    "noData": {
-      "documents": "Es sind keine Dokumente vorhanden."
+  "documents": "Dokumente",
+  "empty": "Keine Dokumente gefunden.",
+  "name": "Filename",
+  "size": "Grösse",
+  "lastUpdate": "Letzte Änderung",
+  "revision": {
+    "list": {
+      "title": "Versionsverlauf"
     }
   },
-  "document": {
-    "plural": "Dokumente",
-    "list": {
-      "header": {
-        "name": "Filename",
-        "size": "Grösse",
-        "lastUpdate": "Letzte Änderung"
-      }
+  "upload": {
+    "single": {
+      "title": "Dokument hochladen"
     },
-    "empty": "Keine Dokumente gefunden",
-    "revision": {
-      "list": {
-        "title": "Versionsverlauf"
-      }
-    },
-    "operation": {
-      "upload": {
-        "single": {
-          "title": "Dokument hochladen"
-        }
-      }
+    "multiple": {
+      "title": "Dokumente hochladen"
     }
+  },
+  "selectImage": {
+    "title": "Bild hinzufügen",
+    "upload": "Bild wählen"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion"
   },
-  "content": {
-    "section": {
-      "operation": {
-        "selectImage": {
-          "title": "Bild hinzufügen",
-          "upload": "Bild wählen"
-        }
-      }
-    }
+  "delete": {
+    "confirm": "Soll das Dokument wirklich gelöscht werden ?"
   }
 }

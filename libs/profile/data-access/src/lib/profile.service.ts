@@ -3,10 +3,12 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { getSystemQuery } from '@bk2/shared-util-core';
 
 import { getPersonIndex } from '@bk2/subject-person-util';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +16,11 @@ import { getPersonIndex } from '@bk2/subject-person-util';
 export class ProfileService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+  });
 
   /** a profile can not be created nor deleted. */
 
@@ -32,8 +39,9 @@ export class ProfileService {
     let uid: string | undefined = undefined;
     if (person && user) {
       person.index = getPersonIndex(person);
-      uid = await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, user);
-      await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, '@profile.operation.update', user);
+      uid = await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, undefined, user);
+      await this.firestoreService.updateModel<UserModel>(UserCollection, user, false,
+        this.i18n.update_conf(), this.i18n.update_error(), user);
     }
     return uid;
   }

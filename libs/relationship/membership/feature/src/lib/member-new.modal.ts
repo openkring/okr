@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { AppStore, OrgSelectModal } from '@bk2/shared-feature';
 import { getDefaultCategoryName, isOrg } from '@bk2/shared-util-core';
 import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
 
@@ -14,7 +14,7 @@ import { MemberNewForm } from '@bk2/relationship-membership-ui';
   selector: 'bk-member-new-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, MemberNewForm,
+    Header, ChangeConfirmation, MemberNewForm,
     IonContent
   ],
   template: `
@@ -83,7 +83,7 @@ export class MemberNewModal {
 
   protected async selectOrg(): Promise<void> {
     const modal = await this.modalController.create({
-      component: OrgSelectModalComponent,
+      component: OrgSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: 'selectable',

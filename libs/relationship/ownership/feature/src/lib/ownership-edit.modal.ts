@@ -3,22 +3,22 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 
 import { AppStore } from '@bk2/shared-feature';
 import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { DocumentsAccordionComponent } from '@bk2/document-feature';
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { OwnershipFormComponent } from '@bk2/relationship-ownership-ui';
+import { DocumentsAccordion } from '@bk2/document-feature';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { OwnershipForm } from '@bk2/relationship-ownership-ui';
 import { getOwnerName } from '@bk2/relationship-ownership-util';
-import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
+import { RelationshipToolbar } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-ownership-edit-modal',
   standalone: true,
   imports: [
-    CommentsAccordionComponent, HeaderComponent, DocumentsAccordionComponent,
-    ChangeConfirmationComponent, OwnershipFormComponent, RelationshipToolbarComponent,
+    CommentsAccordion, Header, DocumentsAccordion,
+    ChangeConfirmation, OwnershipForm, RelationshipToolbar,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -66,7 +66,7 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
     </ion-content>
   `
 })
-export class OwnershipEditModalComponent {
+export class OwnershipEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
   

@@ -2,7 +2,6 @@ import { computed, inject, resource } from '@angular/core';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { GalleryEffects, getCategoryName } from '@bk2/shared-categories';
 import { STORAGE } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, AlbumStyle, ImageConfig, ImageType } from '@bk2/shared-models';
@@ -121,7 +120,7 @@ export const AlbumStore = signalStore(
         const effect = store.config().effect ?? die('AlbumStore.openGallery: gallery effect is mandatory.');
         console.log('AlbumSection.openGallery: not yet implemented');
 /*         const modal = await store.modalController.create({
-          component: GalleryModalComponent,
+          component: GalleryModal,
           cssClass: 'full-modal',
           componentProps: {
             images,

@@ -6,7 +6,7 @@ import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, IonSegment, 
 import { GroupModelName, OrgModel, OrgModelName, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { FullNamePipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 import { AvatarPipe } from '@bk2/avatar-ui';
 
 import { GroupSelectStore } from './group-select.store';
@@ -20,7 +20,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, FormsModule,
-    HeaderComponent, SpinnerComponent, FullNamePipe, AvatarPipe, EmptyListComponent,
+    Header, Spinner, FullNamePipe, AvatarPipe, EmptyList,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
     IonSegment, IonSegmentButton,
   ],
@@ -108,7 +108,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
     </ion-content>
   `
 })
-export class MultiSelectModalComponent {
+export class MultiSelectModal {
   protected readonly orgSelectStore = inject(OrgSelectStore);
   protected readonly groupSelectStore = inject(GroupSelectStore);
   protected readonly personSelectStore = inject(PersonSelectStore);

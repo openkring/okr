@@ -2,17 +2,18 @@ import { Component, computed, effect, inject, input, linkedSignal } from '@angul
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { OrgModel, OrgModelName, UserModel } from '@bk2/shared-models';
-import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
+
 import { OrgSelectStore } from './org-select.store';
 
 @Component({
   selector: 'bk-org-select-modal',
   standalone: true,
   imports: [
-    HeaderComponent, SpinnerComponent,
-    AvatarPipe, EmptyListComponent,
+    Header, Spinner,
+    AvatarPipe, EmptyList,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
   ],
   providers: [OrgSelectStore],
@@ -50,7 +51,7 @@ import { OrgSelectStore } from './org-select.store';
     </ion-content>
   `
 })
-export class OrgSelectModalComponent {
+export class OrgSelectModal {
   protected readonly orgSelectStore = inject(OrgSelectStore);
   private readonly modalController = inject(ModalController);
 

@@ -1,16 +1,15 @@
 import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { Router } from '@angular/router';
 
 import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@bk2/shared-constants';
-import { AvatarInfo, CategoryListModel, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@bk2/shared-models';
-import { ChipsComponent, DateInputComponent, NotesInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
+import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@bk2/shared-models';
+import { Chips, DateInput, NotesInput, StringSelect, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
-
-import { AvatarDisplayComponent, AvatarInputComponent } from '@bk2/avatar-ui';
-import { invitationValidations, createPersonAvatar } from '@bk2/relationship-invitation-util';
 import { PrettyDatePipe } from '@bk2/shared-pipes';
+
+import { AvatarDisplay, AvatarInput } from '@bk2/avatar-ui';
+import { invitationValidations, createPersonAvatar } from '@bk2/relationship-invitation-util';
 
 @Component({
   selector: 'bk-invitation-form',
@@ -18,8 +17,7 @@ import { PrettyDatePipe } from '@bk2/shared-pipes';
   imports: [
     vestForms,
     PrettyDatePipe,
-    ChipsComponent, AvatarDisplayComponent, AvatarInputComponent, NotesInputComponent, StringSelectComponent, DateInputComponent,
-    TextInputComponent,
+    Chips, AvatarDisplay, AvatarInput, NotesInput, StringSelect, DateInput, TextInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -113,13 +111,13 @@ import { PrettyDatePipe } from '@bk2/shared-pipes';
         } 
         
         @if(hasRole('admin')) {
-          <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }
   `,
 })
-export class InvitationFormComponent {
+export class InvitationForm {
   // inputs
   public readonly formData = model.required<InvitationModel>();
   public readonly currentUser = input<UserModel | undefined>();

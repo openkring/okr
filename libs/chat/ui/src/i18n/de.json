@@ -1,31 +1,38 @@
 {
-  "chat": {
-    "fields": {
-      "typeMessage": "Schreibe eine Nachricht...",
-      "recordAudio": "Sprachnachricht aufnehmen",
-      "videoCall": "Video-Chat starten",
-      "recording": "Aufnahme läuft...",
-      "addAttachment": "Anhang hinzufügen",
-      "isTypeing": "tippt...",
-      "and": "und",
-      "areTypeing": "tippen...",
-      "othersTypeing": "andere tippen...",
-      "noMessagesStartConversation": "Es gibt noch keine Nachrichten. Starte die Konversation."
+  "typeMessage": "Schreibe eine Nachricht...",
+  "recordAudio": "Sprachnachricht aufnehmen",
+  "videoCall": "Video-Chat starten",
+  "recording": "Aufnahme läuft...",
+  "addAttachment": "Anhang hinzufügen",
+  "isTypeing": "tippt...",
+  "and": "und",
+  "areTypeing": " tippen...",
+  "othersTypeing": "andere tippen...",
+  "severalTypeing": "Mehrere Personen tippen...",
+  "noMessagesStartConversation": "Es gibt noch keine Nachrichten. Starte die Konversation.",
+  "room": {
+    "empty": "Leerer Raum",
+    "none": "Noch keine Räume vorhanden"
+  },
+  "survey": {
+    "question": {
+      "label": "Frage oder Thema",
+      "placeholder": "Schreibe etwas ...",
     },
-    "survey": {
-      "questionLabel": "Frage oder Thema",
-      "questionPlaceholder": "Schreibe etwas ...",
-      "answers": "Antwortmöglichkeiten erstellen",
-      "addAnswer": "Antwortmöglichkeit verfassen",
-      "viewVotes": {
-        "title": "Abstimmungsergebnis",
-        "noVotes": "Noch keine Stimmen"
-      },
-      "ended": "Umfrage beendet",
-      "totalVotes": "Stimmen gesamt",
-      "voted": "Du hast abgestimmt",
-      "chooseMultiple": "Wähle mindestens eine Option aus",
-      "chooseOne": "Wähle eine Option aus"
+    "answer": {
+      "create": "Antwortmöglichkeiten erstellen",
+      "add": "Antwortmöglichkeit verfassen"
+    },
+    "vote": {
+      "title": "Abstimmungsergebnis",
+      "empty": "Noch keine Stimmen",
+      "total": "Total Stimmen",
+      "done": "Du hast abgestimmt"
+    },
+    "ended": "Umfrage beendet",
+    "choose": {
+      "multiple": "Wähle mindestens eine Option aus",
+      "one": "Wähle eine Option aus"
     }
   },
   "actionsheet": {

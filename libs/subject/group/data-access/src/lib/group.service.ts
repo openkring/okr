@@ -5,9 +5,11 @@ import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { GroupCollection, GroupModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { getGroupIndex } from '@bk2/subject-group-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +18,17 @@ export class GroupService  {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
+  private i18nService = inject(I18nService);
+
+  // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    create_conf: PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf: PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf: PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error'
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -26,7 +39,7 @@ export class GroupService  {
    */ 
   public async create(group: GroupModel, currentUser?: UserModel): Promise<string | undefined> {
     group.index = getGroupIndex(group);
-    const key = await this.firestoreService.createModel<GroupModel>(GroupCollection, group, '@subject.group.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<GroupModel>(GroupCollection, group, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${group.name}`;
     void this.activityService.log('group', 'create', currentUser, payload);
     return key;
@@ -45,12 +58,11 @@ export class GroupService  {
    * Update an existing group.
    * @param group the GroupModel with the new values. Its key must be valid (in order to find it in the database)
    * @param currentUser the current user who performs the operation
-   * @param confirmMessage an optional confirmation message to show in the UI
    * @returns the key of the updated group or undefined if the operation failed
    */
-  public async update(group: GroupModel, currentUser?: UserModel, confirmMessage = '@subject.group.operation.update'): Promise<string | undefined > {
+  public async update(group: GroupModel, currentUser?: UserModel): Promise<string | undefined > {
     group.index = getGroupIndex(group);
-    const key = await this.firestoreService.updateModel<GroupModel>(GroupCollection, group, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<GroupModel>(GroupCollection, group, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${group.name}`;
     void this.activityService.log('group', 'update', currentUser, payload);
     return key;
@@ -64,7 +76,7 @@ export class GroupService  {
    */
   public async delete(group: GroupModel, currentUser?: UserModel): Promise<void> {
     const payload = `${group.bkey}: ${group.name}`;
-    await this.firestoreService.deleteModel<GroupModel>(GroupCollection, group, '@subject.group.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<GroupModel>(GroupCollection, group, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('group', 'delete', currentUser, payload);
   }
 

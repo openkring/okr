@@ -5,7 +5,7 @@ import { IonButton, IonContent, IonItem, ModalController } from '@ionic/angular/
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AuthCredentials } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 
 import { AuthService } from '@bk2/auth-data-access';
 import { LoginForm } from '@bk2/auth-ui';
@@ -15,7 +15,7 @@ import { LoginForm } from '@bk2/auth-ui';
   standalone: true,
   imports: [
      TranslatePipe, AsyncPipe, 
-    HeaderComponent, LoginForm,
+    Header, LoginForm,
     IonContent, IonButton, IonItem
   ],
   template: `
@@ -29,7 +29,7 @@ import { LoginForm } from '@bk2/auth-ui';
     </ion-content>
   `,
 })
-export class LoginModalComponent {
+export class LoginModal {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
   protected readonly authService = inject(AuthService);

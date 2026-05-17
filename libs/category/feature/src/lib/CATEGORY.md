@@ -41,14 +41,14 @@ The `CategoryStore` (NgRx Signal Store) holds:
 
 Notable store actions:
 - `add()` — creates a new empty `CategoryListModel` and opens the edit modal
-- `edit(category)` — opens `CategoryEditModalComponent`; creates or updates on confirm
+- `edit(category)` — opens `CategoryEditModal`; creates or updates on confirm
 - `delete(category)` — deletes without additional confirmation prompt
 
 ## Key Components
 | Component | Selector / Role |
 |---|---|
-| `CategoryListComponent` | Admin list view with search/tag filters and CRUD action sheet |
-| `CategoryEditModalComponent` | Edit/view modal for a single category list and its items |
+| `CategoryList` | Admin list view with search/tag filters and CRUD action sheet |
+| `CategoryEditModal` | Edit/view modal for a single category list and its items |
 
 ## Data Access
 `CategoryService` (`@bk2/category-data-access`) is the Firestore gateway:

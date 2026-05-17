@@ -7,7 +7,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
 import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { AlertService, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
@@ -20,7 +20,7 @@ import { createGroupMembership } from '@bk2/relationship-membership-util';
 import { MatrixChatService } from '@bk2/chat-data-access';
 import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
-import { GroupEditModalComponent } from './group-edit.modal';
+import { GroupEditModal } from './group-edit.modal';
 import { PFX } from './scope';
 
 export type GroupState = {
@@ -214,7 +214,7 @@ export const GroupStore = signalStore(
 
     async edit(group?: GroupModel, readOnly = true, isNew = false): Promise<void> {
       const modal = await store.modalController.create({
-        component: GroupEditModalComponent,
+        component: GroupEditModal,
         componentProps: {
           group,
           currentUser: store.currentUser(),
@@ -445,7 +445,7 @@ export const GroupStore = signalStore(
           membership = createGroupMembership(group, person, store.tenantId());
         } else {
           const modal = await store.modalController.create({
-            component: PersonSelectModalComponent,
+            component: PersonSelectModal,
             cssClass: 'list-modal',
             componentProps: {
               selectedTag: '',

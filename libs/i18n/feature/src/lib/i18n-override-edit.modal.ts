@@ -7,7 +7,7 @@ import {
 } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { I18nTenantOverrideModel } from '@bk2/shared-models';
 import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
 
@@ -16,7 +16,7 @@ import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
   standalone: true,
   imports: [
     AsyncPipe, FormsModule, TranslatePipe,
-    HeaderComponent,
+    Header,
     IonContent, IonToolbar, IonButtons, IonButton,
     IonItem, IonLabel, IonInput, IonTextarea, IonToggle,
   ],

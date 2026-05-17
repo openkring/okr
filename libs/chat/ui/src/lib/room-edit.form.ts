@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { vestForms } from 'ngx-vest-forms';
 
 import { MatrixRoom, UserModel } from '@bk2/shared-models';
-import { CheckboxComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, TextInputComponent, UrlInputComponent } from '@bk2/shared-ui';
+import { Checkbox, ErrorNote, NotesInput, NumberInput, TextInput, UrlInput } from '@bk2/shared-ui';
 import { DEFAULT_NAME, DEFAULT_URL } from '@bk2/shared-constants';
 import { debugFormErrors, debugFormModel } from '@bk2/shared-util-core';
 
@@ -14,8 +14,7 @@ import { roomValidations } from '@bk2/chat-util';
   standalone: true,
   imports: [
     vestForms,
-    TextInputComponent, ErrorNoteComponent, NotesInputComponent, CheckboxComponent,
-    UrlInputComponent, NumberInputComponent,
+    TextInput, ErrorNote, NotesInput, Checkbox, UrlInput, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -55,7 +54,7 @@ import { roomValidations } from '@bk2/chat-util';
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-notes name="topic" [value]="topic()" (valueChange)="onFieldChange('topic', $event)" [readOnly]="false" />
+      <bk-notes-input name="topic" [value]="topic()" (valueChange)="onFieldChange('topic', $event)" [readOnly]="false" />
     </form>
   `
 })

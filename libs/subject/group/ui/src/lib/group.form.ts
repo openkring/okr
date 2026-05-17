@@ -7,10 +7,10 @@ import { LowercaseWordMask } from '@bk2/shared-config';
 import { WORD_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopyComponent, CheckboxComponent, ChipsComponent, NotesInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
+import { ButtonCopy, Checkbox, Chips, NotesInput, StringSelect, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
-import { AvatarsComponent } from '@bk2/avatar-ui';
+import { Avatars } from '@bk2/avatar-ui';
 import { groupValidations } from '@bk2/subject-group-util';
 
 @Component({
@@ -19,8 +19,7 @@ import { groupValidations } from '@bk2/subject-group-util';
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe,
-    TextInputComponent, ChipsComponent, NotesInputComponent, CheckboxComponent, ButtonCopyComponent, 
-    StringSelectComponent, AvatarsComponent,
+    TextInput, Chips, NotesInput, Checkbox, ButtonCopy, StringSelect, Avatars,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem
   ],
    styles: [`
@@ -206,7 +205,7 @@ import { groupValidations } from '@bk2/subject-group-util';
       }
 
       @if(hasRole('admin')) { 
-        <bk-notes name="notes"
+        <bk-notes-input name="notes"
           [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
           [readOnly]="isReadOnly()"
         />
@@ -215,7 +214,7 @@ import { groupValidations } from '@bk2/subject-group-util';
   }
   `
 })
-export class GroupFormComponent {
+export class GroupForm {
   // inputs
   public formData = model.required<GroupModel>();
   public currentUser = input<UserModel | undefined>();

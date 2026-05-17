@@ -1,16 +1,17 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular/standalone';
 
-
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { Attendee, CalEventModel, MembershipModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent } from '@bk2/shared-ui';
+import { EmptyList } from '@bk2/shared-ui';
 import { coerceBoolean, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { AvatarPipe } from '@bk2/avatar-ui';
+
+import { PFX } from './scope';
 
 /**
  * An accordion component to display a list of attendees related to a specific CalEvent.
@@ -21,8 +22,8 @@ import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
   selector: 'bk-attendees-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, AvatarPipe, FullNamePipe, SvgIconPipe,
-    EmptyListComponent,
+    AvatarPipe, FullNamePipe, SvgIconPipe,
+    EmptyList,
     IonAccordion, IonItem, IonLabel, IonList, IonImg, IonAvatar, IonIcon, IonButton
   ],
   styles: [`
@@ -61,11 +62,16 @@ import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
   </ion-accordion>
   `,
 })
-export class AttendeesAccordionComponent {
+export class AttendeesAccordion {
   private actionSheetController = inject(ActionSheetController);
   private appStore = inject(AppStore);
   private modalController = inject(ModalController);
   private toastController = inject(ToastController);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+  });
 
   // inputs
   public calevent = input.required<CalEventModel>();
@@ -143,7 +149,7 @@ export class AttendeesAccordionComponent {
 
   protected async add(): Promise<void> {
    const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',
@@ -172,7 +178,7 @@ export class AttendeesAccordionComponent {
             state: 'accepted',
         };
         calevent.attendees.push(attendee);
-        await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, '@calevent.operation.update', this.currentUser());
+        await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.i18n.update_conf(), this.i18n.update_error(), this.currentUser());
       }
     }
 }
@@ -180,7 +186,7 @@ export class AttendeesAccordionComponent {
   private async changeState(attendee: Attendee, newState: 'accepted' | 'declined'): Promise<void> {
     attendee.state = newState;
     const calevent = this.calevent();
-    await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, '@calevent.operation.update', this.currentUser());
+    await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.i18n.update_conf(), this.i18n.update_error(), this.currentUser());
   }
 
   protected getAttendanceIcon(state: string): string {

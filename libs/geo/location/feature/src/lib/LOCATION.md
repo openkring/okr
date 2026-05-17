@@ -46,17 +46,17 @@ Computed:
 - `filteredLocations` — applies `nameMatches(index, searchTerm)`, `nameMatches(type, selectedType)`, and `chipMatches(tags, selectedTag)` filters client-side.
 
 Key actions:
-- `add(readOnly)` / `edit(location, readOnly)` — open `LocationEditModalComponent` for create/update.
+- `add(readOnly)` / `edit(location, readOnly)` — open `LocationEditModal` for create/update.
 - `delete(location, readOnly)` — calls `LocationService.delete`.
-- `showOnMap(location)` — opens `MapViewModalComponent` centred on the location's coordinates.
+- `showOnMap(location)` — opens `MapViewModal` centred on the location's coordinates.
 - `copy(location)` — copies `latitude, longitude` to clipboard with a toast confirmation.
 
 ## Components
 
 | Component | Description |
 |---|---|
-| `LocationListComponent` | Filterable list of locations; delegates CRUD to `LocationListStore` |
-| `LocationEditModalComponent` | Full-modal edit form for create/update |
+| `LocationList` | Filterable list of locations; delegates CRUD to `LocationListStore` |
+| `LocationEditModal` | Full-modal edit form for create/update |
 
 ## Related Libraries
 

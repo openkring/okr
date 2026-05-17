@@ -5,16 +5,18 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { ownerTypeMatches } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
-import { OrgModel, OwnershipModel, PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
+import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { newOwnership } from '@bk2/relationship-ownership-util';
-import { OwnershipEditModalComponent } from './ownership-edit.modal';
-import { OwnershipNewModalComponent } from './ownership-new.modal';
+import { OwnershipEditModal } from './ownership-edit.modal';
+import { OwnershipNewModal } from './ownership-new.modal';
+import { PFX } from './scope';
 
 export type OwnershipState = {
   // accordion state
@@ -61,10 +63,17 @@ export const OwnershipStore = signalStore(
     ownershipService: inject(OwnershipService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
-    alertController: inject(AlertController)     
+    alertController: inject(AlertController),
+    i18nService: inject(I18nService) 
   })),
 
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     // all ownerships of this tenant
     allOwnershipsResource: rxResource({
       stream: () => {
@@ -307,7 +316,7 @@ export const OwnershipStore = signalStore(
         if (!owner || !resource) return;
         const ownership = newOwnership(owner, resource, store.tenantId(), ownerModelType);
         const modal = await store.modalController.create({
-          component: OwnershipNewModalComponent,
+          component: OwnershipNewModal,
           cssClass: 'small-modal',
           componentProps: {
             ownership,
@@ -331,7 +340,7 @@ export const OwnershipStore = signalStore(
        */
       async edit(ownership: OwnershipModel, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-          component: OwnershipEditModalComponent,
+          component: OwnershipEditModal,
           componentProps: {
             ownership,
             currentUser: store.currentUser(),
@@ -371,7 +380,7 @@ export const OwnershipStore = signalStore(
 
       async delete(ownership?: OwnershipModel, readOnly = true): Promise<void> {
         if (!readOnly && ownership) {
-          const result = await confirm(store.alertController, '@ownership.operation.delete.confirm', true);
+          const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
           if (result === true) {
             await store.ownershipService.delete(ownership, store.currentUser());
             this.reload();

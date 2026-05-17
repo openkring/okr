@@ -5,20 +5,23 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { firstValueFrom, from } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { authState } from 'rxfire/auth';
+import { Router } from '@angular/router';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { MembershipCollection, MembershipModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { DateFormat, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
-
-import { authState } from 'rxfire/auth';
+import { I18nService } from '@bk2/shared-i18n';
 import { AUTH } from '@bk2/shared-config';
 import { confirm, error, navigateByUrl } from '@bk2/shared-util-angular';
-import { Router } from '@angular/router';
+
 import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail } from '@bk2/aoc-util';
+
+import { PFX } from './scope';
 
 export type FirebaseAuthUser = {
   uid: string;
@@ -63,8 +66,16 @@ export const AocUserAccountStore = signalStore(
     authService: inject(AuthService),
     userService: inject(UserService),
     personService: inject(PersonService),
+    i18nService: inject(I18nService)
   })),
   withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      user_delete_confirm: PFX + 'account.user.delete.confirm',
+      fbuser_delete_confirm: PFX + 'account.fbuser.delete.confirm',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     usersResource: rxResource({
       // the resource will reload whenever the fbUser changes (login/logout).
       params: () => store.fbUser(),
@@ -330,7 +341,7 @@ export const AocUserAccountStore = signalStore(
       },
 
       async deleteUser(account: UserAccount): Promise<void> {
-        const confirmed = await confirm(store.alertController, '@aoc.account.user.delete.confirm', true);
+        const confirmed = await confirm(store.alertController, store.i18n.user_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (confirmed === true) {
           const user = store.allUsers().find(u => u.bkey === account.uid);
           if (user) {
@@ -341,7 +352,7 @@ export const AocUserAccountStore = signalStore(
       },
 
       async deleteFirebaseUser(account: UserAccount): Promise<void> {
-        const confirmed = await confirm(store.alertController, '@aoc.account.fbuser.delete.confirm', true);
+        const confirmed = await confirm(store.alertController, store.i18n.fbuser_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (confirmed === true) {
           try {
             const fn = httpsCallable<{ uid: string }, void>(getFunctions(getApp(), 'europe-west6'), 'deleteFirebaseAuthUser');

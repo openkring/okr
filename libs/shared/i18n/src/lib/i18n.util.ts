@@ -1,18 +1,4 @@
-import { HashMap, getBrowserLang, translate } from '@jsverse/transloco';
-
-export function bkTranslate(key: string | null | undefined, argument?: HashMap): string {
-  if (!key || key.length === 0) return '';
-  const clonedKey = structuredClone(key);
-  if (clonedKey.startsWith('@')) {
-    if (argument) {
-      return translate(clonedKey.substring(1), argument);
-    } else {
-      return translate(clonedKey.substring(1));
-    }
-  } else {
-    return clonedKey;
-  }
-}
+import { getBrowserLang, translate } from '@jsverse/transloco';
 
 /**
  * Select the used language based on 1) user settings (configuredLanguage), 2) _browserLanguage, 3) defaultLanguage
@@ -31,13 +17,14 @@ export function selectLanguage(availableLanguages: string[], defaultLanguage: st
 }
 
 export function getLabel(label: string): string {
-    return bkTranslate(label);
+  const key = label.startsWith('@') ? label.substring(1) : label;
+  return translate(key);
 }
 
 export function convertCountryCode(countryCode: string): string {
-  return bkTranslate('@general.countries.' + countryCode.toUpperCase());
+  return translate('general.countries.' + countryCode.toUpperCase());
 }
 
 export function convertStateCode(stateCode: string): string {
-  return bkTranslate('@general.states.CH.' + stateCode.toUpperCase());
+  return translate('general.states.CH.' + stateCode.toUpperCase());
 }

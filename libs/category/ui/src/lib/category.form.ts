@@ -4,7 +4,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { categoryListValidations } from '@bk2/category-util';
 import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategoryItemsComponent, CheckboxComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryItems, Checkbox, Chips, ErrorNote, NotesInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
@@ -13,8 +13,7 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants
   standalone: true,
   imports: [
     vestForms,
-    ChipsComponent, NotesInputComponent,
-    TextInputComponent, ChipsComponent, ErrorNoteComponent, CategoryItemsComponent, CheckboxComponent,
+    Chips, NotesInput, TextInput, ErrorNote, CategoryItems, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -65,13 +64,13 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants
       }
 
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
 `
 })
-export class CategoryListFormComponent {
+export class CategoryListForm {
   // inputs
   public formData = model.required<CategoryListModel>();
   public currentUser = input<UserModel>();

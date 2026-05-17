@@ -4,22 +4,23 @@ import { ActionSheetController, ActionSheetOptions, IonBadge, IonContent, IonIco
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { ModelSelectService } from '@bk2/shared-feature';
 import { AvatarInfo } from '@bk2/shared-models';
-
-import { AvatarSelectComponent } from '@bk2/avatar-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { AvatarSelect } from '@bk2/avatar-ui';
 
 import { formatMatrixTimestamp, isMatrixPhotoUrl } from '@bk2/chat-util';
-
 import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-aoc-chat',
   standalone: true,
   imports: [
-    FormsModule, SvgIconPipe,
-    HeaderComponent, AvatarSelectComponent,
+    FormsModule, 
+    SvgIconPipe,
+    Header, AvatarSelect,
     IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner
   ],
   providers: [AocChatStore],
@@ -114,19 +115,20 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
     }
   `],
   template: `
-      <bk-header title="@aoc.chat.title" />
+      <bk-header title="{{ i18n.title() }}" />
     <ion-content>
       <div class="person-bar">
         <bk-avatar-select
           [avatar]="avatar()"
           name="roomMember"
-          prefix="@aoc.chat.operation.select"
+          [selectLabel]="i18n.select_room_member()"
+          [title]="i18n.title()"
+          [note]="i18n.note()"
           [clearable]="true"
           [readOnly]="false"
           (selectClicked)="onPersonSelectClicked()"
           (clearClicked)="onClearPerson()"
         />
-
       </div>
 
       <!-- 3-column layout -->
@@ -135,12 +137,12 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
         <!-- Column 1: Rooms -->
         <div class="column">
           <div class="column-header">
-            <span>Räume ({{ rooms().length }})</span>
+            <span>{{ i18n.rooms() }} ({{ rooms().length }})</span>
             @if (isLoadingRooms()) { <ion-spinner name="dots" style="width:16px;height:16px" /> }
           </div>
           <div class="column-scroll">
             @if (rooms().length === 0 && !isLoadingRooms()) {
-              <div class="empty-state">Keine Räume</div>
+              <div class="empty-state">{{ i18n.no_rooms() }}</div>
             }
             <ion-list lines="inset">
               @for (room of rooms(); track room.roomId) {
@@ -176,9 +178,9 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
           </div>
           <div class="column-scroll">
             @if (!selectedRoomId()) {
-              <div class="empty-state">Raum auswählen</div>
+              <div class="empty-state">{{ i18n.choose_room() }}</div>
             } @else if (members().length === 0 && !isLoadingMembers()) {
-              <div class="empty-state">Keine Mitglieder</div>
+              <div class="empty-state">{{ i18n.no_members() }}</div>
             }
             <ion-list lines="inset">
               @for (member of members(); track member.userId) {
@@ -210,50 +212,50 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
 
         <!-- Column 3: Details -->
         <div class="column">
-          <div class="column-header">Details</div>
+          <div class="column-header">{{ i18n.details() }}</div>
           <div class="column-scroll">
             @if (detailsTarget() === 'room' && roomDetails()) {
               <div class="details-grid">
-                <div class="details-row"><span class="details-key">ID</span><span class="details-value">{{ roomDetails()!.id }}</span></div>
-                <div class="details-row"><span class="details-key">Name</span><span class="details-value">{{ roomDetails()!.name }}</span></div>
-                <div class="details-row"><span class="details-key">Erstellt von</span><span class="details-value">{{ roomDetails()!.creator }}</span></div>
-                <div class="details-row"><span class="details-key">Mitglieder</span><span class="details-value">{{ roomDetails()!.numberOfJoinedMembers }}</span></div>
-                <div class="details-row"><span class="details-key">Eingeladen</span><span class="details-value">{{ roomDetails()!.numberOfInvitedMembers }}</span></div>
-                <div class="details-row"><span class="details-key">Öffentlich</span><span class="details-value">{{ roomDetails()!.isPublic }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.id() }}</span><span class="details-value">{{ roomDetails()!.id }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.name() }}</span><span class="details-value">{{ roomDetails()!.name }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.created_by() }}</span><span class="details-value">{{ roomDetails()!.creator }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.members() }}</span><span class="details-value">{{ roomDetails()!.numberOfJoinedMembers }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.invited() }}</span><span class="details-value">{{ roomDetails()!.numberOfInvitedMembers }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.public() }}</span><span class="details-value">{{ roomDetails()!.isPublic }}</span></div>
                 @if (roomDetails()!.topic) {
-                  <div class="details-row"><span class="details-key">Thema</span><span class="details-value">{{ roomDetails()!.topic }}</span></div>
+                  <div class="details-row"><span class="details-key">{{ i18n.topic() }}</span><span class="details-value">{{ roomDetails()!.topic }}</span></div>
                 }
                 @if (roomDetails()!.aliases.length > 0) {
                   <div class="details-row">
-                    <span class="details-key">Aliases</span>
+                    <span class="details-key">{{ i18n.aliases() }}</span>
                     <span class="details-value">{{ roomDetails()!.aliases.join(', ') }}</span>
                   </div>
                 }
                 @if (roomDetails()!.avatarUrl) {
                   <div class="details-row">
-                    <span class="details-key">Avatar</span>
+                    <span class="details-key">{{ avatar() }}</span>
                     <span class="details-value"><img [src]="roomDetails()!.avatarUrl" style="width:48px;height:48px;object-fit:cover" /></span>
                   </div>
                 }
               </div>
             } @else if (detailsTarget() === 'member' && memberDetails()) {
               <div class="details-grid">
-                <div class="details-row"><span class="details-key">User ID</span><span class="details-value">{{ memberDetails()!.userId }}</span></div>
-                <div class="details-row"><span class="details-key">Name</span><span class="details-value">{{ memberDetails()!.name }}</span></div>
-                <div class="details-row"><span class="details-key">Anzeigename</span><span class="details-value">{{ memberDetails()!.rawDisplayName }}</span></div>
-                <div class="details-row"><span class="details-key">Power Level</span><span class="details-value">{{ memberDetails()!.powerLevel }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.uid() }}</span><span class="details-value">{{ memberDetails()!.userId }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.name() }}</span><span class="details-value">{{ memberDetails()!.name }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.display_name() }}</span><span class="details-value">{{ memberDetails()!.rawDisplayName }}</span></div>
+                <div class="details-row"><span class="details-key">{{ i18n.level() }}</span><span class="details-value">{{ memberDetails()!.powerLevel }}</span></div>
                 @if (memberDetails()!.membership) {
-                  <div class="details-row"><span class="details-key">Mitgliedschaft</span><span class="details-value">{{ memberDetails()!.membership }}</span></div>
+                  <div class="details-row"><span class="details-key">{{ i18n.membership() }}</span><span class="details-value">{{ memberDetails()!.membership }}</span></div>
                 }
                 @if (memberDetails()!.avatarUrl) {
                   <div class="details-row">
-                    <span class="details-key">Avatar</span>
+                    <span class="details-key">{{ avatar() }}</span>
                     <span class="details-value"><img [src]="memberDetails()!.avatarUrl" style="width:48px;height:48px;object-fit:cover;border-radius:50%" /></span>
                   </div>
                 }
               </div>
             } @else {
-              <div class="empty-state">Raum oder Mitglied auswählen →<br>Details anzeigen</div>
+              <div class="empty-state">{{ i18n.choose_room_or_member() }}</div>
             }
           </div>
         </div>
@@ -266,6 +268,7 @@ export class AocChat {
   protected readonly store = inject(AocChatStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modelSelectService = inject(ModelSelectService);
+  private readonly i18nService = inject(I18nService);
 
   // bound to ion-input via ngModel
   protected personKeyInput = signal('');
@@ -283,10 +286,46 @@ export class AocChat {
   protected readonly selectedPersonKey = computed(() => this.store.selectedPersonKey());
   protected readonly detailsTarget = computed(() => this.store.detailsTarget());
 
-  private get imgixBaseUrl(): string {
-    return this.store.imgixBaseUrl();
-  }
+  // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    title: PFX + 'chat.title',
+    select_room_member: PFX + 'chat.select.roomMember.label',
+    note: PFX + 'chat.select.roomMember.description',
+    rooms: PFX + 'chat.rooms',
+    no_rooms: PFX + 'chat.norooms',
+    no_members: PFX + 'chat.nomembers',
+    choose_room: PFX + 'chat.chooseroom',
+    details: PFX + 'chat.details',
+    id: PFX + 'chat.id',
+    name: PFX + 'chat.name',
+    created_by: PFX + 'chat.createdby',
+    members: PFX + 'chat.members',
+    invited: PFX + 'chat.invited',
+    public: PFX + 'chat.public',
+    topic: PFX + 'chat.topic',
+    aliases: PFX + 'chat.aliases',
+    avatar: PFX + 'chat.avatar',
+    uid: PFX + 'chat.uid',
+    display_name: PFX + 'chat.displayname',
+    level: PFX + 'chat.level',
+    membership: PFX + 'chat.membership',
+    choose_room_or_member: PFX + 'chat.chooseroomormember',
+    as_title: PFX + 'chat.actionsheet.title',
+    as_showMembers: PFX + 'chat.actionsheet.showMembers',
+    as_showDetails: PFX + 'chat.actionsheet.showDetails',
+    as_rename: PFX + 'chat.actionsheet.rename',
+    as_addAlias: PFX + 'chat.actionsheet.addAlias',
+    as_invite: PFX + 'chat.actionsheet.invite',
+    as_provision: PFX + 'chat.actionsheet.provision',
+    as_delete: PFX + 'chat.actionsheet.delete',
+    as_kick: PFX + 'chat.actionsheet.kick',
+    as_deactivate: PFX + 'chat.actionsheet.deactivate',
+    cancel: '@cancel'
+  });
 
+  // constants
+  protected pfx = PFX;
+  private imgixBaseUrl = this.store.imgixBaseUrl();
   protected isPhotoUrl = isMatrixPhotoUrl;
   protected formatTimestamp = formatMatrixTimestamp;
 
@@ -313,17 +352,15 @@ export class AocChat {
   // ─── room click → action sheet ──────────────────────────────────────────────
 
   protected async onRoomClick(room: AdminRoom): Promise<void> {
-    const opts = createActionSheetOptions('@actionsheet.label.choose');
-    const base = this.imgixBaseUrl;
-
-    opts.buttons.push(createActionSheetButton('room.showMembers', base, 'people'));
-    opts.buttons.push(createActionSheetButton('room.showDetails', base, 'info-circle'));
-    opts.buttons.push(createActionSheetButton('room.rename', base, 'edit'));
-    opts.buttons.push(createActionSheetButton('room.addAlias', base, 'add-circle'));
-    opts.buttons.push(createActionSheetButton('room.invite', base, 'person-add'));
-    opts.buttons.push(createActionSheetButton('room.provision', base, 'key'));
-    opts.buttons.push(createActionSheetButton('room.delete', base, 'trash'));
-    opts.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
+    const opts = createActionSheetOptions(this.i18n.as_title());
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.showMembers', this.i18n.as_showMembers(), this.imgixBaseUrl, 'people'));
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.showDetails', this.i18n.as_showDetails(), this.imgixBaseUrl, 'info-circle'));
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.rename', this.i18n.as_rename(), this.imgixBaseUrl, 'edit'));
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.addAlias', this.i18n.as_addAlias(), this.imgixBaseUrl, 'add-circle'));
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.invite', this.i18n.as_invite(), this.imgixBaseUrl, 'person-add'));
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.provision', this.i18n.as_provision(), this.imgixBaseUrl, 'key'));
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.delete', this.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+    opts.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(opts as ActionSheetOptions);
     await sheet.present();
@@ -331,43 +368,41 @@ export class AocChat {
     if (!data?.action) return;
 
     switch (data.action) {
-      case 'room.showMembers':
+      case 'chat.actionsheet.showMembers':
         this.store.showRoomMembers(room.roomId);
         break;
-      case 'room.showDetails':
+      case 'chat.actionsheet.showDetails':
         this.store.showRoomDetails(room.roomId);
         break;
-      case 'room.rename':
+      case 'chat.actionsheet.rename':
         await this.store.renameRoom(room.roomId);
         break;
-      case 'room.addAlias':
+      case 'chat.actionsheet.addAlias':
         await this.store.addAlias(room.roomId);
         break;
-      case 'room.invite':
+      case 'chat.actionsheet.invite':
         await this.store.inviteToRoom(room.roomId);
         break;
-      case 'room.provision':
+      case 'chat.actionsheet.provision':
         await this.store.provisionUser();
         break;
-      case 'room.delete':
+      case 'chat.actionsheet.delete':
         await this.store.deleteRoom(room.roomId);
         break;
     }
   }
 
   // ─── member click → action sheet ────────────────────────────────────────────
-
   protected async onMemberClick(member: RoomMemberInfo): Promise<void> {
     const roomId = this.store.selectedRoomId();
-    const opts = createActionSheetOptions('@actionsheet.label.choose');
-    const base = this.imgixBaseUrl;
+    const opts = createActionSheetOptions(this.i18n.as_title());
 
-    opts.buttons.push(createActionSheetButton('member.showDetails', base, 'info-circle'));
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.showDetails', this.i18n.as_showDetails(), this.imgixBaseUrl, 'info-circle'));
     if (roomId) {
-      opts.buttons.push(createActionSheetButton('member.kick', base, 'exit'));
+      opts.buttons.push(createActionSheetButton('chat.actionsheet.kick', this.i18n.as_kick(), this.imgixBaseUrl, 'exit'));
     }
-    opts.buttons.push(createActionSheetButton('member.deactivate', base, 'trash'));
-    opts.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
+    opts.buttons.push(createActionSheetButton('chat.actionsheet.deactivate', this.i18n.as_deactivate(), this.imgixBaseUrl, 'trash'));
+    opts.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(opts as ActionSheetOptions);
     await sheet.present();
@@ -375,13 +410,13 @@ export class AocChat {
     if (!data?.action) return;
 
     switch (data.action) {
-      case 'member.showDetails':
+      case 'chat.actionsheet.showDetails':
         this.store.showMemberDetails(member.userId);
         break;
-      case 'member.kick':
+      case 'chat.actionsheet.kick':
         if (roomId) await this.store.kickMember(member.userId, roomId);
         break;
-      case 'member.deactivate':
+      case 'chat.actionsheet.deactivate':
         await this.store.deactivateUser(member.userId);
         break;
     }

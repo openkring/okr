@@ -2,17 +2,17 @@ import { Component, computed, effect, inject, input, linkedSignal } from '@angul
 import { IonContent, IonIcon, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { ResourceModel, UserModel } from '@bk2/shared-models';
-import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 import { ResourceSelectStore } from './resource-select.store';
-import { SvgIconPipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-resource-select-modal',
   standalone: true,
   imports: [
     SvgIconPipe,
-    HeaderComponent, SpinnerComponent, EmptyListComponent,
+    Header, Spinner, EmptyList,
     IonContent, IonItem, IonLabel, IonList, IonIcon
   ],
   providers: [ResourceSelectStore],
@@ -49,7 +49,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
     </ion-content>
   `
 })
-export class ResourceSelectModalComponent {
+export class ResourceSelectModal {
   protected readonly resourceSelectStore = inject(ResourceSelectStore);
   private readonly modalController = inject(ModalController);
 

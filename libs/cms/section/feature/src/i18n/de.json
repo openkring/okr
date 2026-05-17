@@ -1,64 +1,45 @@
 {
+  "sections": "Sektionen",
+  "description": "Sektionen sind Teile einer Website. Sie enthalten Text, Bilder, Videos oder andere Elemente.",
+  "empty": "Es sind noch keine Sektionen erstellt worden. Erstelle eine mit Klicken des + Buttons.",
+  "key": "ID",
+  "name": "Name",
+  "type": "Typ",
+  "error": {
+    "noImages": "Es sind noch keine Bilder definiert, die hier angezeigt werden sollen.",
+    "noSuchSection": "Die Sektion {{ type }} existiert nicht. ev. wurde sie noch nicht implementiert oder falsch konfiguriert.",
+    "emptyTable": "Leere Tabelle"
+  },
+  "select": {
+    "label": "Sektion wählen"
+  },
+  "delete": {
+    "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
+  },
+  "send": {
+    "confirm1": "Sollen wirklich",
+    "confirm2": "verschickt werden ?"
+  },
   "activity": {
-    "field": {
-      "empty": "Keine Aktivitäten vorhanden."
-    }
+    "empty": "Keine Aktivitäten vorhanden."
   },
-  "content": {
-    "section": {
-      "error": {
-        "noImages": "Es sind noch keine Bilder definiert, die hier angezeigt werden sollen.",
-        "noSuchSection": "Die Sektion {{ type }} existiert nicht. ev. wurde sie noch nicht implementiert oder falsch konfiguriert.",
-        "emptyTable": "Leere Tabelle"
-      },
-      "plural": "Sektionen",
-      "field": {
-        "description": "Sektionen sind Teile einer Website. Sie enthalten Text, Bilder, Videos oder andere Elemente.",
-        "empty": "Es sind noch keine Sektionen erstellt worden. Erstelle eine mit Klicken des + Buttons."
-      },
-      "list": {
-        "header": {
-          "key": "ID",
-          "name": "Name",
-          "type": "Typ"
-        }
-      },
-      "operation": {
-        "select": {
-          "label": "Sektion wählen"
-        },
-        "delete": {
-          "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
-        },
-        "send": {
-          "confirm": "Sollen wirklich {{ amount }} emails verschickt werden ?"
-        }
-      }
-    }
-  },
-  "chat": {
-    "fields": {
-      "needsHelp": "{{name}} braucht Hilfe an diesem Ort: ",
-      "needsHelpUnknownLocation": "{{name}} braucht Hilfe (Ort unbekannt)"
-    }
+  "emergency": {
+    "needsHelp": "{{name}} braucht Hilfe an diesem Ort: ",
+    "needsHelpUnknownLocation": "{{name}} braucht Hilfe (Ort unbekannt)"
   },
   "calevent": {
-    "plural": "Ereignisse",
-    "operation": {
-      "update": {
-        "label": "Ereignis ändern",
-        "conf": "Das Ereignis wurde geändert.",
-        "error": "Das Ereignis konnte nicht geändert werden."
-      }
+    "calevents": "Ereignisse",
+    "update": {
+      "label": "Ereignis ändern",
+      "conf": "Das Ereignis wurde geändert.",
+      "error": "Das Ereignis konnte nicht geändert werden."
     }
   },
   "invitation": {
-    "operation": {
-      "update": {
-        "label": "Einladung ändern",
-        "conf": "Die Einladung wurde geändert.",
-        "error": "Die Einladung konnte nicht geändert werden."
-      }
+    "update": {
+      "label": "Einladung ändern",
+      "conf": "Die Einladung wurde geändert.",
+      "error": "Die Einladung konnte nicht geändert werden."
     }
   },
   "cms": {
@@ -92,31 +73,17 @@
       "upload": "Dokumente in den RAG-Store hochladen"
     }
   },
-  "general": {
-    "operation": {
-      "change": {
-        "cancel": "Abbrechen",
-        "ok": "OK"
-      },
-      "email": {
-        "conf": "Email(s) wurde(n) abgeschickt.",
-        "error": "Email(s) konnte(n) nicht verschickt werden."
-      }
-    }
+  "email": {
+    "conf": "Email(s) wurde(n) abgeschickt.",
+    "error": "Email(s) konnte(n) nicht verschickt werden."
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion"
   },
-  "subject": {
-    "group": {
-      "singular": "Gruppe",
-      "operation": {
-        "detach": {
-          "confirm": "Soll die Gruppe wirklich entfernt werden ?"
-        }
-      }
+  "group": {
+    "singular": "Gruppe",
+    "detach": {
+      "confirm": "Soll die Gruppe wirklich entfernt werden ?"
     }
   }
 }

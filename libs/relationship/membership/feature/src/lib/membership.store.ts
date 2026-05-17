@@ -7,12 +7,13 @@ import { firstValueFrom, of } from 'rxjs';
 
 import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
+import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
+import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@bk2/shared-util-angular';
 import { EmailAddressesModal, selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { TaskService } from '@bk2/task-data-access';
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
@@ -23,11 +24,12 @@ import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { browseUrl } from '@bk2/subject-address-util';
 import { MatrixChatService } from '@bk2/chat-data-access';
+import { InvoiceNewModal } from '@bk2/finance-invoice-feature';
 
 import { MemberNewModal } from './member-new.modal';
-import { MembershipEditModalComponent } from './membership-edit.modal';
-import { CategoryChangeModalComponent } from './membership-category-change.modal';
-import { InvoiceNewModal } from '@bk2/finance-invoice-feature';
+import { CategoryChangeModal } from './membership-category-change.modal';
+import { MembershipEditModal } from './membership-edit.modal';
+import { PFX } from './scope';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -85,9 +87,21 @@ export const _MembershipStore = signalStore(
     ownershipService: inject(OwnershipService),
     matrixService: inject(MatrixChatService),
     personEditModalClass: inject(PERSON_EDIT_MODAL, { optional: true }),
+    i18nService: inject(I18nService)
   })),
 
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      add_conf: PFX + 'add.conf',
+      add_error: PFX + 'add.error',
+      already_member: PFX + 'create.alreadyMember',
+      create_conf: PFX + 'create.conf',
+      create_error: PFX + 'create.error',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     // all memberships of this tenant
     allMembershipsResource: rxResource({  
       params: () => ({
@@ -448,7 +462,7 @@ export const _MembershipStore = signalStore(
       async addMemberToGroup(group: GroupModel, readOnly = true): Promise<void> {
         if (readOnly) { console.log('MembershipStore.addMemberToGroup: readOnly mode.'); return; }
         const modal = await store.modalController.create({
-          component: PersonSelectModalComponent,
+          component: PersonSelectModal,
           cssClass: 'list-modal',
           componentProps: {
             selectedTag: '',
@@ -462,7 +476,7 @@ export const _MembershipStore = signalStore(
         const member = data as PersonModel;
         const alreadyMember = store.members().some(m => m.memberKey === member.bkey && isOngoing(m.dateOfExit));
         if (alreadyMember) {
-          await showToast(store.toastController, '@membership.operation.create.alreadyMember');
+          await showToast(store.toastController, store.i18n.already_member());
           return;
         }
         const membership = convertMemberAndOrgToMembership(member, PersonModelName, group, GroupModelName, store.tenantId());
@@ -491,7 +505,7 @@ export const _MembershipStore = signalStore(
         if (role === 'confirm' && data) {
           const newMember = data as MemberNewFormModel;
           if (store.personService.checkIfExists(store.appStore.allPersons(), newMember.firstName, newMember.lastName)) {
-            if (!confirm(store.alertController, '@membership.operation.createMember.alreadyMember', true)) return;           
+            if (!confirm(store.alertController, store.i18n.already_member(), store.i18n.ok(), store.i18n.cancel(), true)) return;           
           }
 
           const personKey = await store.personService.create(convertFormToNewPerson(newMember, tenantId), store.currentUser());
@@ -529,7 +543,7 @@ export const _MembershipStore = signalStore(
         const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), vm.category);
         const membership = convertNewMemberFormToMembership(vm, personKey, store.tenantId(), mcatAbbreviation);
         membership.index = 'mn:' + membership.memberName1 + ' ' + membership.memberName2 + ' mk:' + membership.memberKey + ' ok:' + membership.orgKey;
-        return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', store.appStore.currentUser());
+        return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, store.i18n.create_conf(), store.i18n.create_error(), store.appStore.currentUser());
       },
 
       saveAddress(address: AddressModel, avatarKey: string): void {
@@ -543,10 +557,9 @@ export const _MembershipStore = signalStore(
        */
       async edit(membership?: MembershipModel, readOnly = true, isNew = false): Promise<void> {
         if (!membership) return;
-        this.setOrgId(membership.orgKey);
 
         const modal = await store.modalController.create({
-          component: MembershipEditModalComponent,
+          component: MembershipEditModal,
           componentProps: {
             membership,
             currentUser: store.currentUser(),
@@ -663,7 +676,7 @@ export const _MembershipStore = signalStore(
         const membershipCategory = store.membershipCategory();
         if (membershipCategory) {
           const modal = await store.modalController.create({
-            component: CategoryChangeModalComponent,
+            component: CategoryChangeModal,
             componentProps: {
               membership,
               membershipCategory,
@@ -778,7 +791,7 @@ export const _MembershipStore = signalStore(
 
       async delete(membership?: MembershipModel, readOnly = true): Promise<void> {
         if (!membership || readOnly) return;
-        const result = await confirm(store.alertController, '@membership.operation.delete.confirm', true);
+        const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           await store.membershipService.delete(membership);
           this.refreshData();  

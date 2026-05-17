@@ -70,17 +70,17 @@ An NgRx Signal Store managing all transfer data for a tenant.
 | Method | Description |
 | --- | --- |
 | `add(readOnly)` | Creates a new `TransferModel` pre-filled with the current person and default resource, then opens the edit modal |
-| `edit(transfer?, readOnly)` | Opens `TransferEditModalComponent` |
+| `edit(transfer?, readOnly)` | Opens `TransferEditModal` |
 | `delete(transfer?, readOnly)` | Hard-deletes a transfer without confirmation dialog |
 | `selectPersonAvatar()` | Opens a person-select dialog and returns the selected `AvatarInfo` |
 | `selectResourceAvatar()` | Opens a resource-select dialog and returns the selected `AvatarInfo` |
 
 ## Components
 
-### `TransferEditModalComponent`
+### `TransferEditModal`
 
 An Ionic modal for creating or editing a `TransferModel`. Receives `transfer`, `currentUser`, `types`, `states`, `periodicities`, `tags`, `tenantId`, `readOnly`.
 
-### `TransferListComponent`
+### `TransferList`
 
 A standalone list view of transfers with filters for type, state, year, and tags.

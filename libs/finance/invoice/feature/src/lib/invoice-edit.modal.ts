@@ -3,7 +3,7 @@ import { IonContent } from '@ionic/angular/standalone';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { InvoiceModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { InvoiceEditForm } from '@bk2/finance-invoice-ui';
@@ -12,7 +12,7 @@ import { InvoiceEditForm } from '@bk2/finance-invoice-ui';
   selector: 'bk-invoice-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, InvoiceEditForm,
+    Header, ChangeConfirmation, InvoiceEditForm,
     IonContent,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],

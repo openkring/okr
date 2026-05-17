@@ -5,14 +5,12 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { extractFirstPartOfOptionalTupel } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { AsyncPipe } from '@angular/common';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-multi-avatar',
   standalone: true,
   imports: [
-    SvgIconPipe, AvatarPipe, AsyncPipe, TranslatePipe,
+    SvgIconPipe, AvatarPipe,
     IonBadge, IonIcon, IonAvatar, IonImg, IonItem, IonLabel
   ],
   styles: [`
@@ -66,7 +64,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
             <ion-avatar slot="start" class="letter-avatar">
               <div class="letter">{{ name }}</div>
             </ion-avatar>
-            <ion-label>{{ label() | translate | async }}</ion-label>
+            <ion-label>{{ label() }}</ion-label>
             @if(badge() > 0) {
               <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
             }
@@ -77,7 +75,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
               <ion-avatar slot="start" class="logo-avatar">
                 <ion-img src="{{ name | avatar:getModelName(name) }}" alt="Avatar Logo" />
               </ion-avatar>
-              <ion-label>{{ label() | translate | async }}</ion-label>
+              <ion-label>{{ label() }}</ion-label>
               @if(badge() > 0) {
                 <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
               }
@@ -91,14 +89,14 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           <ion-item button detail="false" lines="none">
             <label for="doc-files-input" style="width:100%;cursor:pointer;display:flex;align-items:center;gap:12px;padding:4px 0;">
               <ion-icon slot="start" src="{{icon | svgIcon }}" />
-              <ion-label>{{ label() | translate | async }}</ion-label>
+              <ion-label>{{ label() }}</ion-label>
 
             </label>
           </ion-item>
         } @else {
           <ion-item [button]="true">
             <ion-icon slot="start" src="{{icon | svgIcon }}" />
-            <ion-label>{{ label() | translate | async }}</ion-label>
+            <ion-label>{{ label() }}</ion-label>
             @if(badge() > 0) {
               <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
             }
@@ -107,7 +105,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       }
     }  `
 })
-export class MultiAvatarComponent {
+export class MultiAvatar {
   public icon = input.required<string>();
   public label = input<string>();
   public badge = input<number>(0);

@@ -27,7 +27,7 @@ The `AvatarModel` is a lightweight metadata record that points to the Firebase S
 
 ## Key Components
 
-### AvatarToolbarComponent (`bk-avatar-toolbar`)
+### AvatarToolbar (`bk-avatar-toolbar`)
 
 Presentational toolbar that shows a circular avatar image, an optional title, and an optional subtitle. Inputs:
 
@@ -58,7 +58,7 @@ NgRx Signal Store (provided at component level). Key behaviours:
 | Library | Purpose |
 |---|---|
 | `@bk2/avatar-data-access` | `AvatarService` (storage URL resolution), `UploadService` (camera/upload) |
-| `@bk2/avatar-ui` | `AvatarDisplayComponent`, `AvatarSelectComponent` — presentational avatar widgets |
+| `@bk2/avatar-ui` | `AvatarDisplay`, `AvatarSelect` — presentational avatar widgets |
 | `@bk2/avatar-util` | `getDefaultIcon(modelType)` — maps model types to fallback SVG icon names |
 
 ## Library Path

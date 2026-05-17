@@ -2,20 +2,20 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, OrgModel, PersonModel, RoleName, UserModel, WorkrelModel, WorkrelModelName } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isOrg, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
 
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { WorkrelFormComponent } from '@bk2/relationship-workrel-ui';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { WorkrelForm } from '@bk2/relationship-workrel-ui';
 
 @Component({
   selector: 'bk-workrel-edit-modal',
   standalone: true,
   imports: [
-    CommentsAccordionComponent, HeaderComponent,
-    ChangeConfirmationComponent, WorkrelFormComponent,
+    CommentsAccordion, Header,
+    ChangeConfirmation, WorkrelForm,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -58,7 +58,7 @@ import { WorkrelFormComponent } from '@bk2/relationship-workrel-ui';
     </ion-content>
   `
 })
-export class WorkrelEditModalComponent {
+export class WorkrelEditModal {
   private readonly modalController = inject(ModalController);
 
   // inputs
@@ -123,7 +123,7 @@ export class WorkrelEditModalComponent {
 
   async selectPersonModal(): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',
@@ -159,7 +159,7 @@ export class WorkrelEditModalComponent {
 
   async selectOrgModal(): Promise<OrgModel | undefined> {
     const modal = await this.modalController.create({
-      component: OrgSelectModalComponent,
+      component: OrgSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',

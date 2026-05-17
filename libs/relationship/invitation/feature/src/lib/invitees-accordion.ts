@@ -2,15 +2,16 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
-
-import { AvatarPipe } from '@bk2/avatar-ui';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CalEventModel, InvitationModel, MembershipModel } from '@bk2/shared-models';
 import { FullNamePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent } from '@bk2/shared-ui';
+import { EmptyList } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isOngoing } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { InvitationStore } from 'libs/relationship/invitation/feature/src/lib/invitation.store';
+
+import { AvatarPipe } from '@bk2/avatar-ui';
+
+import { InvitationStore } from './invitation.store';
 
 /**
  * An accordion component to display a list of invitations related to a specific CalEvent.
@@ -22,7 +23,7 @@ import { InvitationStore } from 'libs/relationship/invitation/feature/src/lib/in
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, PrettyDatePipe, FullNamePipe,
-    EmptyListComponent,
+    EmptyList,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonAvatar
   ],
   providers: [InvitationStore],
@@ -63,7 +64,7 @@ import { InvitationStore } from 'libs/relationship/invitation/feature/src/lib/in
   </ion-accordion>
   `,
 })
-export class InviteesAccordionComponent {
+export class InviteesAccordion {
   protected readonly invitationStore = inject(InvitationStore);
   private actionSheetController = inject(ActionSheetController);
 

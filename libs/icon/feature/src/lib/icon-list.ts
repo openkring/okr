@@ -11,7 +11,7 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { IconModel, RoleName } from '@bk2/shared-models';
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -22,7 +22,7 @@ import { ICON_SETS, IconStore } from './icon.store';
   standalone: true,
   imports: [
     TranslatePipe, SvgIconPipe, FileSizePipe, PrettyDatePipe, AsyncPipe,
-    SpinnerComponent, EmptyListComponent, ListFilterComponent,
+    Spinner, EmptyList, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover, IonThumbnail
   ],
@@ -164,7 +164,7 @@ import { ICON_SETS, IconStore } from './icon.store';
     </ion-content>
   `
 })
-export class IconListComponent {
+export class IconList {
   protected readonly store = inject(IconStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly toastController = inject(ToastController);
@@ -209,7 +209,7 @@ export class IconListComponent {
       case 'add': await this.store.add(this.readOnly()); break;
       case 'exportRaw': await this.store.export('raw'); break;
       case 'sync': await this.store.sync(); break;
-      default: error(undefined, `IconListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
+      default: error(undefined, `IconList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 

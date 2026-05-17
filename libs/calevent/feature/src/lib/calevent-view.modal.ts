@@ -3,17 +3,17 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
 import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@bk2/shared-models';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { convertDateFormatToString, DateFormat, getCatAbbreviation, getWeekdayI18nKey } from '@bk2/shared-util-core';
 import { addTime } from '@bk2/shared-util-core';
 
-import { InviteesAccordionComponent } from '@bk2/relationship-invitation-feature';
-import { DocumentsAccordionComponent } from '@bk2/document-feature';
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { AttendeesAccordionComponent } from './attendees-accordion';
-import { AvatarDisplayComponent } from '@bk2/avatar-ui';
+import { InviteesAccordion } from '@bk2/relationship-invitation-feature';
+import { DocumentsAccordion } from '@bk2/document-feature';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { AttendeesAccordion } from './attendees-accordion';
+import { AvatarDisplay } from '@bk2/avatar-ui';
 
 function storeToView(d: string): string {
   return convertDateFormatToString(d, DateFormat.StoreDate, DateFormat.ViewDate, false);
@@ -24,11 +24,8 @@ function storeToView(d: string): string {
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, PartPipe, SvgIconPipe,
-    HeaderComponent, AvatarDisplayComponent,
-    InviteesAccordionComponent, DocumentsAccordionComponent,
-    CommentsAccordionComponent, AttendeesAccordionComponent,
-    IonContent, IonCard, IonCardContent, IonAccordionGroup,
-    IonItem, IonLabel, IonIcon,
+    Header, AvatarDisplay, InviteesAccordion, DocumentsAccordion, CommentsAccordion, AttendeesAccordion,
+    IonContent, IonCard, IonCardContent, IonAccordionGroup, IonItem, IonLabel, IonIcon,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }

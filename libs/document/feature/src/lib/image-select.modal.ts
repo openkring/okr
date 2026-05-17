@@ -6,7 +6,7 @@ import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ChangeConfirmationComponent, HeaderComponent, ImageConfigComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
 import { UploadService } from '@bk2/avatar-data-access';
@@ -21,7 +21,7 @@ import { getDocumentStoragePath, pickPhoto } from '@bk2/document-util';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    HeaderComponent, ChangeConfirmationComponent, ImageConfigComponent,
+    Header, ChangeConfirmation,
     IonContent, IonButton, IonIcon
   ],
   template: `
@@ -38,7 +38,7 @@ import { getDocumentStoragePath, pickPhoto } from '@bk2/document-util';
       </ion-content>
   `
 })
-export class ImageSelectModalComponent {
+export class ImageSelectModal {
   private readonly modalController = inject(ModalController);
   private readonly platform = inject(Platform);
   private readonly uploadService = inject(UploadService);

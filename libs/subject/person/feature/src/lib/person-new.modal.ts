@@ -2,8 +2,8 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { OrgModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { OrgSelectModalComponent } from '@bk2/shared-feature';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { OrgSelectModal } from '@bk2/shared-feature';
 import { isOrg } from '@bk2/shared-util-core';
 
 import { createNewPersonFormModel, PersonNewFormModel } from '@bk2/subject-person-util';
@@ -15,7 +15,7 @@ import { PersonStore } from './person.store';
   selector: 'bk-person-new-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, PersonNewForm,
+    Header, ChangeConfirmation, PersonNewForm,
     IonContent
   ],
   providers: [PersonStore],
@@ -84,7 +84,7 @@ export class PersonNewModal {
 
   protected async selectOrg(): Promise<void> {
     const modal = await this.modalController.create({
-      component: OrgSelectModalComponent,
+      component: OrgSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: 'selectable',

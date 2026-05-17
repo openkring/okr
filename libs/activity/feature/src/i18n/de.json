@@ -1,18 +1,16 @@
 {
-  "activity": {
-    "list": {
-      "title": "Aktivitäten"
-    },
-    "field": {
-      "empty": "Keine Aktivitäten vorhanden.",
-      "timestamp": "Zeitstempel",
-      "scope": "Bereich",
-      "action": "Aktion",
-      "author": "Autor",
-      "payload": "Inhalt"
-    },
-    "view": {
-      "title": "Aktivität anzeigen"
-    }
+  "list": {
+    "title": "Aktivitäten",
+    "nodata": "Kein Aktivitäten gefunden"
+  },
+  "field": {
+    "timestamp": "Zeitstempel",
+    "scope": "Bereich",
+    "action": "Aktion",
+    "author": "Autor",
+    "payload": "Inhalt"
+  },
+  "view": {
+    "title": "Aktivität anzeigen"
   }
 }

@@ -5,7 +5,7 @@ import { AsyncPipe } from '@angular/common';
 
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME } from '@bk2/shared-constants';
 import { CategoryListModel, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
+import { CategorySelect, Checkbox, Chips, DateInput, NotesInput, NumberInput, TextInput, TimeInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 import { TranslatePipe } from '@bk2/shared-i18n';
 
@@ -18,9 +18,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   imports: [
     vestForms,
     AsyncPipe, TranslatePipe, AvatarPipe,
-    TextInputComponent,
-    NumberInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent, DateInputComponent, 
-    CheckboxComponent, TimeInputComponent,
+    TextInput, NumberInput, Chips, NotesInput, CategorySelect, DateInput, Checkbox, TimeInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -180,20 +178,20 @@ import { AvatarPipe } from '@bk2/avatar-ui';
         </ion-card-content>
       </ion-card>
 
-      <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+      <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
 
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
     
       @if(hasRole('admin')) {
-        <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
   `
 })
-export class ReservationFormComponent {
+export class ReservationForm {
   // inputs
   public formData = model.required<ReservationModel>();
   public readonly currentUser = input<UserModel | undefined>();

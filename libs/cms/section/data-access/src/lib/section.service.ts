@@ -3,10 +3,12 @@ import { Observable, first, forkJoin, map, of } from "rxjs";
 
 import { ENV } from "@bk2/shared-config";
 import { FirestoreService } from "@bk2/shared-data-access";
+import { I18nService } from "@bk2/shared-i18n";
 import { DbQuery, SectionCollection, SectionModel, UserModel } from "@bk2/shared-models";
 import { addSystemQueries, findByKey, getSystemQuery } from "@bk2/shared-util-core";
 
 import { getSectionIndex } from "@bk2/cms-section-util";
+import { PFX } from "./scope";
 
 @Injectable({
     providedIn: 'root'
@@ -14,6 +16,15 @@ import { getSectionIndex } from "@bk2/cms-section-util";
 export class SectionService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -23,7 +34,7 @@ export class SectionService {
    */
   public async create(section: SectionModel, currentUser?: UserModel): Promise<string | undefined> {
     section.index = getSectionIndex(section);
-    return await this.firestoreService.createModel<SectionModel>(SectionCollection, section, '@content.section.operation.create', currentUser);
+    return await this.firestoreService.createModel<SectionModel>(SectionCollection, section, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
 
   /**
@@ -39,9 +50,9 @@ export class SectionService {
    * @param section the SectionModel with the new values
    * @param toastController 
    */
-  public async update(section: SectionModel, currentUser?: UserModel, confirmMessage = '@content.section.operation.update'): Promise<string | undefined> {
+  public async update(section: SectionModel, currentUser?: UserModel): Promise<string | undefined> {
     section.index = getSectionIndex(section);
-    return await this.firestoreService.updateModel<SectionModel>(SectionCollection, section, false, confirmMessage, currentUser);
+    return await this.firestoreService.updateModel<SectionModel>(SectionCollection, section, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   /**
@@ -50,7 +61,7 @@ export class SectionService {
    * @param section the section to be deleted
    */
   public async delete(section: SectionModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<SectionModel>(SectionCollection, section, '@content.section.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<SectionModel>(SectionCollection, section, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

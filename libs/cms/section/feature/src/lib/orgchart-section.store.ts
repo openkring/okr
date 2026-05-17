@@ -3,13 +3,17 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, GroupSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, GroupSelectModal } from '@bk2/shared-feature';
 import { DEFAULT_KEY } from '@bk2/shared-constants';
 import { GroupModel, GroupModelName } from '@bk2/shared-models';
 import { confirm } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
+
 import { GroupService } from '@bk2/subject-group-data-access';
 import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
-import { OrgEditModalComponent } from '@bk2/subject-org-feature';
+import { OrgEditModal } from '@bk2/subject-org-feature';
+
+import { PFX } from './scope';
 
 export interface OrgchartTreeNode {
   name: string;
@@ -59,8 +63,15 @@ export const OrgchartStore = signalStore(
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     groupEditModal: inject(GROUP_EDIT_MODAL),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      group_detach_confirm: PFX + 'group.detach.confirm',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     groupsResource: rxResource({
       stream: () => store.groupService.list(),
     }),
@@ -134,7 +145,7 @@ export const OrgchartStore = signalStore(
 
     async addExistingGroup(parentKey: string): Promise<void> {
       const modal = await store.modalController.create({
-        component: GroupSelectModalComponent,
+        component: GroupSelectModal,
         cssClass: 'list-modal',
         componentProps: {
           selectedTag: '',
@@ -180,7 +191,7 @@ export const OrgchartStore = signalStore(
         const org = store.appStore.allOrgs().find(o => o.bkey === node.bkey);
         if (!org) return;
         const modal = await store.modalController.create({
-          component: OrgEditModalComponent,
+          component: OrgEditModal,
           cssClass: 'wide-modal',
           componentProps: {
             org,
@@ -218,12 +229,8 @@ export const OrgchartStore = signalStore(
       if (node.modelType !== 'group') return;
       const group = store.allGroups().find(g => g.bkey === node.bkey);
       if (!group) return;
-      const confirmed = await confirm(
-        store.alertController,
-        '@subject.group.operation.detach.confirm',
-        true,
-      );
-      if (confirmed) {
+      const ok = await confirm(store.alertController, store.i18n.group_detach_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      if (ok) {
         await store.groupService.update(
           { ...group, parentKey: DEFAULT_KEY, parentName: '' },
           store.appStore.currentUser(),

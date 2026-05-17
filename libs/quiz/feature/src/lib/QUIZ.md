@@ -39,7 +39,7 @@ Computed:
 
 - `status` — `Record<AnswerStatus, number>` counting how many questions are in each state (`unanswered`, `correct`, `incorrect`).
 
-## QuizPageComponent (`bk-quiz-page`)
+## QuizPage (`bk-quiz-page`)
 
 Standalone Ionic page component. Iterates over `quizStore.questions()` and renders each as a card with choice buttons. After answering, shows `'Richtig !'` or `'Falsch !'` and the explanation text.
 

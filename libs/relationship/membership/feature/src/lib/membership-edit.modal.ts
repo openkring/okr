@@ -2,22 +2,22 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
 import { AppStore } from '@bk2/shared-feature';
 
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { DocumentsAccordionComponent } from '@bk2/document-feature';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { DocumentsAccordion } from '@bk2/document-feature';
 
-import { MembershipFormComponent } from '@bk2/relationship-membership-ui';
-import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
+import { MembershipForm } from '@bk2/relationship-membership-ui';
+import { RelationshipToolbar } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-membership-edit-modal',
   standalone: true,
   imports: [
-    CommentsAccordionComponent, MembershipFormComponent, RelationshipToolbarComponent, HeaderComponent,
-    ChangeConfirmationComponent, DocumentsAccordionComponent,
+    CommentsAccordion, MembershipForm, RelationshipToolbar, Header,
+    ChangeConfirmation, DocumentsAccordion,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -65,7 +65,7 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
     </ion-content>
   `
 })
-export class MembershipEditModalComponent {
+export class MembershipEditModal {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 

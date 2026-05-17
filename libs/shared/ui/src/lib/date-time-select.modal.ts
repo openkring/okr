@@ -5,14 +5,14 @@ import { IonContent, IonDatetime, ModalController } from '@ionic/angular/standal
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
 
-import { HeaderComponent } from './header.component';
+import { Header } from './header';
 
 @Component({
   selector: 'bk-date-time-select-modal',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    HeaderComponent,
+    Header,
     IonContent, IonDatetime
   ],
   template: `
@@ -37,7 +37,7 @@ import { HeaderComponent } from './header.component';
     </ion-content>
   `,
 })
-export class DateTimeSelectModalComponent {
+export class DateTimeSelectModal {
   private readonly modalController = inject(ModalController);
   protected readonly datetimePicker = viewChild.required<IonDatetime>('datetimePicker');
 

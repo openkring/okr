@@ -2,19 +2,19 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, PageModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-
-import { PageFormComponent } from '@bk2/cms-page-ui';
 import { ENV } from '@bk2/shared-config';
+
+import { PageForm } from '@bk2/cms-page-ui';
 
 @Component({
   selector: 'bk-page-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent,
-    PageFormComponent, 
+    Header, ChangeConfirmation,
+    PageForm, 
     IonContent
   ],
   template: `
@@ -43,7 +43,7 @@ import { ENV } from '@bk2/shared-config';
     </ion-content>
   `,
 })
-export class PageEditModalComponent {
+export class PageEditModal {
   private modalController = inject(ModalController);
   protected readonly env = inject(ENV);
 

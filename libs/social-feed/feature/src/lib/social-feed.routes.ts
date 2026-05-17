@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: 'feed',
-    loadComponent: () => import('./social-feed-list.component'),
+    loadComponent: () => import('./social-feed-list'),
   },
   {
     path: '',

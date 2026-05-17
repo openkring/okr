@@ -2,13 +2,15 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ToastController } from '@ionic/angular/standalone';
 
-import { MenuComponent } from '@bk2/cms-menu-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { generateRandomString, hasRole } from '@bk2/shared-util-core';
+
+import { Menu } from '@bk2/cms-menu-feature';
+
 import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
 
 
@@ -17,8 +19,8 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
     standalone: true,
     imports: [
       TranslatePipe, AsyncPipe, SvgIconPipe, FullNamePipe,
-      SpinnerComponent, EmptyListComponent, ListFilterComponent,
-      MenuComponent,
+      Spinner, EmptyList, ListFilter,
+      Menu,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
       IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
@@ -121,7 +123,7 @@ export class AocUserAccounts {
       case 'add':  await this.store.add(); break;
       case 'exportRaw': await this.store.export('raw'); break;
       case 'exportUsers': await this.store.export('users'); break;
-      default: error(undefined, `UserListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
+      default: error(undefined, `UserList.onPopoverDismiss: unknown method ${selectedMethod}`);
     } */
   }
 

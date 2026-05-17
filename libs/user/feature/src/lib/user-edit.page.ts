@@ -4,25 +4,25 @@ import { IonContent, Platform } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
 import { UserModelName } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Chips, Header } from '@bk2/shared-ui';
 import { debugFormModel, getFullName, hasRole } from '@bk2/shared-util-core';
-
-import { AvatarService, UploadService } from '@bk2/avatar-data-access';
-import { AvatarToolbarComponent } from '@bk2/avatar-feature';
-import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
-import { CommentsCardComponent } from '@bk2/comment-feature';
-
-import { UserAuthFormComponent, UserDisplayFormComponent, UserModelFormComponent, UserNotificationFormComponent, UserPrivacyFormComponent } from '@bk2/user-ui';
-import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
-import { UserEditStore } from './user-edit.store';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
+import { AvatarService, UploadService } from '@bk2/avatar-data-access';
+import { AvatarToolbar } from '@bk2/avatar-feature';
+import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+import { CommentsCard } from '@bk2/comment-feature';
+
+import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, UserPrivacyForm } from '@bk2/user-ui';
+import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
+import { UserEditStore } from './user-edit.store';
+
 @Component({
-  selector: 'bk-user-page',
+  selector: 'bk-user-edit-page',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, AvatarToolbarComponent, ChipsComponent, CommentsCardComponent,
-    UserModelFormComponent, UserDisplayFormComponent, UserAuthFormComponent, UserPrivacyFormComponent, UserNotificationFormComponent,
+    Header, ChangeConfirmation, AvatarToolbar, Chips, CommentsCard,
+    UserModelForm, UserDisplayForm, UserAuthForm, UserPrivacyForm, UserNotificationForm,
     IonContent
   ],
   providers: [UserEditStore],
@@ -45,7 +45,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
     </ion-content>
   `
 })
-export class UserPageComponent{
+export class UserEditPage{
   private readonly avatarService = inject(AvatarService);
   private readonly userEditStore = inject(UserEditStore);
   private readonly uploadService = inject(UploadService);

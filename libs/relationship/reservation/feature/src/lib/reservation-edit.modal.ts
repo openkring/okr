@@ -1,25 +1,24 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonRow, ModalController, IonButton } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CalEventModel, CategoryListModel, PersonModel, PersonModelName, ReservationModel, ReservationModelName, ResourceModel, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, getAvatarName, hasRole, isPerson, isResource, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
 
-import { CalEventEditModalComponent } from '@bk2/calevent-feature';
+import { CalEventEditModal } from '@bk2/calevent-feature';
 import { isCalEvent } from '@bk2/calevent-util';
 
-import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { ReservationFormComponent } from '@bk2/relationship-reservation-ui';
-import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
+import { CommentsAccordion } from '@bk2/comment-feature';
+import { ReservationForm } from '@bk2/relationship-reservation-ui';
+import { RelationshipToolbar } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-reservation-edit-modal',
   standalone: true,
   imports: [
-    CommentsAccordionComponent, RelationshipToolbarComponent, HeaderComponent,
-    ChangeConfirmationComponent, ReservationFormComponent,
+    CommentsAccordion, RelationshipToolbar, Header, ChangeConfirmation, ReservationForm,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
 ],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -79,7 +78,7 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
     </ion-content>
   `
 })
-export class ReservationEditModalComponent {
+export class ReservationEditModal {
   private readonly modalController = inject(ModalController);
   private readonly appstore = inject(AppStore);
 
@@ -166,7 +165,7 @@ export class ReservationEditModalComponent {
   
   async selectPersonModal(): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',
@@ -185,7 +184,7 @@ export class ReservationEditModalComponent {
 
   async selectCalevent(): Promise<void> {
     const modal = await this.modalController.create({
-      component: CalEventEditModalComponent,
+      component: CalEventEditModal,
       cssClass: 'wide-modal',
       componentProps: {
             calevent: this.calevent() ?? new CalEventModel(this.tenantId()),
@@ -234,7 +233,7 @@ export class ReservationEditModalComponent {
 
     async selectResourceModal(): Promise<ResourceModel | undefined> {
     const modal = await this.modalController.create({
-      component: ResourceSelectModalComponent,
+      component: ResourceSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',

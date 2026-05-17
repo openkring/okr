@@ -6,14 +6,14 @@ import { ModalController } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { InvoiceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { DateFormat, convertDateFormatToString, hasRole } from '@bk2/shared-util-core';
+import { PersonSelectModal } from '@bk2/shared-feature';
 
-import { PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AvatarPipe } from '@bk2/avatar-ui';
 
 import { InvoiceStore } from './invoice.store';
-import { AvatarPipe } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-invoice-list',
@@ -22,7 +22,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   providers: [InvoiceStore],
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe, AvatarPipe,
-    SpinnerComponent, ListFilterComponent, EmptyListComponent,
+    Spinner, ListFilter, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
   ],
@@ -144,7 +144,7 @@ export class InvoiceList {
     const currentUser = this.currentUser();
     if (!currentUser) return;
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       componentProps: { selectedTag: '', currentUser },
     });
     await modal.present();

@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from "@angular/core";
 import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 
 import { UserModel } from "@bk2/shared-models";
-import { HeaderComponent, SpinnerComponent } from "@bk2/shared-ui";
+import { Header, Spinner } from "@bk2/shared-ui";
 
 import { BexioIndex } from "..";
 import { getFullName } from "@bk2/shared-util-core";
@@ -13,7 +13,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
   selector: 'bk-aoc-bexio-contact-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, SpinnerComponent,
+    Header, Spinner,
     IonContent, IonGrid, IonRow, IonCol, IonButton, IonLabel
   ],
   styles: [`

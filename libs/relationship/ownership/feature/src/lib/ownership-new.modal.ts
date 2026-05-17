@@ -2,17 +2,17 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 
-import { OwnershipNewFormComponent } from './ownership-new.form';
+import { OwnershipNewForm } from './ownership-new.form';
 
 @Component({
   selector: 'bk-ownership-new-modal',
   standalone: true,
   imports: [
-    HeaderComponent, OwnershipNewFormComponent,
-    ChangeConfirmationComponent,
+    Header, OwnershipNewForm,
+    ChangeConfirmation,
     IonContent
   ],
   template: `
@@ -34,7 +34,7 @@ import { OwnershipNewFormComponent } from './ownership-new.form';
     </ion-content>
   `
 })
-export class OwnershipNewModalComponent {
+export class OwnershipNewModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

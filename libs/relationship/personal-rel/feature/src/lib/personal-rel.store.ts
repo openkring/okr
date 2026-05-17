@@ -9,10 +9,12 @@ import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isPersonalRel, isValidAt, nameMatches } from '@bk2/shared-util-core';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
 
-import { PersonalRelEditModalComponent } from './personal-rel-edit.modal';
+import { PersonalRelEditModal } from './personal-rel-edit.modal';
+import { PFX } from './scope';
 
 export type PersonalRelState = {
   person: PersonModel | undefined;
@@ -39,8 +41,15 @@ export const PersonalRelStore = signalStore(
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     personalRelService: inject(PersonalRelService),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     personalRelsResource: rxResource({
       params: () => ({
         person: store.person(),
@@ -145,7 +154,7 @@ export const PersonalRelStore = signalStore(
        */
       async edit(personalRel: PersonalRelModel, readOnly = true): Promise<void> {        
         const modal = await store.modalController.create({
-          component: PersonalRelEditModalComponent,
+          component: PersonalRelEditModal,
           componentProps: {
             personalRel,
             currentUser: store.currentUser(),
@@ -177,7 +186,7 @@ export const PersonalRelStore = signalStore(
 
       async delete(personalRel?: PersonalRelModel, readOnly = true): Promise<void> {
         if (!readOnly && personalRel) {
-          const result = await confirm(store.alertController, '@personalRel.operation.delete.confirm', true);
+          const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
           if (result === true) {
             await store.personalRelService.delete(personalRel, store.currentUser());
             this.reload();

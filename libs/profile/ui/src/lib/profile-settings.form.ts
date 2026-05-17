@@ -7,7 +7,7 @@ import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriteri
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@bk2/shared-models";
 import { FcmService } from "@bk2/shared-data-access";
-import { CategoryComponent, CheckboxComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared-ui";
+import { CategoryOld, Checkbox, ErrorNote, TextInput } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
@@ -19,7 +19,7 @@ import { userValidations } from "@bk2/user-util";
     TranslatePipe, AsyncPipe,
     vestForms,
     IonAccordion, IonButton, IonItem, IonLabel, IonGrid, IonRow, IonCol,
-    CategoryComponent, CheckboxComponent, TextInputComponent, ErrorNoteComponent,
+    CategoryOld, Checkbox, TextInput, ErrorNote,
   ],
   styles: [`ion-icon { padding-right: 5px; }`],
   viewProviders: [vestFormsViewProviders],
@@ -48,7 +48,7 @@ import { userValidations } from "@bk2/user-util";
             <ion-row> 
               @if(hasRole('admin')) {
                 <ion-col size="12">
-                  <bk-cat name="language" [value]="language()" (valueChange)="onFieldChange('language', $event)"  [categories]="languages" [readOnly]="isReadOnly()" />                                                             
+                  <bk-category-old name="language" [value]="language()" (valueChange)="onFieldChange('language', $event)"  [categories]="languages" [readOnly]="isReadOnly()" />                                                             
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <bk-checkbox name="showDebugInfo" [checked]="showDebugInfo()" (checkedChange)="onFieldChange('showDebugInfo', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
@@ -71,7 +71,7 @@ import { userValidations } from "@bk2/user-util";
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat name="avatarUsage" [value]="avatarUsage()" (valueChange)="onFieldChange('avatarUsage', $event)" [categories]="avatarUsages" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />  
+                <bk-category-old name="avatarUsage" [value]="avatarUsage()" (valueChange)="onFieldChange('avatarUsage', $event)" [categories]="avatarUsages" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />  
               </ion-col>
               @if(avatarUsage() === avatarUsageEnum.GravatarFirst || avatarUsage() === avatarUsageEnum.PhotoFirst) {
                 <ion-col size="12" size-md="6">
@@ -82,16 +82,16 @@ import { userValidations } from "@bk2/user-util";
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat name="nameDisplay" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [categories]="nameDisplays" [readOnly]="isReadOnly()"  [showHelper]="showHelper()" />  
+                <bk-category-old name="nameDisplay" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [categories]="nameDisplays" [readOnly]="isReadOnly()"  [showHelper]="showHelper()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="personSortCriteria" [value]="personSortCriteria()" (valueChange)="onFieldChange('personSortCriteria', $event)" [categories]="personSortCriterias" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />  
+                <bk-category-old name="personSortCriteria" [value]="personSortCriteria()" (valueChange)="onFieldChange('personSortCriteria', $event)" [categories]="personSortCriterias" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="newsDelivery" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
+                <bk-category-old name="newsDelivery" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
+                <bk-category-old name="invoiceDelivery" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
               </ion-col>
             </ion-row>
             @if (fcmService.isSupported()) {
@@ -124,7 +124,7 @@ import { userValidations } from "@bk2/user-util";
   </ion-accordion>
   `,
 })
-export class ProfileSettingsAccordionComponent {
+export class ProfileSettingsAccordion {
   protected readonly modalController = inject(ModalController);
   protected readonly fcmService = inject(FcmService);
 

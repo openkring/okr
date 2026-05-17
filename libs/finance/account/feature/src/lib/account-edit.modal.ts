@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { AccountModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
@@ -13,7 +13,7 @@ import { AccountForm } from '@bk2/finance-account-ui';
   selector: 'bk-account-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, AccountForm,
+    Header, ChangeConfirmation, AccountForm,
     IonContent
   ],
   template: `
@@ -37,7 +37,7 @@ import { AccountForm } from '@bk2/finance-account-ui';
     </ion-content>
   `
 })
-export class AccountEditModalComponent {
+export class AccountEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
 

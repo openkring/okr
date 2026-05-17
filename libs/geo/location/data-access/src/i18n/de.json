@@ -1,21 +1,17 @@
 {
-  "location": {
-    "operation": {
-      "create": {
-        "label": "Ort hinzufügen",
-        "conf": "Ort wurde hinzugefügt.",
-        "error": "Ort konnte nicht hinzugefügt werden."
-      },
-      "update": {
-        "label": "Ort ändern",
-        "conf": "Ort wurde geändert.",
-        "error": "Ort konnte nicht geändert werden."
-      },
-      "delete": {
-        "label": "Ort löschen",
-        "conf": "Ort wurde gelöscht.",
-        "error": "Ort konnte nicht gelöscht werden."
-      }
-    }
+  "create": {
+    "label": "Ort hinzufügen",
+    "conf": "Ort wurde hinzugefügt.",
+    "error": "Ort konnte nicht hinzugefügt werden."
+  },
+  "update": {
+    "label": "Ort ändern",
+    "conf": "Ort wurde geändert.",
+    "error": "Ort konnte nicht geändert werden."
+  },
+  "delete": {
+    "label": "Ort löschen",
+    "conf": "Ort wurde gelöscht.",
+    "error": "Ort konnte nicht gelöscht werden."
   }
 }

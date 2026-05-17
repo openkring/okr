@@ -6,8 +6,8 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { ImageConfig, ImageType } from '@bk2/shared-models';
 import { ImageTypes } from '@bk2/shared-categories';
 
-import { CategoryComponent } from './category.component';
-import { TextInputComponent } from './text-input.component';
+import { CategoryOld } from './category-old';
+import { TextInput } from './text-input';
 
 @Component({
   selector: 'bk-image-config',
@@ -15,7 +15,7 @@ import { TextInputComponent } from './text-input.component';
   imports: [
     TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid,
-    TextInputComponent, CategoryComponent
+    TextInput, CategoryOld
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -35,7 +35,7 @@ import { TextInputComponent } from './text-input.component';
               <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="readOnly()" [showHelper]=true />
             </ion-col>
             <ion-col size="12">
-                <bk-cat name="type" [value]="type()" (valueChange)="onFieldChange('type', $event)" [readOnly]="readOnly()" [categories]="imageTypes" />
+                <bk-category-old name="type" [value]="type()" (valueChange)="onFieldChange('type', $event)" [readOnly]="readOnly()" [categories]="imageTypes" />
             </ion-col>  
             <ion-col size="12"> 
               <bk-text-input name="url" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
@@ -55,7 +55,7 @@ import { TextInputComponent } from './text-input.component';
     </ion-card>
   `
 })
-export class ImageConfigComponent {
+export class ImageConfigEdit {
   // inputs
   public formData = model.required<ImageConfig>();
   public title = input('@content.section.forms.imageConfig.title');

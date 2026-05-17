@@ -1,34 +1,26 @@
 {
-  "ownership": {
-    "operation": {
-      "create": {
-        "label": "Nutzung hinzufügen",
-        "error": "Nutzung konnte nicht erstellt werden.",
-        "conf": "Nutzung wurde erstellt."
-      },
-      "update": {
-        "label": "Nutzung ändern",
-        "error": "Die Aenderungen konnten nicht gespeichert werden",
-        "conf": "Die Aenderungen wurden gespeichert."
-      },
-      "delete": {
-        "label": "Nutzung löschen",
-        "error": "Nutzung konnte nicht gelöscht werden",
-        "conf": "Nutzung wurde gelöscht",
-        "confirm": "Normalerweise sollte eine Nutzung beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Nutzung wirklich löschen?"
-      }
-    },
-    "select": {
-      "raw": "Rohdaten",
-      "lockers": "Garderoben-Liste",
-      "title": "Listenart für Export wählen"
-    }
+  "create": {
+    "label": "Nutzung hinzufügen",
+    "error": "Nutzung konnte nicht erstellt werden.",
+    "conf": "Nutzung wurde erstellt."
   },
-  "comment": {
-    "message": {
-      "ownership": {
-        "deleted": "Nutzung beendet"
-      }
-    }
+  "update": {
+    "label": "Nutzung ändern",
+    "error": "Die Aenderungen konnten nicht gespeichert werden",
+    "conf": "Die Aenderungen wurden gespeichert."
+  },
+  "delete": {
+    "label": "Nutzung löschen",
+    "error": "Nutzung konnte nicht gelöscht werden",
+    "conf": "Nutzung wurde gelöscht",
+    "confirm": "Normalerweise sollte eine Nutzung beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Nutzung wirklich löschen?"
+  },
+  "select": {
+    "raw": "Rohdaten",
+    "lockers": "Garderoben-Liste",
+    "title": "Listenart für Export wählen"
+  },
+  "end": {
+    "conf": "Nutzung beendet"
   }
 }

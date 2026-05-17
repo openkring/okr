@@ -11,11 +11,13 @@ import { confirm } from '@bk2/shared-util-angular';
 import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { ReservationService } from '@bk2/relationship-reservation-data-access';
 import { isReservation } from '@bk2/relationship-reservation-util';
 
-import { ReservationEditModalComponent } from './reservation-edit.modal';
+import { ReservationEditModal } from './reservation-edit.modal';
+import { PFX } from './scope';
 
 export type ReservationState = {
   listId: string;       // filter format: t_resourceType, r_resourceKey, p_reserverKey, or 'all'
@@ -45,7 +47,7 @@ const initialState: ReservationState = {
   searchTerm: '',
   selectedTag: '',
   selectedReason: 'all',
-  selectedYear: getYear(), // initialize to current year to match ListFilterComponent default
+  selectedYear: getYear(), // initialize to current year to match ListFilter default
   selectedState: 'all'
 };
 
@@ -56,9 +58,16 @@ export const ReservationStore = signalStore(
     firestoreService: inject(FirestoreService),
     reservationService: inject(ReservationService),
     alertController: inject(AlertController),
-    modalController: inject(ModalController)
+    modalController: inject(ModalController),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: PFX + 'delete.confirm',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
+
     allReservationsResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser()
@@ -304,7 +313,7 @@ export const ReservationStore = signalStore(
 
       async edit(reservation: ReservationModel, readOnly = true, isSelectable = false): Promise<void> {
         const modal = await store.modalController.create({
-          component: ReservationEditModalComponent,
+          component: ReservationEditModal,
           componentProps: {
             reservation,
             currentUser: store.currentUser(),
@@ -341,7 +350,7 @@ export const ReservationStore = signalStore(
 
       async delete(reservation?: ReservationModel, readOnly = true): Promise<void> {
         if (reservation && !readOnly) {
-          const result = await confirm(store.alertController, '@reservation.operation.delete.confirm', true);
+          const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
           if (result === true) {
             await store.reservationService.delete(reservation, store.appStore.currentUser());
             this.reload();

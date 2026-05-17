@@ -2,7 +2,6 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel } from '@bk2/shared-models';
@@ -10,7 +9,7 @@ import { chipMatches, debugListLoaded, isCategoryList, nameMatches } from '@bk2/
 
 import { CategoryService } from '@bk2/category-data-access';
 
-import { CategoryEditModalComponent } from './category-edit.modal';
+import { CategoryEditModal } from './category-edit.modal';
 
 export type CategoryState = {
   searchTerm: string;
@@ -86,7 +85,7 @@ export const CategoryStore = signalStore(
 
       async edit(category: CategoryListModel, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-          component: CategoryEditModalComponent,
+          component: CategoryEditModal,
           componentProps: {
             category,
             currentUser: store.currentUser(),

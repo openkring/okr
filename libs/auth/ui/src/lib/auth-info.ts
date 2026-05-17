@@ -85,7 +85,7 @@ import { NetworkStatusService } from './network-status.service';
     </ion-grid>
   `,
 })
-export class AuthInfoComponent {
+export class AuthInfo {
   protected networkStatusService = inject(NetworkStatusService);
   public currentUser = input.required<UserModel | undefined>();
   public fbUser = input.required<User | null | undefined>();

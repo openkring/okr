@@ -6,13 +6,13 @@ import { ImageStyle } from '@bk2/shared-models';
 import { ENV } from '@bk2/shared-config';
 import { getImgixUrl, getSizedImgixParamsByExtension } from '@bk2/shared-util-core';
 
-import { HeaderComponent } from './header.component';
+import { Header } from './header';
 
 @Component({
   selector: 'bk-image-view-modal',
   standalone: true,
   imports: [
-    HeaderComponent,
+    Header,
     IonContent
   ],
   providers: [
@@ -48,7 +48,7 @@ import { HeaderComponent } from './header.component';
       </ion-content>
   `
 })
-export class ImageViewModalComponent {
+export class ImageViewModal {
   private env = inject(ENV);
 
   // inputs

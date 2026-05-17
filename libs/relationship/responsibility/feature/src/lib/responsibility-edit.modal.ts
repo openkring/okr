@@ -2,10 +2,10 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, PersonModel, ResponsibilityModel, ResponsibilityModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore, MultiSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, MultiSelectModal, PersonSelectModal } from '@bk2/shared-feature';
 
 import { ResponsibilityForm } from '@bk2/relationship-responsibility-ui';
 
@@ -13,8 +13,7 @@ import { ResponsibilityForm } from '@bk2/relationship-responsibility-ui';
   selector: 'bk-responsibility-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent,
-    ChangeConfirmationComponent, ResponsibilityForm,
+    Header, ChangeConfirmation, ResponsibilityForm,
     IonContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -94,7 +93,7 @@ export class ResponsibilityEditModal {
 
   protected async selectParent(): Promise<void> {
     const modal = await this.modalController.create({
-      component: MultiSelectModalComponent,
+      component: MultiSelectModal,
       cssClass: 'list-modal',
       componentProps: { 
         contents: 'org,group',
@@ -152,7 +151,7 @@ export class ResponsibilityEditModal {
 
   private async openPersonSelectModal(): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: { selectedTag: '', currentUser: this.currentUser() },
     });

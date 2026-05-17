@@ -3,14 +3,14 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonChip, IonContent, IonLabel, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { HeaderComponent } from './header.component';
+import { Header } from './header';
 
 @Component({
   selector: 'bk-chip-select-modal',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
-    HeaderComponent,
+    Header,
     IonContent, IonChip, IonLabel
   ],
   template: `
@@ -24,7 +24,7 @@ import { HeaderComponent } from './header.component';
     </ion-content>
   `,
 })
-export class ChipSelectModalComponent {
+export class ChipSelectModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

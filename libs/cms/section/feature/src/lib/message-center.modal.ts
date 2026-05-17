@@ -2,25 +2,26 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonInput, IonIcon, IonItem, IonList, IonSearchbar, IonSelect, IonSelectOption, IonTitle, IonToolbar, ModalController, IonLabel } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
+import { AsyncPipe } from '@angular/common';
 
-import { AvatarComponent } from '@bk2/avatar-ui';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { DeliveryTypes } from '@bk2/shared-categories';
-
-const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtrap_test'] as const;
 import { AppStore } from '@bk2/shared-feature';
 import { DeliveryType, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { UserService } from '@bk2/user-data-access';
-import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared-i18n';
+
+import { BkAvatar } from '@bk2/avatar-ui';
+import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { UserService } from '@bk2/user-data-access';
+
+const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtrap_test'] as const;
 
 @Component({
   selector: 'bk-message-center-modal',
   standalone: true,
   imports: [
     SvgIconPipe, AsyncPipe, TranslatePipe,
-    AvatarComponent,
+    BkAvatar,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem,
     IonCheckbox, IonIcon, IonSearchbar, IonSelect, IonSelectOption, IonInput, IonLabel
   ],

@@ -3,11 +3,13 @@ import { Observable, firstValueFrom, map } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { FolderCollection, FolderModel, UserModel } from '@bk2/shared-models';
 import { getSystemQuery } from '@bk2/shared-util-core';
 
 import { getFolderIndex, newFolderModel } from '@bk2/folder-util';
 import { ActivityService } from '@bk2/activity-data-access';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -16,12 +18,21 @@ export class FolderService {
   private readonly env = inject(ENV);
   private readonly activityService = inject(ActivityService);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+  });
   private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(folder: FolderModel, currentUser?: UserModel): Promise<string | undefined> {
     folder.index = getFolderIndex(folder);
-    const key = await this.firestoreService.createModel<FolderModel>(FolderCollection, folder, '@folder.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<FolderModel>(FolderCollection, folder, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     void this.activityService.log('folder', 'create', currentUser, `${key}:${folder.name}`);
     return key;
   }
@@ -32,14 +43,14 @@ export class FolderService {
 
   public async update(folder: FolderModel, currentUser?: UserModel): Promise<string | undefined> {
     folder.index = getFolderIndex(folder);
-    const key = await this.firestoreService.updateModel<FolderModel>(FolderCollection, folder, false, '@folder.operation.update', currentUser);
+    const key = await this.firestoreService.updateModel<FolderModel>(FolderCollection, folder, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     void this.activityService.log('folder', 'update', currentUser, `${key}:${folder.name}`);
     return key;
   }
 
   public async delete(folder: FolderModel, currentUser?: UserModel): Promise<void> {
     const payload = `${folder.bkey}:${folder.name}`
-    await this.firestoreService.deleteModel<FolderModel>(FolderCollection, folder, '@folder.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<FolderModel>(FolderCollection, folder, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('folder', 'delete', currentUser, payload);
   }
 

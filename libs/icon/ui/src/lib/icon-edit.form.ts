@@ -5,7 +5,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { iconValidations } from '@bk2/icon-util';
 import { IconModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { Chips, ErrorNote, NotesInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
@@ -14,7 +14,7 @@ import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constant
   standalone: true,
   imports: [
     vestForms, DecimalPipe,
-    TextInputComponent, NotesInputComponent, ChipsComponent, ErrorNoteComponent,
+    TextInput, NotesInput, Chips, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -77,13 +77,13 @@ import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constant
       }
 
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
 `
 })
-export class IconEditFormComponent {
+export class IconEditForm {
   // inputs
   public formData = model.required<IconModel>();
   public currentUser = input<UserModel>();

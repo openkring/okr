@@ -66,10 +66,10 @@ Notable store actions:
 ## Key Components
 | Component | Selector / Role |
 |---|---|
-| `DocumentListComponent` | List view with `listId`-scoped filtering, subfolder navigation, multi-file upload |
+| `DocumentList` | List view with `listId`-scoped filtering, subfolder navigation, multi-file upload |
 | `DocumentEditPage` | Detail/edit page for a single document's metadata |
-| `DocumentAccordionComponent` | Collapsible accordion embedding a document list (used inside other features) |
-| `ImageSelectModalComponent` | Modal for selecting an existing document/image to reference |
+| `DocumentAccordion` | Collapsible accordion embedding a document list (used inside other features) |
+| `ImageSelectModal` | Modal for selecting an existing document/image to reference |
 
 ## Data Access
 `DocumentService` (`@bk2/document-data-access`) and `FolderService` (`@bk2/folder-data-access`) are the Firestore gateways. `UploadService` (`@bk2/avatar-data-access`) handles Firebase Storage uploads.

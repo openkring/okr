@@ -4,10 +4,10 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg,
 import { vestForms } from 'ngx-vest-forms';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, OrgSelectModal, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@bk2/shared-models';
-import { DateInputComponent } from '@bk2/shared-ui';
+import { DateInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
@@ -19,7 +19,7 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe, AvatarPipe,
-    DateInputComponent,
+    DateInput,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonImg, IonButton, IonCard, IonCardContent
   ],
   template: `
@@ -83,7 +83,7 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
   }
   `
 })
-export class OwnershipNewFormComponent {
+export class OwnershipNewForm {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
@@ -123,7 +123,7 @@ export class OwnershipNewFormComponent {
 
   protected onFormChange(value: OwnershipModel): void {
     this.formData.update((vm) => ({ ...vm, ...value }));
-    debugFormModel('OwnershipForm.onFormChange', this.formData(), this.currentUser());
+    debugFormModel('OwnershipNewForm.onFormChange', this.formData(), this.currentUser());
     debugFormErrors('OwnershipNewForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 
@@ -137,7 +137,7 @@ export class OwnershipNewFormComponent {
 
   protected async selectPerson(): Promise<void> {
     const modal = await this.modalController.create({
-      component: PersonSelectModalComponent,
+      component: PersonSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',
@@ -163,7 +163,7 @@ export class OwnershipNewFormComponent {
 
   protected async selectOrg(): Promise<void> {
     const modal = await this.modalController.create({
-      component: OrgSelectModalComponent,
+      component: OrgSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: 'selectable',
@@ -189,7 +189,7 @@ export class OwnershipNewFormComponent {
 
   protected async selectResource(): Promise<void> {
     const modal = await this.modalController.create({
-      component: ResourceSelectModalComponent,
+      component: ResourceSelectModal,
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',

@@ -7,7 +7,7 @@ import {
 } from '@ionic/angular/standalone';
 
 import { FirestoreService } from '@bk2/shared-data-access';
-import { HeaderComponent } from '@bk2/shared-ui';
+import { Header } from '@bk2/shared-ui';
 
 export interface EmailEvent {
   bkey: string;
@@ -45,7 +45,7 @@ const EVENT_TYPES = ['delivery', 'open', 'click', 'bounce', 'spam', 'reject', 'u
   standalone: true,
   imports: [
     DatePipe,
-    HeaderComponent,
+    Header,
     IonContent, IonToolbar, IonSearchbar, IonSelect, IonSelectOption,
     IonList, IonItem, IonLabel, IonNote, IonBadge,
   ],
@@ -95,7 +95,7 @@ const EVENT_TYPES = ['delivery', 'open', 'click', 'bounce', 'spam', 'reject', 'u
     </ion-content>
   `
 })
-export class AocEmailComponent {
+export class AocEmail {
   private readonly firestoreService = inject(FirestoreService);
 
   protected searchTerm = signal('');

@@ -6,7 +6,7 @@ import {
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ImageConfig, ImageType } from '@bk2/shared-models';
-import { StringSelectComponent, TextInputComponent, HeaderComponent } from '@bk2/shared-ui';
+import { StringSelect, TextInput, Header } from '@bk2/shared-ui';
 
 const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
 
@@ -15,8 +15,8 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    HeaderComponent,
-    TextInputComponent, StringSelectComponent,
+    Header,
+    TextInput, StringSelect,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol,
   ],
   template: `
@@ -52,7 +52,7 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
     </ion-card>
   `
 })
-export class ImageEditModalComponent {
+export class ImageEditModal {
   private readonly modalController = inject(ModalController);
 
   // inputs

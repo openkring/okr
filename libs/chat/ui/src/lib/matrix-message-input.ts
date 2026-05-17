@@ -2,13 +2,15 @@ import { Component, DestroyRef, afterNextRender, computed, effect, inject, input
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
+
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { AppStore } from '@bk2/shared-feature';
+import { ButtonCopy } from '@bk2/shared-ui';
+
 import { isSupportedImageFile } from '@bk2/chat-util';
 import 'emoji-picker-element';
-import { ButtonCopyComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-matrix-message-input',
@@ -16,7 +18,7 @@ import { ButtonCopyComponent } from '@bk2/shared-ui';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
-    CommonModule, FormsModule, ButtonCopyComponent,
+    CommonModule, FormsModule, ButtonCopy,
     IonTextarea, IonButton, IonIcon
   ],
   styles: [`
@@ -315,6 +317,13 @@ import { ButtonCopyComponent } from '@bk2/shared-ui';
 export class MatrixMessageInput {
   private actionSheetController = inject(ActionSheetController);
   private appStore = inject(AppStore);
+  private readonly i18nService = inject(I18nService);
+  protected readonly i18n = this.i18nService.translateAll({
+    isTypeing: '@chat.fields.isTypeing',
+    and: '@chat.fields.and',
+    areTypeing: '@chat.fields.areTypeing',
+    othersTypeing: '@chat.fields.othersTypeing',
+  });
 
   disabled = input<boolean>(false);
   roomId = input<string | undefined>(undefined);
@@ -616,9 +625,9 @@ export class MatrixMessageInput {
   getTypingText(): string {
     const users = this.typingUsers();
     if (users.length === 0) return '';
-    if (users.length === 1) return `${users[0]} ${bkTranslate('@chat.fields.isTypeing')}`;
-    if (users.length === 2) return `${users[0]} ${bkTranslate('@chat.fields.and')} ${users[1]} ${bkTranslate('@chat.fields.areTypeing')}`;
-    return `${users[0]} ${bkTranslate('@chat.fields.and')} ${users.length - 1} ${bkTranslate('@chat.fields.othersTypeing')}}`;
+    if (users.length === 1) return `${users[0]} ${this.i18n.isTypeing()}`;
+    if (users.length === 2) return `${users[0]} ${this.i18n.and()} ${users[1]} ${this.i18n.areTypeing()}`;
+    return `${users[0]} ${this.i18n.and()} ${users.length - 1} ${this.i18n.othersTypeing()}`;
   }
 
   focus() {

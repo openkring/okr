@@ -4,7 +4,7 @@ import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton,
 import { ViewWillEnter } from '@ionic/angular';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ChangeConfirmationComponent } from '@bk2/shared-ui';
+import { ChangeConfirmation } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { isAdminMember } from '@bk2/subject-group-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
@@ -12,23 +12,21 @@ import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 import { PageDispatcher, PageStore } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { FolderService } from '@bk2/folder-data-access';
-import { MembershipListComponent } from '@bk2/relationship-membership-feature';
-import { TaskListComponent } from '@bk2/task-feature';
-import { DocumentListComponent } from '@bk2/document-feature';
+import { MembershipList } from '@bk2/relationship-membership-feature';
+import { TaskList } from '@bk2/task-feature';
+import { DocumentList } from '@bk2/document-feature';
+import { CalEventList } from '@bk2/calevent-feature';
 
 import { GroupStore } from './group.store';
-import { CalEventListComponent } from '@bk2/calevent-feature';
 
 @Component({
   selector: 'bk-group-view-page',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    ChangeConfirmationComponent, PageDispatcher,
-    CalEventListComponent, MembershipListComponent, DocumentListComponent,
+    ChangeConfirmation, PageDispatcher, CalEventList, MembershipList, DocumentList, TaskList,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
-    IonHeader, IonButtons, IonTitle, IonMenuButton,
-    TaskListComponent
+    IonHeader, IonButtons, IonTitle, IonMenuButton
 ],
   providers: [GroupStore],
   template: `
@@ -139,7 +137,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
     </ion-content>
   `
 })
-export class GroupViewPageComponent implements ViewWillEnter {
+export class GroupViewPage implements ViewWillEnter {
   private readonly groupStore = inject(GroupStore);
   private readonly pageStore = inject(PageStore);
   private readonly folderService = inject(FolderService);

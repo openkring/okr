@@ -1,3 +1,3 @@
-export * from './lib/comment-header.component';
-export * from './lib/comment-input.component';
-export * from './lib/comments-list.component';
+export * from './lib/comment-header';
+export * from './lib/comment-input';
+export * from './lib/comments-list';

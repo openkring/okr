@@ -8,7 +8,7 @@ import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { ENV } from '@bk2/shared-config';
-import { isBrowser } from '@bk2/shared-util-angular';
+import { isBrowser } from '@bk2/shared-util-core';
 
 /**
  * Service for Firebase Cloud Messaging (FCM) push notifications.

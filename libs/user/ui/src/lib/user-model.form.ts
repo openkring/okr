@@ -5,7 +5,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { RoleName, UserModel } from "@bk2/shared-models";
-import { EmailInputComponent, NotesInputComponent, TextInputComponent } from "@bk2/shared-ui";
+import { EmailInput, NotesInput, TextInput } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, hasRole } from "@bk2/shared-util-core";
 
 import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@bk2/user-util";
@@ -16,7 +16,7 @@ import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
-    TextInputComponent, EmailInputComponent, NotesInputComponent,
+    EmailInput, NotesInput, TextInput,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -52,7 +52,7 @@ import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@
                 <bk-email name="loginEmail" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email name="gravatarEmail" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [readOnly]="isReadOnly()" />
+                <bk-email-input name="gravatarEmail" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-text-input name="tenants" [value]="tenants()" (valueChange)="onFieldChange('tenants', $event)" [readOnly]="isReadOnly()" [copyable]=true />
@@ -62,12 +62,12 @@ import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@
         </ion-card-content>
       </ion-card>
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   `
 })
-export class UserModelFormComponent {
+export class UserModelForm {
   // inputs
   public formData = model.required<UserModelFormModel>();
   public currentUser = input<UserModel | undefined>();

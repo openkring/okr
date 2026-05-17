@@ -1,95 +1,118 @@
 {
-  "content": {
-    "section": {
-      "type": {
-        "album": {
-          "edit": "Albumskonfiguration bearbeiten"
-        },
-        "button": {
-          "style": {
-            "title": "Button Konfiguration",
-            "subtitle": "Definiere das Aussehen des Buttons"
-          },
-          "icon": {
-            "title": "Icon Konfiguration",
-            "subtitle": "Wähle ein Icon und seine Darstellung"
-          }
-        },
-        "chat": {
-          "title": "Chat Konfiguration ändern",
-          "subtitle": "Passe hier die Chat-Einstellungen an deine Bedürfnisse an."
-        },
-        "events": {
-          "title": "Konfiguration der Eventliste",
-          "subtitle": "Passe hier die Einstellungen der Eventliste an deine Bedürfnisse an."
-        },
-        "iframe": {
-          "edit": "Iframe Konfiguration ändern"
-        },
-        "invitations": {
-          "title": "Konfiguration der Einladungen",
-          "subtitle": "Passe hier die Einstellungen der Einladungen an deine Bedürfnisse an."
-        },
-        "map": {
-          "edit": "Karten-Konfiguration ändern"
-        },
-        "people": {
-          "select": {
-            "group": "Gruppe auswählen",
-            "responsibility": "Verantwortliche wählen"
-          },
-          "label": "Personen",
-          "addLabel": "Person auswählen",
-          "edit": "Personen Konfiguration ändern"
-        },
-        "responsibility": {
-          "edit": "Konfiguration"
-        },
-        "table": {
-          "grid": {
-            "title": "Tabellen-Layout"
-          }
-        },
-        "tracker": {
-          "edit": "Tracker Konfiguration ändern"
-        },
-        "video": {
-          "edit": "Video Konfiguration ändern"
-        }
-      },
-      "forms": {
-        "content": {
-          "title": "Inhalt"
-        },
-        "imageStyle": {
-          "title": "Bild Styles (CSS)"
-        },
-        "roleNeeded": {
-          "title": "Benötigte Rolle:"
-        },
-        "state": {
-          "title": "Publikations-Status"
-        },
-        "title": "Sektion"
-      },
-      "image": {
-        "edit": {
-          "title": "Bild Eigenschaften",
-          "header": "Bild bearbeiten"
-        }
-      },
-      "images": {
-        "empty": "Noch keine Bilder konfiguriert.",
-        "title": "Bilder",
-        "upload": "Bilder hochladen"
-      },
-      "error": {
-        "noPeople": "Es sind noch keine Personen definiert, die hier angezeigt werden sollen."
-      },
-      "default": {
-        "type": "Sektions-Art"
-      }
+  "images": {
+    "empty": "Noch keine Bilder konfiguriert.",
+    "title": "Bilder",
+    "upload": "Bilder hochladen"
+  },
+  "table": {
+    "header": {
+      "label": "Header",
+      "placeholder": "text",
+      "helper": "Der Text im Header.",
+      "title": "Daten: Titel/Header",
+      "description": "Optional kannst du hier die Inhalte der Titel-Zeile der Tabelle eintragen. Die Reihenfolge der Einträge entspricht der Reihenfolge der Zellen in der Tabelle. Die Einträge können nachträglich sortiert oder gelöscht werden. Die Titelzeile wird nur angezeigt, wenn sie Inhalte enthält.",
+      "add": "Neuen Titel hinzufügen"
+    },
+    "body": {
+      "label": "Tabelleninhalt (Daten)",
+      "placeholder": "text",
+      "helper": "Der Inhalt (typischerweise Text) in den Zellen der Tabelle.",
+      "title": "Daten: Felder der Tabelle",
+      "description": "Hier kannst du die Daten der Tabelle eintragen. Füge für jede Zelle der Tabelle ein eigenes Feld hinzu. Die Feld-Einträge bestehen aus html-Fragmenten. Es können also auch Links eingegeben werden. Umlaute sind als HTML-Codes einzugeben. Die Reihenfolge der Feld-Einträge entspricht der Reihenfolge der Zellen in der Tabelle. Die Felder können nachträglich sortiert oder gelöscht werden.",
+      "add": "Neues Feld hinzufügen"
     }
+  },
+  "actionsheet": {
+    "title": "Wähle eine Aktion",
+    "image": {
+      "edit": "Bild-Konfiguration bearbeiten",
+      "delete": "Bild löschen"
+    }
+  },
+
+
+  "type": {
+    "album": {
+      "edit": "Albumskonfiguration bearbeiten"
+    },
+    "button": {
+      "style": {
+        "title": "Button Konfiguration",
+        "subtitle": "Definiere das Aussehen des Buttons"
+      },
+      "icon": {
+        "title": "Icon Konfiguration",
+        "subtitle": "Wähle ein Icon und seine Darstellung"
+      }
+    },
+    "chat": {
+      "title": "Chat Konfiguration ändern",
+      "subtitle": "Passe hier die Chat-Einstellungen an deine Bedürfnisse an."
+    },
+    "events": {
+      "title": "Konfiguration der Eventliste",
+      "subtitle": "Passe hier die Einstellungen der Eventliste an deine Bedürfnisse an."
+    },
+    "iframe": {
+      "edit": "Iframe Konfiguration ändern"
+    },
+    "invitations": {
+      "title": "Konfiguration der Einladungen",
+      "subtitle": "Passe hier die Einstellungen der Einladungen an deine Bedürfnisse an."
+    },
+    "map": {
+      "edit": "Karten-Konfiguration ändern"
+    },
+    "people": {
+      "select": {
+        "group": "Gruppe auswählen",
+        "responsibility": "Verantwortliche wählen"
+      },
+      "label": "Personen",
+      "addLabel": "Person auswählen",
+      "edit": "Personen Konfiguration ändern"
+    },
+    "responsibility": {
+      "edit": "Konfiguration"
+    },
+    "table": {
+      "grid": {
+        "title": "Tabellen-Layout"
+      }
+    },
+    "tracker": {
+      "edit": "Tracker Konfiguration ändern"
+    },
+    "video": {
+      "edit": "Video Konfiguration ändern"
+    }
+  },
+  "forms": {
+    "content": {
+      "title": "Inhalt"
+    },
+    "imageStyle": {
+      "title": "Bild Styles (CSS)"
+    },
+    "roleNeeded": {
+      "title": "Benötigte Rolle:"
+    },
+    "state": {
+      "title": "Publikations-Status"
+    },
+    "title": "Sektion"
+  },
+  "image": {
+    "edit": {
+      "title": "Bild Eigenschaften",
+      "header": "Bild bearbeiten"
+    }
+  },
+  "error": {
+    "noPeople": "Es sind noch keine Personen definiert, die hier angezeigt werden sollen."
+  },
+  "default": {
+    "type": "Sektions-Art"
   },
   "input": {
     "style": {
@@ -99,11 +122,6 @@
     },
     "coordinates": {
       "label": "Koordinaten"
-    }
-  },
-  "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
     }
   }
 }

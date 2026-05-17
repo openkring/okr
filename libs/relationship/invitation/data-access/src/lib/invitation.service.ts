@@ -3,10 +3,12 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
+import { I18nService } from '@bk2/shared-i18n';
 import { InvitationCollection, InvitationModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getInvitationIndex } from '@bk2/relationship-invitation-util';
+import { PFX } from './scope';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +16,15 @@ import { getInvitationIndex } from '@bk2/relationship-invitation-util';
 export class InvitationService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
+  private readonly i18nService = inject(I18nService);
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'operation.create.conf',
+    create_error: PFX + 'operation.create.error',
+    update_conf:  PFX + 'operation.update.conf',
+    update_error: PFX + 'operation.update.error',
+    delete_conf:  PFX + 'operation.delete.conf',
+    delete_error: PFX + 'operation.delete.error',
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
     /**
@@ -24,7 +35,7 @@ export class InvitationService {
    */
   public async create(invitation: InvitationModel, currentUser?: UserModel): Promise<string | undefined> {
     invitation.index = getInvitationIndex(invitation);
-    return await this.firestoreService.createModel<InvitationModel>(InvitationCollection, invitation, '@invitation.operation.create', currentUser);
+    return await this.firestoreService.createModel<InvitationModel>(InvitationCollection, invitation, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
   
   /**
@@ -40,12 +51,11 @@ export class InvitationService {
    * Update an existing invitation relationship with new values.
    * @param invitation the invitation to update
    * @param currentUser the user who is updating the invitation
-   * @param confirmMessage the i18n key for the confirmation message to show in a toast
    * @returns the document id of the updated invitation or undefined if the operation failed
    */
-  public async update(invitation: InvitationModel, currentUser?: UserModel, confirmMessage = '@invitation.operation.update'): Promise<string | undefined> {
+  public async update(invitation: InvitationModel, currentUser?: UserModel): Promise<string | undefined> {
     invitation.index = getInvitationIndex(invitation);
-    return await this.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, confirmMessage, currentUser);
+    return await this.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   /**
@@ -55,7 +65,7 @@ export class InvitationService {
    * @returns a promise that resolves when the invitation is deleted
    */
   public async delete(invitation: InvitationModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<InvitationModel>(InvitationCollection, invitation, '@invitation.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<InvitationModel>(InvitationCollection, invitation, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
   }
 
   /*-------------------------- LIST  --------------------------------*/

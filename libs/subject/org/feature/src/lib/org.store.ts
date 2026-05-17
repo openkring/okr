@@ -15,8 +15,8 @@ import { AddressService } from '@bk2/subject-address-data-access';
 import { OrgService } from '@bk2/subject-org-data-access';
 import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/subject-org-util';
 
-import { OrgNewModalComponent } from './org-new.modal';
-import { OrgEditModalComponent } from './org-edit.modal';
+import { OrgNewModal } from './org-new.modal';
+import { OrgEditModal } from './org-edit.modal';
 
 export type OrgState = {
   orgKey: string;
@@ -143,7 +143,7 @@ export const OrgStore = signalStore(
     async add(readOnly = true): Promise<void> {
       if (readOnly) return;
       const modal = await store.modalController.create({
-        component: OrgNewModalComponent,
+        component: OrgNewModal,
         componentProps: {
           currentUser: store.currentUser(),
           tags: store.tags(),
@@ -178,7 +178,7 @@ export const OrgStore = signalStore(
 
     async edit(org: OrgModel, readOnly = true): Promise<void> {
       const modal = await store.modalController.create({
-        component: OrgEditModalComponent,
+        component: OrgEditModal,
         componentProps: {
           org,
           currentUser: store.currentUser(),
