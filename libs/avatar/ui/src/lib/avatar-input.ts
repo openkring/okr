@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, output, viewChild } from '@angular/core';
 import { IonButton, IonInput, IonItem } from '@ionic/angular/standalone';
 
 import { NAME_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo } from '@bk2/shared-models';
 import { generateRandomString, newAvatarInfo } from '@bk2/shared-util-core';
 
@@ -19,7 +17,6 @@ import { generateRandomString, newAvatarInfo } from '@bk2/shared-util-core';
   selector: 'bk-avatar-input',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonItem, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -35,7 +32,7 @@ import { generateRandomString, newAvatarInfo } from '@bk2/shared-util-core';
             [maxlength]="maxLength()"
             placeholder="ssssss"
             /> -->
-        <ion-button slot="end" fill="clear" (click)="selectClicked.emit()">{{ '@general.operation.select.subject' | translate | async }}</ion-button>
+        <ion-button slot="end" fill="clear" (click)="selectClicked.emit()">{{ '@general.operation.select.subject' }}</ion-button>
     </ion-item>
   `
 })

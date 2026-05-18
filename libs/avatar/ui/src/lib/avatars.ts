@@ -1,9 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
 import { NAME_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { AvatarInfo, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { AlertService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
@@ -21,7 +20,7 @@ import { AvatarDisplay } from './avatar-display';
   selector: 'bk-avatars',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     AvatarDisplay,
     IonList, IonItem, IonLabel, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton
 ],
@@ -35,7 +34,7 @@ import { AvatarDisplay } from './avatar-display';
       <ion-card-header>
         <ion-card-title>
           <ion-item lines="none" no-padding>
-            <div class="title">{{ cardTitle() | translate | async }}</div>
+            <div class="title">{{ cardTitle() }}</div>
             @if(!isReadOnly()) {
                 <ion-button slot="end" fill="clear" (click)="selectClicked.emit()" size="default">
                   <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -47,7 +46,7 @@ import { AvatarDisplay } from './avatar-display';
       <ion-card-content class="ion-no-padding">
         @if((description() ?? '').length > 0) {
           <ion-item lines="none">
-            <ion-label>{{ description() | translate | async }}</ion-label>
+            <ion-label>{{ description() }}</ion-label>
           </ion-item>
         }
         @if(isReadOnly()) {

@@ -1,10 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@bk2/shared-categories';
-import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { AvatarInfo, CategoryListModel, ColorIonic, UserModel } from '@bk2/shared-models';
 import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
@@ -16,7 +15,7 @@ import { BkAvatar } from './avatar';
   selector: 'bk-relationship-toolbar',
   standalone: true,
   imports: [
-    CategoryPlainNamePipe, TranslatePipe, AsyncPipe,
+    CategoryPlainNamePipe,
     BkAvatar,
     IonToolbar, IonItem, IonGrid, IonRow, IonCol, IonLabel
   ],
@@ -26,7 +25,7 @@ import { BkAvatar } from './avatar';
       <ion-row class="ion-align-items-center ion-justify-content-center">
         <ion-col size="12">
           <ion-item lines="none" class="title" [color]="color() | categoryPlainName:colorsIonic">
-            <ion-label>{{ '@' + relType() + '.reldesc1' | translate | async }}</ion-label>
+            <ion-label>{{ '@' + relType() + '.reldesc1' }}</ion-label>
           </ion-item>
         </ion-col>
       </ion-row>
@@ -38,7 +37,7 @@ import { BkAvatar } from './avatar';
         </ion-col>
         <ion-col size="2" class="ion-align-items-center ion-justify-content-center">
           <ion-item lines="none" [color]="color() | categoryPlainName:colorsIonic">
-            <ion-label>{{ '@' + relType() + '.reldesc2' | translate | async }}</ion-label>
+            <ion-label>{{ '@' + relType() + '.reldesc2' }}</ion-label>
           </ion-item>
         </ion-col>
         <ion-col size="5" class="ion-align-items-center ion-justify-content-center">

@@ -1,14 +1,10 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { IonCol, IonRow, IonTextarea } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-comment-input',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonTextarea
   ],
   template: `
@@ -17,9 +13,9 @@ import { TranslatePipe } from '@bk2/shared-i18n';
         <ion-textarea #bkComment 
           [value]="value()"
           (keyup.enter)="changed.emit(bkComment.value?.trim() ?? '')"
-          label = "{{label() | translate | async }}"
+          label = "{{label() }}"
           labelPlacement = "floating"
-          placeholder = "{{placeholder() | translate | async }}"
+          placeholder = "{{placeholder() }}"
           [counter]="true"
           fill="outline"
           [maxlength]="1000"

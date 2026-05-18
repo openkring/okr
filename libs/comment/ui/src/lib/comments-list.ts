@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { IonCol, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CommentModel } from '@bk2/shared-models';
 import { PrettyDatePipe } from '@bk2/shared-pipes';
 
@@ -10,20 +8,20 @@ import { PrettyDatePipe } from '@bk2/shared-pipes';
   selector: 'bk-comments-list',
   standalone: true,
   imports: [
-    PrettyDatePipe, TranslatePipe, AsyncPipe,
+    PrettyDatePipe,
     IonRow, IonCol,
   ],
   template: `
     @if(comments().length === 0) {
       <ion-row>
-        <ion-col size="12"><small>{{ '@general.noData.comments' | translate | async }}</small></ion-col>
+        <ion-col size="12"><small>{{ '@general.noData.comments' }}</small></ion-col>
       </ion-row>
     } @else {
       @for (comment of comments(); track comment.bkey) {
         <ion-row>
           <ion-col size="4" class="ion-hide-md-up"><small>{{ comment.creationDateTime | prettyDate }}</small></ion-col>
           <ion-col size="4" class="ion-hide-md-down"><small>{{ comment.creationDateTime | prettyDate }}/{{ comment.authorName }}</small></ion-col>
-          <ion-col size="8"><small>{{ comment.description | translate | async }}</small></ion-col>  
+          <ion-col size="8"><small>{{ comment.description }}</small></ion-col>  
         </ion-row>
       }
     }

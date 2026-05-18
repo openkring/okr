@@ -2,14 +2,11 @@ import { Component, inject, input, signal } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, ModalController } from '@ionic/angular/standalone';
 
 import { Header } from '@bk2/shared-ui';
-import { AsyncPipe } from '@angular/common';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-regression-selection-modal',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe,
     Header,
     IonContent, IonRadioGroup, IonRadio, IonLabel, IonItem, IonList
   ],
@@ -17,25 +14,25 @@ import { TranslatePipe } from '@bk2/shared-i18n';
     <bk-header [title]="title()" [showOkButton]="true" (okClicked)="save()" [isModal]="true" />
     <ion-content class="ion-no-padding">
       <ion-item>
-        <ion-label>{{'@calevent.operation.seriesupdate.intro' | translate | async}}</ion-label>
+        <ion-label>{{'@calevent.operation.seriesupdate.intro' }}</ion-label>
       </ion-item>
       <ion-list>
         <ion-radio-group [value]="selectedOption()" (ionChange)="selectedOption.set($event.detail.value)">
           <ion-item>
             <ion-label class="ion-text-wrap">
-              {{'@calevent.operation.seriesupdate.current' | translate | async}}
+              {{'@calevent.operation.seriesupdate.current' }}
             </ion-label>
             <ion-radio slot="start" value="current" />
           </ion-item>
           <ion-item>
             <ion-label class="ion-text-wrap">
-              {{'@calevent.operation.seriesupdate.future' | translate | async}}
+              {{'@calevent.operation.seriesupdate.future' }}
             </ion-label>
             <ion-radio slot="start" value="future" />
           </ion-item>
           <ion-item>
             <ion-label class="ion-text-wrap">
-              {{'@calevent.operation.seriesupdate.all' | translate | async}}
+              {{'@calevent.operation.seriesupdate.all' }}
             </ion-label>
             <ion-radio slot="start" value="all" />
           </ion-item>
