@@ -64,7 +64,13 @@ export const AocTagStore = signalStore(
       update_error: PFX + 'tag.update.error',
       search: PFX + 'tag.search.placeholder',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      title:             PFX + 'tag.title',
+      list_title:        PFX + 'tag.list.title',
+      loading:           '@general.operation.loading',
+      strings_title:     PFX + 'tag.strings.title',
+      string_add_button: PFX + 'tag.string.add.button',
+      strings_empty:     PFX + 'tag.strings.empty',
     }),
 
     tagsResource: rxResource({

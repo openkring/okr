@@ -1,8 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonSpinner, IonTitle, IonToolbar, ToastController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ListFilter } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat, getAge as getAgeFn } from '@bk2/shared-util-core';
@@ -17,7 +15,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
   selector: 'bk-aoc-srv',
   standalone: true,
   imports: [
-    TranslatePipe, SvgIconPipe, AsyncPipe,
+    SvgIconPipe,
     AvatarLabel, ListFilter,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonHeader,
@@ -29,7 +27,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
-        <ion-title>{{ '@aoc.srv.title' | translate | async }}</ion-title>
+        <ion-title>{{ store.i18n.srv_title() }}</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content>
@@ -37,8 +35,8 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
       <!-- ── Index card ─────────────────────────────────────────────────── -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.srv.index.title' | translate | async }}</ion-card-title>
-          <ion-card-subtitle>{{ '@aoc.srv.index.subtitle' | translate | async }}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.index_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.index_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -63,7 +61,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
                 @if(index().length > 0) {
                   <ion-button color="medium" (click)="store.resetIndex()">
                     <ion-icon src="{{ 'trash' | svgIcon }}" slot="start" />
-                    {{ '@aoc.srv.index.reset' | translate | async }}
+                    {{ store.i18n.index_reset() }}
                   </ion-button>
                 } @else {
                   <ion-button (click)="buildIndex()" [disabled]="isLoading() || isBusy()">
@@ -72,7 +70,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
                     } @else {
                       <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                     }
-                    {{ '@aoc.srv.index.button' | translate | async }}
+                    {{ store.i18n.index_button() }}
                   </ion-button>
                 }
               </ion-col>

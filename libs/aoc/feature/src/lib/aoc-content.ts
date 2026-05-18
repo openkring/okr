@@ -2,14 +2,12 @@ import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, ToastController } from '@ionic/angular/standalone';
 
-import { I18nService } from '@bk2/shared-i18n';
 import { MenuItemModel, SectionModel } from '@bk2/shared-models';
 import { Button, Header, ResultLog } from '@bk2/shared-ui';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 import { AocContentStore, MissingMenuRef, MissingSectionRef } from './aoc-content.store';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { PFX } from './scope';
 
 @Component({
   selector: 'bk-aoc-content',
@@ -22,13 +20,13 @@ import { PFX } from './scope';
   ],
   providers: [AocContentStore],
   template: `
-    <bk-header [title]="i18n.title()" />
+    <bk-header [title]="store.i18n.title()" />
     <ion-content>
       <ion-card>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ i18n.content() }}</ion-col>
+              <ion-col>{{ store.i18n.content() }}</ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -37,12 +35,12 @@ import { PFX } from './scope';
       <!-- Orphaned Sections -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n.orphaned_sections_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.orphaned_sections_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ i18n.orphaned_sections_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.orphaned_sections_content() }}</ion-col>
               <ion-col size="6">
                 <bk-button [label]="orphanedSectionsLabel()" [iconName]="orphanedSectionsIcon()" (click)="toggleOrphanedSections()" />
               </ion-col>
@@ -67,12 +65,12 @@ import { PFX } from './scope';
       <!-- Missing Sections -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n.missing_sections_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.missing_sections_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ i18n.missing_sections_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.missing_sections_content() }}</ion-col>
               <ion-col size="6">
                 <bk-button [label]="missingSectionsLabel()" [iconName]="missingSectionsIcon()" (click)="toggleMissingSections()" />
               </ion-col>
@@ -97,12 +95,12 @@ import { PFX } from './scope';
       <!-- Orphaned Menus -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n.orphaned_menus_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.orphaned_menus_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ i18n.orphaned_menus_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.orphaned_menus_content() }}</ion-col>
               <ion-col size="6">
                 <bk-button [label]="orphanedMenusLabel()" [iconName]="orphanedMenusIcon()" (click)="toggleOrphanedMenus()" />
               </ion-col>
@@ -127,12 +125,12 @@ import { PFX } from './scope';
       <!-- Missing Menus -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n.missing_menus_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.missing_menus_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ i18n.missing_menus_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.missing_menus_content() }}</ion-col>
               <ion-col size="6">
                 <bk-button [label]="missingMenusLabel()" [iconName]="missingMenusIcon()" (click)="toggleMissingMenus()" />
               </ion-col>
@@ -156,21 +154,21 @@ import { PFX } from './scope';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n.check_links_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.check_links_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ i18n.check_links_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.check_links_content() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ i18n.check_links_show() }}" iconName="checkbox-circle" (click)="checkLinks()" />
+                <bk-button label=" {{ store.i18n.check_links_show() }}" iconName="checkbox-circle" (click)="checkLinks()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
 
-      <bk-result-log [title]="logTitle()" [log]="logInfo()" />
+      <bk-result-log [cardTitle]="store.i18n.result_title()" [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
   `,
 })
@@ -178,62 +176,25 @@ export class AocContent {
   protected readonly store = inject(AocContentStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly toastController = inject(ToastController);
-  private readonly i18nService = inject(I18nService);
-
-  protected readonly i18n = this.i18nService.translateAll({
-    title: PFX + 'content.title',
-    content: PFX + 'content.content',
-    orphaned_sections_title: PFX + 'orphanedSections.title',
-    orphaned_sections_content: PFX + 'orphanedSections.content',
-    orphaned_sections_hide: PFX + 'orphanedSections.hide',
-    orphaned_sections_show: PFX + 'orphanedSections.show',
-    missing_sections_title: PFX + 'missingSections.title',
-    missing_sections_content: PFX + 'missingSections.content',
-    missing_sections_hide: PFX + 'missingSections.hide',
-    missing_sections_show: PFX + 'missingSections.show',
-    orphaned_menus_title: PFX + 'orphanedMenus.title',
-    orphaned_menus_content: PFX + 'orphanedMenus.content',
-    orphaned_menus_hide: PFX + 'orphanedMenus.hide',
-    orphaned_menus_show: PFX + 'orphanedMenus.show',
-    missing_menus_title: PFX + 'missingMenus.title',
-    missing_menus_content: PFX + 'missingMenus.content',
-    missing_menus_hide: PFX + 'missingMenus.hide',
-    missing_menus_show: PFX + 'missingMenus.show',
-    check_links_title: PFX + 'checkLinks.title',
-    check_links_content: PFX + 'checkLinks.content',
-    check_links_show: PFX + 'checkLinks.show',
-    as_title: PFX + 'content.actionsheet.title',
-    as_section_edit: PFX + 'content.actionsheet.section.edit',
-    as_section_delete: PFX + 'content.actionsheet.section.delete',
-    as_copy_bkey: PFX + 'content.actionsheet.copy.bkey',
-    as_page_edit: PFX + 'content.actionsheet.page.edit',
-    as_section_create: PFX + 'content.actionsheet.section.create',
-    as_section_removeref: PFX + 'content.actionsheet.section.removeRef',
-    as_menu_create: PFX + 'content.actionsheet.menu.create',
-    as_menu_delete: PFX + 'content.actionsheet.menu.delete',
-    as_menu_edit: PFX + 'content.actionsheet.menu.edit',
-    as_menu_removeref: PFX + 'content.actionsheet.menu.removeRef',
-    cancel: '@cancel',
-  });
 
   protected readonly logTitle = computed(() => this.store.logTitle());
   protected readonly logInfo = computed(() => this.store.log());
   protected readonly isLoading = computed(() => this.store.isLoading());
 
   protected readonly orphanedSections = computed(() => this.store.orphanedSections());
-  protected readonly orphanedSectionsLabel = computed(() => this.orphanedSections().length > 0 ? this.i18n.orphaned_sections_hide() : this.i18n.orphaned_sections_show());
+  protected readonly orphanedSectionsLabel = computed(() => this.orphanedSections().length > 0 ? this.store.i18n.orphaned_sections_hide() : this.store.i18n.orphaned_sections_show());
   protected readonly orphanedSectionsIcon = computed(() => this.orphanedSections().length > 0 ? 'eye-off' : 'eye-on');
 
   protected readonly orphanedMenus = computed(() => this.store.orphanedMenus());
-  protected readonly orphanedMenusLabel = computed(() => this.orphanedMenus().length > 0 ? this.i18n.orphaned_menus_hide() : this.i18n.orphaned_menus_show());
+  protected readonly orphanedMenusLabel = computed(() => this.orphanedMenus().length > 0 ? this.store.i18n.orphaned_menus_hide() : this.store.i18n.orphaned_menus_show());
   protected readonly orphanedMenusIcon = computed(() => this.orphanedMenus().length > 0 ? 'eye-off' : 'eye-on');
 
   protected readonly missingSections = computed(() => this.store.missingSectionRefs());
-  protected readonly missingSectionsLabel = computed(() => this.missingSections().length > 0 ? this.i18n.missing_sections_hide() : this.i18n.missing_sections_show());
+  protected readonly missingSectionsLabel = computed(() => this.missingSections().length > 0 ? this.store.i18n.missing_sections_hide() : this.store.i18n.missing_sections_show());
   protected readonly missingSectionsIcon = computed(() => this.missingSections().length > 0 ? 'eye-off' : 'eye-on');
 
   protected readonly missingMenus = computed(() => this.store.missingMenuRefs());
-  protected readonly missingMenusLabel = computed(() => this.missingMenus().length > 0 ? this.i18n.missing_menus_hide() : this.i18n.missing_menus_show());
+  protected readonly missingMenusLabel = computed(() => this.missingMenus().length > 0 ? this.store.i18n.missing_menus_hide() : this.store.i18n.missing_menus_show());
   protected readonly missingMenusIcon = computed(() => this.missingMenus().length > 0 ? 'eye-off' : 'eye-on');
 
   // constants
@@ -276,11 +237,11 @@ export class AocContent {
   }
 
   protected async showSectionActions(section: SectionModel): Promise<void> {
-    const options: ActionSheetOptions = createActionSheetOptions(this.i18n.as_title());
-    options.buttons.push(createActionSheetButton('content.actionsheet.section.edit', this.i18n.as_section_edit(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.section.delete', this.i18n.as_section_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
-    options.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    options.buttons.push(createActionSheetButton('content.actionsheet.section.edit', this.store.i18n.as_section_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.section.delete', this.store.i18n.as_section_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
@@ -301,12 +262,12 @@ export class AocContent {
   }
 
   protected async showMissingSectionRefActions(ref: MissingSectionRef): Promise<void> {
-    const options: ActionSheetOptions = createActionSheetOptions(this.i18n.as_title());
-    options.buttons.push(createActionSheetButton('content.actionsheet.page.edit', this.i18n.as_page_edit(), this.imgixBaseUrl, 'page'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.section.create', this.i18n.as_section_create(), this.imgixBaseUrl, 'section'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.section.removeRef', this.i18n.as_section_removeref(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
-    options.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    options.buttons.push(createActionSheetButton('content.actionsheet.page.edit', this.store.i18n.as_page_edit(), this.imgixBaseUrl, 'page'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.section.create', this.store.i18n.as_section_create(), this.imgixBaseUrl, 'section'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.section.removeRef', this.store.i18n.as_section_removeref(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
 
     const sheet = await this.actionSheetController.create(options);
@@ -331,11 +292,11 @@ export class AocContent {
   }
 
   protected async showMissingMenuRefActions(ref: MissingMenuRef): Promise<void> {
-    const options: ActionSheetOptions = createActionSheetOptions(this.i18n.as_title());
-    options.buttons.push(createActionSheetButton('content.actionsheet.menu.create', this.i18n.as_menu_create(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.menu.removeRef', this.i18n.as_menu_removeref(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
-    options.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    options.buttons.push(createActionSheetButton('content.actionsheet.menu.create', this.store.i18n.as_menu_create(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.menu.removeRef', this.store.i18n.as_menu_removeref(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
@@ -356,11 +317,11 @@ export class AocContent {
   }
 
   protected async showMenuActions(menuItem: MenuItemModel): Promise<void> {
-    const options: ActionSheetOptions = createActionSheetOptions(this.i18n.as_title());
-    options.buttons.push(createActionSheetButton('content.actionsheet.menu.edit', this.i18n.as_menu_edit(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.menu.delete', this.i18n.as_menu_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
-    options.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    options.buttons.push(createActionSheetButton('content.actionsheet.menu.edit', this.store.i18n.as_menu_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.menu.delete', this.store.i18n.as_menu_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();

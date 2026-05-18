@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { Button, CategorySelect, Header, ResultLog } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { PersonModelName } from '@bk2/shared-models';
@@ -15,20 +13,20 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
   selector: 'bk-aoc-data',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     FormsModule,
     Header, ResultLog, Button, CategorySelect,
     IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonItem, IonIcon
   ],
   providers: [AocDataStore],
   template: `
-    <bk-header title="@aoc.data.title" />
+    <bk-header [title]="aocDataStore.i18n.title()" />
     <ion-content>
       <ion-card>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.data.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocDataStore.i18n.content() }}</ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -36,14 +34,14 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.data.fix.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocDataStore.i18n.fix_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.data.fix.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocDataStore.i18n.fix_content() }}</ion-col>
               <ion-col>
-                <bk-button label=" {{ '@aoc.data.fix.operation.fix' | translate | async }}" iconName="warning" (click)="fixModels()" />
+                <bk-button label=" {{ aocDataStore.i18n.fix_button() }}" iconName="warning" (click)="fixModels()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -52,12 +50,12 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.data.validate.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocDataStore.i18n.validate_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.data.validate.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocDataStore.i18n.validate_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col>
@@ -66,7 +64,7 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
                 </ion-item>
               </ion-col>
               <ion-col>
-                <bk-button label=" {{ '@aoc.data.validate.operation.validate' | translate | async }}" iconName="info-circle" (click)="validateModels()" />
+                <bk-button label=" {{ aocDataStore.i18n.validate_button() }}" iconName="info-circle" (click)="validateModels()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -75,12 +73,12 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.data.createIndex.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocDataStore.i18n.index_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.data.createIndex.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocDataStore.i18n.index_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col>
@@ -89,25 +87,25 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
                 </ion-item>
               </ion-col>
               <ion-col>
-                <bk-button label=" {{ '@aoc.data.createIndex.operation.create' | translate | async }}" iconName="warning" (click)="createIndexesOnCollection()" />
+                <bk-button label=" {{ aocDataStore.i18n.index_button() }}" iconName="warning" (click)="createIndexesOnCollection()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-result-log [title]="logTitle()" [log]="logInfo()" />
+      <bk-result-log [title]="logTitle()"  cardTitle="Resultat" [log]="logInfo()" />
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Fav-Adressen Konsistenz</ion-card-title>
+          <ion-card-title>{{ aocDataStore.i18n.fav_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>Vergleicht die gecachten fav*-Felder jeder Person mit den tatsächlichen Favorit-Adressen.</ion-col>
+              <ion-col>{{ aocDataStore.i18n.fav_description() }}</ion-col>
               <ion-col>
                 <bk-button 
-                  [label]="favMismatches().length > 0 ? 'Ausblenden' : 'Prüfen'" 
+                  [label]="favMismatches().length > 0 ? aocDataStore.i18n.fav_hide() : aocDataStore.i18n.fav_validate()"
                   iconName="info-circle" 
                   [disabled]="isLoading()"
                   (click)="toggleFavAddresses()" 
@@ -116,12 +114,12 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
             </ion-row>
             @if (favMismatches().length > 0) {
               <ion-row>
-                <ion-col size="2"><strong>Person</strong></ion-col>
-                <ion-col size="2"><strong>Feld</strong></ion-col>
-                <ion-col size="3"><strong>Person (fav*)</strong></ion-col>
+                <ion-col size="2"><strong>{{ aocDataStore.i18n.fav_person() }}</strong></ion-col>
+                <ion-col size="2"><strong>{{ aocDataStore.i18n.fav_field() }}</strong></ion-col>
+                <ion-col size="3"><strong>{{ aocDataStore.i18n.fav_favperson() }}</strong></ion-col>
                 <ion-col size="1"></ion-col>
                 <ion-col size="1"></ion-col>
-                <ion-col size="3"><strong>In Adresse</strong></ion-col>
+                <ion-col size="3"><strong>{{ aocDataStore.i18n.fav_address() }}</strong></ion-col>
               </ion-row>
               @for (m of favMismatches(); track m.personKey + m.field) {
                 <ion-row>
@@ -138,7 +136,7 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
                 </ion-row>
               }
             } @else if (favChecked()) {
-              <ion-row><ion-col><small>Keine Abweichungen gefunden.</small></ion-col></ion-row>
+              <ion-row><ion-col><small>{{ aocDataStore.i18n.fav_nomismatches() }}</small></ion-col></ion-row>
             }
           </ion-grid>
         </ion-card-content>

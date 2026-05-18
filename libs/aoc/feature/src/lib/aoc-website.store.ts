@@ -31,12 +31,19 @@ export const AocWebsiteStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll({
-      create_conf:  PFX + 'operation.website.create.conf',
-      create_error: PFX + 'operation.website.create.error',
-      update_conf:  PFX + 'operation.website.update.conf',
-      update_error: PFX + 'operation.website.update.error',
-      delete_conf:  PFX + 'operation.website.delete.conf',
-      delete_error: PFX + 'operation.website.delete.error',
+      key_label: PFX + 'website.key.label',
+      create_conf:  PFX + 'website.create.conf',
+      create_error: PFX + 'website.create.error',
+      update_conf:  PFX + 'website.update.conf',
+      update_error: PFX + 'website.update.error',
+      delete_conf:  PFX + 'website.delete.conf',
+      delete_error: PFX + 'website.delete.error',
+      delete_confirm: PFX + 'website.delete.confirm',
+      ok:               '@ok',
+      cancel:           '@cancel',
+      search_placeholder: '@general.operation.search.placeholder',
+      list_title:       PFX + 'website.list.title',
+      loading:          '@general.operation.loading',
     }),
   })),
   withProps(store => ({
@@ -73,7 +80,7 @@ export const AocWebsiteStore = signalStore(
     },
 
     async createItem(): Promise<void> {
-      const key = await bkPrompt(store.alertController, '@aoc.website.key.prompt', '');
+      const key = await bkPrompt(store.alertController, store.i18n.key_label(), '', store.i18n.ok(), store.i18n.cancel());
       if (!key) return;
       const item = new WebsiteContentModel(store.appStore.env.tenantId);
       item.key = key.trim();

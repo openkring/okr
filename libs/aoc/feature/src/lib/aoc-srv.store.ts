@@ -10,6 +10,7 @@ import { firstValueFrom } from 'rxjs';
 import { isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvMismatch } from '@bk2/shared-models';
 import { debugListLoaded, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@bk2/shared-util-core';
 
@@ -156,6 +157,16 @@ export const AocSrvStore = signalStore(
     modalController: inject(ModalController),
     router: inject(Router),
     ownershipService: inject(OwnershipService),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      srv_title:     '@aoc.srv.title',
+      index_title:   '@aoc.srv.index.title',
+      index_subtitle: '@aoc.srv.index.subtitle',
+      index_reset:   '@aoc.srv.index.reset',
+      index_button:  '@aoc.srv.index.button',
+    }),
   })),
 
   withComputed(state => ({

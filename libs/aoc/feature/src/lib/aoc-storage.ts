@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Button, Header, ResultLog } from '@bk2/shared-ui';
 
@@ -20,22 +18,22 @@ import { AocStorageStore } from './aoc-storage.store';
     `,
   ],
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, 
-    FormsModule, Button, Header, ResultLog, 
+    SvgIconPipe,
+    FormsModule, Button, Header, ResultLog,
     IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonIcon, IonCheckbox, IonButtons, IonButton, IonItem
   ],
   providers: [AocStorageStore],
   template: `
-    <bk-header title="@aoc.storage.title" />
+    <bk-header [title]="aocStorageStore.i18n.title()" />
     <ion-content>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.storage.info.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocStorageStore.i18n.info_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.storage.info.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocStorageStore.i18n.info_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12">
@@ -54,7 +52,7 @@ import { AocStorageStore } from './aoc-storage.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-button [disabled]="isFilePathButtonDisabled()" label="{{ '@aoc.storage.info.buttonLabel' | translate | async }}" iconName="checkbox-circle" (click)="getRefInfo()" />
+                <bk-button [disabled]="isFilePathButtonDisabled()" [label]="aocStorageStore.i18n.info_button_label()" iconName="checkbox-circle" (click)="getRefInfo()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -63,12 +61,12 @@ import { AocStorageStore } from './aoc-storage.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.storage.sizes.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocStorageStore.i18n.sizes_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.storage.sizes.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocStorageStore.i18n.sizes_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col><ion-checkbox labelPlacement="end" [(ngModel)]="isRecursive">Rekursiv</ion-checkbox></ion-col>
@@ -90,19 +88,19 @@ import { AocStorageStore } from './aoc-storage.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-button [disabled]="isDirPathButtonDisabled()" label="{{ '@aoc.storage.sizes.buttonLabel' | translate | async }}" iconName="checkbox-circle" (click)="calculateStorageConsumption()" />
+                <bk-button [disabled]="isDirPathButtonDisabled()" [label]="aocStorageStore.i18n.sizes_button_label()" iconName="checkbox-circle" (click)="calculateStorageConsumption()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
 
-      <bk-result-log [title]="logTitle()" [log]="logInfo()" />
+      <bk-result-log [title]="logTitle()" cardTitle="Resultat" [log]="logInfo()" />
     </ion-content>
   `,
 })
 export class AocStorage {
-  private readonly aocStorageStore = inject(AocStorageStore);
+  protected readonly aocStorageStore = inject(AocStorageStore);
 
   protected readonly logTitle = computed(() => this.aocStorageStore.logTitle());
   protected readonly logInfo = computed(() => this.aocStorageStore.log());

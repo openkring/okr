@@ -22,7 +22,7 @@ export const initialState: AocAdminOpsState = {
   log: [],
   logTitle: '',
 };
-
+ 
 export const AocAdminOpsStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -32,10 +32,18 @@ export const AocAdminOpsStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll({
-      oldjuniors_title:   PFX + 'adminops.oldjuniors.title',
-      oldjuniors_nodob:   PFX + 'adminops.oldJuniors.nodob',
-      title:              PFX + 'title',
-      mcatchange_title:   PFX + 'adminops.mcatchange.title',
+      oldjuniors_title:    PFX + 'adminops.oldJuniors.title',
+      oldjuniors_nodob:    PFX + 'adminops.oldJuniors.nodob',
+      title:               PFX + 'title',
+      mcatchange_title:    PFX + 'adminops.mcatchange.title',
+      result_title:        PFX + 'result.title',
+      adminops_title:      PFX + 'adminops.title',
+      debug_tools:         PFX + 'adminops.debug.tools',
+      focus_event_logging: PFX + 'adminops.debug.focus_event_logging',
+      iban_label:          PFX + 'adminops.iban.label',
+      iban_button:         PFX + 'adminops.iban.button',
+      oldJuniors_label:    PFX + 'adminops.oldJuniors.label',
+      oldJuniors_button:   PFX + 'adminops.oldJuniors.button',
     }),
   })),
   withProps(store => ({

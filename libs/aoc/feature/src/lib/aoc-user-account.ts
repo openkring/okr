@@ -1,8 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ToastController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -18,7 +17,7 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
     selector: 'bk-aoc-user-accounts',
     standalone: true,
     imports: [
-      TranslatePipe, AsyncPipe, SvgIconPipe, FullNamePipe,
+      SvgIconPipe, FullNamePipe,
       Spinner, EmptyList, ListFilter,
       Menu,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
@@ -30,7 +29,7 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
       <!-- title and context menu -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ filteredCount()}}/{{accountsCount()}} {{ '@account.plural' | translate | async }}</ion-title>
+        <ion-title>{{ filteredCount()}}/{{accountsCount()}} {{ store.i18n.account_plural() }}</ion-title>
         @if(hasRole('privileged')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -56,8 +55,8 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
         <ion-label>X X X</ion-label>
-        <ion-label><strong>{{ '@user.field.loginEmail' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@user.field.name' | translate | async }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.login_email() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>

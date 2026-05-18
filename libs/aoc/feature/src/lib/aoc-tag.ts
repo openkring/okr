@@ -22,14 +22,14 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
   ],
   providers: [AocTagStore],
   template: `
-    <bk-header title="@aoc.tag.title" />
+    <bk-header [title]="aocTagStore.i18n.title()" />
     <ion-content>
 
       <!-- Filter toolbar -->
       <ion-toolbar>
         <ion-searchbar
           [value]="searchTerm()"
-          [placeholder]="('@aoc.tag.search.placeholder' | translate | async) ?? ''"
+          [placeholder]="aocTagStore.i18n.search()"
           (ionInput)="onSearch($event)"
           debounce="300" />
         <ion-buttons slot="end">
@@ -48,14 +48,14 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
             <ion-card>
               <ion-card-header>
                 <ion-card-title>
-                  {{ '@aoc.tag.list.title' | translate | async }}
+                  {{ aocTagStore.i18n.list_title() }}
                   <ion-badge color="medium">{{ filteredTags().length }}</ion-badge>
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
                 @if(isLoading()) {
                   <ion-item lines="none">
-                    <ion-label>{{ '@general.operation.loading' | translate | async }}</ion-label>
+                    <ion-label>{{ aocTagStore.i18n.loading() }}</ion-label>
                   </ion-item>
                 }
                 <ion-list lines="inset">
@@ -86,7 +86,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
                     {{ selectedTag()!.tagModel }}
                     <ion-badge color="medium">{{ tagStrings().length }}</ion-badge>
                   } @else {
-                    {{ '@aoc.tag.strings.title' | translate | async }}
+                    {{ aocTagStore.i18n.strings_title() }}
                   }
                 </ion-card-title>
               </ion-card-header>
@@ -95,7 +95,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
                   <ion-list lines="inset">
                     <ion-item lines="none" (click)="addTagString(selectedTag()!)" button>
                       <ion-icon slot="start" src="{{ 'add' | svgIcon }}" color="primary" />
-                      <ion-label color="primary">{{ '@aoc.tag.string.add.button' | translate | async }}</ion-label>
+                      <ion-label color="primary">{{ aocTagStore.i18n.string_add_button() }}</ion-label>
                     </ion-item>
                     @for(tagStr of tagStrings(); track tagStr) {
                       <ion-item (click)="showTagStringActions(selectedTag()!, tagStr)" button>
@@ -109,7 +109,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
                   </ion-list>
                 } @else {
                   <ion-item lines="none">
-                    <ion-label color="medium">{{ '@aoc.tag.strings.empty' | translate | async }}</ion-label>
+                    <ion-label color="medium">{{ aocTagStore.i18n.strings_empty() }}</ion-label>
                   </ion-item>
                 }
               </ion-card-content>

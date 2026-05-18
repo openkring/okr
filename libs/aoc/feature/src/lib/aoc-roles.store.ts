@@ -9,6 +9,7 @@ import { firstValueFrom, from, of } from 'rxjs';
 import { AUTH, isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
 import { debugListLoaded, debugMessage, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
@@ -47,6 +48,34 @@ export const AocRolesStore = signalStore(
     userService: inject(UserService),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      person_select_title:   PFX + 'roles.personSelect.title',
+      person_select_content: PFX + 'roles.personSelect.content',
+      account_select:        PFX + 'roles.account.select',
+      check_title:           PFX + 'roles.check.title',
+      check_content:         PFX + 'roles.check.content',
+      check_button:          PFX + 'roles.check.button',
+      account_title:         PFX + 'roles.account.title',
+      account_content:       PFX + 'roles.account.content',
+      account_button:        PFX + 'roles.account.button',
+      account_pwd_set:       PFX + 'roles.account.password-set',
+      account_pwd_reset:     PFX + 'roles.account.password-reset',
+      fbuser_title:          PFX + 'roles.fbuser.title',
+      fbuser_content:        PFX + 'roles.fbuser.content',
+      fbuser_button:         PFX + 'roles.fbuser.button',
+      impersonate_title:     PFX + 'roles.impersonate.title',
+      impersonate_content:   PFX + 'roles.impersonate.content',
+      impersonate_button:    PFX + 'roles.impersonate.button',
+      pwd_label:             '@input.passwordAoc.label',
+      pwd_placeholder:       '@input.passwordAoc.placeholder',
+      pwd_helper:            '@input.passwordAoc.helper',
+      pwd_set:               '@input.passwordAoc.set',
+      pwd_reset:             '@input.passwordAoc.reset',
+      roles_title:           PFX + 'roles.title',
+    }),
   })),
   withProps(store => ({
     personsResource: rxResource({

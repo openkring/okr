@@ -73,7 +73,10 @@ export const AocUserAccountStore = signalStore(
       user_delete_confirm: PFX + 'account.user.delete.confirm',
       fbuser_delete_confirm: PFX + 'account.fbuser.delete.confirm',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      account_plural:  '@account.plural',
+      login_email:     '@user.field.loginEmail',
+      name:            '@user.field.name',
     }),
 
     usersResource: rxResource({

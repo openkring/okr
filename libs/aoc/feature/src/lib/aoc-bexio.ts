@@ -1,8 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Header, StringSelect } from '@bk2/shared-ui';
 import { AvatarLabel } from '@bk2/avatar-ui';
@@ -12,13 +11,12 @@ import { DateFormat, getFullName, getTodayStr, isAfterDate } from '@bk2/shared-u
 export const CONTACT_FILTERS = ['Alle', 'Nur Personen', 'Nur Mitglieder', 'Nur Orgs', 'Nur Abweichungen'];
 
 import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
-import { PFX } from './scope';
 
 @Component({
   selector: 'bk-aoc-bexio',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe, SvgIconPipe,
+    SvgIconPipe,
     Header, AvatarLabel, StringSelect,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonInput,
@@ -26,23 +24,23 @@ import { PFX } from './scope';
 ],
   providers: [AocBexioStore],
   template: `
-    <bk-header title="{{ pfx + 'bexio.title' | translate | async}}" />
+    <bk-header [title]="store.i18n.title()" />
     <ion-content>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ pfx + 'bexio.invoices.title' | translate | async}}</ion-card-title>
-          <ion-card-subtitle>{{ pfx + 'bexio.invoices.subtitle' | translate | async}}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.invoices_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.invoices_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(invoiceCount() < 0) {
-                  {{ '@loading' | translate | async}}
+                  {{ store.i18n.loading() }}
                 } @else if(invoiceCount() === 0) {
-                  {{ pfx + 'bexio.invoices.nodata' | translate | async}}
+                  {{ store.i18n.invoices_nodata() }}
                 } @else {
-                  {{ invoiceCount() }} {{ pfx + 'bexio.invoices.status' | translate | async}} {{ lastSyncedAt() || 'unknown' }}.
+                  {{ invoiceCount() }} {{ store.i18n.invoices_status() }} {{ lastSyncedAt() || 'unknown' }}.
                 }
               </ion-col>
               <ion-col size="3">
@@ -52,7 +50,7 @@ import { PFX } from './scope';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ pfx + 'bexio.invoices.history' | translate | async}}
+                  {{ store.i18n.invoices_history() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -71,18 +69,18 @@ import { PFX } from './scope';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ pfx + 'bexio.bills.title' | translate | async}}</ion-card-title>
-          <ion-card-subtitle>{{ pfx + 'bexio.bills.subtitle' | translate | async}}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.bills_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.bills_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(billCount() < 0) {
-                  {{ '@loading' | translate | async}}
+                  {{ store.i18n.loading() }}
                 } @else if(billCount() === 0) {
-                  {{ pfx + 'bexio.bills.nodata' | translate | async}}                } @else {
-                  {{ billCount() }} {{ pfx + 'bexio.bills.status' | translate | async}} {{ lastBillSyncedAt() || 'unknown' }}.
+                  {{ store.i18n.bills_nodata() }}                } @else {
+                  {{ billCount() }} {{ store.i18n.bills_status() }} {{ lastBillSyncedAt() || 'unknown' }}.
                 }
               </ion-col>
               <ion-col size="3">
@@ -92,7 +90,7 @@ import { PFX } from './scope';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ pfx + 'bexio.bills.history' | translate | async}}
+                  {{ store.i18n.bills_history() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -111,19 +109,19 @@ import { PFX } from './scope';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ pfx + 'bexio.journal.title' | translate | async}}</ion-card-title>
-          <ion-card-subtitle>{{ pfx + 'bexio.journal.subtitle' | translate | async}}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.journal_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.journal_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(journalCount() < 0) {
-                  {{ '@loading' | translate | async}}
+                  {{ store.i18n.loading() }}
                 } @else if(journalCount() === 0) {
-                  {{ pfx + 'bexio.journal.nodata' | translate | async}}
+                  {{ store.i18n.journal_nodata() }}
                 } @else {
-                  {{ journalCount() }} {{ pfx + 'bexio.journal.status' | translate | async}} {{ lastJournalSyncedAt() || 'unknown' }}.
+                  {{ journalCount() }} {{ store.i18n.journal_status() }} {{ lastJournalSyncedAt() || 'unknown' }}.
                 }
               </ion-col>
               <ion-col size="3">
@@ -133,7 +131,7 @@ import { PFX } from './scope';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ pfx + 'bexio.journal.history' | translate | async}}
+                  {{ store.i18n.journal_history() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -152,8 +150,8 @@ import { PFX } from './scope';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ pfx + 'bexio.accounts.title' | translate | async}}</ion-card-title>
-          <ion-card-subtitle>{{ pfx + 'bexio.accounts.subtitle' | translate | async}}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.accounts_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.accounts_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -162,7 +160,7 @@ import { PFX } from './scope';
                 @if(accountSyncResult()) {
                   {{ accountSyncResult() }}
                 } @else {
-                  {{ pfx + 'bexio.accounts.download' | translate | async}}
+                  {{ store.i18n.accounts_download() }}
                 }
               </ion-col>
               <ion-col size="3">
@@ -172,7 +170,7 @@ import { PFX } from './scope';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ pfx + 'bexio.accounts.history' | translate | async}}
+                  {{ store.i18n.accounts_history() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -210,12 +208,12 @@ import { PFX } from './scope';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ pfx + 'bexio.index.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.index_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="9">{{ pfx + 'bexio.index.content' | translate | async }}</ion-col>
+              <ion-col size="9">{{ store.i18n.index_content() }}</ion-col>
               <ion-col size="3">
                 <ion-button (click)="buildIndex()" [disabled]="isLoading()">
                   @if(isLoading()) {
@@ -223,7 +221,7 @@ import { PFX } from './scope';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ pfx + 'bexio.index.button' | translate | async }}
+                  {{ store.i18n.index_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -299,22 +297,22 @@ import { PFX } from './scope';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ pfx + 'bexio.vendor.title' | translate | async }}</ion-card-title>
-          <ion-card-subtitle>{{ pfx + 'bexio.vendor.subtitle' | translate | async }}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.vendor_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.vendor_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(vendorPendingCount() < 0) {
-                  {{ pfx + 'bexio.vendor.status.initial' | translate | async }}
+                  {{ store.i18n.vendor_status_initial() }}
                 } @else if(vendorPendingCount() === 0) {
-                  {{ pfx + 'bexio.vendor.status.done' | translate | async }}
+                  {{ store.i18n.vendor_status_done() }}
                 } @else {
-                  {{ vendorPendingCount() }} {{ pfx + 'bexio.vendor.status.open' | translate | async }}
+                  {{ vendorPendingCount() }} {{ store.i18n.vendor_status_open() }}
                 }
                 @if(vendorLinkedCount() >= 0) {
-                  {{ vendorLinkedCount() }} {{ pfx + 'bexio.vendor.status.linked' | translate | async }}
+                  {{ vendorLinkedCount() }} {{ store.i18n.vendor_status_linked() }}
                 }
               </ion-col>
               <ion-col size="3">
@@ -332,7 +330,7 @@ import { PFX } from './scope';
               <ion-row>
                 <ion-col>
                   <ion-item lines="none">
-                    <ion-label color="warning">{{ pfx + 'bexio.vendor.status.unmatched' | translate | async }}</ion-label>
+                    <ion-label color="warning">{{ store.i18n.vendor_status_unmatched() }}</ion-label>
                   </ion-item>
                   @for(name of vendorUnmatched(); track name) {
                     <ion-item lines="none">
@@ -348,21 +346,21 @@ import { PFX } from './scope';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ pfx + 'bexio.receiver.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.receiver_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(receiverPendingCount() < 0) {
-                  {{ pfx + 'bexio.receiver.status.initial' | translate | async }}
+                  {{ store.i18n.receiver_status_initial() }}
                 } @else if(receiverPendingCount() === 0) {
-                  {{ pfx + 'bexio.receiver.status.done' | translate | async }}
+                  {{ store.i18n.receiver_status_done() }}
                 } @else {
-                  {{ receiverPendingCount() }} {{ pfx + 'bexio.receiver.status.open' | translate | async }}
+                  {{ receiverPendingCount() }} {{ store.i18n.receiver_status_open() }}
                 }
                 @if(receiverLinkCount() >= 0) {
-                  {{ receiverLinkCount() }} {{ pfx + 'bexio.receiver.status.linked' | translate | async }}
+                  {{ receiverLinkCount() }} {{ store.i18n.receiver_status_linked() }}
                 }
               </ion-col>
               <ion-col size="3">
@@ -372,7 +370,7 @@ import { PFX } from './scope';
                   } @else {
                     <ion-icon src="{{ 'link' | svgIcon }}" slot="start" />
                   }
-                  {{ pfx + 'bexio.receiver.link' | translate | async }}
+                  {{ store.i18n.receiver_link() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -415,8 +413,6 @@ export class AocBexio implements OnInit {
   protected isClearingAccounts = signal(false);
   protected clearAccountResult = signal('');
   protected clearRootName = signal('');
-
-  protected pfx = PFX;
 
   public ngOnInit(): void {
     this.store.loadInvoiceStats();

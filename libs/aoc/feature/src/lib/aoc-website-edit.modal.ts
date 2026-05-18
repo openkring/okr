@@ -1,23 +1,32 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  IonButton, IonButtons, IonContent, IonItem, IonInput, IonLabel,
-  IonToggle, IonToolbar, ModalController,
-  IonTextarea,
-} from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonItem, IonInput, IonLabel, IonToggle, IonToolbar, ModalController, IonTextarea } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { Editor, Header } from '@bk2/shared-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { BkEditor, Header } from '@bk2/shared-ui';
 import { WebsiteContentModel } from '@bk2/shared-models';
 import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
+
+const AocWebsiteEditStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      key_label:    '@aoc.website.key.label',
+      is_html_label: '@aoc.website.isHtml.label',
+      cancel:       '@general.operation.cancel',
+      save:         '@general.operation.save',
+    }),
+  })),
+);
 
 @Component({
   selector: 'bk-aoc-website-edit-modal',
   standalone: true,
+  providers: [AocWebsiteEditStore],
   imports: [
-    AsyncPipe, FormsModule, TranslatePipe,
-    Header, Editor,
+    FormsModule,
+    Header, BkEditor,
     IonContent, IonToolbar, IonButtons, IonButton,
     IonItem, IonLabel, IonInput, IonToggle, IonTextarea
   ],
@@ -25,13 +34,13 @@ import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
     <bk-header title="@aoc.website.edit.title" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
-        <ion-label position="stacked">{{ '@aoc.website.key.label' | translate | async }}</ion-label>
+        <ion-label position="stacked">{{ store.i18n.key_label() }}</ion-label>
         <ion-input [value]="formData().key" [readonly]="true" />
       </ion-item>
 
       <ion-item>
         <ion-toggle [checked]="formData().isHtml" (ionChange)="onToggleHtml($event)" />
-        <ion-label>{{ '@aoc.website.isHtml.label' | translate | async }}</ion-label>
+        <ion-label>{{ store.i18n.is_html_label() }}</ion-label>
       </ion-item>
 
 
@@ -59,11 +68,11 @@ import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
 
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button (click)="cancel()">{{ '@general.operation.cancel' | translate | async }}</ion-button>
+          <ion-button (click)="cancel()">{{ store.i18n.cancel() }}</ion-button>
         </ion-buttons>
         <ion-buttons slot="end">
           <ion-button [disabled]="!isDirty()" (click)="save()" color="primary">
-            {{ '@general.operation.save' | translate | async }}
+            {{ store.i18n.save() }}
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -71,6 +80,7 @@ import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
   `,
 })
 export class AocWebsiteEditModal {
+  protected readonly store = inject(AocWebsiteEditStore);
   private readonly modalController = inject(ModalController);
 
   public item = input.required<WebsiteContentModel>();

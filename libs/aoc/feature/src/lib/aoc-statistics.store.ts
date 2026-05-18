@@ -11,7 +11,7 @@ import { error } from '@bk2/shared-util-angular';
 import { DateFormat, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { initializeAgeByGenderStatistics, updateAgeByGenderStats } from '@bk2/aoc-util';
-import { PFX } from 'libs/aoc/feature/src/lib/scope';
+import { PFX } from './scope';
 
 export type AocStatisticsState = {
   modelType: string | undefined;
@@ -34,8 +34,21 @@ export const AocStatisticsStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll({
-      age_by_gender_conf:  PFX + 'operation.ageByGender.create.conf',
-      age_by_gender_error: PFX + 'operation.ageByGender.create.error',
+      age_by_gender_conf:       PFX + 'statistics.ageByGender.create.conf',
+      age_by_gender_error:      PFX + 'statistics.ageByGender.create.error',
+      statistics_header:        PFX + 'statistics.header',
+      statistics_content:       PFX + 'statistics.content',
+      statistics_title:         PFX + 'statistics.title',
+      cl_label:                 PFX + 'statistics.competitionLevels.label',
+      cl_button:                PFX + 'statistics.competitionLevels.button',
+      cl_stats_label:           PFX + 'statistics.clStats.label',
+      cl_stats_button:          PFX + 'statistics.clStats.button',
+      age_by_gender_label:      PFX + 'statistics.ageByGender.label',
+      age_by_gender_button:     PFX + 'statistics.ageByGender.button',
+      cat_by_gender_label:      PFX + 'statistics.categoryByGender.label',
+      cat_by_gender_button:     PFX + 'statistics.categoryByGender.button',
+      member_location_label:    PFX + 'statistics.memberLocation.label',
+      member_location_button:   PFX + 'statistics.memberLocation.button',
     }),
   })),
   withProps(store => ({

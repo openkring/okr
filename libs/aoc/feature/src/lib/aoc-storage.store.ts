@@ -3,9 +3,11 @@ import { ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { LogInfo } from '@bk2/shared-models';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 import { warn } from '@bk2/shared-util-core';
+import { PFX } from './scope';
 
 export type AocStorageState = {
   filePath: string;
@@ -26,6 +28,18 @@ export const AocStorageStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     toastController: inject(ToastController),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      title:              PFX + 'storage.title',
+      info_title:         PFX + 'storage.info.title',
+      info_content:       PFX + 'storage.info.content',
+      info_button_label:  PFX + 'storage.info.buttonLabel',
+      sizes_title:        PFX + 'storage.sizes.title',
+      sizes_content:      PFX + 'storage.sizes.content',
+      sizes_button_label: PFX + 'storage.sizes.buttonLabel',
+    }),
   })),
   /*   withProps((store) => ({
     dataResource: rxResource({

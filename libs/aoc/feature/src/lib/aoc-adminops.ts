@@ -1,37 +1,33 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonToggle } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { Button, Header, ResultLog, StringSelect } from '@bk2/shared-ui';
 
 import { AocAdminOpsStore } from './aoc-adminops.store';
-import { PFX } from './scope';
 
 @Component({
   selector: 'bk-aoc-adminops',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, 
     Header, Button, ResultLog, StringSelect,
     IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, IonLabel, IonToggle,
     FormsModule
   ],
   providers: [AocAdminOpsStore],
   template: `
-    <bk-header title="@aoc.title" />
+    <bk-header title="{{ aocAdminOpsStore.i18n.aoc_title() }}" />
     <ion-content>
       <!-- Debug Card -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Debug Tools</ion-card-title>
+          <ion-card-title>{{ aocAdminOpsStore.i18n.debug_tools() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="8">
-                <ion-label>Enable Focus Event Logging</ion-label>
+                <ion-label>{{ aocAdminOpsStore.i18n.focus_event_logging() }}</ion-label>
               </ion-col>
               <ion-col size="4">
                 <ion-toggle [checked]="enableFocusLogging()" (ionChange)="onToggleChange($event)" />
@@ -43,26 +39,26 @@ import { PFX } from './scope';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ pfx + 'adminops.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocAdminOpsStore.i18n.adminops_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <!-- IBAN -->
             <ion-row>
-              <ion-col size="6">{{ pfx + 'adminops.iban.label' | translate | async }}</ion-col>
+              <ion-col size="6">{{ aocAdminOpsStore.i18n.iban_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ pfx + 'adminops.iban.button' | translate | async }}" iconName="checkbox-circle" (click)="listIban()" />
+                <bk-button label=" {{ aocAdminOpsStore.i18n.iban_button() }}" iconName="checkbox-circle" (click)="listIban()" />
               </ion-col>
             </ion-row>
             <!-- Old Juniors -->
             <ion-row>
-              <ion-col size="6">{{ pfx + 'adminops.oldJuniors.label' | translate | async }}</ion-col>
+              <ion-col size="6">{{ aocAdminOpsStore.i18n.oldJuniors_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ pfx + 'adminops.oldJuniors.button' | translate | async }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
+                <bk-button label=" {{ aocAdminOpsStore.i18n.oldJuniors_button() }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col><ion-label>"{{ pfx + 'adminops.mcatchange.title' | translate | async}}"</ion-label></ion-col>
+              <ion-col><ion-label>"{{ aocAdminOpsStore.i18n.mcatchange_title() }}"</ion-label></ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
@@ -82,21 +78,20 @@ import { PFX } from './scope';
         </ion-card-content>
       </ion-card>
 
-      <bk-result-log [title]="logTitle()" [log]="logInfo()" />
+      <bk-result-log [cardTitle]="aocAdminOpsStore.i18n.result_title()" [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
   `,
 })
 export class AocAdminOps {
-  private readonly aocAdminOpsStore = inject(AocAdminOpsStore);
+  protected readonly aocAdminOpsStore = inject(AocAdminOpsStore);
 
   protected readonly logTitle = computed(() => this.aocAdminOpsStore.logTitle());
   protected readonly logInfo = computed(() => this.aocAdminOpsStore.log());
   protected readonly isLoading = computed(() => this.aocAdminOpsStore.isLoading());
 
   protected club = signal('scs');
-  protected year = signal('2025'); 
+  protected year = signal('2025');
   protected enableFocusLogging = signal(false);
-  protected pfx = PFX;
 
   constructor() {
     // Setup focus event listener based on toggle

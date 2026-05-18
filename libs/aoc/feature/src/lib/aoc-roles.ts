@@ -1,10 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Chips, Header, ResultLog } from '@bk2/shared-ui';
 import { getCategoryItemNames } from '@bk2/shared-util-core';
@@ -19,23 +18,23 @@ import { AocRolesStore } from './aoc-roles.store';
   selector: 'bk-aoc-roles',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, 
+    SvgIconPipe,
     FormsModule, 
     Header, AvatarDisplay, ResultLog, Chips,
     IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon, IonNote, IonInput, IonInputPasswordToggle, IonItem
   ],
   providers: [AocRolesStore],
   template: `
-    <bk-header title="@aoc.roles.title" />
+    <bk-header [title]="aocRolesStore.i18n.roles_title()" />
     <ion-content>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.roles.personSelect.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocRolesStore.i18n.person_select_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.roles.personSelect.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.person_select_content() }}</ion-col>
             </ion-row>
             <ion-row>
               @if(avatar(); as avatar) {
@@ -46,7 +45,7 @@ import { AocRolesStore } from './aoc-roles.store';
               } @else {
               <ion-button (click)="selectPerson()">
                 <ion-icon src="{{ 'personSearch' | svgIcon }}" slot="start" />
-                {{ '@aoc.roles.account.select' | translate | async }}
+                {{ aocRolesStore.i18n.account_select() }}
               </ion-button>
               }
             </ion-row>
@@ -86,19 +85,19 @@ import { AocRolesStore } from './aoc-roles.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.roles.check.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocRolesStore.i18n.check_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.roles.check.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.check_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="checkAuthorisation()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'shield' | svgIcon }}" slot="start" />
-                  {{ '@aoc.roles.check.button' | translate | async }}
+                  {{ aocRolesStore.i18n.check_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -107,12 +106,12 @@ import { AocRolesStore } from './aoc-roles.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.roles.account.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocRolesStore.i18n.account_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.roles.account.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.account_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
@@ -122,8 +121,8 @@ import { AocRolesStore } from './aoc-roles.store';
                   name="passwordAoc"
                   [ngModel]="pwdValue()"
                   labelPlacement="floating"
-                  label="{{ '@input.passwordAoc.label' | translate | async }}"
-                  placeholder="{{ '@input.passwordAoc.placeholder' | translate | async }}"
+                  [label]="aocRolesStore.i18n.pwd_label()"
+                  [placeholder]="aocRolesStore.i18n.pwd_placeholder()"
                   inputMode="text"
                   [maxlength]="pwdLength"
                   [clearInput]="true"
@@ -133,39 +132,39 @@ import { AocRolesStore } from './aoc-roles.store';
                   <ion-input-password-toggle slot="end"></ion-input-password-toggle>
                 </ion-input>
                 <ion-item lines="none" class="helper">
-                  <ion-note>{{ '@input.passwordAoc.helper' | translate | async }}</ion-note>
+                  <ion-note>{{ aocRolesStore.i18n.pwd_helper() }}</ion-note>
                 </ion-item>
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="createAccountAndUser()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'edit' | svgIcon }}" slot="start" />
-                  {{ '@aoc.roles.account.button' | translate | async }}
+                  {{ aocRolesStore.i18n.account_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
                 <ion-item lines="none" class="helper">
-                  <ion-note>{{ '@input.passwordAoc.set' | translate | async }}</ion-note>
+                  <ion-note>{{ aocRolesStore.i18n.pwd_set() }}</ion-note>
                 </ion-item>
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="setPassword()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'lock-closed' | svgIcon }}" slot="start" />
-                  {{ '@aoc.roles.account.password-set' | translate | async }}
+                  {{ aocRolesStore.i18n.account_pwd_set() }}
                 </ion-button>
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
                 <ion-item lines="none" class="helper">
-                  <ion-note>{{ '@input.passwordAoc.reset' | translate | async }}</ion-note>
+                  <ion-note>{{ aocRolesStore.i18n.pwd_reset() }}</ion-note>
                 </ion-item>
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="resetPassword()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'email' | svgIcon }}" slot="start" />
-                  {{ '@aoc.roles.account.password-reset' | translate | async }}
+                  {{ aocRolesStore.i18n.account_pwd_reset() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -174,34 +173,20 @@ import { AocRolesStore } from './aoc-roles.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.roles.fbuser.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocRolesStore.i18n.fbuser_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.roles.fbuser.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.fbuser_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
-<!--                 <ion-input
-                  (ionInput)="onEmailChange($event)"
-                  type="email"
-                  name="emailAoc"
-                  [ngModel]="emailValue()"
-                  labelPlacement="floating"
-                  label="{{ '@input.emailAoc.label' | translate | async }}"
-                  placeholder="{{ '@input.emailAoc.placeholder' | translate | async }}"
-                  inputMode="email"
-                  [maxlength]="emailLength"
-                  [clearInput]="true"
-                  (ionClear)="clearEmailInput()"
-                  [counter]="true"
-                /> -->
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="updateFbuser()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'edit' | svgIcon }}" slot="start" />
-                  {{ '@aoc.roles.fbuser.button' | translate | async }}
+                  {{ aocRolesStore.i18n.fbuser_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -210,19 +195,19 @@ import { AocRolesStore } from './aoc-roles.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.roles.impersonate.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ aocRolesStore.i18n.impersonate_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.roles.impersonate.content' | translate | async }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.impersonate_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="impersonateUser()" [disabled]="!selectedUser()">
                   <ion-icon src="{{ 'shield' | svgIcon }}" slot="start" />
-                  {{ '@aoc.roles.impersonate.button' | translate | async }}
+                  {{ aocRolesStore.i18n.impersonate_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -230,7 +215,7 @@ import { AocRolesStore } from './aoc-roles.store';
         </ion-card-content>
       </ion-card>
       <bk-chips chipName="role" [storedChips]="roles()" (storedChipsChange)="onRoleChange($event)" [allChips]="allRoleNames()" [readOnly]="false" />
-      <bk-result-log [title]="logTitle()" [log]="logInfo()" />
+      <bk-result-log [title]="logTitle()"  cardTitle="Resultat" [log]="logInfo()" />
     </ion-content>
   `,
 })
