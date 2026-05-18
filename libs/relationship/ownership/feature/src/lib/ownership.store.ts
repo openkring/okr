@@ -69,9 +69,14 @@ export const OwnershipStore = signalStore(
 
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      ok: '@ok',
-      cancel: '@cancel'
+      delete_confirm:            PFX + 'delete.confirm',
+      ok:                        '@ok',
+      cancel:                    '@cancel',
+      list_header_boat_name:     '@input.boatName.label',
+      list_header_boat_type:     '@input.boatType.label',
+      list_header_duration:      '@ownership.list.header.duration',
+      list_header_owner_name:    '@ownership.list.header.ownerName',
+      list_header_resource_name: '@ownership.list.header.resourceName',
     }),
 
     // all ownerships of this tenant

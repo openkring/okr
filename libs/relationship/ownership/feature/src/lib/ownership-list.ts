@@ -57,16 +57,16 @@ import { OwnershipStore } from './ownership.store';
     <ion-toolbar color="primary">
       @if(listId() === 'scsBoats') {
         <ion-item color="primary" lines="none">
-          <ion-label><strong>{{ '@input.boatName.label' | translate | async }}</strong></ion-label>
-          <ion-label><strong>{{ '@input.boatType.label' | translate | async }}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{ '@ownership.list.header.duration' | translate | async }}</strong></ion-label>
+          <ion-label><strong>{{ ownershipStore.i18n.list_header_boat_name() }}</strong></ion-label>
+          <ion-label><strong>{{ ownershipStore.i18n.list_header_boat_type() }}</strong></ion-label>
+          <ion-label class="ion-hide-md-down"><strong>{{ ownershipStore.i18n.list_header_duration() }}</strong></ion-label>
         </ion-item>
       }
       @else {
         <ion-item lines="none" color="primary">
-          <ion-label><strong>{{'@ownership.list.header.ownerName' | translate | async}}</strong></ion-label>
-          <ion-label><strong>{{'@ownership.list.header.resourceName' | translate | async}}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{'@ownership.list.header.duration' | translate | async}}</strong></ion-label>
+          <ion-label><strong>{{ ownershipStore.i18n.list_header_owner_name() }}</strong></ion-label>
+          <ion-label><strong>{{ ownershipStore.i18n.list_header_resource_name() }}</strong></ion-label>
+          <ion-label class="ion-hide-md-down"><strong>{{ ownershipStore.i18n.list_header_duration() }}</strong></ion-label>
         </ion-item>
       }
     </ion-toolbar>

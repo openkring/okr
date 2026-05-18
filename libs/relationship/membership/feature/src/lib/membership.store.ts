@@ -98,8 +98,13 @@ export const _MembershipStore = signalStore(
       already_member: PFX + 'create.alreadyMember',
       create_conf: PFX + 'create.conf',
       create_error: PFX + 'create.error',
-      ok: '@ok',
-      cancel: '@cancel'
+      ok:                    '@ok',
+      cancel:                '@cancel',
+      list_header_name:      '@membership.list.header.name',
+      list_header_category:  '@membership.list.header.category',
+      list_header_phone:     '@subject.list.header.phone',
+      list_header_email:     '@subject.list.header.email',
+      list_header_title_rel: '@membership.list.header.titleRel',
     }),
 
     // all memberships of this tenant
