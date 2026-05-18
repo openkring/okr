@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
@@ -6,21 +5,30 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask } from '@bk2/shared-config';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AppStore, OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, NotesInput, NumberInput, StringSelect, TextInput } from '@bk2/shared-ui';
-import { areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, getItemLabel, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
+import { areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
 
 import { membershipValidations } from '@bk2/relationship-membership-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
+
+export interface MembershipFormI18n {
+  selectLabel: string;
+  newDesc: string;
+  categoryLabel: string;
+  categoryHelper: string;
+  categoryName: string;
+  memberStateLabel: string;
+  stateHelper: string;
+}
 
 @Component({
   selector: 'bk-membership-form',
   standalone: true,
   imports: [
     vestForms, FormsModule,
-    TranslatePipe, AsyncPipe, AvatarPipe,
+    AvatarPipe,
     TextInput, DateInput,
     Chips, NotesInput, CategorySelect, NumberInput, StringSelect,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonCard, IonCardContent, IonAvatar, IonImg, IonButton
@@ -51,14 +59,14 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                     </ion-col>
                     <ion-col size="3">
                       <ion-item lines="none">
-                        <ion-button slot="start" fill="clear" (click)="selectMember()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                        <ion-button slot="start" fill="clear" (click)="selectMember()">{{ i18n().selectLabel }}</ion-button>
                       </ion-item>
                     </ion-col>
                   </ion-row>
                   <ion-row>
                     <ion-col size="12">
                       <ion-item lines="none">
-                        <ion-label>{{ '@membership.newDesc' | translate | async }}</ion-label>
+                        <ion-label>{{ i18n().newDesc }}</ion-label>
                       </ion-item>
                     </ion-col>
                   </ion-row>
@@ -73,7 +81,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                     </ion-col>
                     <ion-col size="3">
                       <ion-item lines="none">
-                      <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                      <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ i18n().selectLabel }}</ion-button>
                       </ion-item>
                     </ion-col>
                   </ion-row>
@@ -110,20 +118,20 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                   <ion-row>
                     <ion-col size="12" size-md="6">
                       <ion-item lines="none">
-                        <ion-label>{{ '@membership.category.label' | translate | async }}:</ion-label>
-                        <ion-label>{{ membershipCategory() | translate | async }}</ion-label>
+                        <ion-label>{{ i18n().categoryLabel }}:</ion-label>
+                        <ion-label>{{ i18n().categoryName }}</ion-label>
                       </ion-item>
                       <ion-item lines="none">
-                        <ion-note>{{ '@membership.category.helper' | translate | async }}</ion-note>
+                        <ion-note>{{ i18n().categoryHelper }}</ion-note>
                       </ion-item>
                     </ion-col>
                     <ion-col size="12" size-md="6">
                       <ion-item lines="none">
-                        <ion-label>{{ '@input.memberState.label' | translate | async }}:</ion-label>
+                        <ion-label>{{ i18n().memberStateLabel }}:</ion-label>
                         <ion-label>{{ membershipState() }}</ion-label>
                       </ion-item>
                       <ion-item lines="none">
-                        <ion-note>{{ '@membership.state.helper' | translate | async }}</ion-note>
+                        <ion-note>{{ i18n().stateHelper }}</ion-note>
                       </ion-item>
                     </ion-col>
                     
@@ -182,6 +190,7 @@ export class MembershipForm {
   private readonly appStore = inject(AppStore);
 
   // inputs
+  public readonly i18n = input<MembershipFormI18n>({ selectLabel: '', newDesc: '', categoryLabel: '', categoryHelper: '', categoryName: '', memberStateLabel: '', stateHelper: '' });
   public readonly formData = model.required<MembershipModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -220,7 +229,6 @@ export class MembershipForm {
   protected memberId = computed(() => this.formData().memberId ?? DEFAULT_ID);
   protected dateOfEntry = linkedSignal(() => this.formData().dateOfEntry ?? DEFAULT_DATE);
   protected dateOfExit = linkedSignal(() => this.formData().dateOfExit ?? DEFAULT_DATE);
-  protected membershipCategory = computed(() => getItemLabel(this.membershipCategories(), this.formData().category));
   protected currentMembershipCategoryItem = linkedSignal(() => this.formData().category ?? '');
   protected orgFunction = linkedSignal(() => this.formData().orgFunction ?? '');
   protected order = computed(() => this.formData().order ?? 0);

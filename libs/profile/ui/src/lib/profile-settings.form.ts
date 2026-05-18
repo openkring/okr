@@ -1,10 +1,8 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, inject, input, linkedSignal, model, output, signal } from "@angular/core";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@bk2/shared-models";
 import { FcmService } from "@bk2/shared-data-access";
 import { CategoryOld, Checkbox, ErrorNote, TextInput } from "@bk2/shared-ui";
@@ -12,11 +10,15 @@ import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from "@bk2/sh
 
 import { userValidations } from "@bk2/user-util";
 
+export interface ProfileSettingsFormI18n {
+  title: string;
+  description: string;
+}
+
 @Component({
   selector: 'bk-profile-settings-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     vestForms,
     IonAccordion, IonButton, IonItem, IonLabel, IonGrid, IonRow, IonCol,
     CategoryOld, Checkbox, TextInput, ErrorNote,
@@ -26,22 +28,22 @@ import { userValidations } from "@bk2/user-util";
   template: `
   <ion-accordion toggle-icon-slot="start" value="profile-settings">
     <ion-item slot="header" [color]="color()">
-        <ion-label>{{ title() | translate | async }}</ion-label>
+        <ion-label>{{ i18n().title }}</ion-label>
     </ion-item>
     <div slot="content">
       @if (showForm()) {
         <form scVestForm
             [formValue]="formData()"
-            [suite]="suite" 
+            [suite]="suite"
             (dirtyChange)="dirty.emit($event)"
             (validChange)="valid.emit($event)"
             (formValueChange)="onFormChange($event)">
 
-          <ion-grid>        
+          <ion-grid>
             <ion-row>
               <ion-col>
                 <ion-item lines="none">
-                  <ion-label>{{ '@profile.settings.description' | translate | async }}</ion-label>
+                  <ion-label>{{ i18n().description }}</ion-label>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -133,11 +135,11 @@ export class ProfileSettingsAccordion {
   );
 
   // inputs
+  public readonly i18n = input<ProfileSettingsFormI18n>({ title: '', description: '' });
   public formData = model.required<UserModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
   public color = input('light'); // color of the accordion
-  public title = input('@profile.settings.title'); // title of the accordion
   public readonly tenantId = input.required<string>();
   public readonly tags = input.required<string>();
   public readonly readOnly = input<boolean>(true);

@@ -1,22 +1,25 @@
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { AsyncPipe } from '@angular/common';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@bk2/shared-constants';
 import { CategoryListModel, RoleName, TaskModel, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, ErrorNote, NotesInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { taskValidations } from '@bk2/task-util';
+
+export interface TaskFormI18n {
+  stateLabel: string;
+  priorityLabel: string;
+  importanceLabel: string;
+}
 
 @Component({
   selector: 'bk-task-form',
   standalone: true,
   imports: [
     vestForms,
-    TranslatePipe, AsyncPipe,
     DateInput, CategorySelect, Chips, NotesInput,
     TextInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonLabel, IonItem
@@ -56,7 +59,7 @@ import { taskValidations } from '@bk2/task-util';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
-                  <ion-label>{{ '@input.state.label' | translate | async}}:</ion-label>
+                  <ion-label>{{ i18n().stateLabel }}:</ion-label>
                   <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>
@@ -64,13 +67,13 @@ import { taskValidations } from '@bk2/task-util';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
-                  <ion-label>{{ '@input.priority.label' | translate | async}}:</ion-label>
+                  <ion-label>{{ i18n().priorityLabel }}:</ion-label>
                   <bk-cat-select [category]="priorities()!" [selectedItemName]="priority()" (selectedItemNameChange)="onFieldChange('priority', $event)" [readOnly]="isReadOnly()" [withAll]="false" /> 
                 </ion-item>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
-                  <ion-label>{{ '@input.importance.label' | translate | async}}:</ion-label>
+                  <ion-label>{{ i18n().importanceLabel }}:</ion-label>
                   <bk-cat-select [category]="importances()!" [selectedItemName]="importance()" (selectedItemNameChange)="onFieldChange('importance', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>
@@ -92,6 +95,7 @@ import { taskValidations } from '@bk2/task-util';
 })
 export class TaskForm {
   // inputs
+  public readonly i18n = input<TaskFormI18n>({ stateLabel: '', priorityLabel: '', importanceLabel: '' });
   public readonly formData = model.required<TaskModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly showForm = input(true);   // used for initializing the form and resetting vest validations

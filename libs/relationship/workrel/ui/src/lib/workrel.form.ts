@@ -1,24 +1,26 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { AsyncPipe } from '@angular/common';
 
 import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, NotesInput, NumberInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { FullNamePipe } from '@bk2/shared-pipes';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { workrelValidations } from '@bk2/relationship-workrel-util';
+
+export interface WorkrelFormI18n {
+  selectLabel: string;
+}
 
 @Component({
   selector: 'bk-workrel-form',
   standalone: true,
   imports: [
     vestForms,
-    AvatarPipe, AsyncPipe, FullNamePipe, TranslatePipe,
+    AvatarPipe, FullNamePipe,
     DateInput, Chips, NotesInput, CategorySelect, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
     TextInput
@@ -58,7 +60,7 @@ import { workrelValidations } from '@bk2/relationship-workrel-util';
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit()">{{ i18n().selectLabel }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -83,7 +85,7 @@ import { workrelValidations } from '@bk2/relationship-workrel-util';
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                <ion-button slot="start" fill="clear" (click)="selectOrg.emit()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                <ion-button slot="start" fill="clear" (click)="selectOrg.emit()">{{ i18n().selectLabel }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>        
@@ -149,6 +151,7 @@ import { workrelValidations } from '@bk2/relationship-workrel-util';
 })
 export class WorkrelForm {
   // inputs
+  public readonly i18n = input<WorkrelFormI18n>({ selectLabel: '' });
   public formData = model.required<WorkrelModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

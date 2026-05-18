@@ -1,20 +1,22 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { RoleName, UserModel } from "@bk2/shared-models";
 import { EmailInput, NotesInput, TextInput } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, hasRole } from "@bk2/shared-util-core";
 
 import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@bk2/user-util";
 
+export interface UserModelFormI18n {
+  modelTitle: string;
+  modelDescription: string;
+}
+
 @Component({
   selector: 'bk-user-model-form',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     vestForms,
     EmailInput, NotesInput, TextInput,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
@@ -30,8 +32,8 @@ import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@
       (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@user.model.title' | translate | async }}</ion-card-title>
-          <ion-card-subtitle>{{ '@user.model.description' | translate | async }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().modelTitle }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().modelDescription }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -52,7 +54,7 @@ import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@
                 <bk-email name="loginEmail" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email-input name="gravatarEmail" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [readOnly]="isReadOnly()" />
+                <bk-email name="gravatarEmail" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-text-input name="tenants" [value]="tenants()" (valueChange)="onFieldChange('tenants', $event)" [readOnly]="isReadOnly()" [copyable]=true />
@@ -69,6 +71,7 @@ import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@
 })
 export class UserModelForm {
   // inputs
+  public readonly i18n = input<UserModelFormI18n>({ modelTitle: '', modelDescription: '' });
   public formData = model.required<UserModelFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

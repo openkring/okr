@@ -1,21 +1,23 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { DeliveryTypes } from "@bk2/shared-categories";
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { DeliveryType, UserModel } from "@bk2/shared-models";
 import { CategoryOld } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificationFormValidations } from "@bk2/user-util";
 
+export interface UserNotificationFormI18n {
+  notificationTitle: string;
+  notificationDescription: string;
+}
+
 @Component({
   selector: 'bk-user-notification-form',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     vestForms,
     CategoryOld,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle,
@@ -32,8 +34,8 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificati
       (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@user.notification.title' | translate | async }}</ion-card-title>
-          <ion-card-subtitle>{{ '@user.notification.description' | translate | async }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().notificationTitle }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().notificationDescription }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -52,6 +54,7 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificati
   `
 })
 export class UserNotificationForm {
+  public readonly i18n = input<UserNotificationFormI18n>({ notificationTitle: '', notificationDescription: '' });
   public formData = model.required<UserNotificationFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

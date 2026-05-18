@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { LowercaseWordMask } from '@bk2/shared-config';
 import { WORD_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ButtonCopy, Checkbox, Chips, NotesInput, StringSelect, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
@@ -13,12 +11,18 @@ import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/sh
 import { Avatars } from '@bk2/avatar-ui';
 import { groupValidations } from '@bk2/subject-group-util';
 
+export interface GroupFormI18n {
+  attributes: string;
+  groupId: string;
+  display: string;
+  access: string;
+}
+
 @Component({
   selector: 'bk-group-form',
   standalone: true,
   imports: [
     vestForms,
-    TranslatePipe, AsyncPipe,
     TextInput, Chips, NotesInput, Checkbox, ButtonCopy, StringSelect, Avatars,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem
   ],
@@ -39,7 +43,7 @@ import { groupValidations } from '@bk2/subject-group-util';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@subject.group.field.attributes' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ i18n().attributes }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -65,7 +69,7 @@ import { groupValidations } from '@bk2/subject-group-util';
                   />
                 } @else {
                   <ion-item lines="none">
-                    <ion-label>{{ '@subject.group.field.groupId' | translate | async }}: {{ bkey() }}</ion-label>
+                    <ion-label>{{ i18n().groupId }}: {{ bkey() }}</ion-label>
                     <bk-button-copy [value]="bkey()" />
                   </ion-item>
                 }                                     
@@ -105,7 +109,7 @@ import { groupValidations } from '@bk2/subject-group-util';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@subject.group.field.display' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ i18n().display }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -169,7 +173,7 @@ import { groupValidations } from '@bk2/subject-group-util';
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-card>
           <ion-card-header>
-            <ion-card-title>{{ '@subject.group.field.access' | translate | async }}</ion-card-title>
+            <ion-card-title>{{ i18n().access }}</ion-card-title>
           </ion-card-header>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
@@ -216,6 +220,7 @@ import { groupValidations } from '@bk2/subject-group-util';
 })
 export class GroupForm {
   // inputs
+  public readonly i18n = input<GroupFormI18n>({ attributes: '', groupId: '', display: '', access: '' });
   public formData = model.required<GroupModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

@@ -1,20 +1,22 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { CategoryListModel, UserModel } from "@bk2/shared-models";
 import { Checkbox, Chips } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel, getCategoryItemNames } from "@bk2/shared-util-core";
 
 import { flattenRoles, UserAuthFormModel, userAuthFormValidations } from "@bk2/user-util";
 
+export interface UserAuthFormI18n {
+  authTitle: string;
+  authDescription: string;
+}
+
 @Component({
   selector: 'bk-user-auth-form',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     vestForms,
     Checkbox, Chips,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
@@ -33,8 +35,8 @@ import { flattenRoles, UserAuthFormModel, userAuthFormValidations } from "@bk2/u
 
         <ion-card>
           <ion-card-header>
-            <ion-card-title>{{ '@user.auth.title' | translate | async }}</ion-card-title>
-            <ion-card-subtitle>{{ '@user.auth.description' | translate | async }}</ion-card-subtitle>
+            <ion-card-title>{{ i18n().authTitle }}</ion-card-title>
+            <ion-card-subtitle>{{ i18n().authDescription }}</ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
             <ion-grid>
@@ -58,6 +60,7 @@ import { flattenRoles, UserAuthFormModel, userAuthFormValidations } from "@bk2/u
 })
 export class UserAuthForm {
   // inputs
+  public readonly i18n = input<UserAuthFormI18n>({ authTitle: '', authDescription: '' });
   public formData = model.required<UserAuthFormModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

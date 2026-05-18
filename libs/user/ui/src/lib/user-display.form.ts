@@ -1,21 +1,23 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { AvatarUsage, DeliveryType, Language, NameDisplay, UserModel } from "@bk2/shared-models";
 import { CategoryOld, Checkbox } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations } from "@bk2/user-util";
 
+export interface UserDisplayFormI18n {
+  displayTitle: string;
+  displayDescription: string;
+}
+
 @Component({
   selector: 'bk-user-display-form',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     vestForms,
     CategoryOld, Checkbox,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle, IonGrid, IonRow, IonCol
@@ -31,8 +33,8 @@ import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidatio
       (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@user.display.title' | translate | async }}</ion-card-title>
-          <ion-card-subtitle>{{ '@user.display.description' | translate | async }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().displayTitle }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().displayDescription }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -67,6 +69,7 @@ import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidatio
 })
 export class UserDisplayForm {
   // inputs
+  public readonly i18n = input<UserDisplayFormI18n>({ displayTitle: '', displayDescription: '' });
   public formData = model.required<UserDisplayFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

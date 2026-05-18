@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 import { CategorySelect, DateInput } from '@bk2/shared-ui';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
@@ -12,12 +10,17 @@ import { coerceBoolean, debugFormErrors, debugFormModel } from '@bk2/shared-util
 import {CategoryChangeFormModel, categoryChangeFormValidations } from '@bk2/relationship-membership-util';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
+export interface CategoryChangeFormI18n {
+  helper: string;
+  helperDate: string;
+}
+
 @Component({
   selector: 'bk-category-change-form',
   standalone: true,
   imports: [
     vestForms,
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     DateInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonIcon, IonCard, IonCardContent
   ],
@@ -51,19 +54,19 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
               <ion-row>
                 <ion-col size="12">
                   <ion-item lines="none">
-                    <ion-label>{{ '@membership.category.change.helper' | translate | async }}</ion-label>
+                    <ion-label>{{ i18n().helper }}</ion-label>
                   </ion-item>
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="12"> 
+                <ion-col size="12">
                   <bk-date-input name="dateOfChange" [storeDate]="dateOfChange()" (storeDateChange)="onFieldChange('dateOfChange', $event)" [showHelper]="false" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12">
                   <ion-item lines="none">
-                    <ion-label>{{ '@membership.category.change.helperDate' | translate | async }}</ion-label>
+                    <ion-label>{{ i18n().helperDate }}</ion-label>
                   </ion-item>
-                </ion-col>   
+                </ion-col>
               </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -73,6 +76,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 })
 export class CategoryChangeForm {
   // inputs
+  public readonly i18n = input<CategoryChangeFormI18n>({ helper: '', helperDate: '' });
   public formData = model.required<CategoryChangeFormModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

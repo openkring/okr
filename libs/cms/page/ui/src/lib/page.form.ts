@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { CaseInsensitiveWordMask } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, PageModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ButtonCopy, CategorySelect, Chips, ErrorNote, NotesInput, StringList, StringSelect, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
@@ -13,11 +11,14 @@ import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DE
 
 import { pageValidations } from '@bk2/cms-page-util';
 
+export interface PageFormI18n {
+  title: string;
+}
+
 @Component({
   selector: 'bk-page-form',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     vestForms, FormsModule,
     Chips, NotesInput, TextInput, StringList, ButtonCopy, ErrorNote, CategorySelect, StringSelect,
     IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonGrid, IonRow, IonCol
@@ -27,17 +28,17 @@ import { pageValidations } from '@bk2/cms-page-util';
   @if (showForm()) {
     <form scVestForm
       [formValue]="formData()"
-      [suite]="suite" 
+      [suite]="suite"
       (dirtyChange)="dirty.emit($event)"
       (validChange)="valid.emit($event)"
       (formValueChange)="onFormChange($event)">
-  
+
         <!---------------------------------------------------
-        Sections 
+        Sections
         --------------------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@content.page.forms.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ i18n().title }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -97,6 +98,7 @@ import { pageValidations } from '@bk2/cms-page-util';
 })
 export class PageForm {
   // inputs
+  public readonly i18n = input<PageFormI18n>({ title: '' });
   public readonly formData = model.required<PageModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

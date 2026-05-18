@@ -6,17 +6,18 @@ import { CategoryListModel, ResourceModel, RoleName, UserModel } from '@bk2/shar
 import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NumberInput, PropertyList, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
-import { AsyncPipe } from '@angular/common';
 import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
+
+export interface ResourceFormI18n {
+  cardTitle: string;
+}
 
 @Component({
   selector: 'bk-resource-form',
   standalone: true,
   imports: [
     vestForms,
-    TranslatePipe, AsyncPipe,
     Chips, NotesInput, PropertyList, TextInput, NumberInput, ErrorNote, CategorySelect, Color,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
   ],
@@ -36,7 +37,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
           @case('rboat') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -80,7 +81,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
           @case('boat') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -122,7 +123,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
           @case('car') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -163,7 +164,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
           @case('locker') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -197,7 +198,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
           @case('key') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -223,7 +224,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
           @case('pet') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -256,7 +257,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
           @case('realestate') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -286,7 +287,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
           @default {
           <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -338,6 +339,7 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
 })
 export class ResourceForm {
   // inputs
+  public readonly i18n = input<ResourceFormI18n>({ cardTitle: '' });
   public formData = model.required<ResourceModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -365,7 +367,6 @@ export class ResourceForm {
   protected errors = computed(() => this.validationResult().getErrors());
   
   // fields
-  protected cardTitle = computed(() => `@resource.type.${this.resourceType()}.formTitle` );
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected resourceType = linkedSignal(() => this.formData().type ?? '');
   protected subType = linkedSignal(() => this.formData().subType ?? this.getDefaultType(this.formData().type ?? ''));

@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, EmailInput, ErrorNote, NotesInput, PhoneInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
@@ -16,13 +14,21 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-membership-util';
 
+export interface MemberNewFormI18n {
+  personDetails: string;
+  personAddress: string;
+  personMisc: string;
+  personMembership: string;
+  selectLabel: string;
+}
+
 @Component({
   selector: 'bk-member-new-form',
   standalone: true,
   imports: [
     vestForms,
     FormsModule,
-    AvatarPipe, AsyncPipe, TranslatePipe,
+    AvatarPipe,
     TextInput, DateInput, CategorySelect, Chips, NotesInput,
     ErrorNote, PhoneInput, EmailInput,
     SwissCitySearch,
@@ -40,7 +46,7 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
       <!-------------------------------------- PERSON ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@subject.person.field.details' | translate | async}}</ion-card-title>
+          <ion-card-title>{{ i18n().personDetails }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -79,7 +85,7 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
       @if(showAddressInputs()) {
         <ion-card>
           <ion-card-header>
-            <ion-card-title>{{ '@subject.person.field.address' | translate | async}}</ion-card-title>
+            <ion-card-title>{{ i18n().personAddress }}</ion-card-title>
           </ion-card-header>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
@@ -132,7 +138,7 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
       <!-------------------------------------- OTHER ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@subject.person.field.misc' | translate | async}}</ion-card-title>
+          <ion-card-title>{{ i18n().personMisc }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -151,7 +157,7 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
       <!-------------------------------------- MEMBERSHIP ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@subject.person.field.membership' | translate | async}}</ion-card-title>
+          <ion-card-title>{{ i18n().personMembership }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -166,7 +172,7 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
                 </ion-col>
                 <ion-col size="3">
                   <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ i18n().selectLabel }}</ion-button>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -191,6 +197,7 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
 })
 export class MemberNewForm {
   // inputs
+  public readonly i18n = input<MemberNewFormI18n>({ personDetails: '', personAddress: '', personMisc: '', personMembership: '', selectLabel: '' });
   public readonly formData = model.required<MemberNewFormModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly showAddressInputs = input(true);

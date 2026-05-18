@@ -1,21 +1,24 @@
-import { AsyncPipe } from "@angular/common";
-import { Component, computed, inject, input, linkedSignal, model, output } from "@angular/core";
-import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
+import { Component, computed, input, linkedSignal, model, output } from "@angular/core";
+import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { PrivacyUsages } from "@bk2/shared-categories";
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { PrivacyUsage, UserModel } from "@bk2/shared-models";
 import { CategoryOld, Checkbox } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
 
+export interface ProfilePrivacyFormI18n {
+  title: string;
+  description: string;
+  srvDescription: string;
+}
+
 @Component({
   selector: 'bk-profile-privacy-accordion',
   standalone: true,
-  imports: [ 
-    TranslatePipe, AsyncPipe,
+  imports: [
     vestForms,
     IonAccordion, IonItem, IonLabel, IonGrid, IonRow, IonCol,
     CategoryOld, Checkbox
@@ -28,22 +31,22 @@ import { userValidations } from "@bk2/user-util";
   template: `
   <ion-accordion toggle-icon-slot="start" value="profile-privacy">
     <ion-item slot="header" [color]="color()">
-        <ion-label>{{ title() | translate | async }}</ion-label>
+        <ion-label>{{ i18n().title }}</ion-label>
     </ion-item>
     <div slot="content">
       @if (showForm()) {
         <form scVestForm
             [formValue]="formData()"
-            [suite]="suite" 
+            [suite]="suite"
             (dirtyChange)="dirty.emit($event)"
             (validChange)="valid.emit($event)"
             (formValueChange)="onFormChange($event)">
 
-          <ion-grid>        
+          <ion-grid>
             <ion-row>
               <ion-col>
                 <ion-item lines="none">
-                  <ion-label>{{ '@profile.privacy.description' | translate | async }}</ion-label>
+                  <ion-label>{{ i18n().description }}</ion-label>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -71,7 +74,7 @@ import { userValidations } from "@bk2/user-util";
               <ion-row>
                 <ion-col>
                   <ion-item lines="none">
-                    <ion-label>{{ '@auth.privacyUsage.srv.description' | translate | async }}</ion-label>
+                    <ion-label>{{ i18n().srvDescription }}</ion-label>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -90,11 +93,11 @@ import { userValidations } from "@bk2/user-util";
 })
 export class ProfilePrivacyAccordion {
   // inputs
+  public readonly i18n = input<ProfilePrivacyFormI18n>({ title: '', description: '', srvDescription: '' });
   public formData = model.required<UserModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
   public color = input('light'); // color of the accordion
-  public readonly title = input('@profile.privacy.title'); // title of the accordion
   public readonly tenantId = input.required<string>();
   public readonly tags = input.required<string>();
   public readonly readOnly = input<boolean>(true);

@@ -1,21 +1,24 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { PrivacyUsages } from "@bk2/shared-categories";
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { PrivacyUsage, UserModel } from "@bk2/shared-models";
 import { CategoryOld, Checkbox } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidations } from "@bk2/user-util";
 
+export interface UserPrivacyFormI18n {
+  privacyTitle: string;
+  privacyDescription: string;
+  srvDescription: string;
+}
+
 @Component({
   selector: 'bk-user-privacy-form',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     vestForms,
     CategoryOld, Checkbox,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle,
@@ -32,10 +35,10 @@ import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidatio
       (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@user.privacy.title' | translate | async }}</ion-card-title>
+          <ion-card-title>{{ i18n().privacyTitle }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-        {{ '@user.privacy.description' | translate | async }}
+        {{ i18n().privacyDescription }}
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">                                                             
@@ -61,7 +64,7 @@ import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidatio
               <ion-row>
                 <ion-col>
                   <ion-item lines="none">
-                    <ion-label>{{ '@auth.privacyUsage.srv.description' | translate | async }}</ion-label>
+                    <ion-label>{{ i18n().srvDescription }}</ion-label>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -79,6 +82,7 @@ import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidatio
 })
 export class UserPrivacyForm {
   // inputs
+  public readonly i18n = input<UserPrivacyFormI18n>({ privacyTitle: '', privacyDescription: '', srvDescription: '' });
   public formData = model.required<UserPrivacyFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

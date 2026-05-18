@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
 import { CategorySelect, Chips, DateInput, NotesInput, TextInput } from '@bk2/shared-ui';
@@ -13,12 +11,16 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME,
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
 
+export interface PersonalRelFormI18n {
+  selectLabel: string;
+}
+
 @Component({
   selector: 'bk-personal-rel-form',
   standalone: true,
   imports: [
     vestForms,
-    AvatarPipe, AsyncPipe, FullNamePipe, TranslatePipe,
+    AvatarPipe, FullNamePipe,
     DateInput, Chips, NotesInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
     TextInput
@@ -58,7 +60,7 @@ import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit(true)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit(true)">{{ i18n().selectLabel }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -83,7 +85,7 @@ import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                <ion-button slot="start" fill="clear" (click)="selectPerson.emit(false)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                <ion-button slot="start" fill="clear" (click)="selectPerson.emit(false)">{{ i18n().selectLabel }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>        
@@ -122,6 +124,7 @@ import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
 })
 export class PersonalRelForm {
   // inputs
+  public readonly i18n = input<PersonalRelFormI18n>({ selectLabel: '' });
   public formData = model.required<PersonalRelModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

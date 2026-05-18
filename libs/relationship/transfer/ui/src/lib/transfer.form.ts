@@ -1,24 +1,26 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, NotesInput, NumberInput, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
 
-import { BkAvatar } from '@bk2/avatar-ui';
+import { Avatars } from '@bk2/avatar-ui';
 import { transferValidations } from '@bk2/relationship-transfer-util';
+
+export interface TransferFormI18n {
+  resourceNameLabel: string;
+  selectResource: string;
+}
 
 @Component({
   selector: 'bk-transfer-form',
   standalone: true,
   imports: [
     vestForms,
-    TranslatePipe, AsyncPipe,
-    DateInput, TextInput, NotesInput, NumberInput, BkAvatar, CategorySelect, Chips,
+    DateInput, TextInput, NotesInput, NumberInput, Avatars, CategorySelect, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonInput, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -62,8 +64,8 @@ import { transferValidations } from '@bk2/relationship-transfer-util';
             <ion-card-content>
               <ion-item lines="none">
                 <!-- we deliberately use ion-input here, because we do not want to interfere with the vest form update  -->
-                <ion-input [value]="resourceName()" (ionChange)="onResourceNameChange($event)" label="{{ '@input.resourceName.label' | translate | async }}" labelPlacement="floating" inputMode="text" type="text" [counter]="true" [maxlength]="nameLength" placeholder="ssssss" />
-                <ion-button slot="end" fill="clear" (click)="selectResource.emit(true)">{{ '@general.operation.select.resource' | translate | async }}</ion-button>
+                <ion-input [value]="resourceName()" (ionChange)="onResourceNameChange($event)" [label]="i18n().resourceNameLabel" labelPlacement="floating" inputMode="text" type="text" [counter]="true" [maxlength]="nameLength" placeholder="ssssss" />
+                <ion-button slot="end" fill="clear" (click)="selectResource.emit(true)">{{ i18n().selectResource }}</ion-button>
               </ion-item>
             </ion-card-content>
           </ion-card>
@@ -138,6 +140,7 @@ import { transferValidations } from '@bk2/relationship-transfer-util';
 })
 export class TransferForm {
   // inputs
+  public readonly i18n = input<TransferFormI18n>({ resourceNameLabel: '', selectResource: '' });
   public readonly formData = model.required<TransferModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

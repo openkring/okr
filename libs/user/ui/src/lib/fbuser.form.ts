@@ -1,20 +1,22 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
 import { Checkbox, EmailInput, ErrorNote, PhoneInput, TextInput } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util";
 
+export interface FbUserFormI18n {
+  authTitle: string;
+  authDescription: string;
+}
+
 @Component({
   selector: 'bk-fbuser-form',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     vestForms,
     Checkbox, TextInput, EmailInput, PhoneInput, ErrorNote,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
@@ -31,8 +33,8 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
     >
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@user.auth.title' | translate | async }}</ion-card-title>
-          <ion-card-subtitle>{{ '@user.auth.description' | translate | async }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().authTitle }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().authDescription }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -44,7 +46,7 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
                 <bk-text-input name="displayName" label="@input.displayName.label" placeholder="@input.displayName.placeholder"  [readOnly]="isReadOnly()" [value]="displayName()" (valueChange)="onFieldChange('displayName', $event)" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email-input
+                <bk-email
                   [value]="email()"
                   (valueChange)="onFieldChange('email', $event)"
                   [readOnly]="isReadOnly()"
@@ -52,7 +54,7 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
                 <bk-error-note [errors]="emailError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6"> 
-                <bk-phone-input
+                <bk-phone
                   [value]="phone()"
                   (valueChange)="onFieldChange('phone', $event)"
                   [readOnly]="isReadOnly()"
@@ -79,6 +81,7 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
 })
 export class FbuserForm {
   // inputs
+  public readonly i18n = input<FbUserFormI18n>({ authTitle: '', authDescription: '' });
   public formData = model.required<FirebaseUserModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);
