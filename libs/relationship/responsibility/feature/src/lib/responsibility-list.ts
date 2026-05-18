@@ -1,13 +1,11 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { ActionSheetOptions, ActionSheetController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, IonNote } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
 import { ResponsibilityModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { Menu } from '@bk2/cms-menu-feature';
 import { AvatarDisplay } from '@bk2/avatar-ui';
@@ -18,7 +16,7 @@ import { ResponsibilityStore } from './responsibility.store';
   selector: 'bk-responsibility-list',
   standalone: true,
   imports: [
-    SvgIconPipe, TranslatePipe, AsyncPipe,
+    SvgIconPipe,
     ListFilter, EmptyList, Menu, Spinner, AvatarDisplay,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonLabel, IonPopover, IonNote, IonGrid, IonRow, IonCol,
@@ -34,7 +32,7 @@ import { ResponsibilityStore } from './responsibility.store';
           @if(showMenu() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
-          <ion-title>{{ count() }} {{ '@responsibility.list.title' | translate | async}}</ion-title>
+          <ion-title>{{ count() }} {{ store.i18n.list_title() }}</ion-title>
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />

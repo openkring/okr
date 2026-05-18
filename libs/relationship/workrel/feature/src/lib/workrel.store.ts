@@ -49,9 +49,13 @@ export const WorkrelStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      ok: '@ok',
-      cancel: '@cancel'
+      delete_confirm:       PFX + 'delete.confirm',
+      ok:                   '@ok',
+      cancel:               '@cancel',
+      list_title:           '@workrel.list.title',
+      list_header_subject:  '@workrel.list.header.subject',
+      list_header_type:     '@workrel.list.header.type',
+      list_header_object:   '@workrel.list.header.object',
     }),
 
     workrelsResource: rxResource({

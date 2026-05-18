@@ -1,24 +1,34 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { AppStore, OrgSelectModal, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@bk2/shared-models';
 import { DateInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
 
+const OwnershipNewFormStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      select_label: '@general.operation.select.label',
+      new_desc:     '@ownership.newDesc',
+    }),
+  })),
+);
 
 @Component({
   selector: 'bk-ownership-new-form',
   standalone: true,
+  providers: [OwnershipNewFormStore],
   imports: [
     vestForms,
-    TranslatePipe, AsyncPipe, AvatarPipe,
+    AvatarPipe,
     DateInput,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonImg, IonButton, IonCard, IonCardContent
   ],
@@ -27,7 +37,7 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
     <form scVestForm
       [formValue]="formData()"
       (formValueChange)="onFormChange($event)"
-      [suite]="suite" 
+      [suite]="suite"
       (dirtyChange)="dirty.emit($event)"
       (validChange)="valid.emit($event)"
     >
@@ -45,14 +55,14 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectOwner()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectOwner()">{{ formStore.i18n.select_label() }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12">
                 <ion-item lines="none">
-                  <ion-label>{{ '@ownership.newDesc' | translate | async }}</ion-label>
+                  <ion-label>{{ formStore.i18n.new_desc() }}</ion-label>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -67,14 +77,14 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                <ion-button slot="start" fill="clear" (click)="selectResource()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                <ion-button slot="start" fill="clear" (click)="selectResource()">{{ formStore.i18n.select_label() }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col size="12"> 
+              <ion-col size="12">
                 <bk-date-input name="validFrom" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [showHelper]=true [readOnly]="isReadOnly()" />
-              </ion-col>      
+              </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -84,11 +94,12 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
   `
 })
 export class OwnershipNewForm {
+  protected readonly formStore = inject(OwnershipNewFormStore);
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
   // inputs
-  public readonly formData = model.required<OwnershipModel>(); 
+  public readonly formData = model.required<OwnershipModel>();
   public currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly readOnly = input(true);

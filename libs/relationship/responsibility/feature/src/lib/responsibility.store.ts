@@ -47,8 +47,9 @@ export const ResponsibilityStore = signalStore(
       update_header: PFX + 'update.header',
       update_message1: PFX + 'update.message1',
       update_message2: PFX + 'update.message2',
-      ok: '@ok',
-      cancel: '@cancel'
+      ok:         '@ok',
+      cancel:     '@cancel',
+      list_title: '@responsibility.list.title',
     }),
 
     allResponsibilitiesResource: rxResource({

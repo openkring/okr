@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { INVOICE_STATE_VALUES, RoleName, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -22,7 +19,7 @@ import { Menu } from '@bk2/cms-menu-feature';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    AsyncPipe, TranslatePipe, AvatarPipe, SvgIconPipe,
+    AvatarPipe, SvgIconPipe,
     Spinner, ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
     IonContent, IonItem, IonAvatar, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonChip
@@ -41,7 +38,7 @@ import { Menu } from '@bk2/cms-menu-feature';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>
           {{ sortedFees().length }}/{{ allFees().length }}
-          {{ '@finance.scsMemberFee.list.title' | translate | async }}
+          {{ store.i18n.list_title() }}
         </ion-title>
         @if(hasRole('treasurer')) {
           <ion-buttons slot="end">

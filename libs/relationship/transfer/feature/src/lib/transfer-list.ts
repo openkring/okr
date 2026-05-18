@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TransferModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter } from '@bk2/shared-ui';
@@ -18,7 +15,7 @@ import { TransferStore } from './transfer.store';
   selector: 'bk-transfer-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe,
+    SvgIconPipe, PrettyDatePipe,
     EmptyList, ListFilter, AvatarDisplay, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonList, IonPopover
@@ -29,7 +26,7 @@ import { TransferStore } from './transfer.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedTransfersCount()}}/{{transfersCount()}} {{ '@transfer.plural' | translate | async }}</ion-title>
+      <ion-title>{{ selectedTransfersCount()}}/{{transfersCount()}} {{ transferStore.i18n.plural() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
@@ -59,12 +56,12 @@ import { TransferStore } from './transfer.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label class="ion-hide-md-down"><strong>{{ '@transfer.list.header.dateOfTransfer' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@transfer.list.header.subject' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@transfer.list.header.object' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@transfer.list.header.resource' | translate | async }}</strong></ion-label>
-        <ion-label class="ion-hide-lg-down"><strong>{{ '@transfer.list.header.name' | translate | async }}</strong></ion-label>
-        <ion-label class="ion-hide-lg-down"><strong>{{ '@transfer.list.header.state' | translate | async }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ transferStore.i18n.list_header_date() }}</strong></ion-label>
+        <ion-label><strong>{{ transferStore.i18n.list_header_subject() }}</strong></ion-label>
+        <ion-label><strong>{{ transferStore.i18n.list_header_object() }}</strong></ion-label>
+        <ion-label><strong>{{ transferStore.i18n.list_header_resource() }}</strong></ion-label>
+        <ion-label class="ion-hide-lg-down"><strong>{{ transferStore.i18n.list_header_name() }}</strong></ion-label>
+        <ion-label class="ion-hide-lg-down"><strong>{{ transferStore.i18n.list_header_state() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>

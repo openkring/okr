@@ -71,7 +71,8 @@ export const _ScsMemberFeesStore = signalStore(
       upload_nobexioid: PFX + 'scsMemberFee.upload.noBexioId',
       upload_conf: PFX + 'scsMemberFee.upload.conf',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      list_title: '@finance.scsMemberFee.list.title',
     }),
 
     // All memberships of this tenant (active/passive/etc.) — filtered locally

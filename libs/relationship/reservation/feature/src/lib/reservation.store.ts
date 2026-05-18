@@ -63,9 +63,14 @@ export const ReservationStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      ok: '@ok',
-      cancel: '@cancel'
+      delete_confirm:          PFX + 'delete.confirm',
+      ok:                      '@ok',
+      cancel:                  '@cancel',
+      list_header_resource:    '@reservation.list.header.resource',
+      list_header_name:        '@reservation.list.header.name',
+      list_header_valid_from:  '@reservation.list.header.validFrom',
+      list_header_state:       '@reservation.list.header.state',
+      list_header_reserver:    '@reservation.list.header.reserver',
     }),
 
     allReservationsResource: rxResource({

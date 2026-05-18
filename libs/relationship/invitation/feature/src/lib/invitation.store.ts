@@ -51,11 +51,17 @@ export const InvitationStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      invite_conf: PFX + 'invite.conf',
-      invite_error: PFX + 'invite.error',
-      ok: '@ok',
-      cancel: '@cancel'
+      delete_confirm:    PFX + 'delete.confirm',
+      invite_conf:       PFX + 'invite.conf',
+      invite_error:      PFX + 'invite.error',
+      ok:                '@ok',
+      cancel:            '@cancel',
+      plural:            '@invitation.plural',
+      list_header_date:    '@invitation.list.header.date',
+      list_header_name:    '@invitation.list.header.name',
+      list_header_invitee: '@invitation.list.header.invitee',
+      list_header_inviter: '@invitation.list.header.inviter',
+      list_header_state:   '@invitation.list.header.state',
     }),
 
     invitationsResource: rxResource({

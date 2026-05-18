@@ -8,6 +8,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, ModelSelectService } from '@bk2/shared-feature';
 import { AvatarInfo, CategoryListModel, TransferCollection, TransferModel } from '@bk2/shared-models';
 import { chipMatches, DateFormat, getAvatarInfo, getAvatarInfoArray, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { TransferService } from '@bk2/relationship-transfer-data-access';
 import { isTransfer } from '@bk2/relationship-transfer-util';
@@ -37,9 +38,20 @@ export const TransferStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    modelSelectService: inject(ModelSelectService)
+    modelSelectService: inject(ModelSelectService),
+    i18nService: inject(I18nService),
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      plural:                    '@transfer.plural',
+      list_header_date:          '@transfer.list.header.dateOfTransfer',
+      list_header_subject:       '@transfer.list.header.subject',
+      list_header_object:        '@transfer.list.header.object',
+      list_header_resource:      '@transfer.list.header.resource',
+      list_header_name:          '@transfer.list.header.name',
+      list_header_state:         '@transfer.list.header.state',
+    }),
+
     transfersResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<TransferModel>(TransferCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');

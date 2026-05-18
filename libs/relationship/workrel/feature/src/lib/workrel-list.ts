@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, WorkrelModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -19,7 +16,7 @@ import { WorkrelStore } from './workrel.store';
   selector: 'bk-workrel-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, WorkrelNamePipe,
+    SvgIconPipe, AvatarPipe, FullNamePipe, WorkrelNamePipe,
     ListFilter, EmptyList, Spinner, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
@@ -30,7 +27,7 @@ import { WorkrelStore } from './workrel.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedWorkRelsCount()}}/{{workRelsCount()}} {{ '@workrel.list.title' | translate | async }}</ion-title>
+        <ion-title>{{ selectedWorkRelsCount()}}/{{workRelsCount()}} {{ workrelStore.i18n.list_title() }}</ion-title>
         <ion-buttons slot="end">
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
@@ -60,9 +57,9 @@ import { WorkrelStore } from './workrel.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{'@workrel.list.header.subject' | translate | async}}</strong></ion-label>
-        <ion-label><strong>{{'@workrel.list.header.type' | translate | async}}</strong></ion-label>
-        <ion-label><strong>{{'@workrel.list.header.object' | translate | async}}</strong></ion-label>
+        <ion-label><strong>{{ workrelStore.i18n.list_header_subject() }}</strong></ion-label>
+        <ion-label><strong>{{ workrelStore.i18n.list_header_type() }}</strong></ion-label>
+        <ion-label><strong>{{ workrelStore.i18n.list_header_object() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>

@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { PersonalRelModel, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -18,7 +15,7 @@ import { PersonalRelStore } from './personal-rel.store';
   selector: 'bk-personal-rel-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
+    SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
     ListFilter, EmptyList, Spinner,
     Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
@@ -30,7 +27,7 @@ import { PersonalRelStore } from './personal-rel.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedPersonalRelsCount()}}/{{personalRelsCount()}} {{ '@personalRel.list.title' | translate | async }}</ion-title>
+        <ion-title>{{ selectedPersonalRelsCount()}}/{{personalRelsCount()}} {{ personalRelStore.i18n.list_title() }}</ion-title>
         <ion-buttons slot="end">
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
@@ -60,9 +57,9 @@ import { PersonalRelStore } from './personal-rel.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{'@personalRel.list.header.person1' | translate | async}}</strong></ion-label>
-        <ion-label><strong>{{'@personalRel.list.header.type' | translate | async}}</strong></ion-label>
-        <ion-label><strong>{{'@personalRel.list.header.person2' | translate | async}}</strong></ion-label>
+        <ion-label><strong>{{ personalRelStore.i18n.list_header_person1() }}</strong></ion-label>
+        <ion-label><strong>{{ personalRelStore.i18n.list_header_type() }}</strong></ion-label>
+        <ion-label><strong>{{ personalRelStore.i18n.list_header_person2() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>

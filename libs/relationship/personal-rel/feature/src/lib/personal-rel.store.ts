@@ -45,9 +45,13 @@ export const PersonalRelStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      ok: '@ok',
-      cancel: '@cancel'
+      delete_confirm:       PFX + 'delete.confirm',
+      ok:                   '@ok',
+      cancel:               '@cancel',
+      list_title:           '@personalRel.list.title',
+      list_header_person1:  '@personalRel.list.header.person1',
+      list_header_type:     '@personalRel.list.header.type',
+      list_header_person2:  '@personalRel.list.header.person2',
     }),
 
     personalRelsResource: rxResource({

@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, OrgModel, PersonModel, ReservationModel, ResourceModelName, RoleName } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter } from '@bk2/shared-ui';
@@ -19,7 +16,7 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
   selector: 'bk-reservation-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe,
+    SvgIconPipe, PrettyDatePipe,
     ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonPopover,
@@ -72,75 +69,75 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
           @if(isReservationFromPerson() || isReservationFromOrg()) {
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.resource' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_resource() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.name' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_name() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.validFrom' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_valid_from() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.state' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else if(isReservationOfResource() || isReservationOfResourceType()) {
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.reserver' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_reserver() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.name' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_name() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.validFrom' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_valid_from() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.state' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else { <!-- all -->
             <ion-col size="auto" size-md="2"class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.reserver' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_reserver() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="auto" size-md="2" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.resource' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_resource() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3" class="ion-hide-md-up">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.reserver' | translate | async}}</strong></ion-label>
-                <ion-label><strong>{{'@reservation.list.header.resource' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_reserver() }}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_resource() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col>
               <ion-item lines="none" color="primary" class="ion-text-wrap">
-                <ion-label><strong>{{'@reservation.list.header.name' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_name() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.validFrom' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_valid_from() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{'@reservation.list.header.state' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{ reservationStore.i18n.list_header_state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           }

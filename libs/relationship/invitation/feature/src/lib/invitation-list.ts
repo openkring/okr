@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, InvitationModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter } from '@bk2/shared-ui';
@@ -19,7 +16,7 @@ import { createPersonAvatar } from '@bk2/relationship-invitation-util';
   selector: 'bk-invitation-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe,
+    SvgIconPipe, PrettyDatePipe,
     EmptyList, ListFilter, AvatarDisplay, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonList, IonPopover
@@ -30,7 +27,7 @@ import { createPersonAvatar } from '@bk2/relationship-invitation-util';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedInvitationsCount()}}/{{invitationsCount()}} {{ '@invitation.plural' | translate | async }}</ion-title>
+      <ion-title>{{ selectedInvitationsCount()}}/{{invitationsCount()}} {{ invitationStore.i18n.plural() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
@@ -58,11 +55,11 @@ import { createPersonAvatar } from '@bk2/relationship-invitation-util';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ '@invitation.list.header.date' | translate | async }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ '@invitation.list.header.name' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@invitation.list.header.invitee' | translate | async }}</strong></ion-label>
-        <ion-label class="ion-hide-lg-down"><strong>{{ '@invitation.list.header.inviter' | translate | async }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ '@invitation.list.header.state' | translate | async }}</strong></ion-label>
+        <ion-label><strong>{{ invitationStore.i18n.list_header_date() }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ invitationStore.i18n.list_header_name() }}</strong></ion-label>
+        <ion-label><strong>{{ invitationStore.i18n.list_header_invitee() }}</strong></ion-label>
+        <ion-label class="ion-hide-lg-down"><strong>{{ invitationStore.i18n.list_header_inviter() }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ invitationStore.i18n.list_header_state() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
