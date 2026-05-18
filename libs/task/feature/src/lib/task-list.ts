@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { PersonModel, RoleName, TaskModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { DateTimeSelectModal, EmptyList, ListFilter } from '@bk2/shared-ui';
@@ -28,8 +26,8 @@ import { TaskStore } from './task.store';
   selector: 'bk-task-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe, AvatarPipe,
-    EmptyList, ListFilter, Menu, DateTimeSelectModal, PersonSelectModal,
+    SvgIconPipe, PrettyDatePipe, AvatarPipe,
+    EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip, IonPopover
   ],
@@ -47,7 +45,7 @@ import { TaskStore } from './task.store';
         @if(showMenuButton()) {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
-        <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ '@task.plural' | translate | async }}</ion-title>
+        <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ store.i18n.task_plural() }}</ion-title>
         @if(canChange()) {
           <ion-buttons slot="end">
             <ion-button id="c-tasks">
@@ -70,9 +68,9 @@ import { TaskStore } from './task.store';
           <ion-textarea #bkQuickEntry
             (keyup.enter)="quickEntry(bkQuickEntry)"
             (ionInput)="onQuickEntryInput(bkQuickEntry)"
-            label = "{{'@input.taskQuickEntry.label' | translate | async }}"
+            label = "{{ store.i18n.quick_entry_label() }}"
             labelPlacement = "floating"
-            placeholder = "{{'@input.taskQuickEntry.placeholder' | translate | async }}"
+            placeholder = "{{ store.i18n.quick_entry_placeholder() }}"
             [counter]="true"
             fill="outline"
             [maxlength]="1000"

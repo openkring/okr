@@ -4,6 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { CategoryListModel, TaskCollection, TaskModel } from '@bk2/shared-models';
 import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
 
@@ -50,9 +51,15 @@ export const TaskStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    avatarService: inject(AvatarService)
+    avatarService: inject(AvatarService),
+    i18nService: inject(I18nService),
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      task_plural:             '@task.plural',
+      quick_entry_label:       '@input.taskQuickEntry.label',
+      quick_entry_placeholder: '@input.taskQuickEntry.placeholder',
+    }),
     tasksResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser()
