@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -17,7 +14,7 @@ import { ResourceListStore } from './resource-list.store';
   selector: 'bk-rowing-boat-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     Menu, ListFilter, Spinner, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList, IonPopover, IonIcon, IonItem, IonLabel, IonContent
   ],
@@ -27,7 +24,7 @@ import { ResourceListStore } from './resource-list.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedBoatsCount()}}/{{boatsCount() }} {{ '@resource.boat.plural' | translate | async}}</ion-title>
+      <ion-title>{{selectedBoatsCount()}}/{{boatsCount() }} {{ resourceListStore.i18n.boat_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c_rboat">
@@ -54,9 +51,9 @@ import { ResourceListStore } from './resource-list.store';
     <!-- list header -->
   <ion-toolbar color="primary">
     <ion-item color="primary" lines="none">
-      <ion-label><strong>{{ '@input.boatName.label' | translate | async }}</strong></ion-label>
-      <ion-label><strong>{{ '@input.boatType.label' | translate | async }}</strong></ion-label>
-      <ion-label class="ion-hide-md-down"><strong>{{ '@input.load.label' | translate | async }}</strong></ion-label>
+      <ion-label><strong>{{ resourceListStore.i18n.list_header_boat_name() }}</strong></ion-label>
+      <ion-label><strong>{{ resourceListStore.i18n.list_header_boat_type() }}</strong></ion-label>
+      <ion-label class="ion-hide-md-down"><strong>{{ resourceListStore.i18n.list_header_load() }}</strong></ion-label>
     </ion-item>
   </ion-toolbar>
 </ion-header>

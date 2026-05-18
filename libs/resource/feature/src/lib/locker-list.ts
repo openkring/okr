@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -17,7 +14,7 @@ import { ResourceListStore } from './resource-list.store';
   selector: 'bk-locker-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, PartPipe,
+    SvgIconPipe, PartPipe,
     Spinner, EmptyList, Menu, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList, IonPopover,
     IonIcon, IonItem, IonLabel, IonContent
@@ -28,7 +25,7 @@ import { ResourceListStore } from './resource-list.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedLockersCount()}}/{{lockersCount() }} {{ title | translate | async}}</ion-title>
+      <ion-title>{{selectedLockersCount()}}/{{lockersCount() }} {{ resourceListStore.i18n.locker_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c_resource">
@@ -55,8 +52,8 @@ import { ResourceListStore } from './resource-list.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item color="primary" lines="none">
-        <ion-label><strong>{{ '@input.lockerNr.label' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@input.keyNr.label' | translate | async }}</strong></ion-label>
+        <ion-label><strong>{{ resourceListStore.i18n.list_header_locker_nr() }}</strong></ion-label>
+        <ion-label><strong>{{ resourceListStore.i18n.list_header_key_nr() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -103,7 +100,6 @@ export class LockerList {
   protected isLoading = computed(() => this.resourceListStore.isLoading());
   protected tags = computed(() => this.resourceListStore.getLockerTags());
   protected types = computed(() => this.resourceListStore.appStore.getCategory('gender'));
-  protected title = '@resource.locker.plural';
   protected currentUser = computed(() => this.resourceListStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 

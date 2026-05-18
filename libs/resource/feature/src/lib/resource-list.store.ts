@@ -4,6 +4,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { chipMatches, getSystemQuery, isResource, nameMatches } from '@bk2/shared-util-core';
 
@@ -34,9 +35,27 @@ export const ResourceListStore = signalStore(
     resourceService: inject(ResourceService),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
-    modalController: inject(ModalController),    
+    modalController: inject(ModalController),
+    i18nService: inject(I18nService),
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      boat_plural:         '@resource.boat.plural',
+      key_plural:          '@resource.key.plural',
+      locker_plural:       '@resource.locker.plural',
+      resource_plural:     '@resource.plural',
+      list_header_name:    '@input.name.label',
+      list_header_value:   '@input.value.label',
+      list_header_desc:    '@general.util.description',
+      list_header_boat_name: '@input.boatName.label',
+      list_header_boat_type: '@input.boatType.label',
+      list_header_load:    '@input.load.label',
+      list_header_key_name: '@input.keyName.label',
+      list_header_key_desc: '@input.description.label',
+      list_header_locker_nr: '@input.lockerNr.label',
+      list_header_key_nr:  '@input.keyNr.label',
+    }),
+
     resourceResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');

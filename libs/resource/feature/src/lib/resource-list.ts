@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -18,7 +15,7 @@ import { ResourceListStore } from './resource-list.store';
   selector: 'bk-resource-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     Menu, ListFilter, Spinner, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList,
     IonIcon, IonItem, IonLabel, IonContent, IonPopover
@@ -29,7 +26,7 @@ import { ResourceListStore } from './resource-list.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedResourcesCount()}}/{{resourcesCount() }} {{ '@resource.plural' | translate | async}}</ion-title>
+      <ion-title>{{selectedResourcesCount()}}/{{resourcesCount() }} {{ resourceListStore.i18n.resource_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c_resource">
@@ -56,9 +53,9 @@ import { ResourceListStore } from './resource-list.store';
   <!-- list header -->
   <ion-toolbar color="primary">
     <ion-item color="primary" lines="none">
-      <ion-label><strong>{{ '@input.name.label' | translate | async }}</strong></ion-label>
-      <ion-label><strong>{{ '@input.value.label' | translate | async }}</strong></ion-label>
-      <ion-label class="ion-hide-md-down"><strong>{{ '@general.util.description' | translate | async }}</strong></ion-label>
+      <ion-label><strong>{{ resourceListStore.i18n.list_header_name() }}</strong></ion-label>
+      <ion-label><strong>{{ resourceListStore.i18n.list_header_value() }}</strong></ion-label>
+      <ion-label class="ion-hide-md-down"><strong>{{ resourceListStore.i18n.list_header_desc() }}</strong></ion-label>
     </ion-item>
   </ion-toolbar>
 </ion-header>

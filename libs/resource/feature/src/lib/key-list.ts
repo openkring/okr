@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetOptions, ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -18,7 +15,7 @@ import { ResourceListStore } from './resource-list.store';
   selector: 'bk-key-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList,
     IonIcon, IonItem, IonLabel, IonContent, IonPopover
@@ -29,7 +26,7 @@ import { ResourceListStore } from './resource-list.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedKeysCount()}}/{{keysCount() }} {{ title | translate | async}}</ion-title>
+      <ion-title>{{selectedKeysCount()}}/{{keysCount() }} {{ resourceListStore.i18n.key_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c_key">
@@ -55,8 +52,8 @@ import { ResourceListStore } from './resource-list.store';
     <!-- list header -->
   <ion-toolbar color="primary">
     <ion-item color="primary" lines="none">
-      <ion-label><strong>{{ '@input.keyName.label' | translate | async }}</strong></ion-label>
-      <ion-label><strong>{{ '@input.description.label' | translate | async }}</strong></ion-label>
+      <ion-label><strong>{{ resourceListStore.i18n.list_header_key_name() }}</strong></ion-label>
+      <ion-label><strong>{{ resourceListStore.i18n.list_header_key_desc() }}</strong></ion-label>
     </ion-item>
   </ion-toolbar>
 </ion-header>
@@ -100,7 +97,6 @@ export class KeyList {
   protected selectedKeysCount = computed(() => this.filteredKeys().length);
   protected isLoading = computed(() => this.resourceListStore.isLoading());
   protected tags = computed(() => this.resourceListStore.getKeyTags() ?? DEFAULT_TAGS);
-  protected title = '@resource.key.plural'
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
   protected currentUser = computed(() => this.resourceListStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
