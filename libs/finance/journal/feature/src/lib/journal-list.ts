@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject } from '@angular/core';
 import { ActionSheetController, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { BookingJournalModel } from '@bk2/shared-models';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
@@ -16,7 +13,6 @@ import { JournalStore } from './journal.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [JournalStore],
   imports: [
-    AsyncPipe, TranslatePipe,
     Spinner, ListFilter, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton,
     IonContent, IonLabel, IonGrid, IonRow, IonCol
@@ -31,7 +27,7 @@ import { JournalStore } from './journal.store';
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ filteredCount() }} {{ '@finance.journal.list.title' | translate | async }}</ion-title>
+        <ion-title>{{ filteredCount() }} {{ store.i18n.list_title() }}</ion-title>
       </ion-toolbar>
       <bk-list-filter
         [years]="yearList"

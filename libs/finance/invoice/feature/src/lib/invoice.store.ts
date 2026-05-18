@@ -59,7 +59,10 @@ export const InvoiceStore = signalStore(
     i18n: store.i18nService.translateAll({
       delete_confirm: PFX + 'delete.confirm',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      list_title:      '@finance.invoice.list.title',
+      accordion_title: '@invoice.accordion.title',
+      field_empty:     '@finance.invoice.field.empty',
     }),
 
     allInvoicesResource: rxResource({

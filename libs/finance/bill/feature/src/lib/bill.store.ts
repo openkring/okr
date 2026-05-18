@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { BillCollection, BillModel } from '@bk2/shared-models';
 import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
@@ -41,8 +42,16 @@ export const BillStore = signalStore(
       firestoreService: inject(FirestoreService),
       modalController: inject(ModalController),
       functions,
+      i18nService: inject(I18nService),
     };
   }),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      list_title:      '@finance.bill.list.title',
+      accordion_title: '@finance.bill.accordion.title',
+      field_empty:     '@finance.bill.field.empty',
+    }),
+  })),
 
   withProps((store) => ({
     allBillsResource: rxResource({

@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, OnInit } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { BillModel } from '@bk2/shared-models';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
@@ -14,13 +11,12 @@ import { BillStore } from './bill.store';
   standalone: true,
   providers: [BillStore],
   imports: [
-    AsyncPipe, TranslatePipe,
     IonAccordion, IonItem, IonLabel, IonList,
   ],
   template: `
     <ion-accordion toggle-icon-slot="start" value="bills">
       <ion-item slot="header" lines="none">
-        <ion-label>{{ '@finance.bill.accordion.title' | translate | async }}</ion-label>
+        <ion-label>{{ store.i18n.accordion_title() }}</ion-label>
       </ion-item>
       <div slot="content">
         <ion-list lines="inset">
@@ -36,7 +32,7 @@ import { BillStore } from './bill.store';
           }
           @if(myBills().length === 0 && !isLoading()) {
             <ion-item lines="none">
-              <ion-label color="medium">{{ '@finance.bill.field.empty' | translate | async }}</ion-label>
+              <ion-label color="medium">{{ store.i18n.field_empty() }}</ion-label>
             </ion-item>
           }
         </ion-list>

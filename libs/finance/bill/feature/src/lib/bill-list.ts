@@ -1,9 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { BillModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -21,7 +20,7 @@ import { BillStore } from './bill.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [BillStore],
   imports: [
-    AsyncPipe, TranslatePipe, SvgIconPipe, AvatarPipe,
+    SvgIconPipe, AvatarPipe,
     Spinner, ListFilter, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
@@ -38,7 +37,7 @@ import { BillStore } from './bill.store';
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ filteredCount() }} {{ '@finance.bill.list.title' | translate | async }}</ion-title>
+        <ion-title>{{ filteredCount() }} {{ store.i18n.list_title() }}</ion-title>
         <ion-buttons slot="end">
           @if(listId() === 'all') {
             @if(selectedVendorName()) {

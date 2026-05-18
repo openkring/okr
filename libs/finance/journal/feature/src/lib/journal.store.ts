@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { AccountService } from '@bk2/finance-account-data-access';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { AccountModel, BookingJournalModel, JournalCollection } from '@bk2/shared-models';
 import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@bk2/shared-util-core';
 
@@ -29,6 +30,12 @@ export const JournalStore = signalStore(
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     accountService: inject(AccountService),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      list_title: '@finance.journal.list.title',
+    }),
   })),
 
   withProps((store) => ({

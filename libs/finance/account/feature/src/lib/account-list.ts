@@ -1,8 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AccountModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, Spinner } from '@bk2/shared-ui';
@@ -18,7 +15,7 @@ import { AccountStore } from './account.store';
   selector: 'bk-account-list',
   standalone: true,
   imports: [
-    TranslatePipe, SvgIconPipe, AsyncPipe,
+    SvgIconPipe,
     Spinner, EmptyList, Menu,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem,
@@ -29,7 +26,7 @@ import { AccountStore } from './account.store';
   <ion-header>
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ '@account.plural' | translate | async }}</ion-title>
+      <ion-title>{{ accountStore.i18n.account_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('admin')) {
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
@@ -50,7 +47,7 @@ import { AccountStore } from './account.store';
     <ion-toolbar>
       <ion-item lines="none">
         <ion-select
-          label="{{ '@finance.account.field.selectRoot' | translate | async }}"
+          [label]="accountStore.i18n.select_root()"
           [value]="accountStore.selectedRootKey()"
           (ionChange)="onRootSelected($event)"
           interface="popover">
@@ -64,8 +61,8 @@ import { AccountStore } from './account.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item color="primary" lines="none">
-        <ion-label slot="start"><strong>{{ '@finance.account.list.header.id' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@finance.account.list.header.name' | translate | async }}</strong></ion-label>
+        <ion-label slot="start"><strong>{{ accountStore.i18n.list_header_id() }}</strong></ion-label>
+        <ion-label><strong>{{ accountStore.i18n.list_header_name() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>

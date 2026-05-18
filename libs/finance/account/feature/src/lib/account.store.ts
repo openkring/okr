@@ -4,6 +4,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { AccountModel } from '@bk2/shared-models';
 
 import { AccountService } from '@bk2/finance-account-data-access';
@@ -27,6 +28,15 @@ export const AccountStore = signalStore(
     accountService: inject(AccountService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      account_plural:   '@account.plural',
+      select_root:      '@finance.account.field.selectRoot',
+      list_header_id:   '@finance.account.list.header.id',
+      list_header_name: '@finance.account.list.header.name',
+    }),
   })),
   withProps((store) => ({
     accountsResource: rxResource({

@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, OnInit } from '@angular/core';
 import { IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { InvoiceModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
@@ -14,13 +11,13 @@ import { InvoiceStore } from './invoice.store';
   standalone: true,
   providers: [InvoiceStore],
   imports: [
-    AsyncPipe, TranslatePipe, SvgIconPipe,
+    SvgIconPipe,
     IonAccordion, IonButton, IonItem, IonLabel, IonList, IonIcon,
   ],
   template: `
     <ion-accordion toggle-icon-slot="start" value="invoices">
       <ion-item slot="header" lines="none">
-        <ion-label>{{ '@invoice.accordion.title' | translate | async }}</ion-label>
+        <ion-label>{{ store.i18n.accordion_title() }}</ion-label>
         <ion-icon src="{{ 'invoice' | svgIcon }}" slot="end" />
       </ion-item>
       <div slot="content">
@@ -40,7 +37,7 @@ import { InvoiceStore } from './invoice.store';
           }
           @if(myInvoices().length === 0 && !isLoading()) {
             <ion-item lines="none">
-              <ion-label color="medium">{{ '@finance.invoice.field.empty' | translate | async }}</ion-label>
+              <ion-label color="medium">{{ store.i18n.field_empty() }}</ion-label>
             </ion-item>
           }
         </ion-list>
