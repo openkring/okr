@@ -1,10 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, computed, effect } from '@angular/core';
 import {
   IonContent, IonAvatar,
   ModalController,
 } from '@ionic/angular/standalone';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { Header } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@bk2/shared-util-core';
 import { CalEventStore } from './calevent.store';
@@ -14,7 +12,6 @@ import { CalEventStore } from './calevent.store';
   standalone: true,
   imports: [
     IonContent, IonAvatar,
-    AsyncPipe, TranslatePipe,
     Header,
   ],
   template: `
@@ -27,7 +24,7 @@ import { CalEventStore } from './calevent.store';
               <th class="member-col"></th>
               @for (event of proposedEvents(); track event.bkey) {
                 <th class="date-col">
-                  <div>{{ formatDayName(event.startDate) | translate | async }}</div>
+                  <div>{{ formatDayName(event.startDate) }}</div>
                   <div class="date-sub">{{ formatShortDate(event.startDate) }}</div>
                 </th>
               }
@@ -67,7 +64,7 @@ import { CalEventStore } from './calevent.store';
       </div>
       @if (pendingCount() > 0) {
         <p class="pending-hint">
-          {{ '@schedule.pendingCount' | translate: { count: pendingCount() } | async }}
+          {{ pendingCountLabel() }}
         </p>
       }
     </ion-content>
@@ -136,6 +133,10 @@ export class ScheduleTableModal {
     const responded = this.invitations().filter(inv => inv.state !== 'pending').length;
     return Math.max(0, totalExpected - responded);
   });
+
+  protected readonly pendingCountLabel = computed(() =>
+    this.store.i18n.schedule_pending_count().replace('{{count}}', String(this.pendingCount()))
+  );
 
   protected formatDayName(storeDate: string): string {
     return getWeekdayI18nKey(storeDate, true);

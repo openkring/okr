@@ -7,11 +7,10 @@ import { EmptyList } from '@bk2/shared-ui';
 import { coerceBoolean, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 
-import { PFX } from './scope';
+import { CalEventStore } from './calevent.store';
 
 /**
  * An accordion component to display a list of attendees related to a specific CalEvent.
@@ -32,7 +31,7 @@ import { PFX } from './scope';
   template: `
   <ion-accordion toggle-icon-slot="start" value="invitees">
     <ion-item slot="header" [color]="color()">
-      <ion-label>{{ title() | translate | async }}</ion-label>
+      <ion-label>{{ store.i18n.attendees_title() }}</ion-label>
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -55,28 +54,23 @@ import { PFX } from './scope';
           }
         </ion-list>
         <ion-list lines="none">
-          <ion-label>{{ acceptedCount()}}/{{attendees().length }} {{ '@calevent.field.attendance.accepted' | translate | async }}</ion-label>
+          <ion-label>{{ acceptedCount()}}/{{attendees().length }} {{ store.i18n.attendees_accepted() }}</ion-label>
         </ion-list>
-      } 
+      }
     </div>
   </ion-accordion>
   `,
 })
 export class AttendeesAccordion {
   private actionSheetController = inject(ActionSheetController);
+  protected readonly store = inject(CalEventStore);
   private appStore = inject(AppStore);
   private modalController = inject(ModalController);
   private toastController = inject(ToastController);
-  private readonly i18nService = inject(I18nService);
-  private readonly i18n = this.i18nService.translateAll({
-    update_conf:  PFX + 'operation.update.conf',
-    update_error: PFX + 'operation.update.error',
-  });
 
   // inputs
   public calevent = input.required<CalEventModel>();
   public readonly color = input('light');
-  public readonly title = input('@calevent.field.attendance.plural');
   public readonly readOnly = input<boolean>(true);
 
   // coerced boolean inputs
@@ -178,15 +172,15 @@ export class AttendeesAccordion {
             state: 'accepted',
         };
         calevent.attendees.push(attendee);
-        await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.i18n.update_conf(), this.i18n.update_error(), this.currentUser());
+        await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.store.i18n.attendees_update_conf(), this.store.i18n.attendees_update_error(), this.currentUser());
       }
     }
-}
+  }
 
   private async changeState(attendee: Attendee, newState: 'accepted' | 'declined'): Promise<void> {
     attendee.state = newState;
     const calevent = this.calevent();
-    await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.i18n.update_conf(), this.i18n.update_error(), this.currentUser());
+    await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.store.i18n.attendees_update_conf(), this.store.i18n.attendees_update_error(), this.currentUser());
   }
 
   protected getAttendanceIcon(state: string): string {

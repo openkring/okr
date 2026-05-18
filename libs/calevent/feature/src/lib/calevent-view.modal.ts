@@ -1,19 +1,19 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@bk2/shared-models';
+import { CalEventModel, CalEventModelName, CategoryListModel } from '@bk2/shared-models';
 import { Header } from '@bk2/shared-ui';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { convertDateFormatToString, DateFormat, getCatAbbreviation, getWeekdayI18nKey } from '@bk2/shared-util-core';
+import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@bk2/shared-util-core';
 import { addTime } from '@bk2/shared-util-core';
 
 import { InviteesAccordion } from '@bk2/relationship-invitation-feature';
 import { DocumentsAccordion } from '@bk2/document-feature';
 import { CommentsAccordion } from '@bk2/comment-feature';
-import { AttendeesAccordion } from './attendees-accordion';
 import { AvatarDisplay } from '@bk2/avatar-ui';
+
+import { AttendeesAccordion } from './attendees-accordion';
+import { CalEventStore } from './calevent.store';
 
 function storeToView(d: string): string {
   return convertDateFormatToString(d, DateFormat.StoreDate, DateFormat.ViewDate, false);
@@ -23,7 +23,7 @@ function storeToView(d: string): string {
   selector: 'bk-calevent-view-modal',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe, PartPipe, SvgIconPipe,
+    PartPipe, SvgIconPipe,
     Header, AvatarDisplay, InviteesAccordion, DocumentsAccordion, CommentsAccordion, AttendeesAccordion,
     IonContent, IonCard, IonCardContent, IonAccordionGroup, IonItem, IonLabel, IonIcon,
   ],
@@ -46,7 +46,7 @@ function storeToView(d: string): string {
             <ion-item lines="none">
                 <ion-icon slot="start" src="{{'calendar' | svgIcon}}" />
                 <ion-label>
-                <p class="view-label">{{ '@calevent.field.date' | translate | async }}</p>
+                <p class="view-label">{{ i18n.date() }}</p>
                 <p class="view-value">{{ dateLabel() }}</p>
                 </ion-label>
             </ion-item>
@@ -56,8 +56,8 @@ function storeToView(d: string): string {
                 <ion-item lines="none">
                 <ion-icon slot="start" src="{{'repeat' | svgIcon}}" />
                 <ion-label>
-                    <p class="view-label">{{ '@calevent.field.periodicity' | translate | async }}</p>
-                    <p class="view-value">{{ periodicityLabel() | translate | async }} {{ until() }}</p>
+                    <p class="view-label">{{ i18n.periodicity() }}</p>
+                    <p class="view-value">{{ periodicityLabel() }} {{ until() }}</p>
                 </ion-label>
                 </ion-item>
             }
@@ -67,7 +67,7 @@ function storeToView(d: string): string {
                 <ion-item lines="none">
                 <ion-icon slot="start" src="{{'location' | svgIcon}}" />
                 <ion-label>
-                    <p class="view-label">{{ '@calevent.field.location' | translate | async }}</p>
+                    <p class="view-label">{{ i18n.location() }}</p>
                     <p class="view-value">{{ calevent().locationKey | part:true }}</p>
                 </ion-label>
                 </ion-item>
@@ -78,7 +78,7 @@ function storeToView(d: string): string {
                 <ion-item lines="none">
                 <ion-icon slot="start" src="{{'person' | svgIcon}}" />
                 <ion-label>
-                    <p class="view-label">{{ '@calevent.field.responsiblePersons' | translate | async }}</p>
+                    <p class="view-label">{{ i18n.responsible_persons() }}</p>
                     <div class="responsible-row">
                       <bk-avatar-display [avatars]="calevent().responsiblePersons" [showName]="true" />
                     </div>
@@ -91,7 +91,7 @@ function storeToView(d: string): string {
                 <ion-item lines="none">
                 <ion-icon slot="start" src="{{'notes' | svgIcon}}" />
                 <ion-label class="ion-text-wrap">
-                    <p class="view-label">{{ '@calevent.field.description' | translate | async }}</p>
+                    <p class="view-label">{{ i18n.description() }}</p>
                     <p class="view-value">{{ calevent().description }}</p>
                 </ion-label>
                 </ion-item>
@@ -102,7 +102,7 @@ function storeToView(d: string): string {
                 <ion-item lines="none" [href]="calevent().url" target="_blank">
                 <ion-icon slot="start" src="{{'link' | svgIcon}}" />
                 <ion-label>
-                    <p class="view-label">{{ '@calevent.field.url' | translate | async }}</p>
+                    <p class="view-label">{{ i18n.url() }}</p>
                     <p class="view-value">{{ calevent().url }}</p>
                 </ion-label>
                 </ion-item>
@@ -133,6 +133,7 @@ function storeToView(d: string): string {
 })
 export class CalEventViewModal {
   private readonly modalController = inject(ModalController);
+  protected readonly store = inject(CalEventStore);
 
   // inputs (keep signature identical so all callers continue to work unchanged)
   public calevent = input.required<CalEventModel>();
@@ -140,14 +141,40 @@ export class CalEventViewModal {
   public locale = input.required<string>();
 
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().bkey}`);
-  protected readonly label = computed(() => `@calevent.periodicity.${this.periodicityLabel()}.label`);
+
+  protected get i18n() { return this.store.i18n; }
+
+  private get wdAbbr() {
+    return {
+      monday:    this.store.i18n.wd_monday,
+      tuesday:   this.store.i18n.wd_tuesday,
+      wednesday: this.store.i18n.wd_wednesday,
+      thursday:  this.store.i18n.wd_thursday,
+      friday:    this.store.i18n.wd_friday,
+      saturday:  this.store.i18n.wd_saturday,
+      sunday:    this.store.i18n.wd_sunday,
+    };
+  }
+
+  private get prd() {
+    return {
+      daily:     this.store.i18n.prd_daily,
+      workday:   this.store.i18n.prd_workday,
+      weekly:    this.store.i18n.prd_weekly,
+      biweekly:  this.store.i18n.prd_biweekly,
+      monthly:   this.store.i18n.prd_monthly,
+      quarterly: this.store.i18n.prd_quarterly,
+      yearly:    this.store.i18n.prd_yearly,
+    };
+  }
 
   /** Human-readable date/time line. */
   protected readonly dateLabel = computed((): string => {
     const e = this.calevent();
-    // Resolve weekday abbreviation from de.json via a simple inline map
-    // (avoids async pipe in computed — weekday is fixed per locale)
-    const wd = this.weekdayAbbr(e.startDate);
+    const i18nKey = getWeekdayI18nKey(e.startDate, true);
+    const day = i18nKey.split('.').pop() ?? '';
+    const wdMap = this.wdAbbr;
+    const wd = (wdMap as Record<string, () => string>)[day]?.() ?? '';
     const startView = storeToView(e.startDate);
 
     if (e.fullDay) {
@@ -160,29 +187,15 @@ export class CalEventViewModal {
     return `${wd} ${startView}${timeRange}`;
   });
 
-  /** "periodicity bis dd.mm.yyyy" — only when the event is part of a series. */
+  /** Translated periodicity label — empty when the event is not part of a series. */
   protected readonly periodicityLabel = computed((): string => {
     const e = this.calevent();
     if (!e.periodicity || e.periodicity === 'once' || e.periodicity === '') return '';
-    return `@calevent.periodicity.${e.periodicity}.label`;
+    const prdMap = this.prd;
+    return (prdMap as Record<string, () => string>)[e.periodicity]?.() ?? '';
   });
 
   protected readonly until = computed(() => this.calevent().repeatUntilDate ? ` bis ${storeToView(this.calevent().repeatUntilDate)}` : '');
-
-  /** German weekday abbreviations inline — avoids async pipe dependency. */
-  private weekdayAbbr(storeDate: string): string {
-    const key = getWeekdayI18nKey(storeDate, true);
-    const map: Record<string, string> = {
-      'calevent.weekDayAbbreviation.monday':    'Mo',
-      'calevent.weekDayAbbreviation.tuesday':   'Di',
-      'calevent.weekDayAbbreviation.wednesday': 'Mi',
-      'calevent.weekDayAbbreviation.thursday':  'Do',
-      'calevent.weekDayAbbreviation.friday':    'Fr',
-      'calevent.weekDayAbbreviation.saturday':  'Sa',
-      'calevent.weekDayAbbreviation.sunday':    'So',
-    };
-    return map[key] ?? '';
-  }
 
   public async cancel(): Promise<void> {
     await this.modalController.dismiss(null, 'cancel');

@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
@@ -9,11 +8,9 @@ import { EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { TranslocoService } from '@jsverse/transloco';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CalEventModel, PersonModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -34,7 +31,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
     selector: 'bk-calevent-list',
     standalone: true,
     imports: [
-      TranslatePipe, AsyncPipe, CalEventDurationPipe, SvgIconPipe, PartPipe,
+      CalEventDurationPipe, SvgIconPipe, PartPipe,
       FullCalendarModule, Spinner, EmptyList, AvatarDisplay, Menu, ListFilter,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonTextarea,
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
@@ -80,7 +77,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
             @if(showMenuButton() === true) {
               <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
             }
-            <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
+            <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ store.i18n.plural() }}</ion-title>
             @if(canChange()) {
               <ion-buttons slot="end">
                 <ion-button id="{{ popupId() }}">
@@ -104,9 +101,9 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
             <ion-textarea #bkQuickEntry
               (keyup.enter)="quickEntry(bkQuickEntry)"
               (ionInput)="onQuickEntryInput(bkQuickEntry)"
-              label = "{{'@input.eventQuickEntry.label' | translate | async }}"
+              [label] = "store.i18n.quick_entry_label()"
               labelPlacement = "floating"
-              placeholder = "{{'@input.eventQuickEntry.placeholder' | translate | async }}"
+              [placeholder] = "store.i18n.quick_entry_placeholder()"
               [counter]="true"
               fill="outline"
               [maxlength]="1000"
@@ -134,16 +131,16 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           <ion-grid>
             <ion-row>
               <ion-col size="6" size-md="3">
-                <ion-label><strong>{{ '@calevent.list.header.duration' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.list_header_duration() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ '@calevent.list.header.name' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.list_header_name() }}</strong></ion-label>
               </ion-col>
               <ion-col size="3" class="ion-hide-md-down">
-                <ion-label><strong>{{ '@calevent.list.header.location' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.list_header_location() }}</strong></ion-label>
               </ion-col>
               <ion-col size="2" class="ion-hide-md-down">
-                <ion-label><strong>{{ '@calevent.list.header.responsible' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.list_header_responsible() }}</strong></ion-label>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -165,7 +162,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           <ion-card>
             <ion-card-content>
               <div [style.display]="'block'">
-                {{ calEventsCount() }} {{'@calevent.plural' | translate | async}}
+                {{ calEventsCount() }} {{ store.i18n.plural() }}
 
                 <full-calendar #fullCalendar
                   [options]="calendarOptions" 
@@ -202,7 +199,6 @@ export class CalEventList implements OnInit {
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
   private isSettingQuickEntryValue = false;
   private readonly matrixChatService = inject(MatrixChatService);
-  private readonly translocoService = inject(TranslocoService);
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
 
   protected readonly getCalEventCssClass = getCalEventCssClass;
@@ -663,19 +659,19 @@ export class CalEventList implements OnInit {
   private async confirmCloseSchedule(calevent: CalEventModel): Promise<void> {
     const formattedDate = convertDateFormatToString(calevent.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
     const alert = await this.alertController.create({
-      header: this.translocoService.translate('@schedule.closeTitle'),
-      message: this.translocoService.translate('@schedule.closeMessage', { date: formattedDate }),
+      header: this.store.i18n.schedule_close_title(),
+      message: this.store.i18n.schedule_close_message().replace('{{date}}', formattedDate),
       inputs: [
         {
           name: 'authorMessage',
           type: 'textarea',
-          placeholder: this.translocoService.translate('@schedule.optionalMessage'),
+          placeholder: this.store.i18n.schedule_optional_message(),
         },
       ],
       buttons: [
-        { text: this.translocoService.translate('@general.cancel'), role: 'cancel' },
+        { text: this.store.i18n.cancel(), role: 'cancel' },
         {
-          text: this.translocoService.translate('@schedule.confirm'),
+          text: this.store.i18n.schedule_confirm(),
           handler: (data: { authorMessage?: string }) => {
             this.store.closeSchedule(calevent)
               .then(async () => {

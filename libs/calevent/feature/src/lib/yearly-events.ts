@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ActionSheetController } from '@ionic/angular';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { LabelPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -19,7 +17,7 @@ import { CalEventStore } from './calevent.store';
     selector: 'bk-yearly-events',
     standalone: true,
     imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, LabelPipe,
+    SvgIconPipe, LabelPipe,
     Spinner, EmptyList, Menu, ListFilter, AvatarDisplay,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
@@ -29,7 +27,7 @@ import { CalEventStore } from './calevent.store';
     <ion-header>
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
+      <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ calEventStore.i18n.plural() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
@@ -61,16 +59,16 @@ import { CalEventStore } from './calevent.store';
       <ion-grid>
         <ion-row>
           <ion-col size="6" size-md="4" size-lg="3">
-            <ion-label><strong>{{ '@calevent.list.header.year' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ calEventStore.i18n.list_header_year() }}</strong></ion-label>
           </ion-col>
           <ion-col size-md="4" size-lg="3" class="ion-hide-md-down">
-            <ion-label><strong>{{ '@calevent.list.header.responsible' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ calEventStore.i18n.list_header_responsible() }}</strong></ion-label>
           </ion-col>
           <ion-col size="6" size-md="4" size-lg="3">
-            <ion-label><strong>{{ '@calevent.list.header.location' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ calEventStore.i18n.list_header_location() }}</strong></ion-label>
           </ion-col>
           <ion-col size-lg="3" class="ion-hide-lg-down">
-            <ion-label><strong>{{ '@calevent.list.header.description' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ calEventStore.i18n.list_header_description() }}</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -83,7 +81,7 @@ import { CalEventStore } from './calevent.store';
       <bk-spinner />
     } @else {
       @if(filteredCalEventsCount() === 0) {
-        <bk-empty-list message="@calevent.field.empty" />
+        <bk-empty-list [message]="calEventStore.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(event of filteredCalEvents(); track event.bkey) {

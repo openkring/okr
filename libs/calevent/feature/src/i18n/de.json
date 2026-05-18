@@ -1,10 +1,32 @@
 {
   "calevents": "Ereignisse",
+  "plural": "Ereignisse",
   "empty": "Es sind noch keine Ereignisse erstellt worden. Erstelle eines mit Klicken des + Buttons.",
+  "list": {
+    "header": {
+      "duration": "von-bis",
+      "name": "Anlass",
+      "year": "Jahr",
+      "responsible": "Organisierende",
+      "location": "Ort",
+      "description": "Thema"
+    }
+  },
+  "operation": {
+    "update": {
+      "conf": "Das Ereignis wurde geändert.",
+      "error": "Das Ereignis konnte nicht geändert werden."
+    }
+  },
   "date": "Datum",
-  "periodicity": "periodisch",
   "location": "Ort",
+  "responsible": "Organisierende",
   "responsiblePersons": "Verantwortlich",
+  "duration": "von-bis",
+  "name": "Anlass",
+  "year": "Jahr",
+  "description": "Thema",
+  "url": "URL",
   "attendance": {
     "accepted": "Teilnahmen",
     "plural": "Teilnehmende",
@@ -22,14 +44,6 @@
   "quickEntry": {
     "label": "Schnelleingabe",
     "placeholder": "Name[,Ort] [//Datum] [@Person]"
-  },
-  "list": {
-    "duration": "von-bis",
-    "name": "Anlass",
-    "location": "Ort",
-    "responsible": "Organisierende",
-    "year": "Jahr",
-    "description": "Thema"
   },
   "actionsheet": {
     "title": "Wähle eine Aktion"
@@ -64,5 +78,34 @@
       "conf": "Die Einladung wurde geändert.",
       "error": "Die Einladung konnte nicht geändert werden."
     }
+  },
+  "weekDayAbbreviation": {
+    "monday": "Mo",
+    "tuesday": "Di",
+    "wednesday": "Mi",
+    "thursday": "Do",
+    "friday": "Fr",
+    "saturday": "Sa",
+    "sunday": "So"
+  },
+  "weekDay": {
+    "monday": "Montag",
+    "tuesday": "Dienstag",
+    "wednesday": "Mittwoch",
+    "thursday": "Donnerstag",
+    "friday": "Freitag",
+    "saturday": "Samstag",
+    "sunday": "Sonntag"
+  },
+  "periodicity": {
+    "label": "periodisch",
+    "once": "einmalig",
+    "daily": "täglich",
+    "workday": "an Arbeitstagen",
+    "weekly": "wöchentlich",
+    "biweekly": "zweiwöchentlich",
+    "monthly": "monatlich",
+    "quarterly": "quartalsweise",
+    "yearly": "jährlich"
   }
 }

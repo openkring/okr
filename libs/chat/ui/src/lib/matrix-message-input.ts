@@ -4,13 +4,19 @@ import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { I18nService } from '@bk2/shared-i18n';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { AppStore } from '@bk2/shared-feature';
 import { ButtonCopy } from '@bk2/shared-ui';
 
 import { isSupportedImageFile } from '@bk2/chat-util';
 import 'emoji-picker-element';
+
+export type MatrixMessageInputI18n = {
+  isTypeing: string;
+  and: string;
+  areTypeing: string;
+  othersTypeing: string;
+};
 
 @Component({
   selector: 'bk-matrix-message-input',
@@ -317,13 +323,8 @@ import 'emoji-picker-element';
 export class MatrixMessageInput {
   private actionSheetController = inject(ActionSheetController);
   private appStore = inject(AppStore);
-  private readonly i18nService = inject(I18nService);
-  protected readonly i18n = this.i18nService.translateAll({
-    isTypeing: '@chat.fields.isTypeing',
-    and: '@chat.fields.and',
-    areTypeing: '@chat.fields.areTypeing',
-    othersTypeing: '@chat.fields.othersTypeing',
-  });
+
+  public i18n = input<MatrixMessageInputI18n>({ isTypeing: '', and: '', areTypeing: '', othersTypeing: '' });
 
   disabled = input<boolean>(false);
   roomId = input<string | undefined>(undefined);
@@ -624,10 +625,11 @@ export class MatrixMessageInput {
 
   getTypingText(): string {
     const users = this.typingUsers();
+    const t = this.i18n();
     if (users.length === 0) return '';
-    if (users.length === 1) return `${users[0]} ${this.i18n.isTypeing()}`;
-    if (users.length === 2) return `${users[0]} ${this.i18n.and()} ${users[1]} ${this.i18n.areTypeing()}`;
-    return `${users[0]} ${this.i18n.and()} ${users.length - 1} ${this.i18n.othersTypeing()}`;
+    if (users.length === 1) return `${users[0]} ${t.isTypeing}`;
+    if (users.length === 2) return `${users[0]} ${t.and} ${users[1]} ${t.areTypeing}`;
+    return `${users[0]} ${t.and} ${users.length - 1} ${t.othersTypeing}`;
   }
 
   focus() {

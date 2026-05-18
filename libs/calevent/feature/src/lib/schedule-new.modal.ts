@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import {
   IonButton,
@@ -6,27 +5,44 @@ import {
   IonContent, IonItem, IonInput, IonTextarea,
   ModalController,
 } from '@ionic/angular/standalone';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { signalStore, withProps } from '@ngrx/signals';
+import { I18nService } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Header } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
+const ScheduleNewStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      title:         '@schedule.title',
+      topic:         '@schedule.topic',
+      description:   '@schedule.description',
+      dates:         '@schedule.dates',
+      add_date:      '@schedule.addDate',
+      confirm_dates: '@schedule.confirmDates',
+      invite:        '@schedule.invite',
+    }),
+  })),
+);
+
 @Component({
   selector: 'bk-schedule-new-modal',
   standalone: true,
+  providers: [ScheduleNewStore],
   imports: [
     IonButton,
     IonChip, IonIcon, IonDatetime, IonModal,
     IonContent, IonItem, IonInput, IonTextarea,
-    AsyncPipe, TranslatePipe, SvgIconPipe,
+    SvgIconPipe,
     Header,
   ],
   template: `
-    <bk-header title="@schedule.title" [isModal]="true" />
+    <bk-header [title]="store.i18n.title()" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-input
-          [label]="'@schedule.topic' | translate | async"
+          [label]="store.i18n.topic()"
           labelPlacement="stacked"
           [value]="name()"
           (ionInput)="name.set(($any($event.target)).value ?? '')"
@@ -35,7 +51,7 @@ import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
       </ion-item>
       <ion-item>
         <ion-textarea
-          [label]="'@schedule.description' | translate | async"
+          [label]="store.i18n.description()"
           labelPlacement="stacked"
           [value]="description()"
           (ionInput)="description.set(($any($event.target)).value ?? '')"
@@ -44,7 +60,7 @@ import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
       </ion-item>
 
       <ion-item lines="none">
-        {{ '@schedule.dates' | translate | async }}
+        {{ store.i18n.dates() }}
       </ion-item>
 
       <div class="date-chips">
@@ -55,7 +71,7 @@ import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
           </ion-chip>
         }
         <ion-chip color="primary" [outline]="true" (click)="datePickerOpen.set(true)">
-          {{ '@schedule.addDate' | translate | async }}
+          {{ store.i18n.add_date() }}
         </ion-chip>
       </div>
 
@@ -72,7 +88,7 @@ import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
             (ionChange)="onDatetimeChange($event)"
           />
           <ion-button expand="block" (click)="confirmDates()">
-            {{ '@schedule.confirmDates' | translate | async }}
+            {{ store.i18n.confirm_dates() }}
           </ion-button>
         </ng-template>
       </ion-modal>
@@ -83,12 +99,13 @@ import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
         (click)="submit()"
         class="ion-margin-top"
       >
-        {{ '@schedule.invite' | translate | async }}
+        {{ store.i18n.invite() }}
       </ion-button>
     </ion-content>
   `,
 })
 export class ScheduleNewModal {
+  protected readonly store = inject(ScheduleNewStore);
   private readonly modalCtrl = inject(ModalController);
 
   protected readonly name = signal('');

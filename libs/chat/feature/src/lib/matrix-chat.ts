@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@bk2/shared-ui';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetOptions, downloadToBrowser, isBrowser } from '@bk2/shared-util-angular';
 import { MatrixMessage, RoleName } from '@bk2/shared-models';
@@ -21,7 +19,7 @@ import { PollCreateModal } from './poll-create.modal';
   selector: 'bk-matrix-chat-overview',
   standalone: true,
   imports: [
-    SvgIconPipe, TranslatePipe, AsyncPipe,
+    SvgIconPipe,
     Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
     IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge
   ],
@@ -273,13 +271,13 @@ import { PollCreateModal } from './poll-create.modal';
           <div class="sync-status">
             @switch (syncState()) {
               @case ('RECONNECTING') { 
-                <ion-badge color="warning">{{ '@chat.fields.reconnecting' | translate | async}}</ion-badge>
+                <ion-badge color="warning">{{ store.i18n.fields_reconnecting() }}</ion-badge>
               }
               @case ('ERROR') { 
-                <ion-badge color="danger">{{ '@chat.fields.connectionError' | translate | async}}</ion-badge>
+                <ion-badge color="danger">{{ store.i18n.fields_connectionError() }}</ion-badge>
               }
               @default { 
-                <ion-badge color="medium">{{ '@chat.fields.connecting' | translate | async}}</ion-badge>
+                <ion-badge color="medium">{{ store.i18n.fields_connecting() }}</ion-badge>
               }
             }
           </div>
@@ -375,6 +373,7 @@ import { PollCreateModal } from './poll-create.modal';
 
                 <!-- Message Input -->
                 <bk-matrix-message-input
+                  [i18n]="messageInputI18n()"
                   [roomId]="currentRoomId()"
                   [typingUsers]="typingUsers()"
                   [replyToMessage]="replyToMessage()"
@@ -394,10 +393,10 @@ import { PollCreateModal } from './poll-create.modal';
                 <div class="empty-state">
                   <ion-icon src="{{'chatbubbles' | svgIcon}}" size="large"></ion-icon>
                   <div>
-                    <h3>{{ '@chat.fields.selectRoom' | translate | async}}</h3>
+                    <h3>{{ store.i18n.fields_selectRoom() }}</h3>
                     @if (rooms().length === 0) {
-                      <p>{{ '@chat.fields.noRoomsError' | translate | async}}</p>
-                      <ion-button (click)="onCreateRoom()">{{ '@chat.fields.createTestRoom' | translate | async}}</ion-button>
+                      <p>{{ store.i18n.fields_noRoomsError() }}</p>
+                      <ion-button (click)="onCreateRoom()">{{ store.i18n.fields_createTestRoom() }}</ion-button>
                     }
                   </div>
                 </div>
@@ -436,7 +435,7 @@ import { PollCreateModal } from './poll-create.modal';
                 }
 
                 @if (threadMessages().length === 0) {
-                  <div class="thread-empty">{{'@chat.operation.thread.empty' | translate | async}}</div>
+                  <div class="thread-empty">{{ store.i18n.op_thread_empty() }}</div>
                 } @else {
                   <bk-matrix-message-list
                     [messages]="threadMessages()"
@@ -454,6 +453,7 @@ import { PollCreateModal } from './poll-create.modal';
                 }
 
                 <bk-matrix-message-input
+                  [i18n]="messageInputI18n()"
                   [typingUsers]="[]"
                   (messageSent)="onThreadMessageSent($event)"
                   (fileSent)="onThreadFileSent($event)"
@@ -471,7 +471,7 @@ import { PollCreateModal } from './poll-create.modal';
             <video #localVideo autoplay playsinline muted class="local-video"></video>
 
             @if (callState() === 'ringing') {
-              <div class="call-status-label">{{'@chat.operation.video.incoming' | translate | async}}</div>
+              <div class="call-status-label">{{ store.i18n.op_video_incoming() }}</div>
               <div class="call-controls">
                 <ion-button class="call-fab" color="success" (click)="answerCall()">
                   <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
@@ -482,7 +482,7 @@ import { PollCreateModal } from './poll-create.modal';
               </div>
             } @else {
               @if (callState() !== 'connected') {
-                <div class="call-status-label">{{ '@chat.operation.video.connecting' | translate | async }}</div>
+                <div class="call-status-label">{{ store.i18n.op_video_connecting() }}</div>
               }
               <div class="call-controls">
                 <ion-button class="call-fab" color="danger" (click)="hangupCall()">
@@ -539,6 +539,13 @@ export class MatrixChat implements OnDestroy {
   protected readonly isMessagesLoading = computed(() => this.store.isMessagesLoading());
   protected readonly typingUsers = computed(() => this.store.typingUsers());
   protected readonly receiptsByEventId = computed(() => this.store.receiptsByEventId());
+
+  protected readonly messageInputI18n = computed(() => ({
+    isTypeing:      this.store.i18n.msg_input_isTypeing(),
+    and:            this.store.i18n.msg_input_and(),
+    areTypeing:     this.store.i18n.msg_input_areTypeing(),
+    othersTypeing:  this.store.i18n.msg_input_othersTypeing(),
+  }));
 
   // Thread signals
   protected readonly selectedThreadId = computed(() => this.store.selectedThreadId());

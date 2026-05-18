@@ -49,31 +49,49 @@ export const _MatrixChatStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      room_create_conf:          '@chat.operation.room.create.conf',
-      room_create_error:         '@chat.operation.room.create.error',
-      room_update_conf:          '@chat.operation.room.update.conf',
-      room_update_error:         '@chat.operation.room.update.error',
-      thread_reply_header:       '@chat.operation.thread.reply.header',
-      thread_reply_placeholder:  '@chat.operation.thread.reply.placeholder',
-      thread_reply_error:        '@chat.operation.thread.reply.error',
-      msg_report_header:         '@chat.operation.message.report.header',
-      msg_report_placeholder:    '@chat.operation.message.report.placeholder',
-      msg_report_noChannel:      '@chat.operation.message.report.noChannel',
-      msg_report_conf:           '@chat.operation.message.report.conf',
-      msg_report_error:          '@chat.operation.message.report.error',
-      msg_update_header:         '@chat.operation.message.update.header',
-      msg_update_placeholder:    '@chat.operation.message.update.placeholder',
-      msg_update_conf:           '@chat.operation.message.update.conf',
-      msg_update_error:          '@chat.operation.message.update.error',
-      msg_delete_confirm:        '@chat.operation.message.delete.confirm',
-      msg_delete_conf:           '@chat.operation.message.delete.conf',
-      msg_delete_error:          '@chat.operation.message.delete.error',
-      react_header:              '@chat.operation.message.react.header',
-      react_cancel:              '@chat.operation.message.react.cancel',
-      msg_report_messageFrom:    '@chat.operation.message.report.messageFrom',
-      msg_report_message:        '@chat.operation.message.report.message',
-      msg_report_comment:        '@chat.operation.message.report.comment',
-      msg_report_showMessage:    '@chat.operation.message.report.showMessage',
+      room_create_conf:          '@chat.room.create.conf',
+      room_create_error:         '@chat.room.create.error',
+      room_update_conf:          '@chat.room.update.conf',
+      room_update_error:         '@chat.room.update.error',
+      thread_reply_header:       '@chat.thread.reply.header',
+      thread_reply_placeholder:  '@chat.thread.reply.placeholder',
+      thread_reply_error:        '@chat.thread.reply.error',
+      msg_report_header:         '@chat.message.report.header',
+      msg_report_placeholder:    '@chat.message.report.placeholder',
+      msg_report_noChannel:      '@chat.message.report.noChannel',
+      msg_report_conf:           '@chat.message.report.conf',
+      msg_report_error:          '@chat.message.report.error',
+      msg_update_header:         '@chat.message.update.header',
+      msg_update_placeholder:    '@chat.message.update.placeholder',
+      msg_update_conf:           '@chat.message.update.conf',
+      msg_update_error:          '@chat.message.update.error',
+      msg_delete_confirm:        '@chat.message.delete.confirm',
+      msg_delete_conf:           '@chat.message.delete.conf',
+      msg_delete_error:          '@chat.message.delete.error',
+      react_header:              '@chat.message.react.header',
+      react_cancel:              '@chat.message.react.cancel',
+      msg_report_messageFrom:    '@chat.message.report.messageFrom',
+      msg_report_message:        '@chat.message.report.message',
+      msg_report_comment:        '@chat.message.report.comment',
+      msg_report_showMessage:    '@chat.message.report.showMessage',
+      // matrix-chat.ts status badges
+      fields_reconnecting:       '@chat.fields.reconnecting',
+      fields_connectionError:    '@chat.fields.connectionError',
+      fields_connecting:         '@chat.fields.connecting',
+      // matrix-chat.ts empty state
+      fields_selectRoom:         '@chat.fields.selectRoom',
+      fields_noRoomsError:       '@chat.fields.noRoomsError',
+      fields_createTestRoom:     '@chat.fields.createTestRoom',
+      // matrix-chat.ts thread panel
+      op_thread_empty:           '@chat.operation.thread.empty',
+      // matrix-chat.ts video call overlay
+      op_video_incoming:         '@chat.operation.video.incoming',
+      op_video_connecting:       '@chat.operation.video.connecting',
+      // MatrixMessageInput typing indicator
+      msg_input_isTypeing:       '@chat.fields.isTypeing',
+      msg_input_and:             '@chat.fields.and',
+      msg_input_areTypeing:      '@chat.fields.areTypeing',
+      msg_input_othersTypeing:   '@chat.fields.othersTypeing',
     }),
     syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),
     roomsResource: rxResource({ stream: () => store.matrixService.rooms }),
@@ -423,7 +441,7 @@ export const _MatrixChatStore = signalStore(
           componentProps: {
             room,
             currentUser: store.currentUser(),
-            header: '@chat.operation.room.create.header'
+            header: '@chat.room.create.header'
           }
         });
         await modal.present();
@@ -463,7 +481,7 @@ export const _MatrixChatStore = signalStore(
           componentProps: { 
             room, 
             currentUser: store.currentUser(),
-            header: '@chat.operation.room.update.header'
+            header: '@chat.room.update.header'
           }
         });
         await modal.present();
