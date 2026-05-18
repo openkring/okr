@@ -1,10 +1,10 @@
 import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { AsyncPipe, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { AppStore } from '@bk2/shared-feature';
 import { ButtonCopy } from '@bk2/shared-ui';
@@ -17,7 +17,7 @@ import 'emoji-picker-element';
   standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
-    SvgIconPipe, TranslatePipe, AsyncPipe,
+    SvgIconPipe,
     CommonModule, FormsModule, ButtonCopy,
     IonTextarea, IonButton, IonIcon
   ],
@@ -241,7 +241,7 @@ import 'emoji-picker-element';
         <ion-textarea
           #textInput
           [(ngModel)]="messageText"
-          placeholder="{{ '@chat.fields.typeMessage' | translate | async }}"
+          placeholder="{{ '@chat.fields.typeMessage' }}"
           [rows]="1"
           [autoGrow]="true"
           (ionInput)="onTyping()"
@@ -279,12 +279,12 @@ import 'emoji-picker-element';
         <span class="spacer"></span>
 
         <ion-button fill="clear" class="action-button" (click)="startRecording()"
-          title="{{ '@chat.fields.recordAudio' | translate | async }}">
+          title="{{ '@chat.fields.recordAudio' }}">
           <ion-icon slot="icon-only" src="{{'mic' | svgIcon}}"></ion-icon>
         </ion-button>
 
         <ion-button fill="clear" class="action-button" (click)="videoCallStarted.emit()"
-          title="{{ '@chat.fields.videoCall' | translate | async }}">
+          title="{{ '@chat.fields.videoCall' }}">
           <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
         </ion-button>
 
@@ -303,7 +303,7 @@ import 'emoji-picker-element';
         <div class="recording-indicator">
           <span class="recording-dot"></span>
           <span class="recording-duration">{{ formatRecordingDuration(recordingSeconds()) }}</span>
-          <span class="recording-label">{{ '@chat.fields.recording' | translate | async }}</span>
+          <span class="recording-label">{{ '@chat.fields.recording' }}</span>
         </div>
         <ion-button class="send-button" color="danger" (click)="stopRecording()">
           <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>

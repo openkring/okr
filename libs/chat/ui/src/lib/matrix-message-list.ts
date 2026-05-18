@@ -1,11 +1,10 @@
 import { Component, computed, effect, input, output, viewChild, ElementRef } from '@angular/core';
-import { AsyncPipe, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { IonIcon, IonChip, IonAvatar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { MatrixMessage, MatrixReadReceipt } from '@bk2/shared-models';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { PollMessage } from './poll-message';
 import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
 
@@ -15,7 +14,7 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
   imports: [
     CommonModule,
     IonIcon, IonChip, IonAvatar,
-    SvgIconPipe, TranslatePipe, AsyncPipe,
+    SvgIconPipe,
     PollMessage, MatrixReadReceiptStrip
   ],
   styles: [`
@@ -306,7 +305,7 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
     <div class="messages-container" #messagesContainer>
       @if (messages().length === 0 && typingUsers().length === 0) {
         <div class="empty-state">
-          <p>{{'@chat.fields.noMessagesStartConversation' | translate | async }}</p>
+          <p>{{'@chat.fields.noMessagesStartConversation' }}</p>
         </div>
       } @else {
         @for (dayGroup of groupedMessages(); track dayGroup.date) {

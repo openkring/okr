@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { MatrixMessage } from '@bk2/shared-models';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
@@ -14,7 +12,7 @@ import { PollDetailModal } from './poll-detail.modal';
   selector: 'bk-poll-message',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, TranslatePipe],
+  imports: [],
   styles: [`
     .poll-question {
       font-weight: 600;
@@ -108,7 +106,7 @@ import { PollDetailModal } from './poll-detail.modal';
   `],
   template: `
     <div class="poll-question" (click)="onHeaderClick(); $event.stopPropagation()">{{ question() }}</div>
-    <div class="poll-hint">{{ hint() | translate | async }}</div>
+    <div class="poll-hint">{{ hint() }}</div>
 
     @for (answer of message().pollAnswers ?? []; track answer.id) {
       <div
@@ -150,11 +148,11 @@ import { PollDetailModal } from './poll-detail.modal';
 
     <div class="poll-footer">
       @if (message().pollEnded) {
-        {{ '@chat.survey.ended' | translate | async }}
+        {{ '@chat.survey.ended' }}
       } @else {
-        {{ totalVotes() }} {{ '@chat.survey.totalVotes' | translate | async }}
+        {{ totalVotes() }} {{ '@chat.survey.totalVotes' }}
         @if (myVoteAnswerIds().length > 0) {
-          · {{ '@chat.survey.voted' | translate | async }}
+          · {{ '@chat.survey.voted' }}
         }
       }
     </div>

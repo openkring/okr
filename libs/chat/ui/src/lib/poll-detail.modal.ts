@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { IonAvatar, IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { MatrixReadReceipt } from '@bk2/shared-models';
 import { Header } from '@bk2/shared-ui';
 import { hashUserIdToColor } from '@bk2/chat-util';
@@ -12,7 +10,6 @@ import { hashUserIdToColor } from '@bk2/chat-util';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    AsyncPipe, TranslatePipe,
     Header,
     IonContent, IonList, IonItem, IonLabel, IonAvatar,
   ],
@@ -60,7 +57,7 @@ import { hashUserIdToColor } from '@bk2/chat-util';
       @for(answer of pollAnswers(); track answer.id) {
         <div class="answer-header">{{ answer.body }} ({{ voteCount(answer.id) }})</div>
         @if(voters(answer.id).length === 0) {
-          <p class="no-votes">{{ '@chat.survey.viewVotes.noVotes' | translate | async }}</p>
+          <p class="no-votes">{{ '@chat.survey.viewVotes.noVotes' }}</p>
         } @else {
           <ion-list lines="none">
             @for(voter of voters(answer.id); track voter.userId) {

@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, OnInit, effect, input, output, signal } from '@angular/core';
 import { IonItem, IonInput, IonList } from '@ionic/angular/standalone';
 
 import { AnyCharacterMask } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { Checkbox, StringList } from '@bk2/shared-ui';
 
 import { MatrixPollData } from '@bk2/chat-data-access';
@@ -12,7 +10,6 @@ import { MatrixPollData } from '@bk2/chat-data-access';
   selector: 'bk-poll-create-form',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe,
     StringList, Checkbox,
     IonItem, IonInput, IonList
   ],
@@ -21,9 +18,9 @@ import { MatrixPollData } from '@bk2/chat-data-access';
       <!-- Question -->
       <ion-item>
         <ion-input
-          [label]="'@chat.survey.questionLabel' | translate | async"
+          [label]="'@chat.survey.questionLabel'"
           labelPlacement="floating"
-          [placeholder]="'@chat.survey.questionPlaceholder' | translate | async"
+          [placeholder]="'@chat.survey.questionPlaceholder'"
           [value]="question()"
           (ionInput)="question.set($any($event).detail.value ?? '')"
           [maxlength]="255"
