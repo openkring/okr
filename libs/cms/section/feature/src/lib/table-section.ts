@@ -1,10 +1,20 @@
-import { AsyncPipe, NgStyle } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { NgStyle } from '@angular/common';
+import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 import { TableSection } from '@bk2/shared-models';
-import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+
+const TableSectionStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      empty_table: '@content.section.error.emptyTable',
+    }),
+  })),
+);
 
 /**
  * Data grid based on open source (Generic UI Data Grid)[https://generic-ui.com/].
@@ -18,11 +28,11 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
   selector: 'bk-table-section',
   standalone: true,
   imports: [
-    SpinnerComponent, OptionalCardHeaderComponent,
+    Spinner, OptionalCardHeader,
     NgStyle,
-    TranslatePipe, AsyncPipe,
     IonCard, IonCardContent, IonLabel, IonItem
-    ],
+  ],
+  providers: [TableSectionStore],
   styles: [`
   ion-card-content { padding: 5px; }
   ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
@@ -50,7 +60,7 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
       <ion-card-content>
         @if(header()?.length === 0 && body()?.length === 0) {
           <ion-item lines="none">
-            <ion-label>{{'@content.section.error.emptyTable' | translate | async}}</ion-label>
+            <ion-label>{{ store.i18n.empty_table() }}</ion-label>
           </ion-item>
         } @else {
           <div [ngStyle]="gridStyle()">
@@ -69,7 +79,7 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
         }
         @if(section.title && section.title !== '' && showTitleAs() === 'legend') {
           <ion-item lines="none" class="legend">
-            <ion-label><i>{{ section.title | translate | async}}</i></ion-label>
+            <ion-label><i>{{ section.title }}</i></ion-label>
           </ion-item>
         }
       </ion-card-content>
@@ -80,6 +90,8 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 `
 })
 export class TableSectionComponent {
+  protected readonly store = inject(TableSectionStore);
+
   // inputs
   public section = input<TableSection>();
 

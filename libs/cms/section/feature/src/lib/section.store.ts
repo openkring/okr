@@ -60,7 +60,13 @@ export const _SectionStore = signalStore(
       send_confirm1: PFX + 'send.confirm1',
       send_confirm2: PFX + 'send.confirm2',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      // section-list.ts
+      list_plural: '@content.section.plural',
+      list_field_description: '@content.section.field.description',
+      list_header_key: '@content.section.list.header.key',
+      list_header_name: '@content.section.list.header.name',
+      list_header_type: '@content.section.list.header.type',
     }),
 
     sectionsResource: rxResource({

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, computed, input, signa
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { IMAGE_STYLE_SHAPE, SliderSection } from '@bk2/shared-models';
-import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { Img, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
 
 
 /**
@@ -13,7 +13,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
   selector: 'bk-slider-section',
   standalone: true,
   imports: [
-    SpinnerComponent, ImageComponent, OptionalCardHeaderComponent,
+    Spinner, Img, OptionalCardHeader,
     IonCard, IonCardContent
   ],
   styles: [`

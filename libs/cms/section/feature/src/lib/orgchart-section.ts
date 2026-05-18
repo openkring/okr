@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, IonCard, IonCardContent, IonLabel, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
@@ -19,7 +18,6 @@ import { AvatarService } from '@bk2/avatar-data-access';
 
 import { OrgchartNodeComponent } from './orgchart-node';
 import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 type ViewMode = 'accordion' | 'chart';
 
@@ -28,7 +26,6 @@ type ViewMode = 'accordion' | 'chart';
   standalone: true,
   providers: [provideEchartsCore({ echarts }), OrgchartStore],
   imports: [
-    TranslatePipe, AsyncPipe,
     OrgchartNodeComponent, Spinner, OptionalCardHeader,
     NgxEchartsDirective, FormsModule,
     IonCard, IonCardContent, IonSegment, IonSegmentButton, IonLabel,
@@ -48,10 +45,10 @@ type ViewMode = 'accordion' | 'chart';
         <ion-card-content>
           <ion-segment [(ngModel)]="viewMode">
             <ion-segment-button value="accordion">
-              <ion-label>{{ '@cms.orgchart.view.accordion' | translate | async }}</ion-label>
+              <ion-label>{{ orgchartStore.i18n.view_accordion() }}</ion-label>
             </ion-segment-button>
             <ion-segment-button value="chart">
-              <ion-label>{{ '@cms.orgchart.view.chart' | translate | async }}</ion-label>
+              <ion-label>{{ orgchartStore.i18n.view_chart() }}</ion-label>
             </ion-segment-button>
           </ion-segment>
 

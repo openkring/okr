@@ -69,7 +69,9 @@ export const OrgchartStore = signalStore(
     i18n: store.i18nService.translateAll({
       group_detach_confirm: PFX + 'group.detach.confirm',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      view_accordion: '@cms.orgchart.view.accordion',
+      view_chart: '@cms.orgchart.view.chart',
     }),
 
     groupsResource: rxResource({

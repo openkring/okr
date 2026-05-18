@@ -4,6 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { STORAGE } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, AlbumStyle, ImageConfig, ImageType } from '@bk2/shared-models';
 import { debugMessage, die } from '@bk2/shared-util-core';
 
@@ -29,7 +30,10 @@ export const AlbumStore = signalStore(
     storage: inject(STORAGE),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
-    httpClient: inject(HttpClient)
+    httpClient: inject(HttpClient),
+    i18n: inject(I18nService).translateAll({
+      no_images: '@content.section.error.noImages',
+    }),
   })),
 
   withComputed((state) => {

@@ -1,8 +1,17 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, forwardRef, inject, input } from '@angular/core';
+import { Component, computed, forwardRef, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
+
+const PreviewStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      no_such_section: '@content.section.error.noSuchSection',
+    }),
+  })),
+);
 import { SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
@@ -22,7 +31,7 @@ import { SliderSectionComponent } from './slider-section';
   selector: 'bk-preview-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     ArticleSectionComponent, SliderSectionComponent, 
     forwardRef(() => PeopleSectionComponent),
     AlbumSectionComponent, MapSectionComponent, VideoSectionComponent, 
@@ -31,6 +40,7 @@ import { SliderSectionComponent } from './slider-section';
     IonHeader, IonButtons, IonToolbar, IonTitle, IonButton, IonIcon, IonMenuButton,
     IonContent, IonLabel
   ],
+  providers: [PreviewStore],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
@@ -82,7 +92,7 @@ import { SliderSectionComponent } from './slider-section';
           }
           <!-- not yet implemented: chart, chat, tracker -->       
           @default {
-            <ion-label>{{ '@content.section.error.noSuchSection' | translate: { type: section.type } | async }}</ion-label>
+            <ion-label>{{ errorMessage() }}</ion-label>
           }
         }
       }
@@ -91,8 +101,12 @@ import { SliderSectionComponent } from './slider-section';
 } )
 export class PreviewModal {
   private readonly modalController = inject(ModalController);
+  private readonly store = inject(PreviewStore);
   public section = input.required<SectionModel>();
   public title = input('Preview');
+  protected errorMessage = computed(() =>
+    this.store.i18n.no_such_section().replace('{{ type }}', this.section().type)
+  );
 
   public close(): void {
     this.modalController.dismiss(null, 'cancel');

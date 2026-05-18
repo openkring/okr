@@ -3,16 +3,18 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { map } from 'rxjs/operators';
 
 import { AppStore } from '@bk2/shared-feature';
+import { DocumentModel } from '@bk2/shared-models';
+import { I18nService } from '@bk2/shared-i18n';
+
 import { ActivityService } from '@bk2/activity-data-access';
 import { UploadService } from '@bk2/avatar-data-access';
 import { DocumentService } from '@bk2/document-data-access';
 import { buildDocumentModel } from '@bk2/document-util';
 import { FolderService } from '@bk2/folder-data-access';
-import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
-import { DocumentModel } from '@bk2/shared-models';
-import { map } from 'rxjs/operators';
+import { PFX } from './scope';
 
 const RAG_FOLDER_KEY = 'rag';
 
@@ -58,8 +60,14 @@ export const RagStore = signalStore(
         uploadService: inject(UploadService),
         documentService: inject(DocumentService),
         folderService: inject(FolderService),
+        i18nService: inject(I18nService),
     })),
     withProps((store) => ({
+        i18n: store.i18nService.translateAll({
+            upload:         PFX + 'cms.rag.upload',
+            placeholder:    PFX + 'cms.rag.placeholder',
+        }),
+
         // Real-time list of documents in the 'rag' folder.
         // Firestore only allows one array-contains per query and getSystemQuery already
         // uses one on 'tenants', so we filter by folderKey client-side.
@@ -99,7 +107,7 @@ export const RagStore = signalStore(
             await store.folderService.ensureGroupFolder(RAG_FOLDER_KEY, 'RAG', tenantId, currentUser ?? undefined);
 
             const uploads = files.map(file => ({ file, fullPath: `${storagePath}/${file.name}` }));
-            const downloadUrls = await store.uploadService.uploadFiles(uploads, '@cms.rag.upload');
+            const downloadUrls = await store.uploadService.uploadFiles(uploads, store.i18n.upload());
             if (!downloadUrls) return;
 
             await Promise.all(files.map(async (file, i) => {

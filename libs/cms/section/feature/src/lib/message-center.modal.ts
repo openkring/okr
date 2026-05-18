@@ -2,13 +2,22 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonInput, IonIcon, IonItem, IonList, IonSearchbar, IonSelect, IonSelectOption, IonTitle, IonToolbar, ModalController, IonLabel } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
-import { AsyncPipe } from '@angular/common';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { DeliveryTypes } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
 import { DeliveryType, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
+
+const MessageCenterStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      group_singular: '@subject.group.singular',
+    }),
+  })),
+);
 
 import { BkAvatar } from '@bk2/avatar-ui';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
@@ -19,8 +28,9 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
 @Component({
   selector: 'bk-message-center-modal',
   standalone: true,
+  providers: [MessageCenterStore],
   imports: [
-    SvgIconPipe, AsyncPipe, TranslatePipe,
+    SvgIconPipe,
     BkAvatar,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem,
     IonCheckbox, IonIcon, IonSearchbar, IonSelect, IonSelectOption, IonInput, IonLabel
@@ -110,7 +120,7 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
       <!-- Group selector (always visible) -->
       <ion-toolbar color="secondary">
         <ion-item lines="none" color="secondary">
-          <ion-label>{{ '@subject.group.singular' | translate | async }}</ion-label>
+          <ion-label>{{ msgStore.i18n.group_singular() }}</ion-label>
           <ion-select [value]="selectedGroupKey()"
             (ionChange)="selectedGroupKey.set($any($event).detail.value)"
             placeholder="Alle Gruppen">
@@ -152,6 +162,7 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
   `
 })
 export class MessageCenterModal {
+  protected readonly msgStore = inject(MessageCenterStore);
   private readonly modalController = inject(ModalController);
   private readonly userService = inject(UserService);
   private readonly membershipService = inject(MembershipService);

@@ -1,16 +1,11 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
-import {
-    IonButton, IonCard, IonCardContent, IonIcon, IonInput,
-    IonItem, IonLabel, IonList, IonNote, IonSpinner, IonText,
-} from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonSpinner, IonText } from '@ionic/angular/standalone';
 
-import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { RagConfig, SectionModel } from '@bk2/shared-models';
+import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { DocumentModel, RagConfig, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
@@ -70,8 +65,8 @@ import { RagStore } from './rag-section.store';
         .error-text { font-size: 0.85rem; padding: 4px 0; }
     `],
     imports: [
-        AsyncPipe, FormsModule,
-        OptionalCardHeaderComponent, SpinnerComponent, TranslatePipe,
+        FormsModule,
+        OptionalCardHeader, Spinner,
         IonCard, IonCardContent, IonInput, IonButton, IonIcon,
         IonItem, IonLabel, IonList, IonNote, IonSpinner, IonText,
         SvgIconPipe,
@@ -86,8 +81,8 @@ import { RagStore } from './rag-section.store';
                         <!-- Search input -->
                         <ion-input
                             [(ngModel)]="searchTerm"
-                            [placeholder]="'@cms.rag.placeholder' | translate | async"
-                            [disabled]="ragStore.isLoading()"
+                            [placeholder]="placeholder()"
+                            [disabled]="store.isLoading()"
                             (keyup.enter)="submit()"
                             fill="outline"
                             clearInput="true"
@@ -96,11 +91,11 @@ import { RagStore } from './rag-section.store';
                         <!-- Submit -->
                         <ion-button
                             (click)="submit()"
-                            [disabled]="!searchTerm().trim() || ragStore.isLoading()"
+                            [disabled]="!searchTerm().trim() || isLoading()"
                             fill="solid"
                             shape="round"
                         >
-                            @if (ragStore.isLoading()) {
+                            @if (isLoading()) {
                                 <ion-spinner slot="icon-only" name="crescent" />
                             } @else {
                                 <ion-icon slot="icon-only" src="{{ 'search' | svgIcon }}" />
@@ -108,8 +103,8 @@ import { RagStore } from './rag-section.store';
                         </ion-button>
 
                         <!-- Clear chat history -->
-                        @if (ragStore.hasHistory()) {
-                            <ion-button fill="clear" (click)="ragStore.reset()">
+                        @if (hasHistory()) {
+                            <ion-button fill="clear" (click)="reset()">
                                 <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
                             </ion-button>
                         }
@@ -129,16 +124,16 @@ import { RagStore } from './rag-section.store';
                     </div>
 
                     <!-- RAG document list (edit mode + contentAdmin only) -->
-                    @if (editMode() && isContentAdmin() && ragStore.ragDocuments().length > 0) {
+                    @if (editMode() && isContentAdmin() && documents().length > 0) {
                         <ion-list lines="inset">
-                            @for (doc of ragStore.ragDocuments(); track doc.bkey) {
+                            @for (doc of documents(); track doc.bkey) {
                                 <ion-item>
                                     <ion-icon slot="start" src="{{ 'document' | svgIcon }}" />
                                     <ion-label>
                                         <p>{{ doc.title || doc.fullPath }}</p>
                                         <ion-note>{{ doc.mimeType }}</ion-note>
                                     </ion-label>
-                                    <ion-button slot="end" fill="clear" color="danger" (click)="ragStore.deleteDocument(doc)">
+                                    <ion-button slot="end" fill="clear" color="danger" (click)="deleteDocument(doc)">
                                         <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
                                     </ion-button>
                                 </ion-item>
@@ -147,14 +142,14 @@ import { RagStore } from './rag-section.store';
                     }
 
                     <!-- Query error -->
-                    @if (ragStore.error(); as err) {
+                    @if (error(); as err) {
                         <ion-text color="danger">
                             <p class="error-text">{{ err }}</p>
                         </ion-text>
                     }
 
                     <!-- Chat history (newest first) -->
-                    @if (ragStore.hasHistory()) {
+                    @if (hasHistory()) {
                         <div class="chat-list">
                             @for (entry of reversedChatEntries(); track $index) {
                                 <div class="chat-entry">
@@ -187,9 +182,40 @@ import { RagStore } from './rag-section.store';
     `,
 })
 export class RagSectionComponent {
-    protected readonly ragStore = inject(RagStore);
+    protected readonly store = inject(RagStore);
     private readonly sanitizer = inject(DomSanitizer);
 
+    // inputs
+    public section = input<SectionModel>();
+    public editMode = input<boolean>(false);
+
+    // signals
+    protected searchTerm = signal('');
+
+    // computed
+    protected placeholder = computed(() => this.store.i18n.placeholder());
+    protected isLoading = computed(() => this.store.isLoading());
+    protected hasHistory = computed(() => this.store.hasHistory());
+    protected documents = computed(() => this.store.ragDocuments());
+    protected error = computed(() => this.store.error());
+    protected readonly title = computed(() => this.section()?.title);
+    protected readonly subTitle = computed(() => this.section()?.subTitle);
+    protected readonly config = computed(() => this.section()?.properties as RagConfig | undefined);
+    protected readonly storeName = computed(() => this.config()?.storeName ?? '');
+    protected readonly isContentAdmin = computed(() => hasRole('contentAdmin', this.store.currentUser()));
+    protected readonly reversedChatEntries = computed(() => [...this.store.chatEntries()].reverse());
+
+    // constants
+    protected readonly acceptMimeTypes = DEFAULT_MIMETYPES.join(',');
+
+    // constructor
+    constructor() {
+        effect(() => {
+            this.store.setStoreName(this.storeName());
+        });
+    }
+
+    // methods
     protected toHtml(markdown: string): SafeHtml {
         return this.sanitizer.bypassSecurityTrustHtml(marked.parse(markdown) as string);
     }
@@ -206,36 +232,25 @@ export class RagSectionComponent {
         URL.revokeObjectURL(objectUrl);
     }
 
-    public section = input<SectionModel>();
-    public editMode = input<boolean>(false);
-
-    protected readonly title = computed(() => this.section()?.title);
-    protected readonly subTitle = computed(() => this.section()?.subTitle);
-    protected readonly config = computed(() => this.section()?.properties as RagConfig | undefined);
-    protected readonly storeName = computed(() => this.config()?.storeName ?? '');
-    protected readonly isContentAdmin = computed(() => hasRole('contentAdmin', this.ragStore.currentUser()));
-    protected readonly reversedChatEntries = computed(() => [...this.ragStore.chatEntries()].reverse());
-
-    protected searchTerm = signal('');
-    protected readonly acceptMimeTypes = DEFAULT_MIMETYPES.join(',');
-
     protected onFilesSelected(event: Event): void {
         const input = event.target as HTMLInputElement;
         const files = Array.from(input.files ?? []);
         input.value = ''; // reset so the same file can be picked again
-        this.ragStore.addDocument(files);
-    }
-
-    constructor() {
-        effect(() => {
-            this.ragStore.setStoreName(this.storeName());
-        });
+        this.store.addDocument(files);
     }
 
     protected submit(): void {
         const term = this.searchTerm().trim();
-        if (!term || this.ragStore.isLoading()) return;
+        if (!term || this.store.isLoading()) return;
         this.searchTerm.set('');
-        this.ragStore.query(term);
+        this.store.query(term);
+    }
+
+    protected reset(): void {
+        this.store.reset();
+    }
+
+    protected async deleteDocument(doc: DocumentModel): Promise<void> {
+        await this.store.deleteDocument(doc);
     }
 }

@@ -3,19 +3,20 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, Mo
 import { firstValueFrom } from 'rxjs';
 
 import { AvatarInfo, PeopleSection, PersonModelName } from "@bk2/shared-models";
-import { SpinnerComponent } from "@bk2/shared-ui";
+import { Spinner } from "@bk2/shared-ui";
 import { AppStore } from '@bk2/shared-feature';
 
 import { PersonsWidget } from '@bk2/cms-section-ui';
 import { SectionViewModal } from '@bk2/cms-section-feature';
 import { SectionService } from '@bk2/cms-section-data-access';
+
 import { PeopleSectionStore } from './people-section.store';
 
 @Component({
   selector: 'bk-people-section',
   standalone: true,
   imports: [
-    SpinnerComponent, PersonsWidget,
+    Spinner, PersonsWidget,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
   providers: [PeopleSectionStore],

@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, viewChild } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
@@ -13,7 +12,6 @@ import { CalendarSection, CalEventModel } from '@bk2/shared-models';
 import { Spinner } from '@bk2/shared-ui';
 import { DateFormat, debugData, debugMessage } from '@bk2/shared-util-core';
 import { isBrowser } from '@bk2/shared-util-angular';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { convertCalEventToFullCalendar } from '@bk2/calevent-util';
 import { CalEventStore } from '@bk2/calevent-feature';
@@ -37,7 +35,6 @@ import { CalendarStore } from './calendar-section.store';
   `],
   providers: [CalendarStore, CalEventStore],
   imports: [
-    TranslatePipe, AsyncPipe,
     FullCalendarModule,
     Spinner, 
     IonCard, IonCardContent
@@ -51,7 +48,7 @@ import { CalendarStore } from './calendar-section.store';
       <!-- <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" /> -->
       <ion-card-content>
         <div [style.display]="'block'">
-          {{ filteredEvents().length }} {{'@calevent.plural' | translate | async}}
+          {{ filteredEvents().length }} {{ calendarStore.i18n.calevent_plural() }}
           <full-calendar #fullCalendar 
             [options]="calendarOptions"
             [events]="calendarEvents()"

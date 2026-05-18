@@ -2,7 +2,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular/standalone';
 
-import { EmptyList, MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, isBrowser } from '@bk2/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
@@ -33,7 +33,7 @@ import { TasksStore } from './tasks-section.store';
   providers: [TasksStore], 
   imports: [
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
-    OptionalCardHeaderComponent, SpinnerComponent, EmptyList, MoreButton,
+    OptionalCardHeader, Spinner, EmptyList, MoreButton,
     IonCard, IonCardContent, IonLabel
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

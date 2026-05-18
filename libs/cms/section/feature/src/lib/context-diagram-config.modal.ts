@@ -1,63 +1,82 @@
 import { Component, computed, inject, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ModalController, IonContent, IonItem, IonLabel, IonToggle, IonButton, IonFooter, IonToolbar } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { ContextDiagramConfig, UserModel } from '@bk2/shared-models';
 import { Header } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
+
+const ContextDiagramStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      show_avatar:        '@cms.contextDiagram.config.showAvatar',
+      show_name:          '@cms.contextDiagram.config.showName',
+      show_members:       '@cms.contextDiagram.config.showMembers',
+      show_memberships:   '@cms.contextDiagram.config.showMemberships',
+      show_resp:          '@cms.contextDiagram.config.showResponsibilities',
+      show_personal_rels: '@cms.contextDiagram.config.showPersonalRels',
+      show_work_rels:     '@cms.contextDiagram.config.showWorkRels',
+      save_changes:       '@cms.contextDiagram.config.saveChanges',
+      cancel:             '@general.operation.change.cancel',
+      ok:                 '@general.operation.change.ok',
+    }),
+  })),
+);
 
 @Component({
   selector: 'bk-context-diagram-config-modal',
   standalone: true,
   imports: [
-    FormsModule, TranslatePipe, AsyncPipe,
+    FormsModule,
     Header,
     IonContent, IonItem, IonLabel, IonToggle, IonButton, IonFooter, IonToolbar,
   ],
+  providers: [ContextDiagramStore],
   template: `
     <bk-header title="@cms.contextDiagram.config.title" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showAvatar">
-          <ion-label>{{ '@cms.contextDiagram.config.showAvatar' | translate | async }}</ion-label>
+          <ion-label>{{ store.i18n.show_avatar() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showName">
-          <ion-label>{{ '@cms.contextDiagram.config.showName' | translate | async }}</ion-label>
+          <ion-label>{{ store.i18n.show_name() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showMembers">
-          <ion-label>{{ '@cms.contextDiagram.config.showMembers' | translate | async }}</ion-label>
+          <ion-label>{{ store.i18n.show_members() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showMemberships">
-          <ion-label>{{ '@cms.contextDiagram.config.showMemberships' | translate | async }}</ion-label>
+          <ion-label>{{ store.i18n.show_memberships() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showResponsibilities">
-          <ion-label>{{ '@cms.contextDiagram.config.showResponsibilities' | translate | async }}</ion-label>
+          <ion-label>{{ store.i18n.show_resp() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showPersonalRels">
-          <ion-label>{{ '@cms.contextDiagram.config.showPersonalRels' | translate | async }}</ion-label>
+          <ion-label>{{ store.i18n.show_personal_rels() }}</ion-label>
         </ion-toggle>
       </ion-item>
       @if (isMemberAdmin()) {
         <ion-item>
           <ion-toggle [(ngModel)]="cfg.showWorkRels">
-            <ion-label>{{ '@cms.contextDiagram.config.showWorkRels' | translate | async }}</ion-label>
+            <ion-label>{{ store.i18n.show_work_rels() }}</ion-label>
           </ion-toggle>
         </ion-item>
         <ion-item>
           <ion-toggle [(ngModel)]="saveChanges">
-            <ion-label>{{ '@cms.contextDiagram.config.saveChanges' | translate | async }}</ion-label>
+            <ion-label>{{ store.i18n.save_changes() }}</ion-label>
           </ion-toggle>
         </ion-item>
       }
@@ -65,16 +84,17 @@ import { TranslatePipe } from '@bk2/shared-i18n';
     <ion-footer>
       <ion-toolbar>
         <ion-button slot="start" fill="clear" (click)="cancel()">
-          {{ '@general.operation.change.cancel' | translate | async }}
+          {{ store.i18n.cancel() }}
         </ion-button>
         <ion-button slot="end" (click)="confirm()">
-          {{ '@general.operation.change.ok' | translate | async }}
+          {{ store.i18n.ok() }}
         </ion-button>
       </ion-toolbar>
     </ion-footer>
   `,
 })
 export class ContextDiagramConfigModal {
+  protected readonly store = inject(ContextDiagramStore);
   @Input() config!: ContextDiagramConfig;
   @Input() currentUser: UserModel | undefined;
 

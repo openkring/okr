@@ -3,7 +3,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { VideoSection } from '@bk2/shared-models';
-import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
 
 /**
  * A section that displays a video using Google's youtube player.
@@ -13,7 +13,7 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
   selector: 'bk-video-section',
   standalone: true,
   imports: [
-    SpinnerComponent, OptionalCardHeaderComponent,
+    Spinner, OptionalCardHeader,
     IonCard, IonCardContent,
   ],
   styles: [`

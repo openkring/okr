@@ -1,8 +1,6 @@
-import { AsyncPipe, NgStyle } from '@angular/common';
+import { NgStyle } from '@angular/common';
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, input, linkedSignal, PLATFORM_ID, viewChild } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AlbumSection, AlbumStyle, BackgroundStyle, ImageActionType, ImageConfig, ImageStyle, ImageType } from '@bk2/shared-models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { browse, CategoryOld, Img, Label, showZoomedImage, Spinner, Video } from '@bk2/shared-ui';
@@ -33,7 +31,7 @@ import { AlbumStore } from './album-section.store';
   standalone: true,
   imports: [
     NgStyle,
-    TranslatePipe, AsyncPipe, SvgIconPipe, JpgUrlPipe, PdfUrlPipe, ThumbnailUrlPipe,
+    SvgIconPipe, JpgUrlPipe, PdfUrlPipe, ThumbnailUrlPipe,
     Spinner, Label, Img, CategoryOld, Video,
     IonCard, IonCardContent, IonList, IonThumbnail,
     IonGrid, IonRow, IonCol, IonItem, IonToolbar, IonTitle, IonIcon, IonLabel
@@ -196,7 +194,7 @@ import { AlbumStore } from './album-section.store';
                 }
               }
             } @else {
-              <bk-label>{{ '@content.section.error.noImages' | translate | async }}</bk-label>
+              <bk-label>{{ albumStore.i18n.no_images() }}</bk-label>
             }
         </ion-card-content>
       </ion-card>

@@ -2,18 +2,18 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, ColorIonic, PersonModelName, ResponsibilitySection } from '@bk2/shared-models';
-import { SpinnerComponent } from '@bk2/shared-ui';
+import { Spinner } from '@bk2/shared-ui';
 import { getAvatarName, getFullName } from '@bk2/shared-util-core';
 import { AppStore } from '@bk2/shared-feature';
 
 import { ResponsibilitySectionStore } from './responsibility-section.store';
-import { AvatarLabelComponent } from '@bk2/avatar-ui';
+import { AvatarLabel } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-responsibility-section',
   standalone: true,
   imports: [
-    SpinnerComponent, AvatarLabelComponent,
+    Spinner, AvatarLabel,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel,
   ],
   styles: [`

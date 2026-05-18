@@ -1,11 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
@@ -15,8 +12,8 @@ import { SectionStore } from './section.store';
   selector: 'bk-section-all-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
-    SpinnerComponent, EmptyList, ListFilterComponent,
+    SvgIconPipe,
+    Spinner, EmptyList, ListFilter,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
   ],
@@ -25,7 +22,7 @@ import { SectionStore } from './section.store';
     <!-- page header -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
-      <ion-title>{{ selectedSectionsCount() }}/{{ sectionsCount() }} {{ '@content.section.plural' | translate | async }}</ion-title>
+      <ion-title>{{ selectedSectionsCount() }}/{{ sectionsCount() }} {{ sectionStore.i18n.list_plural() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('contentAdmin')) {
           <ion-button (click)="add()">
@@ -38,7 +35,7 @@ import { SectionStore } from './section.store';
     <!-- description -->
     <ion-toolbar class="ion-hide-md-down">
       <ion-item lines="none">
-        <ion-label>{{ '@content.section.field.description' | translate | async }}</ion-label>
+        <ion-label>{{ sectionStore.i18n.list_field_description() }}</ion-label>
       </ion-item>
     </ion-toolbar>
 
@@ -56,13 +53,13 @@ import { SectionStore } from './section.store';
         <ion-grid>
           <ion-row>
             <ion-col size="4" class="ion-hide-md-down">
-              <ion-label><strong>{{ '@content.section.list.header.key' | translate | async }}</strong></ion-label>  
+              <ion-label><strong>{{ sectionStore.i18n.list_header_key() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-              <ion-label><strong>{{ '@content.section.list.header.name' | translate | async }}</strong></ion-label>  
+              <ion-label><strong>{{ sectionStore.i18n.list_header_name() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ '@content.section.list.header.type' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ sectionStore.i18n.list_header_type() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
