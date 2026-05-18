@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryModel } from '@bk2/shared-models';
 import { Header } from './header';
 
@@ -16,7 +14,7 @@ import { Header } from './header';
   selector: 'bk-category-select-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, 
+    
     Header,
     IonContent, IonLabel, IonItem
   ],
@@ -25,7 +23,7 @@ import { Header } from './header';
     <ion-content class="ion-padding">
       @for (cat of this.categories(); track cat; let i = $index) {
         <ion-item lines="none" (click)="select(i)">
-          <ion-label>{{ '@' + cat.i18nBase + '.label' | translate | async }}</ion-label>
+          <ion-label>{{ '@' + cat.i18nBase + '.label' }}</ion-label>
         </ion-item>
       }
     </ion-content>

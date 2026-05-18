@@ -1,5 +1,4 @@
 
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon, IonInput, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
@@ -10,7 +9,6 @@ import { MaskitoDirective } from '@maskito/angular';
 
 import { ChTimeMask } from '@bk2/shared-config';
 import { InputMode, TIME_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, getCurrentTime } from '@bk2/shared-util-core';
 
@@ -20,7 +18,7 @@ import { TimeSelectModal } from './time-select.modal';
   selector: 'bk-time-input',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     MaskitoDirective, FormsModule,
     IonItem, IonIcon, IonInput, IonNote
   ],
@@ -36,8 +34,8 @@ import { TimeSelectModal } from './time-select.modal';
           (ngModelChange)="value.set($event)"
           [value]="value()"
           labelPlacement="floating"
-          label="{{'@input.' + name() + '.label' | translate | async }}"
-          placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
+          label="{{'@input.' + name() + '.label' }}"
+          placeholder="{{'@input.' + name() + '.placeholder' }}"
           [inputMode]="inputMode()"
           [counter]="!isReadOnly()"
           [maxlength]="timeLength"
@@ -50,7 +48,7 @@ import { TimeSelectModal } from './time-select.modal';
     </ion-item>
     @if(shouldShowHelper()) {
       <ion-item lines="none" class="helper">
-        <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
+        <ion-note>{{'@input.' + name() + '.helper' }}</ion-note>
       </ion-item>
     }
   `

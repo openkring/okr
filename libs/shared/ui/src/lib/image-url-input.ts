@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { URL_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
@@ -14,7 +12,7 @@ import { ButtonCopy } from './button-copy';
   selector: 'bk-image-url-input',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    
     FormsModule,
     IonItem, IonInput, IonNote,
     ButtonCopy
@@ -28,8 +26,8 @@ import { ButtonCopy } from './button-copy';
         [name]="name()"
         [ngModel]="value()"
         labelPlacement="floating"
-        label="{{'@input.' + name() + '.label' | translate | async }}"
-        placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
+        label="{{'@input.' + name() + '.label' }}"
+        placeholder="{{'@input.' + name() + '.placeholder' }}"
         inputmode="url"
         [counter]="!isReadOnly()"
         [maxlength]="maxLength()"
@@ -43,7 +41,7 @@ import { ButtonCopy } from './button-copy';
     </ion-item>
     @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
-      <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
+      <ion-note>{{'@input.' + name() + '.helper' }}</ion-note>
     </ion-item>
   }
   `

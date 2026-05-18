@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, Injectable, OnInit, inject, input } from '@angular/core';
 import { IonButton, IonContent, IonHeader, IonItem, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { COLOR_PICKER_CONFIG, ChromePickerComponent, ColorPickerControl, ColorType, IColorPickerConfig } from '@iplab/ngx-color-picker';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 const DEFAULT_COLOR = '#2196F3';
 
@@ -19,7 +17,7 @@ class ColorPickerConfiguration implements IColorPickerConfig {
   selector: 'bk-color-select-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    
     ChromePickerComponent,
     IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonButton
   ],
@@ -29,14 +27,14 @@ class ColorPickerConfiguration implements IColorPickerConfig {
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
-        <ion-title>{{ '@input.color.select' | translate | async }}</ion-title>
+        <ion-title>{{ '@input.color.select' }}</ion-title>
       </ion-toolbar>  
     </ion-header>
     <ion-content>
       <chrome-picker [control]="colorControl" [color]="hexColor()" />
       <ion-item lines="none">
-        <ion-button fill="clear" (click)="cancel()">{{ '@general.operation.change.cancel' | translate | async }}</ion-button>
-        <ion-button fill="clear" (click)="save()">{{ '@general.operation.change.ok' | translate | async }}</ion-button>
+        <ion-button fill="clear" (click)="cancel()">{{ '@general.operation.change.cancel' }}</ion-button>
+        <ion-button fill="clear" (click)="save()">{{ '@general.operation.change.ok' }}</ion-button>
       </ion-item>
     </ion-content>
   `

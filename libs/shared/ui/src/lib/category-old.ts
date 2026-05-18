@@ -1,10 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, output } from '@angular/core';
 import { IonItem, IonLabel, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { compareCategories } from '@bk2/shared-categories';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryModel } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
@@ -19,7 +17,6 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   selector: 'bk-category-old',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonItem, IonSelect, IonSelectOption, IonNote, IonLabel
   ],
   viewProviders: [vestFormsViewProviders],
@@ -27,10 +24,10 @@ import { coerceBoolean } from '@bk2/shared-util-core';
     @if(selectedCategory(); as selectedCategory) {
       <ion-item lines="none">
         @if(isReadOnly()) {
-          <ion-label>{{ this.label() | translate | async }}: {{ '@' + selectedCategory.i18nBase + '.label' | translate | async }}</ion-label>
+          <ion-label>{{ this.label() }}: {{ '@' + selectedCategory.i18nBase + '.label' }}</ion-label>
         } @else {
           <ion-select [name]="name()" (ionChange)="onCategoryChange($event)"
-            label="{{ this.label() | translate | async }}"
+            label="{{ this.label() }}"
             [disabled]="isReadOnly()"
             label-placement="floating"
             interface="popover"
@@ -41,7 +38,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
     <!--       
               unfortunately, Ionic is not supporting icons within ion-select-option   
     -->            
-                {{ '@' + cat.i18nBase + '.label' | translate | async }}
+                {{ '@' + cat.i18nBase + '.label' }}
               </ion-select-option>
             }
           </ion-select>
@@ -50,7 +47,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
     }
     @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
-      <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
+      <ion-note>{{'@input.' + name() + '.helper'}}</ion-note>
     </ion-item>
   }
   `

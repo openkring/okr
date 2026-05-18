@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { AppNavigationService } from '@bk2/shared-util-angular';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -13,7 +11,7 @@ import { Searchbar } from './searchbar';
   selector: 'bk-header',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonIcon, IonButton,
     Searchbar
   ],
@@ -43,7 +41,7 @@ import { Searchbar } from './searchbar';
       </ion-toolbar>
       @if(isSearchablePage()) {
         <ion-toolbar>
-          <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ placeholder() | translate | async }}" />
+          <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ placeholder() }}" />
         </ion-toolbar>
       }
     </ion-header>

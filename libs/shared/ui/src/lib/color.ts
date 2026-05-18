@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonChip, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { error } from '@bk2/shared-util-angular';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
@@ -17,7 +15,7 @@ import { ColorSelectModal } from './color-select.modal';
   selector: 'bk-color',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    
     IonItem, IonLabel, IonChip
   ],
   styles: [`
@@ -31,7 +29,7 @@ import { ColorSelectModal } from './color-select.modal';
   viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
-      <ion-label>{{ label() | translate | async }}</ion-label>
+      <ion-label>{{ label() }}</ion-label>
       <ion-chip (click)="selectColor()" style="background-color: {{ hexColor() }}" />
       <ion-label>{{ hexColor() }}</ion-label>
     </ion-item>

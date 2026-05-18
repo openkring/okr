@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { AutoComplete, InputMode, INT_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
@@ -14,7 +12,6 @@ import { ButtonCopy } from './button-copy';
   selector: 'bk-number-input',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     FormsModule,
     IonItem, IonInput, IonNote,
     ButtonCopy
@@ -29,8 +26,8 @@ import { ButtonCopy } from './button-copy';
       [ngModel]="value()"
       (ngModelChange)="value.set($event)"
       labelPlacement="floating"
-      label="{{label() | translate | async }}"
-      placeholder="{{placeholder() | translate | async }}"
+      label="{{label()}}"
+      placeholder="{{placeholder()}}"
       [inputMode]="inputMode()"
       [counter]="!isReadOnly()"
       [maxlength]="maxLength()"
@@ -44,7 +41,7 @@ import { ButtonCopy } from './button-copy';
   </ion-item>
   @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
-      <ion-note>{{helper() | translate | async}}</ion-note>
+      <ion-note>{{helper()}}</ion-note>
     </ion-item>
   }
   `

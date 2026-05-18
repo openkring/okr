@@ -1,12 +1,10 @@
 
-import { AsyncPipe } from '@angular/common';
 import { Component, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
 
 import { LowercaseWordMask } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryItemModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { die } from '@bk2/shared-util-core';
@@ -15,7 +13,7 @@ import { die } from '@bk2/shared-util-core';
   selector: 'bk-category-items',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     MaskitoDirective,
     IonList, IonItem, IonButton,
     IonLabel, IonInput, IonIcon,
@@ -25,8 +23,8 @@ import { die } from '@bk2/shared-util-core';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
-        <ion-card-subtitle>{{ subTitle() | translate | async }}</ion-card-subtitle>
+        <ion-card-title>{{ title() }}</ion-card-title>
+        <ion-card-subtitle>{{ subTitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         <ion-item lines="none">
@@ -64,7 +62,7 @@ import { die } from '@bk2/shared-util-core';
         @if(items(); as items) {
           @if(items.length === 0) {
             <ion-item lines="none">
-              <ion-label>{{'@input.categoryItems.empty' | translate | async}}</ion-label>
+              <ion-label>{{'@input.categoryItems.empty' }}</ion-label>
             </ion-item>
           } @else {
             <ion-list>

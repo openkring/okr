@@ -20,7 +20,7 @@ import { PFX } from './scope';
  */
 
 @Component({
-  selector: 'bk-string-list',
+  selector: 'bk-strings',
   standalone: true,
   imports: [
     SvgIconPipe,

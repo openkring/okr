@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
@@ -8,17 +7,15 @@ import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
 
 import { PHONE_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { ChPhoneMask } from '@bk2/shared-config';
 
 import { ButtonCopy } from './button-copy';
 
 @Component({
-  selector: 'bk-phone-input',
+  selector: 'bk-phone',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     FormsModule, MaskitoDirective,
     IonItem, IonInput, IonNote,
     ButtonCopy
@@ -33,14 +30,14 @@ import { ButtonCopy } from './button-copy';
       [ngModel]="value()"
       (ngModelChange)="value.set($event)"
       labelPlacement="floating"
-      label="{{'@input.' + name() + '.label' | translate | async }}"
-      placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
+      label="{{'@input.' + name() + '.label'}}"
+      placeholder="{{'@input.' + name() + '.placeholder'}}"
       inputMode="tel"
       [counter]="!isReadOnly()"
       [maxlength]="maxLength()"
       autocomplete="tel"
       [clearInput]="shouldClearInput()"
-      [readonly]="isReadOnly()" 
+      [readonly]="isReadOnly()"
       [maskito]="phoneMask"
       [maskitoElement]="maskPredicate"
     />
@@ -50,7 +47,7 @@ import { ButtonCopy } from './button-copy';
   </ion-item>
   @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
-      <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
+      <ion-note>{{'@input.' + name() + '.helper'}}</ion-note>
     </ion-item>
   }
   `

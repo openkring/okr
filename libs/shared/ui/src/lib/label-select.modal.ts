@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
 import { Header } from './header';
@@ -11,7 +9,7 @@ import { Header } from './header';
   selector: 'bk-label-select-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     Header,
     IonIcon, IonContent, IonItem, IonLabel
   ],
@@ -23,7 +21,7 @@ import { Header } from './header';
             @if(icons.length > 0) {
               <ion-icon src="{{icons()[i] | svgIcon}}" slot="start" />
             }
-            <ion-label>{{ label | translate | async }}</ion-label>
+            <ion-label>{{ label }}</ion-label>
           </ion-item>
         }
       </ion-content>

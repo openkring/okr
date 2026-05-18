@@ -1,10 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCheckbox, IonIcon, IonItem, IonLabel, IonNote } from '@ionic/angular/standalone';
 
 import { ColorsIonic, getCategoryStringField } from '@bk2/shared-categories';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ColorIonic } from '@bk2/shared-models';
 import { getSvgIconUrl } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -16,7 +14,7 @@ export type CheckboxJustification = 'start' | 'end' | 'space-between';
   selector: 'bk-checkbox',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    
     FormsModule,
     IonItem, IonCheckbox, IonNote, IonIcon, IonLabel
   ],
@@ -25,7 +23,7 @@ export type CheckboxJustification = 'start' | 'end' | 'space-between';
       @if (isReadOnly()) { <!-- read-only mode: just show icon and label -->
         <ion-label>
           <ion-icon slot="start" [src]="svgIconUrl()" />
-          {{ this.label() | translate | async }}
+          {{ this.label() }}
         </ion-label>
       } @else { <!-- editable mode: show checkbox -->
         <ion-checkbox required
@@ -39,14 +37,14 @@ export type CheckboxJustification = 'start' | 'end' | 'space-between';
           [indeterminate]="isIndeterminate()"
         >
           <div class="ion-text-wrap">
-            {{ label() | translate | async }}
+            {{ label() }}
           </div>
         </ion-checkbox>
       }
     </ion-item>
     @if(shouldShowHelper()) {
       <ion-item lines="none">
-        <ion-note>{{ helperText() | translate | async }}</ion-note>
+        <ion-note>{{ helperText() }}</ion-note>
       </ion-item>
     }
   `

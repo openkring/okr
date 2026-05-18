@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonInputPasswordToggle, IonItem, IonNote } from '@ionic/angular/standalone';
@@ -9,7 +8,6 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { PasswordMask } from '@bk2/shared-config';
 import { InputMode, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
@@ -18,7 +16,6 @@ import { ButtonCopy } from './button-copy';
   selector: 'bk-password-input',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     FormsModule,
     ButtonCopy,
     MaskitoDirective,
@@ -35,8 +32,8 @@ import { ButtonCopy } from './button-copy';
           [ngModel]="value()"
           (ngModelChange)="value.set($event)"
           labelPlacement="floating"
-          label="{{'@input.' + name() + '.label' | translate | async }}"
-          placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
+          label="{{'@input.' + name() + '.label'}}"
+          placeholder="{{'@input.' + name() + '.placeholder'}}"
           [inputMode]="inputMode()"
           [maxlength]="maxLength()"
           [clearInput]="shouldClearInput()"
@@ -54,7 +51,7 @@ import { ButtonCopy } from './button-copy';
     </ion-item>
     @if(shouldShowHelper()) {
       <ion-item lines="none" class="helper" [button]="false">
-        <ion-note>{{ helper() | translate | async }}</ion-note>
+        <ion-note>{{ helper() }}</ion-note>
       </ion-item>
     }
   `

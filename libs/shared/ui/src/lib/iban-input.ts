@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
@@ -9,16 +8,15 @@ import { MaskitoElementPredicate } from '@maskito/core';
 
 import { ChIbanMask } from '@bk2/shared-config';
 import { IBAN_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
 
 @Component({
-  selector: 'bk-iban-input',
+  selector: 'bk-iban',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, 
+    
     MaskitoDirective, FormsModule,
     IonItem, IonNote, IonInput,
     ButtonCopy
@@ -33,8 +31,8 @@ import { ButtonCopy } from './button-copy';
         [ngModel]="value()"
         (ngModelChange)="value.set($event)"
         labelPlacement="floating"
-        label="{{'@input.' + name() + '.label' | translate | async }}"
-        placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
+        label="{{'@input.' + name() + '.label' }}"
+        placeholder="{{'@input.' + name() + '.placeholder' }}"
         inputMode="text"
         [counter]="!isReadOnly()"
         [maxlength]="maxLength()"
@@ -50,7 +48,7 @@ import { ButtonCopy } from './button-copy';
     </ion-item>
     @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
-      <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
+      <ion-note>{{'@input.' + name() + '.helper' }}</ion-note>
     </ion-item>
   }
   `

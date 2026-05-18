@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonIcon, IonItem } from '@ionic/angular/standalone';
 import { Editor, NgxEditorModule } from 'ngx-editor';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
@@ -17,7 +15,7 @@ import { EditorToolbar } from './editor-toolbar';
   standalone: true,
   viewProviders: [vestFormsViewProviders],
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     NgxEditorModule, FormsModule,
     IonItem, IonIcon, IonButton,
     ButtonCopy
@@ -46,7 +44,7 @@ import { EditorToolbar } from './editor-toolbar';
             @if (isClearable()) {
               <ion-button fill="clear" (click)="content.set('<p></p>')">
                 <ion-icon slot="start" src="{{'cancel' | svgIcon }}" />
-                {{ '@general.operation.deleteContent' | translate | async }}
+                {{ '@general.operation.deleteContent' }}
               </ion-button>
             }
             @if (isCopyable()) {

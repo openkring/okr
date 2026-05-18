@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, ModalController } from '@ionic/angular/standalone';
@@ -7,7 +6,6 @@ import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 
 import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean, DateFormat, getTodayStr } from '@bk2/shared-util-core';
 import { ChAnyDate } from '@bk2/shared-config';
 
@@ -20,7 +18,7 @@ import { ChAnyDate } from '@bk2/shared-config';
   selector: 'bk-viewdate-input',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    
     FormsModule, MaskitoDirective,
     IonInput
   ],
@@ -30,8 +28,8 @@ import { ChAnyDate } from '@bk2/shared-config';
       [name]="name()"
       [(ngModel)]="viewDate"
       labelPlacement="floating"
-      label="{{ label() | translate | async}}"
-      placeholder="{{ placeholder() | translate | async }}"
+      label="{{ label() }}"
+      placeholder="{{ placeholder() }}"
       [inputMode]="inputMode()"
       [maxlength]="maxLength()"
       [autocomplete]="autocomplete()"

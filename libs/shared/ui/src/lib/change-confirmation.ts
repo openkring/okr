@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { IonButton, IonButtons, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@bk2/shared-categories';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ColorIonic } from '@bk2/shared-models';
 import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -12,17 +10,17 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   selector: 'bk-change-confirmation',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, CategoryPlainNamePipe,
+    CategoryPlainNamePipe,
     IonButton, IonToolbar, IonTitle, IonButtons
   ],
   template: `
     <ion-toolbar [color]="color() | categoryPlainName:colorsIonic" mode="md">
-      <ion-title>{{ confirmation() | translate | async }}</ion-title>      
+      <ion-title>{{ confirmation() }}</ion-title>      
       <ion-buttons slot="end">
         @if(shouldShowCancel()) {
-          <ion-button (click)="cancelClicked.emit()">{{ cancelLabel() | translate | async }}</ion-button>
+          <ion-button (click)="cancelClicked.emit()">{{ cancelLabel() }}</ion-button>
         }
-        <ion-button (click)="okClicked.emit()">{{ okLabel() | translate | async }}</ion-button>
+        <ion-button (click)="okClicked.emit()">{{ okLabel() }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   `

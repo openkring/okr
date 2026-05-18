@@ -1,23 +1,21 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model } from '@angular/core';
 import { IonItem, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-string-select',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    
     IonSelect, IonSelectOption, IonNote, IonItem
   ],
   viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
       <ion-select [name]="name()"
-        label="{{ label() | translate | async }}"
+        label="{{ label() }}"
         [disabled]="isReadOnly()"
         label-placement="floating"
         interface="popover"
@@ -31,7 +29,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 
       @if(shouldShowHelper()) {
     <ion-item lines="none">
-        <ion-note style="white-space: pre-line">{{ helperNote() | translate | async }}</ion-note>
+        <ion-note style="white-space: pre-line">{{ helperNote() }}</ion-note>
     </ion-item>
       }
   `

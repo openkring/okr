@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, output } from '@angular/core';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, getItemLabel } from '@bk2/shared-util-core';
@@ -24,10 +22,10 @@ let id = 0;
  *  <bk-cat-select selectedItemName="all" [category]="cat" [withAll]="true" (changed)="onChange($event)" />
  */
 @Component({
-  selector: 'bk-category-select',
+  selector: 'bk-cat-select',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     IonItem, IonNote, IonButton, IonPopover, IonContent, IonList, IonIcon, IonLabel
   ],
   viewProviders: [vestFormsViewProviders],
@@ -41,7 +39,7 @@ let id = 0;
       @if(showIcons() && selectedItem().icon.length > 0) {
         <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
       }
-      {{ getItemLabel(selectedItem()) | translate | async}}
+      {{ getItemLabel(selectedItem()) }}
       <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
     </ion-button>
   } @else {
@@ -49,7 +47,7 @@ let id = 0;
       @if(showIcons() && selectedItem().icon.length > 0) {
         <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
       }
-      <ion-label>{{ getItemLabel(selectedItem()) | translate | async}}</ion-label>
+      <ion-label>{{ getItemLabel(selectedItem()) }}</ion-label>
     </ion-item>
   }
   @if(!isReadOnly()) {
@@ -67,7 +65,7 @@ let id = 0;
               @if(shouldShowIcons()) {
                 <ion-icon slot="start" src="{{ item.icon| svgIcon }}" />
               }
-              <ion-label class="ion-text-wrap">{{ getItemLabel(item) | translate | async }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ getItemLabel(item) }}</ion-label>
             </ion-item>
             }
           </ion-list>
@@ -77,7 +75,7 @@ let id = 0;
   }
   @if(shouldShowHelper()) {
     <ion-item lines="none">
-      <ion-note>{{helper() | translate | async}}</ion-note>
+      <ion-note>{{helper() }}</ion-note>
     </ion-item>
   }
   `

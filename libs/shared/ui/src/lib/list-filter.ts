@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, output, linkedSignal } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonGrid, IonIcon, IonRow, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel } from '@bk2/shared-models';
 import { coerceBoolean, getYear, getYearList } from '@bk2/shared-util-core';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -30,7 +27,7 @@ import { YearSelect } from './year-select';
   selector: 'bk-list-filter',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     Searchbar, SingleTag, CategorySelect, YearSelect, StringSelect,
     IonToolbar, IonGrid, IonRow, IonCol, IonButtons, IonButton, IonIcon
   ],
@@ -40,7 +37,7 @@ import { YearSelect } from './year-select';
         <ion-row class="ion-align-items-center">
           @if(showSearch()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
-              <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@general.operation.search.placeholder' | translate | async  }}" />
+              <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@general.operation.search.placeholder' }}" />
             </ion-col>
           }
           @if(showTags()) {

@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { Header } from './header';
 
@@ -10,7 +8,7 @@ import { Header } from './header';
   selector: 'bk-time-select-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, 
+    
     Header,
     IonContent, IonDatetime
   ],
@@ -22,8 +20,8 @@ import { Header } from './header';
             [locale]="locale()"
             presentation="time"
             [showDefaultButtons]="true"
-            doneText="{{'@general.operation.change.ok' | translate | async}}"
-            cancelText="{{'@general.operation.change.cancel' | translate | async}}"
+            doneText="{{'@general.operation.change.ok' }}"
+            cancelText="{{'@general.operation.change.cancel' }}"
             (ionChange)="onTimeSelected($event.detail)" />
       </ion-content>
   `,

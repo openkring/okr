@@ -1,20 +1,18 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, input, model, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { EMAIL_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
 
 @Component({
-  selector: 'bk-email-input',
+  selector: 'bk-email',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, 
+    
     FormsModule,
     IonItem, IonNote, IonInput,
     ButtonCopy
@@ -29,8 +27,8 @@ import { ButtonCopy } from './button-copy';
       [ngModel]="value()"
       (ngModelChange)="value.set($event)"
       labelPlacement="floating"
-      label="{{'@input.' + name() + '.label' | translate | async }}"
-      placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
+      label="{{'@input.' + name() + '.label' }}"
+      placeholder="{{'@input.' + name() + '.placeholder' }}"
       inputmode="email"
       [counter]="!isReadOnly()"
       [maxlength]="maxLength()"
@@ -44,7 +42,7 @@ import { ButtonCopy } from './button-copy';
   </ion-item>
   @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper" [button]="false">
-      <ion-note>{{helper() | translate | async}}</ion-note>
+      <ion-note>{{helper() }}</ion-note>
     </ion-item>
   }
   `

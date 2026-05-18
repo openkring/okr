@@ -1,14 +1,12 @@
 import { Component, input, output, signal } from '@angular/core';
 import { IonModal, IonContent, IonDatetime } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-date-picker-modal',
   standalone: true,
-  imports: [IonModal, IonContent, IonDatetime, TranslatePipe, AsyncPipe],
+  imports: [IonModal, IonContent, IonDatetime],
   template: `
     <ion-modal
       [keepContentsMounted]="true"
@@ -24,8 +22,8 @@ import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
             locale="de-ch"
             firstDayOfWeek="1"
             showDefaultButtons="true"
-            doneText="{{ '@general.operation.change.ok' | translate | async }}"
-            cancelText="{{ '@general.operation.change.cancel' | translate | async }}"
+            doneText="{{ '@general.operation.change.ok' }}"
+            cancelText="{{ '@general.operation.change.cancel' }}"
             style="height: 380px;"
             (ionChange)="onDateChange($event.detail.value)"
             (ionCancel)="isOpen.set(false)"

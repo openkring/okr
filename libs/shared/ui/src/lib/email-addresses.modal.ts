@@ -1,10 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonFooter, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, EmailEntry } from '@bk2/shared-util-angular';
 
 import { Header } from './header';
@@ -16,7 +14,7 @@ type Segment = 'main' | 'cc';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule, AsyncPipe, TranslatePipe,
+    FormsModule,
     Header,
     IonContent, IonFooter, IonToolbar, IonButtons, IonButton,
     IonSegment, IonSegmentButton, IonLabel,
@@ -36,7 +34,7 @@ type Segment = 'main' | 'cc';
 
       @if(activeSegment() === 'main') {
         @if(visibleMainEmails().length === 0) {
-          <ion-item lines="none"><ion-note class="ion-padding">{{ '@membership.operation.emailAddresses.empty' | translate | async }}</ion-note></ion-item>
+          <ion-item lines="none"><ion-note class="ion-padding">{{ '@membership.operation.emailAddresses.empty' }}</ion-note></ion-item>
         } @else {
           <ion-list lines="full">
             @for(entry of visibleMainEmails(); track entry.email) {
@@ -53,7 +51,7 @@ type Segment = 'main' | 'cc';
 
       @if(activeSegment() === 'cc') {
         @if(visibleCcEmails().length === 0) {
-          <ion-item lines="none"><ion-note class="ion-padding">{{ '@membership.operation.emailAddresses.empty' | translate | async }}</ion-note></ion-item>
+          <ion-item lines="none"><ion-note class="ion-padding">{{ '@membership.operation.emailAddresses.empty' }}</ion-note></ion-item>
         } @else {
           <ion-list lines="full">
             @for(entry of visibleCcEmails(); track entry.email) {
@@ -72,7 +70,7 @@ type Segment = 'main' | 'cc';
       <ion-toolbar>
         <ion-buttons slot="end">
           <ion-button color="primary" [disabled]="currentCount() === 0" (click)="copy()">
-            {{ '@membership.operation.emailAddresses.copy' | translate | async }} ({{ currentCount() }})
+            {{ '@membership.operation.emailAddresses.copy' }} ({{ currentCount() }})
           </ion-button>
         </ion-buttons>
       </ion-toolbar>

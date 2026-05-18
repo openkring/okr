@@ -1,15 +1,13 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonChip, IonContent, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { Header } from './header';
 
 @Component({
   selector: 'bk-chip-select-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, 
+    
     Header,
     IonContent, IonChip, IonLabel
   ],
@@ -18,7 +16,7 @@ import { Header } from './header';
     <ion-content class="ion-padding">
       @for (chip of chips(); track chip) {
         <ion-chip color="primary" (click)="select(chip)">
-          <ion-label>{{ chip | translate | async }} </ion-label>
+          <ion-label>{{ chip }} </ion-label>
         </ion-chip>  
       }
     </ion-content>

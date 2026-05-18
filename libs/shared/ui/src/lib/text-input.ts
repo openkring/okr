@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, input, model, output, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
@@ -8,7 +7,6 @@ import { MaskitoElementPredicate } from '@maskito/core';
 
 import { AnyCharacterMask } from '@bk2/shared-config';
 import { AutoComplete, InputMode, NAME_LENGTH } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
@@ -17,7 +15,7 @@ import { ButtonCopy } from './button-copy';
   selector: 'bk-text-input',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    
     ButtonCopy,
     FormsModule, MaskitoDirective,
     IonItem, IonNote, IonInput
@@ -31,8 +29,8 @@ import { ButtonCopy } from './button-copy';
         [ngModel]="value()"
         (ngModelChange)="onChange($event)"
         labelPlacement="floating"
-        label="{{label2() | translate | async }}"
-        placeholder="{{placeholder2() | translate | async }}"
+        label="{{label2() }}"
+        placeholder="{{placeholder2() }}"
         [inputMode]="inputMode()"
         [counter]="!isReadOnly()"
         [maxlength]="maxLength()"
@@ -49,7 +47,7 @@ import { ButtonCopy } from './button-copy';
     </ion-item>
     @if(shouldShowHelper()) {
       <ion-item lines="none" class="helper" [button]="false">
-        <ion-note>{{helper2() | translate | async}}</ion-note>
+        <ion-note>{{helper2() }}</ion-note>
       </ion-item>
     }
   `

@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, getNonSelectedChips, string2stringArray } from '@bk2/shared-util-core';
 import { ChipSelectModal } from './chip-select.modal';
@@ -17,7 +15,7 @@ import { ChipSelectModal } from './chip-select.modal';
   selector: 'bk-chips',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     IonItem, IonLabel, IonIcon, IonChip, IonButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
@@ -29,17 +27,17 @@ import { ChipSelectModal } from './chip-select.modal';
     <ion-card>
       @if(doShowTitle()) {
         <ion-card-header>
-          <ion-card-title>{{ title() | translate | async}}</ion-card-title>
+          <ion-card-title>{{ title() }}</ion-card-title>
         </ion-card-header>
       }
       <ion-card-content>
         <ion-item lines="none">
           @if (isReadOnly()) {
-            <ion-label class="ion-hide-sm-down">{{ title() | translate | async }}</ion-label>
+            <ion-label class="ion-hide-sm-down">{{ title() }}</ion-label>
             <div  class="ion-text-wrap">
               @for (chip of selectedChips(); track $index) {
                 <ion-chip color="primary">
-                  <ion-label>{{ chip | translate | async }}</ion-label>
+                  <ion-label>{{ chip }}</ion-label>
                 </ion-chip>
               }
             </div>
@@ -52,7 +50,7 @@ import { ChipSelectModal } from './chip-select.modal';
                 <ion-chip color="primary">
                   <ion-button fill="clear" (click)="removeChip(chip)">
                     <ion-icon src="{{'cancel' | svgIcon }}" slot="start" [style.color]="'primary'" />
-                    <ion-label>{{ chip | translate | async }}</ion-label>
+                    <ion-label>{{ chip }}</ion-label>
                   </ion-button>
                 </ion-chip>
               }

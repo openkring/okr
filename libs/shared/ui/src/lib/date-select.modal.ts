@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, viewChild } from '@angular/core';
 import { IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
 
 import { Header } from './header';
@@ -11,7 +9,7 @@ import { Header } from './header';
   selector: 'bk-date-select-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, 
+    
     Header,
     IonContent, IonDatetime
   ],
@@ -20,7 +18,7 @@ import { Header } from './header';
     <ion-content class="ion-padding">
       @if(intro(); as intro) {
         @if(intro.length > 0) {
-          <small><div innerHTML="{{intro | translate | async}}"></div></small>
+          <small><div innerHTML="{{intro }}"></div></small>
         }
       }        
 
@@ -33,8 +31,8 @@ import { Header } from './header';
         firstDayOfWeek="1"
         [showDefaultButtons]="true"
         [showAdjacentDays]="true"
-        doneText="{{'@general.operation.change.ok' | translate | async}}"
-        cancelText="{{'@general.operation.change.cancel' | translate | async}}"
+        doneText="{{'@general.operation.change.ok' }}"
+        cancelText="{{'@general.operation.change.cancel' }}"
         size="cover"
         [preferWheel]="false"
         style="height: 380px; --padding-start: 0;"

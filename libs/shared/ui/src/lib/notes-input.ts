@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input, model } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +6,7 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { switchMap } from 'rxjs';
 
 import { DESCRIPTION_LENGTH } from '@bk2/shared-constants';
-import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, decrypt, encrypt } from '@bk2/shared-util-core';
 
@@ -23,7 +22,7 @@ import { PFX } from './scope';
   selector: 'bk-notes-input',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     FormsModule,
     IonIcon, IonTextarea, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonNote,
     ButtonCopy
@@ -39,7 +38,7 @@ import { PFX } from './scope';
   <ion-card>
     @if(doShowTitle()) {
       <ion-card-header>
-        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+        <ion-card-title>{{ title() }}</ion-card-title>
       </ion-card-header>
     }
     <ion-card-content>

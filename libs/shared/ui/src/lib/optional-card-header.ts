@@ -1,14 +1,10 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
 import { IonBadge, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-optional-card-header',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonCardHeader, IonCardTitle, IonCardSubtitle, IonBadge
   ],
   styles: [`
@@ -21,7 +17,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       <ion-card-header>
         @if(title()) {
           <div class="title-row">
-            <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+            <ion-card-title>{{ title() }}</ion-card-title>
             @if((count() ?? 0) > 0) {
               @let c = count()!;
               <ion-badge color="danger">{{ c > 99 ? '99+' : c }}</ion-badge>
@@ -29,7 +25,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           </div>
         }
         @if(subTitle()) {
-          <ion-card-subtitle>{{ subTitle() | translate | async }} </ion-card-subtitle>
+          <ion-card-subtitle>{{ subTitle() }} </ion-card-subtitle>
         }
       </ion-card-header>
     }

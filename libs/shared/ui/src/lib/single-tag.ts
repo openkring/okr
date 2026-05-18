@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, model } from '@angular/core';
 import { IonButton, IonIcon, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { string2stringArray } from '@bk2/shared-util-core';
 
@@ -12,19 +10,19 @@ import { ChipSelectModal } from './chip-select.modal';
   selector: 'bk-single-tag',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     IonButton, IonIcon, IonLabel
   ],
   template: `
   @if (selectedTag()) {
     <ion-button (click)="remove()" fill="clear">
       <ion-icon src="{{'cancel' | svgIcon }}" />
-      <ion-label>{{ selectedTag() | translate | async }}</ion-label>
+      <ion-label>{{ selectedTag() }}</ion-label>
     </ion-button>
   } @else {
     <ion-button (click)="add()" fill="clear">
       <ion-icon src="{{'search' | svgIcon }}" />
-      <ion-label>{{ searchLabel() | translate | async }}</ion-label>
+      <ion-label>{{ searchLabel() }}</ion-label>
     </ion-button>
   }
   `

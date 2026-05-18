@@ -1,26 +1,23 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { LogInfo } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-result-log',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonGrid, IonRow, IonCol
   ],
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ '@aoc.result.title' | translate | async  }}</ion-card-title>
+        <ion-card-title>{{ cardTitle()  }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
-          <ion-row><strong>{{ title() | translate | async }}</strong></ion-row>
+          <ion-row><strong>{{ title() }}</strong></ion-row>
           @for (logEntry of log(); track $index) {
             <ion-row>
               @if(logEntry.id === 'MESSAGE_ONLY') {
@@ -39,6 +36,7 @@ import { LogInfo } from '@bk2/shared-models';
 })
 export class ResultLog {
   // inputs
-  public title = input<string>();
+  public cardTitle = input.required<string>();
+  public title = input.required<string>();
   public log = input<LogInfo[]>([]);
 }

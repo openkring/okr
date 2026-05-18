@@ -2,13 +2,11 @@
 import { Component, computed, input, linkedSignal, model, viewChild } from '@angular/core';
 import { IonIcon, IonItem, IonNote } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
-import { AsyncPipe } from '@angular/common';
 import { MaskitoOptions } from '@maskito/core';
 
 import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ChAnyDate } from '@bk2/shared-config';
 
 import { ViewDateInput } from './viewdate-input';
@@ -18,7 +16,7 @@ import { DatePickerModal } from './date-picker.modal';
   selector: 'bk-date-input',
   standalone: true,
   imports: [
-    SvgIconPipe, TranslatePipe, AsyncPipe,
+    SvgIconPipe, 
     ViewDateInput, DatePickerModal,
     IonItem, IonIcon, IonNote
   ],
@@ -52,7 +50,7 @@ import { DatePickerModal } from './date-picker.modal';
 
     @if(shouldShowHelper()) {
       <ion-item lines="none" class="helper">
-        <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
+        <ion-note>{{'@input.' + name() + '.helper' }}</ion-note>
       </ion-item>
     }
   `

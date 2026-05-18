@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
 import { ENV } from '@bk2/shared-config';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -13,7 +11,7 @@ import { Header } from './header';
   selector: 'bk-card-select-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     Header,
     IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonImg
   ],
@@ -31,7 +29,7 @@ import { Header } from './header';
               <ion-col size="6" size-md="3">
                 <ion-card (click)="select(item)">
                   <ion-card-header>
-                    <ion-card-title>{{ '@' + i18nBase() + '.' + item.name + '.label' | translate | async }}</ion-card-title>
+                    <ion-card-title>{{ '@' + i18nBase() + '.' + item.name + '.label' }}</ion-card-title>
                     <ion-card-subtitle>{{ item.name }}</ion-card-subtitle>
                   </ion-card-header>
                   <ion-card-content>

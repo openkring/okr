@@ -1,5 +1,3 @@
-
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +6,6 @@ import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
 
 import { LowercaseWordMask } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { BaseProperty } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { getIndexOfKey } from '@bk2/shared-util-core';
@@ -17,7 +14,7 @@ import { getIndexOfKey } from '@bk2/shared-util-core';
   selector: 'bk-property-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     MaskitoDirective, FormsModule,
     IonList, IonItem, IonButton,
     IonLabel, IonInput, IonIcon,
@@ -27,7 +24,7 @@ import { getIndexOfKey } from '@bk2/shared-util-core';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+        <ion-card-title>{{ title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-item lines="none">
@@ -62,7 +59,7 @@ import { getIndexOfKey } from '@bk2/shared-util-core';
         @if(properties(); as properties) {
           @if(properties.length === 0) {
             <ion-item lines="none">
-              <ion-note>{{emptyLabel() | translate | async}}</ion-note>
+              <ion-note>{{emptyLabel()}}</ion-note>
             </ion-item>
           } @else {
             <ion-list>

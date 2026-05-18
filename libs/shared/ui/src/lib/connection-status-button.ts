@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { Network } from '@capacitor/network';
 import { AlertController, IonButton, IonicSafeString } from '@ionic/angular/standalone';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 import { I18nService } from '@bk2/shared-i18n';
 import { PFX } from './scope';
@@ -48,15 +47,18 @@ export class ConnectionStatusButton {
   protected readonly color = signal('#4caf50');
 
   // i18n
-  readonly ok = toSignal(this.i18nService.translate('@operation.ok'), { initialValue: '' });
-  readonly title = toSignal(this.i18nService.translate(PFX + 'connection.title'), { initialValue: '' });
-  readonly intro = toSignal(this.i18nService.translate(PFX + 'connection.intro'), { initialValue: '' });
-  readonly good = toSignal(this.i18nService.translate(PFX + 'connection.good'), { initialValue: '' });
-  readonly goodExplanation = toSignal(this.i18nService.translate(PFX + 'connection.goodExplanation'), { initialValue: '' });
-  readonly slow = toSignal(this.i18nService.translate(PFX + 'connection.slow'), { initialValue: '' });
-  readonly slowExplanation = toSignal(this.i18nService.translate(PFX + 'connection.slowExplanation'), { initialValue: '' });
-  readonly offline = toSignal(this.i18nService.translate(PFX + 'connection.offline'), { initialValue: '' });
-  readonly offlineExplanation = toSignal(this.i18nService.translate(PFX + 'connection.offlineExplanation'), { initialValue: '' });
+  private i18n = this.i18nService.translateAll({
+    title: PFX + 'connection.title',
+    intro:  PFX + 'connection.intro',
+    good: PFX + 'connection.good',
+    good_explanation:  PFX + 'connection.goodExplanation',
+    slow: PFX + 'connection.slow',
+    slow_explanation:  PFX + 'connection.slowExplanation',
+    offline: PFX + 'connection.offline',
+    offline_explanation: PFX + 'connection.offlineExplanation',
+    ok: '@ok',
+    cancel: '@cancel'
+  });
 
   constructor() {
     // Initial status
@@ -85,37 +87,37 @@ export class ConnectionStatusButton {
   protected async showExplanation() {
     const message = new IonicSafeString(`
       <div style="text-align: left; font-size: 14px; line-height: 1.5;">
-        <p style="margin: 0 0 16px 0;">${this.intro()}</p>
+        <p style="margin: 0 0 16px 0;">${this.i18n.intro()}</p>
 
         <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
             <div style="background:#4caf50; width:18px; height:18px; border-radius:50%; flex-shrink:0; margin-top: 2px;"></div>
             <div>
-                <strong>${this.good()}</strong><br>
-                ${this.goodExplanation()}
+                <strong>${this.i18n.good()}</strong><br>
+                ${this.i18n.good_explanation()}
             </div>
         </div>
 
         <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
             <div style="background:#ff9800; width:18px; height:18px; border-radius:50%; flex-shrink:0; margin-top: 2px;"></div>
             <div>
-                <strong>${this.slow()}</strong><br>
-                ${this.slowExplanation()}
+                <strong>${this.i18n.slow()}</strong><br>
+                ${this.i18n.slow_explanation()}
             </div>
         </div>
 
         <div style="display: flex; align-items: flex-start; gap: 12px;">
             <div style="background:#f44336; width:18px; height:18px; border-radius:50%; flex-shrink:0; margin-top: 2px;"></div>
             <div>
-                <strong>${this.offline()}</strong><br>
-                ${this.offlineExplanation()}
+                <strong>${this.i18n.offline()}</strong><br>
+                ${this.i18n.offline_explanation()}
             </div>
         </div>
     </div>
         `);
     const alert = await this.alertCtrl.create({
-      header: this.title(),
+      header: this.i18n.title(),
       message,
-      buttons: [this.ok()],
+      buttons: [this.i18n.ok()],
       cssClass: 'connection-alert'
     });
     await alert.present();
