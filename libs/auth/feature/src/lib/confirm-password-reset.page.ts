@@ -1,23 +1,23 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
 import { AppStore } from '@bk2/shared-feature';
 import { Header } from '@bk2/shared-ui';
 import { AlertService, navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 import { AuthCredentials } from '@bk2/shared-models';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { AuthService } from '@bk2/auth-data-access';
 import { LoginForm } from '@bk2/auth-ui';
 
+import { AuthStore } from './auth.store';
+
 @Component({
   selector: 'bk-confirm-password-reset-page',
   standalone: true,
+  providers: [AuthStore],
   imports: [
-    TranslatePipe, AsyncPipe,
     Header, LoginForm,
     IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton, IonText,
   ],
@@ -36,27 +36,27 @@ import { LoginForm } from '@bk2/auth-ui';
     }
   `,
   template: `
-    <bk-header title="@auth.operation.pwdconfirm.title" [showCloseButton]="false" />
+    <bk-header [title]="store.i18n.pwdconfirm_title()" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
-          <ion-label class="title"><strong>{{'@user.auth.pwdreset.newpwd' | translate | async}}</strong></ion-label>
+          <ion-label class="title"><strong>{{ store.i18n.newpwd() }}</strong></ion-label>
 
           @if (invalidCode()) {
             <ion-text color="danger">
-              <p>{{'@user.auth.pwdreset.invalidLink' | translate | async}}</p>
+              <p>{{ store.i18n.invalid_link() }}</p>
             </ion-text>
           } @else if (success()) {
             <ion-text color="success">
-              <p>{{'@user.auth.pwdreset.success' | translate | async}}</p>
+              <p>{{ store.i18n.success() }}</p>
             </ion-text>
           } @else {
-            <bk-login-form
-              [(vm)]="currentCredentials"
-              context="password"
-              (validChange)="onValidChange($event)"
+            <bk-login-form context="password"
+              [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
+              [emailHelper]="emailHelper()"
+              [pwdHelper]="pwdHelper()"
             />
 
 <!--             <ion-item>
@@ -86,7 +86,7 @@ import { LoginForm } from '@bk2/auth-ui';
                 <ion-row>
                   <ion-col>
                     <ion-button expand="block" [disabled]="!formIsValid()" (click)="confirm()">
-                      {{'@user.auth.pwdreset.savepwd' | translate | async}}
+                      {{ store.i18n.savepwd() }}
                     </ion-button>
                   </ion-col>
                 </ion-row>
@@ -104,6 +104,7 @@ export class ConfirmPasswordResetPage {
   private readonly authService = inject(AuthService);
   private readonly appStore = inject(AppStore);
   private readonly alertService = inject(AlertService);
+  protected readonly store = inject(AuthStore);
 
   // inputs
   private readonly oobCode = this.route.snapshot.queryParamMap.get('oobCode') ?? '';
@@ -112,6 +113,10 @@ export class ConfirmPasswordResetPage {
   // computed
   public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
   public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
+  protected emailHelper = "";
+  protected pwdHelper = "";
+  //protected emailHelper = computed(() => this.context() === 'email' ? '@input.emailEmail.helper' : '@input.loginEmail.helper');
+  //protected pwdHelper = computed(() => this.context() === 'password' ? '@input.passwordPassword.helper' : '@input.loginPassword.helper');
 
   // signals
   protected formIsValid = signal(false);
