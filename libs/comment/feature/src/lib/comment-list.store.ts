@@ -24,7 +24,7 @@ export const CommentListStore = signalStore(
       commentService: inject(CommentService),
       alertService: inject(AlertService),
       appStore: inject(AppStore),
-      i18n: i18nService.translateAll({ add_title: '@comment.operation.add.title', add_placeholder: '@comment.operation.add.placeholder' }),
+      i18n: i18nService.translateAll({ add_title: '@comment.operation.add.title', add_placeholder: '@comment.operation.add.placeholder', comment_plural: '@comment.plural' }),
     };
   }),
   withProps((store) => ({

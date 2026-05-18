@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { IonAccordion, IonButton, IonGrid, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { CommentsList } from '@bk2/comment-ui';
 
@@ -14,7 +12,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
   selector: 'bk-comments-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     IonAccordion, IonItem, IonLabel, IonGrid, IonButton, IonIcon,
     CommentsList
   ],
@@ -22,7 +20,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
   template: `
     <ion-accordion toggle-icon-slot="start" value="comments">
       <ion-item slot="header" [color]="color()">
-        <ion-label>{{ '@comment.plural' | translate | async }}</ion-label>
+        <ion-label>{{ commentListStore.i18n.comment_plural() }}</ion-label>
         @if(!isReadOnly()) {
           <ion-button fill="clear" (click)="add()" size="default">
             <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -37,7 +35,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
   `
 })
 export class CommentsAccordion {
-  private readonly commentListStore = inject(CommentListStore);
+  protected readonly commentListStore = inject(CommentListStore);
 
   public name = input('comment'); // mandatory name for the form control
   public parentKey = input.required<string>();  // modelType.key of the parent model

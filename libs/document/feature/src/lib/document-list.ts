@@ -1,8 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, effect } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonThumbnail, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { DocumentModel, RoleName } from '@bk2/shared-models';
 import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
 import { FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
@@ -19,7 +18,7 @@ import { DocumentStore } from './document.store';
   selector: 'bk-document-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, FileNamePipe, FileLogoPipe, FileSizePipe, PrettyDatePipe, ThumbnailUrlPipe,
+    SvgIconPipe, FileNamePipe, FileLogoPipe, FileSizePipe, PrettyDatePipe, ThumbnailUrlPipe,
     Spinner, ListFilter, EmptyList, Menu, FolderBreadcrumb,
     IonToolbar, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem, IonPopover, IonThumbnail
@@ -41,7 +40,7 @@ import { DocumentStore } from './document.store';
         @if(showMenuButton() === true) {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
-        <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
+        <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ documentStore.i18n.document_plural() }}</ion-title>
         @if(canChange()) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -78,13 +77,13 @@ import { DocumentStore } from './document.store';
         <ion-grid>
           <ion-row>
             <ion-col size="8">
-              <ion-label><strong>{{ '@document.list.header.name' | translate | async }}</strong></ion-label>
+              <ion-label><strong>{{ documentStore.i18n.list_header_name() }}</strong></ion-label>
             </ion-col>
             <ion-col size="2">
-              <ion-label><strong>{{ '@document.list.header.size' | translate | async }}</strong></ion-label>
+              <ion-label><strong>{{ documentStore.i18n.list_header_size() }}</strong></ion-label>
             </ion-col>
             <ion-col size="2">
-              <ion-label><strong>{{ '@document.list.header.lastUpdate' | translate | async }}</strong></ion-label>
+              <ion-label><strong>{{ documentStore.i18n.list_header_last_update() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>

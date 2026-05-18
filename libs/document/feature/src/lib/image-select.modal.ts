@@ -1,12 +1,22 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { ENV } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 import { IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@bk2/shared-models';
+
+const ImageSelectStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      title:  '@content.section.operation.selectImage.title',
+      upload: '@content.section.operation.selectImage.upload',
+    }),
+  })),
+);
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, Header, ImageConfigEdit } from '@bk2/shared-ui';
 import { coerceBoolean, getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
 import { UploadService } from '@bk2/avatar-data-access';
@@ -20,25 +30,27 @@ import { getDocumentStoragePath, pickPhoto } from '@bk2/document-util';
   selector: 'bk-image-select-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
-    Header, ChangeConfirmation,
+    SvgIconPipe,
+    Header, ChangeConfirmation, ImageConfigEdit,
     IonContent, IonButton, IonIcon
   ],
+  providers: [ImageSelectStore],
   template: `
-      <bk-header title="@content.section.operation.selectImage.title" [isModal]="true" />
+      <bk-header [title]="imgStore.i18n.title()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
-      } 
+      }
       <ion-content class="ion-no-padding">
         <ion-button (click)="pickImage()">
           <ion-icon slot="start" src="{{'camera' | svgIcon }}" />
-          {{ '@content.section.operation.selectImage.upload' | translate | async }}
+          {{ imgStore.i18n.upload() }}
         </ion-button>
         <bk-image-config [formData]="formData()" (formDataChange)="onFormDataChange($event)" [readOnly]="isReadOnly()" />
       </ion-content>
   `
 })
 export class ImageSelectModal {
+  protected readonly imgStore = inject(ImageSelectStore);
   private readonly modalController = inject(ModalController);
   private readonly platform = inject(Platform);
   private readonly uploadService = inject(UploadService);

@@ -56,7 +56,11 @@ export const DocumentStore = signalStore(
     i18n: store.i18nService.translateAll({
       delete_confirm: PFX + 'delete.confirm',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      document_plural:       '@document.plural',
+      list_header_name:      '@document.list.header.name',
+      list_header_size:      '@document.list.header.size',
+      list_header_last_update: '@document.list.header.lastUpdate',
     }),
 
     documentsResource: rxResource({

@@ -1,9 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid } from '@ionic/angular/standalone';
 import { Observable } from 'rxjs';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { CommentModel } from '@bk2/shared-models';
 
 import { CommentHeader, CommentInput, CommentsList } from '@bk2/comment-ui';
@@ -14,7 +13,6 @@ import { CommentListStore } from './comment-list.store';
   selector: 'bk-comments-card',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonGrid, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
     CommentInput, CommentHeader, CommentsList
 ],
@@ -22,7 +20,7 @@ import { CommentListStore } from './comment-list.store';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ '@comment.plural' | translate | async}}</ion-card-title>
+        <ion-card-title>{{ commentListStore.i18n.comment_plural() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid style="width: 100%; height: 100%;">
@@ -37,7 +35,7 @@ import { CommentListStore } from './comment-list.store';
 `
 })
 export class CommentsCard {
-  private readonly commentListStore = inject(CommentListStore);
+  protected readonly commentListStore = inject(CommentListStore);
 
   public name = input('comment'); // mandatory name for the form control
   public parentKey = input.required<string>();  // modelType.key of the parent model
