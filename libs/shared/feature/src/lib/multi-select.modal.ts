@@ -1,11 +1,22 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { GroupModelName, OrgModel, OrgModelName, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 import { FullNamePipe } from '@bk2/shared-pipes';
+
+const MultiSelectStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      org_label:    '@subject.org.operation.select.label',
+      group_label:  '@subject.group.operation.select.label',
+      person_label: '@subject.person.operation.select.label',
+    }),
+  })),
+);
 import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 import { AvatarPipe } from '@bk2/avatar-ui';
 
@@ -19,12 +30,12 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
   selector: 'bk-multi-select-modal',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe, FormsModule,
+    FormsModule,
     Header, Spinner, FullNamePipe, AvatarPipe, EmptyList,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
     IonSegment, IonSegmentButton,
   ],
-  providers: [OrgSelectStore, GroupSelectStore, PersonSelectStore],
+  providers: [MultiSelectStore, OrgSelectStore, GroupSelectStore, PersonSelectStore],
   styles: [`
     .item { padding: 0px; min-height: 40px; }
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
@@ -43,7 +54,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         <ion-segment [(ngModel)]="activeSegment">
           @for(segment of segments(); track segment) {
             <ion-segment-button [value]="segment">
-              <ion-label>{{ segmentLabel(segment) | translate | async }}</ion-label>
+              <ion-label>{{ getSegmentLabel(segment) }}</ion-label>
             </ion-segment-button>
           }
         </ion-segment>
@@ -109,6 +120,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
   `
 })
 export class MultiSelectModal {
+  protected readonly store = inject(MultiSelectStore);
   protected readonly orgSelectStore = inject(OrgSelectStore);
   protected readonly groupSelectStore = inject(GroupSelectStore);
   protected readonly personSelectStore = inject(PersonSelectStore);
@@ -165,13 +177,10 @@ export class MultiSelectModal {
     });
   }
 
-  protected segmentLabel(segment: MultiSelectSegment): string {
-    const labels: Record<MultiSelectSegment, string> = {
-      org: '@subject.org.operation.select.label',
-      group: '@subject.group.operation.select.label',
-      person: '@subject.person.operation.select.label',
-    };
-    return labels[segment];
+  protected getSegmentLabel(segment: MultiSelectSegment): string {
+    if (segment === 'org') return this.store.i18n.org_label();
+    if (segment === 'group') return this.store.i18n.group_label();
+    return this.store.i18n.person_label();
   }
 
   public select(modelType: MultiSelectSegment, bkey: string): Promise<boolean> {
