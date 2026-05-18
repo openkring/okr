@@ -2,6 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController } from '@ionic/angular/standalone';
+import { I18nService } from '@bk2/shared-i18n';
 import { getMetadata, listAll, ref } from 'firebase/storage';
 
 import { STORAGE } from '@bk2/shared-config';
@@ -30,6 +31,8 @@ const initialState: IconState = {
   selectedTag: ''
 };
 
+const PFX = '@icon.';
+
 export const IconStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -38,6 +41,20 @@ export const IconStore = signalStore(
     uploadService: inject(UploadService),
     modalController: inject(ModalController),
     storage: inject(STORAGE),
+    i18nService: inject(I18nService),
+  })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      plural:           PFX + 'plural',
+      empty:            PFX + 'empty',
+      create_label:     PFX + 'operation.create.label',
+      exportRaw_label:  PFX + 'operation.exportRaw.label',
+      sync_label:       PFX + 'operation.sync.label',
+      name_label:       PFX + 'field.name.label',
+      type_label:       PFX + 'field.type.label',
+      size_label:       PFX + 'field.size.label',
+      updated_label:    PFX + 'field.updated.label',
+    }),
   })),
   withProps((store) => ({
     iconsResource: rxResource({

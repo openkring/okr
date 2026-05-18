@@ -6,9 +6,6 @@ import {
   IonRow, IonThumbnail, IonTitle, IonToolbar,
   PopoverController, ToastController
 } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { IconModel, RoleName } from '@bk2/shared-models';
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -21,7 +18,7 @@ import { ICON_SETS, IconStore } from './icon.store';
   selector: 'bk-icon-list',
   standalone: true,
   imports: [
-    TranslatePipe, SvgIconPipe, FileSizePipe, PrettyDatePipe, AsyncPipe,
+    SvgIconPipe, FileSizePipe, PrettyDatePipe,
     Spinner, EmptyList, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover, IonThumbnail
@@ -63,7 +60,7 @@ import { ICON_SETS, IconStore } from './icon.store';
           @if(showMenuButton() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
-          <ion-title>{{ filteredCount() }}/{{ store.iconsCount() }} {{ '@icon.plural' | translate | async }}</ion-title>
+          <ion-title>{{ filteredCount() }}/{{ store.iconsCount() }} {{ store.i18n.plural() }}</ion-title>
           @if(hasRole('privileged') || hasRole('admin')) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -75,14 +72,14 @@ import { ICON_SETS, IconStore } from './icon.store';
                   <ion-content>
                     <ion-list>
                       <ion-item button (click)="dismissPopover('add')">
-                        <ion-label>{{ '@icon.operation.create.label' | translate | async }}</ion-label>
+                        <ion-label>{{ store.i18n.create_label() }}</ion-label>
                       </ion-item>
                       <ion-item button (click)="dismissPopover('exportRaw')">
-                        <ion-label>{{ '@icon.operation.exportRaw.label' | translate | async }}</ion-label>
+                        <ion-label>{{ store.i18n.exportRaw_label() }}</ion-label>
                       </ion-item>
                       @if(hasRole('admin')) {
                         <ion-item button (click)="dismissPopover('sync')">
-                          <ion-label>{{ '@icon.operation.sync.label' | translate | async }}</ion-label>
+                          <ion-label>{{ store.i18n.sync_label() }}</ion-label>
                         </ion-item>
                       }
                     </ion-list>
@@ -108,16 +105,16 @@ import { ICON_SETS, IconStore } from './icon.store';
           <ion-grid>
             <ion-row>
               <ion-col size="5" size-md="4">
-                <ion-label><strong>{{ '@icon.field.name.label' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-col>
               <ion-col size="3" size-md="3" class="ion-hide-md-down">
-                <ion-label><strong>{{ '@icon.field.type.label' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.type_label() }}</strong></ion-label>
               </ion-col>
               <ion-col size="2">
-                <ion-label><strong>{{ '@icon.field.size.label' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.size_label() }}</strong></ion-label>
               </ion-col>
               <ion-col size="2">
-                <ion-label><strong>{{ '@icon.field.updated.label' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.updated_label() }}</strong></ion-label>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -130,7 +127,7 @@ import { ICON_SETS, IconStore } from './icon.store';
       @if(store.isLoading()) {
         <bk-spinner />
       } @else if(store.filteredIcons().length === 0) {
-        <bk-empty-list message="@icon.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else if(isListView()) {
         <!-- list view -->
         <ion-list lines="inset">

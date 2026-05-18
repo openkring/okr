@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { FolderModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -17,7 +14,7 @@ import { FolderStore } from './folder.store';
   selector: 'bk-folder-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     Spinner, ListFilter, EmptyList, Menu,
     IonToolbar, IonHeader, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon,
     IonContent, IonList, IonItem, IonLabel, IonPopover
@@ -30,7 +27,7 @@ import { FolderStore } from './folder.store';
           @if(showMenuButton() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
-          <ion-title>{{ filteredFoldersCount() }}/{{ foldersCount() }} {{ '@folder.plural' | translate | async }}</ion-title>
+          <ion-title>{{ filteredFoldersCount() }}/{{ foldersCount() }} {{ folderStore.i18n.plural() }}</ion-title>
           @if(!readOnly()) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -55,7 +52,7 @@ import { FolderStore } from './folder.store';
         <bk-spinner />
       } @else {
         @if(filteredFoldersCount() === 0) {
-          <bk-empty-list message="@folder.empty" />
+          <bk-empty-list [message]="folderStore.i18n.empty()" />
         } @else {
           <ion-list>
             @for(folder of filteredFolders(); track folder.bkey) {

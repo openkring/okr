@@ -45,7 +45,12 @@ export const LocationListStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      copy_conf: '@location.operation.copy.conf',
+      copy_conf:        '@location.operation.copy.conf',
+      plural:           '@location.plural',
+      description:      '@location.description',
+      header_name:      '@location.list.header.name',
+      header_type:      '@location.list.header.locationType',
+      empty:            '@location.field.empty',
     }),
     locationsResource: rxResource({
       stream: () => {

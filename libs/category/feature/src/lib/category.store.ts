@@ -4,6 +4,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { CategoryListModel } from '@bk2/shared-models';
 import { chipMatches, debugListLoaded, isCategoryList, nameMatches } from '@bk2/shared-util-core';
 
@@ -21,12 +22,21 @@ export const initialState: CategoryState = {
   selectedTag: '',
 };
 
+const PFX = '@category.';
+
 export const CategoryStore = signalStore(
   withState(initialState),
   withProps(() => ({
     categoryService: inject(CategoryService),
     appStore: inject(AppStore),
-    modalController: inject(ModalController),    
+    modalController: inject(ModalController),
+    i18nService: inject(I18nService),
+  })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      plural: PFX + 'plural',
+      empty:  PFX + 'field.empty',
+    }),
   })),
   withProps((store) => ({
     categoriesResource: rxResource({

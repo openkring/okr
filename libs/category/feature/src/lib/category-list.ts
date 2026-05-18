@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -18,7 +15,7 @@ import { CategoryStore } from './category.store';
     selector: 'bk-category-list',
     standalone: true,
     imports: [
-      TranslatePipe, AsyncPipe, SvgIconPipe,
+      SvgIconPipe,
       Spinner, EmptyList, Menu, ListFilter,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
@@ -29,7 +26,7 @@ import { CategoryStore } from './category.store';
       <!-- title and context menu -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedCategoriesCount()}}/{{categoriesCount()}} {{ '@category.plural' | translate | async }}</ion-title>
+        <ion-title>{{ selectedCategoriesCount()}}/{{categoriesCount()}} {{ categoryListStore.i18n.plural() }}</ion-title>
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -76,7 +73,7 @@ import { CategoryStore } from './category.store';
       <bk-spinner />
     } @else {
       @if(filteredCategories().length === 0) {
-        <bk-empty-list message="@category.field.empty" />
+        <bk-empty-list [message]="categoryListStore.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(cat of filteredCategories(); track cat.bkey) {

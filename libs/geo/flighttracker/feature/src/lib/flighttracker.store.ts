@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { I18nService } from '@bk2/shared-i18n';
 import { FlightInfoResponse, FlightTrackerService } from '@bk2/flighttracker-data-access';
 
 export type FlightTrackerState = {
@@ -21,10 +22,37 @@ const initialState: FlightTrackerState = {
   error: null,
 };
 
+const PFX = '@flighttracker.';
+const DPFX = '@flighttracker.detail.';
+
 export const FlightTrackerStore = signalStore(
   withState(initialState),
   withProps(() => ({
     flightTrackerService: inject(FlightTrackerService),
+    i18nService: inject(I18nService),
+  })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      title:        PFX + 'title',
+      placeholder:  PFX + 'search.placeholder',
+      button:       PFX + 'search.button',
+      prompt:       PFX + 'search.prompt',
+      detailTitle:  DPFX + 'title',
+      departure:    DPFX + 'departure',
+      arrival:      DPFX + 'arrival',
+      aircraft:     DPFX + 'aircraft',
+      live:         DPFX + 'live',
+      airport:      DPFX + 'airport',
+      terminal:     DPFX + 'terminal',
+      gate:         DPFX + 'gate',
+      delay:        DPFX + 'delay',
+      scheduled:    DPFX + 'scheduled',
+      estimated:    DPFX + 'estimated',
+      registration: DPFX + 'registration',
+      altitude:     DPFX + 'altitude',
+      direction:    DPFX + 'direction',
+      speed:        DPFX + 'speed',
+    }),
   })),
   withMethods((store) => ({
     setFlightNumber(flightNumber: string): void {

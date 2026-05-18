@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { LocationModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -17,7 +14,7 @@ import { LocationListStore } from './location-list.store';
   selector: 'bk-location-all-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonBackdrop,
@@ -29,7 +26,7 @@ import { LocationListStore } from './location-list.store';
       <!-- title and context menu -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedLocationsCount()}}/{{locationsCount()}} {{ '@location.plural' | translate | async }}</ion-title>
+      <ion-title>{{ selectedLocationsCount()}}/{{locationsCount()}} {{ store.i18n.plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('admin')) {
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
@@ -49,7 +46,7 @@ import { LocationListStore } from './location-list.store';
     <!-- description -->
     <ion-toolbar class="ion-hide-md-down">
       <ion-item lines="none">
-        <ion-label>{{ '@location.description' | translate | async }}</ion-label>
+        <ion-label>{{ store.i18n.description() }}</ion-label>
       </ion-item>
     </ion-toolbar>
 
@@ -66,10 +63,10 @@ import { LocationListStore } from './location-list.store';
         <ion-grid>
           <ion-row>
             <ion-col size="8">
-              <ion-label><strong>{{ '@location.list.header.name' | translate | async }}</strong></ion-label>  
+              <ion-label><strong>{{ store.i18n.header_name() }}</strong></ion-label>  
             </ion-col>
             <ion-col size="4">
-                <ion-label><strong>{{ '@location.list.header.locationType' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.header_type() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -84,7 +81,7 @@ import { LocationListStore } from './location-list.store';
     <ion-backdrop />
   } @else {
     @if (selectedLocationsCount() === 0) {
-      <bk-empty-list message="@location.field.empty" />
+      <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
         @for(location of filteredLocations(); track location.bkey) {

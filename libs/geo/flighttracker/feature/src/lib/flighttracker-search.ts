@@ -1,4 +1,4 @@
-import { AsyncPipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject } from '@angular/core';
 import {
   IonBackdrop, IonBadge, IonButton, IonButtons, IonContent, IonHeader,
@@ -8,7 +8,6 @@ import {
 
 import { ENV } from '@bk2/shared-config';
 import { isBrowser } from '@bk2/shared-util-angular';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Spinner } from '@bk2/shared-ui';
 
@@ -61,7 +60,7 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
     }
   `],
   imports: [
-    AsyncPipe, DecimalPipe, TranslatePipe, SvgIconPipe,
+    DecimalPipe, SvgIconPipe,
     Spinner,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonMenuButton,
     IonButton, IonIcon, IonInput, IonItem, IonLabel, IonNote,
@@ -71,7 +70,7 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ '@flighttracker.title' | translate | async }}</ion-title>
+        <ion-title>{{ store.i18n.title() }}</ion-title>
       </ion-toolbar>
 
       <ion-toolbar>
@@ -79,7 +78,7 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
           <ion-input
             type="text"
             [value]="flightNumber()"
-            placeholder="{{ '@flighttracker.search.placeholder' | translate | async }}"
+            [placeholder]="store.i18n.placeholder()"
             (ionInput)="onFlightNumberInput($event)"
             (keyup.enter)="onSearch()"
           />
@@ -90,7 +89,7 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
             style="max-width: 145px"
           />
           <ion-button slot="end" (click)="onSearch()" [disabled]="isLoading() || !flightNumber().trim()">
-            {{ '@flighttracker.search.button' | translate | async }}
+            {{ store.i18n.button() }}
           </ion-button>
           <ion-button slot="end" fill="outline" (click)="onReload()" [disabled]="isLoading() || !flightData()">
             <ion-icon slot="icon-only" src="{{'reload' | svgIcon}}" />
@@ -126,7 +125,7 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
       <div class="map-container">
         @if (!flightData() && !isLoading()) {
           <div class="map-prompt">
-            <ion-note>{{ '@flighttracker.search.prompt' | translate | async }}</ion-note>
+            <ion-note>{{ store.i18n.prompt() }}</ion-note>
           </div>
         }
         <capacitor-google-map [id]="mapId" />

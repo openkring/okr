@@ -29,17 +29,21 @@ const initialState: FolderState = {
 
 export const FolderStore = signalStore(
   withState(initialState),
-  withProps(() => {
-    const i18nService = inject(I18nService);
-    return {
-      appStore: inject(AppStore),
-      firestoreService: inject(FirestoreService),
-      modalController: inject(ModalController),
-      alertService: inject(AlertService),
-      folderService: inject(FolderService),
-      i18n: i18nService.translateAll({ delete_confirm: '@folder.operation.delete.confirm' }),
-    };
-  }),
+  withProps(() => ({
+    appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
+    modalController: inject(ModalController),
+    alertService: inject(AlertService),
+    folderService: inject(FolderService),
+    i18nService: inject(I18nService),
+  })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: '@folder.operation.delete.confirm',
+      plural:         '@folder.plural',
+      empty:          '@folder.empty',
+    }),
+  })),
   withProps((store) => ({
     foldersResource: rxResource({
       params: () => ({ currentUser: store.appStore.currentUser() }),
