@@ -1,4 +1,4 @@
-import { AsyncPipe, SlicePipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -8,7 +8,6 @@ import {
   IonLabel, IonList, IonSearchbar, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { Header } from '@bk2/shared-ui';
 import { I18nDefaultModel } from '@bk2/shared-models';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
@@ -21,7 +20,7 @@ import { I18nDefaultEditModal } from './i18n-default-edit.modal';
   selector: 'bk-i18n-default-list',
   standalone: true,
   imports: [
-    AsyncPipe, SlicePipe, FormsModule, TranslatePipe, SvgIconPipe,
+    SlicePipe, FormsModule, SvgIconPipe,
     Header,
     IonContent, IonToolbar, IonSearchbar, IonButtons, IonButton, IonIcon,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,
@@ -34,7 +33,7 @@ import { I18nDefaultEditModal } from './i18n-default-edit.modal';
       <ion-toolbar>
         <ion-searchbar
           [value]="store.searchTerm()"
-          [placeholder]="('@general.operation.search.placeholder' | translate | async) ?? ''"
+          [placeholder]="store.i18n.search_placeholder()"
           (ionInput)="onSearch($event)"
           debounce="300" />
         <ion-buttons slot="end">
@@ -47,14 +46,14 @@ import { I18nDefaultEditModal } from './i18n-default-edit.modal';
       <ion-card>
         <ion-card-header>
           <ion-card-title>
-            {{ '@i18n.default.list.title' | translate | async }}
+            {{ store.i18n.list_title() }}
             <ion-badge color="medium">{{ store.filteredItems().length }}</ion-badge>
           </ion-card-title>
         </ion-card-header>
         <ion-card-content>
           @if (store.isLoading()) {
             <ion-item lines="none">
-              <ion-label>{{ '@general.operation.loading' | translate | async }}</ion-label>
+              <ion-label>{{ store.i18n.loading() }}</ion-label>
             </ion-item>
           }
           <ion-list lines="inset">

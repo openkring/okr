@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { Menu } from '@bk2/cms-menu-feature';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -16,7 +14,7 @@ import { UserListStore } from './user-list.store';
     selector: 'bk-user-list',
     standalone: true,
     imports: [
-      TranslatePipe, AsyncPipe, SvgIconPipe, FullNamePipe,
+      SvgIconPipe, FullNamePipe,
       Spinner, EmptyList, ListFilter, Menu,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
       IonLabel, IonContent, IonItem, IonList, IonPopover
@@ -27,7 +25,7 @@ import { UserListStore } from './user-list.store';
       <!-- title and context menu -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedUsersCount()}}/{{usersCount()}} {{ '@user.plural' | translate | async }}</ion-title>
+        <ion-title>{{ selectedUsersCount()}}/{{usersCount()}} {{ userListStore.i18n.user_plural() }}</ion-title>
         @if(hasRole('privileged')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -53,8 +51,8 @@ import { UserListStore } from './user-list.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ '@user.field.loginEmail' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@user.field.name' | translate | async }}</strong></ion-label>
+        <ion-label><strong>{{ userListStore.i18n.list_header_login_email() }}</strong></ion-label>
+        <ion-label><strong>{{ userListStore.i18n.list_header_name() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>

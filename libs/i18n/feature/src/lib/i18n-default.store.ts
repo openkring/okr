@@ -25,12 +25,25 @@ export const I18nDefaultStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll({
-      create_conf:  PFX + 'operation.create.default.conf',
-      create_error: PFX + 'operation.create.default.error',
-      update_conf:  PFX + 'operation.update.default.conf',
-      update_error: PFX + 'operation.update.default.error',
-      delete_conf:  PFX + 'operation.delete.default.conf',
-      delete_error: PFX + 'operation.delete.default.error',
+      create_conf:  PFX + 'default.create.conf',
+      create_error: PFX + 'default.create.error',
+      update_conf:  PFX + 'default.update.conf',
+      update_error: PFX + 'default.update.error',
+      delete_conf:  PFX + 'default.delete.conf',
+      delete_confirm:  PFX + 'default.delete.confirm',
+      delete_error: PFX + 'default.delete.error',
+      module_prompt: PFX + 'default.module.prompt',
+      key_prompt: PFX + 'default.key.prompt',
+      ok: '@ok',
+      cancel: '@cancel',
+      search_placeholder: '@general.operation.search.placeholder',
+      list_title:         '@i18n.default.list.title',
+      loading:            '@general.operation.loading',
+      module_label:       '@i18n.default.module.label',
+      key_label:          '@i18n.default.key.label',
+      is_html_label:      '@i18n.default.isHtml.label',
+      btn_cancel:         '@general.operation.cancel',
+      btn_save:           '@general.operation.save',
     }),
   })),
   withProps(store => ({
@@ -67,9 +80,9 @@ export const I18nDefaultStore = signalStore(
     },
 
     async createItem(): Promise<void> {
-      const module = await bkPrompt(store.alertController, '@i18n.default.module.prompt', '');
+      const module = await bkPrompt(store.alertController, store.i18n.module_prompt(), '', store.i18n.ok(), store.i18n.cancel());
       if (!module) return;
-      const key = await bkPrompt(store.alertController, '@i18n.default.key.prompt', '');
+      const key = await bkPrompt(store.alertController, store.i18n.key_prompt(), '', store.i18n.ok(), store.i18n.cancel());
       if (!key) return;
       const item = new I18nDefaultModel();
       item.module = module.trim();

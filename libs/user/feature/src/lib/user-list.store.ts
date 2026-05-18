@@ -5,6 +5,7 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { ExportFormat, UserCollection, UserModel } from '@bk2/shared-models';
 import { exportXlsx } from '@bk2/shared-util-angular';
 import { chipMatches, generateRandomString, getDataRow, getSystemQuery, isUser, nameMatches } from '@bk2/shared-util-core';
@@ -29,9 +30,15 @@ export const UserListStore = signalStore(
     userService: inject(UserService),
     modalController: inject(ModalController),
     appStore: inject(AppStore),
-    firestoreService: inject(FirestoreService)
+    firestoreService: inject(FirestoreService),
+    i18nService: inject(I18nService),
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      user_plural:             '@user.plural',
+      list_header_login_email: '@user.field.loginEmail',
+      list_header_name:        '@user.field.name',
+    }),
     userResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.appStore.tenantId()), 'loginEmail', 'asc');

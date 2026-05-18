@@ -1,34 +1,48 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   IonButton, IonButtons, IonContent, IonInput, IonItem,
   IonLabel, IonTextarea, IonToggle, IonToolbar, ModalController,
 } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 import { Header } from '@bk2/shared-ui';
 import { I18nTenantOverrideModel } from '@bk2/shared-models';
 import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
+
+const I18nOverrideEditStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      module_label:  '@i18n.override.module.label',
+      key_label:     '@i18n.override.key.label',
+      is_html_label: '@i18n.override.isHtml.label',
+      btn_cancel:    '@general.operation.cancel',
+      btn_save:      '@general.operation.save',
+    }),
+  })),
+);
 
 @Component({
   selector: 'bk-i18n-override-edit-modal',
   standalone: true,
   imports: [
-    AsyncPipe, FormsModule, TranslatePipe,
+    FormsModule,
     Header,
     IonContent, IonToolbar, IonButtons, IonButton,
     IonItem, IonLabel, IonInput, IonTextarea, IonToggle,
   ],
+  providers: [I18nOverrideEditStore],
   template: `
     <bk-header title="@i18n.override.edit.title" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
-        <ion-label position="stacked">{{ '@i18n.override.module.label' | translate | async }}</ion-label>
+        <ion-label position="stacked">{{ store.i18n.module_label() }}</ion-label>
         <ion-input [value]="formData().module" (ionInput)="onInput($event, 'module')" />
       </ion-item>
       <ion-item>
-        <ion-label position="stacked">{{ '@i18n.override.key.label' | translate | async }}</ion-label>
+        <ion-label position="stacked">{{ store.i18n.key_label() }}</ion-label>
         <ion-input [value]="formData().key" (ionInput)="onInput($event, 'key')" />
       </ion-item>
       <ion-item>
@@ -53,15 +67,15 @@ import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
       </ion-item>
       <ion-item>
         <ion-toggle [checked]="formData().isHtml" (ionChange)="onToggle($event)" />
-        <ion-label>{{ '@i18n.override.isHtml.label' | translate | async }}</ion-label>
+        <ion-label>{{ store.i18n.is_html_label() }}</ion-label>
       </ion-item>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button (click)="cancel()">{{ '@general.operation.cancel' | translate | async }}</ion-button>
+          <ion-button (click)="cancel()">{{ store.i18n.btn_cancel() }}</ion-button>
         </ion-buttons>
         <ion-buttons slot="end">
           <ion-button [disabled]="!isDirty()" (click)="save()" color="primary">
-            {{ '@general.operation.save' | translate | async }}
+            {{ store.i18n.btn_save() }}
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -69,6 +83,7 @@ import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
   `,
 })
 export class I18nOverrideEditModal {
+  protected readonly store = inject(I18nOverrideEditStore);
   private readonly modalController = inject(ModalController);
 
   public item = input.required<I18nTenantOverrideModel>();
