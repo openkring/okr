@@ -1,17 +1,14 @@
 import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
 import { Checkbox, NumberInput, StringSelect } from '@bk2/shared-ui';
 import { TrackerConfig } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
-  selector: 'bk-tracker-configuration',
+  selector: 'bk-tracker-config',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
     Checkbox, NumberInput, StringSelect
   ],
@@ -19,7 +16,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   template: `
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+          <ion-card-title>{{ title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -28,16 +25,16 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                 <bk-checkbox name="autostart" [checked]="autostart()" (checkedChange)="onFieldChange('autostart', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                    <bk-number-input name="intervalInSeconds" [value]="intervalInSeconds()" (valueChange)="onFieldChange('intervalInSeconds', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />                                        
+                    <bk-number-input name="intervalInSeconds" [value]="intervalInSeconds()" (valueChange)="onFieldChange('intervalInSeconds', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                 <bk-checkbox name="enableHighAccuracy" [checked]="enableHighAccuracy()" (checkedChange)="onFieldChange('enableHighAccuracy', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                    <bk-number-input name="maximumAge" [value]="maximumAge()" (valueChange)="onFieldChange('maximumAge', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />                                        
+                    <bk-number-input name="maximumAge" [value]="maximumAge()" (valueChange)="onFieldChange('maximumAge', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                <bk-string-select name="exportFormat"  [selectedString]="exportFormat()" (selectedStringChange)="onFieldChange('exportFormat', $event)" [readOnly]="readOnly()" [stringList] = "['kmz', 'json', 'csv']" /> 
+                <bk-string-select name="exportFormat"  [selectedString]="exportFormat()" (selectedStringChange)="onFieldChange('exportFormat', $event)" [readOnly]="readOnly()" [stringList] = "['kmz', 'json', 'csv']" />
                 </ion-col>
             </ion-row>
           </ion-grid>
@@ -63,4 +60,4 @@ export class TrackerConfiguration {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
-} 
+}

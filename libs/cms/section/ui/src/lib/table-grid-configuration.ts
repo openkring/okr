@@ -1,17 +1,14 @@
 import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
 import { StringSelect, TextInput } from '@bk2/shared-ui';
 import { TableGrid } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-table-grid',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
     TextInput, StringSelect
   ],
@@ -19,7 +16,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   template: `
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+          <ion-card-title>{{ title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
             <ion-grid>
@@ -28,7 +25,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                     <bk-text-input name="template" [value]="template()" (valueChange)="onFieldChange('template', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-string-select name="showTitleAs"  [selectedString]="showTitleAs()" (selectedStringChange)="onFieldChange('showTitleAs', $event)" [readOnly]="readOnly()" [stringList] = "['title', 'legend', 'header', 'none']" /> 
+                    <bk-string-select name="showTitleAs"  [selectedString]="showTitleAs()" (selectedStringChange)="onFieldChange('showTitleAs', $event)" [readOnly]="readOnly()" [stringList] = "['title', 'legend', 'header', 'none']" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
                     <bk-text-input name="gap" [value]="gap()" (valueChange)="onFieldChange('gap', $event)" [showHelper]="true" [readOnly]="readOnly()" />
@@ -63,4 +60,4 @@ export class TableGridConfiguration {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
-} 
+}

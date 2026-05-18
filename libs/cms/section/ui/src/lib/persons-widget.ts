@@ -1,8 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { AsyncPipe } from '@angular/common';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, ColorIonic, NameDisplay } from '@bk2/shared-models';
 import { getFullName } from '@bk2/shared-util-core';
 
@@ -13,7 +11,6 @@ import { calculateCols } from '@bk2/cms-section-util';
   selector: 'bk-persons-widget',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonGrid, IonRow, IonCol,
     AvatarLabel
   ],
@@ -21,7 +18,7 @@ import { calculateCols } from '@bk2/cms-section-util';
     <ion-grid>
       <ion-row>
         @if(count() === 0) {
-          <ion-col>{{ '@content.section.error.noPeople' | translate | async }}</ion-col>
+          <ion-col>{{ '@content.section.error.noPeople' }}</ion-col>
         } @else {
           @for(person of persons(); track person.key) {
             <ion-col size="12" [sizeMd]="cols()" (click)="showPerson(person)">

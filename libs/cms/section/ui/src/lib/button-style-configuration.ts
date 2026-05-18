@@ -7,14 +7,12 @@ import { CategoryOld, StringSelect, TextInput } from '@bk2/shared-ui';
 import { DEFAULT_LABEL, ICON_SIZE } from '@bk2/shared-constants';
 import { ColorsIonic } from '@bk2/shared-categories';
 
-import { AsyncPipe } from '@angular/common';
-import { TranslatePipe } from '@bk2/shared-i18n';
+
 
 @Component({
-  selector: 'bk-button-style-configuration',
+  selector: 'bk-button-style',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     FormsModule,
     TextInput, CategoryOld,
     StringSelect,
@@ -24,8 +22,8 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   template: `  
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ title() | translate | async}}</ion-card-title>
-          <ion-card-subtitle>{{ subTitle() | translate | async}}</ion-card-subtitle>
+          <ion-card-title>{{ title() }}</ion-card-title>
+          <ion-card-subtitle>{{ subTitle() }}</ion-card-subtitle>
         </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {

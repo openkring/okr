@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, RoleName, SectionModel, UserModel } from '@bk2/shared-models';
 import { ButtonCopy, CategorySelect, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
@@ -12,14 +10,13 @@ import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
   selector: 'bk-section-config',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem,
     TextInput, CategorySelect, ButtonCopy
   ],
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ headerTitle() | translate | async }}</ion-card-title>
+        <ion-card-title>{{ headerTitle() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
@@ -27,7 +24,7 @@ import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
             <ion-row>
               <ion-col size="6">
                 <ion-item lines="none">
-                  <ion-label>{{ '@content.section.default.type' | translate | async }}: {{ type() }}</ion-label>
+                  <ion-label>{{ '@content.section.default.type' }}: {{ type() }}</ion-label>
                 </ion-item>
               </ion-col>
               @if(bkey(); as bkey) {
@@ -55,7 +52,7 @@ import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
           </ion-col>
           <ion-col size="6">
             <ion-item lines="none">
-              <ion-label>{{ '@content.section.forms.roleNeeded.title' | translate | async }}</ion-label>
+              <ion-label>{{ '@content.section.forms.roleNeeded.title' }}</ion-label>
             </ion-item>
           </ion-col>
           <ion-col size="6">
@@ -63,7 +60,7 @@ import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
           </ion-col>
           <ion-col size="6">
             <ion-item lines="none">
-              <ion-label>{{ '@content.section.forms.state.title' | translate | async }}</ion-label>
+              <ion-label>{{ '@content.section.forms.state.title' }}</ion-label>
             </ion-item>
           </ion-col>
           <ion-col size="6">

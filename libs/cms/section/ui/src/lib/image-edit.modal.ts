@@ -1,10 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, linkedSignal, model } from '@angular/core';
 import {
   IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow, ModalController
 } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ImageConfig, ImageType } from '@bk2/shared-models';
 import { StringSelect, TextInput, Header } from '@bk2/shared-ui';
 
@@ -14,7 +12,6 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
   selector: 'bk-image-edit-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     Header,
     TextInput, StringSelect,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol,
@@ -23,7 +20,7 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
     <bk-header [title]="title()" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ '@content.section.image.edit.title' | translate | async }}</ion-card-title>
+        <ion-card-title>{{ '@content.section.image.edit.title' }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>

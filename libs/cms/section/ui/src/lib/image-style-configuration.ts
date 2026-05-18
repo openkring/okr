@@ -1,18 +1,15 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { ImageActions } from '@bk2/shared-categories';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryOld, Checkbox, NumberInput, StringSelect, TextInput } from '@bk2/shared-ui';
 import { ImageActionType, ImageStyle, Slot } from '@bk2/shared-models';
 
 
 @Component({
-  selector: 'bk-image-style-configuration',
+  selector: 'bk-image-style',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote,
     Checkbox, TextInput, StringSelect, CategoryOld, NumberInput
 ],
@@ -20,7 +17,7 @@ import { ImageActionType, ImageStyle, Slot } from '@bk2/shared-models';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+        <ion-card-title>{{ title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -30,27 +27,27 @@ import { ImageActionType, ImageStyle, Slot } from '@bk2/shared-models';
         }
         <ion-grid>
           <ion-row>
-            <ion-col size="12">  
+            <ion-col size="12">
               <bk-text-input name="imgIxParams" [value]="imgIxParams()" (valueChange)="onFieldChange('imgIxParams', $event)" [readOnly]="readOnly()" [showHelper]="true" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <bk-text-input name="width" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" />
-            </ion-col>  
-            <ion-col size="12" size-md="6"> 
+            </ion-col>
+            <ion-col size="12" size-md="6">
               <bk-text-input name="height" [value]="height()" (valueChange)="onFieldChange('height', $event)" [readOnly]="readOnly()" />
-            </ion-col>  
+            </ion-col>
             <ion-col size="12" size-md="6">
               <bk-text-input name="sizes" [value]="sizes()" (valueChange)="onFieldChange('sizes', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>  
+            </ion-col>
             <ion-col size="12" size-md="6">
               <bk-text-input name="border" [value]="border()" (valueChange)="onFieldChange('border', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>  
+            </ion-col>
             <ion-col size="12" size-md="6">
               <bk-text-input name="borderRadius" [value]="borderRadius()" (valueChange)="onFieldChange('borderRadius', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>  
+            </ion-col>
             <ion-col size="12" size-md="6">
               <bk-checkbox name="isThumbnail" [checked]="isThumbnail()" (checkedChange)="onFieldChange('isThumbnail', $event)" [readOnly]="readOnly()" />
-            </ion-col>  
+            </ion-col>
             <ion-col size="12" size-md="6">
              <bk-string-select
                 name="slot"
@@ -68,10 +65,10 @@ import { ImageActionType, ImageStyle, Slot } from '@bk2/shared-models';
             </ion-col>
             <ion-col size="12" size-md="6">
               <bk-category-old name="imageAction" [value]="action()" (valueChange)="onFieldChange('imageAction', $event)" [readOnly]="readOnly()" [categories]="imageActions" />
-            </ion-col>  
+            </ion-col>
             <ion-col size="12" size-md="6">
               <bk-number-input name="zoomFactor" [value]="zoomFactor()" (valueChange)="onFieldChange('zoomFactor', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>  
+            </ion-col>
           </ion-row>
         </ion-grid>
       </ion-card-content>

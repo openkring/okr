@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 import { FormsModule } from '@angular/forms';
 
 import { ColorsIonic, NameDisplays } from '@bk2/shared-categories';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@bk2/shared-models';
 import { CategoryOld, Checkbox, StringSelect, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -14,11 +12,11 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Avatars } from '@bk2/avatar-ui';
 
 @Component({
-  selector: 'bk-people-configuration',
+  selector: 'bk-people-config',
   standalone: true,
   imports: [
     vestForms, FormsModule,
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonButton, IonIcon,
     CategoryOld, Avatars, StringSelect, Checkbox, TextInput
   ],
@@ -26,7 +24,7 @@ import { Avatars } from '@bk2/avatar-ui';
   template: `
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ headerTitle() | translate | async}}</ion-card-title>
+          <ion-card-title>{{ headerTitle() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -39,32 +37,32 @@ import { Avatars } from '@bk2/avatar-ui';
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-checkbox name="showName" [checked]="showName()" (checkedChange)="onFieldChange('showName', $event)" [readOnly]="isReadOnly()" />
-              </ion-col>  
+              </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-checkbox name="showLabel" [checked]="showLabel()" (checkedChange)="onFieldChange('showLabel', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                   <bk-string-select name="peopleType" [selectedString]="type()" (selectedStringChange)="onTypeChange($event)" [readOnly]="readOnly()" [showHelper]="true" [stringList]="['persons', 'group', 'responsibility']" />
-              </ion-col>  
+              </ion-col>
                <ion-col size="12" size-md="6">
                 @if(type() === 'group') {
                   <ion-button fill="outline" [disabled]="isReadOnly()" (click)="groupSelectClicked.emit()">
                     <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
-                    {{ groupId() || ('@content.section.type.people.select.group' | translate | async) }}
+                    {{ groupId() || '@content.section.type.people.select.group' }}
                   </ion-button>
                 }
                 @if(type() === 'responsibility') {
                   <ion-button fill="outline" [disabled]="isReadOnly()" (click)="responsibilitySelectClicked.emit()">
                     <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
-                    {{ groupId() || ('@content.section.type.people.select.responsibility' | translate | async) }}
+                    {{ groupId() || '@content.section.type.people.select.responsibility' }}
                   </ion-button>                }
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="color" [value]="color()" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />                                               
-              </ion-col>  
+                <bk-category-old name="color" [value]="color()" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />
+              </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="nameDisplay" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [readOnly]="isReadOnly()" [categories]="nameDisplays" />                                               
-              </ion-col>  
+                <bk-category-old name="nameDisplay" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [readOnly]="isReadOnly()" [categories]="nameDisplays" />
+              </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-text-input name="linkedSection" [value]="linkedSection()" (valueChange)="onFieldChange('linkedSection', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>

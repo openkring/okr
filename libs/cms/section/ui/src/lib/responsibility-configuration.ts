@@ -1,17 +1,14 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResponsibilityConfig, UserModel } from '@bk2/shared-models';
 import { Checkbox, TextInput } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
-  selector: 'bk-responsibility-configuration',
+  selector: 'bk-responsibility-config',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe,
     Checkbox, TextInput,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol,
   ],
@@ -19,7 +16,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ '@content.section.type.responsibility.edit' | translate | async }}</ion-card-title>
+        <ion-card-title>{{ '@content.section.type.responsibility.edit' }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>

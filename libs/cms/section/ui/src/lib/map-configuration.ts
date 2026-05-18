@@ -1,17 +1,14 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { Checkbox, NumberInput } from '@bk2/shared-ui';
 import { MapConfig } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
-  selector: 'bk-map-configuration',
+  selector: 'bk-map-config',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonGrid, IonRow, IonCol, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     NumberInput, Checkbox
   ],
@@ -19,7 +16,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   template: `
        <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+          <ion-card-title>{{ title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           @if(intro(); as intro) {
@@ -30,18 +27,18 @@ import { coerceBoolean } from '@bk2/shared-util-core';
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <ion-label>{{ '@input.coordinates.label' | translate | async }}</ion-label>
+                <ion-label>{{ '@input.coordinates.label' }}</ion-label>
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-number-input name="latitude" [value]="centerLatitude()" (valueChange)="onFieldChange('centerLatitude', $event)" [maxLength]=8 [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                <bk-number-input name="latitude" [value]="centerLatitude()" (valueChange)="onFieldChange('centerLatitude', $event)" [maxLength]=8 [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-number-input name="longitude" [value]="centerLongitude()" (valueChange)="onFieldChange('centerLongitude', $event)" [maxLength]=7 [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                <bk-number-input name="longitude" [value]="centerLongitude()" (valueChange)="onFieldChange('centerLongitude', $event)" [maxLength]=7 [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-number-input name="zoomFactor" [value]="zoom()" (valueChange)="onFieldChange('zoom', $event)" [maxLength]=2 [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                <bk-number-input name="zoomFactor" [value]="zoom()" (valueChange)="onFieldChange('zoom', $event)" [maxLength]=2 [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-checkbox name="useCurrentLocationAsCenter" [checked]="useCurrentLocationAsCenter()" (checkedChange)="onFieldChange('useCurrentLocationAsCenter', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />

@@ -1,20 +1,24 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@bk2/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, StringList, TextInput, UrlInput, IconInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { menuItemValidations } from '@bk2/cms-menu-util';
-import { PFX } from './scope';
+
+export interface MenuFormI18n {
+  title: string;
+  addLabel: string;
+  urlPlaceholder: string;
+  urlHelper: string;
+}
 
 @Component({
-  selector: 'bk-menu-form',
+  selector: 'bk-menu-item-form',
   standalone: true,
   imports: [
     vestForms, FormsModule,
@@ -38,10 +42,10 @@ import { PFX } from './scope';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" [showHelper]=true />
-                <bk-error-note [errors]="nameErrors()" />                                        
+                <bk-error-note [errors]="nameErrors()" />
               </ion-col>
 
-              <ion-col size="12" size-md="6"> 
+              <ion-col size="12" size-md="6">
                 <bk-cat-select [category]="types()!" [selectedItemName]="menuAction()" (selectedItemNameChange)="onFieldChange('action', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
@@ -54,27 +58,27 @@ import { PFX } from './scope';
 
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="labelErrors()" />                                        
+                  <bk-error-note [errors]="labelErrors()" />
                 </ion-col>
 
                 <ion-col size="12">
                   <bk-url name="url"
                     [value]="url()" (valueChange)="onFieldChange('url', $event)"
                     [showHelper]=true
-                    [readOnly]="isReadOnly()" 
-                    placeholder="urlPlaceholder()"
-                    helper="urlHelper()"
+                    [readOnly]="isReadOnly()"
+                    [placeholder]="i18n()?.urlPlaceholder ?? ''"
+                    [helper]="i18n()?.urlHelper ?? ''"
                   />
-                  <bk-error-note [errors]="urlErrors()" />                                        
+                  <bk-error-note [errors]="urlErrors()" />
                 </ion-col>
               </ion-row>
-            } 
+            }
 
             @if(menuAction() === 'sub') {
               <ion-row>
                 <ion-col size="12">
                   <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="labelErrors()" />                                        
+                  <bk-error-note [errors]="labelErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -90,7 +94,7 @@ import { PFX } from './scope';
         </ion-card-content>
       </ion-card>
 
-<!-- 
+<!--
       currently not needed
       @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call') {
         <bk-property-list [properties]="data()" (propertiesChange)="onFieldChange('data', $event)" />
@@ -100,10 +104,10 @@ import { PFX } from './scope';
       @if(menuAction() === 'main' || menuAction() === 'context' || menuAction() === 'sub') {
         <bk-strings
           [strings]="menuItems()" (stringsChange)="onFieldChange('menuItems', $event)"
-          title="title()"
-          addLabel="addLabel()"
+          [title]="i18n()?.title ?? ''"
+          [add]="i18n()?.addLabel ?? ''"
           [readOnly]="isReadOnly()"
-        /> 
+        />
       }
 
       @if(hasRole('contentAdmin')) {
@@ -118,8 +122,6 @@ import { PFX } from './scope';
 `
 })
 export class MenuForm {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public readonly formData = model.required<MenuItemModel>();
   public readonly types = input.required<CategoryListModel>();
@@ -132,10 +134,7 @@ export class MenuForm {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // i18n
-  readonly title = toSignal(this.i18nService.translate(PFX + 'menuItems.title'), { initialValue: '' });
-  readonly addLabel = toSignal(this.i18nService.translate(PFX + 'menuItems.addLabel'), { initialValue: '' });
-  readonly urlPlaceholder = toSignal(this.i18nService.translate(PFX + 'url.placeholder'), { initialValue: '' });
-  readonly urlHelper = toSignal(this.i18nService.translate(PFX + 'url.helper'), { initialValue: '' });
+  public readonly i18n = input<MenuFormI18n>({ title: '', addLabel: '', urlPlaceholder: '', urlHelper: '' });
 
   // signals
   public dirty = output<boolean>();

@@ -1,33 +1,30 @@
 import { Component, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
 import { InvitationsConfig } from '@bk2/shared-models';
 import { Checkbox, NumberInput, TextInput } from '@bk2/shared-ui';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
-  selector: 'bk-invitations-configuration',
+  selector: 'bk-invitations-config',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     TextInput, Checkbox, NumberInput,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  template: `  
+  template: `
 
     <ion-card>
       <ion-card-header>
-          <ion-card-title>{{ title() | translate | async}}</ion-card-title>
-          <ion-card-subtitle>{{ subTitle() | translate | async}}</ion-card-subtitle>
+          <ion-card-title>{{ title() }}</ion-card-title>
+          <ion-card-subtitle>{{ subTitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
           @if(intro.length > 0) {
             <small><div [innerHTML]="intro"></div></small>
           }
-        }        
+        }
 
         <ion-grid>
           <ion-row>

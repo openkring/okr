@@ -1,10 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, input, linkedSignal, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AlbumConfig } from '@bk2/shared-models';
 import { CategoryOld, Checkbox
   , TextInput } from '@bk2/shared-ui';
@@ -16,7 +14,6 @@ import { AlbumStyles } from '@bk2/cms-section-util';
   selector: 'bk-album-config',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     vestForms, FormsModule,
     TextInput, CategoryOld, Checkbox,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
@@ -25,7 +22,7 @@ import { AlbumStyles } from '@bk2/cms-section-util';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+        <ion-card-title>{{ title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {

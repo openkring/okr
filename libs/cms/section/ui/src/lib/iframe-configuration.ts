@@ -1,16 +1,13 @@
 import { Component, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
 import { TextInput, UrlInput } from '@bk2/shared-ui';
 import { IframeConfig } from '@bk2/shared-models';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-iframe-config',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid,
     TextInput, UrlInput
   ],
@@ -18,7 +15,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+        <ion-card-title>{{ title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {

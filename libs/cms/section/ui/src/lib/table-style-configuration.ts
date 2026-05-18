@@ -1,16 +1,13 @@
 import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
 import { StringSelect, TextInput } from '@bk2/shared-ui';
 import { TableStyle } from '@bk2/shared-models';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-table-style',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
     TextInput, StringSelect
   ],
@@ -18,7 +15,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   template: `
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ cardTitle() | translate | async }}</ion-card-title>
+          <ion-card-title>{{ cardTitle() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
             <ion-grid>
@@ -33,7 +30,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                     <bk-text-input name="fontSize" [value]="fontSize()" (valueChange)="onFieldChange('fontSize', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-string-select name="fontWeight"  [selectedString]="fontWeight()" (selectedStringChange)="onFieldChange('fontWeight', $event)" [readOnly]="readOnly()" [showHelper]="true" [stringList]="['thin', 'light', 'normal', 'medium', 'bold', 'black']" /> 
+                    <bk-string-select name="fontWeight"  [selectedString]="fontWeight()" (selectedStringChange)="onFieldChange('fontWeight', $event)" [readOnly]="readOnly()" [showHelper]="true" [stringList]="['thin', 'light', 'normal', 'medium', 'bold', 'black']" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
                     <bk-text-input name="padding" [value]="padding()" (valueChange)="onFieldChange('padding', $event)" [showHelper]="true" [readOnly]="readOnly()" />
@@ -70,4 +67,4 @@ export class TableStyleConfiguration {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
-} 
+}

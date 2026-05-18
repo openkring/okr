@@ -15,8 +15,16 @@ import { UploadService } from '@bk2/avatar-data-access';
 
 import { ImageEditModal } from './image-edit.modal';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { PFX } from './scope';
-import { I18nService } from '@bk2/shared-i18n';
+
+export interface ImagesConfigurationI18n {
+  title: string;
+  empty: string;
+  upload: string;
+  as_title: string;
+  as_image_edit: string;
+  as_image_delete: string;
+  cancel: string;
+}
 
 @Component({
   selector: 'bk-images-config',
@@ -38,7 +46,7 @@ import { I18nService } from '@bk2/shared-i18n';
     <ion-card>
       <ion-card-header>
         <div class="image-list-header">
-          <ion-card-title>{{ i18n.title() }}</ion-card-title>
+          <ion-card-title>{{ i18n()?.title ?? '' }}</ion-card-title>
           @if(!readOnly()) {
             <ion-buttons>
               <label style="display: flex; align-items: center;">
@@ -56,7 +64,7 @@ import { I18nService } from '@bk2/shared-i18n';
         <ion-list lines="inset">
           @if(images().length === 0) {
             <ion-item>
-              <ion-label color="medium">{{ i18n.empty() }}</ion-label>
+              <ion-label color="medium">{{ i18n()?.empty ?? '' }}</ion-label>
             </ion-item>
           } @else {
             <!-- Casting $event to $any is a temporary fix for https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -87,23 +95,20 @@ export class ImagesConfiguration {
   private readonly uploadService = inject(UploadService);
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly i18nService = inject(I18nService);
 
   // inputs
   public images = model.required<ImageConfig[]>();
   public storagePath = input.required<string>();
   public currentUser = input<UserModel | undefined>();
   public readOnly = input(true);
-
-  // i18n
-  protected readonly i18n = this.i18nService.translateAll({
-    title: PFX + 'images.title',
-    empty: PFX + 'images.empty',
-    upload: PFX + 'images.upload',
-    as_title: PFX + 'actionsheet.title',
-    as_image_edit: PFX + 'actionsheet.image.edit',
-    as_image_delete: PFX + 'actionsheet.image.delete',
-    cancel: '@cancel'
+  public readonly i18n = input<ImagesConfigurationI18n>({
+    title: '',
+    empty: '',
+    upload: '',
+    as_title: '',
+    as_image_edit: '',
+    as_image_delete: '',
+    cancel: ''
   });
 
   // constants
@@ -136,7 +141,7 @@ export class ImagesConfiguration {
       fullPath: `${basePath}/${f.name}`,
     }));
 
-    const urls = await this.uploadService.uploadFiles(uploads, this.i18n.upload());
+    const urls = await this.uploadService.uploadFiles(uploads, this.i18n()?.upload ?? '');
     if (!urls) return;
 
     const newImages: ImageConfig[] = files.map(f => ({
@@ -159,11 +164,11 @@ export class ImagesConfiguration {
 
   protected async showActions(img: ImageConfig, index: number): Promise<void> {
     if (this.readOnly()) return;
-    const options: ActionSheetOptions = createActionSheetOptions(this.i18n.as_title());
-    options.buttons.push(createActionSheetButton('image.edit', this.i18n.as_image_edit(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('image.delete', this.i18n.as_image_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
-
+    const i18n = this.i18n();
+    const options: ActionSheetOptions = createActionSheetOptions(i18n?.as_title ?? '');
+    options.buttons.push(createActionSheetButton('image.edit', i18n?.as_image_edit ?? '', this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('image.delete', i18n?.as_image_delete ?? '', this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('cancel', i18n?.cancel ?? '', this.imgixBaseUrl, 'cancel-circle'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();

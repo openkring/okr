@@ -8,7 +8,7 @@ import { DEFAULT_LABEL, DEFAULT_URL } from '@bk2/shared-constants';
 import { ButtonActions } from '@bk2/shared-categories';
 
 @Component({
-  selector: 'bk-button-action-configuration',
+  selector: 'bk-button-action',
   standalone: true,
   imports: [
     FormsModule,

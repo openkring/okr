@@ -1,17 +1,14 @@
 import { Component, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
 import { ChatConfig } from '@bk2/shared-models';
 import { Checkbox, StringSelect, TextInput } from '@bk2/shared-ui';
 import { DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_URL } from '@bk2/shared-constants';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-chat-config',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     TextInput, Checkbox, StringSelect,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle
 ],
@@ -20,8 +17,8 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 
     <ion-card>
       <ion-card-header>
-          <ion-card-title>{{ title() | translate | async}}</ion-card-title>
-          <ion-card-subtitle>{{ subTitle() | translate | async}}</ion-card-subtitle>
+          <ion-card-title>{{ title() }}</ion-card-title>
+          <ion-card-subtitle>{{ subTitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {

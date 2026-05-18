@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
 
 import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
-import { Chips, NotesInput } from '@bk2/shared-ui';
+import { Chips, ImageConfigEdit, NotesInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { ModelSelectService } from '@bk2/shared-feature';
@@ -32,7 +32,7 @@ import { TrackerConfiguration } from './tracker-configuration';
   selector: 'bk-section-form',
   standalone: true,
   imports: [
-    Chips, NotesInput,
+    Chips, ImageConfigEdit, NotesInput,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
     IframeConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration, 
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration, 
