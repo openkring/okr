@@ -1,17 +1,20 @@
 import { computed, inject, Injectable } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 import { combineLatest, Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 
 import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, MenuItemModel, TaskCollection, TaskModel } from '@bk2/shared-models';
 import { debugListLoaded, die, getSystemQuery, nameMatches, safeStructuredClone, warn } from '@bk2/shared-util-core';
-import { AppNavigationService, isInSplitPane, navigateByUrl } from '@bk2/shared-util-angular';
+import { AppNavigationService, isInSplitPane, navigateByUrl, VersionCheckService } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { PFX } from './scope';
 
 import { AuthService } from '@bk2/auth-data-access';
 import { ActivityService } from '@bk2/activity-data-access';
@@ -48,8 +51,28 @@ export const _MenuStore = signalStore(
     authService: inject(AuthService),
     activityService: inject(ActivityService),
     matrixChatService: inject(MatrixChatService),
+    i18nService: inject(I18nService),
+    versionService: inject(VersionCheckService),
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      // menu-list.ts
+      items:                PFX + 'items',
+      list_description:     PFX + 'description',
+      list_name:            PFX + 'name',
+      list_link:            PFX + 'link',
+      list_action:          PFX + 'action',
+      empty:                PFX + 'empty',
+      as_title:             PFX + 'actionsheet.title',
+      as_edit:              PFX + 'actionsheet.edit',
+      as_delete:            PFX + 'actionsheet.delete',
+      cancel:               '@operation.cancel',
+      // menu.modal.ts → bk-menu-item-form
+      form_menu_items_title: PFX + 'form.menuItems.title',
+      form_add_label:       PFX + 'form.menuItems.add',
+      form_url_placeholder: PFX + 'form.url.placeholder',
+      form_url_helper:      PFX + 'form.url.helper',
+    }),
     menuItemsResource: rxResource({
       stream: () => {
         return store.menuService.list();
@@ -109,6 +132,22 @@ export const _MenuStore = signalStore(
     };
   }),
 
+  withProps((store) => ({
+    translatedMenuLabel: toSignal(
+      toObservable(computed(() => {
+        const menuLabel = store.menu()?.label ?? '';
+        if (menuLabel.includes('@VERSION@')) {
+          return menuLabel.replace('@VERSION@', 'v' + store.versionService.getCurrentVersion());
+        }
+        if (menuLabel.startsWith('@')) {
+          return PFX + menuLabel.substring(1);
+        }
+        return menuLabel;
+      })).pipe(switchMap(key => store.i18nService.translate(key))),
+      { initialValue: '' }
+    ),
+  })),
+
   withMethods((store) => {
     return {
       reload() {
@@ -164,7 +203,13 @@ export const _MenuStore = signalStore(
             tags: this.getTags(),
             roles: this.getRoles(),
             types: this.getTypes(),
-            readOnly
+            readOnly,
+            i18n: {
+              title:          store.i18n.form_menu_items_title(),
+              addLabel:       store.i18n.form_add_label(),
+              urlPlaceholder: store.i18n.form_url_placeholder(),
+              urlHelper:      store.i18n.form_url_helper(),
+            },
           }
         });
         modal.present();

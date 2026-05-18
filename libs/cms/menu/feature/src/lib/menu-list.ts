@@ -1,8 +1,6 @@
 import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { toSignal } from '@angular/core/rxjs-interop';
 
-import { I18nService } from '@bk2/shared-i18n';
 import { MenuItemModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -10,7 +8,6 @@ import { hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 import { MenuStore } from './menu.store';
-import { PFX } from './scope';
 
 @Component({
   selector: 'bk-menu-list',
@@ -26,7 +23,7 @@ import { PFX } from './scope';
       <!-- page header -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
-        <ion-title>{{ selectedMenuItemsCount() }}/{{ menuItemsCount() }} {{ items() }}</ion-title>
+        <ion-title>{{ selectedMenuItemsCount() }}/{{ menuItemsCount() }} {{ menuStore.i18n.items() }}</ion-title>
         <ion-buttons slot="end">
           @if(hasRole('privileged') || !readOnly()) {
             <ion-button (click)="add()">
@@ -39,7 +36,7 @@ import { PFX } from './scope';
       <!-- description -->
       <ion-toolbar class="ion-hide-md-down">
         <ion-item lines="none">
-          <ion-label>{{ description() }}</ion-label>
+          <ion-label>{{ menuStore.i18n.list_description() }}</ion-label>
         </ion-item>
       </ion-toolbar>
 
@@ -55,13 +52,13 @@ import { PFX } from './scope';
           <ion-grid>
             <ion-row>
               <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ name() }}</strong></ion-label>  
+                <ion-label><strong>{{ menuStore.i18n.list_name() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4" class="ion-hide-md-down">
-                  <ion-label><strong>{{ link() }}</strong></ion-label>
+                  <ion-label><strong>{{ menuStore.i18n.list_link() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4">
-                  <ion-label><strong>{{ action() }}</strong></ion-label>
+                  <ion-label><strong>{{ menuStore.i18n.list_action() }}</strong></ion-label>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -75,7 +72,7 @@ import { PFX } from './scope';
         <bk-spinner />
       } @else {
         @if (filteredMenuItems().length === 0) {
-          <bk-empty-list message="{{empty()}}" />
+          <bk-empty-list [message]="menuStore.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
             @for(menuItem of filteredMenuItems(); track menuItem.bkey) {
@@ -99,23 +96,10 @@ import { PFX } from './scope';
 export class MenuList {
   protected readonly menuStore = inject(MenuStore);
   private actionSheetController = inject(ActionSheetController);
-  private readonly i18nService = inject(I18nService);
 
   // filters
   protected searchTerm = linkedSignal(() => this.menuStore.searchTerm());
   protected selectedCategory = linkedSignal(() => this.menuStore.selectedCategory());
-
-  // i18n
-  readonly items = toSignal(this.i18nService.translate(PFX + 'items'), { initialValue: '' });
-  readonly description = toSignal(this.i18nService.translate(PFX + 'description'), { initialValue: '' });
-  readonly name = toSignal(this.i18nService.translate(PFX + 'name'), { initialValue: '' });
-  readonly link = toSignal(this.i18nService.translate(PFX + 'link'), { initialValue: '' });
-  readonly action = toSignal(this.i18nService.translate(PFX + 'action'), { initialValue: '' });
-  readonly empty = toSignal(this.i18nService.translate(PFX + 'empty'), { initialValue: '' });
-  readonly title = toSignal(this.i18nService.translate(PFX + 'actionsheet.title'), { initialValue: '' });
-  readonly edit = toSignal(this.i18nService.translate(PFX + 'actionsheet.edit'), { initialValue: '' });
-  readonly delete = toSignal(this.i18nService.translate(PFX + 'actionsheet.delete'), { initialValue: '' });
-  readonly cancel = toSignal(this.i18nService.translate('@operation.cancel'), { initialValue: '' });
 
   // computed
   protected filteredMenuItems = computed(() => this.menuStore.filteredMenuItems() ?? []);
@@ -127,28 +111,18 @@ export class MenuList {
 
   private imgixBaseUrl = this.menuStore.appStore.env.services.imgixBaseUrl;
 
-  /**
-   * Displays an ActionSheet with all possible actions on a MenuItem. Only actions are shown, that the user has permission for.
-   * After user selected an action this action is executed.
-   * @param menuItem 
-   */
   protected async showActions(menuItem: MenuItemModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions(this.title());
+    const actionSheetOptions = createActionSheetOptions(this.menuStore.i18n.as_title());
     if (hasRole('admin', this.menuStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.delete(), this.imgixBaseUrl, 'trash'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.cancel(), this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.menuStore.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.menuStore.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.menuStore.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, menuItem);
     } else {
       await this.menuStore.edit(menuItem, this.readOnly());
     }
   }
 
-  /**
-   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param menuItem 
-   */
   private async executeActions(actionSheetOptions: ActionSheetOptions, menuItem: MenuItemModel): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
@@ -182,6 +156,3 @@ export class MenuList {
     this.menuStore.setSelectedCategory(type);
   }
 }
-
-
-
