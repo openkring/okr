@@ -123,6 +123,38 @@ Matrix chat authentication is done via a Firebase Cloud Function (`getMatrixCred
 - **SSR** is configured but Ionic hydration is intentionally disabled
 - Test runner: **Vitest** (jsdom environment, `globals: true`)
 
+### i18n pattern (store-driven)
+
+All static i18n strings must go through the store — never use `TranslatePipe` or `AsyncPipe` in components for static keys.
+
+**Store side** — resolve strings in `withProps` using `I18nService.translateAll`:
+```ts
+withProps(() => ({ i18nService: inject(I18nService) })),
+withProps(store => ({
+  i18n: store.i18nService.translateAll({
+    list_title: '@feature.list.title',
+    field_empty: '@feature.field.empty',
+  }),
+})),
+```
+
+**Component side** — read resolved signals directly:
+```html
+<ion-title>{{ store.i18n.list_title() }}</ion-title>
+```
+
+**Components without an existing store** — define an inline `signalStore` in the same file, above `@Component`:
+```ts
+const FeatureStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps(store => ({ i18n: store.i18nService.translateAll({ ... }) })),
+);
+// then in @Component: providers: [FeatureStore]
+// and in class: protected readonly store = inject(FeatureStore);
+```
+
+**Exception — keep `TranslatePipe` only when the key is data-driven at runtime** (comes from a DB field, an `input()`, or a dynamically constructed string like `` `@prefix.${variable}.label` ``). Do NOT keep it for hardcoded string literals that happen to live in the component body.
+
 ### Naming conventions
 
 #### Component names
