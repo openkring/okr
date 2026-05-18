@@ -51,7 +51,11 @@ export const OrgStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: '@subject.person.operation.delete.confirm'
+      delete_confirm:   '@subject.person.operation.delete.confirm',
+      org_plural:       '@subject.org.plural',
+      list_header_name: '@subject.list.header.name',
+      list_header_phone:'@subject.list.header.phone',
+      list_header_email:'@subject.list.header.email',
     }),
 
     orgsResource: rxResource({

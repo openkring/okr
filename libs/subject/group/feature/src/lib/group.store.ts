@@ -55,6 +55,15 @@ export const GroupStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
+      group_plural:        '@subject.group.plural',
+      list_header_name:    '@subject.list.header.name',
+      segment_content:     '@subject.group.segment.content',
+      segment_chat:        '@subject.group.segment.chat',
+      segment_calendar:    '@subject.group.segment.calendar',
+      segment_tasks:       '@subject.group.segment.tasks',
+      segment_files:       '@subject.group.segment.files',
+      segment_album:       '@subject.group.segment.album',
+      segment_members:     '@subject.group.segment.members',
       group_create_conf:  PFX + 'group.create.conf',
       group_create_error:  PFX + 'group.create.error',
       group_create_duplicate: PFX + 'group.create.duplicate',

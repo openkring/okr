@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -19,7 +17,7 @@ import { PersonStore } from './person.store';
   selector: 'bk-person-list',
   standalone: true,
   imports: [
-    TranslatePipe, FullNamePipe, AsyncPipe, AvatarPipe, SvgIconPipe,
+    FullNamePipe, AvatarPipe, SvgIconPipe,
     Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonPopover,
@@ -34,7 +32,7 @@ import { PersonStore } from './person.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ filteredPersonsCount()}}/{{personsCount()}} {{ '@subject.person.plural' | translate | async }}</ion-title>
+      <ion-title>{{ filteredPersonsCount()}}/{{personsCount()}} {{ store.i18n.person_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c-persons">
@@ -61,9 +59,9 @@ import { PersonStore } from './person.store';
     <!-- list header -->
     <ion-toolbar color="light" class="ion-hide-sm-down">
       <ion-item lines="none">
-        <ion-label><strong>{{ '@subject.list.header.name' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@subject.list.header.phone' | translate | async }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ '@subject.list.header.email' | translate | async }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.list_header_name() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.list_header_phone() }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.list_header_email() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>

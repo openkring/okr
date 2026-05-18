@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { OrgModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -19,7 +17,7 @@ import { OrgStore } from './org.store';
   selector: 'bk-org-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, AvatarPipe, SvgIconPipe,
+    AvatarPipe, SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
@@ -34,7 +32,7 @@ import { OrgStore } from './org.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedOrgsCount()}}/{{orgsCount()}} {{ '@subject.org.plural' | translate | async }}</ion-title>
+      <ion-title>{{ selectedOrgsCount()}}/{{orgsCount()}} {{ store.i18n.org_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c-orgs">
@@ -63,13 +61,13 @@ import { OrgStore } from './org.store';
       <ion-grid>
         <ion-row>
           <ion-col size="5">
-            <ion-label><strong>{{ '@subject.list.header.name' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ store.i18n.list_header_name() }}</strong></ion-label>
           </ion-col>
           <ion-col size="3">
-              <ion-label><strong>{{ '@subject.list.header.phone' | translate | async }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.list_header_phone() }}</strong></ion-label>
           </ion-col>
           <ion-col size="4">
-            <ion-label><strong>{{ '@subject.list.header.email' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ store.i18n.list_header_email() }}</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>

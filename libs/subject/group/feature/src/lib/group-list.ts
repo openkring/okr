@@ -2,7 +2,6 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -19,7 +18,7 @@ import { GroupStore } from './group.store';
   selector: 'bk-group-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, MemberAvatarsPipe,
+    AsyncPipe, SvgIconPipe, AvatarPipe, MemberAvatarsPipe,
     Spinner, EmptyList, Menu, ListFilter, AvatarDisplay,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover, IonAvatar, IonImg, IonList,
@@ -33,7 +32,7 @@ import { GroupStore } from './group.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedGroupsCount()}}/{{groupsCount()}} {{ '@subject.group.plural' | translate | async }}</ion-title>
+        <ion-title>{{ selectedGroupsCount()}}/{{groupsCount()}} {{ store.i18n.group_plural() }}</ion-title>
         @if(hasRole('privileged') || hasRole('memberAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -61,7 +60,7 @@ import { GroupStore } from './group.store';
         <ion-grid>
           <ion-row>
             <ion-col>
-              <ion-label><strong>{{ '@subject.list.header.name' | translate | async }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.list_header_name() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>

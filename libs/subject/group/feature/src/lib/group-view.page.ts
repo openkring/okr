@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ChangeConfirmation } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { isAdminMember } from '@bk2/subject-group-util';
@@ -23,7 +21,6 @@ import { GroupStore } from './group.store';
   selector: 'bk-group-view-page',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     ChangeConfirmation, PageDispatcher, CalEventList, MembershipList, DocumentList, TaskList,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
     IonHeader, IonButtons, IonTitle, IonMenuButton
@@ -39,37 +36,37 @@ import { GroupStore } from './group.store';
       <ion-segment [scrollable]="true" color="secondary" (ionChange)="onSegmentChanged($event)" value="content">
         @if(hasContent()) {
           <ion-segment-button value="content">
-            <ion-label>{{ '@subject.group.segment.content' | translate | async}}</ion-label>
+            <ion-label>{{ groupStore.i18n.segment_content() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasChat()) {
           <ion-segment-button value="chat">
-            <ion-label>{{ '@subject.group.segment.chat' | translate | async}}</ion-label>
+            <ion-label>{{ groupStore.i18n.segment_chat() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasCalendar()) {
           <ion-segment-button value="calendar">
-            <ion-label>{{ '@subject.group.segment.calendar' | translate | async}}</ion-label>
+            <ion-label>{{ groupStore.i18n.segment_calendar() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasTasks()) {
           <ion-segment-button value="tasks">
-            <ion-label>{{ '@subject.group.segment.tasks' | translate | async}}</ion-label>
+            <ion-label>{{ groupStore.i18n.segment_tasks() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasFiles()) {
           <ion-segment-button value="files">
-            <ion-label>{{ '@subject.group.segment.files' | translate | async}}</ion-label>
+            <ion-label>{{ groupStore.i18n.segment_files() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasAlbum()) {
           <ion-segment-button value="album">
-            <ion-label>{{ '@subject.group.segment.album' | translate | async}}</ion-label>
+            <ion-label>{{ groupStore.i18n.segment_album() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasMembers()) {
           <ion-segment-button value="members">
-            <ion-label>{{ '@subject.group.segment.members' | translate | async}}</ion-label>
+            <ion-label>{{ groupStore.i18n.segment_members() }}</ion-label>
           </ion-segment-button>
         }
       </ion-segment>
@@ -138,7 +135,7 @@ import { GroupStore } from './group.store';
   `
 })
 export class GroupViewPage implements ViewWillEnter {
-  private readonly groupStore = inject(GroupStore);
+  protected readonly groupStore = inject(GroupStore);
   private readonly pageStore = inject(PageStore);
   private readonly folderService = inject(FolderService);
 

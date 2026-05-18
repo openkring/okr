@@ -82,8 +82,12 @@ export const PersonStore = signalStore(
     i18n: store.i18nService.translateAll({
       membership_create_conf:  PFX + 'membership.create.conf',
       membership_create_error:  PFX + 'membership.create.error',
-      person_delete_confirm: PFX + 'person.delete.confirm',
-      create_exists_error: '@subject.person.operation.create.exists.error'
+      person_delete_confirm:   PFX + 'person.delete.confirm',
+      create_exists_error:     '@subject.person.operation.create.exists.error',
+      person_plural:           '@subject.person.plural',
+      list_header_name:        '@subject.list.header.name',
+      list_header_phone:       '@subject.list.header.phone',
+      list_header_email:       '@subject.list.header.email',
     }),
 
     personUserModelResource: rxResource({
