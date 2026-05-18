@@ -1,11 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ArticleSection, BlogLayoutType, ButtonSection, RoleName, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -26,7 +23,7 @@ import { BlogStream } from './blog-stream';
   selector: 'bk-blog-page',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe, SvgIconPipe,
+    SvgIconPipe,
     Menu,
     BlogMinimal, BlogGrid, BlogClassic, BlogMagazine, BlogBento, BlogStream,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
@@ -57,7 +54,7 @@ import { BlogStream } from './blog-stream';
       <ion-header>
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-          <ion-title>{{ pageStore.page()?.name | translate | async }}</ion-title>
+          <ion-title>{{ pageStore.page()?.name }}</ion-title>
           @if (hasRole('contentAdmin')) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -82,14 +79,14 @@ import { BlogStream } from './blog-stream';
       @if (isEmptyPage()) {
         <ion-item lines="none">
           <ion-label class="ion-text-wrap">
-            {{ (hasRole('contentAdmin') ? '@content.section.error.emptyPage' : '@content.section.error.emptyPageReadOnly') | translate | async }}
+            {{ hasRole('contentAdmin') ? pageStore.i18n.section_error_empty() : pageStore.i18n.section_error_empty_readonly() }}
           </ion-label>
         </ion-item>
         @if (hasRole('contentAdmin')) {
           <ion-item lines="none">
             <ion-button (click)="addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
-              {{ '@content.section.operation.add.label' | translate | async }}
+              {{ pageStore.i18n.section_add_label() }}
             </ion-button>
           </ion-item>
         }

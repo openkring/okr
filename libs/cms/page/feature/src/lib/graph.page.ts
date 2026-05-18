@@ -1,8 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { MenuItemModel, PageModel, RoleName, SectionModel } from '@bk2/shared-models';
 import { Spinner } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
@@ -27,7 +24,7 @@ import { error } from '@bk2/shared-util-angular';
   selector: 'bk-graph-page',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe, SvgIconPipe,
+    SvgIconPipe,
     Spinner, MenuGraphNode, Menu,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonItem, IonLabel,
     IonButton, IonIcon, IonPopover
@@ -68,7 +65,7 @@ import { error } from '@bk2/shared-util-angular';
       <ion-header>
         <ion-toolbar color="secondary">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-          <ion-title>{{ pageStore.page()?.title | translate | async }}</ion-title>
+          <ion-title>{{ pageStore.page()?.title }}</ion-title>
           @if(hasRole('contentAdmin')) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -94,14 +91,14 @@ import { error } from '@bk2/shared-util-angular';
         <bk-spinner />
       } @else if (!graphStore.dependencyTree()) {
         <ion-item lines="none">
-          <ion-label>{{ '@content.page.type.graph.nomain' | translate | async }}</ion-label>
+          <ion-label>{{ pageStore.i18n.graph_nomain() }}</ion-label>
         </ion-item>
       } @else {
         <ion-item lines="none">
-          <ion-label class="ion-text-wrap">{{ '@content.page.type.graph.description' | translate | async }}</ion-label>
+          <ion-label class="ion-text-wrap">{{ pageStore.i18n.graph_description() }}</ion-label>
         </ion-item>
         <ion-item lines="none">
-          <ion-label class="ion-text-wrap">{{ '@content.page.type.graph.description2' | translate | async }}</ion-label>
+          <ion-label class="ion-text-wrap">{{ pageStore.i18n.graph_description2() }}</ion-label>
         </ion-item>
 
         <!-- Legend -->

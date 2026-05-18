@@ -1,9 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ArticleSection, ButtonSection, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@bk2/shared-util-angular';
@@ -19,7 +16,7 @@ import { PageStore } from './page.store';
   standalone: true,
   imports: [
     SectionDispatcher, Menu,
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonGrid, IonRow, IonCol, IonLabel, IonPopover
   ],
@@ -231,7 +228,7 @@ import { PageStore } from './page.store';
       <ion-header>
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-          <ion-title>{{ pageStore.page()?.name | translate | async }}</ion-title>
+          <ion-title>{{ pageStore.page()?.name }}</ion-title>
           @if(hasRole('contentAdmin')) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -256,10 +253,10 @@ import { PageStore } from './page.store';
         @if(isEmptyPage()) {
           <div class="empty-state">
             <ion-icon src="{{'grid' | svgIcon }}"></ion-icon>
-            <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPage' | translate | async }}</ion-label>
+            <ion-label class="ion-text-wrap">{{ pageStore.i18n.section_error_empty() }}</ion-label>
             <ion-button size="large" (click)="this.addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
-              {{ '@content.section.operation.add.label' | translate | async }}
+              {{ pageStore.i18n.section_add_label() }}
             </ion-button>
           </div>
         } @else {     <!-- page contains sections -->
@@ -285,7 +282,7 @@ import { PageStore } from './page.store';
         @if(isEmptyPage()) {
           <div class="empty-state">
             <ion-icon src="{{'document' | svgIcon }}"></ion-icon>
-            <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPageReadOnly' | translate | async }}</ion-label>
+            <ion-label class="ion-text-wrap">{{ pageStore.i18n.section_error_empty_readonly() }}</ion-label>
           </div>
         } @else {
           <ion-grid>

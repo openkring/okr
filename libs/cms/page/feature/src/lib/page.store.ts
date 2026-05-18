@@ -71,7 +71,22 @@ export const _PageStore = signalStore(
       sort_noSections: PFX + 'sort.noSections',
       sort_onlyOneSection: PFX + 'sort.onlyOneSection',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      // page-list.ts
+      list_plural: '@content.page.plural',
+      list_field_description: '@content.page.field.description',
+      list_header_key: '@content.page.list.header.key',
+      list_header_name: '@content.page.list.header.name',
+      list_header_sections: '@content.page.list.header.sections',
+      list_field_empty: '@content.field.empty',
+      // content/files/dashboard/blog pages
+      section_error_empty: '@content.section.error.emptyPage',
+      section_error_empty_readonly: '@content.section.error.emptyPageReadOnly',
+      section_add_label: '@content.section.operation.add.label',
+      // graph.page.ts
+      graph_nomain: '@content.page.type.graph.nomain',
+      graph_description: '@content.page.type.graph.description',
+      graph_description2: '@content.page.type.graph.description2',
     }),
 
     pagesResource: rxResource({

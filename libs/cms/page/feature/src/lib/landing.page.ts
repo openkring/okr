@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { IonButton, IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Header } from '@bk2/shared-ui';
 
@@ -18,7 +16,7 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
   selector: 'bk-landing-page',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     IonContent, IonButton, IonIcon, IonImg, IonLabel,
     IonGrid, IonRow, IonCol,
     Header
@@ -90,12 +88,12 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
           }
           <ion-row>
             <ion-col>
-              <ion-label class="title"><strong>{{ title() | translate | async }}</strong></ion-label>
+              <ion-label class="title"><strong>{{ title() }}</strong></ion-label>
             </ion-col>
           </ion-row>
           <ion-row class="ion-hide-md-down">
             <ion-col>
-              <ion-label class="subtitle">{{ subTitle() | translate | async }}</ion-label><br />
+              <ion-label class="subtitle">{{ subTitle() }}</ion-label><br />
             </ion-col>
           </ion-row>
           @if (isAuthenticated() === false) {
@@ -110,7 +108,7 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
             <ion-col color="light">
               <ion-label class="help">
                 <ion-icon src="{{'info-circle' | svgIcon }}" slot="start" />
-                {{ abstract() | translate | async }}
+                {{ abstract() }}
               </ion-label>
             </ion-col>
           </ion-row>

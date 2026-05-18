@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { PageModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
@@ -17,7 +15,7 @@ import { PageStore } from './page.store';
   selector: 'bk-page-all-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList, IonPopover
@@ -26,7 +24,7 @@ import { PageStore } from './page.store';
   <ion-header>
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedPagesCount()}}/{{pagesCount()}} {{ '@content.page.plural' | translate | async }}</ion-title>
+      <ion-title>{{selectedPagesCount()}}/{{pagesCount()}} {{ pageStore.i18n.list_plural() }}</ion-title>
         @if(!readOnly()) {
         <ion-buttons slot="end">
           <ion-button id="c_page">
@@ -46,7 +44,7 @@ import { PageStore } from './page.store';
     <!-- description -->
     <ion-toolbar class="ion-hide-md-down">
       <ion-item lines="none">
-        <ion-label>{{ '@content.page.field.description' | translate | async }}</ion-label>
+        <ion-label>{{ pageStore.i18n.list_field_description() }}</ion-label>
       </ion-item>
     </ion-toolbar>
 
@@ -64,13 +62,13 @@ import { PageStore } from './page.store';
         <ion-grid>
           <ion-row>
             <ion-col size="4" class="ion-hide-md-down">
-              <ion-label><strong>{{ '@content.page.list.header.key' | translate | async }}</strong></ion-label>  
+              <ion-label><strong>{{ pageStore.i18n.list_header_key() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-              <ion-label><strong>{{ '@content.page.list.header.name' | translate | async }}</strong></ion-label>  
+              <ion-label><strong>{{ pageStore.i18n.list_header_name() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ '@content.page.list.header.sections' | translate | async }}</strong></ion-label>
+                <ion-label><strong>{{ pageStore.i18n.list_header_sections() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -82,7 +80,7 @@ import { PageStore } from './page.store';
     <bk-spinner />
   } @else {
     @if (filteredPages().length === 0) {
-      <bk-empty-list message="@content.field.empty" />
+      <bk-empty-list [message]="pageStore.i18n.list_field_empty()" />
     } @else {
       <ion-list lines="inset">
         @for(page of filteredPages(); track $index) {

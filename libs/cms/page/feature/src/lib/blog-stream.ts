@@ -1,11 +1,21 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { IonChip, IonInfiniteScroll, IonInfiniteScrollContent, IonLabel, IonSearchbar, IonToolbar } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { SectionModel, UserModel } from '@bk2/shared-models';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { SectionDispatcher } from '@bk2/cms-section-feature';
+
+const BlogStreamStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      search: '@cms.blog.search',
+      filter_all: '@cms.blog.filter.all',
+    }),
+  })),
+);
 
 const PAGE_SIZE = 10;
 
@@ -17,10 +27,10 @@ const PAGE_SIZE = 10;
   selector: 'bk-blog-stream',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe,
     SectionDispatcher,
     IonToolbar, IonChip, IonLabel, IonSearchbar, IonInfiniteScroll, IonInfiniteScrollContent,
   ],
+  providers: [BlogStreamStore],
   styles: [`
     .filter-bar { position: sticky; top: 0; z-index: 10; background: var(--ion-background-color); }
     .chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 8px 8px; }
@@ -39,14 +49,14 @@ const PAGE_SIZE = 10;
         <ion-searchbar
           [value]="searchTerm()"
           (ionInput)="onSearch($event)"
-          [placeholder]="'@cms.blog.search' | translate | async"
+          [placeholder]="store.i18n.search()"
           debounce="300"
         />
       </ion-toolbar>
       @if (allTags().length > 0) {
         <div class="chips">
           <ion-chip [color]="selectedTag() === '' ? 'primary' : 'medium'" (click)="selectTag('')">
-            <ion-label>{{ '@cms.blog.filter.all' | translate | async }}</ion-label>
+            <ion-label>{{ store.i18n.filter_all() }}</ion-label>
           </ion-chip>
           @for (tag of allTags(); track tag) {
             <ion-chip [color]="selectedTag() === tag ? 'primary' : 'medium'" (click)="selectTag(tag)">
@@ -81,6 +91,8 @@ const PAGE_SIZE = 10;
   `
 })
 export class BlogStream {
+  protected readonly store = inject(BlogStreamStore);
+
   public sections = input<SectionModel[]>([]);
   public currentUser = input<UserModel | undefined>();
   public editMode = input(false);
