@@ -1,23 +1,17 @@
 {
-  "transfer": {
-    "plural": "Transfers",
-    "list": {
-      "header": {
-        "dateOfTransfer": "Datum",
-        "subject": "von",
-        "object": "an",
-        "resource": "Objekt",
-        "name": "Anlass",
-        "state": "Status"
-      }
-    },
-    "field": {
-      "empty": "Keine Transfers gefunden."
-    }
-  },
+  "transfers": "Transfers",
+  "empty": "Keine Transfers gefunden.",
+  "dateOfTransfer": "Datum",
+  "subject": "von",
+  "object": "an",
+  "resource": "Objekt",
+  "name": "Anlass",
+  "state": "Status",
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion",
+    "edit": "Transfer ändern",
+    "view": "Details ansehen",
+    "delete": "Transfer löschen",
+    "create": "Transfer erstellen"
   }
 }

@@ -60,7 +60,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           </ion-list>
         }
         @if(showMoreButton() && !editMode()) {
-          <bk-more-button class="events-more" [url]="moreUrl()" />
+          <bk-more-button class="events-more" [url]="moreUrl()" [label]="store.i18n.more()" />
         }
       </ion-card-content>
     </ion-card>

@@ -8,7 +8,7 @@ import { hasRole } from '@bk2/shared-util-core';
 
 import { Menu } from '@bk2/cms-menu-feature';
 
-import { ResourceListStore } from './resource-list.store';
+import { ResourceStore } from './resource.store';
 
 
 @Component({
@@ -20,13 +20,13 @@ import { ResourceListStore } from './resource-list.store';
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList,
     IonIcon, IonItem, IonLabel, IonContent, IonPopover
   ],
-  providers: [ResourceListStore],
+  providers: [ResourceStore],
   template: `
   <ion-header>
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedResourcesCount()}}/{{resourcesCount() }} {{ resourceListStore.i18n.resource_plural() }}</ion-title>
+      <ion-title>{{selectedResourcesCount()}}/{{resourcesCount() }} {{ store.i18n.resources() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c_resource">
@@ -53,9 +53,9 @@ import { ResourceListStore } from './resource-list.store';
   <!-- list header -->
   <ion-toolbar color="primary">
     <ion-item color="primary" lines="none">
-      <ion-label><strong>{{ resourceListStore.i18n.list_header_name() }}</strong></ion-label>
-      <ion-label><strong>{{ resourceListStore.i18n.list_header_value() }}</strong></ion-label>
-      <ion-label class="ion-hide-md-down"><strong>{{ resourceListStore.i18n.list_header_desc() }}</strong></ion-label>
+      <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+      <ion-label><strong>{{ store.i18n.value() }}</strong></ion-label>
+      <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.description() }}</strong></ion-label>
     </ion-item>
   </ion-toolbar>
 </ion-header>
@@ -66,7 +66,7 @@ import { ResourceListStore } from './resource-list.store';
   <bk-spinner />
 } @else {
   @if(selectedResourcesCount() === 0) {
-    <bk-empty-list message="@resource.field.empty" />
+    <bk-empty-list [message]="store.i18n.empty()" />
   } @else {
     <ion-list lines="inset">
       @for(resource of filteredResources(); track $index) {
@@ -84,7 +84,7 @@ import { ResourceListStore } from './resource-list.store';
   `
 })
 export class ResourceList {
-  protected readonly resourceListStore = inject(ResourceListStore);
+  protected readonly store = inject(ResourceStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -93,46 +93,46 @@ export class ResourceList {
   public contextMenuName = input.required<string>();
 
   // derived signals
-  protected filteredResources = computed(() => this.resourceListStore.filteredResources() ?? []);
-  protected resourcesCount = computed(() => this.resourceListStore.resourcesCount());
+  protected filteredResources = computed(() => this.store.filteredResources() ?? []);
+  protected resourcesCount = computed(() => this.store.resourcesCount());
   protected selectedResourcesCount = computed(() => this.filteredResources().length);
-  protected isLoading = computed(() => this.resourceListStore.isLoading());
-  protected readonly tags = computed(() => this.resourceListStore.getResourceTags());
-  protected readonly types = computed(() => this.resourceListStore.appStore.getCategory('resource_type'));
-  protected currentUser = computed(() => this.resourceListStore.appStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected readonly tags = computed(() => this.store.getResourceTags());
+  protected readonly types = computed(() => this.store.appStore.getCategory('resource_type'));
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** getters ******************************************* */
   protected getIcon(resource: ResourceModel): string {
     let iconName: string;
     if (resource.type === 'rboat')
-      iconName = this.resourceListStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon ?? '';
+      iconName = this.store.appStore.getCategoryItem('rboat_type', resource.subType)?.icon ?? '';
     else
-      iconName = this.resourceListStore.appStore.getCategoryItem('resource_type', resource.type)?.icon ?? '';
+      iconName = this.store.appStore.getCategoryItem('resource_type', resource.type)?.icon ?? '';
     return iconName ?? '';
   }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.resourceListStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.resourceListStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.resourceListStore.setSelectedResourceType(type);
+    this.store.setSelectedResourceType(type);
   }
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.resourceListStore.add(true, this.readOnly()); break;
-      case 'exportRaw': await this.resourceListStore.export("raw"); break;
+      case 'add':  await this.store.add(true, this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `ResourceListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -143,7 +143,7 @@ export class ResourceList {
    * @param resource 
    */
   protected async showActions(resource: ResourceModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, resource);
     await this.executeActions(actionSheetOptions, resource);
   }
@@ -154,14 +154,14 @@ export class ResourceList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, resource: ResourceModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('resource.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('resource.view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('resource.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('resource.edit', this.store.i18n.edit_label(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('resource.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('resource.delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -181,13 +181,13 @@ export class ResourceList {
       if (!data) return;
       switch (data.action) {
         case 'resource.delete':
-          await this.resourceListStore.delete(resource, this.readOnly());
+          await this.store.delete(resource, this.readOnly());
           break;
         case 'resource.edit':
-          await this.resourceListStore.edit(resource, false, this.readOnly());
+          await this.store.edit(resource, false, this.readOnly());
           break;
         case 'resource.view':
-          await this.resourceListStore.edit(resource, false, true);
+          await this.store.edit(resource, false, true);
           break;
 
       }
@@ -196,7 +196,7 @@ export class ResourceList {
 
   /******************************** helpers ******************************************* */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.resourceListStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }
 

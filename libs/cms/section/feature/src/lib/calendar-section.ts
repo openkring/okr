@@ -48,7 +48,7 @@ import { CalendarStore } from './calendar-section.store';
       <!-- <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" /> -->
       <ion-card-content>
         <div [style.display]="'block'">
-          {{ filteredEvents().length }} {{ calendarStore.i18n.calevent_plural() }}
+          {{ filteredEvents().length }} {{ calendarStore.i18n.calevents() }}
           <full-calendar #fullCalendar 
             [options]="calendarOptions"
             [events]="calendarEvents()"

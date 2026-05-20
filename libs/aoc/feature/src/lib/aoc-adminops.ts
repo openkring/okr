@@ -16,18 +16,18 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
   ],
   providers: [AocAdminOpsStore],
   template: `
-    <bk-header title="{{ aocAdminOpsStore.i18n.aoc_title() }}" />
+    <bk-header title="{{ store.i18n.title() }}" />
     <ion-content>
       <!-- Debug Card -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ aocAdminOpsStore.i18n.debug_tools() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.debug_tools() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="8">
-                <ion-label>{{ aocAdminOpsStore.i18n.focus_event_logging() }}</ion-label>
+                <ion-label>{{ store.i18n.focus_event_logging() }}</ion-label>
               </ion-col>
               <ion-col size="4">
                 <ion-toggle [checked]="enableFocusLogging()" (ionChange)="onToggleChange($event)" />
@@ -39,26 +39,26 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ aocAdminOpsStore.i18n.adminops_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.adminops_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <!-- IBAN -->
             <ion-row>
-              <ion-col size="6">{{ aocAdminOpsStore.i18n.iban_label() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.iban_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ aocAdminOpsStore.i18n.iban_button() }}" iconName="checkbox-circle" (click)="listIban()" />
+                <bk-button label=" {{ store.i18n.iban_button() }}" iconName="checkbox-circle" (click)="listIban()" />
               </ion-col>
             </ion-row>
             <!-- Old Juniors -->
             <ion-row>
-              <ion-col size="6">{{ aocAdminOpsStore.i18n.oldJuniors_label() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.oldJuniors_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ aocAdminOpsStore.i18n.oldJuniors_button() }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
+                <bk-button label=" {{ store.i18n.oldJuniors_button() }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col><ion-label>"{{ aocAdminOpsStore.i18n.mcatchange_title() }}"</ion-label></ion-col>
+              <ion-col><ion-label>"{{ store.i18n.mcatchange_title() }}"</ion-label></ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
@@ -78,16 +78,16 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
         </ion-card-content>
       </ion-card>
 
-      <bk-result-log [cardTitle]="aocAdminOpsStore.i18n.result_title()" [title]="logTitle()" [log]="logInfo()" />
+      <bk-result-log [cardTitle]="store.i18n.result_title()" [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
   `,
 })
 export class AocAdminOps {
-  protected readonly aocAdminOpsStore = inject(AocAdminOpsStore);
+  protected readonly store = inject(AocAdminOpsStore);
 
-  protected readonly logTitle = computed(() => this.aocAdminOpsStore.logTitle());
-  protected readonly logInfo = computed(() => this.aocAdminOpsStore.log());
-  protected readonly isLoading = computed(() => this.aocAdminOpsStore.isLoading());
+  protected readonly logTitle = computed(() => this.store.logTitle());
+  protected readonly logInfo = computed(() => this.store.log());
+  protected readonly isLoading = computed(() => this.store.isLoading());
 
   protected club = signal('scs');
   protected year = signal('2025');
@@ -123,16 +123,16 @@ export class AocAdminOps {
   }
 
   public listIban(): void {
-    this.aocAdminOpsStore.listIban();
+    this.store.listIban();
   }
 
   public listOldJuniors(): void {
-    this.aocAdminOpsStore.listJuniorsOlderThan();
+    this.store.listJuniorsOlderThan();
   }
 
   public showMembershipCategoryChanges(): void {
-    this.aocAdminOpsStore.setModelType('membership');
-    this.aocAdminOpsStore.showMembershipCategoryChanges(this.club(), parseInt(this.year(), 10));
+    this.store.setModelType('membership');
+    this.store.showMembershipCategoryChanges(this.club(), parseInt(this.year(), 10));
   }
 
   protected onFieldChange(fieldName: string, $event: string): void {

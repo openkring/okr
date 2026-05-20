@@ -46,7 +46,7 @@ export interface ImagesConfigurationI18n {
     <ion-card>
       <ion-card-header>
         <div class="image-list-header">
-          <ion-card-title>{{ i18n()?.title ?? '' }}</ion-card-title>
+          <ion-card-title>{{ i18n().title }}</ion-card-title>
           @if(!readOnly()) {
             <ion-buttons>
               <label style="display: flex; align-items: center;">
@@ -64,7 +64,7 @@ export interface ImagesConfigurationI18n {
         <ion-list lines="inset">
           @if(images().length === 0) {
             <ion-item>
-              <ion-label color="medium">{{ i18n()?.empty ?? '' }}</ion-label>
+              <ion-label color="medium">{{ i18n().empty }}</ion-label>
             </ion-item>
           } @else {
             <!-- Casting $event to $any is a temporary fix for https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -141,7 +141,7 @@ export class ImagesConfiguration {
       fullPath: `${basePath}/${f.name}`,
     }));
 
-    const urls = await this.uploadService.uploadFiles(uploads, this.i18n()?.upload ?? '');
+    const urls = await this.uploadService.uploadFiles(uploads, this.i18n().upload ?? '');
     if (!urls) return;
 
     const newImages: ImageConfig[] = files.map(f => ({

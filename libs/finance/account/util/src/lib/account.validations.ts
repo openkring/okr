@@ -12,6 +12,6 @@ export const accountValidations = staticSuite((model: AccountModel, tenants: str
   stringValidations('id', model.id, SHORT_NAME_LENGTH);
   stringValidations('type', model.type, WORD_LENGTH, 1, true);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
-  stringValidations('parentId', model.parentId, SHORT_NAME_LENGTH);
+  stringValidations('parentId', model.parentKey, SHORT_NAME_LENGTH);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
 });

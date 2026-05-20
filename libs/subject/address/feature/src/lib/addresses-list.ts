@@ -6,14 +6,11 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser, navigateByUrl } from '@bk2/shared-util-angular';
 import { generateRandomString, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { FavoriteColorPipe, FormatAddressPipe } from '@bk2/subject-address-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
 
 import { AddressStore } from './addresses.store';
-
-import { PFX } from './scope';
 
 @Component({
   selector: 'bk-addresses-list',
@@ -36,7 +33,7 @@ import { PFX } from './scope';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ filteredAddressesCount()}}/{{addressesCount()}} {{ i18n.addresses() }}</ion-title>
+        <ion-title>{{ filteredAddressesCount()}}/{{addressesCount()}} {{ store.i18n.addresses() }}</ion-title>
       </ion-toolbar>
 
     <!-- search and filters -->
@@ -58,7 +55,7 @@ import { PFX } from './scope';
         <ion-grid>
           <ion-row>
             <ion-col>
-              <ion-label><strong>{{ i18n.name() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -71,7 +68,7 @@ import { PFX } from './scope';
       <bk-spinner />
     } @else {
       @if(filteredAddressesCount() === 0) {
-        <bk-empty-list [message]="i18n.empty()" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         @if(selectedChannel()) {
           <ion-list lines="inset">
@@ -133,50 +130,28 @@ import { PFX } from './scope';
     `
 })
 export class AddressesList {
-  protected readonly addressStore = inject(AddressStore);
+  protected readonly store = inject(AddressStore);
   private actionSheetController = inject(ActionSheetController);
-  private i18nService = inject(I18nService);
   private readonly alertService = inject(AlertService);
 
   // inputs
   // we keep this for later, but dont use it yet
   public contextMenuName = input.required<string>();
 
-    // i18n
-  protected readonly i18n = this.i18nService.translateAll({
-    addresses: PFX + 'addresses',
-    empty: PFX + 'nodata',
-    name: PFX + 'name',
-    as_title: PFX + 'actionsheet.title',
-    as_edit: PFX + 'actionsheet.edit',
-    as_delete: PFX + 'actionsheet.delete',
-    as_copy: PFX + 'actionsheet.copy',
-    as_iban_view: PFX + 'actionsheet.iban.view',
-    as_iban_genqr: PFX + 'actionsheet.iban.generateQr',
-    as_email_send: PFX + 'actionsheet.email.send', 
-    as_phone_call: PFX + 'actionsheet.phone.call', 
-    as_postal_view: PFX + 'actionsheet.postal.view', 
-    as_file_view: PFX + 'actionsheet.file.view', 
-    as_file_upload: PFX + 'actionsheet.file.upload', 
-    as_web_open: PFX + 'actionsheet.web.open', 
-    as_subject_edit: PFX + 'actionsheet.subject.edit',
-    cancel: '@operation.cancel'
-  });
-
   // derived signals
-  protected addressesCount = computed(() => this.addressStore.addresses()?.length ?? 0);
-  protected filteredAddresses = computed(() => this.addressStore.filteredAddresses());
+  protected addressesCount = computed(() => this.store.addresses()?.length ?? 0);
+  protected filteredAddresses = computed(() => this.store.filteredAddresses());
   protected filteredAddressesCount = computed(() => this.filteredAddresses().length);
-  protected isLoading = computed(() => this.addressStore.isLoading());
-  protected tags = computed(() => this.addressStore.getTags());
-  private currentUser = computed(() => this.addressStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  private currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   protected popupId = computed(() => 'c_addresses_' + generateRandomString(5));
-  protected selectedChannel = computed(() => this.addressStore.selectedChannel());
+  protected selectedChannel = computed(() => this.store.selectedChannel());
 
-  private imgixBaseUrl = this.addressStore.appStore.env.services.imgixBaseUrl;
-  protected channels = computed(() => this.addressStore.getChannels());
-  protected listHeaderName = `${PFX}list.header.name`;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+  protected channels = computed(() => this.store.getChannels());
+  protected listHeaderName = this.store.i18n.name();
 
   // grouping
   protected allExpanded = signal(false);
@@ -194,7 +169,7 @@ export class AddressesList {
 
   constructor() {
     effect(() => {
-        this.addressStore.setConfig('all', 'parentKey');
+        this.store.setConfig('all', 'parentKey');
     })
   }
   protected toggleExpandAll(): void {
@@ -204,11 +179,11 @@ export class AddressesList {
   protected getParentName(parentKey: string): string {
     const [modelType, key] = parentKey.split('.');
     if (modelType === 'person') {
-      const person = this.addressStore.appStore.getPerson(key) as PersonModel | undefined;
+      const person = this.store.appStore.getPerson(key) as PersonModel | undefined;
       return person ? `${person.firstName} ${person.lastName}` : parentKey;
     }
     if (modelType === 'org') {
-      const org = this.addressStore.appStore.getOrg(key) as OrgModel | undefined;
+      const org = this.store.appStore.getOrg(key) as OrgModel | undefined;
       return org?.name ?? parentKey;
     }
     return parentKey;
@@ -216,23 +191,23 @@ export class AddressesList {
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.addressStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.addressStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onChannelSelected(channel: string): void {
-    this.addressStore.setSelectedChannel(channel);
+    this.store.setSelectedChannel(channel);
   }
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.addressStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.addressStore.export("raw"); break;
+      case 'add': await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: this.alertService.error(`AddressesList.call: unknown method ${selectedMethod}`);
     }
   }
@@ -243,7 +218,7 @@ export class AddressesList {
    * @param address 
    */
   protected async showActions(address: AddressModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions(this.i18n.as_title());
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, address);
     await this.executeActions(actionSheetOptions, address);
   }
@@ -256,45 +231,45 @@ export class AddressesList {
   private addActionSheetButtons(options: ActionSheetOptions, address: AddressModel): void {
     if (!hasRole('memberAdmin', this.currentUser())) return;
     // on address
-    options.buttons.push(createActionSheetButton('actionsheet.edit', this.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('actionsheet.delete', this.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     options.buttons.push(createActionSheetDivider());
 
     // with address (usage)
-    options.buttons.push(createActionSheetButton('actionsheet.copy', this.i18n.as_copy(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('copy', this.store.i18n.as_copy(), this.imgixBaseUrl, 'copy'));
     switch(address.addressChannel) {
       case 'bankaccount':
         if (address.url) {
-          options.buttons.push(createActionSheetButton('actionsheet.iban.view', this.i18n.as_iban_view(), this.imgixBaseUrl, 'qrcode'));
+          options.buttons.push(createActionSheetButton('iban.view', this.store.i18n.as_iban_view(), this.imgixBaseUrl, 'qrcode'));
         } else {
-          options.buttons.push(createActionSheetButton('actionsheet.iban.generateQr', this.i18n.as_iban_genqr(), this.imgixBaseUrl, 'qrcode'));
+          options.buttons.push(createActionSheetButton('iban.generateQr', this.store.i18n.as_iban_genqr(), this.imgixBaseUrl, 'qrcode'));
         }
         break;
       case 'email':
-          options.buttons.push(createActionSheetButton('actionsheet.email.send', this.i18n.as_email_send(), this.imgixBaseUrl, 'email'));
+          options.buttons.push(createActionSheetButton('email.send', this.store.i18n.as_email_send(), this.imgixBaseUrl, 'email'));
         break;
       case 'phone':
-        options.buttons.push(createActionSheetButton('actionsheet.phone.call', this.i18n.as_phone_call(), this.imgixBaseUrl, 'tel'));
+        options.buttons.push(createActionSheetButton('phone.call', this.store.i18n.as_phone_call(), this.imgixBaseUrl, 'tel'));
         break;
       case 'postal':
-        options.buttons.push(createActionSheetButton('actionsheet.postal.view', this.i18n.as_postal_view(), this.imgixBaseUrl, 'location'));
+        options.buttons.push(createActionSheetButton('postal.view', this.store.i18n.as_postal_view(), this.imgixBaseUrl, 'location'));
         break;
       case 'twint':
         if (address.url) {
-          options.buttons.push(createActionSheetButton('actionsheet.file.view', this.i18n.as_file_view(), this.imgixBaseUrl, 'document'));
+          options.buttons.push(createActionSheetButton('file.view', this.store.i18n.as_file_view(), this.imgixBaseUrl, 'document'));
         } else {
-          options.buttons.push(createActionSheetButton('actionsheet.file.upload', this.i18n.as_file_upload(), this.imgixBaseUrl, 'upload'));
+          options.buttons.push(createActionSheetButton('file.upload', this.store.i18n.as_file_upload(), this.imgixBaseUrl, 'upload'));
         }
         break;
       case 'web':
-          options.buttons.push(createActionSheetButton('actionsheet.web.open', this.i18n.as_web_open(), this.imgixBaseUrl, 'link'));
+          options.buttons.push(createActionSheetButton('web.open', this.store.i18n.as_web_open(), this.imgixBaseUrl, 'link'));
         break;
     }
     options.buttons.push(createActionSheetDivider());
 
     // on subject
-    options.buttons.push(createActionSheetButton('actionsheet.subject.edit', this.i18n.as_subject_edit(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
+    options.buttons.push(createActionSheetButton('subject.edit', this.store.i18n.as_subject_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
     if (options.buttons.length === 1) { // only cancel button
       options.buttons = [];
     }
@@ -312,39 +287,39 @@ export class AddressesList {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'address.delete':
-          await this.addressStore.delete(address, false);
+        case 'delete':
+          await this.store.delete(address, false);
           break;
-        case 'address.copy':
-          await this.addressStore.copy(address);
+        case 'copy':
+          await this.store.copy(address);
           break;
-        case 'address.edit':
-          await this.addressStore.edit(address, false);
+        case 'edit':
+          await this.store.edit(address, false);
           break;
         case 'subject.edit':
-          await this.addressStore.editSubject(address.parentKey);
+          await this.store.editSubject(address.parentKey);
           break;
-        case 'address.file.view':
-        case 'address.iban.view':
+        case 'file.view':
+        case 'iban.view':
           await downloadToBrowser(address.url);
           break;
-        case 'address.iban.generateQr':
-          await this.addressStore.generateQrEzs(address);
+        case 'iban.generateQr':
+          await this.store.generateQrEzs(address);
           break;
-        case 'address.email.send':
-          await this.addressStore.sendEmail(address.email);
+        case 'email.send':
+          await this.store.sendEmail(address.email);
           break;
-        case 'address.phone.call':
-          await this.addressStore.call(address.phone);
+        case 'phone.call':
+          await this.store.call(address.phone);
           break;
-        case 'address.postal.view':
-          await this.addressStore.showPostalAddress(address);
+        case 'postal.view':
+          await this.store.showPostalAddress(address);
           break;
-        case 'address.file.upload':
-          await this.addressStore.uploadFile(address);
+        case 'file.upload':
+          await this.store.uploadFile(address);
           break;
-        case 'address.web.open':
-          await this.addressStore.openUrl(address);
+        case 'web.open':
+          await this.store.openUrl(address);
           break;
       }
     }
@@ -352,25 +327,27 @@ export class AddressesList {
 
   /******************************** helpers ******************************************* */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.addressStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected getChannelIcon(addressChannel: string): string {
-    return getCategoryIcon(this.addressStore.getChannels(), addressChannel);
+    return getCategoryIcon(this.store.getChannels(), addressChannel);
   }
 
   protected getAddressUsage(address: AddressModel): string {
-    if (address.addressUsage === 'custom') {
-      return address.addressUsageLabel;
-    } else {
-      return `${PFX}usage.${address.addressUsage}.label`;
+    switch(address.addressUsage) {
+      case 'home':    return this.store.i18n.usage_home_label();
+      case 'work':    return this.store.i18n.usage_work_label();
+      case 'mobile':  return this.store.i18n.usage_mobile_label();
+      case 'custom':  return address.addressUsageLabel;
     }
+    return '';
   }
 
   protected async goto(parentKey: string): Promise<void> {
     const [modelType, bkey] = parentKey.split('.');
     if (!parentKey || parentKey.length === 0) return;
     if (modelType === '')
-    await navigateByUrl(this.addressStore.router, `/${modelType}/${bkey}`);
+    await navigateByUrl(this.store.router, `/${modelType}/${bkey}`);
   }
 }

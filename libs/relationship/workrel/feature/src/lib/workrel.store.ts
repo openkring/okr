@@ -3,9 +3,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { CategoryListModel, WorkrelModel } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { AppStore, OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
+import { CategoryListModel, OrgModel, PersonModel, WorkrelModel } from '@bk2/shared-models';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isOrg, isPerson, isValidAt, nameMatches } from '@bk2/shared-util-core';
 import { confirm } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
@@ -49,13 +49,20 @@ export const WorkrelStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
+      workrels:             PFX + 'workrels',
+      empty:                PFX + 'empty',
+      subject:              PFX + 'subject',
+      type:                 PFX + 'type',
+      object:               PFX + 'object',
       delete_confirm:       PFX + 'delete.confirm',
-      ok:                   '@ok',
+      as_title:             PFX + 'actionsheet.title',
+      as_view:              PFX + 'actionsheet.view',
+      as_edit:              PFX + 'actionsheet.edit',
+      as_create:            PFX + 'actionsheet.create',
+      as_delete:            PFX + 'actionsheet.delete',
+      as_end:               PFX + 'actionsheet.end',
       cancel:               '@cancel',
-      list_title:           '@workrel.list.title',
-      list_header_subject:  '@workrel.list.header.subject',
-      list_header_type:     '@workrel.list.header.type',
-      list_header_object:   '@workrel.list.header.object',
+      ok:                   '@ok'
     }),
 
     workrelsResource: rxResource({
@@ -251,6 +258,56 @@ export const WorkrelStore = signalStore(
 
       async export(type: string): Promise<void> {
         console.log(`WorkrelStore.export(${type}) is not yet implemented.`);
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
+      },
+
+      async selectPerson(): Promise<PersonModel | undefined> {
+        const modal = await store.modalController.create({
+          component: PersonSelectModal,
+          cssClass: 'list-modal',
+          componentProps: {
+            selectedTag: '',
+            currentUser: store.currentUser(),
+            tenantId: store.tenantId()
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
+        if (role === 'confirm' && data) {
+          if (isPerson(data, store.tenantId())) {
+            return data;
+          }
+        }
+        return undefined;
+      },
+
+      async selectOrg(): Promise<OrgModel | undefined> {
+        const modal = await store.modalController.create({
+          component: OrgSelectModal,
+          cssClass: 'list-modal',
+          componentProps: {
+            selectedTag: '',
+            currentUser: store.currentUser()
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
+        if (role === 'confirm') {
+          if (isOrg(data, store.tenantId())) {
+            return data;
+          }
+        }
+        return undefined;
       }
     }
   }),

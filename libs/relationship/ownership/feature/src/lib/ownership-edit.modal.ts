@@ -1,17 +1,17 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
 import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { DocumentsAccordion } from '@bk2/document-feature';
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { OwnershipForm } from '@bk2/relationship-ownership-ui';
 import { getOwnerName } from '@bk2/relationship-ownership-util';
 import { RelationshipToolbar } from '@bk2/avatar-ui';
+
+import { OwnershipStore } from './ownership.store';
 
 @Component({
   selector: 'bk-ownership-edit-modal',
@@ -22,6 +22,7 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
+  providers: [OwnershipStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -45,7 +46,7 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
             [allTags]="tags()"
-            [tenantId]="appStore.env.tenantId"
+            [tenantId]="tenantId()"
             [readOnly]="isReadOnly()"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
@@ -68,7 +69,7 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
 })
 export class OwnershipEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly appStore = inject(AppStore);
+  protected readonly store = inject(OwnershipStore);
   
   // inputs
   public ownership = input.required<OwnershipModel>();
@@ -84,11 +85,12 @@ export class OwnershipEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('ownership', this.ownership()?.bkey, this.isReadOnly()));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.ownership()?.bkey));
   protected readonly parentKey = computed(() => `${OwnershipModelName}.${this.bkey()}`);
-  protected readonly tags = computed(() => this.appStore.getTags('ownership'));
+  protected readonly tags = computed(() => this.store.getTags());
   protected readonly name = computed(() => getOwnerName(this.ownership()));
-  protected readonly resourceTypes = computed(() => this.appStore.getCategory('resource_type'));
+  protected readonly resourceTypes = computed(() => this.store.appStore.getCategory('resource_type'));
+  protected readonly tenantId = computed(() => this.store.tenantId());
   protected ownerAvatar = computed<AvatarInfo>(() => {
     const o = this.ownership();
     return newAvatarInfo(o.ownerKey, o.ownerName1, o.ownerName2, o.ownerModelType, o.ownerType, '', this.name());
@@ -98,8 +100,8 @@ export class OwnershipEditModal {
     return newAvatarInfo(o.resourceKey, '', o.resourceName, o.resourceModelType, o.resourceType, o.resourceSubType, o.resourceName);
   });
   protected bkey = computed(() => this.ownership().bkey);
-  protected readonly subjectDefaultIcon = computed(() => this.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
-  protected readonly objectDefaultIcon = computed(() => this.appStore.getDefaultIcon(this.ownerAvatar()?.modelType));
+  protected readonly subjectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
+  protected readonly objectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(this.ownerAvatar()?.modelType));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

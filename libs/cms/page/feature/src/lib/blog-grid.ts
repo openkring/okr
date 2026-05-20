@@ -10,7 +10,9 @@ import { SectionDispatcher } from '@bk2/cms-section-feature';
 @Component({
   selector: 'bk-blog-grid',
   standalone: true,
-  imports: [SectionDispatcher],
+  imports: [
+    SectionDispatcher
+  ],
   styles: [`
     .blog-grid {
       display: grid;

@@ -5,6 +5,8 @@ import { DocumentModel } from '@bk2/shared-models';
 import { FileNamePipe, PrettyDatePipe } from '@bk2/shared-pipes';
 import { Header } from '@bk2/shared-ui';
 
+import { DocumentStore } from './document.store';
+
 @Component({
   selector: 'bk-document-revisions-modal',
   standalone: true,
@@ -13,8 +15,9 @@ import { Header } from '@bk2/shared-ui';
     Header,
     IonContent, IonList, IonItem, IonLabel
   ],
+  providers: [DocumentStore],
   template: `
-    <bk-header title="@document.revision.list.title" [isModal]="true" />
+    <bk-header title="store.i18n.revisions()" [isModal]="true" />
     <ion-content>
       <ion-list>
         @for (doc of revisions(); track doc.bkey) {
@@ -31,6 +34,7 @@ import { Header } from '@bk2/shared-ui';
 })
 export class DocumentRevisionsModal {
   private readonly modalController = inject(ModalController);
+  protected readonly store = inject(DocumentStore);
 
   public revisions = input.required<DocumentModel[]>();
 

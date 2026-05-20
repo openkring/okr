@@ -64,8 +64,8 @@ export const RagStore = signalStore(
     })),
     withProps((store) => ({
         i18n: store.i18nService.translateAll({
-            upload:         PFX + 'cms.rag.upload',
-            placeholder:    PFX + 'cms.rag.placeholder',
+            upload:         PFX + 'rag.upload',
+            placeholder:    PFX + 'rag.placeholder',
         }),
 
         // Real-time list of documents in the 'rag' folder.

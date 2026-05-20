@@ -18,6 +18,7 @@ import { newFolderModel } from '@bk2/folder-util';
 import { UploadService } from '@bk2/avatar-data-access';
 
 import { PFX } from './scope';
+import { DocumentEditModal } from 'libs/document/feature/src/lib/document-edit.modal';
 
 export type DocumentState = {
   documentKey: string;
@@ -54,13 +55,29 @@ export const DocumentStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
+      documents:        PFX + 'documents',
+      revisions:        PFX + 'revisions',
+      empty:            PFX + 'empty',
+      name:             PFX + 'name',
+      size:             PFX + 'size',
+      lastUpdate:       PFX + 'lastUpdate',
+      revision_list:    PFX + 'revision.list.title',
+      upload_single:    PFX + 'upload.single.title',
+      upload_multiple:  PFX + 'upload.multiple.title',
+      image_add:        PFX + 'image.add',
+      image_select:     PFX + 'image.select',
+      image_upload:     PFX + 'image.upload',
+      delete_confirm:   PFX + 'delete.confirm',
+      as_title:         PFX + 'actionsheet.title',
+      as_view:          PFX + 'actionsheet.view',
+      as_edit:          PFX + 'actionsheet.edit',
+      as_update:        PFX + 'actionsheet.update',
+      as_create:        PFX + 'actionsheet.create',
+      as_delete:        PFX + 'actionsheet.delete',
+      as_revisions:     PFX + 'actionsheet.revisions',
+      as_download:      PFX + 'actionsheet.download',
       ok: '@ok',
-      cancel: '@cancel',
-      document_plural:       '@document.plural',
-      list_header_name:      '@document.list.header.name',
-      list_header_size:      '@document.list.header.size',
-      list_header_last_update: '@document.list.header.lastUpdate',
+      cancel: '@cancel'
     }),
 
     documentsResource: rxResource({
@@ -411,6 +428,35 @@ export const DocumentStore = signalStore(
         const modal = await store.modalController.create({
           component: DocumentRevisionsModal,
           componentProps: { revisions }
+        });
+        await modal.present();
+        await modal.onWillDismiss();
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
+      },
+
+      async openPriorVersion(key: string, tags:string, types: CategoryListModel, sources: CategoryListModel): Promise<void> {
+        const prior = await firstValueFrom(store.documentService.read(key));
+        if (!prior) return;
+        const modal = await store.modalController.create({
+          component: DocumentEditModal,
+          componentProps: {
+            document: prior,
+            currentUser: store.currentUser(),
+            tags,
+            types,
+            sources,
+            readOnly: true
+          }
         });
         await modal.present();
         await modal.onWillDismiss();

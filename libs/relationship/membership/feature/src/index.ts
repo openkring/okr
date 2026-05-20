@@ -2,7 +2,7 @@ export * from './lib/scs-member-fees-list';
 export * from './lib/scs-member-fee-edit.modal';
 export * from './lib/scs-member-fees.store';
 export * from './lib/members-accordion';
-export * from './lib/members
+export * from './lib/members';
 export * from './lib/membership-category-change.modal';
 export * from './lib/membership-edit.modal';
 export * from './lib/member-new.modal';

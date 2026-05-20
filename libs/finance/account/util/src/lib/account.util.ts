@@ -41,11 +41,11 @@ export function flattenAccountTree(
   if (!root) return nodes;
 
   function addNode(account: AccountModel, depth: number): void {
-    const hasChildren = accounts.some(a => a.parentId === account.bkey);
+    const hasChildren = accounts.some(a => a.parentKey === account.bkey);
     const isExpanded = expandedKeys.includes(account.bkey);
     nodes.push({ account, depth, hasChildren, isExpanded });
     if (isExpanded) {
-      const children = accounts.filter(a => a.parentId === account.bkey);
+      const children = accounts.filter(a => a.parentKey === account.bkey);
       for (const child of children) {
         addNode(child, depth + 1);
       }

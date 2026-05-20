@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions,
   IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader,
@@ -60,7 +60,7 @@ import { ICON_SETS, IconStore } from './icon.store';
           @if(showMenuButton() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
-          <ion-title>{{ filteredCount() }}/{{ store.iconsCount() }} {{ store.i18n.plural() }}</ion-title>
+          <ion-title>{{ filteredCount() }}/{{ store.iconsCount() }} {{ store.i18n.icons() }}</ion-title>
           @if(hasRole('privileged') || hasRole('admin')) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -105,16 +105,16 @@ import { ICON_SETS, IconStore } from './icon.store';
           <ion-grid>
             <ion-row>
               <ion-col size="5" size-md="4">
-                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
               </ion-col>
               <ion-col size="3" size-md="3" class="ion-hide-md-down">
-                <ion-label><strong>{{ store.i18n.type_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.type() }}</strong></ion-label>
               </ion-col>
               <ion-col size="2">
-                <ion-label><strong>{{ store.i18n.size_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.size() }}</strong></ion-label>
               </ion-col>
               <ion-col size="2">
-                <ion-label><strong>{{ store.i18n.updated_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.updated() }}</strong></ion-label>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -212,18 +212,18 @@ export class IconList {
 
   /******************************* actions *************************************** */
   protected async showActions(icon: IconModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions);
     await this.executeActions(actionSheetOptions, icon);
   }
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('icon.copy', this.imgixBaseUrl, 'copy'));
-    actionSheetOptions.buttons.push(createActionSheetButton('icon.edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('icon.copy', this.store.i18n.as_copy(), this.imgixBaseUrl, 'copy'));
+    actionSheetOptions.buttons.push(createActionSheetButton('icon.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('icon.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('icon.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   private async executeActions(actionSheetOptions: ActionSheetOptions, icon: IconModel): Promise<void> {

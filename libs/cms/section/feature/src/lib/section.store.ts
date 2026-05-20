@@ -56,17 +56,44 @@ export const _SectionStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      send_confirm1: PFX + 'send.confirm1',
-      send_confirm2: PFX + 'send.confirm2',
+      sections:                 PFX + 'sections',
+      description:              PFX + 'description',
+      empty:                    PFX + 'empty',
+      key:                      '@key',
+      name:                     '@name',
+      type:                     '@type',
+      no_images:                 PFX + 'noImages',
+      no_such_section:           PFX + 'noSuchSection',
+      empty_table:               PFX + 'emptyTable',
+      select_label:              PFX + 'select.label',
+      delete:                    PFX + 'delete.label',
+      delete_confirm:            PFX + 'delete.confirm',
+      send_confirm1:             PFX + 'send.confirm1',
+      send_confirm2:             PFX + 'send.confirm2',
+      activity_empty:            PFX + 'activity.empty',
+      emergency_needs_help:      PFX + 'emergency.needsHelp',
+      emergency_unknown_location:  PFX + 'emergency.needsHelpUnknownLocation',
+      calevents:                 PFX + 'calevent.calevents',
+      calevent_update:           PFX + 'calevent.update.label',
+      calevent_update_conf:      PFX + 'calevent.update.conf',
+      calevent_update_error:     PFX + 'calevent.update.error',
+      invitation_update:         PFX + 'invitation.update.label',
+      invitation_update_conf:    PFX + 'invitation.update.conf',
+      invitation_update_error:    PFX + 'invitation.update.error',
+      context_title:              PFX + 'context.title',
+      context_show_avatar:        PFX + 'context.show.avatar',
+      context_show_name:          PFX + 'context.show.name',
+      context_show_members:       PFX + 'context.show.members',
+      context_show_memberships:   PFX + 'context.show.memberships',
+      context_show_responsibilities: PFX + 'context.show.responsibilities',
+      context_show_personrels:    PFX + 'context.show.personrels',
+      context_show_workrels:      PFX + 'context.show.workrels',
+      context_show_save:          PFX + 'context.show.save',
+      view:                       PFX + 'view',
+      edit:                       PFX + 'edit',
+      create:                     PFX + 'create',
       ok: '@ok',
-      cancel: '@cancel',
-      // section-list.ts
-      list_plural: '@content.section.plural',
-      list_field_description: '@content.section.field.description',
-      list_header_key: '@content.section.list.header.key',
-      list_header_name: '@content.section.list.header.name',
-      list_header_type: '@content.section.list.header.type',
+      cancel: '@cancel'
     }),
 
     sectionsResource: rxResource({
@@ -349,7 +376,18 @@ export const _SectionStore = signalStore(
           console.error('SectionStore.sendEmail: error: ', ex);
           await showToast(store.toastController, '@general.operation.email.error');
         }
-      }
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.edit();
+        } else {
+          return store.i18n.create();
+        }
+      },
     }
   }),
 );

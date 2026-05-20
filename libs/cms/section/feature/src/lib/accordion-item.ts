@@ -35,7 +35,7 @@ import { SliderSectionComponent } from './slider-section';
   ],
   providers: [SectionStore],
   template: `
-    @if(sectionStore.section(); as section) {
+    @if(store.section(); as section) {
       @switch (section.type) {
         @case('article') { <bk-article-section [section]="section" /> }
         @case('table') { <bk-table-section [section]="section" /> }
@@ -68,14 +68,14 @@ import { SliderSectionComponent } from './slider-section';
   `
 })
 export class AccordionItemContentComponent {
-  protected sectionStore = inject(SectionStore);
+  protected store = inject(SectionStore);
   public sectionId = input.required<string>();
   
   constructor() {
     effect(() => {
       const id = this.sectionId();
       if (id) {
-        this.sectionStore.setSectionId(id);
+        this.store.setSectionId(id);
       }
     });
   }

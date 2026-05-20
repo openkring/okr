@@ -17,6 +17,7 @@ import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgForm
 
 import { OrgNewModal } from './org-new.modal';
 import { OrgEditModal } from './org-edit.modal';
+import { PFX } from './scope';
 
 export type OrgState = {
   orgKey: string;
@@ -51,11 +52,18 @@ export const OrgStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm:   '@subject.person.operation.delete.confirm',
-      org_plural:       '@subject.org.plural',
-      list_header_name: '@subject.list.header.name',
-      list_header_phone:'@subject.list.header.phone',
-      list_header_email:'@subject.list.header.email',
+      orgs:                 PFX + 'orgs',
+      empty:                PFX + 'empty',
+      name:                 '@name',
+      phone:                '@phone',
+      email:                '@email',
+      create_label:         PFX + 'create.label',
+      edit_label:           PFX + 'edit.label',
+      view_label:           PFX + 'view.label',
+      delete_confirm:       PFX + 'delete.confirm',
+      as_title:             PFX + 'actionsheet.title',
+      as_edit:              PFX + 'actionsheet.edit',
+      as_delete:            PFX + 'actionsheet.delete'
     }),
 
     orgsResource: rxResource({

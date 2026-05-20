@@ -21,15 +21,15 @@ import { PFX } from './scope';
  * The store reads the corresponding person and updates the state with the person.
  * Then, the person is used to read its addresses.
  */
-export type ProfileEditState = {
+export type ProfileState = {
   personKey: string | undefined;
 };
 
-export const initialState: ProfileEditState = {
+export const initialState: ProfileState = {
   personKey: undefined,
 };
 
-export const ProfileEditStore = signalStore(
+export const ProfileStore = signalStore(
   withState(initialState),
   withProps(() => ({
     personService: inject(PersonService),
@@ -41,8 +41,16 @@ export const ProfileEditStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll({
-      update_conf:  PFX + 'operation.update.conf',
-      update_error: PFX + 'operation.update.error',
+      intro:            PFX + 'intro',
+      update_conf:      PFX + 'update.conf',
+      update_error:     PFX + 'update.error',
+
+      as_title:         '@actionsheet.title',
+      view:             PFX + 'view',
+      edit:             PFX + 'edit',
+      create:           PFX + 'create',
+      cancel:           '@cancel',
+      ok:               '@ok'
     }),
   })),
 
@@ -108,6 +116,17 @@ export const ProfileEditStore = signalStore(
         const person = store.person();
         if (!person) return;
         await store.avatarService.saveAvatarPhoto(photo, person.bkey, store.appStore.env.tenantId, PersonModelName);
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.edit();
+        } else {
+          return store.i18n.create();
+        }
       }
     }
   }),

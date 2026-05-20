@@ -1,7 +1,5 @@
 {
   "invitations": "Einladungen",
-  "date": "Datum",
-  "name": "Name",
   "invitee": "Teilnehmer",
   "inviter": "Organisator",
   "state": "Status",
@@ -20,6 +18,13 @@
   },
   "accepted": "angenommene Einladungen",
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "accept": "Ich bin dabei",
+    "decline": "Ich kann nicht teilnehmen",
+    "maybe": "Vielleicht",
+    "view": "Einladungsdetails ansehen",
+    "edit": "Einladung ändern",
+    "create": "Neue Einladung erstellen",
+    "delete": "Einladung löschen"
   }
 }

@@ -20,6 +20,7 @@ import { PageStore } from './page.store';
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonGrid, IonRow, IonCol, IonLabel, IonPopover
   ],
+  providers: [SectionStore, PageStore],
   styles: [`
     :host {
       display: flex;
@@ -228,7 +229,7 @@ import { PageStore } from './page.store';
       <ion-header>
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-          <ion-title>{{ pageStore.page()?.name }}</ion-title>
+          <ion-title>{{ store.page()?.name }}</ion-title>
           @if(hasRole('contentAdmin')) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -253,10 +254,10 @@ import { PageStore } from './page.store';
         @if(isEmptyPage()) {
           <div class="empty-state">
             <ion-icon src="{{'grid' | svgIcon }}"></ion-icon>
-            <ion-label class="ion-text-wrap">{{ pageStore.i18n.section_error_empty() }}</ion-label>
+            <ion-label class="ion-text-wrap">{{ store.i18n.empty() }}</ion-label>
             <ion-button size="large" (click)="this.addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
-              {{ pageStore.i18n.section_add_label() }}
+              {{ store.i18n.add_label() }}
             </ion-button>
           </div>
         } @else {     <!-- page contains sections -->
@@ -270,7 +271,7 @@ import { PageStore } from './page.store';
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
                     <div class="section-wrapper state-{{ section.state }}" [class.editable]="editMode()">
-                      <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
+                      <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                     </div>
                   </ion-col>
                 }
@@ -282,7 +283,7 @@ import { PageStore } from './page.store';
         @if(isEmptyPage()) {
           <div class="empty-state">
             <ion-icon src="{{'document' | svgIcon }}"></ion-icon>
-            <ion-label class="ion-text-wrap">{{ pageStore.i18n.section_error_empty_readonly() }}</ion-label>
+            <ion-label class="ion-text-wrap">{{ store.i18n.empty_readonly() }}</ion-label>
           </div>
         } @else {
           <ion-grid>
@@ -294,7 +295,7 @@ import { PageStore } from './page.store';
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
                     <div class="section-wrapper">
-                      <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
+                      <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                     </div>
                   </ion-col>
                 }
@@ -307,7 +308,7 @@ import { PageStore } from './page.store';
   `
 })
 export class DashboardPage {
-  protected readonly pageStore = inject(PageStore);
+  protected readonly store = inject(PageStore);
   private readonly sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
@@ -319,23 +320,23 @@ export class DashboardPage {
   public showMenu = input(true);
 
   // derived signals
-  protected tenantId = computed(() => this.pageStore.tenantId());
-  protected popupId = computed(() => 'c_contentpage_' + this.pageStore.page()?.bkey);
+  protected tenantId = computed(() => this.store.tenantId());
+  protected popupId = computed(() => 'c_contentpage_' + this.store.page()?.bkey);
   protected editMode = signal(false);
-  protected page = computed(() => this.pageStore.page());
+  protected page = computed(() => this.store.page());
   // Accordion sections are not supported in Dashboard pages. Makes the implementation easier.
-  protected sections = computed(() => this.pageStore.pageSections());
+  protected sections = computed(() => this.store.pageSections());
   protected isEmptyPage = computed(() => this.sections().length === 0);
 
   constructor() {
     effect(() => {
-      const meta = this.pageStore.meta();
+      const meta = this.store.meta();
       if (meta) {
         this.meta.addTags(meta);
       }
     });
     effect(() => {
-      const title = this.pageStore.page()?.title;
+      const title = this.store.page()?.title;
       if (title && title.length > 0) {
         this.title.setTitle(title);
       }
@@ -348,16 +349,16 @@ export class DashboardPage {
     switch(selectedMethod) {
       case 'toggleEditMode':  this.editMode.update(value => !value); break;
       case 'editPage': 
-        const page = this.pageStore.page();
+        const page = this.store.page();
         if (page) {
-          await this.pageStore.edit(page, false);
+          await this.store.edit(page, false);
         }
         break;
-      case 'sortSections':  await this.pageStore.sortSections(); break;
-      case 'selectSection': await this.pageStore.selectSection(); break;
+      case 'sortSections':  await this.store.sortSections(); break;
+      case 'selectSection': await this.store.selectSection(); break;
       case 'addSection':    await this.addSection(); break;
-      case 'exportRaw': await this.pageStore.export("raw"); break;
-      case 'print': await this.pageStore.print(); break;
+      case 'exportRaw': await this.store.export("raw"); break;
+      case 'print': await this.store.print(); break;
       default: error(undefined, `ContentPage.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -365,7 +366,7 @@ export class DashboardPage {
   protected async addSection(): Promise<void> {
     const sectionId = await this.sectionStore.add(false);
     if (sectionId) {
-      this.pageStore.addSectionById(sectionId);
+      this.store.addSectionById(sectionId);
     }
   }
 
@@ -381,7 +382,7 @@ export class DashboardPage {
 
       // Section will be available via the store's rxResource
       // No need to poll - the UI will update when data loads
-      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
       this.addActionSheetButtons(actionSheetOptions);
       await this.executeActions(actionSheetOptions, sectionId);
     }
@@ -391,17 +392,17 @@ export class DashboardPage {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
-    if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
+    if (hasRole('contentAdmin', this.store.appStore.currentUser())) {
 
-      actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.store.i18n.section_edit(), this.store.imgixBaseUrl(), 'edit'));
       if (this.sectionStore.section()?.type === 'article') {
-        actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.store.i18n.upload_image(), this.store.imgixBaseUrl(), 'upload'));
       }
       if (this.sectionStore.section()?.type === 'button') {
-        actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.pageStore.imgixBaseUrl(), 'upload'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.store.i18n.upload_file(), this.store.imgixBaseUrl(), 'upload'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.pageStore.imgixBaseUrl(), 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.store.i18n.section_remove(), this.store.imgixBaseUrl(), 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.store.imgixBaseUrl(), 'cancel'));
     }
   }
 
@@ -419,7 +420,7 @@ export class DashboardPage {
       switch (data.action) {
         case 'page.removesection':
           if (sectionId) {
-            await this.pageStore.removeSectionById(sectionId);
+            await this.store.removeSectionById(sectionId);
           }
           break;
         case 'section.edit':
@@ -437,7 +438,7 @@ export class DashboardPage {
   }
 
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.pageStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   /**

@@ -13,6 +13,7 @@ import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, get
 import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { EmailAddressesModal, MapViewModal } from '@bk2/shared-ui';
 import { Languages } from '@bk2/shared-categories';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
@@ -22,8 +23,8 @@ import { browseUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
 import { MatrixChatService } from '@bk2/chat-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
+
 import { PFX } from './scope';
-import { I18nService } from '@bk2/shared-i18n';
 
 
 export type PersonState = {
@@ -61,7 +62,6 @@ export const PersonStore = signalStore(
     geocodeService: inject(GeocodingService),
     matrixService: inject(MatrixChatService),
     i18nService: inject(I18nService),
-
   })),
 
   withComputed((state) => {
@@ -80,14 +80,18 @@ export const PersonStore = signalStore(
   withProps((store) => ({
 
     i18n: store.i18nService.translateAll({
-      membership_create_conf:  PFX + 'membership.create.conf',
+      membership_create_conf:   PFX + 'membership.create.conf',
       membership_create_error:  PFX + 'membership.create.error',
-      person_delete_confirm:   PFX + 'person.delete.confirm',
-      create_exists_error:     '@subject.person.operation.create.exists.error',
-      person_plural:           '@subject.person.plural',
-      list_header_name:        '@subject.list.header.name',
-      list_header_phone:       '@subject.list.header.phone',
-      list_header_email:       '@subject.list.header.email',
+      delete_confirm:           PFX + 'delete.confirm',
+      exists:                   PFX + 'membership.create.exists',
+      persons:                  PFX + 'persons',
+      name:                     '@name',
+      phone:                    '@phone',
+      email:                    '@email',
+      empty:                    PFX + 'empty',
+      create_label:             PFX + 'create.label',
+      edit_label:               PFX + 'edit.label',
+      view_label:               PFX + 'view.label',      
     }),
 
     personUserModelResource: rxResource({
@@ -148,22 +152,6 @@ export const PersonStore = signalStore(
             store.personResource.reload();
         },
 
-        printState() {
-            console.log('------------------------------------');
-            console.log('PersonState state:');
-            console.log('  orgId: ' + store.orgId());
-            console.log('  personKey: ' + store.personKey());
-            console.log('  searchTerm: ' + store.searchTerm());
-            console.log('  selectedTag: ' + store.selectedTag());
-            console.log('  selectedGender: ' + store.selectedGender());
-            console.log('  persons: ' + JSON.stringify(store.persons()));
-            console.log('  personsCount: ' + store.personsCount());
-            console.log('  filteredPersons: ' + JSON.stringify(store.filteredPersons()));
-            console.log('  currentUser: ' + JSON.stringify(store.currentUser()));
-            console.log('  tenantId: ' + store.tenantId());
-            console.log('------------------------------------');
-        },
-
         /******************************** setters (filter) ******************************************* */
         setSearchTerm(searchTerm: string) {
             patchState(store, { searchTerm });
@@ -206,7 +194,7 @@ export const PersonStore = signalStore(
                 const p = data as PersonNewFormModel;
 
                 if (store.personService.checkIfExists(store.persons(), p.firstName, p.lastName)) {
-                if (!await store.alertService.confirm(store.i18n.create_exists_error(), true)) return;           
+                if (!await store.alertService.confirm(store.i18n.exists(), true)) return;           
                 }
 
                 const personKey = await store.personService.create(convertFormToNewPerson(p, store.tenantId()), store.currentUser());
@@ -296,7 +284,7 @@ export const PersonStore = signalStore(
 
         async delete(person?: PersonModel, readOnly = true): Promise<void> {
             if (!person || readOnly) return;
-            const result = await store.alertService.confirm(store.i18n.person_delete_confirm(), true);
+            const result = await store.alertService.confirm(store.i18n.delete_confirm(), true);
             if (result === true) {
                 await store.personService.delete(person, store.currentUser());
                 this.reset();

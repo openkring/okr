@@ -3,10 +3,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
+import { AppStore, MultiSelectModal, PersonSelectModal } from '@bk2/shared-feature';
 import { confirm } from '@bk2/shared-util-angular';
-import { CategoryListModel, ResponsibilityModel } from '@bk2/shared-models';
-import { debugListLoaded, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { CategoryListModel, PersonModel, ResponsibilityModel } from '@bk2/shared-models';
+import { debugListLoaded, isPerson, isValidAt, nameMatches } from '@bk2/shared-util-core';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { I18nService } from '@bk2/shared-i18n';
 
@@ -43,13 +43,22 @@ export const ResponsibilityStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      update_header: PFX + 'update.header',
-      update_message1: PFX + 'update.message1',
-      update_message2: PFX + 'update.message2',
-      ok:         '@ok',
-      cancel:     '@cancel',
-      list_title: '@responsibility.list.title',
+      responsibilities:       PFX + 'responsibilities',
+      responsibility:         PFX + 'responsibility',
+      responsible:            PFX + 'responsible',
+      delegate:               PFX + 'delegate',
+      empty:                  PFX + 'empty',
+      delete_confirm:         PFX + 'delete.confirm',
+      update_header:          PFX + 'update.header',
+      update_message1:        PFX + 'update.message1',
+      update_message2:        PFX + 'update.message2',
+      as_title:               PFX + 'actionsheet.title',
+      as_view:                PFX + 'actionsheet.view',
+      as_edit:                PFX + 'actionsheet.edit',
+      as_create:               PFX + 'actionsheet.create',
+      as_delete:               PFX + 'actionsheet.delete',
+      ok:                     '@ok',
+      cancel:                 '@cancel'
     }),
 
     allResponsibilitiesResource: rxResource({
@@ -173,9 +182,51 @@ export const ResponsibilityStore = signalStore(
       }
     },
 
+    async selectPerson(): Promise<PersonModel | undefined> {
+      const modal = await store.modalController.create({
+        component: PersonSelectModal,
+        cssClass: 'list-modal',
+        componentProps: { 
+          selectedTag: '', 
+          currentUser: store.currentUser()
+        },
+      });
+      modal.present();
+      const { data, role } = await modal.onWillDismiss();
+      if (role === 'confirm' && data && isPerson(data, store.tenantId())) return data;
+      return undefined;
+    },
+
+    async selectParent(): Promise<string | undefined> {
+      const modal = await store.modalController.create({
+        component: MultiSelectModal,
+        cssClass: 'list-modal',
+        componentProps: { 
+          contents: 'org,group',
+          selectedTag: '',
+          currentUser: store.currentUser()
+        },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss();
+      if (role !== 'confirm' || !data) return undefined;
+      return data as string;
+    },
+
     /******************************* other *************************************** */
     async export(type: string): Promise<void> {
       console.log(`ResponsibilityStore.export(${type}) is not yet implemented.`);
+    },
+
+    getTitleLabel(readOnly: boolean, key: string): string {
+      if (readOnly) {
+        return store.i18n.as_view();
+      }
+      if (key.length > 0) {
+        return store.i18n.as_edit();
+      } else {
+        return store.i18n.as_create();
+      }
     }
   }))
 );

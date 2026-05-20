@@ -71,8 +71,8 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
       <div class="node-row">
         <!-- Expand / collapse toggle -->
         @if (node().children.length > 0) {
-          <ion-button fill="clear" size="small" class="toggle-btn" (click)="graphStore.toggleExpanded(node().id)">
-            <ion-icon slot="icon-only" src="{{ (graphStore.isExpanded(node().id) ? 'chevron-down' : 'chevron-forward') | svgIcon }}" />
+          <ion-button fill="clear" size="small" class="toggle-btn" (click)="store.toggleExpanded(node().id)">
+            <ion-icon slot="icon-only" src="{{ (store.isExpanded(node().id) ? 'chevron-down' : 'chevron-forward') | svgIcon }}" />
           </ion-button>
         } @else {
           <span class="toggle-btn"></span>
@@ -97,7 +97,7 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
       </div>
 
       <!-- Children (recursively rendered when expanded) -->
-      @if (graphStore.isExpanded(node().id) && node().children.length > 0) {
+      @if (store.isExpanded(node().id) && node().children.length > 0) {
         <div class="children">
           @for (child of node().children; track child.id) {
             <bk-menu-graph-node [node]="child" (nodeEdit)="nodeEdit.emit($event)" />
@@ -107,7 +107,7 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
   `
 })
 export class MenuGraphNode {
-  protected graphStore = inject(MenuGraphStore);
+  protected store = inject(MenuGraphStore);
 
   public node = input.required<DependencyNode>();
   public nodeEdit = output<DependencyNode>();

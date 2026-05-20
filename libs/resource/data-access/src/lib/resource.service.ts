@@ -24,12 +24,12 @@ export class ResourceService {
   private readonly i18n = this.i18nService.translateAll(
     Object.fromEntries(
       RESOURCE_TYPES.flatMap(type => [
-        [`create_conf_${type}`,  PFX + `operation.create.${type}.conf`],
-        [`create_error_${type}`, PFX + `operation.create.${type}.error`],
-        [`update_conf_${type}`,  PFX + `operation.update.${type}.conf`],
-        [`update_error_${type}`, PFX + `operation.update.${type}.error`],
-        [`delete_conf_${type}`,  PFX + `operation.delete.${type}.conf`],
-        [`delete_error_${type}`, PFX + `operation.delete.${type}.error`],
+        [`create_conf_${type}`,  PFX + `create.${type}.conf`],
+        [`create_error_${type}`, PFX + `create.${type}.error`],
+        [`update_conf_${type}`,  PFX + `update.${type}.conf`],
+        [`update_error_${type}`, PFX + `update.${type}.error`],
+        [`delete_conf_${type}`,  PFX + `delete.${type}.conf`],
+        [`delete_error_${type}`, PFX + `delete.${type}.error`],
       ])
     ) as Record<string, string>
   );

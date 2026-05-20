@@ -25,14 +25,14 @@ export class MembershipService {
   private readonly activityService = inject(ActivityService);
   private readonly i18nService = inject(I18nService);
   private readonly i18n = this.i18nService.translateAll({
-    create_conf:  PFX + 'operation.create.conf',
-    create_error: PFX + 'operation.create.error',
-    update_conf:  PFX + 'operation.update.conf',
-    update_error: PFX + 'operation.update.error',
-    delete_conf:  PFX + 'operation.delete.conf',
-    delete_error: PFX + 'operation.delete.error',
-    end_conf:     PFX + 'operation.end.conf',
-    end_error:    PFX + 'operation.end.error',
+    create_conf:  PFX + 'create.conf',
+    create_error: PFX + 'create.error',
+    update_conf:  PFX + 'update.conf',
+    update_error: PFX + 'update.error',
+    delete_conf:  PFX + 'delete.conf',
+    delete_error: PFX + 'delete.error',
+    end_conf:     PFX + 'end.conf',
+    end_error:    PFX + 'end.error',
   });
 
   /*-------------------------- CRUD operations --------------------------------*/
@@ -287,12 +287,12 @@ export class MembershipService {
         component: BkLabelSelectModal,
         componentProps: {
           labels: [
-            '@membership.operation.select.default', 
-            '@membership.operation.select.srv', 
-            '@membership.operation.select.address'
+            '@membership.select.default', 
+            '@membership.select.srv', 
+            '@membership.select.address'
           ],
           icons: ['list-circle', 'menu', 'list'],
-          title: '@membership.operation.select.title'
+          title: '@membership.select.title'
         }
       });
       modal.present();

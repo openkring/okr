@@ -4,7 +4,6 @@ import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup
 import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 import { CalendarSelectModal } from '@bk2/shared-feature';
 
 import { CalEventForm } from '@bk2/calevent-ui';
@@ -13,6 +12,7 @@ import { DocumentsAccordion } from '@bk2/document-feature';
 import { CommentsAccordion } from '@bk2/comment-feature';
 
 import { AttendeesAccordion } from './attendees-accordion';
+import { CalEventStore } from './calevent.store';
 
 @Component({
   selector: 'bk-calevent-edit-modal',
@@ -24,6 +24,7 @@ import { AttendeesAccordion } from './attendees-accordion';
     IonContent, IonCard, IonCardContent, IonAccordionGroup
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  providers: [CalEventStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -70,6 +71,7 @@ import { AttendeesAccordion } from './attendees-accordion';
 })
 export class CalEventEditModal {
   private modalController = inject(ModalController);
+  protected readonly store = inject(CalEventStore);
 
   // inputs
   public calevent = input.required<CalEventModel>();
@@ -91,7 +93,7 @@ export class CalEventEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('calevent', this.calevent().bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.calevent().bkey));
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().bkey}`);
   protected isNew = computed(() => !this.formData()?.bkey);
 

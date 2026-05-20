@@ -7,9 +7,12 @@ import { of } from 'rxjs';
 import { AppStore } from '@bk2/shared-feature';
 import { ActivityCollection, ActivityModel } from '@bk2/shared-models';
 import { getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { ActivityService } from '@bk2/activity-data-access';
+
 import { ActivityViewModal } from './activity-view.modal';
+import { PFX } from './scope';
 
 export type ActivityState = {
   searchTerm: string;
@@ -31,8 +34,20 @@ export const ActivityStore = signalStore(
     activityService: inject(ActivityService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
+    i18nService: inject(I18nService),
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+        title:      PFX + 'title',
+        empty:      PFX + 'empty',
+        timestamp:  PFX + 'timestamp',
+        scope:      PFX + 'scope',
+        action:     PFX + 'action',
+        author:     PFX + 'author',
+        payload:    PFX + 'payload',
+        view_title: PFX + 'view.title'
+    }),
+  
     activitiesResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),
@@ -63,7 +78,7 @@ export const ActivityStore = signalStore(
         if (action !== 'all' && a.action !== action) return false;
         if (term && !nameMatches(a.index, term)) return false;
         return true;
-      });
+      }).slice(0, state.maxItems() ?? all.length);
     }),
   })),
 
@@ -81,10 +96,6 @@ export const ActivityStore = signalStore(
       patchState(store, { maxItems });
     },
 
-    reload(): void {
-      store.activitiesResource.reload();
-    },
-
     async view(activity: ActivityModel): Promise<void> {
       const modal = await store.modalController.create({
         component: ActivityViewModal,
@@ -95,7 +106,7 @@ export const ActivityStore = signalStore(
 
     async delete(activity: ActivityModel): Promise<void> {
       await store.activityService.delete(activity, store.currentUser() ?? undefined);
-      this.reload();
+      store.activitiesResource.reload();
     },
   }))
 );

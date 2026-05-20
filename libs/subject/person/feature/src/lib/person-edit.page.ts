@@ -5,7 +5,6 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter }
 import { PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { MembershipAccordion } from '@bk2/relationship-membership-feature';
 import { OwnershipAccordion } from '@bk2/relationship-ownership-feature';
@@ -101,7 +100,7 @@ export class PersonEditPage implements ViewWillEnter   {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('subject.person', this.person()?.bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.person()?.bkey ?? ''));
   protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
   protected parentKey = computed(() => PersonModelName + '.' + this.personKey());
   protected priv = computed(() => this.store.privacySettings());
@@ -159,5 +158,16 @@ export class PersonEditPage implements ViewWillEnter   {
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  protected getTitleLabel(readOnly: boolean, key: string): string {
+    if (this.readOnly()) {
+      return this.store.i18n.view_label();
+    }
+    if (key.length > 0) {
+      return this.store.i18n.edit_label();
+    } else {
+      return this.store.i18n.create_label();
+    }
   }
 }

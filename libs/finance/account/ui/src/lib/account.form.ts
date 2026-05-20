@@ -87,7 +87,7 @@ export class AccountForm {
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected type = linkedSignal(() => this.formData().type ?? '');
   protected label = linkedSignal(() => this.formData().label ?? '');
-  protected parentId = linkedSignal(() => this.formData().parentId ?? '');
+  protected parentId = linkedSignal(() => this.formData().parentKey ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
   protected bkey = computed(() => this.formData().bkey ?? '');
 

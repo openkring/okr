@@ -4,14 +4,13 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
-import { ENV } from '@bk2/shared-config';
+import { PersonSelectModal } from '@bk2/shared-feature';
 
 import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { DocumentsAccordion } from '@bk2/document-feature';
 import { PersonalRelForm } from '@bk2/relationship-personal-rel-ui';
+import { PersonalRelStore } from './personal-rel.store';
 
 @Component({
   selector: 'bk-personal-rel-edit-modal',
@@ -21,6 +20,7 @@ import { PersonalRelForm } from '@bk2/relationship-personal-rel-ui';
     ChangeConfirmation, PersonalRelForm,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
+  providers: [PersonalRelStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
@@ -36,7 +36,7 @@ import { PersonalRelForm } from '@bk2/relationship-personal-rel-ui';
           [types]="types()"
           [allTags]="tags()"
           [readOnly]="isReadOnly()"
-          [tenants]="env.tenantId"
+          [tenants]="tenantId()"
           (selectPerson)="selectPerson($event)"
           (showPersonOutput)="onShowPerson($event)"
           (dirty)="formDirty.set($event)"
@@ -59,13 +59,13 @@ import { PersonalRelForm } from '@bk2/relationship-personal-rel-ui';
 })
 export class PersonalRelEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
-  protected readonly env = inject(ENV);
+  private readonly store = inject(PersonalRelStore);
   private readonly personEditModalClass = inject<Type<unknown> | null>(PERSON_EDIT_MODAL, { optional: true });
 
   // inputs
   public personalRel = input.required<PersonalRelModel>();
   public currentUser = input.required<UserModel>();
+  protected tenantId = computed(() => this.store.tenantId());
   public tags = input.required<string>();
   public types = input.required<CategoryListModel>();
   public readonly readOnly = input<boolean>(true);
@@ -81,7 +81,7 @@ export class PersonalRelEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('personalRel', this.personalRel()?.bkey, this.isReadOnly()));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.personalRel()?.bkey));
   protected readonly parentKey = computed(() => `${PersonalRelModelName}.${this.personalRel().bkey ?? ''}`);
 
   /******************************* actions *************************************** */
@@ -152,7 +152,7 @@ export class PersonalRelEditModal {
     modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm' && data) {
-      if (isPerson(data, this.env.tenantId)) {
+      if (isPerson(data, this.tenantId())) {
         return data;
       }
     }
@@ -160,16 +160,16 @@ export class PersonalRelEditModal {
   }
 
   protected async onShowPerson(personKey: string): Promise<void> {
-    const person = this.appStore.getPerson(personKey);
+    const person = this.store.appStore.getPerson(personKey);
     if (!person || !this.personEditModalClass) return;
     const modal = await this.modalController.create({
       component: this.personEditModalClass,
       componentProps: {
         person,
         currentUser: this.currentUser(),
-        tags: this.appStore.getTags(PersonModelName),
-        tenantId: this.appStore.tenantId(),
-        genders: this.appStore.getCategory('gender'),
+        tags: this.store.getTags(PersonModelName),
+        tenantId: this.store.tenantId(),
+        genders: this.store.appStore.getCategory('gender'),
         readOnly: true,
       }
     });

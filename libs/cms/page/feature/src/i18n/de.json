@@ -2,39 +2,53 @@
   "pages": "Webseiten",
   "sections": "Sektionen",
   "empty": "Es sind noch keine Inhalte erfasst worden.",
+  "notfound": "Seite nicht gefunden",
+  "notexist": "Die aufgerufene Seite existiert nicht.",
+  "help": "Bitte überprüfen Sie die URL oder navigieren Sie über das Menü.",
   "emptyPage": "Es gibt noch keine Sektionen für diese Seite. Bitte zuerst Sektionen erstellen.",
   "emptyPageReadOnly": "Diese Seite ist noch leer.",
   "description": "Eine Website enthält einen Titel und mehrere Sektionen. Die Reihenfolge der Sektionen kann geändert werden.",
-  "name": "Name",
-  "key": "ID",
-  "page": {
-    "add": {
-      "label": "Webseite hinzufügen",
-      "placeholder": "Name der Seite"
-    },
-    "delete": {
-      "confirm": "Soll die Webseite wirklich gelöscht werden ?"
-    }
+  "add": {
+    "label": "Webseite hinzufügen",
+    "placeholder": "Name der Seite",
+    "section": "Neue Sektion hinzufügen"
   },
-  "section": {
-    "add": "Neue Sektion hinzufügen"
+  "delete": {
+    "label": "Webseite löschen",
+    "confirm": "Soll die Webseite wirklich gelöscht werden ?"
   },
-  "article": {
-    "search": "Artikel suchen"
+  "search": {
+    "article": "Artikel suchen"
   },
   "sort": {
-    "label": "Webseiten sortieren",
+    "label": "Sektionen sortieren",
     "noSections": "Es sind keine Sektionen zum Sortieren vorhanden.",
     "onlyOneSection": "Es ist nur eine Sektion vorhanden, Sortieren ist nicht nötig."
+  },
+  "upload": {
+    "image": "Bild/er hochladen",
+    "file": "File/s hochladen"
   },
   "type": {
     "graph": {
       "nomain": "Kein Hauptmenu gefunden.",
       "description": "Die Sitemap gibt einen graphischen Überblick über die Struktur der App. Sie listet alle konfigurierten Menu, Seiten und Sektionen und zeigt ihre Abhängigkeiten.",
       "description2": "Die Elemente in diesem Graph können selektiert und editiert werden."
+    },
+    "blog": {
+      "search": "",
+      "filter": {
+        "all": "Alle"
+      }
     }
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion"
-  }
+  "section": {
+    "edit": "Sektion bearbeiten",
+    "send": "Artikel versenden",
+    "remove": "Sektion entfernen"
+  },
+  "view": "Webseiten-Konfiguration anzeigen",
+  "show": "Webseite anzeigen",
+  "edit": "Webseite bearbeiten",
+  "create": "Neue Seite erstellen"
 }

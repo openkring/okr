@@ -6,7 +6,6 @@ import { CategoryListModel, OrgModel, OrgModelName, ResourceModel, RoleName, Use
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_TITLE } from '@bk2/shared-constants';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
 
 import { AvatarToolbar } from '@bk2/avatar-feature';
@@ -23,7 +22,7 @@ import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
 
 import { AddressesAccordion } from '@bk2/subject-address-feature';
 import { OrgForm } from '@bk2/subject-org-ui';
-import { OrgStore } from 'libs/subject/org/feature/src/lib/org.store';
+import { OrgStore } from './org.store';
 
 @Component({
   selector: 'bk-org-edit-modal',
@@ -110,7 +109,7 @@ export class OrgEditModal {
   protected showForm = signal(true);
 
   // derived signals and fields
-  protected headerTitle = computed(() => getTitleLabel('subject.org', this.org()?.bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.org()?.bkey));
   protected toolbarTitle = computed(() => this.org()?.name ?? DEFAULT_TITLE);
   protected readonly parentKey = computed(() => `${OrgModelName}.${this.orgKey()}`);
   protected path = computed(() => getDocumentStoragePath(this.env.tenantId, 'org', this.org()?.bkey));
@@ -148,5 +147,16 @@ export class OrgEditModal {
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  protected getTitleLabel(readOnly: boolean, key: string): string {
+    if (this.readOnly()) {
+      return this.store.i18n.view_label();
+    }
+    if (key.length > 0) {
+      return this.store.i18n.edit_label();
+    } else {
+      return this.store.i18n.create_label();
+    }
   }
 }

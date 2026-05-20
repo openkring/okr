@@ -1,65 +1,59 @@
 {
-  "input": {
-    "keyName": {
-      "label": "Schlüsselname"
-    },
-    "description": {
-      "label": "Beschreibung"
-    },
-    "lockerNr": {
-      "label": "Garderobe Nr."
-    },
-    "keyNr": {
-      "label": "Schlüssel Nr."
-    },
-    "name": {
-      "label": "Name"
-    },
-    "value": {
-      "label": "Wert"
-    },
-    "boatName": {
-      "label": "Bootsname"
-    },
-    "boatType": {
-      "label": "Bootstyp"
-    },
-    "load": {
-      "label": "Beladung"
-    }
+  "resources": "Resourcen",
+  "empty": "Keine Resourcen gefunden.",
+  "load": "Beladung",
+  "create": {
+    "label": "Resource erstellen"
   },
-  "resource": {
-    "key": {
-      "field": {
-        "empty": "Es sind noch keine Schlüssel erfasst."
-      },
-      "plural": "Schlüssel"
-    },
-    "locker": {
-      "field": {
-        "empty": "Keine Garderoben gefunden."
-      },
-      "plural": "Garderoben"
-    },
-    "plural": "Resourcen",
-    "field": {
-      "empty": "Keine Resourcen gefunden."
-    },
-    "boat": {
-      "plural": "Boote",
-      "field": {
-        "empty": "Keine Boote gefunden."
-      }
-    }
+  "view": {
+    "label": "Resource anzeigen"
+  },
+  "edit": {
+    "label": "Resource ändern"
+  },
+  "delete": {
+    "label": "Resource löschen"
+  },
+  "key": {
+    "plural": "Schlüssel",
+    "empty": "Keine Schlüssel gefunden.",
+    "name": "Schlüsselname",
+    "nr": "Schlüssel Nr.",
+    "view": "Schlüssel anzeigen",
+    "edit": "Schlüssel ändern",
+    "delete": "Schlüssel löschen",
+    "create": "Schlüssel erstellen"
+  },
+  "locker": {
+    "plural": "Garderoben",
+    "empty": "Keine Garderoben gefunden.",
+    "nr": "Garderobe Nr.",
+    "view": "Garderobe anzeigen",
+    "edit": "Garderobe ändern",
+    "delete": "Garderobe löschen",
+    "create": "Garderobe erstellen"
+  },
+  "boat": {
+    "plural": "Boote",
+    "empty": "Keine Boote gefunden.",
+    "name": "Bootsname",
+    "type": "Bootstyp",
+    "view": "Boot anzeigen",
+    "edit": "Boot ändern",
+    "delete": "Boot löschen",
+    "create": "Boot erstellen"
+  },
+  "rboat": {
+    "plural": "Ruderboote",
+    "empty": "Keine Ruderboote gefunden.",
+    "name": "Name des Ruderboots",
+    "type": "Bootstyp",
+    "view": "Boot anzeigen",
+    "edit": "Boot ändern",
+    "delete": "Boot löschen",
+    "create": "Ruderboot erstellen"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
-  },
-  "general": {
-    "util": {
-      "description": "Beschreibung"
-    }
+    "title": "Wähle eine Aktion"
   }
 }

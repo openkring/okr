@@ -1,9 +1,9 @@
 {
+  "responsibility": "Verantwortlichkeit",
   "responsibilities": "Verantwortlichkeiten",
+  "responsible": "Verantwortlich",
+  "delegate": "Stellvertretung",
   "empty": "Keine Verantwortungen gefunden.",
-  "actionsheet": {
-    "title": "Wähle eine Aktion"
-  },
   "delete": {
     "confirm": "Möchtest du die Verantwortlichkeit wirklich löschen?"
   },
@@ -11,5 +11,12 @@
     "header": "Doppelte ID",
     "message1": "Eine Verantwortlichkeit mit ID ",
     "message2": " existiert bereits. Bitte benutze eine andere ID."
+  },
+  "actionsheet": {
+    "title": "Wähle eine Aktion",
+    "view": "Verantwortlichkeit ansehen",
+    "edit": "Verantwortlichkeit ändern",
+    "create": "Verantwortlichkeit erstellen",
+    "delete": "Verantwortlichkeit löschen"
   }
 }

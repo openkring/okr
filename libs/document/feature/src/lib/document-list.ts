@@ -40,7 +40,7 @@ import { DocumentStore } from './document.store';
         @if(showMenuButton() === true) {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
-        <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ documentStore.i18n.document_plural() }}</ion-title>
+        <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ store.i18n.documents() }}</ion-title>
         @if(canChange()) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -77,13 +77,13 @@ import { DocumentStore } from './document.store';
         <ion-grid>
           <ion-row>
             <ion-col size="8">
-              <ion-label><strong>{{ documentStore.i18n.list_header_name() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
             </ion-col>
             <ion-col size="2">
-              <ion-label><strong>{{ documentStore.i18n.list_header_size() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.size() }}</strong></ion-label>
             </ion-col>
             <ion-col size="2">
-              <ion-label><strong>{{ documentStore.i18n.list_header_last_update() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.lastUpdate() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -186,7 +186,7 @@ import { DocumentStore } from './document.store';
 `
 })
 export class DocumentList {
-  protected readonly documentStore = inject(DocumentStore);
+  protected readonly store = inject(DocumentStore);
   private readonly actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -198,55 +198,55 @@ export class DocumentList {
   public groupAdmin = input(false);
 
   // filters
-  protected readonly searchTerm = linkedSignal(() => this.documentStore.searchTerm());
-  protected readonly selectedTag = linkedSignal(() => this.documentStore.selectedTag());
-  protected readonly selectedType = linkedSignal(() => this.documentStore.selectedType());
+  protected readonly searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected readonly selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected readonly selectedType = linkedSignal(() => this.store.selectedType());
 
   // data
-  protected documentsCount = computed(() => this.documentStore.documentsCount());
-  protected filteredDocuments = computed(() => this.documentStore.filteredDocuments() ?? []);
+  protected documentsCount = computed(() => this.store.documentsCount());
+  protected filteredDocuments = computed(() => this.store.filteredDocuments() ?? []);
   protected filteredDocumentsCount = computed(() => this.filteredDocuments().length);
-  protected subFolders = computed(() => this.documentStore.subFolders());
-  protected folderDocumentCounts = computed(() => this.documentStore.folderDocumentCounts());
-  protected isLoading = computed(() => this.documentStore.isLoading());
+  protected subFolders = computed(() => this.store.subFolders());
+  protected folderDocumentCounts = computed(() => this.store.folderDocumentCounts());
+  protected isLoading = computed(() => this.store.isLoading());
   protected isEmpty = computed(() => this.filteredDocumentsCount() === 0 && this.subFolders().length === 0);
-  protected tags = computed(() => this.documentStore.getTags());
-  protected types = computed(() => this.documentStore.appStore.getCategory('document_type'));
-  protected sources = computed(() => this.documentStore.appStore.getCategory('document_source'));
-  protected readonly currentUser = computed(() => this.documentStore.appStore.currentUser());
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.store.appStore.getCategory('document_type'));
+  protected sources = computed(() => this.store.appStore.getCategory('document_source'));
+  protected readonly currentUser = computed(() => this.store.appStore.currentUser());
   protected isListView = linkedSignal(() => this.view() === 'list');
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()) && !this.groupAdmin());
   protected popupId = computed(() => `c_docs_${this.listId}`);
   protected readonly folderKey = computed(() => {
-    const id = this.documentStore.listId();
+    const id = this.store.listId();
     return id.startsWith('f:') ? id.substring(2) : null;
   });
 
-  private imgixBaseUrl = this.documentStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.documentStore.setListId(this.listId()));
+    effect(() => this.store.setListId(this.listId()));
   }
 
   /******************************** setters (filter) ******************************************* */
   protected onFolderSelected(key: string): void {
-    this.documentStore.setListId(`f:${key}`);
+    this.store.setListId(`f:${key}`);
   }
 
   protected onSubfolderClick(key: string): void {
-    this.documentStore.setListId(`f:${key}`);
+    this.store.setListId(`f:${key}`);
   }
 
   protected onSearchtermChange(searchTerm: string): void {
-    this.documentStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.documentStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.documentStore.setSelectedType(type);
+    this.store.setSelectedType(type);
   }
 
   protected readonly acceptMimeTypes = DEFAULT_MIMETYPES.join(',');
@@ -255,17 +255,17 @@ export class DocumentList {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
     input.value = '';
-    this.documentStore.addFiles(files);
+    this.store.addFiles(files);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.documentStore.add(); break;
+      case 'add':  await this.store.add(); break;
       case 'addFiles': break; // handled by the toolbar label→input (Safari-compatible)
-      case 'addFolder': await this.documentStore.addFolder(); break;
-      case 'exportRaw': await this.documentStore.export('raw'); break;
+      case 'addFolder': await this.store.addFolder(); break;
+      case 'exportRaw': await this.store.export('raw'); break;
       default: error(undefined, `DocumentList.call: unknown method ${selectedMethod}`);
     }
   }
@@ -276,7 +276,7 @@ export class DocumentList {
    * @param document 
    */
   protected async showActions(document: DocumentModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, document);
     await this.executeActions(actionSheetOptions, document);
   }
@@ -287,18 +287,17 @@ export class DocumentList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
     if (this.canChange()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.imgixBaseUrl, 'upload'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.store.i18n.as_update(), this.imgixBaseUrl, 'upload'));
     } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
     }
-    // actionSheetOptions.buttons.push(createActionSheetButton('document.preview', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.imgixBaseUrl, 'download'));
-    actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.imgixBaseUrl, 'timeline'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.store.i18n.as_download(), this.imgixBaseUrl, 'download'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.store.i18n.as_revisions(), this.imgixBaseUrl, 'timeline'));
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -314,25 +313,25 @@ export class DocumentList {
       if (!data) return;
       switch (data.action) {
         case 'document.delete':
-          await this.documentStore.delete(document, this.readOnly());
+          await this.store.delete(document, this.readOnly());
           break;
         case 'document.download':
-          await this.documentStore.download(document, this.readOnly());
+          await this.store.download(document, this.readOnly());
           break;
         case 'document.update':
-          await this.documentStore.update(document, this.readOnly());
+          await this.store.update(document, this.readOnly());
           break;
         case 'document.edit':
-          await this.documentStore.edit(document, this.readOnly());
+          await this.store.edit(document, this.readOnly());
           break;
         case 'document.view':
-          await this.documentStore.edit(document, true);
+          await this.store.edit(document, true);
           break;
         case 'document.preview':
-          await this.documentStore.preview(document, true);
+          await this.store.preview(document, true);
           break;
         case 'document.showRevisions':
-          await this.documentStore.showRevisions(document);
+          await this.store.showRevisions(document);
           break;
       }
     }
@@ -348,7 +347,7 @@ export class DocumentList {
   }
 
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.documentStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }
 

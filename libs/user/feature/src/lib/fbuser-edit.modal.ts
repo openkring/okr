@@ -6,6 +6,7 @@ import { ChangeConfirmation, Header } from "@bk2/shared-ui";
 import { hasRole, removeUndefinedFields } from "@bk2/shared-util-core";
 
 import { FbuserForm } from "@bk2/user-ui";
+import { UserStore } from "libs/user/feature/src/lib/user.store";
 
 @Component({
   selector: 'bk-fbuser-edit-modal',
@@ -14,8 +15,9 @@ import { FbuserForm } from "@bk2/user-ui";
     Header, ChangeConfirmation, FbuserForm,
     IonContent
   ],
+  providers: [UserStore],
   template: `
-    <bk-header title="@user.fbuser.edit.title" [isModal]="true" />
+    <bk-header [title]="store.i18n.fbuser_edit_title()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
@@ -33,6 +35,7 @@ import { FbuserForm } from "@bk2/user-ui";
 })
 export class FbuserEditModal {
   private readonly modalController = inject(ModalController);
+  protected readonly store = inject(UserStore);
 
   // inputs
   public fbuser = input.required<FirebaseUserModel>();

@@ -46,7 +46,7 @@ import { ActivitiesSectionStore } from './activities-section.store';
                 </ion-item>
               }
               @if(showMoreButton()) {
-                <bk-more-button [url]="moreUrl()" />
+                <bk-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
               }
             </ion-list>
           }

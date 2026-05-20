@@ -5,7 +5,6 @@ import { ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
 import { CategorySelect, ChangeConfirmation, Header, IconToolbar } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_RESOURCE_TYPE, DEFAULT_TITLE } from '@bk2/shared-constants';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
@@ -13,7 +12,7 @@ import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
 import { ResourceForm } from '@bk2/resource-ui';
 import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@bk2/resource-util';
 
-import { ResourceEditStore } from './resource-edit.store';
+import { ResourceStore } from './resource.store';
 
 @Component({
   selector: 'bk-resource-edit-page',
@@ -24,7 +23,7 @@ import { ResourceEditStore } from './resource-edit.store';
     ReservationsAccordion,
     IonContent, IonAccordionGroup, IonGrid, IonRow, IonCol
   ],
-  providers: [ResourceEditStore],
+  providers: [ResourceStore],
   template: `
     <bk-header [title]="headerTitle()" />
     @if(showConfirmation()) {
@@ -71,7 +70,7 @@ import { ResourceEditStore } from './resource-edit.store';
   `
 })
 export class ResourceEditPage {
-  private readonly resourceEditStore = inject(ResourceEditStore);
+  private readonly store = inject(ResourceStore);
 
   // inputs
   public resourceKey = input.required<string>();
@@ -87,37 +86,37 @@ export class ResourceEditPage {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('resource.type.' + this.type(), this.resource()?.bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.resource()?.bkey ?? '', this.type()));
   protected toolbarTitle = computed(() => this.formData()?.name ?? DEFAULT_TITLE);
   protected readonly parentKey = computed(() => `${ResourceModelName}.${this.resourceKey()}`);
-  protected currentUser = computed(() => this.resourceEditStore.currentUser());
-  protected types = computed(() => this.resourceEditStore.appStore.getCategory('resource_type'));
+  protected currentUser = computed(() => this.store.currentUser());
+  protected types = computed(() => this.store.appStore.getCategory('resource_type'));
   protected type = linkedSignal(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
   protected subTypes = computed(() => {
     const catName = getCategoryNameForResourceType(this.type());
-    return catName ? this.resourceEditStore.appStore.getCategory(catName) : undefined;
+    return catName ? this.store.appStore.getCategory(catName) : undefined;
   });
   protected usages = computed(() => {
     const usageName = getUsageNameForResourceType(this.type());
-    return usageName ? this.resourceEditStore.appStore.getCategory(usageName) : undefined;
+    return usageName ? this.store.appStore.getCategory(usageName) : undefined;
   });
-  private rowingBoatIcon = computed(() => this.resourceEditStore.appStore.getCategoryIcon('rboat_type', this.formData()?.subType));
-  private resourceIcon = computed(() => this.resourceEditStore.appStore.getCategoryIcon('resource_type', this.formData()?.type));
+  private rowingBoatIcon = computed(() => this.store.appStore.getCategoryIcon('rboat_type', this.formData()?.subType));
+  private resourceIcon = computed(() => this.store.appStore.getCategoryIcon('resource_type', this.formData()?.type));
   protected icon = computed(() => this.formData()?.type === 'rboat' ? this.rowingBoatIcon() : this.resourceIcon());
-  protected resource = computed(() => this.resourceEditStore.resource());
-  protected tags = computed(() => this.resourceEditStore.getTags());
-  protected tenantId = computed(() => this.resourceEditStore.tenantId());
+  protected resource = computed(() => this.store.resource());
+  protected tags = computed(() => this.store.getResourceTags());
+  protected tenantId = computed(() => this.store.tenantId());
   protected listId = computed(() => `r_${this.resourceKey()}`);
 
   constructor() {
     effect(() => {
-      this.resourceEditStore.setResourceKey(this.resourceKey());
+      this.store.setResourceKey(this.resourceKey());
     });
   }
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.resourceEditStore.save(this.formData());
+    await this.store.save(this.formData());
   }
 
   public async cancel(): Promise<void> {
@@ -146,5 +145,34 @@ export class ResourceEditPage {
   protected isReservable(resourceType?: string): boolean {
     if (!resourceType || resourceType.length === 0) return false;
     return isReservable(resourceType);
+  }
+
+  protected getTitleLabel(readOnly: boolean, key: string, type: string): string {
+    if (this.readOnly()) {
+      switch(type) {
+        case 'key': return this.store.i18n.key_view();
+        case 'locker': return this.store.i18n.locker_view();
+        case 'boat': return this.store.i18n.boat_view();
+        case 'rboat': return this.store.i18n.rboat_view();
+        default: return this.store.i18n.view_label();
+      }
+    }
+    if (key.length > 0) {
+      switch(type) {
+        case 'key': return this.store.i18n.key_edit();
+        case 'locker': return this.store.i18n.locker_edit();
+        case 'boat': return this.store.i18n.boat_edit();
+        case 'rboat': return this.store.i18n.rboat_edit();
+        default: return this.store.i18n.edit_label();
+      }
+    } else {
+      switch(type) {
+        case 'key': return this.store.i18n.key_create();
+        case 'locker': return this.store.i18n.locker_create();
+        case 'boat': return this.store.i18n.boat_create();
+        case 'rboat': return this.store.i18n.rboat_create();
+        default: return this.store.i18n.create_label();
+      }
+    }
   }
 }

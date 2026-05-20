@@ -4,7 +4,6 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { AVATAR_INFO_SHAPE, GroupModel, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 import { PersonSelectModal } from '@bk2/shared-feature';
 
 import { GroupForm } from '@bk2/subject-group-ui';
@@ -66,7 +65,7 @@ export class GroupEditModal {
   protected showForm = signal(true);
 
   // fields
-  protected headerTitle = computed(() => getTitleLabel('subject.group', this.group().bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.group().bkey));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -123,5 +122,16 @@ export class GroupEditModal {
       }
     }
     return undefined;
+  }
+
+  protected getTitleLabel(readOnly: boolean, key: string): string {
+    if (this.readOnly()) {
+      return this.store.i18n.group_view_label();
+    }
+    if (key.length > 0) {
+      return this.store.i18n.group_edit_label();
+    } else {
+      return this.store.i18n.group_create_label();
+    }
   }
 }

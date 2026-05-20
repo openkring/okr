@@ -51,17 +51,26 @@ export const InvitationStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
+      invitations:       PFX + 'invitations',
+      date:              '@date',
+      name:              '@name',
+      invitee:           PFX + 'invitee',
+      inviter:           PFX + 'inviter',
+      state:             PFX + 'state',
+      empty:             PFX + 'empty',
       delete_confirm:    PFX + 'delete.confirm',
       invite_conf:       PFX + 'invite.conf',
       invite_error:      PFX + 'invite.error',
+      as_title:          PFX + 'actionsheet.title',
+      as_accept:         PFX + 'actionsheet.accept',
+      as_decline:        PFX + 'actionsheet.decline',
+      as_maybe:          PFX + 'actionsheet.maybe',
+      as_view:           PFX + 'actionsheet.view',
+      as_edit:           PFX + 'actionsheet.edit',
+      as_create:         PFX + 'actionsheet.create',
+      as_delete:         PFX + 'actionsheet.delete',
       ok:                '@ok',
       cancel:            '@cancel',
-      plural:            '@invitation.plural',
-      list_header_date:    '@invitation.list.header.date',
-      list_header_name:    '@invitation.list.header.name',
-      list_header_invitee: '@invitation.list.header.invitee',
-      list_header_inviter: '@invitation.list.header.inviter',
-      list_header_state:   '@invitation.list.header.state',
     }),
 
     invitationsResource: rxResource({
@@ -215,9 +224,20 @@ export const InvitationStore = signalStore(
         console.log(`InvitationStore.export(${type}) is not yet implemented.`);
       },
 
-      async selectPersonAvatar(): Promise<AvatarInfo | undefined> {
+      async selectPerson(): Promise<AvatarInfo | undefined> {
         return await store.modelSelectService.selectPersonAvatar('','');
       },
+
+     getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
+      }
     }
   })
 );

@@ -6,6 +6,7 @@ import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { OwnershipNewForm } from './ownership-new.form';
+import { OwnershipStore } from './ownership.store';
 
 @Component({
   selector: 'bk-ownership-new-modal',
@@ -15,8 +16,9 @@ import { OwnershipNewForm } from './ownership-new.form';
     ChangeConfirmation,
     IonContent
   ],
+  providers: [OwnershipStore],
   template: `
-    <bk-header title="@ownership.operation.create.label" [isModal]="true" />
+    <bk-header [title]="store.i18n.create_label()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
@@ -36,6 +38,7 @@ import { OwnershipNewForm } from './ownership-new.form';
 })
 export class OwnershipNewModal {
   private readonly modalController = inject(ModalController);
+  protected readonly store = inject(OwnershipStore);
 
   // inputs
   public ownership = input.required<OwnershipModel>();

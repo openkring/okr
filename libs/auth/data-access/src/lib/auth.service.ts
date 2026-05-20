@@ -10,6 +10,8 @@ import { AlertService, navigateByUrl } from '@bk2/shared-util-angular';
 import { die, warn } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
+import { PFX } from './scope';
+
 /**
  * This provider centralizes the authentication functions
  * so that it is available several times by calling it from the provider.
@@ -33,13 +35,13 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
   private readonly i18n = inject(I18nService).translateAll({
-    login_conf:     '@auth.operation.login.confirmation',
-    login_error:    '@auth.operation.login.error',
-    pwdreset_conf:  '@auth.operation.pwdreset.confirmation',
-    pwdreset_error: '@auth.operation.pwdreset.error',
-    logout_conf:    '@auth.operation.logout.confirmation',
-    logout_error:   '@auth.operation.logout.error',
-    logout_confirm: '@content.menuItem.action.logout.confirm',
+    login_conf:     PFX + 'login.conf',
+    login_error:    PFX + 'login.error',
+    pwdreset_conf:  PFX + 'pwdreset.conf',
+    pwdreset_error: PFX + 'pwdreset.error',
+    logout_conf:    PFX + 'logout.conf',
+    logout_error:   PFX + 'logout.error',
+    logout_confirm: PFX + 'logout.confirm',
   });
 
   /*-------------------------- login / logout / password reset --------------------------------*/

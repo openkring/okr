@@ -1,5 +1,6 @@
 {
   "documents": "Dokumente",
+  "revisions": "Versionen",
   "empty": "Keine Dokumente gefunden.",
   "name": "Filename",
   "size": "Grösse",
@@ -17,14 +18,22 @@
       "title": "Dokumente hochladen"
     }
   },
-  "selectImage": {
-    "title": "Bild hinzufügen",
-    "upload": "Bild wählen"
-  },
-  "actionsheet": {
-    "title": "Wähle eine Aktion"
+  "image": {
+    "add": "Bild hinzufügen",
+    "select": "Bild wählen",
+    "upload": "Bild hochladen"
   },
   "delete": {
     "confirm": "Soll das Dokument wirklich gelöscht werden ?"
+  },
+  "actionsheet": {
+    "title": "Wähle eine Aktion",
+    "view": "Dokumenten Details ansehen",
+    "edit": "Dokument ändern",
+    "update": "Neue Version hinzufügen",
+    "create": "Neues Dokument erstellen",
+    "delete": "Dokument löschen",
+    "revisions": "Versionen anzeigen",
+    "download": "Dokument herunterladen"
   }
 }

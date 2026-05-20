@@ -17,13 +17,14 @@ export class AccountService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly i18nService = inject(I18nService);
+  
   private readonly i18n = this.i18nService.translateAll({
-    create_conf:  PFX + 'operation.create.conf',
-    create_error: PFX + 'operation.create.error',
-    update_conf:  PFX + 'operation.update.conf',
-    update_error: PFX + 'operation.update.error',
-    delete_conf:  PFX + 'operation.delete.conf',
-    delete_error: PFX + 'operation.delete.error',
+    create_conf:  PFX + 'create.conf',
+    create_error: PFX + 'create.error',
+    update_conf:  PFX + 'update.conf',
+    update_error: PFX + 'update.error',
+    delete_conf:  PFX + 'delete.conf',
+    delete_error: PFX + 'delete.error',
   });
 
   private readonly tenantId = this.env.tenantId;
@@ -31,7 +32,7 @@ export class AccountService {
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(account: AccountModel, currentUser?: UserModel): Promise<string | undefined> {
     account.index = getAccountIndex(account);
-    return await this.firestoreService.createModel<AccountModel>(AccountCollection, account, PFX + 'operation.create.conf', PFX + 'operation.create.error', currentUser);
+    return await this.firestoreService.createModel<AccountModel>(AccountCollection, account, PFX + 'create.conf', PFX + 'create.error', currentUser);
   }
 
   public read(key: string): Observable<AccountModel | undefined> {
@@ -40,11 +41,11 @@ export class AccountService {
 
   public async update(account: AccountModel, currentUser?: UserModel): Promise<string | undefined> {
     account.index = getAccountIndex(account);
-    return await this.firestoreService.updateModel<AccountModel>(AccountCollection, account, false, PFX + 'operation.update.conf', PFX + 'operation.update.error', currentUser);
+    return await this.firestoreService.updateModel<AccountModel>(AccountCollection, account, false, PFX + 'update.conf', PFX + 'update.error', currentUser);
   }
 
   public async delete(account: AccountModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, PFX + 'operation.delete.conf', PFX + 'operation.delete.error', currentUser);
+    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, PFX + 'delete.conf', PFX + 'delete.error', currentUser);
   }
 
   /**
@@ -71,7 +72,7 @@ export class AccountService {
   private collectSubtree(accounts: AccountModel[], key: string): AccountModel[] {
     const node = accounts.find(a => a.bkey === key);
     if (!node) return [];
-    const children = accounts.filter(a => a.parentId === key);
+    const children = accounts.filter(a => a.parentKey === key);
     return [node, ...children.flatMap(c => this.collectSubtree(accounts, c.bkey))];
   }
 

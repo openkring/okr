@@ -4,12 +4,12 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { InvitationModel, InvitationModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 import { ModelSelectService } from '@bk2/shared-feature';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
 
 import { InvitationForm } from '@bk2/relationship-invitation-ui';
+import { InvitationStore } from './invitation.store';
 
 
 @Component({
@@ -20,6 +20,7 @@ import { InvitationForm } from '@bk2/relationship-invitation-ui';
     Header, ChangeConfirmation, InvitationForm, CommentsAccordion, 
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
+  providers: [InvitationStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -58,6 +59,7 @@ import { InvitationForm } from '@bk2/relationship-invitation-ui';
 export class InvitationEditModal {
   private readonly modalController = inject(ModalController);
   private readonly modelSelectService = inject(ModelSelectService);
+  protected readonly store = inject(InvitationStore);
 
   // inputs
   public invitation = input.required<InvitationModel>();
@@ -75,7 +77,7 @@ export class InvitationEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('invitation', this.invitation()?.bkey, this.readOnly()));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.invitation()?.bkey));
   protected readonly parentKey = computed(() => `${InvitationModelName}.${this.invitationKey()}`);
   protected readonly invitationKey = computed(() => this.invitation().bkey ?? '');
 
@@ -101,7 +103,7 @@ export class InvitationEditModal {
   }
 
   protected async select(object: string): Promise<void> {
-    const avatar = await this.modelSelectService.selectPersonAvatar();
+    const avatar = await this.store.selectPerson();
     if (!avatar) return;
     const invitation = this.formData();
     if (!invitation) return;

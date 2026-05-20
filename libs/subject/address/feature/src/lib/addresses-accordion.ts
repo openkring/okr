@@ -117,7 +117,7 @@ export class AddressesAccordion {
     as_iban_generate: PFX + 'actionsheet.iban.generate',
     as_web_open: PFX + 'actionsheet.web.open',
     as_web_copy: PFX + 'actionsheet.web.copy',
-    as_subject_edit: PFX + 'actionsheet.subject_edit',
+    as_subject_edit: PFX + 'actionsheet.subject.edit',
     as_hide: PFX + 'actionsheet.hide',
     cancel: '@cancel'
   });

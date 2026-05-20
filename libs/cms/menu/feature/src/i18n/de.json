@@ -1,24 +1,21 @@
 {
-    "items": "Menüpunkte",
+    "menus": "Menüpunkte",
+    "submenus": "Sub-Menüs",
     "description": "Menu-Einträge verweisen auf interne (Navigation) oder externe (Browse) Webseiten.",
     "empty": "Es sind noch keine Menüpunkte erstellt worden. Erstelle einen mit Klicken des + Buttons.",
     "name": "Name",
     "link": "URL oder Menüs",
     "action": "Aktion",
-    "actionsheet": {
-      "title": "Wähle eine Aktion",
-      "edit": "Menü bearbeiten",
-      "delete": "Menü löschen"
+    "edit": "Menü bearbeiten",
+    "view": "Menü Details anzeigen",
+    "create": "Neues Menu erstellen",
+    "delete": "Menü löschen",
+    "add": {
+      "submenu": "Sub-Menü hinzufügen"
     },
-    "form": {
-      "menuItems": {
-        "title": "Sub-Menüs",
-        "add": "Sub-Menü hinzufügen"
-      },
-      "url": {
-        "placeholder": "https://...",
-        "helper": "URL des Menüpunkts"
-      }
+    "url": {
+      "placeholder": "https://...",
+      "helper": "URL des Menüpunkts"
     },
     "menu": {
       "main": {
@@ -186,7 +183,7 @@
     },
     "content": {
       "section": {
-        "plural": ""
+        "plural": "Sektionen"
       }
     }
 }

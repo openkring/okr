@@ -4,10 +4,9 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { IconModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { ENV } from '@bk2/shared-config';
 
 import { IconEditForm } from '@bk2/icon-ui';
+import { IconStore } from './icon.store';
 
 @Component({
   selector: 'bk-icon-edit-modal',
@@ -16,6 +15,7 @@ import { IconEditForm } from '@bk2/icon-ui';
     Header, ChangeConfirmation, IconEditForm,
     IonContent
   ],
+  providers: [IconStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -29,7 +29,7 @@ import { IconEditForm } from '@bk2/icon-ui';
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
             [allTags]="tags()"
-            [tenants]="env.tenantId"
+            [tenants]="tenantId()"
             [readOnly]="isReadOnly()"
             [showForm]="showForm()"
             (dirty)="formDirty.set($event)"
@@ -42,7 +42,7 @@ import { IconEditForm } from '@bk2/icon-ui';
 })
 export class IconEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly env = inject(ENV);
+  protected readonly store = inject(IconStore);
 
   // inputs
   public icon = input.required<IconModel>();
@@ -58,7 +58,8 @@ export class IconEditModal {
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => safeStructuredClone(this.icon()));
 
-  protected readonly headerTitle = computed(() => getTitleLabel('icon', this.icon()?.bkey, this.isReadOnly()));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.icon()?.bkey));
+  protected tenantId = computed(() => this.store.tenantId());
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

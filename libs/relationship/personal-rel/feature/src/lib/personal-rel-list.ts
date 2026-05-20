@@ -1,3 +1,4 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { PersonalRelModel, RoleName } from '@bk2/shared-models';
@@ -15,7 +16,7 @@ import { PersonalRelStore } from './personal-rel.store';
   selector: 'bk-personal-rel-list',
   standalone: true,
   imports: [
-    SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
+    SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe, AsyncPipe,
     ListFilter, EmptyList, Spinner,
     Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
@@ -27,7 +28,7 @@ import { PersonalRelStore } from './personal-rel.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedPersonalRelsCount()}}/{{personalRelsCount()}} {{ personalRelStore.i18n.list_title() }}</ion-title>
+        <ion-title>{{ selectedPersonalRelsCount()}}/{{personalRelsCount()}} {{ store.i18n.title() }}</ion-title>
         <ion-buttons slot="end">
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
@@ -57,9 +58,9 @@ import { PersonalRelStore } from './personal-rel.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ personalRelStore.i18n.list_header_person1() }}</strong></ion-label>
-        <ion-label><strong>{{ personalRelStore.i18n.list_header_type() }}</strong></ion-label>
-        <ion-label><strong>{{ personalRelStore.i18n.list_header_person2() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.person1() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.type() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.person2() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -107,7 +108,7 @@ import { PersonalRelStore } from './personal-rel.store';
     `
 })
 export class PersonalRelList {
-  protected personalRelStore = inject(PersonalRelStore);
+  protected store = inject(PersonalRelStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -115,42 +116,42 @@ export class PersonalRelList {
   public contextMenuName = input.required<string>();
 
   // filter
-  protected searchTerm = linkedSignal(() => this.personalRelStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.personalRelStore.selectedTag());
-  protected selectedType = linkedSignal(() => this.personalRelStore.selectedPersonalRelType());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedType = linkedSignal(() => this.store.selectedPersonalRelType());
 
   // derived values
-  protected filteredPersonalRels = computed(() => this.personalRelStore.filteredPersonalRels());
-  protected allPersonalRels = computed(() => this.personalRelStore.allPersonalRels());
-  protected personalRelsCount = computed(() => this.personalRelStore.allPersonalRels()?.length ?? 0);
+  protected filteredPersonalRels = computed(() => this.store.filteredPersonalRels());
+  protected allPersonalRels = computed(() => this.store.allPersonalRels());
+  protected personalRelsCount = computed(() => this.store.allPersonalRels()?.length ?? 0);
   protected selectedPersonalRelsCount = computed(() => this.filteredPersonalRels()?.length ?? 0);
-  protected isLoading = computed(() => this.personalRelStore.isLoading());
-  protected tags = computed(() => this.personalRelStore.getTags());
-  protected types = computed(() => this.personalRelStore.appStore.getCategory('personalrel_type'));
-  protected currentUser = computed(() => this.personalRelStore.appStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.store.appStore.getCategory('personalrel_type'));
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.personalRelStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.personalRelStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.personalRelStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.personalRelStore.setSelectedPersonalRelType(type);
+    this.store.setSelectedPersonalRelType(type);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.personalRelStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.personalRelStore.export("raw"); break;
+      case 'add': await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `PersonalRelList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -161,7 +162,7 @@ export class PersonalRelList {
    * @param personalRel 
    */
   protected async showActions(personalRel: PersonalRelModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, personalRel);
     await this.executeActions(actionSheetOptions, personalRel);
   }
@@ -172,15 +173,15 @@ export class PersonalRelList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, personalRel: PersonalRelModel): void {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('relationship.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('relationship.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(personalRel.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('relationship.end', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('relationship.end', this.store.i18n.as_end(), this.imgixBaseUrl, 'stop-circle'));
       }
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('relationship.view', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    if (hasRole('admin', this.personalRelStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('relationship.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('relationship.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    if (hasRole('admin', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('relationship.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -201,16 +202,16 @@ export class PersonalRelList {
       if (data?.action) {
         switch (data.action) {
             case 'relationship.delete':
-              await this.personalRelStore.delete(personalRel, this.readOnly());
+              await this.store.delete(personalRel, this.readOnly());
               break;
             case 'relationship.edit':
-              await this.personalRelStore.edit(personalRel, this.readOnly());
+              await this.store.edit(personalRel, this.readOnly());
               break;
             case 'relationship.view':
-              await this.personalRelStore.edit(personalRel, true);
+              await this.store.edit(personalRel, true);
               break;
             case 'relationship.end':
-              await this.personalRelStore.end(personalRel, this.readOnly());
+              await this.store.end(personalRel, this.readOnly());
               break;
           }
         }
@@ -219,7 +220,7 @@ export class PersonalRelList {
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.personalRelStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected isOngoing(personalRel: PersonalRelModel): boolean {

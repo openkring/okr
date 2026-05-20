@@ -9,8 +9,8 @@ import { getYearList, hasRole } from '@bk2/shared-util-core';
 import { Menu } from '@bk2/cms-menu-feature';
 import { AvatarDisplay } from '@bk2/avatar-ui';
 
-import { InvitationStore } from './invitation.store';
 import { createPersonAvatar } from '@bk2/relationship-invitation-util';
+import { InvitationStore } from './invitation.store';
 
 @Component({
   selector: 'bk-invitation-list',
@@ -27,7 +27,7 @@ import { createPersonAvatar } from '@bk2/relationship-invitation-util';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedInvitationsCount()}}/{{invitationsCount()}} {{ invitationStore.i18n.plural() }}</ion-title>
+      <ion-title>{{ selectedInvitationsCount()}}/{{invitationsCount()}} {{ store.i18n.invitations() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
@@ -55,11 +55,11 @@ import { createPersonAvatar } from '@bk2/relationship-invitation-util';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ invitationStore.i18n.list_header_date() }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ invitationStore.i18n.list_header_name() }}</strong></ion-label>
-        <ion-label><strong>{{ invitationStore.i18n.list_header_invitee() }}</strong></ion-label>
-        <ion-label class="ion-hide-lg-down"><strong>{{ invitationStore.i18n.list_header_inviter() }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ invitationStore.i18n.list_header_state() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.date() }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.name() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.invitee() }}</strong></ion-label>
+        <ion-label class="ion-hide-lg-down"><strong>{{ store.i18n.inviter() }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.state() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -85,7 +85,7 @@ import { createPersonAvatar } from '@bk2/relationship-invitation-util';
     `
 })
 export class InvitationList {
-  protected readonly invitationStore = inject(InvitationStore);
+  protected readonly store = inject(InvitationStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -94,55 +94,54 @@ export class InvitationList {
  // public showOnlyCurrent = input<boolean>(true);
 
   // filters
-  protected searchTerm = linkedSignal(() => this.invitationStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.invitationStore.selectedTag());
-  protected selectedState = linkedSignal(() => this.invitationStore.selectedState());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedState = linkedSignal(() => this.store.selectedState());
   
   // data
-  protected filteredInvitations = computed(() => this.invitationStore.filteredInvitations() ?? []);
-  protected invitationsCount = computed(() => this.invitationStore.invitationsCount());
+  protected filteredInvitations = computed(() => this.store.filteredInvitations() ?? []);
+  protected invitationsCount = computed(() => this.store.invitationsCount());
   protected selectedInvitationsCount = computed(() => this.filteredInvitations().length);
-  protected isLoading = computed(() => this.invitationStore.isLoading());
-  protected tags = computed(() => this.invitationStore.getTags());
-  protected states = computed(() => this.invitationStore.appStore.getCategory('invitation_state'));
-  protected currentUser = computed(() => this.invitationStore.appStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  protected states = computed(() => this.store.appStore.getCategory('invitation_state'));
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected years = getYearList();
-  private imgixBaseUrl = this.invitationStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
-      console.log(`InvitationList: setting scope for listId=${this.listId()}`);  
       if (this.listId() === 'my') {
-        this.invitationStore.setScope('', this.currentUser()?.personKey ?? '', true);
+        this.store.setScope('', this.currentUser()?.personKey ?? '', true);
       } else if (this.listId() === 'all') {
-        this.invitationStore.setScope('', '', true);
+        this.store.setScope('', '', true);
       } else { // explicit calevent key given
-        this.invitationStore.setScope(this.listId(), '', true);
+        this.store.setScope(this.listId(), '', true);
       }
     })
   }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.invitationStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.invitationStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onStateSelected(state: string): void {
-    this.invitationStore.setSelectedState(state);
+    this.store.setSelectedState(state);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'exportRaw': await this.invitationStore.export("raw"); break;
-      default: error(undefined, `InvitationList.call: unknown method ${selectedMethod}`);
+      case 'exportRaw': await this.store.export("raw"); break;
+      default: error(undefined, `InvitationList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 
@@ -152,7 +151,7 @@ export class InvitationList {
    * @param invitation 
    */
   protected async showActions(invitation: InvitationModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions);
     await this.executeActions(actionSheetOptions, invitation);
   }
@@ -167,12 +166,12 @@ export class InvitationList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invitation.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    if (hasRole('admin', this.invitationStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invitation.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    if (hasRole('admin', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
   }
 
@@ -189,13 +188,13 @@ export class InvitationList {
       if (!data) return;
       switch (data.action) {
         case 'invitation.delete':
-          await this.invitationStore.delete(invitation, this.readOnly());
+          await this.store.delete(invitation, this.readOnly());
           break;
         case 'invitation.edit':
-          await this.invitationStore.edit(invitation, this.readOnly());
+          await this.store.edit(invitation, this.readOnly());
           break;
         case 'invitation.view':
-          await this.invitationStore.edit(invitation, true);
+          await this.store.edit(invitation, true);
           break;
       }
     }
@@ -203,6 +202,6 @@ export class InvitationList {
 
   /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.invitationStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   } 
 }

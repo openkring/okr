@@ -1,13 +1,16 @@
 {
   "locations": "Orte",
   "description": "Ein Ort, der mittels Koordinaten genau lokalisiert werden kann.",
-  "name": "Name",
-  "locationType": "Typ",
   "empty": "Es sind noch keine Orte erfasst. Erstelle einen neuen Ort mit Klicken des + Buttons.",
   "copy": {
+    "coord": "Koordinaten kopieren",
+    "w3wcopy": "what3word kopieren",
     "conf": "Der Ort wurde kopiert."
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion"
-  }
+  "view": "Ort-Details ansehen",
+  "edit": "Ort ändern",
+  "create": "Neuen Ort erstellen",
+  "delete": "Ort löschen",
+  "show": "Ort auf der Karte anzeigen",
+  "convert": "Formate konvertieren"
 }

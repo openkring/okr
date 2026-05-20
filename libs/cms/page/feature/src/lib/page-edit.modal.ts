@@ -4,10 +4,9 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { CategoryListModel, PageModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { ENV } from '@bk2/shared-config';
 
 import { PageForm } from '@bk2/cms-page-ui';
+import { PageStore } from './page.store';
 
 @Component({
   selector: 'bk-page-edit-modal',
@@ -33,7 +32,7 @@ import { PageForm } from '@bk2/cms-page-ui';
             [types]="types()"
             [states]="states()"
             [allTags]="tags()"
-            [tenantId]="env.tenantId"
+            [tenantId]="store.tenantId()"
             [readOnly]="isReadOnly()"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
@@ -45,7 +44,7 @@ import { PageForm } from '@bk2/cms-page-ui';
 })
 export class PageEditModal {
   private modalController = inject(ModalController);
-  protected readonly env = inject(ENV);
+  protected readonly store = inject(PageStore);
 
   // inputs
   public page = input.required<PageModel>();
@@ -65,7 +64,7 @@ export class PageEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('content.page', this.page()?.bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.page()?.bkey));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

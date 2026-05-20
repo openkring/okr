@@ -8,7 +8,7 @@ import { hasRole } from '@bk2/shared-util-core';
 
 import { Menu } from '@bk2/cms-menu-feature';
 
-import { LocationListStore } from './location-list.store';
+import { LocationStore } from './location.store';
 
 @Component({
   selector: 'bk-location-all-list',
@@ -20,13 +20,13 @@ import { LocationListStore } from './location-list.store';
     IonTitle, IonMenuButton, IonContent, IonItem, IonBackdrop,
     IonGrid, IonRow, IonCol, IonList, IonPopover
   ],
-  providers: [LocationListStore],
+  providers: [LocationStore],
   template: `
   <ion-header>
       <!-- title and context menu -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedLocationsCount()}}/{{locationsCount()}} {{ store.i18n.plural() }}</ion-title>
+      <ion-title>{{ selectedLocationsCount()}}/{{locationsCount()}} {{ store.i18n.locations() }}</ion-title>
       @if(hasRole('privileged') || hasRole('admin')) {
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
@@ -63,10 +63,10 @@ import { LocationListStore } from './location-list.store';
         <ion-grid>
           <ion-row>
             <ion-col size="8">
-              <ion-label><strong>{{ store.i18n.header_name() }}</strong></ion-label>  
+              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>  
             </ion-col>
             <ion-col size="4">
-                <ion-label><strong>{{ store.i18n.header_type() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.type() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -97,7 +97,7 @@ import { LocationListStore } from './location-list.store';
   `
 })
 export class LocationList {
-  protected store = inject(LocationListStore);
+  protected store = inject(LocationStore);
   private actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);
 
@@ -153,7 +153,7 @@ export class LocationList {
    * @param location 
    */
   protected async showActions(location: LocationModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, location);
     await this.executeActions(actionSheetOptions, location);
   }
@@ -164,17 +164,18 @@ export class LocationList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, location: LocationModel): void {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('location.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('location.convert', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('location.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('location.convert', this.store.i18n.convert(), this.imgixBaseUrl, 'edit'));
     } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('location.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('location.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('location.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('location.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('location.showOnMap', this.imgixBaseUrl, 'location'));
-    actionSheetOptions.buttons.push(createActionSheetButton('location.copy', this.imgixBaseUrl, 'copy'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('location.showOnMap', this.store.i18n.show(), this.imgixBaseUrl, 'location'));
+    actionSheetOptions.buttons.push(createActionSheetButton('location.copy_coord', this.store.i18n.copy_coord(), this.imgixBaseUrl, 'copy'));
+    actionSheetOptions.buttons.push(createActionSheetButton('location.copy_w3w', this.store.i18n.copy_w3w(), this.imgixBaseUrl, 'copy'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -204,8 +205,11 @@ export class LocationList {
         case 'location.convert': 
           await this.store.convert(location);
           break;
-        case 'location.copy':
-          await this.store.copy(location);
+        case 'location.copy_coord':
+          await this.store.copy(location, false);
+          break;        
+        case 'location.copy_w3w':
+          await this.store.copy(location, true);
           break;
       }
     }

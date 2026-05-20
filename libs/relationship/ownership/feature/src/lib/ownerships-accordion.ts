@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList } from '@bk2/shared-ui';
@@ -15,7 +13,7 @@ import { OwnershipStore } from './ownership.store';
   selector: 'bk-ownerships-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, DurationPipe, SvgIconPipe, EmptyList,
+    DurationPipe, SvgIconPipe, EmptyList,
     IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon, IonAvatar, IonImg
   ],
   providers: [OwnershipStore],
@@ -25,7 +23,7 @@ import { OwnershipStore } from './ownership.store';
   template: `
     <ion-accordion toggle-icon-slot="start" value="ownerships">
       <ion-item slot="header" [color]="color()">
-        <ion-label>{{ title() | translate | async }}</ion-label>
+        <ion-label>{{ title() }}</ion-label>
         @if(!readOnly()) {
           <ion-button fill="clear" (click)="add()" size="default">
             <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -53,7 +51,7 @@ import { OwnershipStore } from './ownership.store';
     `
 })
 export class OwnershipAccordion {
-  private readonly ownershipStore = inject(OwnershipStore);
+  private readonly store = inject(OwnershipStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -61,18 +59,18 @@ export class OwnershipAccordion {
   public readonly ownerModelType = input<'person' | 'org'>('person');
   public readonly defaultResource = input<ResourceModel>();
   public readonly color = input('light');
-  public readonly title = input('@ownership.plural');
+  public readonly title = input(this.store.i18n.ownerships);
   public readonly readOnly = input(true);
 
   // derived fields
-  protected ownerships = computed(() => this.ownershipStore.ownerships());
-  private readonly currentUser = computed(() => this.ownershipStore.currentUser());
-  protected readonly resourceTypes = this.ownershipStore.appStore.getCategory('resource_type');
+  protected ownerships = computed(() => this.store.ownerships());
+  private readonly currentUser = computed(() => this.store.currentUser());
+  protected readonly resourceTypes = this.store.appStore.getCategory('resource_type');
 
-  private imgixBaseUrl = this.ownershipStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.ownershipStore.setOwner(this.owner().bkey, this.ownerModelType()));
+    effect(() => this.store.setOwner(this.owner().bkey, this.ownerModelType()));
   }
 
   /******************************* getters *************************************** */
@@ -85,7 +83,7 @@ export class OwnershipAccordion {
   protected async add(): Promise<void> {
     const resource = this.defaultResource();
     if (resource) {
-      await this.ownershipStore.add(this.owner(), this.ownerModelType(), resource, this.readOnly());
+      await this.store.add(this.owner(), this.ownerModelType(), resource, this.readOnly());
     }
   }
 
@@ -95,7 +93,7 @@ export class OwnershipAccordion {
    * @param ownership 
    */
   protected async showActions(ownership: OwnershipModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, ownership);
     await this.executeActions(actionSheetOptions, ownership);
   }
@@ -105,17 +103,17 @@ export class OwnershipAccordion {
    * @param ownership 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(ownership.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.store.i18n.as_end(), this.imgixBaseUrl, 'stop-circle'));
       }
     }
     if (hasRole('admin', this.currentUser()) && !this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -131,16 +129,16 @@ export class OwnershipAccordion {
       if (!data) return;
       switch (data.action) {
         case 'ownership.delete':
-          await this.ownershipStore.delete(ownership, this.readOnly());
+          await this.store.delete(ownership, this.readOnly());
           break;
         case 'ownership.edit':
-          await this.ownershipStore.edit(ownership, this.readOnly());
+          await this.store.edit(ownership, this.readOnly());
           break;
         case 'ownership.view':
-          await this.ownershipStore.edit(ownership, true);
+          await this.store.edit(ownership, true);
           break;
         case 'ownership.end':
-          await this.ownershipStore.end(ownership, this.readOnly());
+          await this.store.end(ownership, this.readOnly());
           break;
       }
     }
@@ -148,7 +146,7 @@ export class OwnershipAccordion {
 
   /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.ownershipStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected getIcon(resourceType: string): string {

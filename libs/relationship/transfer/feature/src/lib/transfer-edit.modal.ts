@@ -4,11 +4,10 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { CategoryListModel, RoleName, TransferModel, TransferModelName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { TransferForm } from '@bk2/relationship-transfer-ui';
-import { ModelSelectService } from '@bk2/shared-feature';
+import { TransferStore } from './transfer.store';
 
 
 @Component({
@@ -19,6 +18,7 @@ import { ModelSelectService } from '@bk2/shared-feature';
     Header, ChangeConfirmation, TransferForm, CommentsAccordion, 
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
+  providers: [TransferStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -59,7 +59,7 @@ import { ModelSelectService } from '@bk2/shared-feature';
 })
 export class TransferEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly modelSelectService = inject(ModelSelectService);
+  protected readonly store = inject(TransferStore);
 
   // inputs
   public transfer = input.required<TransferModel>();
@@ -78,7 +78,7 @@ export class TransferEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('transfer', this.transfer()?.bkey, this.readOnly()));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.transfer()?.bkey));
   protected readonly parentKey = computed(() => `${TransferModelName}.${this.transferKey()}`);
   protected readonly transferKey = computed(() => this.transfer().bkey ?? '');  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
@@ -104,7 +104,7 @@ export class TransferEditModal {
   }
 
   protected async selectSubject(): Promise<void> {
-    const avatar = await this.modelSelectService.selectPersonAvatar();
+    const avatar = await this.store.selectPersonAvatar();
     const formData = this.formData();
     if (avatar && formData) {
       const subjects = formData.subjects;
@@ -118,7 +118,7 @@ export class TransferEditModal {
   }
 
   protected async selectObject(): Promise<void> {
-    const avatar = await this.modelSelectService.selectPersonAvatar();
+    const avatar = await this.store.selectPersonAvatar();
     const formData = this.formData();
     if (avatar && formData) {
       const objects = formData.objects;
@@ -132,7 +132,7 @@ export class TransferEditModal {
   }
 
   protected async selectResource(): Promise<void> {
-    const resource = await this.modelSelectService.selectResourceAvatar();
+    const resource = await this.store.selectResourceAvatar();
     if (resource) {
       this.formData.update((vm: TransferModel | undefined) => {
         if (!vm) return vm;

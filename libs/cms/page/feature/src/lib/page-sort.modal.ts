@@ -5,6 +5,8 @@ import { SectionModel } from '@bk2/shared-models';
 import { Header, Spinner } from '@bk2/shared-ui';
 import { arrayMove } from '@bk2/shared-util-core';
 
+import { PageStore } from './page.store';
+
 /**
  * Modal to sort the sections of a page.
  */
@@ -16,7 +18,7 @@ import { arrayMove } from '@bk2/shared-util-core';
     IonContent, IonReorderGroup, IonReorder, IonItem
   ],
   template: `
-    <bk-header title="@content.page.operation.sort.label" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
+    <bk-header [title]="store.i18n.sort_label()" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
     <ion-content>
       @if (sections(); as sections) {
         <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -36,6 +38,7 @@ import { arrayMove } from '@bk2/shared-util-core';
 })
 export class PageSortModal {
   private readonly modalController = inject(ModalController);
+  protected readonly store = inject(PageStore);
 
   // inputs
   public sections = input.required<SectionModel[]>();

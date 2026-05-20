@@ -22,6 +22,7 @@ import { PageStore } from './page.store';
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonPopover
   ],
+  providers: [PageStore, SectionStore],
   styles: [`
     :host {
       display: flex;
@@ -128,7 +129,7 @@ import { PageStore } from './page.store';
       <ion-header>
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-          <ion-title>{{ pageStore.page()?.name }}</ion-title>
+          <ion-title>{{ store.page()?.name }}</ion-title>
           @if(isEditable()) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -152,12 +153,12 @@ import { PageStore } from './page.store';
       @if(isEditable()) {
         @if(isEmptyPage()) {
           <ion-item lines="none">
-            <ion-label class="ion-text-wrap">{{ pageStore.i18n.section_error_empty() }}</ion-label>
+            <ion-label class="ion-text-wrap">{{ store.i18n.empty() }}</ion-label>
           </ion-item>
           <ion-item lines="none">
             <ion-button (click)="this.addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
-              {{ pageStore.i18n.section_add_label() }}
+              {{ store.i18n.add_label() }}
             </ion-button>
           </ion-item>
         } @else {     <!-- page contains sections -->
@@ -172,10 +173,10 @@ import { PageStore } from './page.store';
                   >
                     @if(editMode()) {
                       <div class="section-wrapper editable state-{{ section.state }}">
-                        <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
+                        <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                       </div>  
                     } @else {
-                      <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
+                      <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                     }
                   </ion-col>
                 }
@@ -186,13 +187,13 @@ import { PageStore } from './page.store';
       } @else { <!-- not contentAdmin; also: not logged-in for public content -->
         @if(isEmptyPage()) {
           <ion-item lines="none">
-            <ion-label class="ion-text-wrap">{{ pageStore.i18n.section_error_empty_readonly() }}</ion-label>
+            <ion-label class="ion-text-wrap">{{ store.i18n.empty_readonly() }}</ion-label>
           </ion-item>
         } @else {
           <div class="print-content" #printContent>
             @for(section of visibleSections(); track section.bkey) {
               <div [id]="section.bkey">
-                <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
+                <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
               </div>
             }
           </div>
@@ -202,7 +203,7 @@ import { PageStore } from './page.store';
   `
 })
 export class ContentPage {
-  protected pageStore = inject(PageStore);
+  protected store = inject(PageStore);
   private sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
@@ -220,12 +221,12 @@ export class ContentPage {
   protected isEditable = computed(() => this.hasRole('contentAdmin') || this.groupAdmin());
 
   // derived signals
-  protected tenantId = computed(() => this.pageStore.tenantId());
-  protected showDebugInfo = computed(() => this.pageStore.showDebugInfo());
-  protected popupId = computed(() => 'c_contentpage_' + this.pageStore.page()?.bkey);
+  protected tenantId = computed(() => this.store.tenantId());
+  protected showDebugInfo = computed(() => this.store.showDebugInfo());
+  protected popupId = computed(() => 'c_contentpage_' + this.store.page()?.bkey);
   protected editMode = signal(false);
-  protected page = computed(() => this.pageStore.page());
-  protected sections = computed(() => this.pageStore.pageSections());
+  protected page = computed(() => this.store.page());
+  protected sections = computed(() => this.store.pageSections());
   protected isEmptyPage = computed(() => this.sections().length === 0);
 
   /**
@@ -271,13 +272,13 @@ export class ContentPage {
 
   constructor() {
     effect(() => {
-      const meta = this.pageStore.meta();
+      const meta = this.store.meta();
       if (meta) {
         this.meta.addTags(meta);
       }
     });
     effect(() => {
-      const title = this.pageStore.page()?.title;
+      const title = this.store.page()?.title;
       if (title && title.length > 0) {
         this.title.setTitle(title);
       }
@@ -307,16 +308,16 @@ export class ContentPage {
     switch(selectedMethod) {
       case 'toggleEditMode':  this.toggleEditMode(); break;
       case 'editPage': 
-        const page = this.pageStore.page();
+        const page = this.store.page();
         if (page) {
-          await this.pageStore.edit(page, false);
+          await this.store.edit(page, false);
         }
         break;
-      case 'sortSections':  await this.pageStore.sortSections(); break;
-      case 'selectSection': await this.pageStore.selectSection(); break;
+      case 'sortSections':  await this.store.sortSections(); break;
+      case 'selectSection': await this.store.selectSection(); break;
       case 'addSection':    await this.addSection(); break;
-      case 'exportRaw': await this.pageStore.export("raw"); break;
-      case 'print': await this.pageStore.print(); break;
+      case 'exportRaw': await this.store.export("raw"); break;
+      case 'print': await this.store.print(); break;
       default: error(undefined, `ContentPage.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -324,7 +325,7 @@ export class ContentPage {
   protected async addSection(): Promise<void> {
     const sectionId = await this.sectionStore.add(false);
     if (sectionId) {
-      this.pageStore.addSectionById(sectionId);
+      this.store.addSectionById(sectionId);
     }
   }
 
@@ -335,7 +336,7 @@ export class ContentPage {
    */
   protected async showActions(section: SectionModel): Promise<void> {
     if (this.editMode()) {
-      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
       this.addActionSheetButtons(actionSheetOptions, section.type);
       await this.executeActions(actionSheetOptions, section);
     }
@@ -346,16 +347,16 @@ export class ContentPage {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, sectionType: string): void {
     if (this.isEditable()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.store.i18n.section_edit(), this.store.imgixBaseUrl(), 'edit'));
       if (sectionType === 'article') {
-        actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
-        actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.pageStore.imgixBaseUrl(), 'send'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.store.i18n.upload_image(), this.store.imgixBaseUrl(), 'upload'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.store.i18n.section_send(), this.store.imgixBaseUrl(), 'send'));
       }
       if (sectionType === 'button') {
-        actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.pageStore.imgixBaseUrl(), 'upload'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.store.i18n.upload_file(), this.store.imgixBaseUrl(), 'upload'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.pageStore.imgixBaseUrl(), 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.store.i18n.section_remove(), this.store.imgixBaseUrl(), 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.store.imgixBaseUrl(), 'cancel'));
     }
   }
 
@@ -371,7 +372,7 @@ export class ContentPage {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'page.removesection':    await this.pageStore.removeSectionById(section.bkey);             break;
+        case 'page.removesection':    await this.store.removeSectionById(section.bkey);             break;
         case 'section.edit':          await this.sectionStore.edit(section, false);                     break;
         case 'section.send':          await this.sectionStore.send(section);                            break;
         case 'section.image.upload':  await this.sectionStore.uploadImage(section as ArticleSection);   break;
@@ -381,7 +382,7 @@ export class ContentPage {
   }
 
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.pageStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   /**
@@ -399,7 +400,7 @@ export class ContentPage {
       .map(item => item.key)
       .filter(id => id !== undefined) as string[];
     
-    const nestedSections = this.pageStore.pageSections().filter(s => sectionIds.includes(s.bkey));
+    const nestedSections = this.store.pageSections().filter(s => sectionIds.includes(s.bkey));
     
     // ContentAdmin and group admins see all nested sections
     if (this.isEditable()) return nestedSections;

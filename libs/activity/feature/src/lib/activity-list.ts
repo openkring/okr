@@ -1,21 +1,18 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { IonContent, IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ActivityModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
 import { ActivityStore } from './activity.store';
-import { PFX } from './scope';
 
 @Component({
   selector: 'bk-activity-list',
   standalone: true,
   imports: [
-    AsyncPipe, TranslatePipe, SvgIconPipe,
+    SvgIconPipe,
     EmptyList, ListFilter, Spinner,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton, IonIcon,
     IonContent, IonItem, IonLabel, IonList,
@@ -31,7 +28,7 @@ import { PFX } from './scope';
     <ion-header>
       <ion-toolbar color="primary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ pfx + 'list.title' | translate | async }}</ion-title>
+        <ion-title>{{ store.i18n.title() }}</ion-title>
       </ion-toolbar>
       <bk-list-filter
         (searchTermChanged)="store.setSearchTerm($event)"
@@ -42,7 +39,7 @@ import { PFX } from './scope';
       @if(store.isLoading()) {
         <bk-spinner />
       } @else if(store.activities().length === 0) {
-        <bk-empty-list message="{{pfx + 'list.nodata' | translate | async}}" />
+        <bk-empty-list message="{{ store.i18n.empty() }}" />
       } @else {
         <ion-list lines="inset">
           @for(activity of store.activities(); track activity.bkey) {
@@ -65,9 +62,7 @@ export class ActivityList {
   // inputs
   // no contextmenu nor listId needed
 
-  protected readonly currentUser = computed(() => this.store.currentUser());
-  protected pfx = PFX;
-
+  // methods
   protected formatTimestamp(ts: string): string {
     if (!ts || ts.length !== 14) return ts;
     return convertDateFormatToString(ts, DateFormat.StoreDateTime, DateFormat.ViewDateTime, false);

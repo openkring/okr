@@ -11,6 +11,7 @@ import { debugMessage, die } from '@bk2/shared-util-core';
 import { getImageMetaData, listAllFilesFromDirectory } from '@bk2/cms-section-util';
 
 import { HttpClient } from '@angular/common/http';
+import { PFX } from './scope';
 
 export interface AlbumState {
   config: AlbumConfig;
@@ -32,7 +33,8 @@ export const AlbumStore = signalStore(
     modalController: inject(ModalController),
     httpClient: inject(HttpClient),
     i18n: inject(I18nService).translateAll({
-      no_images: '@content.section.error.noImages',
+      no_images: PFX + 'noImages',
+      zoomed: PFX + 'album.zoomed'
     }),
   })),
 

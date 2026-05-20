@@ -15,7 +15,7 @@ import { navigateByUrl } from '@bk2/shared-util-angular';
         <ion-row>
             <ion-col size="3">
                 <ion-button expand="block" fill="clear" (click)="openMoreUrl()">
-                    Mehr...
+                    {{ label() }}
                 </ion-button>
             </ion-col>
         </ion-row>
@@ -27,6 +27,7 @@ export class MoreButton {
   
   // inputs
   public url = input.required<string>();
+  public label = input.required<string>();
 
   protected openMoreUrl(): void {
     navigateByUrl(this.router, this.url());

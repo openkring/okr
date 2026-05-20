@@ -23,7 +23,7 @@ import { MenuStore } from './menu.store';
       <!-- page header -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
-        <ion-title>{{ selectedMenuItemsCount() }}/{{ menuItemsCount() }} {{ menuStore.i18n.items() }}</ion-title>
+        <ion-title>{{ selectedMenuItemsCount() }}/{{ menuItemsCount() }} {{ menuStore.i18n.menus() }}</ion-title>
         <ion-buttons slot="end">
           @if(hasRole('privileged') || !readOnly()) {
             <ion-button (click)="add()">
@@ -36,7 +36,7 @@ import { MenuStore } from './menu.store';
       <!-- description -->
       <ion-toolbar class="ion-hide-md-down">
         <ion-item lines="none">
-          <ion-label>{{ menuStore.i18n.list_description() }}</ion-label>
+          <ion-label>{{ menuStore.i18n.description() }}</ion-label>
         </ion-item>
       </ion-toolbar>
 
@@ -52,13 +52,13 @@ import { MenuStore } from './menu.store';
           <ion-grid>
             <ion-row>
               <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ menuStore.i18n.list_name() }}</strong></ion-label>
+                <ion-label><strong>{{ menuStore.i18n.name() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4" class="ion-hide-md-down">
-                  <ion-label><strong>{{ menuStore.i18n.list_link() }}</strong></ion-label>
+                  <ion-label><strong>{{ menuStore.i18n.link() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4">
-                  <ion-label><strong>{{ menuStore.i18n.list_action() }}</strong></ion-label>
+                  <ion-label><strong>{{ menuStore.i18n.action() }}</strong></ion-label>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -114,8 +114,8 @@ export class MenuList {
   protected async showActions(menuItem: MenuItemModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions(this.menuStore.i18n.as_title());
     if (hasRole('admin', this.menuStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.menuStore.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.menuStore.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.menuStore.i18n.edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.menuStore.i18n.delete(), this.imgixBaseUrl, 'trash'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.menuStore.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, menuItem);
     } else {

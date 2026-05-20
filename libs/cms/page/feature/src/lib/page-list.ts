@@ -24,7 +24,7 @@ import { PageStore } from './page.store';
   <ion-header>
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedPagesCount()}}/{{pagesCount()}} {{ pageStore.i18n.list_plural() }}</ion-title>
+      <ion-title>{{selectedPagesCount()}}/{{pagesCount()}} {{ store.i18n.pages() }}</ion-title>
         @if(!readOnly()) {
         <ion-buttons slot="end">
           <ion-button id="c_page">
@@ -44,7 +44,7 @@ import { PageStore } from './page.store';
     <!-- description -->
     <ion-toolbar class="ion-hide-md-down">
       <ion-item lines="none">
-        <ion-label>{{ pageStore.i18n.list_field_description() }}</ion-label>
+        <ion-label>{{ store.i18n.description() }}</ion-label>
       </ion-item>
     </ion-toolbar>
 
@@ -62,13 +62,13 @@ import { PageStore } from './page.store';
         <ion-grid>
           <ion-row>
             <ion-col size="4" class="ion-hide-md-down">
-              <ion-label><strong>{{ pageStore.i18n.list_header_key() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.key() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-              <ion-label><strong>{{ pageStore.i18n.list_header_name() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ pageStore.i18n.list_header_sections() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.sections() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -80,7 +80,7 @@ import { PageStore } from './page.store';
     <bk-spinner />
   } @else {
     @if (filteredPages().length === 0) {
-      <bk-empty-list [message]="pageStore.i18n.list_field_empty()" />
+      <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
         @for(page of filteredPages(); track $index) {
@@ -97,7 +97,7 @@ import { PageStore } from './page.store';
   `
 })
 export class PageList {
-  protected pageStore = inject(PageStore);
+  protected store = inject(PageStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -105,47 +105,47 @@ export class PageList {
   public contextMenuName = input.required<string>();
 
   // filters
-  protected searchTerm = linkedSignal(() => this.pageStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.pageStore.selectedTag());
-  protected selectedType = linkedSignal(() => this.pageStore.selectedType());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedType = linkedSignal(() => this.store.selectedType());
 
   // computed
-  protected filteredPages = computed(() => this.pageStore.filteredPages() || []);
-  protected pagesCount = computed(() => this.pageStore.pagesCount());
+  protected filteredPages = computed(() => this.store.filteredPages() || []);
+  protected pagesCount = computed(() => this.store.pagesCount());
   protected selectedPagesCount = computed(() => this.filteredPages().length);
-  protected isLoading = computed(() => this.pageStore.isLoading());
-  protected tags = computed(() => this.pageStore.getTags());
-  protected types = computed(() => this.pageStore.appStore.getCategory('page_type'));
-  protected states = computed(() => this.pageStore.appStore.getCategory('content_state'));
-  protected currentUser = computed(() => this.pageStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.store.appStore.getCategory('page_type'));
+  protected states = computed(() => this.store.appStore.getCategory('content_state'));
+  protected currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
 
   // passing constants to the template
-  private imgixBaseUrl = this.pageStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.pageStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.pageStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.pageStore.setSelectedType(type);
+    this.store.setSelectedType(type);
   }
 
   protected onStateSelected(state: string): void {
-    this.pageStore.setSelectedState(state);
+    this.store.setSelectedState(state);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.pageStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.pageStore.export("raw"); break;
+      case 'add':  await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `PageList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -156,7 +156,7 @@ export class PageList {
    * @param page 
    */
   protected async showActions(page: PageModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, page);
     await this.executeActions(actionSheetOptions, page);
   }
@@ -167,15 +167,15 @@ export class PageList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, page: PageModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('page.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('page.show', this.imgixBaseUrl, 'link'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.show', this.store.i18n.show(), this.imgixBaseUrl, 'link'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('page.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('page.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
     }
   }
 
@@ -192,16 +192,16 @@ export class PageList {
       if (!data) return;
       switch (data.action) {
         case 'page.delete':
-          await this.pageStore.delete(page, this.readOnly());
+          await this.store.delete(page, this.readOnly());
           break;
         case 'page.edit':
-          await this.pageStore.edit(page, this.readOnly());
+          await this.store.edit(page, this.readOnly());
           break;
         case 'page.view':
-          await this.pageStore.edit(page, true);
+          await this.store.edit(page, true);
           break;
         case 'page.show':
-          await this.pageStore.show(page, this.readOnly());
+          await this.store.show(page, this.readOnly());
           break;
       }
     }

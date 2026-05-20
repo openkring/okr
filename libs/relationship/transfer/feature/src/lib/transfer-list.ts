@@ -26,7 +26,7 @@ import { TransferStore } from './transfer.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedTransfersCount()}}/{{transfersCount()}} {{ transferStore.i18n.plural() }}</ion-title>
+      <ion-title>{{ selectedTransfersCount()}}/{{transfersCount()}} {{ store.i18n.transfers() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
@@ -56,12 +56,12 @@ import { TransferStore } from './transfer.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label class="ion-hide-md-down"><strong>{{ transferStore.i18n.list_header_date() }}</strong></ion-label>
-        <ion-label><strong>{{ transferStore.i18n.list_header_subject() }}</strong></ion-label>
-        <ion-label><strong>{{ transferStore.i18n.list_header_object() }}</strong></ion-label>
-        <ion-label><strong>{{ transferStore.i18n.list_header_resource() }}</strong></ion-label>
-        <ion-label class="ion-hide-lg-down"><strong>{{ transferStore.i18n.list_header_name() }}</strong></ion-label>
-        <ion-label class="ion-hide-lg-down"><strong>{{ transferStore.i18n.list_header_state() }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.date() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.subject() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.object() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.resource() }}</strong></ion-label>
+        <ion-label class="ion-hide-lg-down"><strong>{{ store.i18n.name() }}</strong></ion-label>
+        <ion-label class="ion-hide-lg-down"><strong>{{ store.i18n.state() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -88,7 +88,7 @@ import { TransferStore } from './transfer.store';
     `
 })
 export class TransferList {
-  protected readonly transferStore = inject(TransferStore);
+  protected readonly store = inject(TransferStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -96,53 +96,53 @@ export class TransferList {
   public contextMenuName = input.required<string>();
 
   // filters
-  protected searchTerm = linkedSignal(() => this.transferStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.transferStore.selectedTag());
-  protected selectedType = linkedSignal(() => this.transferStore.selectedType());
-  protected selectedState = linkedSignal(() => this.transferStore.selectedState());
-  protected selectedYear = linkedSignal(() => this.transferStore.selectedYear());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedType = linkedSignal(() => this.store.selectedType());
+  protected selectedState = linkedSignal(() => this.store.selectedState());
+  protected selectedYear = linkedSignal(() => this.store.selectedYear());
   
   // data
-  protected filteredTransfers = computed(() => this.transferStore.filteredTransfers() ?? []);
-  protected transfersCount = computed(() => this.transferStore.transfersCount());
+  protected filteredTransfers = computed(() => this.store.filteredTransfers() ?? []);
+  protected transfersCount = computed(() => this.store.transfersCount());
   protected selectedTransfersCount = computed(() => this.filteredTransfers().length);
-  protected isLoading = computed(() => this.transferStore.isLoading());
-  protected tags = computed(() => this.transferStore.getTags());
-  protected types = computed(() => this.transferStore.appStore.getCategory('transfer_type'));
-  protected states = computed(() => this.transferStore.appStore.getCategory('transfer_state'));
-  protected currentUser = computed(() => this.transferStore.appStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.store.appStore.getCategory('transfer_type'));
+  protected states = computed(() => this.store.appStore.getCategory('transfer_state'));
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected years = getYearList();
-  private imgixBaseUrl = this.transferStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.transferStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.transferStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.transferStore.setSelectedType(type);
+    this.store.setSelectedType(type);
   }
 
   protected onStateSelected(state: string): void {
-    this.transferStore.setSelectedState(state);
+    this.store.setSelectedState(state);
   }
 
   protected onYearSelected(year: number): void {
-    this.transferStore.setSelectedYear(year);
+    this.store.setSelectedYear(year);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.transferStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.transferStore.export("raw"); break;
+      case 'add':  await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `TransferListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -153,7 +153,7 @@ export class TransferList {
    * @param transfer 
    */
   protected async showActions(transfer: TransferModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, transfer);
     await this.executeActions(actionSheetOptions, transfer);
   }
@@ -164,12 +164,12 @@ export class TransferList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, transfer: TransferModel): void {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('transfer.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('transfer.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('transfer.view', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    if (hasRole('admin', this.transferStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('transfer.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('transfer.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    if (hasRole('admin', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('transfer.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -189,13 +189,13 @@ export class TransferList {
       if (!data) return;
       switch (data.action) {
         case 'transfer.delete':
-          await this.transferStore.delete(transfer, this.readOnly());
+          await this.store.delete(transfer, this.readOnly());
           break;
         case 'transfer.edit':
-          await this.transferStore.edit(transfer, this.readOnly());
+          await this.store.edit(transfer, this.readOnly());
           break;
         case 'transfer.view':
-          await this.transferStore.edit(transfer, true);
+          await this.store.edit(transfer, true);
           break;
       }
     }
@@ -203,6 +203,6 @@ export class TransferList {
 
   /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.transferStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   } 
 }

@@ -45,10 +45,10 @@ type ViewMode = 'accordion' | 'chart';
         <ion-card-content>
           <ion-segment [(ngModel)]="viewMode">
             <ion-segment-button value="accordion">
-              <ion-label>{{ orgchartStore.i18n.view_accordion() }}</ion-label>
+              <ion-label>{{ store.i18n.view_accordion() }}</ion-label>
             </ion-segment-button>
             <ion-segment-button value="chart">
-              <ion-label>{{ orgchartStore.i18n.view_chart() }}</ion-label>
+              <ion-label>{{ store.i18n.view_chart() }}</ion-label>
             </ion-segment-button>
           </ion-segment>
 
@@ -76,7 +76,7 @@ type ViewMode = 'accordion' | 'chart';
   `,
 })
 export class OrgchartSectionComponent {
-  private readonly orgchartStore = inject(OrgchartStore);
+  protected readonly store = inject(OrgchartStore);
   private readonly actionSheetController = inject(ActionSheetController);
 
   public section = input<OrgchartSection>();
@@ -86,10 +86,10 @@ export class OrgchartSectionComponent {
   protected readonly subTitle = computed(() => this.section()?.subTitle);
   private readonly config = computed(() => this.section()?.properties as OrgchartConfig | undefined);
   protected readonly showName = computed(() => this.config()?.showName ?? true);
-  protected readonly isLoading = computed(() => this.orgchartStore.isLoading());
-  protected readonly rootNode = computed(() => this.orgchartStore.rootNode());
-  protected readonly isAuthenticated = computed(() => this.orgchartStore.appStore.isAuthenticated());
-  protected readonly isMemberAdmin = computed(() => hasRole('memberAdmin', this.orgchartStore.appStore.currentUser()));
+  protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly rootNode = computed(() => this.store.rootNode());
+  protected readonly isAuthenticated = computed(() => this.store.appStore.isAuthenticated());
+  protected readonly isMemberAdmin = computed(() => hasRole('memberAdmin', this.store.appStore.currentUser()));
 
   protected viewMode = signal<ViewMode>('accordion');
 
@@ -97,13 +97,13 @@ export class OrgchartSectionComponent {
   private readonly orient = computed(() => this.display() === 'horizontal' ? 'LR' as const : 'TB' as const);
 
   protected readonly echartsOption = computed(() => {
-    const treeData = this.orgchartStore.treeData();
+    const treeData = this.store.treeData();
     if (!treeData) return undefined;
     return buildEchartsOption(treeData, this.orient(), this.showName(), this.avatarService);
   });
 
   private readonly avatarService = inject(AvatarService);
-  private readonly imgixBaseUrl = this.orgchartStore.appStore.env.services.imgixBaseUrl;
+  private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private chartInstance: any = null;
@@ -113,7 +113,7 @@ export class OrgchartSectionComponent {
       const config = this.config();
       if (config) {
         untracked(() => {
-          this.orgchartStore.setConfig(config.topElement, config.showName, config.display ?? 'vertical');
+          this.store.setConfig(config.topElement, config.showName, config.display ?? 'vertical');
         });
       }
     });
@@ -138,7 +138,7 @@ export class OrgchartSectionComponent {
     if (this.isMemberAdmin()) {
       void this.showActions(node);
     } else if (this.isAuthenticated()) {
-      void this.orgchartStore.viewNode(node);
+      void this.store.viewNode(node);
     }
   }
 
@@ -146,9 +146,9 @@ export class OrgchartSectionComponent {
   protected onChartNodeClick(event: any): void {
     const bkey = event?.data?.value as string | undefined;
     if (!bkey) return;
-    const root = this.orgchartStore.rootNode();
+    const root = this.store.rootNode();
     if (root?.bkey === bkey) { this.handleNodeClick(root); return; }
-    const group = this.orgchartStore.allGroups().find(g => g.bkey === bkey);
+    const group = this.store.allGroups().find(g => g.bkey === bkey);
     if (group) this.handleNodeClick({ name: group.name, bkey: group.bkey, modelType: 'group', icon: group.icon, children: [] });
   }
 
@@ -169,16 +169,16 @@ export class OrgchartSectionComponent {
     if (!data?.action) return;
     switch (data.action) {
       case 'orgchart.addNewGroup':
-        await this.orgchartStore.addNewGroup(node.bkey);
+        await this.store.addNewGroup(node.bkey);
         break;
       case 'orgchart.addExistingGroup':
-        await this.orgchartStore.addExistingGroup(node.bkey);
+        await this.store.addExistingGroup(node.bkey);
         break;
       case 'orgchart.editGroup':
-        await this.orgchartStore.editGroup(node);
+        await this.store.editGroup(node);
         break;
       case 'orgchart.removeGroup':
-        await this.orgchartStore.removeGroup(node);
+        await this.store.removeGroup(node);
         break;
     }
   }

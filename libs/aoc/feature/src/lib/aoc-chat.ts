@@ -297,7 +297,7 @@ export class AocChat {
     choose_room: PFX + 'chat.chooseroom',
     details: PFX + 'chat.details',
     id: PFX + 'chat.id',
-    name: PFX + 'chat.name',
+    name: '@name',
     created_by: PFX + 'chat.createdby',
     members: PFX + 'chat.members',
     invited: PFX + 'chat.invited',

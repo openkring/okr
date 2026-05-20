@@ -45,13 +45,20 @@ export const PersonalRelStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
+      title:                PFX + 'title',
+      person1:              PFX + 'person1',
+      type:                 PFX + 'type',
+      person2:              PFX + 'person2',
       delete_confirm:       PFX + 'delete.confirm',
+      as_title:             PFX + 'actionsheet.title',
+      as_view:              PFX + 'actionsheet.view',
+      as_edit:              PFX + 'actionsheet.edit',
+      as_end:               PFX + 'actionsheet.end',
+      as_delete:            PFX + 'actionsheet.delete',
+      as_create:            PFX + 'actionsheet.create',
       ok:                   '@ok',
       cancel:               '@cancel',
-      list_title:           '@personalRel.list.title',
-      list_header_person1:  '@personalRel.list.header.person1',
-      list_header_type:     '@personalRel.list.header.type',
-      list_header_person2:  '@personalRel.list.header.person2',
+
     }),
 
     personalRelsResource: rxResource({
@@ -201,6 +208,17 @@ export const PersonalRelStore = signalStore(
       async export(type: string): Promise<void> {
         console.log(`PersonalRelStore.export(${type}) is not yet implemented.`);
       },
+
+      getTitleLabel(readOnly: boolean, key: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
+      }
     }
   }),
 );

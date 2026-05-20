@@ -1,18 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarInfo, CalEventModel, CategoryListModel, PersonModel, PersonModelName, ReservationModel, ReservationModelName, ResourceModel, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, CalEventModel, CategoryListModel, PersonModelName, ReservationModel, ReservationModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
-import { coerceBoolean, getAvatarName, hasRole, isPerson, isResource, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
-
-import { CalEventEditModal } from '@bk2/calevent-feature';
-import { isCalEvent } from '@bk2/calevent-util';
+import { coerceBoolean, getAvatarName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { ReservationForm } from '@bk2/relationship-reservation-ui';
 import { RelationshipToolbar } from '@bk2/avatar-ui';
+import { ReservationStore } from './reservation.store';
 
 @Component({
   selector: 'bk-reservation-edit-modal',
@@ -22,6 +18,7 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
     IonContent, IonAccordionGroup, IonCard, IonCardContent
 ],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
+  providers: [ReservationStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -33,7 +30,7 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
           @if(resourceAvatar(); as resource) {
             <bk-relationship-toolbar
               relType="reservation"
-              title="@reservation.reldesc"
+              [title]="toolbarTitle()"
               [subjectAvatar]="resource"
               [subjectDefaultIcon]="subjectDefaultIcon()"
               [objectAvatar]="reserver"
@@ -80,7 +77,7 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
 })
 export class ReservationEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly appstore = inject(AppStore);
+  private readonly store = inject(ReservationStore);
 
   // inputs
   public reservation = input.required<ReservationModel>();
@@ -105,15 +102,17 @@ export class ReservationEditModal {
   protected readonly parentKey = computed(() => `${ReservationModelName}.${this.reservationKey()}`);
   
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('reservation', this.reservation()?.bkey, this.readOnly()));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.reservation()?.bkey));
+  protected readonly toolbarTitle = computed(() => this.store.i18n.reldesc1() + this.resourceName + this.store.i18n.reldesc1() + this.reserverName());
   protected readonly reservationKey = computed(() => this.reservation().bkey ?? '');
   protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.reserver);
   protected readonly reserverName = computed(() => this.reserverAvatar() ? getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay) : '');
   protected readonly resourceAvatar = computed<AvatarInfo | undefined>(() => this.reservation().resource);
-  protected readonly defaultIcon = computed(() => this.appstore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
-  protected readonly tenantId = computed(() => this.appstore.tenantId());
-  protected readonly subjectDefaultIcon = computed(() => this.appstore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
-  protected readonly objectDefaultIcon = computed(() => this.appstore.getDefaultIcon(PersonModelName));
+  protected readonly resourceName = computed(() => this.resourceAvatar()?.name2 ?? '');
+  protected readonly defaultIcon = computed(() => this.store.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
+  protected readonly tenantId = computed(() => this.store.tenantId());
+  protected readonly subjectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
+  protected readonly objectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(PersonModelName));
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -137,7 +136,7 @@ export class ReservationEditModal {
   }
 
   protected async selectReserver(): Promise<void> {
-    const person = await this.selectPersonModal();
+    const person = await this.store.selectPerson();
     if (!person) return;
 
     this.formDirty.set(true);
@@ -162,61 +161,24 @@ export class ReservationEditModal {
       };
     });
   }
-  
-  async selectPersonModal(): Promise<PersonModel | undefined> {
-    const modal = await this.modalController.create({
-      component: PersonSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: '',
-        currentUser: this.currentUser()
-      }
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm' && data) {
-      if (isPerson(data, this.tenantId())) {
-        return data;
-      }
-    }
-    return undefined;
-  }
 
   async selectCalevent(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: CalEventEditModal,
-      cssClass: 'wide-modal',
-      componentProps: {
-            calevent: this.calevent() ?? new CalEventModel(this.tenantId()),
-            currentUser: this.currentUser(),
-            types: this.appstore.getCategory('calevent_type'),
-            periodicities: this.periodicities(),
-            tags: this.appstore.getTags('calevent'),
-            tenantId: this.tenantId(),
-            locale: this.appstore.appConfig().locale,
-            readOnly: this.isReadOnly()
-      }
+    const calevent = await this.store.selectCalevent(this.readOnly(), this.periodicities(), this.calevent());
+    if (!calevent) return;
+    this.calevent.set(calevent);
+    this.formData.update((vm: ReservationModel | undefined) => {
+      if (!vm) return vm;
+      return {
+        ...vm,
+        caleventKey: calevent.bkey,
+        startDate: calevent.startDate,
+        endDate: calevent.endDate ?? calevent.startDate,
+      };
     });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm' && data) {
-      if (isCalEvent(data, this.tenantId())) {
-        this.calevent.set(data);
-        this.formData.update((vm: ReservationModel | undefined) => {
-          if (!vm) return vm;
-          return {
-            ...vm,
-            caleventKey: data.bkey,
-            startDate: data.startDate,
-            endDate: data.endDate ?? data.startDate,
-          };
-        });
-      }
-    }
   }
 
   protected async selectResource(): Promise<void> {
-    const resource = await this.selectResourceModal();
+    const resource = await this.store.selectResource();
     if (!resource) return;
     this.formData.update((vm) => {
       if (!vm) return vm;
@@ -229,24 +191,5 @@ export class ReservationEditModal {
         resourceSubType: resource.subType,
       };
     });      
-  }
-
-    async selectResourceModal(): Promise<ResourceModel | undefined> {
-    const modal = await this.modalController.create({
-      component: ResourceSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: '',
-        currentUser: this.currentUser()
-      }
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm' && data) {
-      if (isResource(data, this.tenantId())) {
-        return data;
-      }
-    }
-    return undefined;
   }
 }

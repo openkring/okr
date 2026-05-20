@@ -8,7 +8,7 @@ import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
-import { UserListStore } from './user-list.store';
+import { UserStore } from './user.store';
 
 @Component({
     selector: 'bk-user-list',
@@ -19,13 +19,13 @@ import { UserListStore } from './user-list.store';
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
       IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
-    providers: [UserListStore],
+    providers: [UserStore],
     template: `
     <ion-header>
       <!-- title and context menu -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedUsersCount()}}/{{usersCount()}} {{ userListStore.i18n.user_plural() }}</ion-title>
+        <ion-title>{{ selectedUsersCount()}}/{{usersCount()}} {{ store.i18n.users() }}</ion-title>
         @if(hasRole('privileged')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -51,8 +51,8 @@ import { UserListStore } from './user-list.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ userListStore.i18n.list_header_login_email() }}</strong></ion-label>
-        <ion-label><strong>{{ userListStore.i18n.list_header_name() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.login_email() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -63,7 +63,7 @@ import { UserListStore } from './user-list.store';
       <bk-spinner />
     } @else {
       @if(filteredUsers().length === 0) {
-        <bk-empty-list message="@user.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(user of filteredUsers(); track user.bkey) {
@@ -79,7 +79,7 @@ import { UserListStore } from './user-list.store';
     `
 })
 export class UserList {
-  protected userListStore = inject(UserListStore);
+  protected store = inject(UserStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -87,38 +87,38 @@ export class UserList {
   public contextMenuName = input.required<string>();
 
   // derived signals
-  protected searchTerm = linkedSignal(() => this.userListStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.userListStore.selectedTag());
-  protected filteredUsers = computed(() => this.userListStore.filteredUsers() ?? []);
-  protected usersCount = computed(() => this.userListStore.usersCount());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected filteredUsers = computed(() => this.store.filteredUsers() ?? []);
+  protected usersCount = computed(() => this.store.usersCount());
   protected selectedUsersCount = computed(() => this.filteredUsers().length);
-  protected isLoading = computed(() => this.userListStore.isLoading());
-  protected tags = computed(() => this.userListStore.getTags());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
   protected popupId = computed(() => `c_user_${this.listId}`);
-  protected currentUser = computed(() => this.userListStore.appStore.currentUser());
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('admin', this.currentUser()));
 
   // passing constants to the template
   protected isYearly = false;
-  private imgixBaseUrl = this.userListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.userListStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.userListStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.userListStore.add(); break;
-      case 'exportRaw': await this.userListStore.export('raw'); break;
-      case 'exportUsers': await this.userListStore.export('users'); break;
-      default: error(undefined, `UserListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
+      case 'add':  await this.store.add(); break;
+      case 'exportRaw': await this.store.export('raw'); break;
+      case 'exportUsers': await this.store.export('users'); break;
+      default: error(undefined, `UserList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 
@@ -128,7 +128,7 @@ export class UserList {
    * @param user 
    */
   protected async showActions(user: UserModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, user);
     await this.executeActions(actionSheetOptions, user);
   }
@@ -138,13 +138,13 @@ export class UserList {
    * @param user 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, user: UserModel): void {
-    if (hasRole('privileged', this.userListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    if (hasRole('privileged', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('user.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
-    if (hasRole('admin', this.userListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.imgixBaseUrl, 'trash'));
+    if (hasRole('admin', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -164,13 +164,13 @@ export class UserList {
       if (!data) return;
       switch (data.action) {
         case 'user.delete':
-          await this.userListStore.delete(user, this.readOnly());
+          await this.store.delete(user, this.readOnly());
           break;
         case 'user.edit':
-          await this.userListStore.edit(user, this.readOnly());
+          await this.store.edit(user, this.readOnly());
           break;
         case 'user.view':
-          await this.userListStore.edit(user, true);
+          await this.store.edit(user, true);
           break;
       }
     }
@@ -178,6 +178,6 @@ export class UserList {
   
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.userListStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }

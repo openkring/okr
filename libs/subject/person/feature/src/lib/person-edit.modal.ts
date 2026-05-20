@@ -5,7 +5,6 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { CategoryListModel, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { AvatarToolbar } from '@bk2/avatar-feature';
 import { CommentsAccordion } from '@bk2/comment-feature';
@@ -110,7 +109,7 @@ export class PersonEditModal {
 
   // derived signals and fields
   protected personKey = computed(() => this.person()?.bkey ?? '');
-  protected headerTitle = computed(() => getTitleLabel('subject.person', this.personKey(), this.isReadOnly()));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.personKey()));
   protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
   protected readonly parentKey = computed(() => PersonModelName + '.' + this.personKey());
   protected path = computed(() => getDocumentStoragePath(this.tenantId(), 'person', this.person()?.bkey));
@@ -150,5 +149,16 @@ export class PersonEditModal {
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  protected getTitleLabel(readOnly: boolean, key: string): string {
+    if (this.readOnly()) {
+      return this.store.i18n.view_label();
+    }
+    if (key.length > 0) {
+      return this.store.i18n.edit_label();
+    } else {
+      return this.store.i18n.create_label();
+    }
   }
 }

@@ -3,10 +3,9 @@ import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonBut
 
 import { PersonModel, RoleName, TaskModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { DateTimeSelectModal, EmptyList, ListFilter } from '@bk2/shared-ui';
+import { EmptyList, ListFilter } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, QuickEntryService } from '@bk2/shared-util-angular';
 import { convertDateFormatToString, DateFormat, getAvatarInfo, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
-import { PersonSelectModal } from '@bk2/shared-feature';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { Menu } from '@bk2/cms-menu-feature';
@@ -45,7 +44,7 @@ import { TaskStore } from './task.store';
         @if(showMenuButton()) {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
-        <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ store.i18n.task_plural() }}</ion-title>
+        <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ store.i18n.tasks() }}</ion-title>
         @if(canChange()) {
           <ion-buttons slot="end">
             <ion-button id="c-tasks">
@@ -95,7 +94,7 @@ import { TaskStore } from './task.store';
   <!-- list data -->
   <ion-content #content>
       @if(selectedTasksCount() === 0) {
-        <bk-empty-list message="@task.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(task of filteredTasks(); track $index) {
@@ -292,7 +291,7 @@ export class TaskList {
    * @param task 
    */
   protected async showActions(task: TaskModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, task);
     await this.executeActions(actionSheetOptions, task);
   }
@@ -302,17 +301,17 @@ export class TaskList {
    * @param task 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.imgixBaseUrl, 'checkbox'));
+    actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.as_done(), this.imgixBaseUrl, 'checkbox'));
     actionSheetOptions.buttons.push(createActionSheetDivider());
     if (this.canChange(task)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('admin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

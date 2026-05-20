@@ -50,7 +50,7 @@ export class ResponsibilityAccordion {
 
   public key = input.required<string>();
   public color = input('');
-  public title = input('Verantwortlichkeiten');
+  public title = input(this.store.i18n.responsibilities());
   public readOnly = input(true);
 
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
@@ -69,20 +69,20 @@ export class ResponsibilityAccordion {
   }
 
   protected async onRowClick(r: ResponsibilityModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, r);
     await this.executeActions(actionSheetOptions, r);
   }
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, r: ResponsibilityModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.store.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   private async executeActions(actionSheetOptions: ActionSheetOptions, r: ResponsibilityModel): Promise<void> {

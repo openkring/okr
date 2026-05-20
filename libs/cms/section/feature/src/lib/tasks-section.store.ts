@@ -7,10 +7,13 @@ import { ModalController } from '@ionic/angular/standalone';
 import { AppStore } from '@bk2/shared-feature';
 import { TaskCollection, TaskModel } from '@bk2/shared-models';
 import { getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { TaskService } from '@bk2/task-data-access';
 import { TaskEditModal } from '@bk2/task-feature';
 import { isTask } from '@bk2/task-util';
+
+import { PFX } from './scope';
 
 export type TasksState = {
   maxItems: number | undefined; // max items to show, undefined means all
@@ -26,8 +29,14 @@ export const TasksStore = signalStore(
     appStore: inject(AppStore),
     taskService: inject(TaskService),
     modalController: inject(ModalController),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      empty:        PFX + 'tasks.empty',
+      more:         '@more'
+    }),
+
     tasksForCurrentUserResource: rxResource({
       params: () => ({
         personKey: store.appStore.currentUser()?.personKey,

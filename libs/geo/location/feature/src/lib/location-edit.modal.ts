@@ -1,13 +1,12 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
 import { LocationModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { LocationForm } from '@bk2/location-ui';
+import { LocationStore } from './location.store';
 
 
 @Component({
@@ -30,7 +29,7 @@ import { LocationForm } from '@bk2/location-ui';
           [currentUser]="currentUser()"
           [types]="types()"
           [allTags]="tags()"
-          [tenantId]="appStore.env.tenantId"
+          [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -41,7 +40,7 @@ import { LocationForm } from '@bk2/location-ui';
 })
 export class LocationEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly appStore = inject(AppStore);
+  protected readonly store = inject(LocationStore);
 
   // inputs
   public location = input.required<LocationModel>();
@@ -57,9 +56,10 @@ export class LocationEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('location', this.location().bkey, this.isReadOnly()));
-  protected tags = computed(() => this.appStore.getTags('location'));
-  protected types = computed(() => this.appStore.getCategory('location_type'));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.location().bkey));
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.store.getTypes());
+  protected tenantId = computed(() => this.store.tenantId())
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {

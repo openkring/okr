@@ -45,15 +45,23 @@ export const IconStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      plural:           PFX + 'plural',
+      icons:            PFX + 'icons',
       empty:            PFX + 'empty',
-      create_label:     PFX + 'operation.create.label',
-      exportRaw_label:  PFX + 'operation.exportRaw.label',
-      sync_label:       PFX + 'operation.sync.label',
-      name_label:       PFX + 'field.name.label',
-      type_label:       PFX + 'field.type.label',
-      size_label:       PFX + 'field.size.label',
-      updated_label:    PFX + 'field.updated.label',
+      name:             PFX + 'name',
+      type:             PFX + 'type',
+      size:             PFX + 'size',
+      updated:          PFX + 'updated',
+      create_label:     PFX + 'create.label',
+      exportRaw_label:  PFX + 'exportRaw.label',
+      sync_label:       PFX + 'sync.label',
+      as_title:         PFX + 'actionsheet.title',
+      as_view:          PFX + 'actionsheet.view',
+      as_edit:          PFX + 'actionsheet.edit',
+      as_create:        PFX + 'actionsheet.create',
+      as_delete:        PFX + 'actionsheet.delete',
+      as_copy:          PFX + 'actionsheet.copy',
+      cancel:           '@cancel',
+      ok:               '@ok'
     }),
   })),
   withProps((store) => ({
@@ -211,6 +219,17 @@ export const IconStore = signalStore(
           this.reload();
         }
         console.log(`IconStore.sync(): created ${created} new icon entries.`);
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
       }
     }
   })

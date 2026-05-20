@@ -22,7 +22,7 @@ import { SectionStore } from './section.store';
     <!-- page header -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
-      <ion-title>{{ selectedSectionsCount() }}/{{ sectionsCount() }} {{ sectionStore.i18n.list_plural() }}</ion-title>
+      <ion-title>{{ selectedSectionsCount() }}/{{ sectionsCount() }} {{ sectionStore.i18n.sections() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('contentAdmin')) {
           <ion-button (click)="add()">
@@ -35,7 +35,7 @@ import { SectionStore } from './section.store';
     <!-- description -->
     <ion-toolbar class="ion-hide-md-down">
       <ion-item lines="none">
-        <ion-label>{{ sectionStore.i18n.list_field_description() }}</ion-label>
+        <ion-label>{{ sectionStore.i18n.description() }}</ion-label>
       </ion-item>
     </ion-toolbar>
 
@@ -53,13 +53,13 @@ import { SectionStore } from './section.store';
         <ion-grid>
           <ion-row>
             <ion-col size="4" class="ion-hide-md-down">
-              <ion-label><strong>{{ sectionStore.i18n.list_header_key() }}</strong></ion-label>
+              <ion-label><strong>{{ sectionStore.i18n.key() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-              <ion-label><strong>{{ sectionStore.i18n.list_header_name() }}</strong></ion-label>
+              <ion-label><strong>{{ sectionStore.i18n.name() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ sectionStore.i18n.list_header_type() }}</strong></ion-label>
+                <ion-label><strong>{{ sectionStore.i18n.type() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>

@@ -6,7 +6,6 @@ import { ENV } from '@bk2/shared-config';
 import { UserModelName } from '@bk2/shared-models';
 import { ChangeConfirmation, Chips, Header } from '@bk2/shared-ui';
 import { debugFormModel, getFullName, hasRole } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { AvatarService, UploadService } from '@bk2/avatar-data-access';
 import { AvatarToolbar } from '@bk2/avatar-feature';
@@ -15,7 +14,7 @@ import { CommentsCard } from '@bk2/comment-feature';
 
 import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, UserPrivacyForm } from '@bk2/user-ui';
 import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
-import { UserEditStore } from './user-edit.store';
+import { UserStore } from './user.store';
 
 @Component({
   selector: 'bk-user-edit-page',
@@ -25,7 +24,7 @@ import { UserEditStore } from './user-edit.store';
     UserModelForm, UserDisplayForm, UserAuthForm, UserPrivacyForm, UserNotificationForm,
     IonContent
   ],
-  providers: [UserEditStore],
+  providers: [UserStore],
   template: `
     <bk-header [title]="headerTitle()" [showCloseButton]="false" />
     @if(showConfirmation()) {
@@ -47,7 +46,7 @@ import { UserEditStore } from './user-edit.store';
 })
 export class UserEditPage{
   private readonly avatarService = inject(AvatarService);
-  private readonly userEditStore = inject(UserEditStore);
+  private readonly store = inject(UserStore);
   private readonly uploadService = inject(UploadService);
   private readonly platform = inject(Platform);
   private readonly env = inject(ENV);
@@ -69,19 +68,19 @@ export class UserEditPage{
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('user', this.user()?.bkey, this.readOnly()));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.user()?.bkey));
   protected readonly toolbarTitle = computed(() => getFullName(this.user().firstName, this.user().lastName, this.user().nameDisplay));
   protected readonly parentKey = computed(() => `${UserModelName}.${this.userKey()}`);
-  protected readonly user = computed(() => this.userEditStore.user());
+  protected readonly user = computed(() => this.store.user());
   protected readonly avatarKey = computed(() => `person.${this.user().bkey}`);
-  protected readonly allTags = computed(() => this.userEditStore.getTags());
-  protected readonly currentUser = computed(() => this.userEditStore.currentUser());
+  protected readonly allTags = computed(() => this.store.getTags());
+  protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
-  protected readonly allRoles = computed(() => this.userEditStore.appStore.getCategory('roles'));
+  protected readonly allRoles = computed(() => this.store.appStore.getCategory('roles'));
   protected tags = linkedSignal(() => this.user().tags);
 
   constructor() {
-    effect(() => { this.userEditStore.setUserKey(this.userKey()); });
+    effect(() => { this.store.setUserKey(this.userKey()); });
     effect(() => { debugFormModel<UserAuthFormModel>('userAuth', this.userAuthVm(), this.currentUser()); });
     effect(() => { debugFormModel<UserDisplayFormModel>('userDisplay', this.userDisplayVm(), this.currentUser()); });
     effect(() => { debugFormModel<UserModelFormModel>('userModel', this.userModelVm(), this.currentUser()); });
@@ -97,7 +96,7 @@ export class UserEditPage{
     user = convertModelFormToUser(this.userModelVm(), this.user());
     user = convertNotificationFormToUser(this.userNotificationVm(), this.user());
     user = convertPrivacyFormToUser(this.userPrivacyVm(), this.user());
-    this.userEditStore.save(user);
+    this.store.save(user);
   }
 
   public async cancel(): Promise<void> {
@@ -119,7 +118,7 @@ export class UserEditPage{
     if (!user) return;
     const file = await readAsFile(photo, this.platform);
     const avatar = newAvatarModel([this.env.tenantId], 'user', user.bkey, file.name);
-    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@document.operation.upload.avatar.title')
+    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, this.store.i18n.avatar_upload())
 
     if (downloadUrl) {
       await this.avatarService.updateOrCreate(avatar);

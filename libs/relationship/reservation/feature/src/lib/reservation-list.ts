@@ -9,8 +9,10 @@ import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole
 import { Menu } from '@bk2/cms-menu-feature';
 import { AvatarService } from '@bk2/avatar-data-access';
 
-import { ReservationStore } from './reservation.store';
 import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
+
+import { ReservationStore } from './reservation.store';
+
 
 @Component({
   selector: 'bk-reservation-list',
@@ -69,75 +71,75 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
           @if(isReservationFromPerson() || isReservationFromOrg()) {
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_resource() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.resource() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_name() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_valid_from() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.valid_from() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_state() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else if(isReservationOfResource() || isReservationOfResourceType()) {
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_reserver() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.reserver() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_name() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_valid_from() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.valid_from() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_state() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else { <!-- all -->
             <ion-col size="auto" size-md="2"class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_reserver() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.reserver() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="auto" size-md="2" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_resource() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.resource() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3" class="ion-hide-md-up">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_reserver() }}</strong></ion-label>
-                <ion-label><strong>{{ reservationStore.i18n.list_header_resource() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.reserver() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.resource() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col>
               <ion-item lines="none" color="primary" class="ion-text-wrap">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_name() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_valid_from() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.valid_from() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ reservationStore.i18n.list_header_state() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           }
@@ -149,7 +151,7 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
   <!-- list data -->
   <ion-content #content>
     @if(selectedReservationsCount() === 0) {
-      <bk-empty-list message="@reservation.field.empty" />
+      <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-grid>
         @for(reservation of filteredReservations(); track $index) {
@@ -241,7 +243,7 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
     `
 })
 export class ReservationList {
-  protected reservationStore = inject(ReservationStore);
+  protected store = inject(ReservationStore);
   private actionSheetController = inject(ActionSheetController);
   private avatarService = inject(AvatarService);
 
@@ -264,37 +266,37 @@ export class ReservationList {
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
   
-  private imgixBaseUrl = this.reservationStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
-      this.reservationStore.setListId(this.listId());
+      this.store.setListId(this.listId());
     });
   }
 
   // filters
-  protected searchTerm = linkedSignal(() => this.reservationStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.reservationStore.selectedTag());
-  protected selectedReason = linkedSignal(() => this.reservationStore.selectedReason());
-  protected selectedYear = linkedSignal(() => this.reservationStore.selectedYear());
-  protected selectedState = linkedSignal(() => this.reservationStore.selectedState());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedReason = linkedSignal(() => this.store.selectedReason());
+  protected selectedYear = linkedSignal(() => this.store.selectedYear());
+  protected selectedState = linkedSignal(() => this.store.selectedState());
 
   // derived values
-  protected filteredReservations = computed(() => this.reservationStore.filteredReservations());
-  protected allReservations = computed(() => this.reservationStore.allReservations());
-  protected reservationsCount = computed(() => this.reservationStore.allReservations()?.length ?? 0);
+  protected filteredReservations = computed(() => this.store.filteredReservations());
+  protected allReservations = computed(() => this.store.allReservations());
+  protected reservationsCount = computed(() => this.store.allReservations()?.length ?? 0);
   protected selectedReservationsCount = computed(() => this.filteredReservations()?.length ?? 0);
-  protected isLoading = computed(() => this.reservationStore.isLoading());
-  protected tags = computed(() => this.reservationStore.getTags());
-  protected reasons = computed(() => this.reservationStore.appStore.getCategory('reservation_reason'));
-  protected states = computed(() => this.reservationStore.appStore.getCategory('reservation_state'));
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  protected reasons = computed(() => this.store.appStore.getCategory('reservation_reason'));
+  protected states = computed(() => this.store.appStore.getCategory('reservation_state'));
   protected popupId = computed(() => 'c_reservation_' + this.listId());
-  protected currentUser = computed(() => this.reservationStore.appStore.currentUser());
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected readonly years = computed(() => getYearList(getYear() + 1, 7));
   protected title = computed(() => this.getTitle());
-  protected resourceName = computed(() => this.reservationStore.currentResource()?.name);
-  protected resourceKey = computed(() => this.reservationStore.currentResource()?.bkey ?? '');
+  protected resourceName = computed(() => this.store.currentResource()?.name);
+  protected resourceKey = computed(() => this.store.currentResource()?.bkey ?? '');
   protected isReservationFromPerson = computed(() => this.listId().startsWith('p_') || this.listId() === 'my');
   protected isReservationFromOrg = computed(() => this.listId().startsWith('o_'));
   protected isReservationOfResource = computed(() => this.listId().startsWith('r_'));
@@ -302,36 +304,36 @@ export class ReservationList {
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.reservationStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.reservationStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onReasonSelected(reason: string): void {
-    this.reservationStore.setSelectedReason(reason);
+    this.store.setSelectedReason(reason);
   }
 
   protected onStateSelected(state: string): void {
-    this.reservationStore.setSelectedState(state);
+    this.store.setSelectedState(state);
   }
 
   protected onYearSelected(year: number): void {
-    this.reservationStore.setSelectedYear(year);
+    this.store.setSelectedYear(year);
   }
 
   /******************************** getters ******************************************* */
   protected getStateIcon(state: string): string {
-    return this.reservationStore.getStateIcon(state);
+    return this.store.getStateIcon(state);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.reservationStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.reservationStore.export("raw"); break;
+      case 'add': await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `ReservationList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -342,7 +344,7 @@ export class ReservationList {
    * @param reservation 
    */
   protected async showActions(reservation: ReservationModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, reservation);
     await this.executeActions(actionSheetOptions, reservation);
   }
@@ -353,17 +355,17 @@ export class ReservationList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('reservation.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('reservation.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(reservation.endDate)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('reservation.end', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('reservation.end', this.store.i18n.as_end(), this.imgixBaseUrl, 'stop-circle'));
       }
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('reservation.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -383,16 +385,16 @@ export class ReservationList {
       if (!data) return;
       switch (data.action) {
         case 'reservation.delete':
-          await this.reservationStore.delete(reservation, this.readOnly());
+          await this.store.delete(reservation, this.readOnly());
           break;
         case 'reservation.edit':
-          await this.reservationStore.edit(reservation, this.readOnly());
+          await this.store.edit(reservation, this.readOnly());
           break;
         case 'reservation.view':
-          await this.reservationStore.edit(reservation, true);
+          await this.store.edit(reservation, true);
           break;
         case 'reservation.end':
-          await this.reservationStore.end(reservation, this.readOnly());
+          await this.store.end(reservation, this.readOnly());
           break;
       }
     }
@@ -400,7 +402,7 @@ export class ReservationList {
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.reservationStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected isOngoing(reservation: ReservationModel): boolean {
@@ -425,11 +427,11 @@ export class ReservationList {
     if (avatar.modelType === ResourceModelName) {
       // For rboat resources, use the subType icon (e.g., b1x, b2x, etc.)
       if (avatar.type === 'rboat' && avatar.subType) {
-        iconName = this.reservationStore.appStore.getCategoryIcon('rboat_type', avatar.subType) || 'rboat';
+        iconName = this.store.appStore.getCategoryIcon('rboat_type', avatar.subType) || 'rboat';
       } 
       // For other resources, use the resource type icon
       else if (avatar.type) {
-        iconName = this.reservationStore.appStore.getCategoryIcon('resource_type', avatar.type) || avatar.type;
+        iconName = this.store.appStore.getCategoryIcon('resource_type', avatar.type) || avatar.type;
       }
     }
     
@@ -460,11 +462,11 @@ export class ReservationList {
   }
 
   protected getTitle(): string {
-    if (this.listId() === 'all') return ' Reservationen';
-    const reserver = this.reservationStore.currentReserver();
+    if (this.listId() === 'all') return ' ' + this.store.i18n.reservations();
+    const reserver = this.store.currentReserver();
     let reserverName = '';
     if (reserver) {
-      if (isPerson(reserver, this.reservationStore.tenantId())) {
+      if (isPerson(reserver, this.store.tenantId())) {
         const person = reserver as PersonModel;
         reserverName = getFullName(person.firstName, person.lastName, this.currentUser()?.nameDisplay) || '';
       } else {
@@ -473,15 +475,15 @@ export class ReservationList {
     }
     switch (this.listId().substring(0,2)) {
       case 't_': // resource type 
-        return this.listId().substring(2) + ' Reservationen';
+        return this.listId().substring(2) + ' ' + this.store.i18n.reservations();
       case 'r_': // resource key
         const resourceName = this.resourceName() ?? '';
-        return `${resourceName} Reservationen`;
+        return `${resourceName} ${this.store.i18n.reservations()}`;
       case 'my': // my reservations = p_[currentUser.personKey]
       case 'p_': // reserver key (person)
-        return `${reserverName} Reservationen`;
+        return `${reserverName} ${this.store.i18n.reservations()}`;
       case 'o_': // reserver key (org)
-        return `${reserverName} Reservationen`;
+        return `${reserverName} ${this.store.i18n.reservations()}`;
       default:
         return '';
     }

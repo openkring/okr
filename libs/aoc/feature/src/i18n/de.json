@@ -1,7 +1,14 @@
 {
   "title": "AOC - Application Operation Center",
+  "result": {
+    "title": "Resultate"
+  },
   "adminops": {
     "title": "Admin Operationen",
+    "debug": {
+      "tools": "Debug Tools",
+      "focus_event_logging": "Focus Event Logging einschalten"
+    },
     "iban": {
       "label": "IBAN Nummern auflisten",
       "button": "Anzeigen"
@@ -245,13 +252,24 @@
       "content": "Bulk-Operation (adminops/validateModels) mit Validierungs-Operationen auf eine Collection.",
       "button": "Daten validieren"
     },
-    "createIndex": {
+    "index": {
       "title": "Index erstellen",
       "content": "Erstellt einen Index auf einer Collection. Dies ist nützlich, wenn ein Index in der Datenbank fehlt und eine Abfrage nicht ausgeführt werden kann.",
       "button": "Index erstellen"
     },
     "check": {
       "console": "Bitte Konfiguration in der Browser Console prüfen und bestätigen."
+    },
+    "fav": {
+      "title": "Fav-Adressen Konsistenz",
+      "description": "Vergleicht die gecachten fav*-Felder jeder Person mit den tatsächlichen Favorite-Adressen.",
+      "hide": "Ausblenden",
+      "validate": "Prüfen",
+      "person": "Person",
+      "field": "Feld",
+      "favperson": "Person (fav*)",
+      "address": "In Adresse",
+      "nomismatches": "Keine Abweichungen gefunden."
     }
   },
 
@@ -282,7 +300,7 @@
         "path": "Speicherpfad kopieren",
         "url": "Download-URL kopieren"
       }
-    },
+    }
   },
 
   "email": {
@@ -445,6 +463,19 @@
     "title": "Website Texte",
     "list": {
       "title": "Texte"
+    },
+    "create": {
+      "conf": "Website wurde erstellt",
+      "error": "Website konnte nicht erstellt werden."
+    },
+    "update": {
+      "conf": "Website Änderung wurde gespeichert.",
+      "error": "Die Änderung konnte nicht gespeichert werden."
+    },
+    "delete": {
+      "conf": "Website entfernt",
+      "confirm": "Soll die Website wirklich gelöscht werden ?",
+      "error": "Die Website konnte nicht gelöscht werden."
     }
   },
   "actionsheet": {

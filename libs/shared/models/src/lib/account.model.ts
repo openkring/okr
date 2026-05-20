@@ -10,12 +10,12 @@ export class AccountModel implements BkModel, NamedModel, SearchableModel, Tagge
   public tags = DEFAULT_TAGS;
   public notes = DEFAULT_NOTES;
   public id = DEFAULT_ID; // account number, e.g. iban
-  public parentId = DEFAULT_ID; // to build a hierarchical structure of accounts
+  public parentKey = DEFAULT_KEY; // to build a hierarchical structure of accounts
 
   // for accounting, use root, group, leaf to build a chart of accounts (Kontoplan)
   // root is to have several different chart of accounts (e.g. custom and bexio, or scs and gss)
   // leaf are the accounts where your booking statements go into
-  // group are grouping leafs or other groups together (e.g. assets, liabilities, earings, etc.)
+  // group are grouping leafs or other groups together (e.g. assets, liabilities, earnings, etc.)
   public type = DEFAULT_ACCOUNT_NAME; // CategoryList: account_type
   public label = DEFAULT_LABEL; // label for custom account types
 

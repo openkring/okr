@@ -19,10 +19,10 @@ export interface TableHeaderI18n {
     <bk-text-list
         [(texts)]="formData"
         [maxLength]="maxLength()"
-        [title]="i18n()?.title ?? ''"
+        [title]="i18n().title"
         [readOnly]="readOnly()"
-        [description]="i18n()?.description ?? ''"
-        [add]="i18n()?.add ?? ''"
+        [description]="i18n().description"
+        [add]="i18n().add"
     />
     `
 })

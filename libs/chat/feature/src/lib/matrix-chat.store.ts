@@ -18,6 +18,7 @@ import { AvatarService } from '@bk2/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@bk2/chat-data-access';
 
 import { RoomEditModal } from './room-edit.modal';
+import { PFX } from './scope';
 
 export type MatrixChatState = {
   isMatrixInitialized: boolean;
@@ -49,49 +50,50 @@ export const _MatrixChatStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      room_create_conf:          '@chat.room.create.conf',
-      room_create_error:         '@chat.room.create.error',
-      room_update_conf:          '@chat.room.update.conf',
-      room_update_error:         '@chat.room.update.error',
-      thread_reply_header:       '@chat.thread.reply.header',
-      thread_reply_placeholder:  '@chat.thread.reply.placeholder',
-      thread_reply_error:        '@chat.thread.reply.error',
-      msg_report_header:         '@chat.message.report.header',
-      msg_report_placeholder:    '@chat.message.report.placeholder',
-      msg_report_noChannel:      '@chat.message.report.noChannel',
-      msg_report_conf:           '@chat.message.report.conf',
-      msg_report_error:          '@chat.message.report.error',
-      msg_update_header:         '@chat.message.update.header',
-      msg_update_placeholder:    '@chat.message.update.placeholder',
-      msg_update_conf:           '@chat.message.update.conf',
-      msg_update_error:          '@chat.message.update.error',
-      msg_delete_confirm:        '@chat.message.delete.confirm',
-      msg_delete_conf:           '@chat.message.delete.conf',
-      msg_delete_error:          '@chat.message.delete.error',
-      react_header:              '@chat.message.react.header',
-      react_cancel:              '@chat.message.react.cancel',
-      msg_report_messageFrom:    '@chat.message.report.messageFrom',
-      msg_report_message:        '@chat.message.report.message',
-      msg_report_comment:        '@chat.message.report.comment',
-      msg_report_showMessage:    '@chat.message.report.showMessage',
+      room_create_conf:          PFX + 'room.create.conf',
+      room_create_error:         PFX + 'room.create.error',
+      room_update_conf:          PFX + 'room.update.conf',
+      room_update_error:         PFX + 'room.update.error',
+      thread_reply_header:       PFX + 'thread.reply.header',
+      thread_reply_placeholder:  PFX + 'thread.reply.placeholder',
+      thread_reply_error:        PFX + 'thread.reply.error',
+      msg_report_header:         PFX + 'message.report.header',
+      msg_report_placeholder:    PFX + 'message.report.placeholder',
+      msg_report_noChannel:      PFX + 'message.report.noChannel',
+      msg_report_conf:           PFX + 'message.report.conf',
+      msg_report_error:          PFX + 'message.report.error',
+      msg_update_header:         PFX + 'message.update.header',
+      msg_update_placeholder:    PFX + 'message.update.placeholder',
+      msg_update_conf:           PFX + 'message.update.conf',
+      msg_update_error:          PFX + 'message.update.error',
+      msg_delete_confirm:        PFX + 'message.delete.confirm',
+      msg_delete_conf:           PFX + 'message.delete.conf',
+      msg_delete_error:          PFX + 'message.delete.error',
+      react_header:              PFX + 'message.react.header',
+      react_cancel:              PFX + 'message.react.cancel',
+      msg_report_messageFrom:    PFX + 'message.report.messageFrom',
+      msg_report_message:        PFX + 'message.report.message',
+      msg_report_comment:        PFX + 'message.report.comment',
+      msg_report_showMessage:    PFX + 'message.report.showMessage',
       // matrix-chat.ts status badges
-      fields_reconnecting:       '@chat.fields.reconnecting',
-      fields_connectionError:    '@chat.fields.connectionError',
-      fields_connecting:         '@chat.fields.connecting',
+      reconnecting:              PFX + 'reconnecting',
+      connectionError:           PFX + 'connectionError',
+      connecting:                PFX + 'connecting',
       // matrix-chat.ts empty state
-      fields_selectRoom:         '@chat.fields.selectRoom',
-      fields_noRoomsError:       '@chat.fields.noRoomsError',
-      fields_createTestRoom:     '@chat.fields.createTestRoom',
+      selectRoom:                PFX + 'selectRoom',
+      noRoomsError:              PFX + 'noRoomsError',
+      createTestRoom:            PFX + 'createTestRoom',
       // matrix-chat.ts thread panel
-      op_thread_empty:           '@chat.operation.thread.empty',
+      thread_empty:              PFX + 'thread.empty',
       // matrix-chat.ts video call overlay
-      op_video_incoming:         '@chat.operation.video.incoming',
-      op_video_connecting:       '@chat.operation.video.connecting',
+      video_incoming:            PFX + 'video.incoming',
+      video_connecting:          PFX + 'video.connecting',
       // MatrixMessageInput typing indicator
-      msg_input_isTypeing:       '@chat.fields.isTypeing',
-      msg_input_and:             '@chat.fields.and',
-      msg_input_areTypeing:      '@chat.fields.areTypeing',
-      msg_input_othersTypeing:   '@chat.fields.othersTypeing',
+      isTypeing:       PFX + 'isTypeing',
+      and:             PFX + 'and',
+      areTypeing:      PFX + 'areTypeing',
+      othersTypeing:   PFX + 'othersTypeing',
+
     }),
     syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),
     roomsResource: rxResource({ stream: () => store.matrixService.rooms }),
@@ -441,7 +443,7 @@ export const _MatrixChatStore = signalStore(
           componentProps: {
             room,
             currentUser: store.currentUser(),
-            header: '@chat.room.create.header'
+            header: 'room.create.header'
           }
         });
         await modal.present();
@@ -481,7 +483,7 @@ export const _MatrixChatStore = signalStore(
           componentProps: { 
             room, 
             currentUser: store.currentUser(),
-            header: '@chat.room.update.header'
+            header: 'room.update.header'
           }
         });
         await modal.present();

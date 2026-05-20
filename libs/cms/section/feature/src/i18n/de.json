@@ -2,18 +2,14 @@
   "sections": "Sektionen",
   "description": "Sektionen sind Teile einer Website. Sie enthalten Text, Bilder, Videos oder andere Elemente.",
   "empty": "Es sind noch keine Sektionen erstellt worden. Erstelle eine mit Klicken des + Buttons.",
-  "key": "ID",
-  "name": "Name",
-  "type": "Typ",
-  "error": {
-    "noImages": "Es sind noch keine Bilder definiert, die hier angezeigt werden sollen.",
-    "noSuchSection": "Die Sektion {{ type }} existiert nicht. ev. wurde sie noch nicht implementiert oder falsch konfiguriert.",
-    "emptyTable": "Leere Tabelle"
-  },
+  "noImages": "Es sind noch keine Bilder definiert, die hier angezeigt werden sollen.",
+  "noSuchSection": "Die Sektion {{ type }} existiert nicht. ev. wurde sie noch nicht implementiert oder falsch konfiguriert.",
+  "emptyTable": "Leere Tabelle",
   "select": {
     "label": "Sektion wählen"
   },
   "delete": {
+    "label": "Sektion löschen",
     "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
   },
   "send": {
@@ -42,48 +38,51 @@
       "error": "Die Einladung konnte nicht geändert werden."
     }
   },
-  "cms": {
-    "contextDiagram": {
-      "config": {
-        "title": "Anzeigeoptionen",
-        "showAvatar": "Avatar anzeigen",
-        "showName": "Name anzeigen",
-        "showMembers": "Mitglieder anzeigen",
-        "showMemberships": "Mitgliedschaften anzeigen",
-        "showResponsibilities": "Verantwortlichkeiten anzeigen",
-        "showPersonalRels": "Persönliche Beziehungen anzeigen",
-        "showWorkRels": "Beschäftigungen anzeigen",
-        "saveChanges": "Änderungen speichern"
-      }
-    },
-    "messages": {
-      "empty": "Du hast keine offenen Mitteilungen."
-    },
-    "news": {
-      "empty": "Es gibt keine Neuigkeiten."
-    },
-    "orgchart": {
-      "view": {
-        "accordion": "Liste",
-        "chart": "Organigramm"
-      }
-    },
-    "rag": {
-      "placeholder": "Frage irgendetwas über den Seeclub Stäfa",
-      "upload": "Dokumente in den RAG-Store hochladen"
+  "context": {
+    "title": "Anzeigeoptionen",
+    "show": {
+      "avatar": "Avatar anzeigen",
+      "name": "Name anzeigen",
+      "members": "Mitglieder anzeigen",
+      "memberships": "Mitgliedschaften anzeigen",
+      "responsibilities": "Verantwortlichkeiten anzeigen",
+      "personrels": "Beziehungen anzeigen",
+      "workrels": "Beschäftigungen anzeigen",
+      "save": "Änderungen speichern"
     }
+  },
+  "messages": {
+    "empty": "Du hast keine offenen Mitteilungen."
+  },
+  "news": {
+    "empty": "Es gibt keine Neuigkeiten."
+  },
+  "tasks": {
+    "empty": "Gratulation ! - du hast keine offenen Aufgaben."
+  },
+  "orgchart": {
+    "view": {
+      "accordion": "Liste",
+      "chart": "Organigramm"
+    }
+  },
+  "rag": {
+    "placeholder": "Frage irgendetwas über den Seeclub Stäfa",
+    "upload": "Dokumente in den RAG-Store hochladen"
+  },
+  "album": {
+    "zoomed": "Bild zoomen"
   },
   "email": {
     "conf": "Email(s) wurde(n) abgeschickt.",
     "error": "Email(s) konnte(n) nicht verschickt werden."
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion"
-  },
   "group": {
-    "singular": "Gruppe",
     "detach": {
       "confirm": "Soll die Gruppe wirklich entfernt werden ?"
     }
-  }
+  },
+  "view": "Sektionskonfiguration anzeigen",
+  "edit": "Sektion bearbeiten",
+  "create": "Sektion erstellen"
 }

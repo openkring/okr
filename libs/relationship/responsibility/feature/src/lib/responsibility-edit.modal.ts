@@ -1,13 +1,12 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarInfo, PersonModel, ResponsibilityModel, ResponsibilityModelName, RoleName, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, PersonModel, ResponsibilityModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
-import { hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore, MultiSelectModal, PersonSelectModal } from '@bk2/shared-feature';
+import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { ResponsibilityForm } from '@bk2/relationship-responsibility-ui';
+import { ResponsibilityStore } from './responsibility.store';
 
 @Component({
   selector: 'bk-responsibility-edit-modal',
@@ -16,6 +15,7 @@ import { ResponsibilityForm } from '@bk2/relationship-responsibility-ui';
     Header, ChangeConfirmation, ResponsibilityForm,
     IonContent
   ],
+  providers: [ResponsibilityStore],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
@@ -45,7 +45,7 @@ import { ResponsibilityForm } from '@bk2/relationship-responsibility-ui';
 })
 export class ResponsibilityEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly appstore = inject(AppStore);
+  protected readonly store = inject(ResponsibilityStore);
 
   // inputs
   public responsibility = input.required<ResponsibilityModel>();
@@ -60,8 +60,8 @@ export class ResponsibilityEditModal {
   protected formData = linkedSignal(() => safeStructuredClone(this.responsibility()));
 
   // fields
-  protected readonly headerTitle = computed(() => getTitleLabel('responsibility', this.responsibility()?.bkey, false));
-  protected readonly tenantId = computed(() => this.appstore.tenantId());
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(false, this.responsibility()?.bkey));
+  protected readonly tenantId = computed(() => this.store.tenantId());
   protected readonly parentName = computed(() => {
     const parentKey = this.formData()?.parentKey;
     if (!parentKey) return '';
@@ -69,8 +69,8 @@ export class ResponsibilityEditModal {
     if (dot === -1) return parentKey;
     const modelType = parentKey.slice(0, dot);
     const key = parentKey.slice(dot + 1);
-    if (modelType === 'org') return this.appstore.getOrg(key)?.name ?? parentKey;
-    if (modelType === 'group') return this.appstore.getGroup(key)?.name ?? parentKey;
+    if (modelType === 'org') return this.store.appStore.getOrg(key)?.name ?? parentKey;
+    if (modelType === 'group') return this.store.appStore.getGroup(key)?.name ?? parentKey;
     return parentKey;
   });
 
@@ -92,24 +92,14 @@ export class ResponsibilityEditModal {
   }
 
   protected async selectParent(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: MultiSelectModal,
-      cssClass: 'list-modal',
-      componentProps: { 
-        contents: 'org,group',
-        selectedTag: '',
-        currentUser: this.currentUser()
-      },
-    });
-    await modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role !== 'confirm' || !data) return;
+    const parentKey = await this.store.selectParent();
+    if (!parentKey) return;
+    this.formData.update(vm => ({ ...vm, parentKey }) as ResponsibilityModel);
     this.formDirty.set(true);
-    this.formData.update(vm => ({ ...vm, parentKey: data as string }) as ResponsibilityModel);
   }
 
   protected async selectResponsibleAvatar(): Promise<void> {
-    const person = await this.openPersonSelectModal();
+    const person = await this.store.selectPerson();
     if (!person) return;
     this.formDirty.set(true);
     this.formData.update(vm => ({
@@ -127,7 +117,7 @@ export class ResponsibilityEditModal {
   }
 
   protected async selectDelegateAvatar(): Promise<void> {
-    const person = await this.openPersonSelectModal();
+    const person = await this.store.selectPerson();
     if (!person) return;
     this.formDirty.set(true);
     this.formData.update(vm => ({
@@ -147,17 +137,5 @@ export class ResponsibilityEditModal {
   protected onClearDelegate(): void {
     this.formDirty.set(true);
     this.formData.update(vm => ({ ...vm, delegateAvatar: undefined }) as ResponsibilityModel);
-  }
-
-  private async openPersonSelectModal(): Promise<PersonModel | undefined> {
-    const modal = await this.modalController.create({
-      component: PersonSelectModal,
-      cssClass: 'list-modal',
-      componentProps: { selectedTag: '', currentUser: this.currentUser() },
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm' && data && isPerson(data, this.tenantId())) return data;
-    return undefined;
   }
 }

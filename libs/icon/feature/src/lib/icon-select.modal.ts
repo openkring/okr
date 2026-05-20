@@ -33,7 +33,7 @@ import { ICON_SETS, IconStore } from './icon.store';
       @if(store.isLoading()) {
         <bk-spinner />
       } @else if(store.filteredIcons().length === 0) {
-        <bk-empty-list message="@icon.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else if(isListView()) {
         <!-- list view: thumbnail + name, size, lastUpdate -->
         <ion-grid>

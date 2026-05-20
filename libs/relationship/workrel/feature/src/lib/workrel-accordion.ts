@@ -1,8 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, WorkrelModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList } from '@bk2/shared-ui';
@@ -18,7 +17,7 @@ import { WorkrelStore } from './workrel.store';
   selector: 'bk-workrel-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, AvatarPipe, FullNamePipe, SvgIconPipe, WorkrelNamePipe,
+    AvatarPipe, FullNamePipe, SvgIconPipe, WorkrelNamePipe, AsyncPipe,
     EmptyList,
     IonAccordion, IonItem, IonLabel, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonButton, IonIcon
   ],
@@ -29,7 +28,7 @@ import { WorkrelStore } from './workrel.store';
   template: `
   <ion-accordion toggle-icon-slot="start" value="workrels">
     <ion-item slot="header" [color]="color()">
-      <ion-label>{{ title() | translate | async }}</ion-label>
+      <ion-label>{{ title() }}</ion-label>
       @if(hasRole('memberAdmin') && readOnly() === false) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -38,7 +37,7 @@ import { WorkrelStore } from './workrel.store';
     </ion-item>
     <div slot="content">
         @if(workRels().length === 0) {
-        <bk-empty-list message="@workrel.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(workrel of workRels(); track $index) {
@@ -75,32 +74,32 @@ import { WorkrelStore } from './workrel.store';
   `,
 })
 export class WorkrelAccordion {
-  protected readonly workRelStore = inject(WorkrelStore);
+  protected readonly store = inject(WorkrelStore);
   private actionSheetController = inject(ActionSheetController);
 
   public personKey = input<string>();
   public color = input('light');
-  public title = input('@workrel.plural');
+  public title = input(this.store.i18n.workrels());
   public readOnly = input(true);
-  protected types = computed(() => this.workRelStore.appStore.getCategory('workrel_type'));
+  protected types = computed(() => this.store.appStore.getCategory('workrel_type'));
   
-  protected workRels = computed(() => this.workRelStore.allWorkrels());  // tbd: better define: a) all, b) open c) current year ...
-  protected currentUser = computed(() => this.workRelStore.appStore.currentUser());
+  protected workRels = computed(() => this.store.allWorkrels());  // tbd: better define: a) all, b) open c) current year ...
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   
-  private imgixBaseUrl = this.workRelStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
       if (this.personKey()) {
-        this.workRelStore.setPersonKey(this.personKey() ?? '');
+        this.store.setPersonKey(this.personKey() ?? '');
       }
     });
-    effect(() => this.workRelStore.setShowMode(hasRole('admin')));
+    effect(() => this.store.setShowMode(hasRole('admin')));
   }
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    await this.workRelStore.add();
+    await this.store.add();
   }
 
   /**
@@ -109,7 +108,7 @@ export class WorkrelAccordion {
    * @param workRel 
    */
   protected async showActions(workRel: WorkrelModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, workRel);
     await this.executeActions(actionSheetOptions, workRel);
   }
@@ -120,18 +119,18 @@ export class WorkrelAccordion {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, workRel: WorkrelModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
 
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(workRel.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.store.i18n.as_end(), this.imgixBaseUrl, 'stop-circle'));
       }
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -151,16 +150,16 @@ export class WorkrelAccordion {
       if (!data) return;
       switch (data.action) {
         case 'delete':
-          await this.workRelStore.delete(workRel, this.readOnly());
+          await this.store.delete(workRel, this.readOnly());
           break;
         case 'edit':
-          await this.workRelStore.edit(workRel, this.readOnly());
+          await this.store.edit(workRel, this.readOnly());
           break;
         case 'view':
-          await this.workRelStore.edit(workRel, true);
+          await this.store.edit(workRel, true);
           break;
         case 'endrel':
-          await this.workRelStore.end(workRel, this.readOnly());
+          await this.store.end(workRel, this.readOnly());
           break;
       }
     }
@@ -168,7 +167,7 @@ export class WorkrelAccordion {
 
   /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.workRelStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected isOngoing(workRel: WorkrelModel): boolean {

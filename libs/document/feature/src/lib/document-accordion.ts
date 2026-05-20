@@ -37,7 +37,7 @@ import { DocumentStore } from './document.store';
     <div slot="content">
       @if((documents()); as documents) {
         @if(documents.length === 0) {
-          <bk-empty-list message="@general.noData.documents" />
+          <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="none">
             @for(document of documents; track document.bkey) {
@@ -59,28 +59,28 @@ import { DocumentStore } from './document.store';
   `,
 })
 export class DocumentsAccordion {
-  protected readonly documentStore = inject(DocumentStore);
+  protected readonly store = inject(DocumentStore);
   private actionSheetController = inject(ActionSheetController);
 
   public parentKey = input.required<string>();
   public readonly color = input('light');
-  public readonly title = input('@document.plural');
+  public readonly title = input(this.store.i18n.documents());
   public readonly readOnly = input<boolean>(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected readonly currentUser = computed(() => this.documentStore.currentUser());
-  protected readonly documents = computed(() => this.documentStore.filteredDocuments() ?? []);
+  protected readonly currentUser = computed(() => this.store.currentUser());
+  protected readonly documents = computed(() => this.store.filteredDocuments() ?? []);
 
-  private imgixBaseUrl = this.documentStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
-      this.documentStore.setListId(`f:${this.parentKey()}`);
+      this.store.setListId(`f:${this.parentKey()}`);
     });
   }
 
   protected async add(): Promise<void> {
-   await this.documentStore.add(this.parentKey());
+   await this.store.add(this.parentKey());
   } 
 
   /**
@@ -90,9 +90,9 @@ export class DocumentsAccordion {
    */
   protected async showActions(document: DocumentModel): Promise<void> {
     if (this.readOnly()) {
-      await this.documentStore.download(document, false);
+      await this.store.download(document, false);
     } else {
-      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
       this.addActionSheetButtons(actionSheetOptions, document);
       await this.executeActions(actionSheetOptions, document);
     }
@@ -104,11 +104,11 @@ export class DocumentsAccordion {
    * @param document 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.imgixBaseUrl, 'download'));
-    actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.imgixBaseUrl, 'edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.imgixBaseUrl, 'upload'));
-    actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.imgixBaseUrl, 'timeline'));
-    actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.store.i18n.as_download(), this.imgixBaseUrl, 'download'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.store.i18n.as_update(), this.imgixBaseUrl, 'upload'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.store.i18n.as_revisions(), this.imgixBaseUrl, 'timeline'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
 
@@ -125,19 +125,19 @@ export class DocumentsAccordion {
       if (!data) return;
       switch (data.action) {
         case 'document.delete':
-          await this.documentStore.delete(document, this.readOnly());
+          await this.store.delete(document, this.readOnly());
           break;
         case 'document.download':
-          await this.documentStore.download(document, false);
+          await this.store.download(document, false);
           break;
         case 'document.update':
-          await this.documentStore.update(document, this.readOnly());
+          await this.store.update(document, this.readOnly());
           break;
         case 'document.edit':
-          await this.documentStore.edit(document, this.readOnly());
+          await this.store.edit(document, this.readOnly());
           break;
         case 'document.showRevisions':
-          const revisions = await this.documentStore.getRevisions(document);
+          const revisions = await this.store.getRevisions(document);
           for (const rev of revisions) {
             console.log(` - revision: ${rev.bkey} / version: ${rev.version} / last update: ${rev.dateOfDocLastUpdate}`);
           }

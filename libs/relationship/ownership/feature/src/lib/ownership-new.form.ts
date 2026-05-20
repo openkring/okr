@@ -1,31 +1,21 @@
 import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { AppStore, OrgSelectModal, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@bk2/shared-models';
 import { DateInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
+import { OwnershipStore } from './ownership.store';
 
-const OwnershipNewFormStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      select_label: '@general.operation.select.label',
-      new_desc:     '@ownership.newDesc',
-    }),
-  })),
-);
 
 @Component({
   selector: 'bk-ownership-new-form',
   standalone: true,
-  providers: [OwnershipNewFormStore],
+  providers: [OwnershipStore],
   imports: [
     vestForms,
     AvatarPipe,
@@ -94,7 +84,7 @@ const OwnershipNewFormStore = signalStore(
   `
 })
 export class OwnershipNewForm {
-  protected readonly formStore = inject(OwnershipNewFormStore);
+  protected readonly formStore = inject(OwnershipStore);
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 

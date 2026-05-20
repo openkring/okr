@@ -71,6 +71,8 @@ export class LoginForm {
   // inputs
   public readonly vm = model.required<AuthCredentials>(); // vm always contains the current values of the form
   public readonly context = input<'login' | 'email' | 'password'>('login');
+  public readonly emailHelper = input.required<string>();
+  public readonly pwdHelper = input.required<string>();
 
   protected get suite() {
     switch (this.context()) {
@@ -83,9 +85,6 @@ export class LoginForm {
   // fields
   protected loginEmail = linkedSignal(() => this.vm().loginEmail);
   protected loginPassword = linkedSignal(() => this.vm().loginPassword);
-
-  protected emailHelper = computed(() => this.context() === 'email' ? '@input.emailEmail.helper' : '@input.loginEmail.helper');
-  protected pwdHelper = computed(() => this.context() === 'password' ? '@input.passwordPassword.helper' : '@input.loginPassword.helper');
 
   // errors
   protected emailErrors = signal<string[]>([]);

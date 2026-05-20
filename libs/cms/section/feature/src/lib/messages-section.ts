@@ -30,7 +30,7 @@ import { MessagesStore } from './messages-section.store';
         <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if(rooms().length === 0) {
-            <bk-empty-list message="@cms.messages.empty" />
+            <bk-empty-list [message]="store.i18n.messages_empty()" />
           } @else {
             <ion-list lines="inset">
               @for(room of rooms(); track room.roomId) {
@@ -44,7 +44,7 @@ import { MessagesStore } from './messages-section.store';
             </ion-list>
           }
           @if(showMoreButton() && !editMode()) {
-            <bk-more-button [url]="moreUrl()" />
+            <bk-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
           }
         </ion-card-content>
       </ion-card>
@@ -52,7 +52,7 @@ import { MessagesStore } from './messages-section.store';
   `,
 })
 export class MessagesSectionComponent {
-  protected readonly messagesStore = inject(MessagesStore);
+  protected readonly store = inject(MessagesStore);
   private readonly router = inject(Router);
 
   // inputs
@@ -66,13 +66,13 @@ export class MessagesSectionComponent {
   protected readonly moreUrl = computed(() => this.config()?.moreUrl ?? '');
   protected readonly showMoreButton = computed(() => this.moreUrl().length > 0);
   protected readonly maxItems = computed(() => this.config()?.maxItems ?? undefined);
-  protected readonly rooms = computed(() => this.messagesStore.rooms());
-  protected readonly isLoading = computed(() => this.messagesStore.isLoading());
+  protected readonly rooms = computed(() => this.store.rooms());
+  protected readonly isLoading = computed(() => this.store.isLoading());
 
   constructor() {
     effect(() => {
-      this.messagesStore.setConfig(this.maxItems());
-      debugMessage(`MessagesSection(): maxItems=${this.maxItems()}`, this.messagesStore.currentUser());
+      this.store.setConfig(this.maxItems());
+      debugMessage(`MessagesSection(): maxItems=${this.maxItems()}`, this.store.currentUser());
     });
   }
 

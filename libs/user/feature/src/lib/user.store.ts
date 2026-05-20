@@ -7,56 +7,83 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { ExportFormat, UserCollection, UserModel } from '@bk2/shared-models';
-import { exportXlsx } from '@bk2/shared-util-angular';
-import { chipMatches, generateRandomString, getDataRow, getSystemQuery, isUser, nameMatches } from '@bk2/shared-util-core';
+import { AppNavigationService, exportXlsx } from '@bk2/shared-util-angular';
+import { chipMatches, debugItemLoaded, generateRandomString, getDataRow, getSystemQuery, isUser, nameMatches } from '@bk2/shared-util-core';
 import { ExportFormats } from '@bk2/shared-categories';
 
 import { UserService } from '@bk2/user-data-access';
 import { UserEditModal } from './user-edit.modal';
+import { PFX } from './scope';
 
 export type UserListState = {
   searchTerm: string;
   selectedTag: string;
+  userKey: string | undefined;
 };
 
 export const initialState: UserListState = {
   searchTerm: '',
   selectedTag: '',
+  userKey: undefined
 };
 
-export const UserListStore = signalStore(
+export const UserStore = signalStore(
   withState(initialState),
   withProps(() => ({
     userService: inject(UserService),
     modalController: inject(ModalController),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
+    appNavigationService: inject(AppNavigationService),
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      user_plural:             '@user.plural',
-      list_header_login_email: '@user.field.loginEmail',
-      list_header_name:        '@user.field.name',
+      users:                    PFX + 'users',
+      empty:                    PFX + 'empty',
+      login_email:              PFX + 'loginEmail',
+      fbuser_edit_title:        PFX + 'fbuser.edit.title',
+      avatar_upload:            PFX + 'document.upload.avatar.title',
+      name:                     '@name',
+      as_title:                 PFX + 'actionsheet.title',
+      as_view:                  PFX + 'actionsheet.view',
+      as_create:                PFX + 'actionsheet.create',
+      as_edit:                  PFX + 'actionsheet.edit',
+      as_delete:                PFX + 'actionsheet.delete',
+      cancel:                   '@cancel',
+      ok:                       '@ok'
     }),
-    userResource: rxResource({
+    usersResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.appStore.tenantId()), 'loginEmail', 'asc');
+      }
+    }),
+
+    userResource: rxResource({
+      params: () => ({
+        userKey: store.userKey(),
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.userService.read(params.userKey).pipe(
+          debugItemLoaded('UserStore.user', params.currentUser)
+        );
       }
     })
   })),
 
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      users: computed(() => state.userResource.value()),
-      usersCount: computed(() => state.userResource.value()?.length ?? 0),
-      currentUser: computed(() => state.appStore.currentUser()),
+      users: computed(() => store.usersResource.value()),
+      usersCount: computed(() => store.usersResource.value()?.length ?? 0),
+      user: computed(() => store.userResource.value() ?? new UserModel(store.appStore.tenantId())),
+      currentUser: computed(() => store.appStore.currentUser()),
       filteredUsers: computed(() => 
-        state.userResource.value()?.filter((user: UserModel) => 
-          nameMatches(user.index, state.searchTerm()) &&
-          chipMatches(user.tags, state.selectedTag()))
+        store.usersResource.value()?.filter((user: UserModel) => 
+          nameMatches(user.index, store.searchTerm()) &&
+          chipMatches(user.tags, store.selectedTag()))
       ),
-      isLoading: computed(() => state.userResource.isLoading()), 
+      isLoading: computed(() => store.usersResource.isLoading() && store.userResource.isLoading()), 
     };
   }),
 
@@ -67,7 +94,7 @@ export const UserListStore = signalStore(
       },
 
       reload() {
-        store.userResource.reload()
+        store.usersResource.reload()
       },
       
       /******************************** setters (filter) ******************************************* */
@@ -79,6 +106,10 @@ export const UserListStore = signalStore(
         patchState(store, { selectedTag });
       },
 
+      setUserKey(userKey: string): void {
+        patchState(store, { userKey });
+      },
+
       /******************************** getters ******************************************* */
       getTags(): string {
         return store.appStore.getTags('user');
@@ -88,7 +119,7 @@ export const UserListStore = signalStore(
       async add(): Promise<void> {
         // not sure whether we should implement this
         // AOC function ? only depending on an existing person and/or firebase account ?
-        console.log('UserListStore.add() is not yet implemented.');
+        console.log('UserStore.add() is not yet implemented.');
       },
 
       async edit(user: UserModel, readOnly = true): Promise<void> {
@@ -130,13 +161,31 @@ export const UserListStore = signalStore(
             keys = ['loginEmail', 'firstName', 'lastName', 'roles']
             break;
           default:
-            console.warn(`UserListStore.export: type ${type} not supported.`);
+            console.warn(`UserStore.export: type ${type} not supported.`);
             return;
         }
         for (const user of store.users() ?? []) {
           table.push(getDataRow<UserModel>(user, keys));
         }
         exportXlsx(table, fn, tableName);
+      },
+
+      async save(user: UserModel): Promise<void> {
+        await (!user.bkey ? 
+          store.userService.create(user, store.currentUser()) : 
+          store.userService.update(user, store.currentUser()));
+        store.appNavigationService.back();
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
       }
     }
   }),

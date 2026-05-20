@@ -34,7 +34,7 @@ import { NewsStore } from './news-section.store';
         <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (news().length === 0) {
-            <bk-empty-list message="@cms.news.empty" />
+            <bk-empty-list [message]="store.i18n.empty()" />
           } @else {
             <ion-list lines="none">
               @for (article of news(); track article.bkey) {
@@ -59,7 +59,7 @@ import { NewsStore } from './news-section.store';
                 </ion-item>
               }
               @if(showMoreButton() && !editMode()) {
-                <bk-more-button [url]="moreUrl()" />
+                <bk-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
               }
             </ion-list>
           }
@@ -69,7 +69,7 @@ import { NewsStore } from './news-section.store';
   `,
 })
 export class NewsSectionComponent implements OnInit {
-  protected newsStore = inject(NewsStore);
+  protected store = inject(NewsStore);
   private readonly platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private actionSheetController = inject(ActionSheetController);
@@ -84,17 +84,17 @@ export class NewsSectionComponent implements OnInit {
   protected readonly showMoreButton = computed(() => this.moreUrl().length > 0);
   protected readonly maxItems = computed(() => this.config()?.maxItems);
   protected readonly blogPageKey = computed(() => this.config()?.blogPageKey);
-  protected readonly news = computed(() => this.newsStore.news());
-  protected currentUser = computed(() => this.newsStore.currentUser());
-  protected isLoading = computed(() => this.newsStore.isLoading());
+  protected readonly news = computed(() => this.store.news());
+  protected currentUser = computed(() => this.store.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
 
   protected readonly imageStyle = IMAGE_STYLE_SHAPE;
 
-  private imgixBaseUrl = this.newsStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
-      this.newsStore.setConfig(this.blogPageKey(), this.maxItems());
+      this.store.setConfig(this.blogPageKey(), this.maxItems());
       debugMessage(`NewsSection: blogPageKey=${this.blogPageKey()}, maxItems=${this.maxItems()}`, this.currentUser());
     });
   }
@@ -136,8 +136,8 @@ export class NewsSectionComponent implements OnInit {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'news.view': await this.newsStore.edit(article, true); break;
-        case 'news.edit': await this.newsStore.edit(article, false); break;
+        case 'news.view': await this.store.edit(article, true); break;
+        case 'news.edit': await this.store.edit(article, false); break;
       }
     }
   }

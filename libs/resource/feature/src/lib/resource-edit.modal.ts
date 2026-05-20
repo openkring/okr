@@ -1,11 +1,9 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
 import { CategorySelect, ChangeConfirmation, Header, IconToolbar } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 import { DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
@@ -13,6 +11,7 @@ import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
 
 import { ResourceForm } from '@bk2/resource-ui';
 import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@bk2/resource-util';
+import { ResourceStore } from './resource.store';
 
 @Component({
   selector: 'bk-resource-edit-modal',
@@ -22,6 +21,7 @@ import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservab
     ResourceForm, IconToolbar, CommentsAccordion, CategorySelect,
     IonContent, IonAccordionGroup, IonGrid, IonRow, IonCol
   ],
+  providers: [ResourceStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -42,7 +42,7 @@ import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservab
         <bk-resource-form
           [formData]="formData" 
           (formDataChange)="onFormDataChange($event)"
-          [currentUser]="appStore.currentUser()"
+          [currentUser]="store.currentUser()"
           [subTypes]="subTypes()"
           [usages]="usages()"
           [allTags]="tags()"
@@ -68,7 +68,7 @@ import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservab
 })
 export class ResourceEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly appStore = inject(AppStore);
+  protected readonly store = inject(ResourceStore);
 
   // inputs
   public resource = input.required<ResourceModel>();
@@ -84,31 +84,31 @@ export class ResourceEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('resource.type.' + this.type(), this.resource()?.bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.resource()?.bkey));
   protected toolbarTitle = computed(() => this.formData()?.name);
   protected readonly parentKey = computed(() => `${ResourceModelName}.${this.resourceKey()}`);
-  protected currentUser = computed(() => this.appStore.currentUser());
-  protected types = computed(() => this.appStore.getCategory('resource_type'));
+  protected currentUser = computed(() => this.store.currentUser());
+  protected types = computed(() => this.store.getResourceTypes());
   protected subTypes = computed(() => this.getSubtypes());
   protected usages = computed(() => this.getUsages());
-  protected tags = computed(() => this.appStore.getTags(`${ResourceModelName}.${this.type()}`));
-  protected tenantId = computed(() => this.appStore.env.tenantId);
+  protected tags = computed(() => this.store.getTags(this.type()));
+  protected tenantId = computed(() => this.store.tenantId());
   protected type = linkedSignal(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
   protected resourceKey = computed(() => this.resource()?.bkey ?? '');
   protected listId = computed(() => `r_${this.resourceKey()}`);
 
-  private rowingBoatIcon = computed(() => this.appStore.getCategoryIcon('rboat_type', this.formData()?.subType));
-  private resourceIcon = computed(() => this.appStore.getCategoryIcon('resource_type', this.formData()?.type));
+  private rowingBoatIcon = computed(() => this.store.appStore.getCategoryIcon('rboat_type', this.formData()?.subType));
+  private resourceIcon = computed(() => this.store.appStore.getCategoryIcon('resource_type', this.formData()?.type));
   protected icon = computed(() => this.type() === 'rboat' ? this.rowingBoatIcon() : this.resourceIcon());
 
   private getUsages(): CategoryListModel | undefined {
     const usageName = getUsageNameForResourceType(this.type());
-    if (usageName) return this.appStore.getCategory(usageName);
+    if (usageName) return this.store.appStore.getCategory(usageName);
   }
 
   private getSubtypes(): CategoryListModel | undefined {
     const categoryName = getCategoryNameForResourceType(this.type());
-    if (categoryName) return this.appStore.getCategory(categoryName);
+    if (categoryName) return this.store.appStore.getCategory(categoryName);
   }
 
   /******************************* actions *************************************** */
@@ -137,10 +137,21 @@ export class ResourceEditModal {
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.appStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected isReservable(resourceType: string): boolean {
     return isReservable(resourceType);
+  }
+
+  protected getTitleLabel(readOnly: boolean, key: string): string {
+    if (this.readOnly()) {
+      return this.store.i18n.view_label();
+    }
+    if (key.length > 0) {
+      return this.store.i18n.edit_label();
+    } else {
+      return this.store.i18n.create_label();
+    }
   }
 }

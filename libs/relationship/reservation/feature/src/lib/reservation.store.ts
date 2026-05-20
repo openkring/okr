@@ -6,11 +6,11 @@ import { of, take } from 'rxjs';
 
 import { yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
 import { confirm } from '@bk2/shared-util-angular';
 import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isPerson, isResource, isValidAt, nameMatches } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { ReservationService } from '@bk2/relationship-reservation-data-access';
@@ -18,6 +18,8 @@ import { isReservation } from '@bk2/relationship-reservation-util';
 
 import { ReservationEditModal } from './reservation-edit.modal';
 import { PFX } from './scope';
+import { CalEventEditModal } from '@bk2/calevent-feature';
+import { isCalEvent } from '@bk2/calevent-util';
 
 export type ReservationState = {
   listId: string;       // filter format: t_resourceType, r_resourceKey, p_reserverKey, or 'all'
@@ -63,14 +65,24 @@ export const ReservationStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
+      reservations:            PFX + 'reservations',
+      empty:                   PFX + 'empty',
+      reldesc1:                PFX + 'reldesc1',
+      reldesc2:                PFX + 'reldesc2',
+      resource:                PFX + 'resource',
+      name:                    PFX + 'name',
+      valid_from:              PFX + 'validFrom',
+      state:                   PFX + 'state',
+      reserver:                PFX + 'reserver',
       delete_confirm:          PFX + 'delete.confirm',
+      as_title:                PFX + 'actionsheet.title',
+      as_view:                 PFX + 'actionsheet.view',
+      as_edit:                 PFX + 'actionsheet.edit',
+      as_end:                  PFX + 'actionsheet.end',
+      as_delete:               PFX + 'actionsheet.delete',
+      as_create:               PFX + 'actionsheet.create',
       ok:                      '@ok',
-      cancel:                  '@cancel',
-      list_header_resource:    '@reservation.list.header.resource',
-      list_header_name:        '@reservation.list.header.name',
-      list_header_valid_from:  '@reservation.list.header.validFrom',
-      list_header_state:       '@reservation.list.header.state',
-      list_header_reserver:    '@reservation.list.header.reserver',
+      cancel:                  '@cancel'
     }),
 
     allReservationsResource: rxResource({
@@ -366,6 +378,80 @@ export const ReservationStore = signalStore(
       async export(type: string): Promise<void> {
         console.log(`ReservationStore.export(${type}) is not yet implemented.`);
       },
+
+      async selectCalevent(readOnly: boolean, periodicities: CategoryListModel, calevent?: CalEventModel): Promise<CalEventModel | undefined> {
+        const modal = await store.modalController.create({
+          component: CalEventEditModal,
+          cssClass: 'wide-modal',
+          componentProps: {
+                calevent: calevent ?? new CalEventModel(store.tenantId()),
+                currentUser: store.currentUser(),
+                types: store.appStore.getCategory('calevent_type'),
+                periodicities,
+                tags: store.appStore.getTags('calevent'),
+                tenantId: store.tenantId(),
+                locale: store.appStore.appConfig().locale,
+                readOnly
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
+        if (role === 'confirm' && data) {
+          if (isCalEvent(data, store.tenantId())) {
+            return data;
+          }
+        }
+        return undefined;
+      },
+
+      async selectResource(): Promise<ResourceModel | undefined> {
+        const modal = await store.modalController.create({
+          component: ResourceSelectModal,
+          cssClass: 'list-modal',
+          componentProps: {
+            selectedTag: '',
+            currentUser: store.currentUser()
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
+        if (role === 'confirm' && data) {
+          if (isResource(data, store.tenantId())) {
+            return data;
+          }
+        }
+        return undefined;
+      },
+
+      async selectPerson(): Promise<PersonModel | undefined> {
+        const modal = await store.modalController.create({
+          component: PersonSelectModal,
+          cssClass: 'list-modal',
+          componentProps: {
+            selectedTag: '',
+            currentUser: store.currentUser()
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
+        if (role === 'confirm' && data) {
+          if (isPerson(data, store.tenantId())) {
+            return data;
+          }
+        }
+        return undefined;
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
+      }
     }
   }),
 );

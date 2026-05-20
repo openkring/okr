@@ -4,7 +4,6 @@ import { IonContent } from '@ionic/angular/standalone';
 import { DocumentModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { DocumentForm } from '@bk2/document-ui';
 import { DocumentStore } from './document.store';
@@ -44,7 +43,7 @@ import { DocumentStore } from './document.store';
   `
 })
 export class DocumentEditPage {
-  private readonly documentStore = inject(DocumentStore);
+  private readonly store = inject(DocumentStore);
 
   // inputs
   public documentKey = input.required<string>();
@@ -55,27 +54,27 @@ export class DocumentEditPage {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected document = linkedSignal(() => this.documentStore.document() ?? new DocumentModel(this.documentStore.tenantId()));
+  protected document = linkedSignal(() => this.store.document() ?? new DocumentModel(this.store.tenantId()));
   protected formData = linkedSignal(() => safeStructuredClone(this.document()));
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('document', this.document()?.bkey, this.isReadOnly()));
-  protected currentUser = computed(() => this.documentStore.currentUser());
-  protected tags = computed(() => this.documentStore.getTags());
-  protected types = computed(() => this.documentStore.getTypes());
-  protected sources = computed(() => this.documentStore.getSources());
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.document()?.bkey));
+  protected currentUser = computed(() => this.store.currentUser());
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.store.getTypes());
+  protected sources = computed(() => this.store.getSources());
 
   constructor() {
     effect(() => {
-      this.documentStore.setDocumentKey(this.documentKey());
+      this.store.setDocumentKey(this.documentKey());
     }); 
   }
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.documentStore.save(this.document());
-    this.documentStore.appNavigationService.back();
+    await this.store.save(this.document());
+    this.store.appNavigationService.back();
   }
 
   public async cancel(): Promise<void> {

@@ -4,9 +4,9 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { CategoryListModel, SectionModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header} from '@bk2/shared-ui';
 import { coerceBoolean, deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore } from '@bk2/shared-feature';
 import { SectionForm } from '@bk2/cms-section-ui';
+
+import { SectionStore } from './section.store';
 
 
 /**
@@ -47,7 +47,7 @@ import { SectionForm } from '@bk2/cms-section-ui';
 })
 export class SectionEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly appStore = inject(AppStore);
+  protected readonly store = inject(SectionStore);
 
   // inputs
   public section = input.required<SectionModel>();
@@ -68,14 +68,13 @@ export class SectionEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('content.section', this.section().bkey, this.isReadOnly()));
-  protected tenantId = computed(() => this.appStore.tenantId());
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.section().bkey));
+  protected tenantId = computed(() => this.store.tenantId());
 
   constructor() {
     effect(() => {
       const orig = this.section();
       this.initialData.set(safeStructuredClone(orig));
-      console.log('SectionEditModal initialized', orig);
     });
     effect(() => {
       const current = this.formData();

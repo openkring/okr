@@ -10,7 +10,7 @@ import { map, switchMap } from 'rxjs/operators';
 import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, MenuItemModel, TaskCollection, TaskModel } from '@bk2/shared-models';
-import { debugListLoaded, die, getSystemQuery, nameMatches, safeStructuredClone, warn } from '@bk2/shared-util-core';
+import { die, getSystemQuery, nameMatches, safeStructuredClone, warn } from '@bk2/shared-util-core';
 import { AppNavigationService, isInSplitPane, navigateByUrl, VersionCheckService } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
 
@@ -56,22 +56,22 @@ export const _MenuStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      // menu-list.ts
-      items:                PFX + 'items',
-      list_description:     PFX + 'description',
-      list_name:            PFX + 'name',
-      list_link:            PFX + 'link',
-      list_action:          PFX + 'action',
+      menus:                PFX + 'menus',
+      submenus:             PFX + 'submenus',
+      description:          PFX + 'description',
+      name:                 '@name',
+      link:                 PFX + 'link',
+      action:               PFX + 'action',
       empty:                PFX + 'empty',
-      as_title:             PFX + 'actionsheet.title',
-      as_edit:              PFX + 'actionsheet.edit',
-      as_delete:            PFX + 'actionsheet.delete',
-      cancel:               '@operation.cancel',
-      // menu.modal.ts → bk-menu-item-form
-      form_menu_items_title: PFX + 'form.menuItems.title',
-      form_add_label:       PFX + 'form.menuItems.add',
-      form_url_placeholder: PFX + 'form.url.placeholder',
-      form_url_helper:      PFX + 'form.url.helper',
+      as_title:             '@actionsheet.title',
+      edit:                 PFX + 'edit',
+      view:                 PFX + 'view',
+      create:               PFX + 'create',
+      delete:               PFX + 'delete',
+      add_submenu:            PFX + 'add.submenu',
+      url_placeholder:      PFX + 'url.placeholder',
+      url_helper:           PFX + 'url.helper',
+      cancel:               '@cancel'
     }),
     menuItemsResource: rxResource({
       stream: () => {
@@ -115,20 +115,21 @@ export const _MenuStore = signalStore(
     }),
   })),
 
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      menuItems: computed(() => state.menuItemsResource.value()),
-      menuItemsCount: computed(() => state.menuItemsResource.value()?.length ?? 0),
+      menuItems: computed(() => store.menuItemsResource.value()),
+      menuItemsCount: computed(() => store.menuItemsResource.value()?.length ?? 0),
       filteredMenuItems: computed(() => 
-        state.menuItemsResource.value()?.filter((menuItem: MenuItemModel) => 
-          nameMatches(menuItem.index, state.searchTerm()) && 
-          nameMatches(menuItem.action, state.selectedCategory())   
+        store.menuItemsResource.value()?.filter((menuItem: MenuItemModel) => 
+          nameMatches(menuItem.index, store.searchTerm()) && 
+          nameMatches(menuItem.action, store.selectedCategory())   
       )),
-      menu: computed(() => state.menuResource.value() ?? undefined),
-      currentUser: computed(() => state.appStore.currentUser()),
-      isMenuLoading: computed(() => state.menuResource.isLoading()),
-      isLoading: computed(() => state.menuItemsResource.isLoading() || state.menuResource.isLoading()),
-      notificationCount: computed(() => state.notificationCountResource.value() ?? 0),
+      menu: computed(() => store.menuResource.value() ?? undefined),
+      currentUser: computed(() => store.appStore.currentUser()),
+      tenantId: computed(() => store.appStore.tenantId()),
+      isMenuLoading: computed(() => store.menuResource.isLoading()),
+      isLoading: computed(() => store.menuItemsResource.isLoading() || store.menuResource.isLoading()),
+      notificationCount: computed(() => store.notificationCountResource.value() ?? 0),
     };
   }),
 
@@ -205,10 +206,10 @@ export const _MenuStore = signalStore(
             types: this.getTypes(),
             readOnly,
             i18n: {
-              title:          store.i18n.form_menu_items_title(),
-              addLabel:       store.i18n.form_add_label(),
-              urlPlaceholder: store.i18n.form_url_placeholder(),
-              urlHelper:      store.i18n.form_url_helper(),
+              title:          store.i18n.submenus(),
+              addLabel:       store.i18n.add_submenu(),
+              urlPlaceholder: store.i18n.url_placeholder(),
+              urlHelper:      store.i18n.url_helper(),
             },
           }
         });
@@ -279,7 +280,18 @@ export const _MenuStore = signalStore(
           default:
             die('MenuStore.selectMenuItem: invalid MenuAction=' + menuItem.action);
         }
-      }
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.edit();
+        } else {
+          return store.i18n.create();
+        }
+      },
     }
   })
 );

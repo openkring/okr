@@ -14,6 +14,7 @@ import { TransferService } from '@bk2/relationship-transfer-data-access';
 import { isTransfer } from '@bk2/relationship-transfer-util';
 
 import { TransferEditModal } from './transfer-edit.modal';
+import { PFX } from './scope';
 
 export type TransferState = {
   searchTerm: string;
@@ -43,13 +44,20 @@ export const TransferStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      plural:                    '@transfer.plural',
-      list_header_date:          '@transfer.list.header.dateOfTransfer',
-      list_header_subject:       '@transfer.list.header.subject',
-      list_header_object:        '@transfer.list.header.object',
-      list_header_resource:      '@transfer.list.header.resource',
-      list_header_name:          '@transfer.list.header.name',
-      list_header_state:         '@transfer.list.header.state',
+      transfers:                    PFX + 'transfers',
+      date:                         PFX + 'dateOfTransfer',
+      subject:                      PFX + 'subject',
+      object:                       PFX + 'object',
+      resource:                     PFX + 'resource',
+      name:                         PFX + 'name',
+      state:                        PFX + 'state',
+      as_title:                     PFX + 'actionsheet.title',
+      as_edit:                      PFX + 'actionsheet.edit',
+      as_view:                      PFX + 'actionsheet.view',
+      as_delete:                    PFX + 'actionsheet.delete',
+      as_create:                    PFX + 'actionsheet.create',
+      cancel:                       '@cancel',
+      ok:                           '@ok'
     }),
 
     transfersResource: rxResource({
@@ -181,11 +189,22 @@ export const TransferStore = signalStore(
       },
 
       async selectPersonAvatar(): Promise<AvatarInfo | undefined> {
-        return await store.modelSelectService.selectPersonAvatar('','');
+        return await store.modelSelectService.selectPersonAvatar();
       },
 
       async selectResourceAvatar(): Promise<AvatarInfo | undefined> {
         return await store.modelSelectService.selectResourceAvatar();
+      },
+
+      getTitleLabel(readOnly: boolean, key: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
       }
     }
   })

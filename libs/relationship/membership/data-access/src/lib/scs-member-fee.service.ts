@@ -19,12 +19,12 @@ export class ScsMemberFeeService {
   private readonly activityService = inject(ActivityService);
   private readonly i18nService = inject(I18nService);
   private readonly i18n = this.i18nService.translateAll({
-    fee_create_conf:  PFX + 'operation.fee.create.conf',
-    fee_create_error: PFX + 'operation.fee.create.error',
-    fee_update_conf:  PFX + 'operation.fee.update.conf',
-    fee_update_error: PFX + 'operation.fee.update.error',
-    fee_delete_conf:  PFX + 'operation.fee.delete.conf',
-    fee_delete_error: PFX + 'operation.fee.delete.error',
+    fee_create_conf:  PFX + 'fee.create.conf',
+    fee_create_error: PFX + 'fee.create.error',
+    fee_update_conf:  PFX + 'fee.update.conf',
+    fee_update_error: PFX + 'fee.update.error',
+    fee_delete_conf:  PFX + 'fee.delete.conf',
+    fee_delete_error: PFX + 'fee.delete.error',
   });
 
   public list(): Observable<ScsMemberFeesModel[]> {

@@ -3,15 +3,15 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 import { MenuItemModel, PageModel, RoleName, SectionModel } from '@bk2/shared-models';
 import { Spinner } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
-
-import { Menu, MenuStore } from '@bk2/cms-menu-feature';
-
-import { PageStore } from './page.store';
-import { SectionStore } from '@bk2/cms-section-feature';
-import { DependencyNode, MenuGraphStore } from './menu-graph.store';
-import { MenuGraphNode } from './menu-graph-node';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { error } from '@bk2/shared-util-angular';
+
+import { Menu, MenuStore } from '@bk2/cms-menu-feature';
+import { SectionStore } from '@bk2/cms-section-feature';
+
+import { DependencyNode, MenuGraphStore } from './menu-graph.store';
+import { MenuGraphNode } from './menu-graph-node';
+import { PageStore } from './page.store';
 
 /**
  * GraphPage renders the CMS dependency tree:
@@ -65,7 +65,7 @@ import { error } from '@bk2/shared-util-angular';
       <ion-header>
         <ion-toolbar color="secondary">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-          <ion-title>{{ pageStore.page()?.title }}</ion-title>
+          <ion-title>{{ store.page()?.title }}</ion-title>
           @if(hasRole('contentAdmin')) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -91,14 +91,14 @@ import { error } from '@bk2/shared-util-angular';
         <bk-spinner />
       } @else if (!graphStore.dependencyTree()) {
         <ion-item lines="none">
-          <ion-label>{{ pageStore.i18n.graph_nomain() }}</ion-label>
+          <ion-label>{{ store.i18n.graph_nomain() }}</ion-label>
         </ion-item>
       } @else {
         <ion-item lines="none">
-          <ion-label class="ion-text-wrap">{{ pageStore.i18n.graph_description() }}</ion-label>
+          <ion-label class="ion-text-wrap">{{ store.i18n.graph_description() }}</ion-label>
         </ion-item>
         <ion-item lines="none">
-          <ion-label class="ion-text-wrap">{{ pageStore.i18n.graph_description2() }}</ion-label>
+          <ion-label class="ion-text-wrap">{{ store.i18n.graph_description2() }}</ion-label>
         </ion-item>
 
         <!-- Legend -->
@@ -122,7 +122,7 @@ import { error } from '@bk2/shared-util-angular';
   `
 })
 export class GraphPage {
-  protected pageStore  = inject(PageStore);
+  protected store  = inject(PageStore);
   protected graphStore = inject(MenuGraphStore);
   private menuStore    = inject(MenuStore);
   private sectionStore = inject(SectionStore);
@@ -133,29 +133,29 @@ export class GraphPage {
   public showMenu = input(true);
 
   // derived signals
-  protected popupId = computed(() => 'c_graphpage_' + this.pageStore.page()?.bkey);
+  protected popupId = computed(() => 'c_graphpage_' + this.store.page()?.bkey);
 
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'exportRaw': await this.pageStore.export("raw"); break;
-      case 'exportXml': await this.pageStore.export("xml"); break;
+      case 'exportRaw': await this.store.export("raw"); break;
+      case 'exportXml': await this.store.export("xml"); break;
       default: error(undefined, `GraphPage.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 
   /** Dispatch to the appropriate store's edit() method based on node type. */
   protected async onNodeEdit(node: DependencyNode): Promise<void> {
-    if (!hasRole('contentAdmin', this.pageStore.currentUser())) return;
+    if (!hasRole('contentAdmin', this.store.currentUser())) return;
 
     switch (node.nodeType) {
       case 'menu':
         await this.menuStore.edit(node.model as MenuItemModel, false);
         break;
       case 'page':
-        await this.pageStore.edit(node.model as PageModel, false);
+        await this.store.edit(node.model as PageModel, false);
         break;
       case 'section':
         this.sectionStore.setSectionId((node.model as SectionModel).bkey);
@@ -165,6 +165,6 @@ export class GraphPage {
   }
 
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.pageStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }

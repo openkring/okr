@@ -1,24 +1,21 @@
 {
-  "input": {
-    "calendarName": {
-      "label": "Kalender",
-      "description": "In diesen Kalendern wird das Ereignis eingetragen.",
-      "addLabel": "Kalendername hinzufügen"
-    },
-    "taskQuickEntry": {
-      "label": "Schnelleingabe",
-      "placeholder": "Text [@Person] [//Datum]"
-    }
+  "tasks": "Todos",
+  "empty": "Keine Todos gefunden.",
+  "calendarName": {
+    "label": "Kalender",
+    "description": "In diesen Kalendern wird das Ereignis eingetragen.",
+    "addLabel": "Kalendername hinzufügen"
   },
-  "task": {
-    "plural": "Todos",
-    "field": {
-      "empty": "Keine Todos gefunden."
-    }
+  "taskQuickEntry": {
+    "label": "Schnelleingabe",
+    "placeholder": "Text [@Person] [//Datum]"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion",
+    "view": "Todo Details ansehen",
+    "edit": "Todo ändern",
+    "create": "Neues Todo erstellen",
+    "delete": "Todo löschen",
+    "done": "Todo auf Erledigt setzen"
   }
 }

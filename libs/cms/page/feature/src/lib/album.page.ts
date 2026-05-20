@@ -13,6 +13,7 @@ import { PageStore } from './page.store';
 @Component({
   selector: 'bk-album-page',
   standalone: true,
+  providers: [PageStore],
   imports: [
     Header, Spinner, AlbumSectionComponent,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonContent
@@ -43,7 +44,7 @@ import { PageStore } from './page.store';
   `
 })
 export class AlbumPage {
-  private readonly pageStore = inject(PageStore);
+  private readonly store = inject(PageStore);
 
   // inputs
   public contextMenuName = input<string>();
@@ -55,7 +56,7 @@ export class AlbumPage {
   public showMenu = input(true);
 
   protected headerTitle = computed(() => extractFirstPartOfOptionalTupel(this.id(), '@'));
-  private tenantId = computed(() => this.pageStore.tenantId());
+  private tenantId = computed(() => this.store.tenantId());
 
   protected section = computed(() => {
     const section = createSection('album', this.tenantId()) as AlbumSection;

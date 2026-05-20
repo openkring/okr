@@ -1,21 +1,10 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { IonChip, IonInfiniteScroll, IonInfiniteScrollContent, IonLabel, IonSearchbar, IonToolbar } from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
 
 import { SectionModel, UserModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { SectionDispatcher } from '@bk2/cms-section-feature';
-
-const BlogStreamStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      search: '@cms.blog.search',
-      filter_all: '@cms.blog.filter.all',
-    }),
-  })),
-);
+import { PageStore } from './page.store';
 
 const PAGE_SIZE = 10;
 
@@ -26,11 +15,11 @@ const PAGE_SIZE = 10;
 @Component({
   selector: 'bk-blog-stream',
   standalone: true,
+  providers: [PageStore],
   imports: [
     SectionDispatcher,
     IonToolbar, IonChip, IonLabel, IonSearchbar, IonInfiniteScroll, IonInfiniteScrollContent,
   ],
-  providers: [BlogStreamStore],
   styles: [`
     .filter-bar { position: sticky; top: 0; z-index: 10; background: var(--ion-background-color); }
     .chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 8px 8px; }
@@ -91,7 +80,7 @@ const PAGE_SIZE = 10;
   `
 })
 export class BlogStream {
-  protected readonly store = inject(BlogStreamStore);
+  protected readonly store = inject(PageStore);
 
   public sections = input<SectionModel[]>([]);
   public currentUser = input<UserModel | undefined>();

@@ -1,25 +1,17 @@
 {
-  "account": {
-    "plural": "Konti"
-  },
-  "finance": {
-    "account": {
-      "field": {
-        "selectRoot": "Kontoplan wählen",
-        "selectRootHint": "Bitte zuerst einen Kontoplan wählen.",
-        "empty": "Keine Konti gefunden."
-      },
-      "list": {
-        "header": {
-          "id": "Konto Nr",
-          "name": "Konto Name"
-        }
-      }
-    }
+  "accounts": "Konti",
+  "empty": "Keine Konti gefunden.",
+  "id": "Konto Nr.",
+  "name": "Konto Name",
+  "select": {
+    "root": "Kontoplan wählen",
+    "hint": "Bitte zuerst einen Kontoplan wählen."
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion",
+    "view": "Konto Details ansehen",
+    "edit": "Konto editieren",
+    "create": "Neues Konto eröffnen",
+    "delete": "Konto löschen"
   }
 }

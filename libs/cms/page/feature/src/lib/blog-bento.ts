@@ -11,7 +11,9 @@ import { SectionDispatcher } from '@bk2/cms-section-feature';
 @Component({
   selector: 'bk-blog-bento',
   standalone: true,
-  imports: [SectionDispatcher],
+  imports: [
+    SectionDispatcher
+  ],
   styles: [`
     .bento-grid {
       display: grid;

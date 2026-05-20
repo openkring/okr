@@ -7,5 +7,8 @@
     "label": "Profil ändern",
     "error": "Die Änderungen konnten nicht gespeichert werden",
     "conf": "Die Änderungen wurden gespeichert."
-  }
+  },
+  "view": "Profil Details ansehen",
+  "edit": "Profil ändern",
+  "create": "Profil kreieren ? das sollte nicht gehen !"
 }

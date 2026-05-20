@@ -11,6 +11,9 @@ import { getSystemQuery } from '@bk2/shared-util-core';
 
 import { ActivityService } from '@bk2/activity-data-access';
 import { ActivityViewModal } from '@bk2/activity-feature';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { PFX } from './scope';
 
 export type ActivitiesSectionState = {
   maxItems: number | undefined;
@@ -26,8 +29,14 @@ export const ActivitiesSectionStore = signalStore(
     activityService: inject(ActivityService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      empty:      PFX + 'activity.empty',
+      more:       '@more'
+    }),
+
     activitiesResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),

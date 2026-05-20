@@ -34,8 +34,15 @@ export const CategoryStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      plural: PFX + 'plural',
-      empty:  PFX + 'field.empty',
+      categories:           PFX + 'categories',
+      empty:                PFX + 'empty',
+      view:                 PFX + 'view',
+      edit:                 PFX + 'edit',
+      create:               PFX + 'create',
+      delete:               PFX + 'delete',
+      as_title:             '@actionsheet.title',
+      ok: '@ok',
+      cancel: '@cancel'
     }),
   })),
   withProps((store) => ({
@@ -51,17 +58,18 @@ export const CategoryStore = signalStore(
     })
   })),
 
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      categories: computed(() => state.categoriesResource.value()),
-      categoriesCount: computed(() => state.categoriesResource.value()?.length ?? 0), 
+      categories: computed(() => store.categoriesResource.value()),
+      categoriesCount: computed(() => store.categoriesResource.value()?.length ?? 0), 
       filteredCategories: computed(() => 
-        state.categoriesResource.value()?.filter((cat: CategoryListModel) => 
-          nameMatches(cat.index, state.searchTerm()) &&
-          chipMatches(cat.tags, state.selectedTag()))
+        store.categoriesResource.value()?.filter((cat: CategoryListModel) => 
+          nameMatches(cat.index, store.searchTerm()) &&
+          chipMatches(cat.tags, store.selectedTag()))
       ),
-      isLoading: computed(() => state.categoriesResource.isLoading()),
-      currentUser: computed(() => state.appStore.currentUser()),
+      isLoading: computed(() => store.categoriesResource.isLoading()),
+      currentUser: computed(() => store.appStore.currentUser()),
+      tenantId: computed(() => store.appStore.tenantId())
     };
   }),
 
@@ -124,7 +132,18 @@ export const CategoryStore = signalStore(
 
       async export(type: string): Promise<void> {
         console.log(`CategoryStore.export(${type}) is not yet implemented.`);
-      }
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.edit();
+        } else {
+          return store.i18n.create();
+        }
+      },
     }
   })
 );

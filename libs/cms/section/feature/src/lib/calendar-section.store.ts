@@ -38,11 +38,12 @@ export const CalendarStore = signalStore(
     modalController: inject(ModalController),
     calEventService: inject(CalEventService),
     i18n: inject(I18nService).translateAll({
-      update_calevent_conf:       PFX + 'update.calevent.conf',
-      update_calevent_error:      PFX + 'update.calevent.error',
-      update_invitation_conf:     PFX + 'update.invitation.conf',
-      update_invitation_error:    PFX + 'update.invitation.error',
-      calevent_plural:            '@calevent.plural',
+      update_calevent_conf:       PFX + 'calevent.update.conf',
+      update_calevent_error:      PFX + 'calevent.update.error',
+      update_invitation_conf:     PFX + 'invitation.update.conf',
+      update_invitation_error:    PFX + 'invitation.update.error',
+      calevents:                  PFX + 'calevent.calevents',
+      more:                       '@more'
     }),
   })),
   withProps((store) => ({

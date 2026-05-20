@@ -4,11 +4,9 @@ import { IonContent, ModalController } from "@ionic/angular/standalone";
 import { AddressModel, CategoryListModel, UserModel } from "@bk2/shared-models";
 import { ChangeConfirmation, Header } from "@bk2/shared-ui";
 import { coerceBoolean, safeStructuredClone } from "@bk2/shared-util-core";
-import { getTitleLabel } from "@bk2/shared-util-angular";
 
 import { AddressForm } from "@bk2/subject-address-ui";
-
-import { PFX } from './scope';
+import { AddressStore } from "./addresses.store";
 
 @Component({
   selector: 'bk-address-edit-modal',
@@ -16,7 +14,8 @@ import { PFX } from './scope';
   imports: [
     AddressForm, Header, ChangeConfirmation,
     IonContent
-  ],
+  ],  
+  providers: [AddressStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -45,6 +44,7 @@ import { PFX } from './scope';
 })
 export class AddressEditModal {
   private readonly modalController = inject(ModalController);
+  protected readonly store = inject(AddressStore);
 
   // inputs
   public address = input.required<AddressModel>();
@@ -64,7 +64,7 @@ export class AddressEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel(PFX, this.address().bkey, this.isReadOnly()));
+  protected readonly headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.address().bkey));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -81,5 +81,16 @@ export class AddressEditModal {
 
   protected onFormDataChange(formData: AddressModel): void {
     this.formData.set(formData);
+  }
+
+  protected getTitleLabel(readOnly: boolean, key: string): string {
+    if (this.readOnly()) {
+      return this.store.i18n.view_label();
+    }
+    if (key.length > 0) {
+      return this.store.i18n.edit_label();
+    } else {
+      return this.store.i18n.create_label();
+    }
   }
 }

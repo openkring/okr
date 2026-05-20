@@ -45,7 +45,7 @@ import { TasksStore } from './tasks-section.store';
             <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" [count]="numberOfTasks()" />
             <ion-card-content>
                 @if(numberOfTasks() === 0) {
-                    <bk-empty-list message="@task.field.empty-my" />
+                    <bk-empty-list [message]="store.i18n.empty()" />
                 } @else {
                     <ion-list lines="inset">
                         @for(task of tasks(); track $index) {
@@ -74,7 +74,7 @@ import { TasksStore } from './tasks-section.store';
                     </ion-list>
                 }
                 @if(showMoreButton() && !editMode()) {
-                  <bk-more-button [url]="moreUrl()" />
+                  <bk-more-button [url]="moreUrl()" [label]="store.i18n.more()"/>
                 }
             </ion-card-content>
         </ion-card>
@@ -82,7 +82,7 @@ import { TasksStore } from './tasks-section.store';
   `,
 })
 export class TasksSectionComponent implements OnInit {
-  protected tasksStore = inject(TasksStore);
+  protected store = inject(TasksStore);
   private readonly platformId = inject(PLATFORM_ID);
   private actionSheetController = inject(ActionSheetController);
   
@@ -97,16 +97,16 @@ export class TasksSectionComponent implements OnInit {
   protected readonly moreUrl = computed(() => this.config()?.moreUrl ?? '');
   protected readonly showMoreButton = computed(() => this.moreUrl().length > 0);
   protected readonly maxItems = computed(() => this.config()?.maxItems ?? undefined); // undefined = show all tasks
-  protected readonly tasks = computed(() => this.tasksStore.tasks());
-  protected readonly numberOfTasks = computed(() => this.tasksStore.totalTaskCount());
-  protected currentUser = computed(() => this.tasksStore.currentUser());
+  protected readonly tasks = computed(() => this.store.tasks());
+  protected readonly numberOfTasks = computed(() => this.store.totalTaskCount());
+  protected currentUser = computed(() => this.store.currentUser());
   protected isLoading = computed(() => false);
 
-  private imgixBaseUrl = this.tasksStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
    constructor() {
     effect(() => {
-      this.tasksStore.setConfig(this.maxItems());
+      this.store.setConfig(this.maxItems());
       debugMessage(`TasksSection(): maxItems=${this.maxItems()}`, this.currentUser());
     });
   }
@@ -169,13 +169,13 @@ export class TasksSectionComponent implements OnInit {
       if (!data) return;
       switch (data.action) {
         case 'task.complete':
-            await this.tasksStore.setCompleted(task, false);
+            await this.store.setCompleted(task, false);
             break;
         case 'task.view':
-            await this.tasksStore.edit(task, true);
+            await this.store.edit(task, true);
             break;
         case 'task.edit':
-            await this.tasksStore.edit(task, false);
+            await this.store.edit(task, false);
             break;
       }
     }

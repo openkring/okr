@@ -66,8 +66,8 @@ export interface MenuFormI18n {
                     [value]="url()" (valueChange)="onFieldChange('url', $event)"
                     [showHelper]=true
                     [readOnly]="isReadOnly()"
-                    [placeholder]="i18n()?.urlPlaceholder ?? ''"
-                    [helper]="i18n()?.urlHelper ?? ''"
+                    [placeholder]="i18n().urlPlaceholder"
+                    [helper]="i18n().urlHelper"
                   />
                   <bk-error-note [errors]="urlErrors()" />
                 </ion-col>
@@ -104,8 +104,8 @@ export interface MenuFormI18n {
       @if(menuAction() === 'main' || menuAction() === 'context' || menuAction() === 'sub') {
         <bk-strings
           [strings]="menuItems()" (stringsChange)="onFieldChange('menuItems', $event)"
-          [title]="i18n()?.title ?? ''"
-          [add]="i18n()?.addLabel ?? ''"
+          [title]="i18n().title"
+          [add]="i18n().addLabel"
           [readOnly]="isReadOnly()"
         />
       }

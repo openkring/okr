@@ -13,6 +13,6 @@
     "label": "Menüeintrag löschen",
     "conf": "Menüeintrag wurde gelöscht.",
     "error": "Menüeintrag konnte nicht gelöscht werden.",
-    "askConfirmation": "Soll dieser Menüeintrag wirklich gelöscht werden ?"
+    "confirm": "Soll dieser Menüeintrag wirklich gelöscht werden ?"
   }
 }

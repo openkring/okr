@@ -6,7 +6,7 @@ import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList } from '@bk2/shared-ui';
 import { coerceBoolean, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
+import { PersonSelectModal } from '@bk2/shared-feature';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 
@@ -31,7 +31,7 @@ import { CalEventStore } from './calevent.store';
   template: `
   <ion-accordion toggle-icon-slot="start" value="invitees">
     <ion-item slot="header" [color]="color()">
-      <ion-label>{{ store.i18n.attendees_title() }}</ion-label>
+      <ion-label>{{ store.i18n.attendees_plural() }}</ion-label>
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -64,7 +64,6 @@ import { CalEventStore } from './calevent.store';
 export class AttendeesAccordion {
   private actionSheetController = inject(ActionSheetController);
   protected readonly store = inject(CalEventStore);
-  private appStore = inject(AppStore);
   private modalController = inject(ModalController);
   private toastController = inject(ToastController);
 
@@ -78,11 +77,11 @@ export class AttendeesAccordion {
 
   // derived field
   protected attendees = computed(() => this.calevent().attendees || []);
-  private currentUser = computed(() => this.appStore.currentUser());
+  private currentUser = computed(() => this.store.currentUser());
   protected acceptedCount = computed(() => 
     this.attendees().filter(inv => inv.state === 'accepted').length
   );
-  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   /**
@@ -92,7 +91,7 @@ export class AttendeesAccordion {
    */
   protected async showActions(attendee: Attendee): Promise<void> {
     if (this.isReadOnly()) return;
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, attendee);
     await this.executeActions(actionSheetOptions, attendee);
   }
@@ -103,12 +102,12 @@ export class AttendeesAccordion {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, attendee: Attendee): void {
     if (attendee.state !== 'accepted') {
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkmark'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.as_subscribe(), this.imgixBaseUrl, 'checkmark'));
     }
     if (attendee.state !== 'declined') {
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.as_unsubscribe(), this.imgixBaseUrl, 'cancel'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }
@@ -153,10 +152,10 @@ export class AttendeesAccordion {
     await modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isPerson(data, this.appStore.tenantId())) {
+      if (isPerson(data, this.store.tenantId())) {
         const calevent = this.calevent();
         if (calevent.attendees.find(att => att.person.key === data.bkey)) {
-          error(this.toastController, '@calevent.field.attendance.exists');
+          error(this.toastController, this.store.i18n.attendees_exists());
           return;
         }
         const attendee: Attendee = {
@@ -172,7 +171,7 @@ export class AttendeesAccordion {
             state: 'accepted',
         };
         calevent.attendees.push(attendee);
-        await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.store.i18n.attendees_update_conf(), this.store.i18n.attendees_update_error(), this.currentUser());
+        await this.store.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.store.i18n.update_conf(), this.store.i18n.update_error(), this.currentUser());
       }
     }
   }
@@ -180,7 +179,7 @@ export class AttendeesAccordion {
   private async changeState(attendee: Attendee, newState: 'accepted' | 'declined'): Promise<void> {
     attendee.state = newState;
     const calevent = this.calevent();
-    await this.appStore.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.store.i18n.attendees_update_conf(), this.store.i18n.attendees_update_error(), this.currentUser());
+    await this.store.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.store.i18n.update_conf(), this.store.i18n.update_error(), this.currentUser());
   }
 
   protected getAttendanceIcon(state: string): string {

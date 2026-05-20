@@ -79,68 +79,80 @@ export const CalEventStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      invite_conf: PFX + 'invite.conf',
-      invite_error: PFX + 'invite.error',
-      update_conf: PFX + 'update.conf',
-      update_error: PFX + 'update.error',
-      invitation_update_conf: PFX + 'invitation.update.conf',
-      invitation_update_error: PFX + 'invite.update.error',
-      ok: '@actionsheet.cancel',
-      cancel: '@actionsheet.cancel',
-      // calevent-view.modal.ts
-      date: PFX + 'date',
-      periodicity: PFX + 'periodicity',
-      location: PFX + 'location',
-      responsible_persons: PFX + 'responsiblePersons',
-      description: PFX + 'description',
-      url: PFX + 'url',
-      wd_monday: PFX + 'weekDayAbbreviation.monday',
-      wd_tuesday: PFX + 'weekDayAbbreviation.tuesday',
-      wd_wednesday: PFX + 'weekDayAbbreviation.wednesday',
-      wd_thursday: PFX + 'weekDayAbbreviation.thursday',
-      wd_friday: PFX + 'weekDayAbbreviation.friday',
-      wd_saturday: PFX + 'weekDayAbbreviation.saturday',
-      wd_sunday: PFX + 'weekDayAbbreviation.sunday',
-      prd_daily: PFX + 'periodicity.daily',
-      prd_workday: PFX + 'periodicity.workday',
-      prd_weekly: PFX + 'periodicity.weekly',
-      prd_biweekly: PFX + 'periodicity.biweekly',
-      prd_monthly: PFX + 'periodicity.monthly',
-      prd_quarterly: PFX + 'periodicity.quarterly',
-      prd_yearly: PFX + 'periodicity.yearly',
-      // attendees-accordion.ts
-      attendees_update_conf: PFX + 'operation.update.conf',
-      attendees_update_error: PFX + 'operation.update.error',
-      attendees_title: '@calevent.field.attendance.plural',
-      attendees_accepted: '@calevent.field.attendance.accepted',
-      // calevent-list.ts / yearly-events.ts
-      plural: PFX + 'plural',
-      list_header_duration: PFX + 'list.header.duration',
-      list_header_name: PFX + 'list.header.name',
-      list_header_year: PFX + 'list.header.year',
-      list_header_responsible: PFX + 'list.header.responsible',
-      list_header_location: PFX + 'list.header.location',
-      list_header_description: PFX + 'list.header.description',
-      quick_entry_label: '@input.eventQuickEntry.label',
-      quick_entry_placeholder: '@input.eventQuickEntry.placeholder',
-      // schedule keys (calevent-list.ts confirmCloseSchedule + schedule-new.modal.ts)
-      schedule_close_title: '@schedule.closeTitle',
-      schedule_close_message: '@schedule.closeMessage',
-      schedule_optional_message: '@schedule.optionalMessage',
-      schedule_confirm: '@schedule.confirm',
-      schedule_topic: '@schedule.topic',
-      schedule_description: '@schedule.description',
-      schedule_dates: '@schedule.dates',
-      schedule_add_date: '@schedule.addDate',
-      schedule_confirm_dates: '@schedule.confirmDates',
-      schedule_invite: '@schedule.invite',
-      // schedule-table.modal.ts
-      schedule_pending_count: '@schedule.pendingCount',
-      // schedule-new.modal.ts title
-      schedule_title: '@schedule.title',
-      // yearly-events.ts / calevent-list.ts empty state
-      empty: '@calevent.field.empty',
+      calevents:            PFX + 'calevents',
+      empty:                PFX + 'empty',
+      description:          '@description',
+      duration:             PFX + 'duration',
+      event:                '@event',
+      year:                 '@year',
+      responsible:          PFX + 'responsible',
+      location:             '@location',
+      topic:                '@topic',
+      date:                 '@date',
+      url:                  '@url',
+
+      attendees_accepted:   PFX + 'attendance.accepted',
+      attendees_plural:     PFX + 'attendance.plural',
+      attendees_exists:     PFX + 'attendance.exists',
+      attendees_empty:      PFX + 'attendance.empty',
+
+      update_conf:                PFX + 'update.conf',
+      update_error:               PFX + 'update.error',
+      delete_confirm:             PFX + 'delete.confirm',
+      download_ics:               PFX + 'download.ics',
+
+      quick_entry_label:          PFX + 'quickEntry.label',
+      quick_entry_placeholder:    PFX + 'quickEntry.placeholder',
+
+      schedule_title:             PFX + 'schedule.title',
+      schedule_find:              PFX + 'schedule.find',
+      schedule_close_label:       PFX + 'schedule.close.label',
+      schedule_close_message:     PFX + 'schedule.close.message',
+      schedule_optional_message:  PFX + 'schedule.optionalMessage',
+      schedule_date_proposals:    PFX + 'schedule.date.proposals',
+      schedule_date_add:          PFX + 'schedule.date.add',
+      schedule_confirm:           PFX + 'schedule.date.confirm',
+      schedule_member_invite:     PFX + 'invite.members',
+      schedule_member_pending:    PFX + 'invitation.pending',
+      schedule_view:              PFX + 'schedule.view',
+
+      invite_conf:                PFX + 'invite.conf',
+      invite_error:               PFX + 'invite.error',
+      invite_group:               PFX + 'invite.group',
+      invite_person:              PFX + 'invite.person',
+      invite_members:             PFX + 'invite.members',
+
+      invitation_update_conf:     PFX + 'invitation.update.conf',
+      invitation_update_error:    PFX + 'invite.update.error',
+ 
+      wd_monday:            PFX + 'weekDayAbbreviation.monday',
+      wd_tuesday:           PFX + 'weekDayAbbreviation.tuesday',
+      wd_wednesday:         PFX + 'weekDayAbbreviation.wednesday',
+      wd_thursday:          PFX + 'weekDayAbbreviation.thursday',
+      wd_friday:            PFX + 'weekDayAbbreviation.friday',
+      wd_saturday:          PFX + 'weekDayAbbreviation.saturday',
+      wd_sunday:            PFX + 'weekDayAbbreviation.sunday',
+
+      periodicity_label:          PFX + 'periodicity.label',
+      periodicity_once:           PFX + 'periodicity.once',
+      periodicity_daily:          PFX + 'periodicity.daily',
+      periodicity_workday:        PFX + 'periodicity.workday',
+      periodicity_weekly:         PFX + 'periodicity.weekly',
+      periodicity_biweekly:       PFX + 'periodicity.biweekly',
+      periodicity_monthly:        PFX + 'periodicity.monthly',
+      periodicity_quarterly:      PFX + 'periodicity.quarterly',
+      periodicity_yearly:         PFX + 'periodicity.yearly',
+
+      as_title:             '@actionsheet.title',
+      as_view:              PFX + 'actionsheet.view',
+      as_edit:              PFX + 'actionsheet.edit',
+      as_create:            PFX + 'actionsheet.create',
+      as_delete:            PFX + 'actionsheet.delete',
+      as_subscribe:         PFX + 'invitation.subscribe',
+      as_unsubscribe:       PFX + 'invitation.unsubscribe',
+      as_albums:            PFX + 'actionsheet.albums',
+      ok: '@ok',
+      cancel: '@cancel'
     }),
 
     // returns a list of unigue organization keys for the current user
@@ -784,7 +796,18 @@ export const CalEventStore = signalStore(
         if (albumUrl.length > 0) {
           await navigateByUrl(store.router, albumUrl)
         } 
-      }
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
+      },
     }
   })
 );

@@ -271,13 +271,13 @@ import { PollCreateModal } from './poll-create.modal';
           <div class="sync-status">
             @switch (syncState()) {
               @case ('RECONNECTING') { 
-                <ion-badge color="warning">{{ store.i18n.fields_reconnecting() }}</ion-badge>
+                <ion-badge color="warning">{{ store.i18n.reconnecting() }}</ion-badge>
               }
               @case ('ERROR') { 
-                <ion-badge color="danger">{{ store.i18n.fields_connectionError() }}</ion-badge>
+                <ion-badge color="danger">{{ store.i18n.connectionError() }}</ion-badge>
               }
               @default { 
-                <ion-badge color="medium">{{ store.i18n.fields_connecting() }}</ion-badge>
+                <ion-badge color="medium">{{ store.i18n.connecting() }}</ion-badge>
               }
             }
           </div>
@@ -393,10 +393,10 @@ import { PollCreateModal } from './poll-create.modal';
                 <div class="empty-state">
                   <ion-icon src="{{'chatbubbles' | svgIcon}}" size="large"></ion-icon>
                   <div>
-                    <h3>{{ store.i18n.fields_selectRoom() }}</h3>
+                    <h3>{{ store.i18n.selectRoom() }}</h3>
                     @if (rooms().length === 0) {
-                      <p>{{ store.i18n.fields_noRoomsError() }}</p>
-                      <ion-button (click)="onCreateRoom()">{{ store.i18n.fields_createTestRoom() }}</ion-button>
+                      <p>{{ store.i18n.noRoomsError() }}</p>
+                      <ion-button (click)="onCreateRoom()">{{ store.i18n.createTestRoom() }}</ion-button>
                     }
                   </div>
                 </div>
@@ -435,7 +435,7 @@ import { PollCreateModal } from './poll-create.modal';
                 }
 
                 @if (threadMessages().length === 0) {
-                  <div class="thread-empty">{{ store.i18n.op_thread_empty() }}</div>
+                  <div class="thread-empty">{{ store.i18n.thread_empty() }}</div>
                 } @else {
                   <bk-matrix-message-list
                     [messages]="threadMessages()"
@@ -471,7 +471,7 @@ import { PollCreateModal } from './poll-create.modal';
             <video #localVideo autoplay playsinline muted class="local-video"></video>
 
             @if (callState() === 'ringing') {
-              <div class="call-status-label">{{ store.i18n.op_video_incoming() }}</div>
+              <div class="call-status-label">{{ store.i18n.video_incoming() }}</div>
               <div class="call-controls">
                 <ion-button class="call-fab" color="success" (click)="answerCall()">
                   <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
@@ -482,7 +482,7 @@ import { PollCreateModal } from './poll-create.modal';
               </div>
             } @else {
               @if (callState() !== 'connected') {
-                <div class="call-status-label">{{ store.i18n.op_video_connecting() }}</div>
+                <div class="call-status-label">{{ store.i18n.video_connecting() }}</div>
               }
               <div class="call-controls">
                 <ion-button class="call-fab" color="danger" (click)="hangupCall()">
@@ -499,7 +499,7 @@ import { PollCreateModal } from './poll-create.modal';
   `
 })
 export class MatrixChat implements OnDestroy {
-  private readonly store = inject(MatrixChatStore);
+  protected readonly store = inject(MatrixChatStore);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly alertService = inject(AlertService);
   private actionSheetController = inject(ActionSheetController);
@@ -541,10 +541,10 @@ export class MatrixChat implements OnDestroy {
   protected readonly receiptsByEventId = computed(() => this.store.receiptsByEventId());
 
   protected readonly messageInputI18n = computed(() => ({
-    isTypeing:      this.store.i18n.msg_input_isTypeing(),
-    and:            this.store.i18n.msg_input_and(),
-    areTypeing:     this.store.i18n.msg_input_areTypeing(),
-    othersTypeing:  this.store.i18n.msg_input_othersTypeing(),
+    isTypeing:      this.store.i18n.isTypeing(),
+    and:            this.store.i18n.and(),
+    areTypeing:     this.store.i18n.areTypeing(),
+    othersTypeing:  this.store.i18n.othersTypeing(),
   }));
 
   // Thread signals

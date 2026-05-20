@@ -5,31 +5,34 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
-import { ResourceCollection, ResourceModel } from '@bk2/shared-models';
-import { chipMatches, getSystemQuery, isResource, nameMatches } from '@bk2/shared-util-core';
-
-import { ResourceService } from '@bk2/resource-data-access';
+import { CategoryListModel, ResourceCollection, ResourceModel, ResourceModelName } from '@bk2/shared-models';
+import { chipMatches, debugItemLoaded, getSystemQuery, isResource, nameMatches } from '@bk2/shared-util-core';
 import { FirestoreService } from '@bk2/shared-data-access';
 
-import { ResourceEditModal } from './resource-edit.modal';
+import { ResourceService } from '@bk2/resource-data-access';
 
-export type ResourceListState = {
+import { ResourceEditModal } from './resource-edit.modal';
+import { PFX } from './scope';
+
+export type ResourceState = {
   searchTerm: string;
   selectedTag: string;
   selectedResourceType: string;
   selectedSubType: string;
   selectedGender: string;
+  resourceKey: string | undefined;    // for resourceEditPage
 };
 
-const initialState: ResourceListState = {
+const initialState: ResourceState = {
   searchTerm: '',
   selectedTag: '',
   selectedResourceType: 'all',
   selectedSubType: 'all',
   selectedGender: 'all',
+  resourceKey: undefined,
 };
 
-export const ResourceListStore = signalStore(
+export const ResourceStore = signalStore(
   withState(initialState),
   withProps(() => ({
     resourceService: inject(ResourceService),
@@ -40,27 +43,67 @@ export const ResourceListStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      boat_plural:         '@resource.boat.plural',
-      key_plural:          '@resource.key.plural',
-      locker_plural:       '@resource.locker.plural',
-      resource_plural:     '@resource.plural',
-      list_header_name:    '@input.name.label',
-      list_header_value:   '@input.value.label',
-      list_header_desc:    '@general.util.description',
-      list_header_boat_name: '@input.boatName.label',
-      list_header_boat_type: '@input.boatType.label',
-      list_header_load:    '@input.load.label',
-      list_header_key_name: '@input.keyName.label',
-      list_header_key_desc: '@input.description.label',
-      list_header_locker_nr: '@input.lockerNr.label',
-      list_header_key_nr:  '@input.keyNr.label',
+      resources:            PFX + 'resources',
+      empty:                PFX + 'empty',
+      description:          '@description',
+      name:                 '@name',
+      value:                '@value',
+      load:                 PFX + 'load',
+      create_label:         PFX + 'create.label',
+      view_label:           PFX + 'view.label',
+      edit_label:           PFX + 'edit.label',
+      delete_label:         PFX + 'delete.label',
+      key_plural:           PFX + 'key.plural',
+      key_empty:            PFX + 'key.empty',
+      key_name:             PFX + 'key.name',
+      key_nr:               PFX + 'key.nr',
+      key_view:             PFX + 'key.view',
+      key_edit:             PFX + 'key.edit',
+      key_delete:           PFX + 'key.delete',
+      key_create:           PFX + 'key.create',
+      locker_plural:        PFX + 'locker.plural',
+      locker_empty:         PFX + 'locker.empty',
+      locker_nr:            PFX + 'locker.nr',
+      locker_view:          PFX + 'locker.view',
+      locker_edit:          PFX + 'locker.edit',
+      locker_delete:        PFX + 'locker.delete',
+      locker_create:        PFX + 'locker.create',
+      boat_plural:          PFX + 'boat.plural',
+      boat_empty:           PFX + 'boat.empty',
+      boat_name:            PFX + 'boat.name',
+      boat_type:            PFX + 'boat.type',
+      boat_view:            PFX + 'boat.view',
+      boat_edit:            PFX + 'boat.edit',
+      boat_delete:          PFX + 'boat.delete',
+      boat_create:          PFX + 'boat.create',
+      rboat_plural:         PFX + 'rboat.plural',
+      rboat_empty:          PFX + 'rboat.empty',
+      rboat_name:           PFX + 'rboat.name',
+      rboat_type:           PFX + 'rboat.type',
+      rboat_view:           PFX + 'rboat.view',
+      rboat_edit:           PFX + 'rboat.edit',
+      rboat_delete:         PFX + 'rboat.delete',
+      rboat_create:         PFX + 'rboat.create',
+      as_title:             PFX + 'actionsheet.title',
+      cancel:               '@cancel',
+      ok:                   '@ok'
     }),
 
     resourceResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
       }
-    })
+    }),
+    resResource: rxResource({
+      params: () => ({
+        resourceKey: store.resourceKey()
+      }),
+      stream: ({params}) => {
+        return store.resourceService.read(params.resourceKey).pipe(
+          debugItemLoaded('ResourceStore.resource', store.appStore.currentUser())
+        );
+      }
+    }),    
   })),
 
   withComputed((state) => {
@@ -80,6 +123,7 @@ export const ResourceListStore = signalStore(
       keys: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'key') ?? []),
       realestate: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'realestate') ?? []),
       pets: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'pet') ?? []),
+      resource: computed(() => state.resResource.value()),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
       isLoading: computed(() => state.resourceResource.isLoading()),
@@ -161,37 +205,21 @@ export const ResourceListStore = signalStore(
         patchState(store, { selectedTag });
       },
 
+      setResourceKey(resourceKey: string): void {
+        patchState(store, { resourceKey });
+      },
+
       /******************************** getters ******************************************* */
       getResourceTags(): string {
         return store.appStore.getTags('resource');
       },
 
-      getBoatTags(): string {
-        return store.appStore.getTags('resource.boat');
-      },
-      
-      getCarTags(): string {
-        return store.appStore.getTags('resource.car');
+      getTags(type: string): string {
+        return store.appStore.getTags(`${ResourceModelName}.${type}`);
       },
 
-      getKeyTags(): string {
-        return store.appStore.getTags('resource.key');
-      },
-
-      getLockerTags(): string {
-        return store.appStore.getTags('resource.locker');
-      },
-
-      getPetTags(): string {
-        return store.appStore.getTags('resource.pet');
-      },
-
-      getRowingBoatTags(): string {
-        return store.appStore.getTags('resource.rboat');
-      },
-
-      getRealEstateTags(): string {
-        return store.appStore.getTags('resource.realestate');
+      getResourceTypes(): CategoryListModel {
+        return store.appStore.getCategory('resource_type');
       },
 
       /******************************** actions ******************************************* */
@@ -227,6 +255,13 @@ export const ResourceListStore = signalStore(
         if (readOnly) return;
         await store.resourceService.delete(resource, store.currentUser());
         store.resourceResource.reload();
+      },
+
+      async save(resource?: ResourceModel): Promise<void> {
+        if (!resource) return;
+        await (!resource.bkey ? 
+          store.resourceService.create(resource, store.currentUser()) : 
+          store.resourceService.update(resource, store.currentUser()));
       },
 
       async export(type: string): Promise<void> {

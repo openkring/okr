@@ -1,13 +1,12 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
 import { AccountModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { AccountForm } from '@bk2/finance-account-ui';
+import { AccountStore } from './account.store';
 
 @Component({
   selector: 'bk-account-edit-modal',
@@ -16,6 +15,7 @@ import { AccountForm } from '@bk2/finance-account-ui';
     Header, ChangeConfirmation, AccountForm,
     IonContent
   ],
+  providers: [AccountStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -28,7 +28,7 @@ import { AccountForm } from '@bk2/finance-account-ui';
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [types]="types()"
-          [tenantId]="appStore.env.tenantId"
+          [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -39,7 +39,7 @@ import { AccountForm } from '@bk2/finance-account-ui';
 })
 export class AccountEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly appStore = inject(AppStore);
+  protected readonly store = inject(AccountStore);
 
   public account = input.required<AccountModel>();
   public currentUser = input<UserModel | undefined>();
@@ -52,8 +52,9 @@ export class AccountEditModal {
   public formData = linkedSignal(() => safeStructuredClone(this.account()));
   protected showForm = signal(true);
 
-  protected headerTitle = computed(() => getTitleLabel('finance.account', this.account().bkey, this.isReadOnly()));
-  protected types = computed(() => this.appStore.getCategory('account_type'));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.account().bkey));
+  protected types = computed(() => this.store.appStore.getCategory('account_type'));
+  protected tenantId = computed(() => this.store.appStore.tenantId());
 
   public async save(): Promise<void> {
     await this.modalController.dismiss(this.formData(), 'confirm');

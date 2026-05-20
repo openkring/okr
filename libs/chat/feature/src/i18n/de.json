@@ -61,7 +61,9 @@
     "title": "Umfrage erstellen",
     "create": "Umfrage erstellen"
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion"
-  }
+  "isTypeing": "tippt...",
+  "and": "und",
+  "areTypeing": "tippen...",
+  "othersTypeing": "andere tippen...",
+  "severalTypeing": "Mehrere Personen tippen..."
 }

@@ -1,8 +1,7 @@
 {
   "address": "Addresse",
   "addresses": "Adressen",
-  "nodata": "Keine Adressen gefunden",
-  "name": "Name",
+  "empty": "Keine Adressen gefunden",
   "currency": "CHF",
   "qrinvoice": "QR-Rechnung",
   "description": "Kontaktinformation zu einer Person oder Organisation",

@@ -70,8 +70,8 @@
   },
   "notes": {
     "notes": "Notizen",
-    "placeholder": "",
-    "label": "",
+    "placeholder": "text",
+    "label": "Notizen",
     "pwd": {
       "header": "Passwort eingeben",
       "message": "Achtung: wenn du das Passwort vergisst, kann der Text nicht mehr entschlüsselt werden !",

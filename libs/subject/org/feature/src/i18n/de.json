@@ -1,16 +1,17 @@
 {
   "orgs": "Organisationen",
   "empty": "Keine Organisationen gefunden.",
-  "name": "Name",
-  "phone": "Tel.",
-  "email": "E-Mail",
   "create": {
     "label": "Neue Organisation"
   },
-  "person": {
-    "delete": {
-      "confirm": "Soll die Person wirklich gelöscht werden ?"
-    }
+  "edit": {
+    "label": "Organisation ändern"
+  },
+  "view": {
+    "label": "Organisation anzeigen"
+  },
+  "delete": {
+    "confirm": "Soll die Organisation wirklich gelöscht werden ?"
   },
   "address": {
     "emailCopy": {
@@ -18,6 +19,8 @@
     }
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "edit": "Organisation ändern",
+    "delete": "Organisation löschen"
   }
 }

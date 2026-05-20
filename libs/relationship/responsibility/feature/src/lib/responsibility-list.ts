@@ -32,7 +32,7 @@ import { ResponsibilityStore } from './responsibility.store';
           @if(showMenu() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
-          <ion-title>{{ count() }} {{ store.i18n.list_title() }}</ion-title>
+          <ion-title>{{ count() }} {{ store.i18n.responsibilities() }}</ion-title>
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
@@ -51,13 +51,13 @@ import { ResponsibilityStore } from './responsibility.store';
         <ion-grid>
           <ion-row>
             <ion-col size="4">
-              <ion-label>Verantwortlichkeit</ion-label>
+              <ion-label>{{ store.i18n.responsibility() }}</ion-label>
             </ion-col>
             <ion-col size="4">
-              <ion-label>Verantwortlich</ion-label>
+              <ion-label>{{ store.i18n.responsible() }}</ion-label>
             </ion-col>
             <ion-col size="4">
-              <ion-label>Stellvertretung</ion-label>
+              <ion-label>{{ store.i18n.delegate() }}</ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -129,17 +129,17 @@ export class ResponsibilityList {
   }
 
   protected async showActions(r: ResponsibilityModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, r);
     await this.executeActions(actionSheetOptions, r);
   }
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, r: ResponsibilityModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('responsibility.edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('responsibility.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.store.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('responsibility.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('responsibility.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   private async executeActions(actionSheetOptions: ActionSheetOptions, r: ResponsibilityModel): Promise<void> {

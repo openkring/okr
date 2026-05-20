@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { I18nService } from '@bk2/shared-i18n';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { safeStructuredClone } from '@bk2/shared-util-core';
 
 import { AddressesAccordion } from '@bk2/subject-address-feature';
 
@@ -13,9 +14,7 @@ import { AvatarToolbar } from '@bk2/avatar-feature';
 
 import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
 import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
-import { ProfileEditStore } from './profile-edit.store';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { safeStructuredClone } from '@bk2/shared-util-core';
+import { ProfileStore } from './profile.store';
 
 @Component({
   selector: 'bk-profile-edit-page',
@@ -26,7 +25,7 @@ import { safeStructuredClone } from '@bk2/shared-util-core';
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
-  providers: [ProfileEditStore],
+  providers: [ProfileStore],
     styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <bk-header [title]="headerTitle()" [showCloseButton]="false" />
@@ -98,7 +97,7 @@ import { safeStructuredClone } from '@bk2/shared-util-core';
   `
 })
 export class ProfileEditPage {
-  private readonly profileEditStore = inject(ProfileEditStore);
+  private readonly store = inject(ProfileStore);
   private readonly i18nService = inject(I18nService);
 
   // inputs
@@ -113,32 +112,29 @@ export class ProfileEditPage {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('profile', this.currentUser()?.bkey, false));
-  protected currentUser = computed(() => this.profileEditStore.currentUser());
-  protected currentPerson = computed(() => this.profileEditStore.person());
+  protected headerTitle = computed(() => this.store.getTitleLabel(false, this.currentUser()?.bkey));
+  protected currentUser = computed(() => this.store.currentUser());
+  protected currentPerson = computed(() => this.store.person());
   protected personKey = computed(() => this.currentUser()?.personKey || '');
-  protected genders = computed(() => this.profileEditStore.appStore.getCategory('gender'));
-  protected tenantId = computed(() => this.profileEditStore.tenantId());
+  protected genders = computed(() => this.store.appStore.getCategory('gender'));
+  protected tenantId = computed(() => this.store.tenantId());
   protected loginEmail = computed(() => this.currentUser()?.loginEmail || '');
   protected parentKey = computed(() => `${PersonModelName}.${this.personKey()}`);
   protected avatarTitle = computed(() => this.currentPerson()?.firstName + ' ' + this.currentPerson()?.lastName);
-  protected introHtml = computed(async () => {
-    const intro = await firstValueFrom(this.i18nService.translate('@profile.intro'));
-    return intro + ' <a href=mailto:"' + this.profileEditStore.appStore.appConfig().opEmail + '">Website Admin</a>.';
-  });
-  protected tags = computed(() => this.profileEditStore.getTags());
-  protected priv = computed(() => this.profileEditStore.privacySettings());
+  protected introHtml = computed(async () => this.store.i18n.intro() + ' <a href=mailto:"' + this.store.appStore.appConfig().opEmail + '">Website Admin</a>.');
+  protected tags = computed(() => this.store.getTags());
+  protected priv = computed(() => this.store.privacySettings());
 
   constructor() {
     effect(() => {
-      this.profileEditStore.setPersonKey(this.personKey());
+      this.store.setPersonKey(this.personKey());
     });
   }
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     this.formDirty.set(false);
-    await this.profileEditStore.save(this.personFormData(), this.userFormData());
+    await this.store.save(this.personFormData(), this.userFormData());
   }
 
   public async cancel(): Promise<void> {
@@ -155,7 +151,7 @@ export class ProfileEditPage {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    await this.profileEditStore.saveAvatar(photo);
+    await this.store.saveAvatar(photo);
   }
 
   protected onPersonChange(formData: PersonModel): void {

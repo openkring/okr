@@ -4,10 +4,9 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { CategoryListModel, MenuItemModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { MenuForm, MenuFormI18n } from '@bk2/cms-menu-ui';
-import { ENV } from '@bk2/shared-config';
+import { MenuStore } from './menu.store';
 
 @Component({
   selector: 'bk-menu-modal',
@@ -16,6 +15,7 @@ import { ENV } from '@bk2/shared-config';
     Header, ChangeConfirmation, MenuForm,
     IonContent
   ],
+  providers: [MenuStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -30,7 +30,7 @@ import { ENV } from '@bk2/shared-config';
           [showForm]="showForm()"
           [roles]="roles()"
           [types]="types()"
-          [tenantId]="env.tenantId"
+          [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           [allTags]="tags()"
           [i18n]="i18n()"
@@ -44,7 +44,7 @@ import { ENV } from '@bk2/shared-config';
 })
 export class MenuModal {
   private readonly modalController = inject(ModalController);
-  protected readonly env = inject(ENV);
+  protected readonly store = inject(MenuStore);
 
   // inputs
   public menuItem = input.required<MenuItemModel>();
@@ -64,7 +64,8 @@ export class MenuModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('content.menuItem', this.menuItem().bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.menuItem().bkey));
+  protected tenantId = computed(() => this.store.tenantId());
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

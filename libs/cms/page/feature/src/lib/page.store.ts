@@ -64,29 +64,43 @@ export const _PageStore = signalStore(
   }),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      page_add_label: PFX + 'page.add.label',
-      page_add_placeholder: PFX + 'page.add.placeholder',
-      page_delete_confirm: PFX + 'page.delete.confirm',
-      sort_label: PFX + 'sort.label',
-      sort_noSections: PFX + 'sort.noSections',
-      sort_onlyOneSection: PFX + 'sort.onlyOneSection',
-      ok: '@ok',
-      cancel: '@cancel',
-      // page-list.ts
-      list_plural: '@content.page.plural',
-      list_field_description: '@content.page.field.description',
-      list_header_key: '@content.page.list.header.key',
-      list_header_name: '@content.page.list.header.name',
-      list_header_sections: '@content.page.list.header.sections',
-      list_field_empty: '@content.field.empty',
-      // content/files/dashboard/blog pages
-      section_error_empty: '@content.section.error.emptyPage',
-      section_error_empty_readonly: '@content.section.error.emptyPageReadOnly',
-      section_add_label: '@content.section.operation.add.label',
-      // graph.page.ts
-      graph_nomain: '@content.page.type.graph.nomain',
-      graph_description: '@content.page.type.graph.description',
-      graph_description2: '@content.page.type.graph.description2',
+      pages:                        PFX + 'pages',
+      sections:                     PFX + 'sections',
+      empty:                        PFX + 'empty',
+      empty_page:                   PFX + 'emptyPage',
+      empty_readonly:               PFX + 'emptyPageReadOnly',
+      not_found:                    PFX + 'notfound',
+      not_exist:                    PFX + 'notexist',
+      help:                         PFX + 'help',
+      description:                  PFX + 'description',
+      key:                          '@key',
+      name:                         '@name',
+      add_label:                    PFX + 'add.label',
+      add_placeholder:              PFX + 'add.placeholder',
+      add_section:                  PFX + 'add.section',
+      delete_label:                 PFX + 'delete.label',
+      delete_confirm:               PFX + 'delete.confirm',
+      search_article:               PFX + 'search.article',
+      sort_label:                   PFX + 'sort.label',
+      sort_noSections:              PFX + 'sort.noSections',
+      sort_onlyOneSection:          PFX + 'sort.onlyOneSection',
+      upload_image:                 PFX + 'upload.image',
+      upload_file:                  PFX + 'upload.file',
+      section_edit:                 PFX + 'section.edit',
+      section_send:                 PFX + 'section.send',
+      section_remove:               PFX + 'section.remove',
+      view:                         PFX + 'view',
+      edit:                         PFX + 'edit',
+      show:                         PFX + 'show',
+      create:                       PFX + 'create',
+      graph_nomain:                 PFX + 'type.graph.nomain',
+      graph_description:            PFX + 'type.graph.description',
+      graph_description2:           PFX + 'type.graph.description2',
+      as_title:                     '@actionsheet.title',
+      search:                       '@search.label',
+      filter_all:                   '@filter.all',
+      ok:                           '@ok',
+      cancel:                       '@cancel'
     }),
 
     pagesResource: rxResource({
@@ -244,7 +258,7 @@ export const _PageStore = signalStore(
        */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
-        const pageName = await bkPrompt(store.alertController, store.i18n.page_add_label(), store.i18n.page_add_placeholder(), store.i18n.ok(), store.i18n.cancel());
+        const pageName = await bkPrompt(store.alertController, store.i18n.add_label(), store.i18n.add_placeholder(), store.i18n.ok(), store.i18n.cancel());
         if (pageName) {
           const page = new PageModel(store.tenantId());
           page.name = pageName;
@@ -290,7 +304,7 @@ export const _PageStore = signalStore(
        */
       async delete(page: PageModel, readOnly = true): Promise<void> {
         if (readOnly) return;
-        const result = await confirm(store.alertController, store.i18n.page_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           await store.pageService.delete(page, store.currentUser());
           this.reload();
@@ -389,7 +403,18 @@ export const _PageStore = signalStore(
       async print(): Promise<void> {
         store.page() ?? die('PageStore.print: page is mandatory.');
         window.print();
-      }
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.edit();
+        } else {
+          return store.i18n.create();
+        }
+      },
     }
   }),
 );

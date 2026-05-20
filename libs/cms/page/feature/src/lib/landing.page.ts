@@ -118,23 +118,23 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
   `
 })
 export class LandingPage {
-  private readonly pageStore = inject(PageStore);
+  private readonly store = inject(PageStore);
 
-  protected page = computed(() => this.pageStore.page());
+  protected page = computed(() => this.store.page());
   protected title = computed (() => this.page()?.title ?? 'Title missing');
   protected subTitle = computed (() => this.page()?.subTitle ?? 'Subtitle missing');
   protected abstract = computed (() => this.page()?.abstract);
-  protected logoUrl = computed (() => this.pageStore.getImgixUrl(this.page()?.logoUrl));
-  protected logoAltText = computed(() => this.page()?.logoAltText || `${this.pageStore.tenantId()} Logo`);
-  protected bannerUrl = computed(() => this.pageStore.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
-  protected bannerAltText = computed(() => this.page()?.bannerAltText || `${this.pageStore.tenantId()} Banner`);
-  protected isAuthenticated = computed(() => this.pageStore.appStore.isAuthenticated());
+  protected logoUrl = computed (() => this.store.getImgixUrl(this.page()?.logoUrl));
+  protected logoAltText = computed(() => this.page()?.logoAltText || `${this.store.tenantId()} Logo`);
+  protected bannerUrl = computed(() => this.store.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
+  protected bannerAltText = computed(() => this.page()?.bannerAltText || `${this.store.tenantId()} Banner`);
+  protected isAuthenticated = computed(() => this.store.appStore.isAuthenticated());
 
   protected async gotoHome(): Promise<void> {
-    await this.pageStore.navigateByUrl(this.pageStore.getConfigAttribute('rootUrl') + '');
+    await this.store.navigateByUrl(this.store.getConfigAttribute('rootUrl') + '');
   }
 
   protected async login(): Promise<void> {
-    await this.pageStore.navigateByUrl(this.pageStore.getConfigAttribute('loginUrl') + '');
+    await this.store.navigateByUrl(this.store.getConfigAttribute('loginUrl') + '');
   }
 }

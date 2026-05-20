@@ -194,7 +194,7 @@ import { AlbumStore } from './album-section.store';
                 }
               }
             } @else {
-              <bk-label>{{ albumStore.i18n.no_images() }}</bk-label>
+              <bk-label>{{ store.i18n.no_images() }}</bk-label>
             }
         </ion-card-content>
       </ion-card>
@@ -203,27 +203,27 @@ import { AlbumStore } from './album-section.store';
 })
 export class AlbumSectionComponent {
   private readonly modalController = inject(ModalController);
-  protected albumStore = inject(AlbumStore);
+  protected store = inject(AlbumStore);
   private readonly platformId = inject(PLATFORM_ID);
 
   public section = input<AlbumSection>();
   public editMode = input<boolean>(false);
 
-  protected imgixBaseUrl = computed(() => this.albumStore.imgixBaseUrl());
+  protected imgixBaseUrl = computed(() => this.store.imgixBaseUrl());
   protected imageContainer = viewChild('.imgix-image', { read: ElementRef });
-  protected metaData = computed(() => this.albumStore.metaData());
+  protected metaData = computed(() => this.store.metaData());
 
-  protected directory = computed(() => this.albumStore.currentDirectory());
-  protected image = computed(() => this.albumStore.currentImage());
-  protected imageStyle = computed(() => this.albumStore.imageStyle());
-  protected albumStyle = linkedSignal(() => this.albumStore.albumStyle());
-  protected images = computed(() => this.albumStore.images());
-  protected isLoading = computed(() => this.albumStore.isLoading());
-  protected error = computed(() => this.albumStore.error());
-  protected title = computed(() => this.albumStore.title());
-  protected currentDirLength = computed(() => this.albumStore.currentDirLength());
-  protected parentDirectory = computed(() => this.albumStore.parentDirectory());
-  protected isTopDirectory = computed(() => this.albumStore.currentDirLength() === this.albumStore.initialDirLength());
+  protected directory = computed(() => this.store.currentDirectory());
+  protected image = computed(() => this.store.currentImage());
+  protected imageStyle = computed(() => this.store.imageStyle());
+  protected albumStyle = linkedSignal(() => this.store.albumStyle());
+  protected images = computed(() => this.store.images());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected error = computed(() => this.store.error());
+  protected title = computed(() => this.store.title());
+  protected currentDirLength = computed(() => this.store.currentDirLength());
+  protected parentDirectory = computed(() => this.store.parentDirectory());
+  protected isTopDirectory = computed(() => this.store.currentDirLength() === this.store.initialDirLength());
 
   // passing constants to template
   protected IT = ImageType;
@@ -232,25 +232,25 @@ export class AlbumSectionComponent {
 
   constructor() {
     effect(() => {
-      this.albumStore.setConfig(this.section()?.properties);  // this also updates the current directory and the albumStyle in the store
+      this.store.setConfig(this.section()?.properties);  // this also updates the current directory and the albumStyle in the store
     });
   }
   
   protected async onImageClicked(image: ImageConfig, index = 0): Promise<void> {
     if (this.editMode()) return;
-    this.albumStore.setImage(image);    // loads metadata
-    debugData('AlbumSectionComponent.onImageClicked -> image: ', image, this.albumStore.currentUser());
-    debugData('AlbumSectionComponent.onImageClicked -> metaData: ', this.metaData(), this.albumStore.currentUser());
+    this.store.setImage(image);    // loads metadata
+    debugData('AlbumSectionComponent.onImageClicked -> image: ', image, this.store.currentUser());
+    debugData('AlbumSectionComponent.onImageClicked -> metaData: ', this.metaData(), this.store.currentUser());
     // tbd: show the metadata to the user, e.g. in a modal or as an overlay
     // tbd: put the following into the store as a method, triggered by an effect each time the image changes
     switch (this.imageStyle().action) {
       case ImageActionType.Download: await downloadToBrowser(image.actionUrl); break;
-      case ImageActionType.Zoom: await showZoomedImage(this.modalController, image.url, '@content.type.article.zoomedImage', this.imageStyle(), image.altText, 'full-modal'); break;
-      case ImageActionType.OpenSlider: this.albumStore.openGallery(this.images(), this.title(), index); break;
-      case ImageActionType.OpenDirectory: this.albumStore.setDirectory(image.actionUrl); break;
+      case ImageActionType.Zoom: await showZoomedImage(this.modalController, image.url, this.store.i18n.zoomed(), this.imageStyle(), image.altText, 'full-modal'); break;
+      case ImageActionType.OpenSlider: this.store.openGallery(this.images(), this.title(), index); break;
+      case ImageActionType.OpenDirectory: this.store.setDirectory(image.actionUrl); break;
       case ImageActionType.FollowLink: browse(image.actionUrl); break;
       case ImageActionType.None: break;
-      default: debugMessage('AlbumSectionComponent.onImageClicked -> no action defined', this.albumStore.currentUser());
+      default: debugMessage('AlbumSectionComponent.onImageClicked -> no action defined', this.store.currentUser());
     }
   }
 
@@ -259,12 +259,12 @@ export class AlbumSectionComponent {
   }
 
   protected onAlbumStyleChange(albumStyle: AlbumStyle): void {
-    this.albumStore.setAlbumStyle(albumStyle);
+    this.store.setAlbumStyle(albumStyle);
   }
 
   protected goUp(): void {
     if (this.editMode()) return;
-    this.albumStore.goUp();
+    this.store.goUp();
   }
 
   protected convertThumbnailToFullImage(): ImageStyle {

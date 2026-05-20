@@ -26,16 +26,16 @@ export class AddressService {
 
   // i18n
   protected readonly i18n = this.i18nService.translateAll({
-    create_conf: PFX + 'operation.create.conf',
-    create_error: PFX + 'operation.create.error',
-    update_conf: PFX + 'operation.update.conf',
-    update_error: PFX + 'operation.update.error',
-    delete_conf: PFX + 'operation.delete.conf',
-    delete_error: PFX + 'operation.delete.error',
-    favorite_enable_conf: PFX + 'operation.favorite.enable.conf',
-    favorite_enable_error: PFX + 'operation.favorite.enable.error',
-    favorite_disable_conf: PFX + 'operation.favorite.disable.conf',
-    favorite_disable_error: PFX + 'operation.favorite.disable.error'
+    create_conf: PFX + 'create.conf',
+    create_error: PFX + 'create.error',
+    update_conf: PFX + 'update.conf',
+    update_error: PFX + 'update.error',
+    delete_conf: PFX + 'delete.conf',
+    delete_error: PFX + 'delete.error',
+    favorite_enable_conf: PFX + 'favorite.enable.conf',
+    favorite_enable_error: PFX + 'favorite.enable.error',
+    favorite_disable_conf: PFX + 'favorite.disable.conf',
+    favorite_disable_error: PFX + 'favorite.disable.error'
   });
 
   /***************************  CRUD-operations *************************** */

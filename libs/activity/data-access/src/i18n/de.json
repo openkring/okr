@@ -2,7 +2,7 @@
   "delete": {
     "label": "Aktivität löschen",
     "conf": "Aktivität wurde gelöscht.",
-    "askconf": "Soll die Aktivität gelöscht werden ?",
+    "confirm": "Soll die Aktivität gelöscht werden ?",
     "error": "Die Aktivität konnte nicht gelöscht werden."
   }
 }

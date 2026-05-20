@@ -56,7 +56,7 @@ function storeToView(d: string): string {
                 <ion-item lines="none">
                 <ion-icon slot="start" src="{{'repeat' | svgIcon}}" />
                 <ion-label>
-                    <p class="view-label">{{ i18n.periodicity() }}</p>
+                    <p class="view-label">{{ i18n.periodicity_label() }}</p>
                     <p class="view-value">{{ periodicityLabel() }} {{ until() }}</p>
                 </ion-label>
                 </ion-item>
@@ -78,7 +78,7 @@ function storeToView(d: string): string {
                 <ion-item lines="none">
                 <ion-icon slot="start" src="{{'person' | svgIcon}}" />
                 <ion-label>
-                    <p class="view-label">{{ i18n.responsible_persons() }}</p>
+                    <p class="view-label">{{ i18n.responsible() }}</p>
                     <div class="responsible-row">
                       <bk-avatar-display [avatars]="calevent().responsiblePersons" [showName]="true" />
                     </div>
@@ -156,15 +156,15 @@ export class CalEventViewModal {
     };
   }
 
-  private get prd() {
+  private get periodicity() {
     return {
-      daily:     this.store.i18n.prd_daily,
-      workday:   this.store.i18n.prd_workday,
-      weekly:    this.store.i18n.prd_weekly,
-      biweekly:  this.store.i18n.prd_biweekly,
-      monthly:   this.store.i18n.prd_monthly,
-      quarterly: this.store.i18n.prd_quarterly,
-      yearly:    this.store.i18n.prd_yearly,
+      daily:     this.store.i18n.periodicity_daily,
+      workday:   this.store.i18n.periodicity_workday,
+      weekly:    this.store.i18n.periodicity_weekly,
+      biweekly:  this.store.i18n.periodicity_biweekly,
+      monthly:   this.store.i18n.periodicity_monthly,
+      quarterly: this.store.i18n.periodicity_quarterly,
+      yearly:    this.store.i18n.periodicity_yearly,
     };
   }
 
@@ -191,8 +191,8 @@ export class CalEventViewModal {
   protected readonly periodicityLabel = computed((): string => {
     const e = this.calevent();
     if (!e.periodicity || e.periodicity === 'once' || e.periodicity === '') return '';
-    const prdMap = this.prd;
-    return (prdMap as Record<string, () => string>)[e.periodicity]?.() ?? '';
+    const periodicityMap = this.periodicity;
+    return (periodicityMap as Record<string, () => string>)[e.periodicity]?.() ?? '';
   });
 
   protected readonly until = computed(() => this.calevent().repeatUntilDate ? ` bis ${storeToView(this.calevent().repeatUntilDate)}` : '');

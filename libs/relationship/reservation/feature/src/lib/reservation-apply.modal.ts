@@ -4,8 +4,6 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { AvatarInfo, CalEventModel, PersonModelName, ReservationApplyModel, ResourceModelName, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { getAvatarName, hasRole } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore } from '@bk2/shared-feature';
 
 import { CalEventEditModal } from '@bk2/calevent-feature';
 import { isCalEvent } from '@bk2/calevent-util';
@@ -13,6 +11,7 @@ import { isCalEvent } from '@bk2/calevent-util';
 import { ReservationApplyForm } from '@bk2/relationship-reservation-ui';
 import { RelationshipToolbar } from '@bk2/avatar-ui';
 import { convertApplyToReservation, getNewReservationApply } from '@bk2/relationship-reservation-util';
+import { ReservationStore } from './reservation.store';
 
 @Component({
   selector: 'bk-reservation-apply-modal',
@@ -20,7 +19,8 @@ import { convertApplyToReservation, getNewReservationApply } from '@bk2/relation
   imports: [
     RelationshipToolbar, Header, ChangeConfirmation, ReservationApplyForm,
     IonContent
-],
+  ],
+  providers: [ReservationStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" [showCloseButton]="false" />
@@ -64,13 +64,13 @@ import { convertApplyToReservation, getNewReservationApply } from '@bk2/relation
 })
 export class ReservationApplyModal {
   private readonly modalController = inject(ModalController);
-  private readonly appstore = inject(AppStore);
+  private readonly store = inject(ReservationStore);
 
-  protected readonly currentUser = computed(() => this.appstore.currentUser());
-  private resource = computed(() => this.appstore.defaultResource());
-  protected readonly reasons = computed(() => this.appstore.getCategory('reservation_reason'));
-  protected readonly periodicities = computed(() => this.appstore.getCategory('periodicity'));
-  protected readonly locale = computed(() => this.appstore.appConfig().locale);
+  protected readonly currentUser = computed(() => this.store.currentUser());
+  private resource = computed(() => this.store.defaultResource());
+  protected readonly reasons = computed(() => this.store.appStore.getCategory('reservation_reason'));
+  protected readonly periodicities = computed(() => this.store.appStore.getCategory('periodicity'));
+  protected readonly locale = computed(() => this.store.appStore.appConfig().locale);
   protected formData = linkedSignal(() => getNewReservationApply(this.currentUser(), this.resource()));
 
   // signals
@@ -79,14 +79,16 @@ export class ReservationApplyModal {
   protected calevent = signal<CalEventModel | undefined>(undefined);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('reservation', undefined, false));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(false, undefined));
+  protected readonly toolbarTitle = computed(() => this.store.i18n.reldesc1() + this.resourceName + this.store.i18n.reldesc1() + this.reserverName());
   protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.reserver);
   protected readonly reserverName = computed(() => this.reserverAvatar() ? getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay) : '');
   protected readonly resourceAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.resource);
-  protected readonly defaultIcon = computed(() => this.appstore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
-  protected readonly tenantId = computed(() => this.appstore.tenantId());
-  protected readonly subjectDefaultIcon = computed(() => this.appstore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
-  protected readonly objectDefaultIcon = computed(() => this.appstore.getDefaultIcon(PersonModelName));
+  protected readonly resourceName = computed(() => this.resourceAvatar()?.name2 ?? '');
+  protected readonly defaultIcon = computed(() => this.store.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
+  protected readonly tenantId = computed(() => this.store.tenantId());
+  protected readonly subjectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
+  protected readonly objectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(PersonModelName));
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -118,11 +120,11 @@ export class ReservationApplyModal {
       componentProps: {
             calevent: this.calevent() ?? new CalEventModel(this.tenantId()),
             currentUser: this.currentUser(),
-            types: this.appstore.getCategory('calevent_type'),
+            types: this.store.appStore.getCategory('calevent_type'),
             periodicities: this.periodicities(),
-            tags: this.appstore.getTags('calevent'),
+            tags: this.store.appStore.getTags('calevent'),
             tenantId: this.tenantId(),
-            locale: this.appstore.appConfig().locale,
+            locale: this.store.appStore.appConfig().locale,
             readOnly: false
       }
     });

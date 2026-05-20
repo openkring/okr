@@ -26,7 +26,7 @@ import { CategoryStore } from './category.store';
       <!-- title and context menu -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedCategoriesCount()}}/{{categoriesCount()}} {{ categoryListStore.i18n.plural() }}</ion-title>
+        <ion-title>{{ selectedCategoriesCount()}}/{{categoriesCount()}} {{ store.i18n.categories() }}</ion-title>
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -73,7 +73,7 @@ import { CategoryStore } from './category.store';
       <bk-spinner />
     } @else {
       @if(filteredCategories().length === 0) {
-        <bk-empty-list [message]="categoryListStore.i18n.empty()" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(cat of filteredCategories(); track cat.bkey) {
@@ -90,7 +90,7 @@ import { CategoryStore } from './category.store';
     `
 })
 export class CategoryList {
-  protected categoryListStore = inject(CategoryStore);
+  protected store = inject(CategoryStore);
   private actionSheetController = inject(ActionSheetController);
   private readonly appStore = inject(AppStore);
   private readonly alertService = inject(AlertService);
@@ -100,15 +100,15 @@ export class CategoryList {
   public contextMenuName = input.required<string>();
 
   // filters
-  protected searchTerm = linkedSignal(() => this.categoryListStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.categoryListStore.selectedTag());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
 
-  protected filteredCategories = computed(() => this.categoryListStore.filteredCategories() ?? []);
-  protected categoriesCount = computed(() => this.categoryListStore.categoriesCount());
+  protected filteredCategories = computed(() => this.store.filteredCategories() ?? []);
+  protected categoriesCount = computed(() => this.store.categoriesCount());
   protected selectedCategoriesCount = computed(() => this.filteredCategories().length);
-  protected isLoading = computed(() => this.categoryListStore.isLoading());
+  protected isLoading = computed(() => this.store.isLoading());
   protected popupId = computed(() => `c_category_${this.listId}`);
-  protected tags = computed(() => this.categoryListStore.getTags());
+  protected tags = computed(() => this.store.getTags());
   protected currentUser = computed(() => this.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
@@ -117,19 +117,19 @@ export class CategoryList {
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.categoryListStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.categoryListStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.categoryListStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.categoryListStore.export("raw"); break;
+      case 'add':  await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: this.alertService.error(`CategoryList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -140,7 +140,7 @@ export class CategoryList {
    * @param cat 
    */
   protected async showActions(cat: CategoryListModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, cat);
     await this.executeActions(actionSheetOptions, cat);
   }
@@ -150,11 +150,11 @@ export class CategoryList {
    * @param cat 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, cat: CategoryListModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('category.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('category.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -170,10 +170,10 @@ export class CategoryList {
       if (!data) return;
       switch (data.action) {
         case 'category.delete':
-          await this.categoryListStore.delete(cat, this.readOnly());
+          await this.store.delete(cat, this.readOnly());
           break;
         case 'category.edit':
-          await this.categoryListStore.edit(cat, this.readOnly());
+          await this.store.edit(cat, this.readOnly());
           break;
       }
     }
@@ -181,6 +181,6 @@ export class CategoryList {
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.categoryListStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }

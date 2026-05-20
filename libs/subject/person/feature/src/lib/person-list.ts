@@ -32,7 +32,7 @@ import { PersonStore } from './person.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ filteredPersonsCount()}}/{{personsCount()}} {{ store.i18n.person_plural() }}</ion-title>
+      <ion-title>{{ filteredPersonsCount()}}/{{personsCount()}} {{ store.i18n.persons() }}</ion-title>
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c-persons">
@@ -59,9 +59,9 @@ import { PersonStore } from './person.store';
     <!-- list header -->
     <ion-toolbar color="light" class="ion-hide-sm-down">
       <ion-item lines="none">
-        <ion-label><strong>{{ store.i18n.list_header_name() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.list_header_phone() }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.list_header_email() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.phone() }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.email() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -72,7 +72,7 @@ import { PersonStore } from './person.store';
       <bk-spinner />
     } @else {
       @if(filteredPersonsCount() === 0) {
-        <bk-empty-list message="@subject.person.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(person of filteredPersons(); track $index) {

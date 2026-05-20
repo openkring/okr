@@ -11,7 +11,10 @@ import { SectionDispatcher } from '@bk2/cms-section-feature';
 @Component({
   selector: 'bk-blog-minimal',
   standalone: true,
-  imports: [SectionDispatcher, IonGrid, IonRow, IonCol],
+  imports: [
+    SectionDispatcher,
+    IonGrid, IonRow, IonCol
+  ],
   styles: [`
     .blog-minimal { max-width: 740px; margin: 0 auto; }
     .section-wrapper.editable {

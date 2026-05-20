@@ -7,6 +7,9 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { ArticleSection, PageCollection, PageModel, SectionCollection, SectionModel } from '@bk2/shared-models';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { PFX } from './scope';
 
 export type NewsState = {
   blogPageKey: string | undefined;
@@ -23,8 +26,14 @@ export const NewsStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     modalController: inject(ModalController),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      empty:      PFX + 'news.empty',
+      more:       '@more'
+    }),
+
     newsResource: rxResource({
       params: () => ({
         blogPageKey: store.blogPageKey(),

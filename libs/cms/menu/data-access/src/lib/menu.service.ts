@@ -1,6 +1,5 @@
 import { inject, Injectable } from "@angular/core";
 import { Observable } from "rxjs";
-import { toSignal } from '@angular/core/rxjs-interop';
 
 import { ENV } from "@bk2/shared-config";
 import { FirestoreService } from "@bk2/shared-data-access";
@@ -20,12 +19,14 @@ export class MenuService {
   private readonly i18nService = inject(I18nService);
 
   // i18n
-  readonly createConf = toSignal(this.i18nService.translate(PFX + 'create.conf'), { initialValue: '' });
-  readonly createError = toSignal(this.i18nService.translate(PFX + 'create.error'), { initialValue: '' });
-  readonly updateConf = toSignal(this.i18nService.translate(PFX + 'update.conf'), { initialValue: '' });
-  readonly updateError = toSignal(this.i18nService.translate(PFX + 'update.error'), { initialValue: '' });
-  readonly deleteConf = toSignal(this.i18nService.translate(PFX + 'delete.conf'), { initialValue: '' });
-  readonly deleteError = toSignal(this.i18nService.translate(PFX + 'delete.error'), { initialValue: '' });
+  private readonly i18n = this.i18nService.translateAll({
+    create_conf:  PFX + 'create.conf',
+    create_error: PFX + 'create.error',
+    update_conf:  PFX + 'update.conf',
+    update_error: PFX + 'update.error',
+    delete_conf:  PFX + 'delete.conf',
+    delete_error: PFX + 'delete.error',
+  });
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -35,7 +36,7 @@ export class MenuService {
    */
   public async create(menuItem: MenuItemModel, currentUser: UserModel | undefined): Promise<string | undefined> {
     menuItem.index = getMenuIndex(menuItem);
-    return await this.firestoreService.createModel<MenuItemModel>(MenuItemCollection, menuItem, this.createConf(), this.createError(), currentUser);
+    return await this.firestoreService.createModel<MenuItemModel>(MenuItemCollection, menuItem, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
 
   /**
@@ -53,7 +54,7 @@ export class MenuService {
    */
   public async update(menuItem: MenuItemModel, currentUser?: UserModel): Promise<string | undefined> {
     menuItem.index = getMenuIndex(menuItem);
-    return await this.firestoreService.updateModel<MenuItemModel>(MenuItemCollection, menuItem, false, this.updateConf(), this.updateError(), currentUser);
+    return await this.firestoreService.updateModel<MenuItemModel>(MenuItemCollection, menuItem, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   /**
@@ -63,7 +64,7 @@ export class MenuService {
    * @param currentUser the current user performing the delete operation 
    */
   public async delete(menuItem: MenuItemModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<MenuItemModel>(MenuItemCollection, menuItem, this.deleteConf(), this.deleteError(), currentUser);
+    await this.firestoreService.deleteModel<MenuItemModel>(MenuItemCollection, menuItem, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
   }
 
   /*-------------------------- LIST / QUERY --------------------------------*/

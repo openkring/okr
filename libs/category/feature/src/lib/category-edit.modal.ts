@@ -4,10 +4,9 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { ENV } from '@bk2/shared-config';
 
 import { CategoryListForm } from '@bk2/category-ui';
+import { CategoryStore } from './category.store';
 
 @Component({
   selector: 'bk-category-edit-modal',
@@ -16,6 +15,7 @@ import { CategoryListForm } from '@bk2/category-ui';
     Header, ChangeConfirmation, CategoryListForm,
     IonContent
   ],
+  providers: [CategoryStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -29,7 +29,7 @@ import { CategoryListForm } from '@bk2/category-ui';
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
             [allTags]="tags()"
-            [tenants]="env.tenantId"
+            [tenants]="tenantId()"
             [hasAbbreviation]="hasAbbreviation()"
             [readOnly]="isReadOnly()"
             (dirty)="formDirty.set($event)"
@@ -42,7 +42,7 @@ import { CategoryListForm } from '@bk2/category-ui';
 })
 export class CategoryEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly env = inject(ENV);
+  protected readonly store = inject(CategoryStore);
 
   // inputs
   public category = input.required<CategoryListModel>();
@@ -60,7 +60,8 @@ export class CategoryEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('category', this.category()?.bkey, this.isReadOnly()));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.category()?.bkey));
+  protected tenantId = computed(() => this.store.tenantId());
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

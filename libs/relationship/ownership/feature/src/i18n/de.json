@@ -1,12 +1,17 @@
 {
   "ownerships": "Nutzungen",
-  "boatName": "Bootsname",
-  "boatType": "Bootstyp",
+  "empty": "Keine Nutzungen gefunden.",
   "duration": "von-bis",
   "ownerName": "Name",
   "resourceName": "Resource",
-  "empty": "Keine Nutzungen gefunden.",
   "newDesc": "möchte neu die folgende Resource nutzen:",
+  "select": {
+    "label": "Auswählen"
+  },
+  "boat": {
+    "name": "Bootsname",
+    "type": "Bootstyp"
+  },
   "create": {
     "label": "Nutzung hinzufügen"
   },
@@ -14,6 +19,11 @@
     "confirm": "Normalerweise sollte eine Nutzung beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Nutzung wirklich löschen?"
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "view": "Nutzungs Details ansehen",
+    "edit": "Nutzung ändern",
+    "create": "Neue Nutzung erstellen",
+    "delete": "Nutzung löschen",
+    "end": "Nutzung beenden"
   }
 }

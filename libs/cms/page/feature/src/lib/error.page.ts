@@ -3,9 +3,9 @@ import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Header } from '@bk2/shared-ui';
+import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
 
 import { PageStore } from './page.store';
-import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
 
 /**
  * ErrorPage is a simple component that displays a user-friendly error message.
@@ -17,6 +17,7 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
 @Component({
   selector: 'bk-error-page',
   standalone: true,
+  providers: [PageStore],
   imports: [
     SvgIconPipe,
     Header,
@@ -105,26 +106,26 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
   `
 })
 export class ErrorPage {
-  private readonly pageStore = inject(PageStore);
+  private readonly store = inject(PageStore);
 
   public readonly errorName = input('notfound');
 
-  protected page = computed(() => this.pageStore.page());
-  protected title = computed(() => this.page()?.title ?? 'Seite nicht gefunden');
-  protected subTitle = computed(() => this.page()?.subTitle ?? 'Die aufgerufene Seite existiert nicht.');
-  protected abstract = computed(() => this.page()?.abstract ?? 'Bitte überprüfen Sie die URL oder navigieren Sie über das Menü.');
-  protected logoUrl = computed(() => this.pageStore.getImgixUrl(this.page()?.logoUrl) ?? '');
-  protected logoAltText = computed(() => this.page()?.logoAltText || `${this.pageStore.tenantId()} Logo`);
-  protected bannerUrl = computed(() => this.pageStore.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
-  protected bannerAltText = computed(() => this.page()?.bannerAltText || `${this.pageStore.tenantId()} Banner`);
+  protected page = computed(() => this.store.page());
+  protected title = computed(() => this.page()?.title ?? this.store.i18n.not_found());
+  protected subTitle = computed(() => this.page()?.subTitle ?? this.store.i18n.not_exist());
+  protected abstract = computed(() => this.page()?.abstract ?? this.store.i18n.help());
+  protected logoUrl = computed(() => this.store.getImgixUrl(this.page()?.logoUrl) ?? '');
+  protected logoAltText = computed(() => this.page()?.logoAltText || `${this.store.tenantId()} Logo`);
+  protected bannerUrl = computed(() => this.store.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
+  protected bannerAltText = computed(() => this.page()?.bannerAltText || `${this.store.tenantId()} Banner`);
 
   constructor() {
     effect(() => {
-      this.pageStore.setPageId(this.errorName());
+      this.store.setPageId(this.errorName());
     });
   }
 
   protected async gotoHome(): Promise<void> {
-    await this.pageStore.navigateByUrl(this.pageStore.getConfigAttribute('rootUrl') + '');
+    await this.store.navigateByUrl(this.store.getConfigAttribute('rootUrl') + '');
   }
 }

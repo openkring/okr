@@ -3,11 +3,14 @@
   "empty": "Keine Personen gefunden.",
   "email-copy-conf": "Die E-Mail Adresse wurde kopiert",
   "phone-copy-conf": "Die Telefonnummer wurde kopiert.",
-  "name": "Name",
-  "phone": "Tel.",
-  "email": "E-Mail",
   "create": {
     "label": "Neue Person erfassen"
+  },
+  "edit": {
+    "label": "Person ändern"
+  },
+  "view": {
+    "label": "Person anzeigen"
   },
   "delete": {
     "confirm": "Soll die Person wirklich gelöscht werden ?"
@@ -17,7 +20,7 @@
       "label": "Mitgliedschaft hinzufügen",
       "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
       "conf": "Die Mitgliedschaft wurde erstellt.",
-      "alreadyMember": "Dieses Mitglied ist bereits vorhanden."
+      "exists": "Dieses Mitglied ist bereits vorhanden."
     }
   },
   "actionsheet": {

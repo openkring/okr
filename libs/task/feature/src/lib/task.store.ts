@@ -1,20 +1,21 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { map, of } from 'rxjs';
+import { ModalController } from '@ionic/angular/standalone';
 
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
-import { CategoryListModel, TaskCollection, TaskModel } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
+import { CategoryListModel, PersonModel, TaskCollection, TaskModel } from '@bk2/shared-models';
+import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, isPerson, nameMatches } from '@bk2/shared-util-core';
 
 import { TaskService } from '@bk2/task-data-access';
-
-import { ModalController } from '@ionic/angular/standalone';
-import { TaskEditModal } from 'libs/task/feature/src/lib/task-edit.modal';
 import { isTask } from '@bk2/task-util';
 import { AvatarService } from '@bk2/avatar-data-access';
-import { map, of } from 'rxjs';
+
+import { TaskEditModal } from './task-edit.modal';
+import { PFX } from './scope';
 
 export type TaskState = {
   calendarName: string;
@@ -56,9 +57,18 @@ export const TaskStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      task_plural:             '@task.plural',
-      quick_entry_label:       '@input.taskQuickEntry.label',
-      quick_entry_placeholder: '@input.taskQuickEntry.placeholder',
+      tasks:                   PFX + 'tasks',
+      empty:                   PFX + 'empty',
+      quick_entry_label:       PFX + 'taskQuickEntry.label',
+      quick_entry_placeholder: PFX + 'taskQuickEntry.placeholder',
+      as_title:                PFX + 'actionsheet.title',
+      as_view:                 PFX + 'actionsheet.view',
+      as_edit:                 PFX + 'actionsheet.edit',
+      as_create:               PFX + 'actionsheet.create',
+      as_delete:               PFX + 'actionsheet.delete',
+      as_done:                 PFX + 'actionsheet.done',
+      cancel:                  '@cancel',
+      ok:                      '@ok'
     }),
     tasksResource: rxResource({
       params: () => ({
@@ -247,5 +257,35 @@ export const TaskStore = signalStore(
         this.reload();
       }
     },
+
+    async selectPerson(): Promise<PersonModel | undefined> {
+      const modal = await store.modalController.create({
+        component: PersonSelectModal,
+        cssClass: 'list-modal',
+        componentProps: {
+          selectedTag: '',
+          currentUser: store.currentUser()
+        }
+      });
+      modal.present();
+      const { data, role } = await modal.onWillDismiss();
+      if (role === 'confirm' && data) {
+        if (isPerson(data, store.tenantId())) {
+          return data;
+        }
+      }
+      return undefined;
+    },
+
+    getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
+        }
+      }
   })),
 );

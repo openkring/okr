@@ -1,7 +1,6 @@
 {
   "users": "Firebase Users",
   "loginEmail": "Login E-Mail",
-  "name": "Name",
   "empty": "Keine User gefunden",
   "edit": {
     "title": "Firebase User ändern"
@@ -13,7 +12,16 @@
       }
     }
   },
+  "fbuser": {
+    "edit": {
+      "title": "Firebase User ändern"
+    }
+  },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "view": "User Details ansehen",
+    "edit": "User ändern",
+    "create": "Neuen User erstellen",
+    "delete": "User löschen"
   }
 }

@@ -1,15 +1,22 @@
 {
   "reservations": "Reservationen",
+  "empty": "Keine Reservationen gefunden.",
+  "reldesc1": "Reservation von ",
+  "reldesc2": "durch",
   "resource": "Was",
   "name": "Anlass",
   "validFrom": "Datum",
   "state": "Status",
   "reserver": "Wer",
-  "empty": "Keine Reservationen gefunden.",
   "delete": {
     "confirm": "Normalerweise sollte eine Reservation beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Reservation wirklich löschen?"
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "view": "Reservations-Details anzeigen",
+    "edit": "Reservation ändern",
+    "end": "Reservation beenden",
+    "delete": "Reservation löschen",
+    "create": "Neue Reservation erstellen"
   }
 }

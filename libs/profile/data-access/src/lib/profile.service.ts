@@ -18,8 +18,8 @@ export class ProfileService {
   private readonly env = inject(ENV);
   private readonly i18nService = inject(I18nService);
   private readonly i18n = this.i18nService.translateAll({
-    update_conf:  PFX + 'operation.update.conf',
-    update_error: PFX + 'operation.update.error',
+    update_conf:  PFX + 'update.conf',
+    update_error: PFX + 'update.error',
   });
 
   /** a profile can not be created nor deleted. */

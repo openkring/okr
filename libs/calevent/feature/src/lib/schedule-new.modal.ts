@@ -1,35 +1,16 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import {
-  IonButton,
-  IonChip, IonIcon, IonDatetime, IonModal,
-  IonContent, IonItem, IonInput, IonTextarea,
-  ModalController,
-} from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
-import { I18nService } from '@bk2/shared-i18n';
+import { IonButton, IonChip, IonIcon, IonDatetime, IonModal, IonContent, IonItem, IonInput, IonTextarea, ModalController } from '@ionic/angular/standalone';
+
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Header } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
-const ScheduleNewStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      title:         '@schedule.title',
-      topic:         '@schedule.topic',
-      description:   '@schedule.description',
-      dates:         '@schedule.dates',
-      add_date:      '@schedule.addDate',
-      confirm_dates: '@schedule.confirmDates',
-      invite:        '@schedule.invite',
-    }),
-  })),
-);
+import { CalEventStore } from './calevent.store';
 
 @Component({
   selector: 'bk-schedule-new-modal',
   standalone: true,
-  providers: [ScheduleNewStore],
+  providers: [CalEventStore],
   imports: [
     IonButton,
     IonChip, IonIcon, IonDatetime, IonModal,
@@ -38,7 +19,7 @@ const ScheduleNewStore = signalStore(
     Header,
   ],
   template: `
-    <bk-header [title]="store.i18n.title()" [isModal]="true" />
+    <bk-header [title]="store.i18n.schedule_title()" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-input
@@ -60,7 +41,7 @@ const ScheduleNewStore = signalStore(
       </ion-item>
 
       <ion-item lines="none">
-        {{ store.i18n.dates() }}
+        {{ store.i18n.schedule_date_proposals() }}
       </ion-item>
 
       <div class="date-chips">
@@ -71,7 +52,7 @@ const ScheduleNewStore = signalStore(
           </ion-chip>
         }
         <ion-chip color="primary" [outline]="true" (click)="datePickerOpen.set(true)">
-          {{ store.i18n.add_date() }}
+          {{ store.i18n.schedule_date_add() }}
         </ion-chip>
       </div>
 
@@ -88,7 +69,7 @@ const ScheduleNewStore = signalStore(
             (ionChange)="onDatetimeChange($event)"
           />
           <ion-button expand="block" (click)="confirmDates()">
-            {{ store.i18n.confirm_dates() }}
+            {{ store.i18n.schedule_confirm() }}
           </ion-button>
         </ng-template>
       </ion-modal>
@@ -99,13 +80,13 @@ const ScheduleNewStore = signalStore(
         (click)="submit()"
         class="ion-margin-top"
       >
-        {{ store.i18n.invite() }}
+        {{ store.i18n.invite_members() }}
       </ion-button>
     </ion-content>
   `,
 })
 export class ScheduleNewModal {
-  protected readonly store = inject(ScheduleNewStore);
+  protected readonly store = inject(CalEventStore);
   private readonly modalCtrl = inject(ModalController);
 
   protected readonly name = signal('');

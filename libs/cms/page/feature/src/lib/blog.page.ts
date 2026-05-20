@@ -29,7 +29,7 @@ import { BlogStream } from './blog-stream';
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonItem, IonLabel, IonPopover
   ],
-  providers: [SectionStore],
+  providers: [SectionStore, PageStore],
   styles: [`
     :host { display: flex; flex-direction: column; height: 100%; width: 100%; }
 
@@ -54,7 +54,7 @@ import { BlogStream } from './blog-stream';
       <ion-header>
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-          <ion-title>{{ pageStore.page()?.name }}</ion-title>
+          <ion-title>{{ store.page()?.name }}</ion-title>
           @if (hasRole('contentAdmin')) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -79,14 +79,14 @@ import { BlogStream } from './blog-stream';
       @if (isEmptyPage()) {
         <ion-item lines="none">
           <ion-label class="ion-text-wrap">
-            {{ hasRole('contentAdmin') ? pageStore.i18n.section_error_empty() : pageStore.i18n.section_error_empty_readonly() }}
+            {{ hasRole('contentAdmin') ? store.i18n.empty() : store.i18n.empty_readonly() }}
           </ion-label>
         </ion-item>
         @if (hasRole('contentAdmin')) {
           <ion-item lines="none">
             <ion-button (click)="addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
-              {{ pageStore.i18n.section_add_label() }}
+              {{ store.i18n.add_label() }}
             </ion-button>
           </ion-item>
         }
@@ -94,22 +94,22 @@ import { BlogStream } from './blog-stream';
         <div class="print-content">
           @switch (blogType()) {
             @case ('grid') {
-              <bk-blog-grid [sections]="sections()" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <bk-blog-grid [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('classic') {
-              <bk-blog-classic [sections]="sections()" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <bk-blog-classic [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('magazine') {
-              <bk-blog-magazine [sections]="sections()" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <bk-blog-magazine [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('bento') {
-              <bk-blog-bento [sections]="sections()" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <bk-blog-bento [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('stream') {
-              <bk-blog-stream [sections]="sections()" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <bk-blog-stream [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @default {
-              <bk-blog-minimal [sections]="sections()" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <bk-blog-minimal [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
           }
         </div>
@@ -118,7 +118,7 @@ import { BlogStream } from './blog-stream';
   `
 })
 export class BlogPage {
-  protected pageStore = inject(PageStore);
+  protected store = inject(PageStore);
   private sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
@@ -131,20 +131,20 @@ export class BlogPage {
   public color = input('secondary');
   public showMenu = input(true);
 
-  protected tenantId = computed(() => this.pageStore.tenantId());
-  protected popupId = computed(() => 'c_blogpage_' + this.pageStore.page()?.bkey);
+  protected tenantId = computed(() => this.store.tenantId());
+  protected popupId = computed(() => 'c_blogpage_' + this.store.page()?.bkey);
   protected editMode = signal(false);
-  protected sections = computed(() => this.pageStore.pageSections().filter(s => s.state === 'published' || this.hasRole('contentAdmin')));
+  protected sections = computed(() => this.store.pageSections().filter(s => s.state === 'published' || this.hasRole('contentAdmin')));
   protected isEmptyPage = computed(() => this.sections().length === 0);
-  protected blogType = computed(() => (this.pageStore.page()?.blogType ?? 'minimal') as BlogLayoutType);
+  protected blogType = computed(() => (this.store.page()?.blogType ?? 'minimal') as BlogLayoutType);
 
   constructor() {
     effect(() => {
-      const meta = this.pageStore.meta();
+      const meta = this.store.meta();
       if (meta) this.meta.addTags(meta);
     });
     effect(() => {
-      const title = this.pageStore.page()?.title;
+      const title = this.store.page()?.title;
       if (title && title.length > 0) this.title.setTitle(title);
     });
     effect(() => {
@@ -168,22 +168,22 @@ export class BlogPage {
     switch ($event.detail.data) {
       case 'toggleEditMode':  this.editMode.update(v => !v); break;
       case 'editPage': {
-        const page = this.pageStore.page();
-        if (page) await this.pageStore.edit(page, false);
+        const page = this.store.page();
+        if (page) await this.store.edit(page, false);
         break;
       }
-      case 'sortSections':  await this.pageStore.sortSections(); break;
-      case 'selectSection': await this.pageStore.selectSection(); break;
+      case 'sortSections':  await this.store.sortSections(); break;
+      case 'selectSection': await this.store.selectSection(); break;
       case 'addSection':    await this.addSection(); break;
-      case 'exportRaw':     await this.pageStore.export('raw'); break;
-      case 'print':         await this.pageStore.print(); break;
+      case 'exportRaw':     await this.store.export('raw'); break;
+      case 'print':         await this.store.print(); break;
       default: error(undefined, `BlogPage.onPopoverDismiss: unknown method ${$event.detail.data}`);
     }
   }
 
   protected async addSection(): Promise<void> {
     const sectionId = await this.sectionStore.add(false);
-    if (sectionId) this.pageStore.addSectionById(sectionId);
+    if (sectionId) this.store.addSectionById(sectionId);
   }
 
   protected async showActions(sectionId: string): Promise<void> {
@@ -193,23 +193,23 @@ export class BlogPage {
     if (!section) return;
     this.sectionStore.setSectionId(id);
 
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, section);
     await this.executeActions(actionSheetOptions, section);
   }
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
-    if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'edit'));
+    if (hasRole('contentAdmin', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.store.i18n.section_edit(), this.store.imgixBaseUrl(), 'edit'));
       if (section.type === 'article') {
-        actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
-        actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.pageStore.imgixBaseUrl(), 'send'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.store.i18n.upload_image(), this.store.imgixBaseUrl(), 'upload'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.store.i18n.section_send(), this.store.imgixBaseUrl(), 'send'));
       }
       if (section.type === 'button') {
-        actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.pageStore.imgixBaseUrl(), 'upload'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.store.i18n.upload_file(), this.store.imgixBaseUrl(), 'upload'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.pageStore.imgixBaseUrl(), 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.store.i18n.section_remove(), this.store.imgixBaseUrl(), 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.store.imgixBaseUrl(), 'cancel'));
     }
   }
 
@@ -220,7 +220,7 @@ export class BlogPage {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'page.removesection': await this.pageStore.removeSectionById(section.bkey); break;
+        case 'page.removesection': await this.store.removeSectionById(section.bkey); break;
         case 'section.edit':       await this.sectionStore.edit(this.sectionStore.section(), false); break;
         case 'section.send':       await this.sectionStore.send(section); break;
         case 'section.image.upload': await this.sectionStore.uploadImage(this.sectionStore.section() as ArticleSection); break;
@@ -230,6 +230,6 @@ export class BlogPage {
   }
 
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.pageStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }

@@ -69,14 +69,25 @@ export const OwnershipStore = signalStore(
 
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm:            PFX + 'delete.confirm',
-      ok:                        '@ok',
-      cancel:                    '@cancel',
-      list_header_boat_name:     '@input.boatName.label',
-      list_header_boat_type:     '@input.boatType.label',
-      list_header_duration:      '@ownership.list.header.duration',
-      list_header_owner_name:    '@ownership.list.header.ownerName',
-      list_header_resource_name: '@ownership.list.header.resourceName',
+      ownerships:           PFX + 'ownerships',
+      empty:                PFX + 'empty',
+      duration:             PFX + 'duration',
+      owner_name:           PFX + 'ownerName',
+      resource_name:        PFX + 'resourceName',
+      new_desc:             PFX + 'newDesc',
+      select_label:         PFX + 'select.label',
+      boat_name:            PFX + 'boat.name',
+      boat_type:            PFX + 'boat.type',
+      create_label:         PFX + 'create.label',
+      delete_confirm:       PFX + 'delete.confirm',
+      as_title:             PFX + 'actionsheet.title',
+      as_view:              PFX + 'actionsheet.view',
+      as_edit:              PFX + 'actionsheet.edit',
+      as_create:            PFX + 'actionsheet.create',
+      as_delete:            PFX + 'actionsheet.delete',
+      as_end:               PFX + 'actionsheet.end',
+      cancel:               '@cancel',
+      ok:                   '@ok'
     }),
 
     // all ownerships of this tenant
@@ -390,6 +401,17 @@ export const OwnershipStore = signalStore(
             await store.ownershipService.delete(ownership, store.currentUser());
             this.reload();
           }
+        }
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.as_view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.as_edit();
+        } else {
+          return store.i18n.as_create();
         }
       },
     }

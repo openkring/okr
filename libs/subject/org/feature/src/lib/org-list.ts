@@ -32,7 +32,7 @@ import { OrgStore } from './org.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedOrgsCount()}}/{{orgsCount()}} {{ store.i18n.org_plural() }}</ion-title>
+      <ion-title>{{ selectedOrgsCount()}}/{{orgsCount()}} {{ store.i18n.orgs() }}</ion-title>
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c-orgs">
@@ -61,13 +61,13 @@ import { OrgStore } from './org.store';
       <ion-grid>
         <ion-row>
           <ion-col size="5">
-            <ion-label><strong>{{ store.i18n.list_header_name() }}</strong></ion-label>
+            <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
           </ion-col>
           <ion-col size="3">
-              <ion-label><strong>{{ store.i18n.list_header_phone() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.phone() }}</strong></ion-label>
           </ion-col>
           <ion-col size="4">
-            <ion-label><strong>{{ store.i18n.list_header_email() }}</strong></ion-label>
+            <ion-label><strong>{{ store.i18n.email() }}</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -173,7 +173,7 @@ export class OrgList {
   protected async showActions(org: OrgModel): Promise<void> {
     if (this.hasRole('memberAdmin')) {
       if (this.hasRole('admin')) {
-        const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+        const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
         this.addActionSheetButtons(actionSheetOptions, org);
         await this.executeActions(actionSheetOptions, org);
       } else {
@@ -190,8 +190,8 @@ export class OrgList {
    * @param org 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, org: OrgModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('org.edit', this.imgixBaseUrl, 'edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('org.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.imgixBaseUrl, 'trash'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
 
@@ -207,10 +207,10 @@ export class OrgList {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'org.delete':
+        case 'as_delete':
           await this.store.delete(org, this.readOnly());
           break;
-        case 'org.edit':
+        case 'as_edit':
           await this.store.edit(org, this.readOnly());
           break;
       }

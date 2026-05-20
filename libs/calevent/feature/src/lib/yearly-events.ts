@@ -27,7 +27,7 @@ import { CalEventStore } from './calevent.store';
     <ion-header>
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ calEventStore.i18n.plural() }}</ion-title>
+      <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ store.i18n.calevents() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
@@ -59,16 +59,16 @@ import { CalEventStore } from './calevent.store';
       <ion-grid>
         <ion-row>
           <ion-col size="6" size-md="4" size-lg="3">
-            <ion-label><strong>{{ calEventStore.i18n.list_header_year() }}</strong></ion-label>
+            <ion-label><strong>{{ store.i18n.year() }}</strong></ion-label>
           </ion-col>
           <ion-col size-md="4" size-lg="3" class="ion-hide-md-down">
-            <ion-label><strong>{{ calEventStore.i18n.list_header_responsible() }}</strong></ion-label>
+            <ion-label><strong>{{ store.i18n.responsible() }}</strong></ion-label>
           </ion-col>
           <ion-col size="6" size-md="4" size-lg="3">
-            <ion-label><strong>{{ calEventStore.i18n.list_header_location() }}</strong></ion-label>
+            <ion-label><strong>{{ store.i18n.location() }}</strong></ion-label>
           </ion-col>
           <ion-col size-lg="3" class="ion-hide-lg-down">
-            <ion-label><strong>{{ calEventStore.i18n.list_header_description() }}</strong></ion-label>
+            <ion-label><strong>{{ store.i18n.description() }}</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -81,7 +81,7 @@ import { CalEventStore } from './calevent.store';
       <bk-spinner />
     } @else {
       @if(filteredCalEventsCount() === 0) {
-        <bk-empty-list [message]="calEventStore.i18n.empty()" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(event of filteredCalEvents(); track event.bkey) {
@@ -100,7 +100,7 @@ import { CalEventStore } from './calevent.store';
     `
 })
 export class YearlyEvents {
-  protected calEventStore = inject(CalEventStore);
+  protected store = inject(CalEventStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -108,33 +108,33 @@ export class YearlyEvents {
   public contextMenuName = input.required<string>();
 
   // filters
-  protected searchTerm = linkedSignal(() => this.calEventStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.calEventStore.selectedTag());
-  protected selectedType = linkedSignal(() => this.calEventStore.selectedCategory());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedType = linkedSignal(() => this.store.selectedCategory());
 
   // data
-  protected calEventsCount = computed(() => this.calEventStore.calEventsCount());
-  protected filteredCalEvents = computed(() => this.calEventStore.filteredCalEvents() ?? []);
+  protected calEventsCount = computed(() => this.store.calEventsCount());
+  protected filteredCalEvents = computed(() => this.store.filteredCalEvents() ?? []);
   protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
-  protected isLoading = computed(() => this.calEventStore.isLoading());
-  protected tags = computed(() => this.calEventStore.getTags());
-  protected types = computed(() => this.calEventStore.appStore.getCategory('calevent_type'));
-  private currentUser = computed(() => this.calEventStore.appStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.store.appStore.getCategory('calevent_type'));
+  private currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   protected readonly years = computed(() => getYearList(getYear(), 30));
 
-  private imgixBaseUrl = this.calEventStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.calEventStore.setCalendarName(this.listId()));
+    effect(() => this.store.setCalendarName(this.listId()));
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.calEventStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.calEventStore.export("raw"); break;
+      case 'add':  await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `YearlyEvents.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -145,7 +145,7 @@ export class YearlyEvents {
    * @param calEvent 
    */
   protected async showActions(calEvent: CalEventModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions);
     await this.executeActions(actionSheetOptions, calEvent);
   }
@@ -155,15 +155,15 @@ export class YearlyEvents {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('album', this.imgixBaseUrl, 'albums'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('album', this.store.i18n.as_albums(), this.imgixBaseUrl, 'albums'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
   }
 
@@ -180,16 +180,16 @@ export class YearlyEvents {
       if (!data) return;
       switch (data.action) {
         case 'calevent.delete':
-          await this.calEventStore.delete(calEvent, this.readOnly());
+          await this.store.delete(calEvent, this.readOnly());
           break;
         case 'calevent.edit':
-          await this.calEventStore.edit(calEvent, false, this.readOnly());
+          await this.store.edit(calEvent, false, this.readOnly());
           break;
         case 'calevent.view':
-          await this.calEventStore.edit(calEvent, false, true);
+          await this.store.edit(calEvent, false, true);
           break;
         case 'album':
-          await this.calEventStore.showAlbum(calEvent.url);
+          await this.store.showAlbum(calEvent.url);
           break;
       }
     }
@@ -197,23 +197,23 @@ export class YearlyEvents {
 
   /******************************* change notifications *************************************** */
   protected onSearchtermChange(searchTerm: string): void {
-    this.calEventStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected($event: string): void {
-    this.calEventStore.setSelectedTag($event);
+    this.store.setSelectedTag($event);
   }
 
   protected onTypeSelected(calEventType: string): void {
-    this.calEventStore.setSelectedCategory(calEventType);
+    this.store.setSelectedCategory(calEventType);
   }
 
   protected onYearSelected(year: number): void {
-    this.calEventStore.setSelectedYear(year);
+    this.store.setSelectedYear(year);
   }
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.calEventStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }

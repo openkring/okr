@@ -1,16 +1,16 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ENV, LowercaseWordMask } from '@bk2/shared-config';
+import { LowercaseWordMask } from '@bk2/shared-config';
 import { CategoryListModel, PersonModel, RoleName, TaskModel, TaskModelName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, Header, StringList } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isPerson, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
-import { PersonSelectModal } from '@bk2/shared-feature';
-import { getTitleLabel } from '@bk2/shared-util-angular';
+import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { TaskForm } from '@bk2/task-ui';
 import { AvatarSelect } from '@bk2/avatar-ui';
+
+import { TaskStore } from './task.store';
 
 @Component({
   selector: 'bk-task-edit-modal',
@@ -20,6 +20,7 @@ import { AvatarSelect } from '@bk2/avatar-ui';
     AvatarSelect, StringList,
     IonContent, IonAccordionGroup
   ],
+  providers: [TaskStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -66,7 +67,7 @@ import { AvatarSelect } from '@bk2/avatar-ui';
 })
 export class TaskEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
+  protected readonly store = inject(TaskStore);
 
   // inputs
   public task = input.required<TaskModel>();
@@ -88,7 +89,7 @@ export class TaskEditModal {
 
   // derived signals
   protected defaultAvatar = computed(() => newAvatarInfo(this.currentUser()!.personKey, this.currentUser()!.firstName, this.currentUser()!.lastName, 'person', '', '', ''));  
-  protected headerTitle = computed(() => getTitleLabel('task', this.task().bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.task().bkey, ));
   protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().bkey}`);
   protected calendars = linkedSignal(() => (this.formData()?.calendars ?? []) as string[]);
   protected author = linkedSignal(() => this.formData()?.author ?? this.defaultAvatar());
@@ -123,7 +124,7 @@ export class TaskEditModal {
   }
 
   protected async selectPerson(type: 'author' | 'assignee'): Promise<void> {
-    const person = await this.selectPersonModal();
+    const person = await this.store.selectPerson();
     if (!person) return;
     const avatar = newAvatarInfo(person.bkey, person.firstName, person.lastName, 'person', person.gender, '', '');
     this.formData.update((vm) => {
@@ -131,25 +132,6 @@ export class TaskEditModal {
       return ({...vm, [type]: avatar });
     });      
     this.formDirty.set(true);
-  }
-
-  async selectPersonModal(): Promise<PersonModel | undefined> {
-    const modal = await this.modalController.create({
-      component: PersonSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: '',
-        currentUser: this.currentUser()
-      }
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm' && data) {
-      if (isPerson(data, this.env.tenantId)) {
-        return data;
-      }
-    }
-    return undefined;
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

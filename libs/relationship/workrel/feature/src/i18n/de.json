@@ -1,7 +1,6 @@
 {
   "workrels": "Beschäftigungen",
   "empty": "Keine Arbeits-Beziehungen gefunden.",
-  "title": "Beschäftigungen",
   "subject": "Person",
   "type": "Beziehungsart",
   "object": "Organisation",
@@ -9,8 +8,11 @@
     "confirm": "Soll diese Beschäftigung wirklich gelöscht werden ?"
   },
   "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
+    "title": "Wähle eine Aktion",
+    "view": "Beschäftigungs Details ansehen",
+    "edit": "Beschäftigung ändern",
+    "create": "Neue Beschäftigung erstellen",
+    "delete": "Beschäftigung löschen",
+    "end": "Beschäftigung beenden"
   }
 }

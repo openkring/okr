@@ -32,7 +32,7 @@ import { GroupStore } from './group.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedGroupsCount()}}/{{groupsCount()}} {{ store.i18n.group_plural() }}</ion-title>
+        <ion-title>{{ selectedGroupsCount()}}/{{groupsCount()}} {{ store.i18n.groups() }}</ion-title>
         @if(hasRole('privileged') || hasRole('memberAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -60,7 +60,7 @@ import { GroupStore } from './group.store';
         <ion-grid>
           <ion-row>
             <ion-col>
-              <ion-label><strong>{{ store.i18n.list_header_name() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -73,7 +73,7 @@ import { GroupStore } from './group.store';
       <bk-spinner />
     } @else {
       @if(selectedGroupsCount() === 0) {
-        <bk-empty-list message="@subject.group.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(group of filteredGroups(); track $index) {
@@ -146,7 +146,7 @@ export class GroupList {
     if (this.readOnly()) {
       await this.store.view(group, this.readOnly());
     } else {
-      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      const actionSheetOptions = createActionSheetOptions('@as_title');
       await this.addActionSheetButtons(actionSheetOptions, group);
       await this.executeActions(actionSheetOptions, group);
     }
@@ -157,14 +157,14 @@ export class GroupList {
    * @param group 
    */
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): Promise<void> {
-    actionSheetOptions.buttons.push(createActionSheetButton('group.show', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('group.edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('as_show', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.store.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetDivider());
       if (await this.store.doesGroupContentPageExist(group.bkey) === false) {
-        actionSheetOptions.buttons.push(createActionSheetButton('group.addPage', this.imgixBaseUrl, 'add'));
+        actionSheetOptions.buttons.push(createActionSheetButton('as_addPage', this.imgixBaseUrl, 'add'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('group.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
@@ -181,20 +181,20 @@ export class GroupList {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'group.delete':
+        case 'as_delete':
           await this.store.delete(group, this.readOnly());
           break;
-        case 'group.addPage':
+        case 'as_addPage':
           // tbd: add default article section explaining how to add content to the group page
           await this.store.createGroupPage(group, 'intro', 'Gruppe: ' + group.name);
           break;
-        case 'group.edit':
+        case 'as_edit':
           await this.store.edit(group, this.readOnly());
           break;
-        case 'group.view':
+        case 'as_view':
           await this.store.edit(group, true);
           break;
-        case 'group.show':
+        case 'as_show':
           await this.store.view(group, this.readOnly());
           break;
       }

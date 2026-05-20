@@ -2,6 +2,8 @@
   "icons": "Icons",
   "name": "Icon Name",
   "type": "Icon Set",
+  "size": "Grösse in px",
+  "updated": "Letzte Aktualisierung",
   "empty": "Keine Icons gefunden.",
   "create": {
     "label": "Icon hinzufügen"
@@ -16,6 +18,11 @@
     "label": "Icon auswählen"
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "view": "Icon Details ansehen",
+    "edit": "Icon ändern",
+    "create": "Neues Icon erstellen",
+    "delete": "Icon löschen",
+    "copy": "Icon Name kopieren"
   }
 }

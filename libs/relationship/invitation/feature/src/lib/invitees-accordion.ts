@@ -42,7 +42,7 @@ import { InvitationStore } from './invitation.store';
     </ion-item>
     <div slot="content">
         @if(invitees().length === 0) {
-        <bk-empty-list message="@general.noData.invitations" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(invitee of invitees(); track $index) {
@@ -65,7 +65,7 @@ import { InvitationStore } from './invitation.store';
   `,
 })
 export class InviteesAccordion {
-  protected readonly invitationStore = inject(InvitationStore);
+  protected readonly store = inject(InvitationStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -79,20 +79,20 @@ export class InviteesAccordion {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // derived fields
-  protected invitees = computed(() => this.invitationStore.invitees());
-  private currentUser = computed(() => this.invitationStore.currentUser());
+  protected invitees = computed(() => this.store.invitees());
+  private currentUser = computed(() => this.store.currentUser());
   protected acceptedCount = computed(() => 
     this.invitees().filter(inv => inv.state === 'accepted').length
   );
-  private imgixBaseUrl = this.invitationStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.invitationStore.setScope(this.calevent().bkey, '', this.showOnlyCurrent()));
+    effect(() => this.store.setScope(this.calevent().bkey, '', this.showOnlyCurrent()));
   }
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    await this.invitationStore.invitePerson(this.calevent(), this.isReadOnly());
+    await this.store.invitePerson(this.calevent(), this.isReadOnly());
   }
 
   /**
@@ -101,7 +101,7 @@ export class InviteesAccordion {
    * @param invitation 
    */
   protected async showActions(invitation: InvitationModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, invitation);
     await this.executeActions(actionSheetOptions, invitation);
   }
@@ -111,26 +111,26 @@ export class InviteesAccordion {
    * @param invitation 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, invitation: InvitationModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
     // users can change the invitation state of their own invitations
     if (invitation.inviteeKey === this.currentUser()?.personKey) {
       if (invitation.state !== 'accepted') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.accept', this.imgixBaseUrl, 'checkmark'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.accept', this.store.i18n.as_accept(), this.imgixBaseUrl, 'checkmark'));
       }
       if (invitation.state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.decline', this.imgixBaseUrl, 'cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.decline', this.store.i18n.as_decline(), this.imgixBaseUrl, 'cancel'));
       }
       if (invitation.state !== 'maybe') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.maybe', this.imgixBaseUrl, 'help'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.maybe', this.store.i18n.as_maybe(), this.imgixBaseUrl, 'help'));
       }
     }
     if (!this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invitation.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.currentUser()) && !this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invitation.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -146,22 +146,22 @@ export class InviteesAccordion {
       if (!data) return;
       switch (data.action) {
         case 'invitation.delete':
-          await this.invitationStore.delete(invitation, this.isReadOnly());
+          await this.store.delete(invitation, this.isReadOnly());
           break;
         case 'invitation.edit':
-          await this.invitationStore.edit(invitation, this.isReadOnly());
+          await this.store.edit(invitation, this.isReadOnly());
           break;
         case 'invitation.view':
-          await this.invitationStore.edit(invitation, true);
+          await this.store.edit(invitation, true);
           break;
         case 'invitation.accept':
-          await this.invitationStore.changeState(invitation, 'accepted');
+          await this.store.changeState(invitation, 'accepted');
           break;
         case 'invitation.decline':
-          await this.invitationStore.changeState(invitation, 'declined');
+          await this.store.changeState(invitation, 'declined');
           break;
         case 'invitation.maybe':
-          await this.invitationStore.changeState(invitation, 'maybe');
+          await this.store.changeState(invitation, 'maybe');
           break;
       }
     }

@@ -5,6 +5,9 @@ import { map } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { MatrixChatService } from '@bk2/chat-data-access';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { PFX } from './scope';
 
 export type MessagesState = {
   maxItems: number | undefined; // max items to show, undefined means all
@@ -19,8 +22,14 @@ export const MessagesStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     matrixService: inject(MatrixChatService),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      messages_empty: PFX + 'messages.empty',
+      more: '@more'
+    }),
+
     roomsWithUnreadResource: rxResource({
       params: () => ({
         maxItems: store.maxItems(),

@@ -57,16 +57,16 @@ import { OwnershipStore } from './ownership.store';
     <ion-toolbar color="primary">
       @if(listId() === 'scsBoats') {
         <ion-item color="primary" lines="none">
-          <ion-label><strong>{{ ownershipStore.i18n.list_header_boat_name() }}</strong></ion-label>
-          <ion-label><strong>{{ ownershipStore.i18n.list_header_boat_type() }}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{ ownershipStore.i18n.list_header_duration() }}</strong></ion-label>
+          <ion-label><strong>{{ store.i18n.boat_name() }}</strong></ion-label>
+          <ion-label><strong>{{ store.i18n.boat_type() }}</strong></ion-label>
+          <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.duration() }}</strong></ion-label>
         </ion-item>
       }
       @else {
         <ion-item lines="none" color="primary">
-          <ion-label><strong>{{ ownershipStore.i18n.list_header_owner_name() }}</strong></ion-label>
-          <ion-label><strong>{{ ownershipStore.i18n.list_header_resource_name() }}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{ ownershipStore.i18n.list_header_duration() }}</strong></ion-label>
+          <ion-label><strong>{{ store.i18n.owner_name() }}</strong></ion-label>
+          <ion-label><strong>{{ store.i18n.resource_name() }}</strong></ion-label>
+          <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.duration() }}</strong></ion-label>
         </ion-item>
       }
     </ion-toolbar>
@@ -79,7 +79,7 @@ import { OwnershipStore } from './ownership.store';
       <ion-backdrop />
     } @else {
       @if(filteredOwnerships().length === 0) {
-        <bk-empty-list message="@ownership.list.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(ownership of filteredOwnerships(); track $index) {
@@ -109,39 +109,39 @@ import { OwnershipStore } from './ownership.store';
     `
 })
 export class OwnershipList {
-  protected ownershipStore = inject(OwnershipStore);
+  protected store = inject(OwnershipStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
-  protected currentUser = computed(() => this.ownershipStore.appStore.currentUser());
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   // filters
-  protected searchTerm = linkedSignal(() => this.ownershipStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.ownershipStore.selectedTag());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
 
   protected filteredOwnerships = computed(() => {
     switch (this.listId()) {
-      case 'ownerships': return this.ownershipStore.filteredOwnerships() ?? [];
-      case 'lockers': return this.ownershipStore.filteredLockers() ?? [];
-      case 'keys': return this.ownershipStore.filteredKeys() ?? [];
-      case 'privateBoats': return this.ownershipStore.filteredPrivateBoats();
-      case 'scsBoats': return this.ownershipStore.filteredScsBoats();
+      case 'ownerships': return this.store.filteredOwnerships() ?? [];
+      case 'lockers': return this.store.filteredLockers() ?? [];
+      case 'keys': return this.store.filteredKeys() ?? [];
+      case 'privateBoats': return this.store.filteredPrivateBoats();
+      case 'scsBoats': return this.store.filteredScsBoats();
       case 'all':
-      default: return this.ownershipStore.filteredAllOwnerships() ?? [];
+      default: return this.store.filteredAllOwnerships() ?? [];
     }
   });
   protected ownershipsCount = computed(() => {
     switch (this.listId()) {
-      case 'ownerships': return this.ownershipStore.ownershipsCount();
-      case 'lockers': return this.ownershipStore.lockersCount();
-      case 'keys': return this.ownershipStore.keysCount();
-      case 'privateBoats': return this.ownershipStore.privateBoatsCount();
-      case 'scsBoats': return this.ownershipStore.scsBoatsCount();
+      case 'ownerships': return this.store.ownershipsCount();
+      case 'lockers': return this.store.lockersCount();
+      case 'keys': return this.store.keysCount();
+      case 'privateBoats': return this.store.privateBoatsCount();
+      case 'scsBoats': return this.store.scsBoatsCount();
       case 'all':
-      default: return this.ownershipStore.allOwnershipsCount() ?? [];
+      default: return this.store.allOwnershipsCount() ?? [];
     }
   });
   protected title = computed(() => {
@@ -152,12 +152,12 @@ export class OwnershipList {
     switch (this.listId()) {
       case 'privateBoats':
       case 'lockers':
-        return this.ownershipStore.selectedGender();
+        return this.store.selectedGender();
       case 'scsBoats':
-        return this.ownershipStore.selectedRowingBoatType();
+        return this.store.selectedRowingBoatType();
       case 'all':
       case 'ownerships':
-        return this.ownershipStore.selectedResourceType();
+        return this.store.selectedResourceType();
       default:
         return 'all';
     }
@@ -166,46 +166,46 @@ export class OwnershipList {
   protected types = computed(() => {
     switch (this.listId()) {
       case 'privateBoats':
-      case 'lockers': return this.ownershipStore.appStore.getCategory('gender');
+      case 'lockers': return this.store.appStore.getCategory('gender');
       case 'keys': return undefined;
-      case 'scsBoats': return this.ownershipStore.appStore.getCategory('rboat_type');
+      case 'scsBoats': return this.store.appStore.getCategory('rboat_type');
       case 'all':
-      default: return this.ownershipStore.appStore.getCategory('resource_type');
+      default: return this.store.appStore.getCategory('resource_type');
     }
   });
 
   protected readonly years = getYearList();
 
   protected selectedOwnershipsCount = computed(() => this.filteredOwnerships().length);
-  protected isLoading = computed(() => this.ownershipStore.isLoading());
-  protected tags = computed(() => this.ownershipStore.getTags());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
   protected popupId = computed(() => 'c_ownerships_' + this.listId());
 
-  private imgixBaseUrl = this.ownershipStore.appStore.env.services.imgixBaseUrl;
-  private rboatTypes = this.ownershipStore.appStore.getCategory('rboat_type');
-  private resourceTypes = this.ownershipStore.appStore.getCategory('resource_type');
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+  private rboatTypes = this.store.appStore.getCategory('rboat_type');
+  private resourceTypes = this.store.appStore.getCategory('resource_type');
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.ownershipStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.ownershipStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
     switch (this.listId()) {
       case 'privateBoats':
       case 'lockers':
-        this.ownershipStore.setSelectedGender(type);
+        this.store.setSelectedGender(type);
         break;
       case 'scsBoats':
-        this.ownershipStore.setSelectedRowingBoatType(type);
+        this.store.setSelectedRowingBoatType(type);
         break;
       case 'all':
       case 'ownerships':
-        this.ownershipStore.setSelectedResourceType(type);
+        this.store.setSelectedResourceType(type);
         break;
       default:
         break;
@@ -216,8 +216,8 @@ export class OwnershipList {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.ownershipStore.add(undefined, PersonModelName, undefined, this.readOnly()); break;
-      case 'exportRaw': await this.ownershipStore.export("raw"); break;
+      case 'add': await this.store.add(undefined, PersonModelName, undefined, this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `OwnershipList.call: unknown method ${selectedMethod}`);
     }
   }
@@ -228,7 +228,7 @@ export class OwnershipList {
    * @param ownership 
    */
   protected async showActions(ownership: OwnershipModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, ownership);
     await this.executeActions(actionSheetOptions, ownership);
   }
@@ -238,17 +238,17 @@ export class OwnershipList {
    * @param ownership 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
-    if (hasRole('resourceAdmin', this.ownershipStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.imgixBaseUrl, 'edit'));
+    if (hasRole('resourceAdmin', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(ownership.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.store.i18n.as_end(), this.imgixBaseUrl, 'stop-circle'));
       }
     }
-    if (hasRole('admin', this.ownershipStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.imgixBaseUrl, 'trash'));
+    if (hasRole('admin', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -264,16 +264,16 @@ export class OwnershipList {
       if (!data) return;
       switch (data.action) {
         case 'ownership.delete':
-          await this.ownershipStore.delete(ownership, this.readOnly());
+          await this.store.delete(ownership, this.readOnly());
           break;
         case 'ownership.edit':
-          await this.ownershipStore.edit(ownership, this.readOnly());
+          await this.store.edit(ownership, this.readOnly());
           break;
         case 'ownership.view':
-          await this.ownershipStore.edit(ownership, true);
+          await this.store.edit(ownership, true);
           break;
         case 'ownership.end':
-          await this.ownershipStore.end(ownership, this.readOnly());
+          await this.store.end(ownership, this.readOnly());
           break;
       }
     }
@@ -281,7 +281,7 @@ export class OwnershipList {
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.ownershipStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected getOwnerName(ownership: OwnershipModel): string {

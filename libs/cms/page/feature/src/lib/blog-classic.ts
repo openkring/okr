@@ -13,7 +13,10 @@ import { SectionDispatcher } from '@bk2/cms-section-feature';
 @Component({
   selector: 'bk-blog-classic',
   standalone: true,
-  imports: [SectionDispatcher, IonGrid, IonRow, IonCol],
+  imports: [
+    SectionDispatcher,
+    IonGrid, IonRow, IonCol
+  ],
   styles: [`
     .section-wrapper.editable {
       border: 3px solid yellow;

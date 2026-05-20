@@ -3,12 +3,11 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 
 import { CategoryListModel, OrgModel, PersonModel, RoleName, UserModel, WorkrelModel, WorkrelModelName } from '@bk2/shared-models';
 import { ChangeConfirmation, Header } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isOrg, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { WorkrelForm } from '@bk2/relationship-workrel-ui';
+import { WorkrelStore } from './workrel.store';
 
 @Component({
   selector: 'bk-workrel-edit-modal',
@@ -19,6 +18,7 @@ import { WorkrelForm } from '@bk2/relationship-workrel-ui';
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
+  providers: [WorkrelStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -60,6 +60,7 @@ import { WorkrelForm } from '@bk2/relationship-workrel-ui';
 })
 export class WorkrelEditModal {
   private readonly modalController = inject(ModalController);
+  protected readonly store = inject(WorkrelStore);
 
   // inputs
   public workrel = input.required<WorkrelModel>();
@@ -80,7 +81,7 @@ export class WorkrelEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => getTitleLabel('workrel', this.workrel().bkey, this.isReadOnly()));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.workrel().bkey));
   protected readonly parentKey = computed(() => `${WorkrelModelName}.${this.workrel().bkey}`);
 
   /******************************* actions *************************************** */
@@ -106,7 +107,7 @@ export class WorkrelEditModal {
   }
 
   protected async selectPerson(): Promise<void> {
-    const person = await this.selectPersonModal();
+    const person = await this.store.selectPerson();
     if (!person) return;
     this.formData.update((vm: WorkrelModel | undefined) => {
       if (!vm) return vm;
@@ -121,28 +122,8 @@ export class WorkrelEditModal {
     this.formDirty.set(true);
   }
 
-  async selectPersonModal(): Promise<PersonModel | undefined> {
-    const modal = await this.modalController.create({
-      component: PersonSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: '',
-        currentUser: this.currentUser(),
-        tenantId: this.tenantId()
-      }
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm' && data) {
-      if (isPerson(data, this.tenantId())) {
-        return data;
-      }
-    }
-    return undefined;
-  }
-
   protected async selectOrg(): Promise<void> {
-    const org = await this.selectOrgModal();
+    const org = await this.store.selectOrg();
     if (!org) return;
     this.formData.update((vm) => {
       if (!vm) return vm;
@@ -155,24 +136,5 @@ export class WorkrelEditModal {
       };
     });
     this.formDirty.set(true);
-  }
-
-  async selectOrgModal(): Promise<OrgModel | undefined> {
-    const modal = await this.modalController.create({
-      component: OrgSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: '',
-        currentUser: this.currentUser()
-      }
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') {
-      if (isOrg(data, this.tenantId())) {
-        return data;
-      }
-    }
-    return undefined;
   }
 }

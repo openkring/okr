@@ -11,18 +11,26 @@
     "album": "Alben",
     "members": "Mitglieder"
   },
-  "list": {
-    "name": "Name"
-  },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "show": "Gruppe anzeigen",
+    "edit": "Gruppenkonfiguration ändern",
+    "addPage": "Gruppen Page hinzufügen",
+    "delete": "Gruppe löschen"
   },
   "group": {
     "create": {
+      "label": "Gruppe erstellen",
       "conf": "Gruppe wurde erstellt.",
       "error": "Gruppe konnte nicht erstellt werden.",
       "duplicate": "Doppelte ID",
       "exists": "Eine Gruppe mit dieser ID existiert bereits. Bitte benutze eine andere ID."
+    },
+    "edit": {
+      "label": "Gruppe ändern"
+    },
+    "view": {
+      "label": "Gruppe anzeigen"
     },
     "delete": {
       "confirm": "Soll die Gruppe wirklich gelöscht werden ?"

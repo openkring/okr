@@ -18,9 +18,19 @@
     "list": {
       "title": "Alle Standardübersetzungen"
     },
-    "create": "Übersetzung erstellt",
-    "update": "Übersetzung gespeichert",
-    "delete": "Übersetzung gelöscht"
+    "create": {
+      "conf": "Übersetzung erstellt",
+      "error": "Übersetzung konnte nicht erstellt werden."
+    },
+    "update": {
+      "conf": "Übersetzung gespeichert",
+      "error": "Übersetzung konnte nicht gespeichert werden."
+    },
+    "delete": {
+      "conf": "Übersetzung gelöscht",
+      "confirm": "Soll diese Übersetzung wirklich gelöscht werden ?",
+      "error": "Die Übersetzung konnte nicht gelöscht werden."
+    }
   },
   "override": {
     "edit": {
@@ -41,9 +51,19 @@
     "list": {
       "title": "Alle Überschreibungen"
     },
-    "create": "Überschreibung erstellt",
-    "update": "Überschreibung gespeichert",
-    "delete": "Überschreibung gelöscht"
+    "create": {
+      "conf": "Übersetzung erstellt",
+      "error": "Übersetzung konnte nicht erstellt werden."
+    },
+    "update": {
+      "conf": "Übersetzung gespeichert",
+      "error": "Übersetzung konnte nicht gespeichert werden."
+    },
+    "delete": {
+      "conf": "Übersetzung gelöscht",
+      "confirm": "Soll diese Übersetzung wirklich gelöscht werden ?",
+      "error": "Die Übersetzung konnte nicht gelöscht werden."
+    }
   },
   "actionsheet": {
     "title": "Wähle eine Aktion"

@@ -58,29 +58,6 @@ import { AuthStore } from './auth.store';
               [emailHelper]="emailHelper()"
               [pwdHelper]="pwdHelper()"
             />
-
-<!--             <ion-item>
-              <ion-input
-                type="password"
-                label="Neues Passwort"
-                labelPlacement="floating"
-                placeholder="Mindestens 6 Zeichen"
-                [value]="password()"
-                (ionInput)="password.set($any($event).detail.value ?? '')"
-                [clearInput]="true" />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                type="password"
-                label="Passwort bestätigen"
-                labelPlacement="floating"
-                [value]="passwordConfirm()"
-                (ionInput)="passwordConfirm.set($any($event).detail.value ?? '')"
-                [clearInput]="true" />
-            </ion-item>
-            @if (mismatch()) {
-              <ion-text color="danger"><p>Die Passwörter stimmen nicht überein.</p></ion-text>
-            } -->
             <div class="button-container">
               <ion-grid>
                 <ion-row>
@@ -113,8 +90,8 @@ export class ConfirmPasswordResetPage {
   // computed
   public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
   public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
-  protected emailHelper = "";
-  protected pwdHelper = "";
+  protected emailHelper = computed(() => '');
+  protected pwdHelper = computed(() => '');
   //protected emailHelper = computed(() => this.context() === 'email' ? '@input.emailEmail.helper' : '@input.loginEmail.helper');
   //protected pwdHelper = computed(() => this.context() === 'password' ? '@input.passwordPassword.helper' : '@input.loginPassword.helper');
 
@@ -124,20 +101,8 @@ export class ConfirmPasswordResetPage {
     loginEmail: '',
     loginPassword: '',
   });
-//  protected password = signal('');
-//  protected passwordConfirm = signal('');
   protected success = signal(false);
   protected invalidCode = signal(!this.oobCode);
-
-/*   protected mismatch = computed(() =>
-    this.passwordConfirm().length > 0 && this.password() !== this.passwordConfirm()
-  ); */
-
-/*   protected canSubmit = computed(() =>
-    this.password().length >= 6 &&
-    this.password() === this.passwordConfirm() &&
-    !!this.oobCode
-  ); */
 
   // methods
   public async confirm(): Promise<void> {

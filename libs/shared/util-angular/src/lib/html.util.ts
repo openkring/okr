@@ -23,20 +23,6 @@ export function stripPrefix(value: string, prefix: string): string {
 }
 
 /**
- * Generic function to construct the i18n key for a title label.
- * The constructred key should reference an entry in the i18n translation files.
- * @param prefix usually, this is PFX prefix, a constant defined in the calling component
- * @param value a string value; usually the key of the model; undefined for new models
- * @param isReadOnly whether the form is read-only or not
- * @returns the constructed i18n key
- */
-export function getTitleLabel(prefix: string, value: string | undefined, isReadOnly = true): string {
-  let operation = isReadOnly ? 'view' : (!value ? 'create' : 'update');
-  return `${prefix}operation.${operation}.label`;
-}
-
-
-/**
  * Returns a string of Ionic column size attributes based on a config string.
  * Use like this: <ion-col size="{{colSizes.size}}" [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
  * @param colSizeConfig - e.g. "6,4,3" → size="6" size-md="4" size-lg="3"

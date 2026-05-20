@@ -1,13 +1,8 @@
 {
-  "category": {
-    "plural": "Kategorien",
-    "field": {
-      "empty": "Keine Kategorien gefunden."
-    }
-  },
-  "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
-    }
-  }
+  "categories": "Kategorien",
+  "empty": "Keine Kategorien gefunden.",
+  "view": "Ort-Details ansehen",
+  "edit": "Ort ändern",
+  "create": "Neuen Ort erstellen",
+  "delete": "Ort löschen"
 }

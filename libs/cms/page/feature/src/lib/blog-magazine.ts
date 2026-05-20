@@ -11,7 +11,9 @@ import { SectionDispatcher } from '@bk2/cms-section-feature';
 @Component({
   selector: 'bk-blog-magazine',
   standalone: true,
-  imports: [SectionDispatcher],
+  imports: [
+    SectionDispatcher
+  ],
   styles: [`
     .hero { width: 100%; margin-bottom: 16px; }
     .article-grid {

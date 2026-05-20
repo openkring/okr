@@ -4,7 +4,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
-import { LocationModel } from '@bk2/shared-models';
+import { CategoryListModel, LocationModel } from '@bk2/shared-models';
 import { chipMatches, nameMatches } from '@bk2/shared-util-core';
 import { AlertService, copyToClipboard } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
@@ -14,6 +14,7 @@ import { LocationConversionService, LocationService } from '@bk2/location-data-a
 import { isLocation } from '@bk2/location-util';
 
 import { LocationEditModal } from './location-edit.modal';
+import { PFX } from './scope';
 
 function zoomForBounds(latSpan: number, lngSpan: number): number {
   const span = Math.max(latSpan, lngSpan);
@@ -21,19 +22,19 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
   return Math.min(15, Math.max(1, Math.round(Math.log2(360 / span)) - 1));
 }
 
-export type LocationListState = {
+export type LocationState = {
   searchTerm: string;
   selectedTag: string;
   selectedType: string;
 };
 
-export const initialState: LocationListState = {
+export const initialState: LocationState = {
   searchTerm: '',
   selectedTag: '',
   selectedType: 'all',
 };
 
-export const LocationListStore = signalStore(
+export const LocationStore = signalStore(
   withState(initialState),
   withProps(() => ({
     locationService: inject(LocationService),
@@ -45,12 +46,23 @@ export const LocationListStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      copy_conf:        '@location.operation.copy.conf',
-      plural:           '@location.plural',
-      description:      '@location.description',
-      header_name:      '@location.list.header.name',
-      header_type:      '@location.list.header.locationType',
-      empty:            '@location.field.empty',
+      locations:            PFX + 'locations',
+      copy_conf:            PFX + 'copy.conf',
+      description:          PFX + 'description',
+      name:                 '@name',
+      type:                 '@type',
+      empty:                PFX + 'empty',
+      as_title:             '@actionsheet.title',
+      view:                 PFX + 'view',
+      edit:                 PFX + 'edit',
+      create:               PFX + 'create',
+      delete:               PFX + 'delete',
+      convert:              PFX + 'convert',
+      show:                 PFX + 'show',
+      copy_coord:           PFX + 'copy.coord',
+      copy_w3w:             PFX + 'copy.w3w',
+      ok: '@ok',
+      cancel: '@cancel'
     }),
     locationsResource: rxResource({
       stream: () => {
@@ -59,18 +71,19 @@ export const LocationListStore = signalStore(
     })
   })),
 
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      locations: computed(() => state.locationsResource.value()),
-      locationsCount: computed(() => state.locationsResource.value()?.length ?? 0), 
+      locations: computed(() => store.locationsResource.value()),
+      locationsCount: computed(() => store.locationsResource.value()?.length ?? 0), 
       filteredLocations: computed(() => 
-        state.locationsResource.value()?.filter((location: LocationModel) => 
-          nameMatches(location.index, state.searchTerm()) &&
-          nameMatches(location.type, state.selectedType()) &&
-          chipMatches(location.tags, state.selectedTag()))
+        store.locationsResource.value()?.filter((location: LocationModel) => 
+          nameMatches(location.index, store.searchTerm()) &&
+          nameMatches(location.type, store.selectedType()) &&
+          chipMatches(location.tags, store.selectedTag()))
       ), 
-      currentUser: computed(() => state.appStore.currentUser()),
-      isLoading: computed(() => state.locationsResource.isLoading()), 
+      currentUser: computed(() => store.appStore.currentUser()),
+      tenantId: computed(() => store.appStore.tenantId()),
+      isLoading: computed(() => store.locationsResource.isLoading()), 
     };
   }),
 
@@ -97,6 +110,10 @@ export const LocationListStore = signalStore(
       /******************************** getters ******************************************* */
       getTags(): string {
         return store.appStore.getTags('location');
+      },
+
+      getTypes(): CategoryListModel {
+        return store.appStore.getCategory('location_type');
       },
 
       /******************************* actions *************************************** */
@@ -187,9 +204,21 @@ export const LocationListStore = signalStore(
 
       },
 
-      async copy(location: LocationModel): Promise<void> {
-        await copyToClipboard(location.latitude + ', ' + location.longitude);
+      async copy(location: LocationModel, isW3w = true): Promise<void> {
+        const value = isW3w ? location.what3words : location.latitude + ', ' + location.longitude
+        await copyToClipboard(value);
         await store.alertService.showToast(store.i18n.copy_conf());
+      },
+
+      getTitleLabel(readOnly: boolean, key?: string): string {
+        if (readOnly) {
+          return store.i18n.view();
+        }
+        if (key && key.length > 0) {
+          return store.i18n.edit();
+        } else {
+          return store.i18n.create();
+        }
       },
   }})
 );
