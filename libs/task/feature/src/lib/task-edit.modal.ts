@@ -29,6 +29,7 @@ import { TaskStore } from './task.store';
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-task-form
+          [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"

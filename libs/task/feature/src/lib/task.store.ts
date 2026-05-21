@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
@@ -16,6 +16,46 @@ import { AvatarService } from '@bk2/avatar-data-access';
 
 import { TaskEditModal } from './task-edit.modal';
 import { PFX } from './scope';
+
+const TASK_I18N_KEYS = {
+  tasks:                   PFX + 'tasks',
+  empty:                   PFX + 'empty',
+  quick_entry_label:       PFX + 'taskQuickEntry.label',
+  quick_entry_placeholder: PFX + 'taskQuickEntry.placeholder',
+  as_title:                PFX + 'actionsheet.title',
+  as_view:                 PFX + 'actionsheet.view',
+  as_edit:                 PFX + 'actionsheet.edit',
+  as_create:               PFX + 'actionsheet.create',
+  as_delete:               PFX + 'actionsheet.delete',
+  as_done:                 PFX + 'actionsheet.done',
+  cancel:                  '@cancel',
+  ok:                      '@ok',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  calendarName_label:              PFX + 'calendarName.label',
+  calendarName_description:        PFX + 'calendarName.description',
+  calendarName_addLabel:           PFX + 'calendarName.addLabel',
+  bkey_label:              '@task/ui.bkey.label',
+  bkey_placeholder:        '@task/ui.bkey.placeholder',
+  bkey_helper:             '@task/ui.bkey.helper',
+  name_label:              '@task/ui.name.label',
+  name_placeholder:        '@task/ui.name.placeholder',
+  name_helper:             '@task/ui.name.helper',
+  notes_label:             '@task/ui.notes.label',
+  notes_placeholder:       '@task/ui.notes.placeholder',
+  dueDate_label:           '@task/ui.dueDate.label',
+  dueDate_placeholder:     '@task/ui.dueDate.placeholder',
+  dueDate_helper:          '@task/ui.dueDate.helper',
+  completionDate_label:    '@task/ui.completionDate.label',
+  completionDate_placeholder: '@task/ui.completionDate.placeholder',
+  completionDate_helper:   '@task/ui.completionDate.helper',
+  stateLabel:              '@task/ui.input.state.label',
+  priorityLabel:           '@task/ui.input.priority.label',
+  importanceLabel:         '@task/ui.input.importance.label',
+} satisfies Record<string, string>;
+
+export type TaskI18n = { [K in keyof typeof TASK_I18N_KEYS]: Signal<string> };
 
 export type TaskState = {
   calendarName: string;
@@ -56,26 +96,7 @@ export const TaskStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      tasks:                   PFX + 'tasks',
-      empty:                   PFX + 'empty',
-      quick_entry_label:       PFX + 'taskQuickEntry.label',
-      quick_entry_placeholder: PFX + 'taskQuickEntry.placeholder',
-      as_title:                PFX + 'actionsheet.title',
-      as_view:                 PFX + 'actionsheet.view',
-      as_edit:                 PFX + 'actionsheet.edit',
-      as_create:               PFX + 'actionsheet.create',
-      as_delete:               PFX + 'actionsheet.delete',
-      as_done:                 PFX + 'actionsheet.done',
-      cancel:                  '@cancel',
-      ok:                      '@ok',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-      calendarName_label:              PFX + 'calendarName.label',
-      calendarName_description:        PFX + 'calendarName.description',
-      calendarName_addLabel:           PFX + 'calendarName.addLabel',
-    }),
+    i18n: store.i18nService.translateAll(TASK_I18N_KEYS),
     tasksResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser()
