@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -32,6 +32,28 @@ export const initialTransferState: TransferState = {
   selectedState: 'all',
 };
 
+const TRANSFER_I18N_KEYS = {
+  transfers:                       PFX + 'transfers',
+  date:                            PFX + 'dateOfTransfer',
+  subject:                         PFX + 'subject',
+  object:                          PFX + 'object',
+  resource:                        PFX + 'resource',
+  name:                            PFX + 'name',
+  state:                           PFX + 'state',
+  as_title:                        PFX + 'actionsheet.title',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_view:                         PFX + 'actionsheet.view',
+  as_delete:                       PFX + 'actionsheet.delete',
+  as_create:                       PFX + 'actionsheet.create',
+  cancel:                          '@cancel',
+  ok:                              '@ok',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type TransferI18n = { [K in keyof typeof TRANSFER_I18N_KEYS]: Signal<string> };
+
 export const TransferStore = signalStore(
   withState(initialTransferState),
   withProps(() => ({
@@ -43,25 +65,7 @@ export const TransferStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      transfers:                    PFX + 'transfers',
-      date:                         PFX + 'dateOfTransfer',
-      subject:                      PFX + 'subject',
-      object:                       PFX + 'object',
-      resource:                     PFX + 'resource',
-      name:                         PFX + 'name',
-      state:                        PFX + 'state',
-      as_title:                     PFX + 'actionsheet.title',
-      as_edit:                      PFX + 'actionsheet.edit',
-      as_view:                      PFX + 'actionsheet.view',
-      as_delete:                    PFX + 'actionsheet.delete',
-      as_create:                    PFX + 'actionsheet.create',
-      cancel:                          '@cancel',
-      ok:                              '@ok',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(TRANSFER_I18N_KEYS),
 
     transfersResource: rxResource({
       stream: () => {

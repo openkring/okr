@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -38,6 +38,28 @@ const initialState: WorkrelState = {
   selectedState: 'all',
 };
 
+const WORKREL_I18N_KEYS = {
+  workrels:                        PFX + 'workrels',
+  empty:                           PFX + 'empty',
+  subject:                         PFX + 'subject',
+  type:                            PFX + 'type',
+  object:                          PFX + 'object',
+  delete_confirm:                  PFX + 'delete.confirm',
+  as_title:                        PFX + 'actionsheet.title',
+  as_view:                         PFX + 'actionsheet.view',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_create:                       PFX + 'actionsheet.create',
+  as_delete:                       PFX + 'actionsheet.delete',
+  as_end:                          PFX + 'actionsheet.end',
+  cancel:                          '@cancel',
+  ok:                              '@ok',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type WorkrelI18n = { [K in keyof typeof WORKREL_I18N_KEYS]: Signal<string> };
+
 export const WorkrelStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -48,25 +70,7 @@ export const WorkrelStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      workrels:             PFX + 'workrels',
-      empty:                PFX + 'empty',
-      subject:              PFX + 'subject',
-      type:                 PFX + 'type',
-      object:               PFX + 'object',
-      delete_confirm:       PFX + 'delete.confirm',
-      as_title:             PFX + 'actionsheet.title',
-      as_view:              PFX + 'actionsheet.view',
-      as_edit:              PFX + 'actionsheet.edit',
-      as_create:            PFX + 'actionsheet.create',
-      as_delete:            PFX + 'actionsheet.delete',
-      as_end:               PFX + 'actionsheet.end',
-      cancel:                          '@cancel',
-      ok:                              '@ok',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(WORKREL_I18N_KEYS),
 
     workrelsResource: rxResource({
       params: () => ({

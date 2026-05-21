@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -71,6 +71,24 @@ const initialState: MembershipState = {
   yearField: 'dateOfEntry',
 };
 
+const MEMBERSHIP_I18N_KEYS = {
+  delete_confirm:        PFX + 'delete.confirm',
+  add_conf:              PFX + 'add.conf',
+  add_error:             PFX + 'add.error',
+  already_member:        PFX + 'create.alreadyMember',
+  create_conf:           PFX + 'create.conf',
+  create_error:          PFX + 'create.error',
+  ok:                    '@ok',
+  cancel:                '@cancel',
+  list_header_name:      '@membership.list.header.name',
+  list_header_category:  '@membership.list.header.category',
+  list_header_phone:     '@subject.list.header.phone',
+  list_header_email:     '@subject.list.header.email',
+  list_header_title_rel: '@membership.list.header.titleRel',
+} satisfies Record<string, string>;
+
+export type MembershipI18n = { [K in keyof typeof MEMBERSHIP_I18N_KEYS]: Signal<string> };
+
 export const _MembershipStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -91,21 +109,7 @@ export const _MembershipStore = signalStore(
   })),
 
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      add_conf: PFX + 'add.conf',
-      add_error: PFX + 'add.error',
-      already_member: PFX + 'create.alreadyMember',
-      create_conf: PFX + 'create.conf',
-      create_error: PFX + 'create.error',
-      ok:                    '@ok',
-      cancel:                '@cancel',
-      list_header_name:      '@membership.list.header.name',
-      list_header_category:  '@membership.list.header.category',
-      list_header_phone:     '@subject.list.header.phone',
-      list_header_email:     '@subject.list.header.email',
-      list_header_title_rel: '@membership.list.header.titleRel',
-    }),
+    i18n: store.i18nService.translateAll(MEMBERSHIP_I18N_KEYS),
 
     // all memberships of this tenant
     allMembershipsResource: rxResource({  

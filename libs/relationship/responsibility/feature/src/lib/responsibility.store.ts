@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -32,6 +32,30 @@ const initialState: ResponsibilityState = {
   searchTerm: '',
 };
 
+const RESPONSIBILITY_I18N_KEYS = {
+  responsibilities:                PFX + 'responsibilities',
+  responsibility:                  PFX + 'responsibility',
+  responsible:                     PFX + 'responsible',
+  delegate:                        PFX + 'delegate',
+  empty:                           PFX + 'empty',
+  delete_confirm:                  PFX + 'delete.confirm',
+  update_header:                   PFX + 'update.header',
+  update_message1:                 PFX + 'update.message1',
+  update_message2:                 PFX + 'update.message2',
+  as_title:                        PFX + 'actionsheet.title',
+  as_view:                         PFX + 'actionsheet.view',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_create:                       PFX + 'actionsheet.create',
+  as_delete:                       PFX + 'actionsheet.delete',
+  ok:                              '@ok',
+  cancel:                          '@cancel',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type ResponsibilityI18n = { [K in keyof typeof RESPONSIBILITY_I18N_KEYS]: Signal<string> };
+
 export const ResponsibilityStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -42,27 +66,7 @@ export const ResponsibilityStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      responsibilities:       PFX + 'responsibilities',
-      responsibility:         PFX + 'responsibility',
-      responsible:            PFX + 'responsible',
-      delegate:               PFX + 'delegate',
-      empty:                  PFX + 'empty',
-      delete_confirm:         PFX + 'delete.confirm',
-      update_header:          PFX + 'update.header',
-      update_message1:        PFX + 'update.message1',
-      update_message2:        PFX + 'update.message2',
-      as_title:               PFX + 'actionsheet.title',
-      as_view:                PFX + 'actionsheet.view',
-      as_edit:                PFX + 'actionsheet.edit',
-      as_create:               PFX + 'actionsheet.create',
-      as_delete:               PFX + 'actionsheet.delete',
-      ok:                              '@ok',
-      cancel:                          '@cancel',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(RESPONSIBILITY_I18N_KEYS),
 
     allResponsibilitiesResource: rxResource({
       params: () => ({ currentUser: store.appStore.currentUser() }),

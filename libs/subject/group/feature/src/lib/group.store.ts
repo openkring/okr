@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, of } from 'rxjs';
 import { Router } from '@angular/router';
@@ -36,6 +36,54 @@ export const initialState: GroupState = {
   selectedSegment: 'content'
 };
 
+const GROUP_I18N_KEYS = {
+  groups:                          PFX + 'groups',
+  empty:                           PFX + 'empty',
+  name:                            '@name',
+  content:                         PFX + 'content',
+  segment_content:                 PFX + 'segment.content',
+  segment_chat:                    PFX + 'segment.chat',
+  segment_calendar:                PFX + 'segment.calendar',
+  segment_tasks:                   PFX + 'segment.tasks',
+  segment_files:                   PFX + 'segment.files',
+  segment_album:                   PFX + 'segment.album',
+  segment_members:                 PFX + 'segment.members',
+  group_create_label:              PFX + 'group.create.label',
+  group_create_conf:               PFX + 'group.create.conf',
+  group_create_error:              PFX + 'group.create.error',
+  group_create_duplicate:          PFX + 'group.create.duplicate',
+  group_create_exists:             PFX + 'group.create.exists',
+  group_edit_label:                PFX + 'group.edit.label',
+  group_view_label:                PFX + 'group.view.label',
+  group_delete_confirm:            PFX + 'group.delete.confirm',
+  page_create_conf:                PFX + 'page.create.conf',
+  page_create_error:               PFX + 'page.create.error',
+  article_create_conf:             PFX + 'article.create.conf',
+  article_create_error:            PFX + 'article.create.error',
+  article_title:                   PFX + 'article.title',
+  article_content:                 PFX + 'article.content',
+  chat_name:                       PFX + 'chat.name',
+  chat_create_conf:                PFX + 'chat.create.conf',
+  chat_create_error:               PFX + 'chat.create.error',
+  chat_group_name:                 PFX + 'chat.group.name',
+  chat_group_description:          PFX + 'chat.group.description',
+  calendar_name:                   PFX + 'calendar.name',
+  calendar_create_conf:            PFX + 'calendar.create.conf',
+  calendar_create_error:           PFX + 'calendar.create.error',
+  as_title:                        PFX + 'actionsheet.title',
+  as_show:                         PFX + 'actionsheet.show',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_addPage:                      PFX + 'actionsheet.addPage',
+  as_delete:                       PFX + 'actionsheet.delete',
+  ok:                              '@ok',
+  cancel:                          '@cancel',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type GroupI18n = { [K in keyof typeof GROUP_I18N_KEYS]: Signal<string> };
+
 export const GroupStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -44,7 +92,7 @@ export const GroupStore = signalStore(
     router: inject(Router),
     appStore: inject(AppStore),
     membershipService: inject(MembershipService),
-    avatarService: inject(AvatarService), 
+    avatarService: inject(AvatarService),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
@@ -54,51 +102,7 @@ export const GroupStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      groups:               PFX + 'groups',
-      empty:                PFX + 'empty',
-      name:                 '@name',
-      content:              PFX + 'content',
-      segment_content:      PFX + 'segment.content',
-      segment_chat:         PFX + 'segment.chat',
-      segment_calendar:     PFX + 'segment.calendar',
-      segment_tasks:        PFX + 'segment.tasks',
-      segment_files:        PFX + 'segment.files',
-      segment_album:        PFX + 'segment.album',
-      segment_members:      PFX + 'segment.members',
-      group_create_label:   PFX + 'group.create.label',
-      group_create_conf:    PFX + 'group.create.conf',
-      group_create_error:   PFX + 'group.create.error',
-      group_create_duplicate: PFX + 'group.create.duplicate',
-      group_create_exists:  PFX + 'group.create.exists',
-      group_edit_label:     PFX + 'group.edit.label',
-      group_view_label:     PFX + 'group.view.label',
-      group_delete_confirm: PFX + 'group.delete.confirm',
-      page_create_conf:     PFX + 'page.create.conf',
-      page_create_error:    PFX + 'page.create.error',
-      article_create_conf:  PFX + 'article.create.conf',
-      article_create_error: PFX + 'article.create.error',
-      article_title:        PFX + 'article.title',
-      article_content:      PFX + 'article.content',
-      chat_name:            PFX + 'chat.name',
-      chat_create_conf:     PFX + 'chat.create.conf',
-      chat_create_error:    PFX + 'chat.create.error',
-      chat_group_name:      PFX + 'chat.group.name',
-      chat_group_description: PFX + 'chat.group.description',
-      calendar_name:        PFX + 'calendar.name',
-      calendar_create_conf: PFX + 'calendar.create.conf',
-      calendar_create_error: PFX + 'calendar.create.error',
-      as_title:             PFX + 'actionsheet.title',
-      as_show:              PFX + 'actionsheet.show',
-      as_edit:              PFX + 'actionsheet.edit',
-      as_addPage:           PFX + 'actionsheet.addPage',
-      as_delete:            PFX + 'actionsheet.delete',
-      ok: '@ok',
-      cancel: '@cancel',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(GROUP_I18N_KEYS),
 
     groupsResource: rxResource({
       params: () => ({

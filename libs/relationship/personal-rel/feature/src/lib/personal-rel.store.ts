@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -34,6 +34,27 @@ const initialState: PersonalRelState = {
   showOnlyCurrent: true,
 };
 
+const PERSONAL_REL_I18N_KEYS = {
+  title:                           PFX + 'title',
+  person1:                         PFX + 'person1',
+  type:                            PFX + 'type',
+  person2:                         PFX + 'person2',
+  delete_confirm:                  PFX + 'delete.confirm',
+  as_title:                        PFX + 'actionsheet.title',
+  as_view:                         PFX + 'actionsheet.view',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_end:                          PFX + 'actionsheet.end',
+  as_delete:                       PFX + 'actionsheet.delete',
+  as_create:                       PFX + 'actionsheet.create',
+  ok:                              '@ok',
+  cancel:                          '@cancel',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type PersonalRelI18n = { [K in keyof typeof PERSONAL_REL_I18N_KEYS]: Signal<string> };
+
 export const PersonalRelStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -44,24 +65,7 @@ export const PersonalRelStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      title:                PFX + 'title',
-      person1:              PFX + 'person1',
-      type:                 PFX + 'type',
-      person2:              PFX + 'person2',
-      delete_confirm:       PFX + 'delete.confirm',
-      as_title:             PFX + 'actionsheet.title',
-      as_view:              PFX + 'actionsheet.view',
-      as_edit:              PFX + 'actionsheet.edit',
-      as_end:               PFX + 'actionsheet.end',
-      as_delete:            PFX + 'actionsheet.delete',
-      as_create:            PFX + 'actionsheet.create',
-      ok:                              '@ok',
-      cancel:                          '@cancel',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(PERSONAL_REL_I18N_KEYS),
 
     personalRelsResource: rxResource({
       params: () => ({

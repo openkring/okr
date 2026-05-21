@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -57,6 +57,36 @@ const initialState: OwnershipState = {
   yearField: 'validFrom',
 };
 
+const OWNERSHIP_I18N_KEYS = {
+  ownerships:                      PFX + 'ownerships',
+  empty:                           PFX + 'empty',
+  duration:                        PFX + 'duration',
+  owner_name:                      PFX + 'ownerName',
+  resource_name:                   PFX + 'resourceName',
+  new_desc:                        PFX + 'newDesc',
+  select_label:                    PFX + 'select.label',
+  boat_name:                       PFX + 'boat.name',
+  boat_type:                       PFX + 'boat.type',
+  create_label:                    PFX + 'create.label',
+  delete_confirm:                  PFX + 'delete.confirm',
+  as_title:                        PFX + 'actionsheet.title',
+  as_view:                         PFX + 'actionsheet.view',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_create:                       PFX + 'actionsheet.create',
+  as_delete:                       PFX + 'actionsheet.delete',
+  as_end:                          PFX + 'actionsheet.end',
+  cancel:                          '@cancel',
+  ok:                              '@ok',
+  validFrom_label:                 PFX + 'validFrom.label',
+  validFrom_placeholder:           PFX + 'validFrom.placeholder',
+  validFrom_helper:                PFX + 'validFrom.helper',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type OwnershipI18n = { [K in keyof typeof OWNERSHIP_I18N_KEYS]: Signal<string> };
+
 export const OwnershipStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -64,37 +94,11 @@ export const OwnershipStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
-    i18nService: inject(I18nService) 
+    i18nService: inject(I18nService)
   })),
 
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      ownerships:           PFX + 'ownerships',
-      empty:                PFX + 'empty',
-      duration:             PFX + 'duration',
-      owner_name:           PFX + 'ownerName',
-      resource_name:        PFX + 'resourceName',
-      new_desc:             PFX + 'newDesc',
-      select_label:         PFX + 'select.label',
-      boat_name:            PFX + 'boat.name',
-      boat_type:            PFX + 'boat.type',
-      create_label:         PFX + 'create.label',
-      delete_confirm:       PFX + 'delete.confirm',
-      as_title:             PFX + 'actionsheet.title',
-      as_view:              PFX + 'actionsheet.view',
-      as_edit:              PFX + 'actionsheet.edit',
-      as_create:            PFX + 'actionsheet.create',
-      as_delete:            PFX + 'actionsheet.delete',
-      as_end:               PFX + 'actionsheet.end',
-      cancel:               '@cancel',
-      ok:                   '@ok',
-      validFrom_label:        PFX + 'validFrom.label',
-      validFrom_placeholder:           PFX + 'validFrom.placeholder',
-      validFrom_helper:                PFX + 'validFrom.helper',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(OWNERSHIP_I18N_KEYS),
 
     // all ownerships of this tenant
     allOwnershipsResource: rxResource({

@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -53,6 +53,32 @@ const initialState: ReservationState = {
   selectedState: 'all'
 };
 
+const RESERVATION_I18N_KEYS = {
+  reservations:                    PFX + 'reservations',
+  empty:                           PFX + 'empty',
+  reldesc1:                        PFX + 'reldesc1',
+  reldesc2:                        PFX + 'reldesc2',
+  resource:                        PFX + 'resource',
+  name:                            PFX + 'name',
+  valid_from:                      PFX + 'validFrom',
+  state:                           PFX + 'state',
+  reserver:                        PFX + 'reserver',
+  delete_confirm:                  PFX + 'delete.confirm',
+  as_title:                        PFX + 'actionsheet.title',
+  as_view:                         PFX + 'actionsheet.view',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_end:                          PFX + 'actionsheet.end',
+  as_delete:                       PFX + 'actionsheet.delete',
+  as_create:                       PFX + 'actionsheet.create',
+  ok:                              '@ok',
+  cancel:                          '@cancel',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type ReservationI18n = { [K in keyof typeof RESERVATION_I18N_KEYS]: Signal<string> };
+
 export const ReservationStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -64,29 +90,7 @@ export const ReservationStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      reservations:            PFX + 'reservations',
-      empty:                   PFX + 'empty',
-      reldesc1:                PFX + 'reldesc1',
-      reldesc2:                PFX + 'reldesc2',
-      resource:                PFX + 'resource',
-      name:                    PFX + 'name',
-      valid_from:              PFX + 'validFrom',
-      state:                   PFX + 'state',
-      reserver:                PFX + 'reserver',
-      delete_confirm:          PFX + 'delete.confirm',
-      as_title:                PFX + 'actionsheet.title',
-      as_view:                 PFX + 'actionsheet.view',
-      as_edit:                 PFX + 'actionsheet.edit',
-      as_end:                  PFX + 'actionsheet.end',
-      as_delete:               PFX + 'actionsheet.delete',
-      as_create:               PFX + 'actionsheet.create',
-      ok:                              '@ok',
-      cancel:                          '@cancel',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(RESERVATION_I18N_KEYS),
 
     allReservationsResource: rxResource({
       params: () => ({

@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ModalController, Platform, ToastController } from '@ionic/angular/standalone';
@@ -49,6 +49,42 @@ export const initialState: AddressState = {
   orderByParam: 'addressChannel'
 };
     
+const ADDRESSES_I18N_KEYS = {
+  addresses:                       PFX + 'addresses',
+  empty:                           PFX + 'empty',
+  name:                            '@name',
+  copy_conf:                       PFX + 'copy.conf',
+  delete_confirm:                  PFX + 'delete.confirm',
+  currency:                        PFX + 'currency',
+  qrinvoice:                       PFX + 'qrinvoice',
+  edit_label:                      PFX + 'update.label',
+  view_label:                      PFX + 'view.label',
+  create_label:                    PFX + 'create.label',
+  usage_home_label:                PFX + 'usage.home.label',
+  usage_work_label:                PFX + 'usage.work.label',
+  usage_mobile_label:              PFX + 'usage.mobile.label',
+  as_title:                        PFX + 'actionsheet.title',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_delete:                       PFX + 'actionsheet.delete',
+  as_copy:                         PFX + 'actionsheet.copy',
+  as_iban_view:                    PFX + 'actionsheet.iban.view',
+  as_iban_genqr:                   PFX + 'actionsheet.iban.generate',
+  as_email_send:                   PFX + 'actionsheet.email.send',
+  as_phone_call:                   PFX + 'actionsheet.phone.call',
+  as_postal_view:                  PFX + 'actionsheet.postal.view',
+  as_file_view:                    PFX + 'actionsheet.file.view',
+  as_file_upload:                  PFX + 'actionsheet.file.upload',
+  as_web_open:                     PFX + 'actionsheet.web.open',
+  as_subject_edit:                 PFX + 'actionsheet.subject.edit',
+  cancel:                          '@cancel',
+  ok:                              '@ok',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type AddressesI18n = { [K in keyof typeof ADDRESSES_I18N_KEYS]: Signal<string> };
+
 export const AddressStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -73,39 +109,7 @@ export const AddressStore = signalStore(
   })),
   withProps((store) => ({
 
-    i18n: store.i18nService.translateAll({
-      addresses:          PFX + 'addresses',
-      empty:              PFX + 'empty',
-      name:               '@name',
-      copy_conf:          PFX + 'copy.conf',
-      delete_confirm:     PFX + 'delete.confirm',
-      currency:           PFX + 'currency',
-      qrinvoice:          PFX + 'qrinvoice',
-      edit_label:         PFX + 'update.label',
-      view_label:         PFX + 'view.label',
-      create_label:       PFX + 'create.label',
-      usage_home_label:   PFX + 'usage.home.label',
-      usage_work_label:   PFX + 'usage.work.label',
-      usage_mobile_label: PFX + 'usage.mobile.label',
-      as_title:           PFX + 'actionsheet.title',
-      as_edit:            PFX + 'actionsheet.edit',
-      as_delete:          PFX + 'actionsheet.delete',
-      as_copy:            PFX + 'actionsheet.copy',
-      as_iban_view:       PFX + 'actionsheet.iban.view',
-      as_iban_genqr:      PFX + 'actionsheet.iban.generate',
-      as_email_send:      PFX + 'actionsheet.email.send', 
-      as_phone_call:      PFX + 'actionsheet.phone.call', 
-      as_postal_view:     PFX + 'actionsheet.postal.view', 
-      as_file_view:       PFX + 'actionsheet.file.view', 
-      as_file_upload:     PFX + 'actionsheet.file.upload', 
-      as_web_open:        PFX + 'actionsheet.web.open', 
-      as_subject_edit:    PFX + 'actionsheet.subject.edit',
-      cancel:             '@cancel',
-      ok:                 '@ok',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(ADDRESSES_I18N_KEYS),
     addressesResource: rxResource({
       params: () => ({
         parentKey: store.parentKey(),

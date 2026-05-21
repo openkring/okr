@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -38,6 +38,23 @@ const initialState: ScsMemberFeesState = {
   version: 0,
 };
 
+const SCS_MEMBER_FEES_I18N_KEYS = {
+  archive_confirm:  PFX + 'scsMemberFee.archive.confirm',
+  archive_conf:     PFX + 'scsMemberFee.archive.conf',
+  generate_confirm: PFX + 'scsMemberFee.generate.confirm',
+  generate_conf:    PFX + 'scsMemberFee.generate.conf',
+  export_title:     PFX + 'scsMemberFee.export.title',
+  delete_confirm:   PFX + 'scsMemberFee.delete.confirm',
+  update_conf:      PFX + 'scsMemberFee.update.conf',
+  upload_nobexioid: PFX + 'scsMemberFee.upload.noBexioId',
+  upload_conf:      PFX + 'scsMemberFee.upload.conf',
+  ok:               '@ok',
+  cancel:           '@cancel',
+  list_title:       '@finance.scsMemberFee.list.title',
+} satisfies Record<string, string>;
+
+export type ScsMemberFeesI18n = { [K in keyof typeof SCS_MEMBER_FEES_I18N_KEYS]: Signal<string> };
+
 export const _ScsMemberFeesStore = signalStore(
   withState(initialState),
   withProps(() => {
@@ -60,20 +77,7 @@ export const _ScsMemberFeesStore = signalStore(
   }),
 
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      archive_confirm: PFX + 'scsMemberFee.archive.confirm',
-      archive_conf: PFX + 'scsMemberFee.archive.conf',
-      generate_confirm: PFX + 'scsMemberFee.generate.confirm',
-      generate_conf: PFX + 'scsMemberFee.generate.conf',
-      export_title: PFX + 'scsMemberFee.export.title',
-      delete_confirm: PFX + 'scsMemberFee.delete.confirm',
-      update_conf: PFX + 'scsMemberFee.update.conf',
-      upload_nobexioid: PFX + 'scsMemberFee.upload.noBexioId',
-      upload_conf: PFX + 'scsMemberFee.upload.conf',
-      ok: '@ok',
-      cancel: '@cancel',
-      list_title: '@finance.scsMemberFee.list.title',
-    }),
+    i18n: store.i18nService.translateAll(SCS_MEMBER_FEES_I18N_KEYS),
 
     // All memberships of this tenant (active/passive/etc.) — filtered locally
     allMembershipsResource: rxResource({

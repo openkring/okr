@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
@@ -36,6 +36,26 @@ export const initialState: OrgState = {
   selectedType: 'all',
 };
 
+const ORG_I18N_KEYS = {
+  orgs:                            PFX + 'orgs',
+  empty:                           PFX + 'empty',
+  name:                            '@name',
+  phone:                           '@phone',
+  email:                           '@email',
+  create_label:                    PFX + 'create.label',
+  edit_label:                      PFX + 'edit.label',
+  view_label:                      PFX + 'view.label',
+  delete_confirm:                  PFX + 'delete.confirm',
+  as_title:                        PFX + 'actionsheet.title',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_delete:                       PFX + 'actionsheet.delete',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type OrgI18n = { [K in keyof typeof ORG_I18N_KEYS]: Signal<string> };
+
 export const OrgStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -51,23 +71,7 @@ export const OrgStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      orgs:                 PFX + 'orgs',
-      empty:                PFX + 'empty',
-      name:                 '@name',
-      phone:                '@phone',
-      email:                '@email',
-      create_label:         PFX + 'create.label',
-      edit_label:           PFX + 'edit.label',
-      view_label:           PFX + 'view.label',
-      delete_confirm:       PFX + 'delete.confirm',
-      as_title:             PFX + 'actionsheet.title',
-      as_edit:              PFX + 'actionsheet.edit',
-      as_delete:            PFX + 'actionsheet.delete',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(ORG_I18N_KEYS),
 
     orgsResource: rxResource({
       stream: () => {

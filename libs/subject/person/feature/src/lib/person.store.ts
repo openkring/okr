@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
@@ -46,6 +46,26 @@ export const initialState: PersonState = {
   selectedGender: 'all',
 };
 
+const PERSON_I18N_KEYS = {
+  membership_create_conf:          PFX + 'membership.create.conf',
+  membership_create_error:         PFX + 'membership.create.error',
+  delete_confirm:                  PFX + 'delete.confirm',
+  exists:                          PFX + 'membership.create.exists',
+  persons:                         PFX + 'persons',
+  name:                            '@name',
+  phone:                           '@phone',
+  email:                           '@email',
+  empty:                           PFX + 'empty',
+  create_label:                    PFX + 'create.label',
+  edit_label:                      PFX + 'edit.label',
+  view_label:                      PFX + 'view.label',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type PersonI18n = { [K in keyof typeof PERSON_I18N_KEYS]: Signal<string> };
+
 export const PersonStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -79,23 +99,7 @@ export const PersonStore = signalStore(
 
   withProps((store) => ({
 
-    i18n: store.i18nService.translateAll({
-      membership_create_conf:   PFX + 'membership.create.conf',
-      membership_create_error:  PFX + 'membership.create.error',
-      delete_confirm:           PFX + 'delete.confirm',
-      exists:                   PFX + 'membership.create.exists',
-      persons:                  PFX + 'persons',
-      name:                     '@name',
-      phone:                    '@phone',
-      email:                    '@email',
-      empty:                    PFX + 'empty',
-      create_label:             PFX + 'create.label',
-      edit_label:               PFX + 'edit.label',
-      view_label:               PFX + 'view.label',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(PERSON_I18N_KEYS),
 
     personUserModelResource: rxResource({
       params: () => ({ personKey: store.personKey() }),

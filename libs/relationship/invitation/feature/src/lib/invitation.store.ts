@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -38,6 +38,34 @@ export const initialInvitationState: InvitationState = {
   selectedState: 'all',
 };
 
+const INVITATION_I18N_KEYS = {
+  invitations:                     PFX + 'invitations',
+  date:                            '@date',
+  name:                            '@name',
+  invitee:                         PFX + 'invitee',
+  inviter:                         PFX + 'inviter',
+  state:                           PFX + 'state',
+  empty:                           PFX + 'empty',
+  delete_confirm:                  PFX + 'delete.confirm',
+  invite_conf:                     PFX + 'invite.conf',
+  invite_error:                    PFX + 'invite.error',
+  as_title:                        PFX + 'actionsheet.title',
+  as_accept:                       PFX + 'actionsheet.accept',
+  as_decline:                      PFX + 'actionsheet.decline',
+  as_maybe:                        PFX + 'actionsheet.maybe',
+  as_view:                         PFX + 'actionsheet.view',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_create:                       PFX + 'actionsheet.create',
+  as_delete:                       PFX + 'actionsheet.delete',
+  ok:                              '@ok',
+  cancel:                          '@cancel',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type InvitationI18n = { [K in keyof typeof INVITATION_I18N_KEYS]: Signal<string> };
+
 export const InvitationStore = signalStore(
   withState(initialInvitationState),
   withProps(() => ({
@@ -50,31 +78,7 @@ export const InvitationStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      invitations:       PFX + 'invitations',
-      date:              '@date',
-      name:              '@name',
-      invitee:           PFX + 'invitee',
-      inviter:           PFX + 'inviter',
-      state:             PFX + 'state',
-      empty:             PFX + 'empty',
-      delete_confirm:    PFX + 'delete.confirm',
-      invite_conf:       PFX + 'invite.conf',
-      invite_error:      PFX + 'invite.error',
-      as_title:          PFX + 'actionsheet.title',
-      as_accept:         PFX + 'actionsheet.accept',
-      as_decline:        PFX + 'actionsheet.decline',
-      as_maybe:          PFX + 'actionsheet.maybe',
-      as_view:           PFX + 'actionsheet.view',
-      as_edit:           PFX + 'actionsheet.edit',
-      as_create:         PFX + 'actionsheet.create',
-      as_delete:         PFX + 'actionsheet.delete',
-      ok:                              '@ok',
-      cancel:                          '@cancel',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(INVITATION_I18N_KEYS),
 
     invitationsResource: rxResource({
       stream: () => {
