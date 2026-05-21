@@ -7,7 +7,7 @@ import type {
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection,
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
-  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, OrgchartConfig, OrgchartSection, PeopleConfig,
+  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
@@ -385,4 +385,4 @@ export const MEMBER_AGE_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,
   type: 'member-age' as const,
   properties: MEMBER_AGE_CONFIG_SHAPE,
-};
+} as MemberAgeSection;
