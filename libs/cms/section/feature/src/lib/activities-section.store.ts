@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController } from '@ionic/angular/standalone';
@@ -14,6 +14,13 @@ import { ActivityViewModal } from '@bk2/activity-feature';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { PFX } from './scope';
+
+const ACTIVITIES_SECTION_I18N_KEYS = {
+  empty: PFX + 'activity.empty',
+  more:  '@more',
+} satisfies Record<string, string>;
+
+export type ActivitiesSectionI18n = { [K in keyof typeof ACTIVITIES_SECTION_I18N_KEYS]: Signal<string> };
 
 export type ActivitiesSectionState = {
   maxItems: number | undefined;
@@ -32,10 +39,7 @@ export const ActivitiesSectionStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      empty:      PFX + 'activity.empty',
-      more:       '@more'
-    }),
+    i18n: store.i18nService.translateAll(ACTIVITIES_SECTION_I18N_KEYS),
 
     activitiesResource: rxResource({
       params: () => ({

@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { inject, Signal } from '@angular/core';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { I18nService } from '@bk2/shared-i18n';
@@ -25,6 +25,30 @@ const initialState: FlightTrackerState = {
 const PFX = '@flighttracker.';
 const DPFX = '@flighttracker.detail.';
 
+const FLIGHTTRACKER_I18N_KEYS = {
+  title:        PFX + 'title',
+  placeholder:  PFX + 'search.placeholder',
+  button:       PFX + 'search.button',
+  prompt:       PFX + 'search.prompt',
+  detailTitle:  DPFX + 'title',
+  departure:    DPFX + 'departure',
+  arrival:      DPFX + 'arrival',
+  aircraft:     DPFX + 'aircraft',
+  live:         DPFX + 'live',
+  airport:      DPFX + 'airport',
+  terminal:     DPFX + 'terminal',
+  gate:         DPFX + 'gate',
+  delay:        DPFX + 'delay',
+  scheduled:    DPFX + 'scheduled',
+  estimated:    DPFX + 'estimated',
+  registration: DPFX + 'registration',
+  altitude:     DPFX + 'altitude',
+  direction:    DPFX + 'direction',
+  speed:        DPFX + 'speed',
+} satisfies Record<string, string>;
+
+export type FlighttrackerI18n = { [K in keyof typeof FLIGHTTRACKER_I18N_KEYS]: Signal<string> };
+
 export const FlightTrackerStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -32,27 +56,7 @@ export const FlightTrackerStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      title:        PFX + 'title',
-      placeholder:  PFX + 'search.placeholder',
-      button:       PFX + 'search.button',
-      prompt:       PFX + 'search.prompt',
-      detailTitle:  DPFX + 'title',
-      departure:    DPFX + 'departure',
-      arrival:      DPFX + 'arrival',
-      aircraft:     DPFX + 'aircraft',
-      live:         DPFX + 'live',
-      airport:      DPFX + 'airport',
-      terminal:     DPFX + 'terminal',
-      gate:         DPFX + 'gate',
-      delay:        DPFX + 'delay',
-      scheduled:    DPFX + 'scheduled',
-      estimated:    DPFX + 'estimated',
-      registration: DPFX + 'registration',
-      altitude:     DPFX + 'altitude',
-      direction:    DPFX + 'direction',
-      speed:        DPFX + 'speed',
-    }),
+    i18n: store.i18nService.translateAll(FLIGHTTRACKER_I18N_KEYS),
   })),
   withMethods((store) => ({
     setFlightNumber(flightNumber: string): void {

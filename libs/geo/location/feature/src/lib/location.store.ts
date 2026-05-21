@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -15,6 +15,31 @@ import { isLocation } from '@bk2/location-util';
 
 import { LocationEditModal } from './location-edit.modal';
 import { PFX } from './scope';
+
+const LOCATION_I18N_KEYS = {
+  locations:            PFX + 'locations',
+  copy_conf:            PFX + 'copy.conf',
+  description:          PFX + 'description',
+  name:                 '@name',
+  type:                 '@type',
+  empty:                PFX + 'empty',
+  as_title:             '@actionsheet.title',
+  view:                 PFX + 'view',
+  edit:                 PFX + 'edit',
+  create:               PFX + 'create',
+  delete:               PFX + 'delete',
+  convert:              PFX + 'convert',
+  show:                 PFX + 'show',
+  copy_coord:           PFX + 'copy.coord',
+  copy_w3w:             PFX + 'copy.w3w',
+  ok:                   '@ok',
+  cancel:               '@cancel',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type LocationI18n = { [K in keyof typeof LOCATION_I18N_KEYS]: Signal<string> };
 
 function zoomForBounds(latSpan: number, lngSpan: number): number {
   const span = Math.max(latSpan, lngSpan);
@@ -45,28 +70,7 @@ export const LocationStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      locations:            PFX + 'locations',
-      copy_conf:            PFX + 'copy.conf',
-      description:          PFX + 'description',
-      name:                 '@name',
-      type:                 '@type',
-      empty:                PFX + 'empty',
-      as_title:             '@actionsheet.title',
-      view:                 PFX + 'view',
-      edit:                 PFX + 'edit',
-      create:               PFX + 'create',
-      delete:               PFX + 'delete',
-      convert:              PFX + 'convert',
-      show:                 PFX + 'show',
-      copy_coord:           PFX + 'copy.coord',
-      copy_w3w:             PFX + 'copy.w3w',
-      ok: '@ok',
-      cancel: '@cancel',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(LOCATION_I18N_KEYS),
     locationsResource: rxResource({
       stream: () => {
         return store.locationService.list();

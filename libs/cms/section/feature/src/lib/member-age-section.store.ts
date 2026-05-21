@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
@@ -8,6 +8,16 @@ import { I18nService } from '@bk2/shared-i18n';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 
 import { PFX } from './scope';
+
+const MEMBER_AGE_SECTION_I18N_KEYS = {
+  ageGroup: PFX + 'memberAge.ageGroup',
+  male:     PFX + 'memberAge.male',
+  female:   PFX + 'memberAge.female',
+  total:    PFX + 'memberAge.total',
+  empty:    PFX + 'memberAge.empty',
+} satisfies Record<string, string>;
+
+export type MemberAgeSectionI18n = { [K in keyof typeof MEMBER_AGE_SECTION_I18N_KEYS]: Signal<string> };
 
 export type AgeRow = { label: string; male: number; female: number; total: number };
 
@@ -63,13 +73,7 @@ export const MemberAgeSectionStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      ageGroup: PFX + 'memberAge.ageGroup',
-      male:     PFX + 'memberAge.male',
-      female:   PFX + 'memberAge.female',
-      total:    PFX + 'memberAge.total',
-      empty:    PFX + 'memberAge.empty',
-    }),
+    i18n: store.i18nService.translateAll(MEMBER_AGE_SECTION_I18N_KEYS),
 
     membershipsResource: rxResource({
       params: () => ({ orgId: store.orgId() }),

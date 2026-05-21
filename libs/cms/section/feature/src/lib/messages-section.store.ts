@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map } from 'rxjs';
@@ -8,6 +8,13 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { PFX } from './scope';
+
+const MESSAGES_SECTION_I18N_KEYS = {
+  messages_empty: PFX + 'messages.empty',
+  more:           '@more',
+} satisfies Record<string, string>;
+
+export type MessagesSectionI18n = { [K in keyof typeof MESSAGES_SECTION_I18N_KEYS]: Signal<string> };
 
 export type MessagesState = {
   maxItems: number | undefined; // max items to show, undefined means all
@@ -25,10 +32,7 @@ export const MessagesStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      messages_empty: PFX + 'messages.empty',
-      more: '@more'
-    }),
+    i18n: store.i18nService.translateAll(MESSAGES_SECTION_I18N_KEYS),
 
     roomsWithUnreadResource: rxResource({
       params: () => ({

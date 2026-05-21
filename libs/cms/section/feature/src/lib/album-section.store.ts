@@ -1,4 +1,4 @@
-import { computed, inject, resource } from '@angular/core';
+import { computed, inject, resource, Signal } from '@angular/core';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -12,6 +12,14 @@ import { getImageMetaData, listAllFilesFromDirectory } from '@bk2/cms-section-ut
 
 import { HttpClient } from '@angular/common/http';
 import { PFX } from './scope';
+
+const ALBUM_SECTION_I18N_KEYS = {
+  no_images:         PFX + 'noImages',
+  zoomed:            PFX + 'album.zoomed',
+  albumStyle_label:  PFX + 'albumStyle.label',
+} satisfies Record<string, string>;
+
+export type AlbumSectionI18n = { [K in keyof typeof ALBUM_SECTION_I18N_KEYS]: Signal<string> };
 
 export interface AlbumState {
   config: AlbumConfig;
@@ -32,11 +40,7 @@ export const AlbumStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     httpClient: inject(HttpClient),
-    i18n: inject(I18nService).translateAll({
-      no_images:         PFX + 'noImages',
-      zoomed:            PFX + 'album.zoomed',
-      albumStyle_label:  PFX + 'albumStyle.label',
-    }),
+    i18n: inject(I18nService).translateAll(ALBUM_SECTION_I18N_KEYS),
   })),
 
   withComputed((state) => {

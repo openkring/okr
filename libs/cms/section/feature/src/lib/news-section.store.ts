@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { combineLatest, of, switchMap } from 'rxjs';
@@ -10,6 +10,13 @@ import { ArticleSection, PageCollection, PageModel, SectionCollection, SectionMo
 import { I18nService } from '@bk2/shared-i18n';
 
 import { PFX } from './scope';
+
+const NEWS_SECTION_I18N_KEYS = {
+  empty: PFX + 'news.empty',
+  more:  '@more',
+} satisfies Record<string, string>;
+
+export type NewsSectionI18n = { [K in keyof typeof NEWS_SECTION_I18N_KEYS]: Signal<string> };
 
 export type NewsState = {
   blogPageKey: string | undefined;
@@ -29,10 +36,7 @@ export const NewsStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      empty:      PFX + 'news.empty',
-      more:       '@more'
-    }),
+    i18n: store.i18nService.translateAll(NEWS_SECTION_I18N_KEYS),
 
     newsResource: rxResource({
       params: () => ({

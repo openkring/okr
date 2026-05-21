@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, Signal } from '@angular/core';
 import { rxResource, toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -15,6 +15,30 @@ import { AppNavigationService, isInSplitPane, navigateByUrl, VersionCheckService
 import { I18nService } from '@bk2/shared-i18n';
 
 import { PFX } from './scope';
+
+const MENU_I18N_KEYS = {
+  menus:                          PFX + 'menus',
+  submenus:                       PFX + 'submenus',
+  description:                    PFX + 'description',
+  name:                           '@name',
+  link:                           PFX + 'link',
+  action:                         PFX + 'action',
+  empty:                          PFX + 'empty',
+  as_title:                       '@actionsheet.title',
+  edit:                           PFX + 'edit',
+  view:                           PFX + 'view',
+  create:                         PFX + 'create',
+  delete:                         PFX + 'delete',
+  add_submenu:                    PFX + 'add.submenu',
+  url_placeholder:                PFX + 'url.placeholder',
+  url_helper:                     PFX + 'url.helper',
+  cancel:                         '@cancel',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type MenuI18n = { [K in keyof typeof MENU_I18N_KEYS]: Signal<string> };
 
 import { AuthService } from '@bk2/auth-data-access';
 import { ActivityService } from '@bk2/activity-data-access';
@@ -55,27 +79,7 @@ export const _MenuStore = signalStore(
     versionService: inject(VersionCheckService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      menus:                PFX + 'menus',
-      submenus:             PFX + 'submenus',
-      description:          PFX + 'description',
-      name:                 '@name',
-      link:                 PFX + 'link',
-      action:               PFX + 'action',
-      empty:                PFX + 'empty',
-      as_title:             '@actionsheet.title',
-      edit:                 PFX + 'edit',
-      view:                 PFX + 'view',
-      create:               PFX + 'create',
-      delete:               PFX + 'delete',
-      add_submenu:            PFX + 'add.submenu',
-      url_placeholder:      PFX + 'url.placeholder',
-      url_helper:           PFX + 'url.helper',
-      cancel:               '@cancel',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(MENU_I18N_KEYS),
     menuItemsResource: rxResource({
       stream: () => {
         return store.menuService.list();

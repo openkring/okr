@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -15,6 +15,17 @@ import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { PFX } from './scope';
+
+const CALENDAR_SECTION_I18N_KEYS = {
+  update_calevent_conf:       PFX + 'calevent.update.conf',
+  update_calevent_error:      PFX + 'calevent.update.error',
+  update_invitation_conf:     PFX + 'invitation.update.conf',
+  update_invitation_error:    PFX + 'invitation.update.error',
+  calevents:                  PFX + 'calevent.calevents',
+  more:                       '@more',
+} satisfies Record<string, string>;
+
+export type CalendarSectionI18n = { [K in keyof typeof CALENDAR_SECTION_I18N_KEYS]: Signal<string> };
 
 export type CalendarState = {
   calendarName: string | undefined; // all, my, or specific calendar name
@@ -37,14 +48,7 @@ export const CalendarStore = signalStore(
     membershipService: inject(MembershipService),
     modalController: inject(ModalController),
     calEventService: inject(CalEventService),
-    i18n: inject(I18nService).translateAll({
-      update_calevent_conf:       PFX + 'calevent.update.conf',
-      update_calevent_error:      PFX + 'calevent.update.error',
-      update_invitation_conf:     PFX + 'invitation.update.conf',
-      update_invitation_error:    PFX + 'invitation.update.error',
-      calevents:                  PFX + 'calevent.calevents',
-      more:                       '@more'
-    }),
+    i18n: inject(I18nService).translateAll(CALENDAR_SECTION_I18N_KEYS),
   })),
   withProps((store) => ({
     // returns a list of unigue organization keys for the current user

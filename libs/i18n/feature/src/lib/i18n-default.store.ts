@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -10,6 +10,30 @@ import { I18nService } from '@bk2/shared-i18n';
 import { I18nDefaultCollection, I18nDefaultModel } from '@bk2/shared-models';
 import { bkPrompt } from '@bk2/shared-util-angular';
 import { PFX } from './scope';
+
+const I18N_DEFAULT_I18N_KEYS = {
+  create_conf:        PFX + 'default.create.conf',
+  create_error:       PFX + 'default.create.error',
+  update_conf:        PFX + 'default.update.conf',
+  update_error:       PFX + 'default.update.error',
+  delete_conf:        PFX + 'default.delete.conf',
+  delete_confirm:     PFX + 'default.delete.confirm',
+  delete_error:       PFX + 'default.delete.error',
+  module_prompt:      PFX + 'default.module.prompt',
+  key_prompt:         PFX + 'default.key.prompt',
+  ok:                 '@ok',
+  cancel:             '@cancel',
+  search_placeholder: '@general.operation.search.placeholder',
+  list_title:         '@i18n.default.list.title',
+  loading:            '@general.operation.loading',
+  module_label:       '@i18n.default.module.label',
+  key_label:          '@i18n.default.key.label',
+  is_html_label:      '@i18n.default.isHtml.label',
+  btn_cancel:         '@general.operation.cancel',
+  btn_save:           '@general.operation.save',
+} satisfies Record<string, string>;
+
+export type I18nDefaultI18n = { [K in keyof typeof I18N_DEFAULT_I18N_KEYS]: Signal<string> };
 
 export type I18nDefaultState = { searchTerm: string };
 const initialState: I18nDefaultState = { searchTerm: '' };
@@ -24,27 +48,7 @@ export const I18nDefaultStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      create_conf:  PFX + 'default.create.conf',
-      create_error: PFX + 'default.create.error',
-      update_conf:  PFX + 'default.update.conf',
-      update_error: PFX + 'default.update.error',
-      delete_conf:  PFX + 'default.delete.conf',
-      delete_confirm:  PFX + 'default.delete.confirm',
-      delete_error: PFX + 'default.delete.error',
-      module_prompt: PFX + 'default.module.prompt',
-      key_prompt: PFX + 'default.key.prompt',
-      ok: '@ok',
-      cancel: '@cancel',
-      search_placeholder: '@general.operation.search.placeholder',
-      list_title:         '@i18n.default.list.title',
-      loading:            '@general.operation.loading',
-      module_label:       '@i18n.default.module.label',
-      key_label:          '@i18n.default.key.label',
-      is_html_label:      '@i18n.default.isHtml.label',
-      btn_cancel:         '@general.operation.cancel',
-      btn_save:           '@general.operation.save',
-    }),
+    i18n: store.i18nService.translateAll(I18N_DEFAULT_I18N_KEYS),
   })),
   withProps(store => ({
     contentResource: rxResource({

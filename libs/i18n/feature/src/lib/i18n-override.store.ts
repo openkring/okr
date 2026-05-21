@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -11,6 +11,30 @@ import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@bk2/shar
 import { bkPrompt } from '@bk2/shared-util-angular';
 
 import { PFX } from './scope';
+
+const I18N_OVERRIDE_I18N_KEYS = {
+  create_conf:        PFX + 'override.create.conf',
+  create_error:       PFX + 'override.create.error',
+  update_conf:        PFX + 'override.update.conf',
+  update_error:       PFX + 'override.update.error',
+  delete_conf:        PFX + 'override.delete.conf',
+  delete_confirm:     PFX + 'override.delete.confirm',
+  delete_error:       PFX + 'override.delete.error',
+  module_prompt:      PFX + 'override.module.prompt',
+  key_prompt:         PFX + 'override.key.prompt',
+  ok:                 '@ok',
+  cancel:             '@cancel',
+  search_placeholder: '@general.operation.search.placeholder',
+  list_title:         '@i18n.override.list.title',
+  loading:            '@general.operation.loading',
+  module_label:       '@i18n.override.module.label',
+  key_label:          '@i18n.override.key.label',
+  is_html_label:      '@i18n.override.isHtml.label',
+  btn_cancel:         '@general.operation.cancel',
+  btn_save:           '@general.operation.save',
+} satisfies Record<string, string>;
+
+export type I18nOverrideI18n = { [K in keyof typeof I18N_OVERRIDE_I18N_KEYS]: Signal<string> };
 
 export type I18nOverrideState = { searchTerm: string };
 const initialState: I18nOverrideState = { searchTerm: '' };
@@ -25,27 +49,7 @@ export const I18nOverrideStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      create_conf:  PFX + 'override.create.conf',
-      create_error: PFX + 'override.create.error',
-      update_conf:  PFX + 'override.update.conf',
-      update_error: PFX + 'override.update.error',
-      delete_conf:  PFX + 'override.delete.conf',
-      delete_confirm:  PFX + 'override.delete.confirm',
-      delete_error: PFX + 'override.delete.error',
-      module_prompt: PFX + 'override.module.prompt',
-      key_prompt: PFX + 'override.key.prompt',
-      ok: '@ok',
-      cancel: '@cancel',
-      search_placeholder: '@general.operation.search.placeholder',
-      list_title:         '@i18n.override.list.title',
-      loading:            '@general.operation.loading',
-      module_label:       '@i18n.override.module.label',
-      key_label:          '@i18n.override.key.label',
-      is_html_label:      '@i18n.override.isHtml.label',
-      btn_cancel:         '@general.operation.cancel',
-      btn_save:           '@general.operation.save',
-    }),
+    i18n: store.i18nService.translateAll(I18N_OVERRIDE_I18N_KEYS),
   })),
   withProps(store => ({
     contentResource: rxResource({

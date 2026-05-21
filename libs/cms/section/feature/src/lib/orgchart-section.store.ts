@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -14,6 +14,16 @@ import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
 import { OrgEditModal } from '@bk2/subject-org-feature';
 
 import { PFX } from './scope';
+
+const ORGCHART_SECTION_I18N_KEYS = {
+  group_detach_confirm: PFX + 'group.detach.confirm',
+  ok:                   '@ok',
+  cancel:               '@cancel',
+  view_accordion:       '@cms.orgchart.view.accordion',
+  view_chart:           '@cms.orgchart.view.chart',
+} satisfies Record<string, string>;
+
+export type OrgchartSectionI18n = { [K in keyof typeof ORGCHART_SECTION_I18N_KEYS]: Signal<string> };
 
 export interface OrgchartTreeNode {
   name: string;
@@ -66,13 +76,7 @@ export const OrgchartStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      group_detach_confirm: PFX + 'group.detach.confirm',
-      ok: '@ok',
-      cancel: '@cancel',
-      view_accordion: '@cms.orgchart.view.accordion',
-      view_chart: '@cms.orgchart.view.chart',
-    }),
+    i18n: store.i18nService.translateAll(ORGCHART_SECTION_I18N_KEYS),
 
     groupsResource: rxResource({
       stream: () => store.groupService.list(),

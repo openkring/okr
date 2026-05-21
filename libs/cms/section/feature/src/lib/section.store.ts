@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -21,6 +21,52 @@ import { SectionEditModal } from './section-edit.modal';
 import { MessageCenterModal } from './message-center.modal';
 import { PFX } from './scope';
 import { CardSelectModal } from './card-select.modal';
+
+const SECTION_I18N_KEYS = {
+  sections:                 PFX + 'sections',
+  description:              PFX + 'description',
+  empty:                    PFX + 'empty',
+  key:                      '@key',
+  name:                     '@name',
+  type:                     '@type',
+  no_images:                 PFX + 'noImages',
+  no_such_section:           PFX + 'noSuchSection',
+  empty_table:               PFX + 'emptyTable',
+  select_label:              PFX + 'select.label',
+  delete:                    PFX + 'delete.label',
+  delete_confirm:            PFX + 'delete.confirm',
+  send_confirm1:             PFX + 'send.confirm1',
+  send_confirm2:             PFX + 'send.confirm2',
+  activity_empty:            PFX + 'activity.empty',
+  emergency_needs_help:      PFX + 'emergency.needsHelp',
+  emergency_unknown_location:  PFX + 'emergency.needsHelpUnknownLocation',
+  calevents:                 PFX + 'calevent.calevents',
+  calevent_update:           PFX + 'calevent.update.label',
+  calevent_update_conf:      PFX + 'calevent.update.conf',
+  calevent_update_error:     PFX + 'calevent.update.error',
+  invitation_update:         PFX + 'invitation.update.label',
+  invitation_update_conf:    PFX + 'invitation.update.conf',
+  invitation_update_error:    PFX + 'invitation.update.error',
+  context_title:              PFX + 'context.title',
+  context_show_avatar:        PFX + 'context.show.avatar',
+  context_show_name:          PFX + 'context.show.name',
+  context_show_members:       PFX + 'context.show.members',
+  context_show_memberships:   PFX + 'context.show.memberships',
+  context_show_responsibilities: PFX + 'context.show.responsibilities',
+  context_show_personrels:    PFX + 'context.show.personrels',
+  context_show_workrels:      PFX + 'context.show.workrels',
+  context_show_save:          PFX + 'context.show.save',
+  view:                       PFX + 'view',
+  edit:                       PFX + 'edit',
+  create:                     PFX + 'create',
+  ok:                         '@ok',
+  cancel:                     '@cancel',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+} satisfies Record<string, string>;
+
+export type SectionI18n = { [K in keyof typeof SECTION_I18N_KEYS]: Signal<string> };
 
 export type SectionState = {
   sectionId: string;
@@ -55,49 +101,7 @@ export const _SectionStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      sections:                 PFX + 'sections',
-      description:              PFX + 'description',
-      empty:                    PFX + 'empty',
-      key:                      '@key',
-      name:                     '@name',
-      type:                     '@type',
-      no_images:                 PFX + 'noImages',
-      no_such_section:           PFX + 'noSuchSection',
-      empty_table:               PFX + 'emptyTable',
-      select_label:              PFX + 'select.label',
-      delete:                    PFX + 'delete.label',
-      delete_confirm:            PFX + 'delete.confirm',
-      send_confirm1:             PFX + 'send.confirm1',
-      send_confirm2:             PFX + 'send.confirm2',
-      activity_empty:            PFX + 'activity.empty',
-      emergency_needs_help:      PFX + 'emergency.needsHelp',
-      emergency_unknown_location:  PFX + 'emergency.needsHelpUnknownLocation',
-      calevents:                 PFX + 'calevent.calevents',
-      calevent_update:           PFX + 'calevent.update.label',
-      calevent_update_conf:      PFX + 'calevent.update.conf',
-      calevent_update_error:     PFX + 'calevent.update.error',
-      invitation_update:         PFX + 'invitation.update.label',
-      invitation_update_conf:    PFX + 'invitation.update.conf',
-      invitation_update_error:    PFX + 'invitation.update.error',
-      context_title:              PFX + 'context.title',
-      context_show_avatar:        PFX + 'context.show.avatar',
-      context_show_name:          PFX + 'context.show.name',
-      context_show_members:       PFX + 'context.show.members',
-      context_show_memberships:   PFX + 'context.show.memberships',
-      context_show_responsibilities: PFX + 'context.show.responsibilities',
-      context_show_personrels:    PFX + 'context.show.personrels',
-      context_show_workrels:      PFX + 'context.show.workrels',
-      context_show_save:          PFX + 'context.show.save',
-      view:                       PFX + 'view',
-      edit:                       PFX + 'edit',
-      create:                     PFX + 'create',
-      ok: '@ok',
-      cancel: '@cancel',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(SECTION_I18N_KEYS),
 
     sectionsResource: rxResource({
       stream: () => {
