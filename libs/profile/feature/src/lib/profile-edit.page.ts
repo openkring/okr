@@ -84,7 +84,8 @@ import { ProfileStore } from './profile.store';
                 [readOnly]="false"
                 [tags]="tags()"
                 [tenantId]="tenantId()"
-                (valid)="formValid.set($event)" 
+                [i18n]="store.i18n"
+                (valid)="formValid.set($event)"
                 (dirty)="formDirty.set($event)"
               />
             }
