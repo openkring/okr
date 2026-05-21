@@ -33,11 +33,11 @@ import { UserStore } from './user.store';
     <ion-content>
       <bk-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
       @if(user(); as user) {
-        <bk-user-model-form [formData]="userModelVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
-        <bk-user-auth-form [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
-        <bk-user-display-form [formData]="userDisplayVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <bk-user-model-form [i18n]="store.i18n" [formData]="userModelVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <bk-user-auth-form [i18n]="store.i18n" [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <bk-user-display-form [i18n]="store.i18n" [formData]="userDisplayVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
         <bk-user-privacy-form [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (onFormDataChange)="log($event)" />
-        <bk-user-notification-form [formData]="userNotificationVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <bk-user-notification-form [i18n]="store.i18n" [formData]="userNotificationVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onTagsChanged($event)" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" />
       }
       <bk-comments-card [parentKey]="parentKey()" />
@@ -46,7 +46,7 @@ import { UserStore } from './user.store';
 })
 export class UserEditPage{
   private readonly avatarService = inject(AvatarService);
-  private readonly store = inject(UserStore);
+  protected readonly store = inject(UserStore);
   private readonly uploadService = inject(UploadService);
   private readonly platform = inject(Platform);
   private readonly env = inject(ENV);

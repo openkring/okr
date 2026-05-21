@@ -43,7 +43,8 @@ import { ResourceStore } from './resource.store';
       {{ readOnly()}}
       @if(formData(); as formData) {
         <bk-resource-form
-          [formData]="formData" 
+          [i18n]="store.i18n"
+          [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [subTypes]="subTypes()"
@@ -70,7 +71,7 @@ import { ResourceStore } from './resource.store';
   `
 })
 export class ResourceEditPage {
-  private readonly store = inject(ResourceStore);
+  protected readonly store = inject(ResourceStore);
 
   // inputs
   public resourceKey = input.required<string>();

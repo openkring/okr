@@ -1,18 +1,33 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
 import { Checkbox, CheckboxI18n, EmailInput, EmailInputI18n, ErrorNote, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
-import { I18nService } from "@bk2/shared-i18n";
 
 import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util";
-import { PFX } from "./scope";
 
 export interface FbUserFormI18n {
-  authTitle: string;
-  authDescription: string;
+  fbuser_auth_title: Signal<string>;
+  fbuser_auth_description: Signal<string>;
+  uid_label: Signal<string>;
+  uid_placeholder: Signal<string>;
+  uid_helper: Signal<string>;
+  displayName_label: Signal<string>;
+  displayName_placeholder: Signal<string>;
+  displayName_helper: Signal<string>;
+  photoUrl_label: Signal<string>;
+  photoUrl_placeholder: Signal<string>;
+  photoUrl_helper: Signal<string>;
+  email_label: Signal<string>;
+  email_placeholder: Signal<string>;
+  phone_label: Signal<string>;
+  phone_placeholder: Signal<string>;
+  emailVerified_label: Signal<string>;
+  emailVerified_helper: Signal<string>;
+  disabled_label: Signal<string>;
+  disabled_helper: Signal<string>;
 }
 
 @Component({
@@ -35,8 +50,8 @@ export interface FbUserFormI18n {
     >
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().authTitle }}</ion-card-title>
-          <ion-card-subtitle>{{ i18n().authDescription }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().fbuser_auth_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().fbuser_auth_description() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -85,49 +100,28 @@ export interface FbUserFormI18n {
 })
 export class FbuserForm {
   // inputs
-  public readonly i18n = input<FbUserFormI18n>({ authTitle: '', authDescription: '' });
+  public readonly i18n = input.required<FbUserFormI18n>();
   public formData = model.required<FirebaseUserModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    uid_label:           PFX + 'uid.label',
-    uid_placeholder:     PFX + 'uid.placeholder',
-    uid_helper:          PFX + 'uid.helper',
-    displayName_label:   PFX + 'displayName.label',
-    displayName_placeholder: PFX + 'displayName.placeholder',
-    displayName_helper:  PFX + 'displayName.helper',
-    photoUrl_label:      PFX + 'photoUrl.label',
-    photoUrl_placeholder: PFX + 'photoUrl.placeholder',
-    photoUrl_helper:     PFX + 'photoUrl.helper',
-    email_label:         PFX + 'email.label',
-    email_placeholder:   PFX + 'email.placeholder',
-    phone_label:         PFX + 'phone.label',
-    phone_placeholder:   PFX + 'phone.placeholder',
-    emailVerified_label: PFX + 'emailVerified.label',
-    emailVerified_helper: PFX + 'emailVerified.helper',
-    disabled_label:      PFX + 'disabled.label',
-    disabled_helper:     PFX + 'disabled.helper',
-  });
-
   protected uidI18n = computed(() => ({
-    name: 'uid', label: this.fieldI18n.uid_label(), placeholder: this.fieldI18n.uid_placeholder(), helper: this.fieldI18n.uid_helper()
+    name: 'uid', label: this.i18n().uid_label(), placeholder: this.i18n().uid_placeholder(), helper: this.i18n().uid_helper()
   } as TextInputI18n));
 
   protected displayNameI18n = computed(() => ({
-    name: 'displayName', label: this.fieldI18n.displayName_label(), placeholder: this.fieldI18n.displayName_placeholder(), helper: this.fieldI18n.displayName_helper()
+    name: 'displayName', label: this.i18n().displayName_label(), placeholder: this.i18n().displayName_placeholder(), helper: this.i18n().displayName_helper()
   } as TextInputI18n));
 
   protected photoUrlI18n = computed(() => ({
-    name: 'photoUrl', label: this.fieldI18n.photoUrl_label(), placeholder: this.fieldI18n.photoUrl_placeholder(), helper: this.fieldI18n.photoUrl_helper()
+    name: 'photoUrl', label: this.i18n().photoUrl_label(), placeholder: this.i18n().photoUrl_placeholder(), helper: this.i18n().photoUrl_helper()
   } as TextInputI18n));
 
-  protected emailI18n = computed(() => ({ name: 'email', label: this.fieldI18n.email_label(), placeholder: this.fieldI18n.email_placeholder() } as EmailInputI18n));
-  protected phoneI18n = computed(() => ({ name: 'phone', label: this.fieldI18n.phone_label(), placeholder: this.fieldI18n.phone_placeholder() } as PhoneInputI18n));
-  protected emailVerifiedI18n = computed(() => ({ name: 'emailVerified', label: this.fieldI18n.emailVerified_label(), helper: this.fieldI18n.emailVerified_helper() } as CheckboxI18n));
-  protected disabledI18n = computed(() => ({ name: 'disabled', label: this.fieldI18n.disabled_label(), helper: this.fieldI18n.disabled_helper() } as CheckboxI18n));
+  protected emailI18n = computed(() => ({ name: 'email', label: this.i18n().email_label(), placeholder: this.i18n().email_placeholder() } as EmailInputI18n));
+  protected phoneI18n = computed(() => ({ name: 'phone', label: this.i18n().phone_label(), placeholder: this.i18n().phone_placeholder() } as PhoneInputI18n));
+  protected emailVerifiedI18n = computed(() => ({ name: 'emailVerified', label: this.i18n().emailVerified_label(), helper: this.i18n().emailVerified_helper() } as CheckboxI18n));
+  protected disabledI18n = computed(() => ({ name: 'disabled', label: this.i18n().disabled_label(), helper: this.i18n().disabled_helper() } as CheckboxI18n));
 
   // signals
   public dirty = output<boolean>();

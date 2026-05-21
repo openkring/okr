@@ -1,19 +1,27 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
 import { AvatarUsage, DeliveryType, Language, NameDisplay, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
-import { I18nService } from "@bk2/shared-i18n";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations } from "@bk2/user-util";
-import { PFX } from "./scope";
 
 export interface UserDisplayFormI18n {
-  displayTitle: string;
-  displayDescription: string;
+  display_title: Signal<string>;
+  display_description: Signal<string>;
+  avatarUsage_label: Signal<string>;
+  personSortCriteria_label: Signal<string>;
+  userLanguage_label: Signal<string>;
+  nameDisplay_label: Signal<string>;
+  showArchivedData_label: Signal<string>;
+  showArchivedData_helper: Signal<string>;
+  showDebugInfo_label: Signal<string>;
+  showDebugInfo_helper: Signal<string>;
+  showHelpers_label: Signal<string>;
+  showHelpers_helper: Signal<string>;
 }
 
 @Component({
@@ -35,8 +43,8 @@ export interface UserDisplayFormI18n {
       (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().displayTitle }}</ion-card-title>
-          <ion-card-subtitle>{{ i18n().displayDescription }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().display_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().display_description() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -70,29 +78,16 @@ export interface UserDisplayFormI18n {
   `
 })
 export class UserDisplayForm {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    avatarUsage_label:          PFX + 'avatarUsage.label',
-    personSortCriteria_label:   PFX + 'personSortCriteria.label',
-    userLanguage_label:         PFX + 'userLanguage.label',
-    nameDisplay_label:          PFX + 'nameDisplay.label',
-    showArchivedData_label:     PFX + 'showArchivedData.label',
-    showArchivedData_helper:    PFX + 'showArchivedData.helper',
-    showDebugInfo_label:        PFX + 'showDebugInfo.label',
-    showDebugInfo_helper:       PFX + 'showDebugInfo.helper',
-    showHelpers_label:          PFX + 'showHelpers.label',
-    showHelpers_helper:         PFX + 'showHelpers.helper',
-  });
-  protected avatarUsageI18n        = computed(() => ({ name: 'avatarUsage',        label: this.fieldI18n.avatarUsage_label()        } as CategoryOldI18n));
-  protected personSortCriteriaI18n = computed(() => ({ name: 'personSortCriteria', label: this.fieldI18n.personSortCriteria_label() } as CategoryOldI18n));
-  protected userLanguageI18n       = computed(() => ({ name: 'userLanguage',       label: this.fieldI18n.userLanguage_label()       } as CategoryOldI18n));
-  protected nameDisplayI18n        = computed(() => ({ name: 'nameDisplay',        label: this.fieldI18n.nameDisplay_label()        } as CategoryOldI18n));
-  protected showArchivedDataI18n   = computed(() => ({ name: 'showArchivedData', label: this.fieldI18n.showArchivedData_label(), helper: this.fieldI18n.showArchivedData_helper() } as CheckboxI18n));
-  protected showDebugInfoI18n      = computed(() => ({ name: 'showDebugInfo',    label: this.fieldI18n.showDebugInfo_label(),    helper: this.fieldI18n.showDebugInfo_helper()    } as CheckboxI18n));
-  protected showHelpersI18n        = computed(() => ({ name: 'showHelpers',      label: this.fieldI18n.showHelpers_label(),      helper: this.fieldI18n.showHelpers_helper()      } as CheckboxI18n));
+  protected avatarUsageI18n        = computed(() => ({ name: 'avatarUsage',        label: this.i18n().avatarUsage_label()        } as CategoryOldI18n));
+  protected personSortCriteriaI18n = computed(() => ({ name: 'personSortCriteria', label: this.i18n().personSortCriteria_label() } as CategoryOldI18n));
+  protected userLanguageI18n       = computed(() => ({ name: 'userLanguage',       label: this.i18n().userLanguage_label()       } as CategoryOldI18n));
+  protected nameDisplayI18n        = computed(() => ({ name: 'nameDisplay',        label: this.i18n().nameDisplay_label()        } as CategoryOldI18n));
+  protected showArchivedDataI18n   = computed(() => ({ name: 'showArchivedData', label: this.i18n().showArchivedData_label(), helper: this.i18n().showArchivedData_helper() } as CheckboxI18n));
+  protected showDebugInfoI18n      = computed(() => ({ name: 'showDebugInfo',    label: this.i18n().showDebugInfo_label(),    helper: this.i18n().showDebugInfo_helper()    } as CheckboxI18n));
+  protected showHelpersI18n        = computed(() => ({ name: 'showHelpers',      label: this.i18n().showHelpers_label(),      helper: this.i18n().showHelpers_helper()      } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input<UserDisplayFormI18n>({ displayTitle: '', displayDescription: '' });
+  public readonly i18n = input.required<UserDisplayFormI18n>();
   public formData = model.required<UserDisplayFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

@@ -1,18 +1,37 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { RoleName, UserModel } from "@bk2/shared-models";
 import { EmailInput, EmailInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, hasRole } from "@bk2/shared-util-core";
-import { I18nService } from "@bk2/shared-i18n";
 
 import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@bk2/user-util";
-import { PFX } from "./scope";
 
 export interface UserModelFormI18n {
-  modelTitle: string;
-  modelDescription: string;
+  model_title: Signal<string>;
+  model_description: Signal<string>;
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  personKey_label: Signal<string>;
+  personKey_placeholder: Signal<string>;
+  personKey_helper: Signal<string>;
+  firstName_label: Signal<string>;
+  firstName_placeholder: Signal<string>;
+  firstName_helper: Signal<string>;
+  lastName_label: Signal<string>;
+  lastName_placeholder: Signal<string>;
+  lastName_helper: Signal<string>;
+  tenants_label: Signal<string>;
+  tenants_placeholder: Signal<string>;
+  tenants_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+  loginEmail_label: Signal<string>;
+  loginEmail_placeholder: Signal<string>;
+  gravatarEmail_label: Signal<string>;
+  gravatarEmail_placeholder: Signal<string>;
 }
 
 @Component({
@@ -34,8 +53,8 @@ export interface UserModelFormI18n {
       (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().modelTitle }}</ion-card-title>
-          <ion-card-subtitle>{{ i18n().modelDescription }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().model_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().model_description() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -73,65 +92,40 @@ export interface UserModelFormI18n {
 })
 export class UserModelForm {
   // inputs
-  public readonly i18n = input<UserModelFormI18n>({ modelTitle: '', modelDescription: '' });
+  public readonly i18n = input.required<UserModelFormI18n>();
   public formData = model.required<UserModelFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:          PFX + 'bkey.label',
-    bkey_placeholder:    PFX + 'bkey.placeholder',
-    bkey_helper:         PFX + 'bkey.helper',
-    personKey_label:     PFX + 'personKey.label',
-    personKey_placeholder: PFX + 'personKey.placeholder',
-    personKey_helper:    PFX + 'personKey.helper',
-    firstName_label:     PFX + 'firstName.label',
-    firstName_placeholder: PFX + 'firstName.placeholder',
-    firstName_helper:    PFX + 'firstName.helper',
-    lastName_label:      PFX + 'lastName.label',
-    lastName_placeholder: PFX + 'lastName.placeholder',
-    lastName_helper:     PFX + 'lastName.helper',
-    tenants_label:       PFX + 'tenants.label',
-    tenants_placeholder: PFX + 'tenants.placeholder',
-    tenants_helper:      PFX + 'tenants.helper',
-    notes_label:              PFX + 'notes.label',
-    notes_placeholder:        PFX + 'notes.placeholder',
-    loginEmail_label:         PFX + 'loginEmail.label',
-    loginEmail_placeholder:   PFX + 'loginEmail.placeholder',
-    gravatarEmail_label:      PFX + 'gravatarEmail.label',
-    gravatarEmail_placeholder:PFX + 'gravatarEmail.placeholder',
-  });
-
   protected bkeyI18n = computed(() => ({
-    name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: this.fieldI18n.bkey_placeholder(), helper: this.fieldI18n.bkey_helper()
+    name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
   } as TextInputI18n));
 
   protected personKeyI18n = computed(() => ({
-    name: 'personKey', label: this.fieldI18n.personKey_label(), placeholder: this.fieldI18n.personKey_placeholder(), helper: this.fieldI18n.personKey_helper()
+    name: 'personKey', label: this.i18n().personKey_label(), placeholder: this.i18n().personKey_placeholder(), helper: this.i18n().personKey_helper()
   } as TextInputI18n));
 
   protected firstNameI18n = computed(() => ({
-    name: 'firstName', label: this.fieldI18n.firstName_label(), placeholder: this.fieldI18n.firstName_placeholder(), helper: this.fieldI18n.firstName_helper()
+    name: 'firstName', label: this.i18n().firstName_label(), placeholder: this.i18n().firstName_placeholder(), helper: this.i18n().firstName_helper()
   } as TextInputI18n));
 
   protected lastNameI18n = computed(() => ({
-    name: 'lastName', label: this.fieldI18n.lastName_label(), placeholder: this.fieldI18n.lastName_placeholder(), helper: this.fieldI18n.lastName_helper()
+    name: 'lastName', label: this.i18n().lastName_label(), placeholder: this.i18n().lastName_placeholder(), helper: this.i18n().lastName_helper()
   } as TextInputI18n));
 
   protected tenantsI18n = computed(() => ({
-    name: 'tenants', label: this.fieldI18n.tenants_label(), placeholder: this.fieldI18n.tenants_placeholder(), helper: this.fieldI18n.tenants_helper()
+    name: 'tenants', label: this.i18n().tenants_label(), placeholder: this.i18n().tenants_placeholder(), helper: this.i18n().tenants_helper()
   } as TextInputI18n));
 
   protected notesI18n = computed(() => ({
     name: 'notes',
-    label: this.fieldI18n.notes_label(),
-    placeholder: this.fieldI18n.notes_placeholder()
+    label: this.i18n().notes_label(),
+    placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
 
-  protected loginEmailI18n = computed(() => ({ name: 'loginEmail', label: this.fieldI18n.loginEmail_label(), placeholder: this.fieldI18n.loginEmail_placeholder() } as EmailInputI18n));
-  protected gravatarEmailI18n = computed(() => ({ name: 'gravatarEmail', label: this.fieldI18n.gravatarEmail_label(), placeholder: this.fieldI18n.gravatarEmail_placeholder() } as EmailInputI18n));
+  protected loginEmailI18n = computed(() => ({ name: 'loginEmail', label: this.i18n().loginEmail_label(), placeholder: this.i18n().loginEmail_placeholder() } as EmailInputI18n));
+  protected gravatarEmailI18n = computed(() => ({ name: 'gravatarEmail', label: this.i18n().gravatarEmail_label(), placeholder: this.i18n().gravatarEmail_placeholder() } as EmailInputI18n));
 
   // signals
   public dirty = output<boolean>();

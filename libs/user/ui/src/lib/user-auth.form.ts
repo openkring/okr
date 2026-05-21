@@ -1,18 +1,20 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, input, linkedSignal, model, output, Signal } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { CategoryListModel, UserModel } from "@bk2/shared-models";
 import { Checkbox, CheckboxI18n, Chips } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel, getCategoryItemNames } from "@bk2/shared-util-core";
-import { I18nService } from "@bk2/shared-i18n";
 
 import { flattenRoles, UserAuthFormModel, userAuthFormValidations } from "@bk2/user-util";
-import { PFX } from "./scope";
 
 export interface UserAuthFormI18n {
-  authTitle: string;
-  authDescription: string;
+  auth_title: Signal<string>;
+  auth_description: Signal<string>;
+  useTouchId_label: Signal<string>;
+  useTouchId_helper: Signal<string>;
+  useFaceId_label: Signal<string>;
+  useFaceId_helper: Signal<string>;
 }
 
 @Component({
@@ -37,8 +39,8 @@ export interface UserAuthFormI18n {
 
         <ion-card>
           <ion-card-header>
-            <ion-card-title>{{ i18n().authTitle }}</ion-card-title>
-            <ion-card-subtitle>{{ i18n().authDescription }}</ion-card-subtitle>
+            <ion-card-title>{{ i18n().auth_title() }}</ion-card-title>
+            <ion-card-subtitle>{{ i18n().auth_description() }}</ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
             <ion-grid>
@@ -61,18 +63,11 @@ export interface UserAuthFormI18n {
   `
 })
 export class UserAuthForm {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    useTouchId_label:  PFX + 'useTouchId.label',
-    useTouchId_helper: PFX + 'useTouchId.helper',
-    useFaceId_label:   PFX + 'useFaceId.label',
-    useFaceId_helper:  PFX + 'useFaceId.helper',
-  });
-  protected useTouchIdI18n = computed(() => ({ name: 'useTouchId', label: this.fieldI18n.useTouchId_label(), helper: this.fieldI18n.useTouchId_helper() } as CheckboxI18n));
-  protected useFaceIdI18n  = computed(() => ({ name: 'useFaceId',  label: this.fieldI18n.useFaceId_label(),  helper: this.fieldI18n.useFaceId_helper()  } as CheckboxI18n));
+  protected useTouchIdI18n = computed(() => ({ name: 'useTouchId', label: this.i18n().useTouchId_label(), helper: this.i18n().useTouchId_helper() } as CheckboxI18n));
+  protected useFaceIdI18n  = computed(() => ({ name: 'useFaceId',  label: this.i18n().useFaceId_label(),  helper: this.i18n().useFaceId_helper()  } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input<UserAuthFormI18n>({ authTitle: '', authDescription: '' });
+  public readonly i18n = input.required<UserAuthFormI18n>();
   public formData = model.required<UserAuthFormModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

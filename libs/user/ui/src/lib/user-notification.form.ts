@@ -1,19 +1,19 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { DeliveryTypes } from "@bk2/shared-categories";
 import { DeliveryType, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n } from "@bk2/shared-ui";
-import { I18nService } from "@bk2/shared-i18n";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificationFormValidations } from "@bk2/user-util";
-import { PFX } from "./scope";
 
 export interface UserNotificationFormI18n {
-  notificationTitle: string;
-  notificationDescription: string;
+  notification_title: Signal<string>;
+  notification_description: Signal<string>;
+  newsDelivery_label: Signal<string>;
+  invoiceDelivery_label: Signal<string>;
 }
 
 @Component({
@@ -36,8 +36,8 @@ export interface UserNotificationFormI18n {
       (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().notificationTitle }}</ion-card-title>
-          <ion-card-subtitle>{{ i18n().notificationDescription }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().notification_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().notification_description() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -56,15 +56,10 @@ export interface UserNotificationFormI18n {
   `
 })
 export class UserNotificationForm {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    newsDelivery_label:    PFX + 'newsDelivery.label',
-    invoiceDelivery_label: PFX + 'invoiceDelivery.label',
-  });
-  protected newsDeliveryI18n    = computed(() => ({ name: 'newsDelivery',    label: this.fieldI18n.newsDelivery_label()    } as CategoryOldI18n));
-  protected invoiceDeliveryI18n = computed(() => ({ name: 'invoiceDelivery', label: this.fieldI18n.invoiceDelivery_label() } as CategoryOldI18n));
+  protected newsDeliveryI18n    = computed(() => ({ name: 'newsDelivery',    label: this.i18n().newsDelivery_label()    } as CategoryOldI18n));
+  protected invoiceDeliveryI18n = computed(() => ({ name: 'invoiceDelivery', label: this.i18n().invoiceDelivery_label() } as CategoryOldI18n));
 
-  public readonly i18n = input<UserNotificationFormI18n>({ notificationTitle: '', notificationDescription: '' });
+  public readonly i18n = input.required<UserNotificationFormI18n>();
   public formData = model.required<UserNotificationFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

@@ -40,7 +40,8 @@ import { ResourceStore } from './resource.store';
       }
       @if(formData(); as formData) {
         <bk-resource-form
-          [formData]="formData" 
+          [i18n]="store.i18n"
+          [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="store.currentUser()"
           [subTypes]="subTypes()"

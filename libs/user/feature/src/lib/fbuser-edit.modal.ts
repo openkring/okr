@@ -23,6 +23,7 @@ import { UserStore } from "libs/user/feature/src/lib/user.store";
       } 
     <ion-content>
       <bk-fbuser-form
+        [i18n]="store.i18n"
         [formData]="formData()"
         (formDataChange)="onFormDataChange($event)"
         [currentUser]="currentUser()"

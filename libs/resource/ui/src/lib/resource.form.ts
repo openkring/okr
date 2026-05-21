@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { vestForms } from 'ngx-vest-forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
@@ -6,13 +6,33 @@ import { CategoryListModel, ResourceModel, RoleName, UserModel } from '@bk2/shar
 import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
-import { PFX } from './scope';
+
 
 export interface ResourceFormI18n {
-  cardTitle: string;
+  form_card_title: Signal<string>;
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  load_label: Signal<string>;
+  load_placeholder: Signal<string>;
+  load_helper: Signal<string>;
+  keyNr_label: Signal<string>;
+  keyNr_placeholder: Signal<string>;
+  keyNr_helper: Signal<string>;
+  currentValue_label: Signal<string>;
+  currentValue_placeholder: Signal<string>;
+  currentValue_helper: Signal<string>;
+  lockerNr_label: Signal<string>;
+  lockerNr_placeholder: Signal<string>;
+  lockerNr_helper: Signal<string>;
+  description_label: Signal<string>;
+  description_placeholder: Signal<string>;
+  color_label: Signal<string>;
 }
 
 @Component({
@@ -39,7 +59,7 @@ export interface ResourceFormI18n {
           @case('rboat') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
+                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -83,7 +103,7 @@ export interface ResourceFormI18n {
           @case('boat') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
+                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -125,7 +145,7 @@ export interface ResourceFormI18n {
           @case('car') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
+                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -166,7 +186,7 @@ export interface ResourceFormI18n {
           @case('locker') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
+                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -200,7 +220,7 @@ export interface ResourceFormI18n {
           @case('key') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
+                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -226,7 +246,7 @@ export interface ResourceFormI18n {
           @case('pet') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
+                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -259,7 +279,7 @@ export interface ResourceFormI18n {
           @case('realestate') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
+                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -289,7 +309,7 @@ export interface ResourceFormI18n {
           @default {
           <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().cardTitle }}</ion-card-title>
+                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -340,10 +360,8 @@ export interface ResourceFormI18n {
   `
 })
 export class ResourceForm {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
-  public readonly i18n = input<ResourceFormI18n>({ cardTitle: '' });
+  public readonly i18n = input.required<ResourceFormI18n>();
   public formData = model.required<ResourceModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -385,84 +403,59 @@ export class ResourceForm {
   protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
   protected bkey = computed(() => this.formData().bkey ?? DEFAULT_NAME);
 
-  // i18n
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:           PFX + 'bkey.label',
-    bkey_placeholder:     PFX + 'bkey.placeholder',
-    bkey_helper:          PFX + 'bkey.helper',
-    name_label:           PFX + 'name.label',
-    name_placeholder:     PFX + 'name.placeholder',
-    name_helper:          PFX + 'name.helper',
-    load_label:           PFX + 'load.label',
-    load_placeholder:     PFX + 'load.placeholder',
-    load_helper:          PFX + 'load.helper',
-    keyNr_label:              PFX + 'keyNr.label',
-    keyNr_placeholder:        PFX + 'keyNr.placeholder',
-    keyNr_helper:             PFX + 'keyNr.helper',
-    currentValue_label:       PFX + 'currentValue.label',
-    currentValue_placeholder: PFX + 'currentValue.placeholder',
-    currentValue_helper:      PFX + 'currentValue.helper',
-    lockerNr_label:           PFX + 'lockerNr.label',
-    lockerNr_placeholder:     PFX + 'lockerNr.placeholder',
-    lockerNr_helper:          PFX + 'lockerNr.helper',
-    description_label:        PFX + 'description.label',
-    description_placeholder:  PFX + 'description.placeholder',
-    color_label:              PFX + 'color.label',
-  });
-
   protected bkeyI18n = computed(() => ({
     name: 'bkey',
-    label: this.fieldI18n.bkey_label(),
-    placeholder: this.fieldI18n.bkey_placeholder(),
-    helper: this.fieldI18n.bkey_helper()
+    label: this.i18n().bkey_label(),
+    placeholder: this.i18n().bkey_placeholder(),
+    helper: this.i18n().bkey_helper()
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({
     name: 'name',
-    label: this.fieldI18n.name_label(),
-    placeholder: this.fieldI18n.name_placeholder(),
-    helper: this.fieldI18n.name_helper()
+    label: this.i18n().name_label(),
+    placeholder: this.i18n().name_placeholder(),
+    helper: this.i18n().name_helper()
   } as TextInputI18n));
 
   protected loadI18n = computed(() => ({
     name: 'load',
-    label: this.fieldI18n.load_label(),
-    placeholder: this.fieldI18n.load_placeholder(),
-    helper: this.fieldI18n.load_helper()
+    label: this.i18n().load_label(),
+    placeholder: this.i18n().load_placeholder(),
+    helper: this.i18n().load_helper()
   } as TextInputI18n));
 
   protected keyNrTextI18n = computed(() => ({
     name: 'keyNr',
-    label: this.fieldI18n.keyNr_label(),
-    placeholder: this.fieldI18n.keyNr_placeholder(),
-    helper: this.fieldI18n.keyNr_helper()
+    label: this.i18n().keyNr_label(),
+    placeholder: this.i18n().keyNr_placeholder(),
+    helper: this.i18n().keyNr_helper()
   } as TextInputI18n));
 
   protected currentValueI18n = computed(() => ({
     name: 'currentValue',
-    label: this.fieldI18n.currentValue_label(),
-    placeholder: this.fieldI18n.currentValue_placeholder(),
-    helper: this.fieldI18n.currentValue_helper()
+    label: this.i18n().currentValue_label(),
+    placeholder: this.i18n().currentValue_placeholder(),
+    helper: this.i18n().currentValue_helper()
   } as NumberInputI18n));
 
   protected lockerNrI18n = computed(() => ({
     name: 'lockerNr',
-    label: this.fieldI18n.lockerNr_label(),
-    placeholder: this.fieldI18n.lockerNr_placeholder(),
-    helper: this.fieldI18n.lockerNr_helper()
+    label: this.i18n().lockerNr_label(),
+    placeholder: this.i18n().lockerNr_placeholder(),
+    helper: this.i18n().lockerNr_helper()
   } as NumberInputI18n));
 
   protected keyNrNumI18n = computed(() => ({
     name: 'keyNr',
-    label: this.fieldI18n.keyNr_label(),
-    placeholder: this.fieldI18n.keyNr_placeholder(),
-    helper: this.fieldI18n.keyNr_helper()
+    label: this.i18n().keyNr_label(),
+    placeholder: this.i18n().keyNr_placeholder(),
+    helper: this.i18n().keyNr_helper()
   } as NumberInputI18n));
 
   protected descriptionI18n = computed(() => ({
-    name: 'description', label: this.fieldI18n.description_label(), placeholder: this.fieldI18n.description_placeholder()
+    name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
-  protected colorLabel = computed(() => this.fieldI18n.color_label());
+  protected colorLabel = computed(() => this.i18n().color_label());
 
   /******************************* actions *************************************** */
   private getDefaultType(type: string): string {
