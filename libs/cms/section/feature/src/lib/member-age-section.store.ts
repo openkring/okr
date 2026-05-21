@@ -3,7 +3,6 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { AppStore } from '@bk2/shared-feature';
 import { MemberAgeConfig } from '@bk2/shared-models';
 import { I18nService } from '@bk2/shared-i18n';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
@@ -61,7 +60,6 @@ export const MemberAgeSectionStore = signalStore(
   withState(initialState),
   withProps(() => ({
     membershipService: inject(MembershipService),
-    appStore: inject(AppStore),
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
