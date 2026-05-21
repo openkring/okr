@@ -31,6 +31,7 @@ import { OrgchartSectionComponent } from './orgchart-section';
 import { RagSectionComponent } from './rag-section';
 import { ContextDiagramSectionComponent } from './context-diagram-section';
 import { ResponsibilitySectionComponent } from './responsibility-section';
+import { MemberAgeSectionComponent } from './member-age-section';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -46,7 +47,7 @@ import { ResponsibilitySectionComponent } from './responsibility-section';
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent,
     IonItem, IonLabel, Spinner,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
   ],
@@ -143,6 +144,9 @@ import { ResponsibilitySectionComponent } from './responsibility-section';
           }
           @case('video') {
             <bk-video-section [section]="section" />
+          }
+          @case('member-age') {
+            <bk-member-age-section [section]="section" [editMode]="editMode()" />
           }
           @default {
             <bk-missing-section [section]="section" />
