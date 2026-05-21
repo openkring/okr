@@ -14,5 +14,10 @@
     "create": "Neue Beschäftigung erstellen",
     "delete": "Beschäftigung löschen",
     "end": "Beschäftigung beenden"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

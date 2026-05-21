@@ -1,14 +1,16 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
-import { CategorySelect, DateInput } from '@bk2/shared-ui';
+import { CategorySelect, DateInput, DateInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
 import { coerceBoolean, debugFormErrors, debugFormModel } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import {CategoryChangeFormModel, categoryChangeFormValidations } from '@bk2/relationship-membership-util';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { PFX } from './scope';
 
 export interface CategoryChangeFormI18n {
   helper: string;
@@ -60,7 +62,7 @@ export interface CategoryChangeFormI18n {
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-date-input name="dateOfChange" [storeDate]="dateOfChange()" (storeDateChange)="onFieldChange('dateOfChange', $event)" [showHelper]="false" [readOnly]="isReadOnly()" />
+                  <bk-date-input [i18n]="dateOfChangeI18n()" [storeDate]="dateOfChange()" (storeDateChange)="onFieldChange('dateOfChange', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12">
                   <ion-item lines="none">
@@ -75,6 +77,14 @@ export interface CategoryChangeFormI18n {
   `
 })
 export class CategoryChangeForm {
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    dateOfChange_label:       PFX + 'dateOfChange.label',
+    dateOfChange_placeholder: PFX + 'dateOfChange.placeholder',
+    dateOfChange_helper:      PFX + 'dateOfChange.helper',
+  });
+  protected dateOfChangeI18n = computed(() => ({ name: 'dateOfChange', label: this.fieldI18n.dateOfChange_label(), placeholder: this.fieldI18n.dateOfChange_placeholder(), helper: this.fieldI18n.dateOfChange_helper() } as DateInputI18n));
+
   // inputs
   public readonly i18n = input<CategoryChangeFormI18n>({ helper: '', helperDate: '' });
   public formData = model.required<CategoryChangeFormModel>();

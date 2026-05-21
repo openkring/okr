@@ -24,5 +24,10 @@
     "create": "Neues Icon erstellen",
     "delete": "Icon löschen",
     "copy": "Icon Name kopieren"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

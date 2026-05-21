@@ -35,7 +35,7 @@ const I18nOverrideEditStore = signalStore(
   ],
   providers: [I18nOverrideEditStore],
   template: `
-    <bk-header title="@i18n.override.edit.title" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@i18n.override.edit.title' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-label position="stacked">{{ store.i18n.module_label() }}</ion-label>

@@ -1,14 +1,16 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AddressModel, CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Checkbox, Chips, EmailInput, ErrorNote, IbanInput, NotesInput, PhoneInput, TextInput } from '@bk2/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 import { addressValidations } from '@bk2/subject-address-util';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-address-form',
@@ -36,7 +38,7 @@ import { addressValidations } from '@bk2/subject-address-util';
           @if(hasRole('admin')) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
               </ion-col>
             </ion-row>
           }
@@ -50,7 +52,7 @@ import { addressValidations } from '@bk2/subject-address-util';
 
             @if(addressChannel() === 'custom') {
               <ion-col size="12" size-md="6">
-                <bk-text-input name="addressChannelLabel" [value]="addressChannelLabel()" (valueChange)="onFieldChange('addressChannelLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <bk-text-input [i18n]="addressChannelLabelI18n()" [value]="addressChannelLabel()" (valueChange)="onFieldChange('addressChannelLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                 <bk-error-note [errors]="channelLabelError()" />                                                                                                                     
               </ion-col>
             }
@@ -63,7 +65,7 @@ import { addressValidations } from '@bk2/subject-address-util';
 
             @if(addressUsage() === 'custom') {
               <ion-col size="12" size-md="6">
-                <bk-text-input name="addressUsageLabel" [value]="addressUsageLabel()" (valueChange)="onFieldChange('addressUsageLabel', $event)"  [showHelper]="true" [readOnly]="isReadOnly()" />
+                <bk-text-input [i18n]="addressUsageLabelI18n()" [value]="addressUsageLabel()" (valueChange)="onFieldChange('addressUsageLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                 <bk-error-note [errors]="usageLabelError()" />                                                                                                                     
               </ion-col>
             }
@@ -73,7 +75,7 @@ import { addressValidations } from '@bk2/subject-address-util';
             @case ('email') {
               <ion-row>
                 <ion-col size="12">
-                  <bk-email [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
+                  <bk-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
                   <bk-error-note [errors]="emailError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
@@ -81,7 +83,7 @@ import { addressValidations } from '@bk2/subject-address-util';
             @case ('phone') {
               <ion-row>
                 <ion-col size="12"> 
-                  <bk-phone [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
+                  <bk-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
                   <bk-error-note [errors]="phoneError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
@@ -89,16 +91,16 @@ import { addressValidations } from '@bk2/subject-address-util';
             @case ('postal') {
               <ion-row>
                 <ion-col size="8" size-md="9">
-                  <bk-text-input name="streetName" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" [readOnly]="isReadOnly()" autocomplete="street-address" />
+                  <bk-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" [readOnly]="isReadOnly()" autocomplete="street-address" />
                   <bk-error-note [errors]="streetNameError()" />                                                                                                                     
                 </ion-col>
                 <ion-col size="4" size-md="3">
-                  <bk-text-input name="streetNumber" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
                   <bk-error-note [errors]="streetNumberError()" />                                                                                                                     
                 </ion-col>
 
                 <ion-col size="12">
-                  <bk-text-input name="addressValue2" [value]="addressValue2()" (valueChange)="onFieldChange('addressValue2', $event)" [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="addressValue2I18n()" [value]="addressValue2()" (valueChange)="onFieldChange('addressValue2', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               
@@ -108,29 +110,29 @@ import { addressValidations } from '@bk2/subject-address-util';
 
               <ion-row>
                 <ion-col size="12" size-md="3">
-                <bk-text-input name="countryCode" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
+                <bk-text-input [i18n]="countryCodeI18n()" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
         
                 <ion-col size="12" size-md="3">
-                  <bk-text-input name="zipCode" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="city" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
             @case ('bankaccount') {
               <ion-row>
                 <ion-col size="12">
-                  <bk-iban [value]="iban()" (valueChange)="onFieldChange('iban', $event)" [readOnly]="isReadOnly()" />
+                  <bk-iban [i18n]="ibanI18n()" [value]="iban()" (valueChange)="onFieldChange('iban', $event)" [readOnly]="isReadOnly()" />
                   <bk-error-note [errors]="ibanError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12">
-                    <bk-text-input name="url" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
+                    <bk-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
                     <bk-error-note [errors]="urlError()" />                                                                                                                     
                   </ion-col>
                 </ion-row>
@@ -139,7 +141,7 @@ import { addressValidations } from '@bk2/subject-address-util';
             @default {
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input name="url" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
                   <bk-error-note [errors]="urlError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
@@ -152,13 +154,13 @@ import { addressValidations } from '@bk2/subject-address-util';
           <ion-row>
             @if(isFavorable()) {
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="isFavorite" [checked]="isFavorite()" (checkedChange)="onFieldChange('isFavorite', $event)" [readOnly]="isReadOnly()" />
+                <bk-checkbox [i18n]="isFavoriteI18n()" [checked]="isFavorite()" (checkedChange)="onFieldChange('isFavorite', $event)" [readOnly]="isReadOnly()" />
               </ion-col>  
             }
 
             @if(isFavorite() === false && addressChannel() === 'email') {
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="isCc" [checked]="isCc()" (checkedChange)="onFieldChange('isCc', $event)" [readOnly]="isReadOnly()" />
+                <bk-checkbox [i18n]="isCcI18n()" [checked]="isCc()" (checkedChange)="onFieldChange('isCc', $event)" [readOnly]="isReadOnly()" />
               </ion-col>  
             }
           </ion-row>
@@ -171,13 +173,76 @@ import { addressValidations } from '@bk2/subject-address-util';
     }
     
     @if(hasRole('admin')) {
-      <bk-notes-input [value]="notes()" [readOnly]="isReadOnly()" />
+      <bk-notes-input [i18n]="notesI18n()" [value]="notes()" [readOnly]="isReadOnly()" />
     }
   </form>
   }
 ` 
 })
-export class AddressForm {  
+export class AddressForm {
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label:                  PFX + 'bkey.label',
+    bkey_placeholder:            PFX + 'bkey.placeholder',
+    bkey_helper:                 PFX + 'bkey.helper',
+    addressChannelLabel_label:   PFX + 'addressChannelLabel.label',
+    addressChannelLabel_placeholder: PFX + 'addressChannelLabel.placeholder',
+    addressChannelLabel_helper:  PFX + 'addressChannelLabel.helper',
+    addressUsageLabel_label:     PFX + 'addressUsageLabel.label',
+    addressUsageLabel_placeholder: PFX + 'addressUsageLabel.placeholder',
+    addressUsageLabel_helper:    PFX + 'addressUsageLabel.helper',
+    streetName_label:            PFX + 'streetName.label',
+    streetName_placeholder:      PFX + 'streetName.placeholder',
+    streetName_helper:           PFX + 'streetName.helper',
+    streetNumber_label:          PFX + 'streetNumber.label',
+    streetNumber_placeholder:    PFX + 'streetNumber.placeholder',
+    streetNumber_helper:         PFX + 'streetNumber.helper',
+    addressValue2_label:         PFX + 'addressValue2.label',
+    addressValue2_placeholder:   PFX + 'addressValue2.placeholder',
+    addressValue2_helper:        PFX + 'addressValue2.helper',
+    countryCode_label:           PFX + 'countryCode.label',
+    countryCode_placeholder:     PFX + 'countryCode.placeholder',
+    countryCode_helper:          PFX + 'countryCode.helper',
+    zipCode_label:               PFX + 'zipCode.label',
+    zipCode_placeholder:         PFX + 'zipCode.placeholder',
+    zipCode_helper:              PFX + 'zipCode.helper',
+    city_label:                  PFX + 'city.label',
+    city_placeholder:            PFX + 'city.placeholder',
+    city_helper:                 PFX + 'city.helper',
+    url_label:                   PFX + 'url.label',
+    url_placeholder:             PFX + 'url.placeholder',
+    url_helper:                  PFX + 'url.helper',
+    iban_label:                  PFX + 'iban.label',
+    iban_placeholder:            PFX + 'iban.placeholder',
+    iban_helper:                 PFX + 'iban.helper',
+    notes_label:                 PFX + 'notes.label',
+    notes_placeholder:           PFX + 'notes.placeholder',
+    email_label:                 PFX + 'email.label',
+    email_placeholder:           PFX + 'email.placeholder',
+    phone_label:                 PFX + 'phone.label',
+    phone_placeholder:           PFX + 'phone.placeholder',
+    isFavorite_label:            PFX + 'isFavorite.label',
+    isFavorite_helper:           PFX + 'isFavorite.helper',
+    isCc_label:                  PFX + 'isCc.label',
+    isCc_helper:                 PFX + 'isCc.helper',
+  });
+  protected bkeyI18n              = computed(() => ({ name: 'bkey',              label: this.fieldI18n.bkey_label(),              placeholder: this.fieldI18n.bkey_placeholder(),              helper: this.fieldI18n.bkey_helper()              } as TextInputI18n));
+  protected addressChannelLabelI18n = computed(() => ({ name: 'addressChannelLabel', label: this.fieldI18n.addressChannelLabel_label(), placeholder: this.fieldI18n.addressChannelLabel_placeholder(), helper: this.fieldI18n.addressChannelLabel_helper() } as TextInputI18n));
+  protected addressUsageLabelI18n = computed(() => ({ name: 'addressUsageLabel', label: this.fieldI18n.addressUsageLabel_label(), placeholder: this.fieldI18n.addressUsageLabel_placeholder(), helper: this.fieldI18n.addressUsageLabel_helper() } as TextInputI18n));
+  protected streetNameI18n        = computed(() => ({ name: 'streetName',        label: this.fieldI18n.streetName_label(),        placeholder: this.fieldI18n.streetName_placeholder(),        helper: this.fieldI18n.streetName_helper()        } as TextInputI18n));
+  protected streetNumberI18n      = computed(() => ({ name: 'streetNumber',      label: this.fieldI18n.streetNumber_label(),      placeholder: this.fieldI18n.streetNumber_placeholder(),      helper: this.fieldI18n.streetNumber_helper()      } as TextInputI18n));
+  protected addressValue2I18n     = computed(() => ({ name: 'addressValue2',     label: this.fieldI18n.addressValue2_label(),     placeholder: this.fieldI18n.addressValue2_placeholder(),     helper: this.fieldI18n.addressValue2_helper()     } as TextInputI18n));
+  protected countryCodeI18n       = computed(() => ({ name: 'countryCode',       label: this.fieldI18n.countryCode_label(),       placeholder: this.fieldI18n.countryCode_placeholder(),       helper: this.fieldI18n.countryCode_helper()       } as TextInputI18n));
+  protected zipCodeI18n           = computed(() => ({ name: 'zipCode',           label: this.fieldI18n.zipCode_label(),           placeholder: this.fieldI18n.zipCode_placeholder(),           helper: this.fieldI18n.zipCode_helper()           } as TextInputI18n));
+  protected cityI18n              = computed(() => ({ name: 'city',              label: this.fieldI18n.city_label(),              placeholder: this.fieldI18n.city_placeholder(),              helper: this.fieldI18n.city_helper()              } as TextInputI18n));
+  protected urlI18n               = computed(() => ({ name: 'url',              label: this.fieldI18n.url_label(),               placeholder: this.fieldI18n.url_placeholder(),               helper: this.fieldI18n.url_helper()               } as TextInputI18n));
+  protected ibanI18n              = computed(() => ({ name: 'iban',             label: this.fieldI18n.iban_label(),              placeholder: this.fieldI18n.iban_placeholder(),              helper: this.fieldI18n.iban_helper()              } as IbanInputI18n));
+  protected notesI18n             = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
+  protected emailI18n             = computed(() => ({ name: 'email', label: this.fieldI18n.email_label(), placeholder: this.fieldI18n.email_placeholder() } as EmailInputI18n));
+  protected phoneI18n             = computed(() => ({ name: 'phone',      label: this.fieldI18n.phone_label(),      placeholder: this.fieldI18n.phone_placeholder()      } as PhoneInputI18n));
+  protected isFavoriteI18n        = computed(() => ({ name: 'isFavorite', label: this.fieldI18n.isFavorite_label(), helper: this.fieldI18n.isFavorite_helper() } as CheckboxI18n));
+  protected isCcI18n              = computed(() => ({ name: 'isCc',       label: this.fieldI18n.isCc_label(),       helper: this.fieldI18n.isCc_helper()       } as CheckboxI18n));
+
   // inputs
   public readonly formData = model.required<AddressModel>();  
   public readonly currentUser = input<UserModel>();

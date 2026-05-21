@@ -28,7 +28,7 @@ import { PersonSelectStore } from './person-select.store';
       [searchTerm]="searchTerm()"
       (searchTermChange)="onSearchTermChange($event)"
       [isSearchable]="true"
-      title="@subject.person.operation.select.label"
+      [i18n]="{ title: '@subject.person.operation.select.label' }"
       [isModal]="true"
     />   
     <ion-content>

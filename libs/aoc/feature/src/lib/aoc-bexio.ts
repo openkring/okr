@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { StringSelectI18n } from '@bk2/shared-ui';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
 
 
@@ -24,7 +25,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 ],
   providers: [AocBexioStore],
   template: `
-    <bk-header [title]="store.i18n.title()" />
+    <bk-header [i18n]="{ title: store.i18n.title() }" />
     <ion-content>
       <ion-card>
         <ion-card-header>
@@ -227,7 +228,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-string-select name="bexioContactFilter" [selectedString]="contactFilter()" (selectedStringChange)="contactFilter.set($event)" [stringList]="contactFilters" [readOnly]="false" />
+                <bk-string-select [i18n]="contactFilterI18n()" [selectedString]="contactFilter()" (selectedStringChange)="contactFilter.set($event)" [stringList]="contactFilters" [readOnly]="false" />
               </ion-col>
             </ion-row>
             @if(filteredIndex().length > 0) {
@@ -422,6 +423,10 @@ export class AocBexio implements OnInit {
 
   protected readonly contactFilters = CONTACT_FILTERS;
   protected contactFilter = signal(CONTACT_FILTERS[0]);
+  protected readonly contactFilterI18n = computed(() => ({
+    name: 'bexioContactFilter',
+    label: this.store.i18n.index_contactFilter_label(),
+  } as StringSelectI18n));
   protected readonly filteredIndex = computed(() => {
     const today = getTodayStr(DateFormat.StoreDate);
     switch (this.contactFilter()) {

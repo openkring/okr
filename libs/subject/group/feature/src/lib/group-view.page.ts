@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
-import { ChangeConfirmation } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { isAdminMember } from '@bk2/subject-group-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
@@ -73,7 +73,7 @@ import { GroupStore } from './group.store';
       </ion-toolbar>
     </ion-header>
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(id(); as id) {
@@ -160,6 +160,11 @@ export class GroupViewPage implements ViewWillEnter {
   protected selectedSegment = computed(() => this.groupStore.segment());
   protected group = computed(() => this.groupStore.group());
   protected name = computed(() => this.formData()?.name ?? DEFAULT_NAME);
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.groupStore.i18n.changeConfirmation_ok(),
+    cancel: this.groupStore.i18n.changeConfirmation_cancel(),
+    confirmation: this.groupStore.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   protected id = computed(() => this.formData()?.bkey ?? DEFAULT_ID);
   protected hasContent = computed(() => this.formData()?.hasContent ?? true);
   protected hasChat = computed(() => this.formData()?.hasChat ?? true);

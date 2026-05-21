@@ -1,10 +1,12 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_DATE, WORD_LENGTH } from '@bk2/shared-constants';
 import { ResponsibilityModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopy, DateInput, ErrorNote, TextInput } from '@bk2/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@bk2/shared-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { PFX } from './scope';
 import { debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
 import { isDelegateActive, responsibilityValidations } from '@bk2/relationship-responsibility-util';
@@ -37,16 +39,16 @@ import { LowercaseWordMask } from '@bk2/shared-config';
             <ion-row>
              <ion-col size="12" size-md="6">
                 @if(isNew()) {
-                  <bk-text-input name="respId" [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="false" />
+                  <bk-text-input [i18n]="respIdI18n()" [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="false" />
                 } @else {
                   <ion-item lines="none">
                     <ion-label>ID: {{ bkey() }}</ion-label>
-                    <bk-button-copy [value]="bkey()" />
+                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="bkey()" />
                   </ion-item>
                 }                                     
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="false" />
+                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="false" />
                 <bk-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
@@ -77,10 +79,10 @@ import { LowercaseWordMask } from '@bk2/shared-config';
                 </ion-item>
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="validFrom" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [readOnly]="false" [showHelper]=true />
+                <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [readOnly]="false" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="validTo" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [locale]="locale()" [readOnly]="false" [showHelper]=true />
+                <bk-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [locale]="locale()" [readOnly]="false" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -106,10 +108,10 @@ import { LowercaseWordMask } from '@bk2/shared-config';
               </ion-col>
               @if(formData().delegateAvatar) {
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="delegateValidFrom" [storeDate]="delegateValidFrom()" (storeDateChange)="onFieldChange('delegateValidFrom', $event)" [locale]="locale()" [readOnly]="false" [showHelper]=true />
+                  <bk-date-input [i18n]="delegateValidFromI18n()" [storeDate]="delegateValidFrom()" (storeDateChange)="onFieldChange('delegateValidFrom', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="delegateValidTo" [storeDate]="delegateValidTo()" (storeDateChange)="onFieldChange('delegateValidTo', $event)" [locale]="locale()" [readOnly]="false" [showHelper]=true />
+                  <bk-date-input [i18n]="delegateValidToI18n()" [storeDate]="delegateValidTo()" (storeDateChange)="onFieldChange('delegateValidTo', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 @if(delegateExpired()) {
                   <ion-row>
@@ -129,6 +131,37 @@ import { LowercaseWordMask } from '@bk2/shared-config';
   `
 })
 export class ResponsibilityForm {
+  // i18n
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    respId_label: PFX + 'respId.label',
+    respId_placeholder: PFX + 'respId.placeholder',
+    respId_helper: PFX + 'respId.helper',
+    name_label: PFX + 'name.label',
+    name_placeholder: PFX + 'name.placeholder',
+    name_helper: PFX + 'name.helper',
+    validFrom_label:           PFX + 'validFrom.label',
+    validFrom_placeholder:     PFX + 'validFrom.placeholder',
+    validFrom_helper:          PFX + 'validFrom.helper',
+    validTo_label:             PFX + 'validTo.label',
+    validTo_placeholder:       PFX + 'validTo.placeholder',
+    validTo_helper:            PFX + 'validTo.helper',
+    delegateValidFrom_label:   PFX + 'delegateValidFrom.label',
+    delegateValidFrom_placeholder: PFX + 'delegateValidFrom.placeholder',
+    delegateValidFrom_helper:  PFX + 'delegateValidFrom.helper',
+    delegateValidTo_label:     PFX + 'delegateValidTo.label',
+    delegateValidTo_placeholder: PFX + 'delegateValidTo.placeholder',
+    delegateValidTo_helper:    PFX + 'delegateValidTo.helper',
+    copy_conf:                 '@shared/ui.copy.conf',
+  });
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.fieldI18n.copy_conf() } as ButtonCopyI18n));
+  protected respIdI18n = computed(() => ({ name: 'respId', label: this.fieldI18n.respId_label(), placeholder: this.fieldI18n.respId_placeholder(), helper: this.fieldI18n.respId_helper() } as TextInputI18n));
+  protected nameI18n = computed(() => ({ name: 'name', label: this.fieldI18n.name_label(), placeholder: this.fieldI18n.name_placeholder(), helper: this.fieldI18n.name_helper() } as TextInputI18n));
+  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.fieldI18n.validFrom_label(), placeholder: this.fieldI18n.validFrom_placeholder(), helper: this.fieldI18n.validFrom_helper() } as DateInputI18n));
+  protected validToI18n = computed(() => ({ name: 'validTo', label: this.fieldI18n.validTo_label(), placeholder: this.fieldI18n.validTo_placeholder(), helper: this.fieldI18n.validTo_helper() } as DateInputI18n));
+  protected delegateValidFromI18n = computed(() => ({ name: 'delegateValidFrom', label: this.fieldI18n.delegateValidFrom_label(), placeholder: this.fieldI18n.delegateValidFrom_placeholder(), helper: this.fieldI18n.delegateValidFrom_helper() } as DateInputI18n));
+  protected delegateValidToI18n = computed(() => ({ name: 'delegateValidTo', label: this.fieldI18n.delegateValidTo_label(), placeholder: this.fieldI18n.delegateValidTo_placeholder(), helper: this.fieldI18n.delegateValidTo_helper() } as DateInputI18n));
+
   // inputs
   public formData = model.required<ResponsibilityModel>();
   public readonly currentUser = input<UserModel | undefined>();

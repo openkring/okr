@@ -1,14 +1,16 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, NotesInput, NumberInput, TextInput } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { Avatars } from '@bk2/avatar-ui';
 import { transferValidations } from '@bk2/relationship-transfer-util';
+import { PFX } from './scope';
 
 export interface TransferFormI18n {
   resourceNameLabel: string;
@@ -78,7 +80,7 @@ export interface TransferFormI18n {
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                    <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
@@ -87,7 +89,7 @@ export interface TransferFormI18n {
 
                   @if(type() === 'custom') {
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                    <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                   </ion-col>
                   }
 
@@ -96,7 +98,7 @@ export interface TransferFormI18n {
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-date-input name="dateOfTransfer" [storeDate]="dateOfTransfer()" (storeDateChange)="onFieldChange('dateOfTransfer', $event)" [locale]="locale()" [showHelper]="true" [readOnly]="isReadOnly()" />
+                    <bk-date-input [i18n]="dateOfTransferI18n()" [storeDate]="dateOfTransfer()" (storeDateChange)="onFieldChange('dateOfTransfer', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -111,11 +113,11 @@ export interface TransferFormI18n {
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-number-input name="price" [value]="price()" (valueChange)="onFieldChange('price', $event)" [maxLength]="6" [readOnly]="isReadOnly()" />
+                    <bk-number-input [i18n]="priceI18n()" [value]="price()" (valueChange)="onFieldChange('price', $event)" [maxLength]="6" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="currency" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]="20" [readOnly]="isReadOnly()" />
+                    <bk-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]="20" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
@@ -131,7 +133,7 @@ export interface TransferFormI18n {
           } 
           
           @if(hasRole('admin')) {
-            <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
           }
         }
       </form>
@@ -182,6 +184,70 @@ export class TransferForm {
   protected price = linkedSignal(() => this.formData().price ?? DEFAULT_PRICE);
   protected currency = linkedSignal(() => this.formData().currency ?? DEFAULT_CURRENCY);
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? 'yearly');
+
+  // i18n
+  private readonly i18nService = inject(I18nService);
+
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    name_label:           PFX + 'name.label',
+    name_placeholder:     PFX + 'name.placeholder',
+    name_helper:          PFX + 'name.helper',
+    label_label:          PFX + 'label.label',
+    label_placeholder:    PFX + 'label.placeholder',
+    label_helper:         PFX + 'label.helper',
+    currency_label:       PFX + 'currency.label',
+    currency_placeholder: PFX + 'currency.placeholder',
+    currency_helper:      PFX + 'currency.helper',
+    price_label:          PFX + 'price.label',
+    price_placeholder:    PFX + 'price.placeholder',
+    price_helper:         PFX + 'price.helper',
+    notes_label:          PFX + 'notes.label',
+    notes_placeholder:    PFX + 'notes.placeholder',
+    dateOfTransfer_label:       PFX + 'dateOfTransfer.label',
+    dateOfTransfer_placeholder: PFX + 'dateOfTransfer.placeholder',
+    dateOfTransfer_helper:      PFX + 'dateOfTransfer.helper',
+  });
+
+  protected nameI18n = computed(() => ({
+    name:        'name',
+    label:       this.fieldI18n.name_label(),
+    placeholder: this.fieldI18n.name_placeholder(),
+    helper:      this.fieldI18n.name_helper(),
+  } as TextInputI18n));
+
+  protected labelI18n = computed(() => ({
+    name:        'label',
+    label:       this.fieldI18n.label_label(),
+    placeholder: this.fieldI18n.label_placeholder(),
+    helper:      this.fieldI18n.label_helper(),
+  } as TextInputI18n));
+
+  protected currencyI18n = computed(() => ({
+    name:        'currency',
+    label:       this.fieldI18n.currency_label(),
+    placeholder: this.fieldI18n.currency_placeholder(),
+    helper:      this.fieldI18n.currency_helper(),
+  } as TextInputI18n));
+
+  protected priceI18n = computed(() => ({
+    name:        'price',
+    label:       this.fieldI18n.price_label(),
+    placeholder: this.fieldI18n.price_placeholder(),
+    helper:      this.fieldI18n.price_helper(),
+  } as NumberInputI18n));
+
+  protected notesI18n = computed(() => ({
+    name:        'notes',
+    label:       this.fieldI18n.notes_label(),
+    placeholder: this.fieldI18n.notes_placeholder(),
+  } as NotesInputI18n));
+
+  protected dateOfTransferI18n = computed(() => ({
+    name:        'dateOfTransfer',
+    label:       this.fieldI18n.dateOfTransfer_label(),
+    placeholder: this.fieldI18n.dateOfTransfer_placeholder(),
+    helper:      this.fieldI18n.dateOfTransfer_helper(),
+  } as DateInputI18n));
 
   // passing constants to template
   protected nameLength = NAME_LENGTH;

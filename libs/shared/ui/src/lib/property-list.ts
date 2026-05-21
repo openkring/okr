@@ -1,4 +1,9 @@
 import { Component, computed, input, model, signal } from '@angular/core';
+
+export interface PropertyListI18n {
+  title: string;
+  empty: string;
+}
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 
@@ -24,7 +29,7 @@ import { getIndexOfKey } from '@bk2/shared-util-core';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() }}</ion-card-title>
+        <ion-card-title>{{ i18n().title }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-item lines="none">
@@ -59,7 +64,7 @@ import { getIndexOfKey } from '@bk2/shared-util-core';
         @if(properties(); as properties) {
           @if(properties.length === 0) {
             <ion-item lines="none">
-              <ion-note>{{emptyLabel()}}</ion-note>
+              <ion-note>{{ i18n().empty }}</ion-note>
             </ion-item>
           } @else {
             <ion-list>
@@ -84,7 +89,7 @@ import { getIndexOfKey } from '@bk2/shared-util-core';
 export class PropertyList {
   // inputs
   public properties = model.required<BaseProperty[]>(); // the keys of the menu items
-  public name = input('property');
+  public i18n = input<PropertyListI18n>({ title: 'Eigenschaften', empty: 'Keine Eigenschaften' });
   public wordMask = input(LowercaseWordMask);
 
   // signals
@@ -93,8 +98,6 @@ export class PropertyList {
 
   // fields
   protected isDisabled = computed(() => this.newKey() === '' || this.newValue() === '');
-  protected title = computed(() => '@input.' + this.name() + '.label');
-  protected emptyLabel = computed(() => '@input.' + this.name() + '.empty');
 
   // passing constants to template
   readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();

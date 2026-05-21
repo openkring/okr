@@ -6,12 +6,14 @@ import { vestForms } from 'ngx-vest-forms';
 import { BexioIdMask } from '@bk2/shared-config';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { AppStore, OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, NotesInput, NumberInput, StringSelect, TextInput } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
 
 import { membershipValidations } from '@bk2/relationship-membership-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
+import { PFX } from './scope';
 
 export interface MembershipFormI18n {
   selectLabel: string;
@@ -89,9 +91,9 @@ export interface MembershipFormI18n {
                     <ion-col size="12">
                       <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
                     </ion-col>
-                    <ion-col size="12"> 
-                      <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [locale]="locale()" [showHelper]=true [readOnly]="isReadOnly()" />
-                    </ion-col>      
+                    <ion-col size="12">
+                      <bk-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                    </ion-col>
                   </ion-row>
                 </ion-grid>
               } @else {
@@ -100,18 +102,18 @@ export interface MembershipFormI18n {
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                        <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12" size-md="6">
-                      <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
                     </ion-col>
-              
+
                     @if(dateOfExit() && dateOfExit().length > 0 && dateOfExit() !== endFutureDate) {
                       <ion-col size="12" size-md="6">
-                        <bk-date-input name="dateOfExit" [storeDate]="dateOfExit()" (storeDateChange)="onFieldChange('dateOfExit', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                        <bk-date-input [i18n]="dateOfExitI18n()" [storeDate]="dateOfExit()" (storeDateChange)="onFieldChange('dateOfExit', $event)" [readOnly]="isReadOnly()" />
                       </ion-col>
                     }
                   </ion-row>
@@ -136,10 +138,10 @@ export interface MembershipFormI18n {
                     </ion-col>
                     
                     <ion-col size="12" size-md="6">
-                      <bk-number-input name="rebate" [value]="rebate()" (valueChange)="onFieldChange('rebate', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />                                        
+                      <bk-number-input [i18n]="rebateI18n()" [value]="rebate()" (valueChange)="onFieldChange('rebate', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-string-select name="rebateReason"  [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" />
+                      <bk-string-select [i18n]="rebateReasonI18n()" [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" />
                     </ion-col>         
                   </ion-row>
                 </ion-grid>
@@ -149,24 +151,24 @@ export interface MembershipFormI18n {
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6"> 
-                    <bk-text-input name="memberId" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
+                    <bk-text-input [i18n]="memberIdI18n()" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="memberBexioId" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]=6 [mask]="bexioMask" [readOnly]="isReadOnly()" />                                        
+                    <bk-text-input [i18n]="memberBexioIdI18n()" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]=6 [mask]="bexioMask" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6"> 
-                    <bk-text-input name="memberAbbreviation" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
+                    <bk-text-input [i18n]="memberAbbreviationI18n()" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   @if(hasRole('memberAdmin')) {
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="memberNickName" [value]="memberNickName()" (valueChange)="onFieldChange('memberNickName', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
+                    <bk-text-input [i18n]="memberNickNameI18n()" [value]="memberNickName()" (valueChange)="onFieldChange('memberNickName', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6"> 
-                    <bk-text-input name="orgFunction" [value]="orgFunction()" (valueChange)="onFieldChange('orgFunction', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
+                    <bk-text-input [i18n]="orgFunctionI18n()" [value]="orgFunction()" (valueChange)="onFieldChange('orgFunction', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
                   </ion-col>
                   }
                 </ion-row>
@@ -179,7 +181,7 @@ export interface MembershipFormI18n {
           }
           
           @if(hasRole('admin')) {
-            <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
           }
         </form>
       }
@@ -188,6 +190,50 @@ export interface MembershipFormI18n {
 export class MembershipForm {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
+  private readonly i18nService = inject(I18nService);
+
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label:                   PFX + 'bkey.label',
+    memberId_label:               PFX + 'memberId.label',
+    memberId_placeholder:         PFX + 'memberId.placeholder',
+    memberId_helper:              PFX + 'memberId.helper',
+    memberBexioId_label:          PFX + 'memberBexioId.label',
+    memberBexioId_placeholder:    PFX + 'memberBexioId.placeholder',
+    memberBexioId_helper:         PFX + 'memberBexioId.helper',
+    memberAbbreviation_label:     PFX + 'memberAbbreviation.label',
+    memberAbbreviation_placeholder: PFX + 'memberAbbreviation.placeholder',
+    memberAbbreviation_helper:    PFX + 'memberAbbreviation.helper',
+    memberNickName_label:         PFX + 'memberNickName.label',
+    memberNickName_placeholder:   PFX + 'memberNickName.placeholder',
+    memberNickName_helper:        PFX + 'memberNickName.helper',
+    orgFunction_label:            PFX + 'orgFunction.label',
+    orgFunction_placeholder:      PFX + 'orgFunction.placeholder',
+    orgFunction_helper:           PFX + 'orgFunction.helper',
+    rebate_label:                 PFX + 'rebate.label',
+    rebate_placeholder:           PFX + 'rebate.placeholder',
+    rebate_helper:                PFX + 'rebate.helper',
+    notes_label:                  PFX + 'notes.label',
+    notes_placeholder:            PFX + 'notes.placeholder',
+    dateOfEntry_label:            PFX + 'dateOfEntry.label',
+    dateOfEntry_placeholder:      PFX + 'dateOfEntry.placeholder',
+    dateOfEntry_helper:           PFX + 'dateOfEntry.helper',
+    dateOfExit_label:             PFX + 'dateOfExit.label',
+    dateOfExit_placeholder:       PFX + 'dateOfExit.placeholder',
+    dateOfExit_helper:            PFX + 'dateOfExit.helper',
+    rebateReason_label:           PFX + 'rebateReason.label',
+  });
+
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: '', helper: '' }) as TextInputI18n);
+  protected memberIdI18n = computed(() => ({ name: 'memberId', label: this.fieldI18n.memberId_label(), placeholder: this.fieldI18n.memberId_placeholder(), helper: this.fieldI18n.memberId_helper() }) as TextInputI18n);
+  protected memberBexioIdI18n = computed(() => ({ name: 'memberBexioId', label: this.fieldI18n.memberBexioId_label(), placeholder: this.fieldI18n.memberBexioId_placeholder(), helper: this.fieldI18n.memberBexioId_helper() }) as TextInputI18n);
+  protected memberAbbreviationI18n = computed(() => ({ name: 'memberAbbreviation', label: this.fieldI18n.memberAbbreviation_label(), placeholder: this.fieldI18n.memberAbbreviation_placeholder(), helper: this.fieldI18n.memberAbbreviation_helper() }) as TextInputI18n);
+  protected memberNickNameI18n = computed(() => ({ name: 'memberNickName', label: this.fieldI18n.memberNickName_label(), placeholder: this.fieldI18n.memberNickName_placeholder(), helper: this.fieldI18n.memberNickName_helper() }) as TextInputI18n);
+  protected orgFunctionI18n = computed(() => ({ name: 'orgFunction', label: this.fieldI18n.orgFunction_label(), placeholder: this.fieldI18n.orgFunction_placeholder(), helper: this.fieldI18n.orgFunction_helper() }) as TextInputI18n);
+  protected rebateI18n = computed(() => ({ name: 'rebate', label: this.fieldI18n.rebate_label(), placeholder: this.fieldI18n.rebate_placeholder(), helper: this.fieldI18n.rebate_helper() } as NumberInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
+  protected dateOfEntryI18n = computed(() => ({ name: 'dateOfEntry', label: this.fieldI18n.dateOfEntry_label(), placeholder: this.fieldI18n.dateOfEntry_placeholder(), helper: this.fieldI18n.dateOfEntry_helper() } as DateInputI18n));
+  protected dateOfExitI18n    = computed(() => ({ name: 'dateOfExit',    label: this.fieldI18n.dateOfExit_label(),    placeholder: this.fieldI18n.dateOfExit_placeholder(),    helper: this.fieldI18n.dateOfExit_helper()    } as DateInputI18n));
+  protected rebateReasonI18n  = computed(() => ({ name: 'rebateReason',  label: this.fieldI18n.rebateReason_label()  } as StringSelectI18n));
 
   // inputs
   public readonly i18n = input<MembershipFormI18n>({ selectLabel: '', newDesc: '', categoryLabel: '', categoryHelper: '', categoryName: '', memberStateLabel: '', stateHelper: '' });

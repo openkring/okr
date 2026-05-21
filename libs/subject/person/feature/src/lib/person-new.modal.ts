@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { OrgModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { OrgSelectModal } from '@bk2/shared-feature';
 import { isOrg } from '@bk2/shared-util-core';
 
@@ -20,9 +20,9 @@ import { PersonStore } from './person.store';
   ],
   providers: [PersonStore],
   template: `
-    <bk-header title="@subject.person.operation.create.label" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@subject.person.operation.create.label' }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
@@ -62,6 +62,11 @@ export class PersonNewModal {
   protected tags = computed(() => this.store.getTags());
   protected tenantId = computed(() => this.store.tenantId());
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   constructor() {
     effect(() => this.store.setOrgId(this.org()?.bkey));

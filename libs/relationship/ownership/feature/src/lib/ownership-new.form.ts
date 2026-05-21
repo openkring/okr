@@ -5,7 +5,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { AppStore, OrgSelectModal, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@bk2/shared-models';
-import { DateInput } from '@bk2/shared-ui';
+import { DateInput, DateInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
@@ -73,7 +73,7 @@ import { OwnershipStore } from './ownership.store';
             </ion-row>
             <ion-row>
               <ion-col size="12">
-                <bk-date-input name="validFrom" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [showHelper]=true [readOnly]="isReadOnly()" />
+                <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -85,6 +85,7 @@ import { OwnershipStore } from './ownership.store';
 })
 export class OwnershipNewForm {
   protected readonly formStore = inject(OwnershipStore);
+  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.formStore.i18n.validFrom_label(), placeholder: this.formStore.i18n.validFrom_placeholder(), helper: this.formStore.i18n.validFrom_helper() } as DateInputI18n));
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 

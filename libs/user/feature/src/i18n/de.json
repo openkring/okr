@@ -23,5 +23,10 @@
     "edit": "User ändern",
     "create": "Neuen User erstellen",
     "delete": "User löschen"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

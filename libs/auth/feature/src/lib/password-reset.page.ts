@@ -36,7 +36,7 @@ import { AuthStore } from './auth.store';
       }
     `,
   template: `
-    <bk-header [title]="store.i18n.pwdreset_title()" [showCloseButton]="false" />
+    <bk-header [i18n]="{ title: store.i18n.pwdreset_title() }" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />

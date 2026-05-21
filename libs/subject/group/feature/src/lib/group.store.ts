@@ -94,7 +94,10 @@ export const GroupStore = signalStore(
       as_addPage:           PFX + 'actionsheet.addPage',
       as_delete:            PFX + 'actionsheet.delete',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     groupsResource: rxResource({

@@ -1,14 +1,16 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME } from '@bk2/shared-constants';
 import { CategoryListModel, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Checkbox, Chips, DateInput, NotesInput, NumberInput, TextInput, TimeInput } from '@bk2/shared-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
 import { reservationValidations } from '@bk2/relationship-reservation-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
+import { PFX } from './scope';
 
 export interface ReservationFormI18n {
   selectLabel: string;
@@ -42,7 +44,7 @@ export interface ReservationFormI18n {
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                    <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                   </ion-col>
                 </ion-row>
               }
@@ -96,28 +98,28 @@ export interface ReservationFormI18n {
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="fullDay" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <bk-checkbox [i18n]="fullDayI18n()" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if(!fullDay()) {
               <ion-row>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-time-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <bk-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-number-input name="durationMinutes" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="isReadOnly()" />
+                  <bk-number-input [i18n]="durationMinutesI18n()" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             } @else {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="endDate"  [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <bk-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
@@ -133,7 +135,7 @@ export interface ReservationFormI18n {
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" /> 
+                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -142,15 +144,15 @@ export interface ReservationFormI18n {
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="participants" [value]="participants()" (valueChange)="onFieldChange('participants', $event)"  [readOnly]="isReadOnly()" />                                        
+                <bk-text-input [i18n]="participantsI18n()" [value]="participants()" (valueChange)="onFieldChange('participants', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6"> 
-                <bk-text-input name="area" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
+                <bk-text-input [i18n]="areaI18n()" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6"> 
-                <bk-text-input name="resref" [value]="ref()" (valueChange)="onFieldChange('ref', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
+                <bk-text-input [i18n]="resrefI18n()" [value]="ref()" (valueChange)="onFieldChange('ref', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -169,11 +171,11 @@ export interface ReservationFormI18n {
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-number-input name="price" [value]="amount()" (valueChange)="onFieldChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />                                        
+                <bk-number-input [i18n]="priceI18n()" [value]="amount()" (valueChange)="onFieldChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="currency" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
+                <bk-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
               </ion-col>
 
             </ion-row>
@@ -181,14 +183,14 @@ export interface ReservationFormI18n {
         </ion-card-content>
       </ion-card>
 
-      <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+      <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
 
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
     
       @if(hasRole('admin')) {
-        <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
@@ -215,6 +217,63 @@ export class ReservationForm {
   public valid = output<boolean>();
   public selectReserver = output<boolean>();
   public selectResource = output<boolean>();
+
+  // i18n
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label:           PFX + 'bkey.label',
+    bkey_placeholder:     PFX + 'bkey.placeholder',
+    bkey_helper:          PFX + 'bkey.helper',
+    name_label:           PFX + 'name.label',
+    name_placeholder:     PFX + 'name.placeholder',
+    name_helper:          PFX + 'name.helper',
+    participants_label:   PFX + 'participants.label',
+    participants_placeholder: PFX + 'participants.placeholder',
+    participants_helper:  PFX + 'participants.helper',
+    area_label:           PFX + 'area.label',
+    area_placeholder:     PFX + 'area.placeholder',
+    area_helper:          PFX + 'area.helper',
+    resref_label:         PFX + 'resref.label',
+    resref_placeholder:   PFX + 'resref.placeholder',
+    resref_helper:        PFX + 'resref.helper',
+    currency_label:           PFX + 'currency.label',
+    currency_placeholder:     PFX + 'currency.placeholder',
+    currency_helper:          PFX + 'currency.helper',
+    durationMinutes_label:    PFX + 'durationMinutes.label',
+    durationMinutes_placeholder: PFX + 'durationMinutes.placeholder',
+    durationMinutes_helper:   PFX + 'durationMinutes.helper',
+    price_label:              PFX + 'price.label',
+    price_placeholder:        PFX + 'price.placeholder',
+    price_helper:             PFX + 'price.helper',
+    description_label:        PFX + 'description.label',
+    description_placeholder:  PFX + 'description.placeholder',
+    notes_label:              PFX + 'notes.label',
+    notes_placeholder:        PFX + 'notes.placeholder',
+    startDate_label:          PFX + 'startDate.label',
+    startDate_placeholder:    PFX + 'startDate.placeholder',
+    startDate_helper:         PFX + 'startDate.helper',
+    endDate_label:            PFX + 'endDate.label',
+    endDate_placeholder:      PFX + 'endDate.placeholder',
+    endDate_helper:           PFX + 'endDate.helper',
+    startTime_label:          PFX + 'startTime.label',
+    startTime_placeholder:    PFX + 'startTime.placeholder',
+    fullDay_label:            PFX + 'fullDay.label',
+    fullDay_helper:           PFX + 'fullDay.helper',
+  });
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: this.fieldI18n.bkey_placeholder(), helper: this.fieldI18n.bkey_helper() } as TextInputI18n));
+  protected nameI18n = computed(() => ({ name: 'name', label: this.fieldI18n.name_label(), placeholder: this.fieldI18n.name_placeholder(), helper: this.fieldI18n.name_helper() } as TextInputI18n));
+  protected participantsI18n = computed(() => ({ name: 'participants', label: this.fieldI18n.participants_label(), placeholder: this.fieldI18n.participants_placeholder(), helper: this.fieldI18n.participants_helper() } as TextInputI18n));
+  protected areaI18n = computed(() => ({ name: 'area', label: this.fieldI18n.area_label(), placeholder: this.fieldI18n.area_placeholder(), helper: this.fieldI18n.area_helper() } as TextInputI18n));
+  protected resrefI18n = computed(() => ({ name: 'resref', label: this.fieldI18n.resref_label(), placeholder: this.fieldI18n.resref_placeholder(), helper: this.fieldI18n.resref_helper() } as TextInputI18n));
+  protected currencyI18n = computed(() => ({ name: 'currency', label: this.fieldI18n.currency_label(), placeholder: this.fieldI18n.currency_placeholder(), helper: this.fieldI18n.currency_helper() } as TextInputI18n));
+  protected durationMinutesI18n = computed(() => ({ name: 'durationMinutes', label: this.fieldI18n.durationMinutes_label(), placeholder: this.fieldI18n.durationMinutes_placeholder(), helper: this.fieldI18n.durationMinutes_helper() } as NumberInputI18n));
+  protected priceI18n = computed(() => ({ name: 'price', label: this.fieldI18n.price_label(), placeholder: this.fieldI18n.price_placeholder(), helper: this.fieldI18n.price_helper() } as NumberInputI18n));
+  protected descriptionI18n = computed(() => ({ name: 'description', label: this.fieldI18n.description_label(), placeholder: this.fieldI18n.description_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
+  protected startDateI18n = computed(() => ({ name: 'startDate', label: this.fieldI18n.startDate_label(), placeholder: this.fieldI18n.startDate_placeholder(), helper: this.fieldI18n.startDate_helper() } as DateInputI18n));
+  protected endDateI18n = computed(() => ({ name: 'endDate', label: this.fieldI18n.endDate_label(), placeholder: this.fieldI18n.endDate_placeholder(), helper: this.fieldI18n.endDate_helper() } as DateInputI18n));
+  protected startTimeI18n = computed(() => ({ name: 'startTime', label: this.fieldI18n.startTime_label(), placeholder: this.fieldI18n.startTime_placeholder() } as TimeInputI18n));
+  protected fullDayI18n   = computed(() => ({ name: 'fullDay', label: this.fieldI18n.fullDay_label(), helper: this.fieldI18n.fullDay_helper() } as CheckboxI18n));
 
   // validation and errors
   protected readonly suite = reservationValidations;

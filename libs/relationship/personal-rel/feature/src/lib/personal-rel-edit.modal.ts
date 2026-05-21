@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal, Type } from '
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 import { PersonSelectModal } from '@bk2/shared-feature';
 
@@ -23,9 +23,9 @@ import { PersonalRelStore } from './personal-rel.store';
   providers: [PersonalRelStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
@@ -59,7 +59,7 @@ import { PersonalRelStore } from './personal-rel.store';
 })
 export class PersonalRelEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly store = inject(PersonalRelStore);
+  protected readonly store = inject(PersonalRelStore);
   private readonly personEditModalClass = inject<Type<unknown> | null>(PERSON_EDIT_MODAL, { optional: true });
 
   // inputs
@@ -82,6 +82,11 @@ export class PersonalRelEditModal {
 
   // derived signals
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.personalRel()?.bkey));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   protected readonly parentKey = computed(() => `${PersonalRelModelName}.${this.personalRel().bkey ?? ''}`);
 
   /******************************* actions *************************************** */

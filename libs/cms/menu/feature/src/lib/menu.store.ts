@@ -71,7 +71,10 @@ export const _MenuStore = signalStore(
       add_submenu:            PFX + 'add.submenu',
       url_placeholder:      PFX + 'url.placeholder',
       url_helper:           PFX + 'url.helper',
-      cancel:               '@cancel'
+      cancel:               '@cancel',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
     menuItemsResource: rxResource({
       stream: () => {

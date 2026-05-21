@@ -9,5 +9,29 @@
     "importance": {
       "label": "Wichtigkeit"
     }
+  },
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
+  },
+  "dueDate": {
+    "label": "Fälligkeitsdatum",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
+  },
+  "completionDate": {
+    "label": "Abschlussdatum",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
   }
 }

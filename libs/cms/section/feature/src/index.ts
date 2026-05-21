@@ -2,6 +2,7 @@ export * from './lib/album-section';
 export * from './lib/article-section';
 export * from './lib/button-section';
 export * from './lib/calendar-section';
+export * from './lib/card-select.modal';
 export * from './lib/chart-section';
 export * from './lib/iframe-section';
 export * from './lib/map-section';

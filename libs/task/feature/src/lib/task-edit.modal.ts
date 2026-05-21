@@ -3,7 +3,7 @@ import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/s
 
 import { LowercaseWordMask } from '@bk2/shared-config';
 import { CategoryListModel, PersonModel, RoleName, TaskModel, TaskModelName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header, StringList } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header, StringList } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
@@ -22,9 +22,9 @@ import { TaskStore } from './task.store';
   ],
   providers: [TaskStore],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
@@ -50,12 +50,12 @@ import { TaskStore } from './task.store';
       <bk-strings
         [strings]="calendars()"
         (stringsChange)="onFieldChange('calendars', $event)"
-        [mask]="calendarMask" 
+        [mask]="calendarMask"
         [maxLength]="20"
-        [readOnly]="readOnly()" 
-        title="@input.calendarName.label"
-        description="@input.calendarName.description"
-        addLabel="@input.calendarName.addLabel" />    
+        [readOnly]="readOnly()"
+        [title]="store.i18n.calendarName_label()"
+        [description]="store.i18n.calendarName_description()"
+        [add]="store.i18n.calendarName_addLabel()" />
 
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
         <ion-accordion-group value="comments">
@@ -88,8 +88,13 @@ export class TaskEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected defaultAvatar = computed(() => newAvatarInfo(this.currentUser()!.personKey, this.currentUser()!.firstName, this.currentUser()!.lastName, 'person', '', '', ''));  
+  protected defaultAvatar = computed(() => newAvatarInfo(this.currentUser()!.personKey, this.currentUser()!.firstName, this.currentUser()!.lastName, 'person', '', '', ''));
   protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.task().bkey, ));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().bkey}`);
   protected calendars = linkedSignal(() => (this.formData()?.calendars ?? []) as string[]);
   protected author = linkedSignal(() => this.formData()?.author ?? this.defaultAvatar());

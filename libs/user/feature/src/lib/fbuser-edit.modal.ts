@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from "@angul
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
 import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
-import { ChangeConfirmation, Header } from "@bk2/shared-ui";
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from "@bk2/shared-ui";
 import { hasRole, removeUndefinedFields } from "@bk2/shared-util-core";
 
 import { FbuserForm } from "@bk2/user-ui";
@@ -17,9 +17,9 @@ import { UserStore } from "libs/user/feature/src/lib/user.store";
   ],
   providers: [UserStore],
   template: `
-    <bk-header [title]="store.i18n.fbuser_edit_title()" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.fbuser_edit_title() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
     <ion-content>
       <bk-fbuser-form
@@ -46,6 +46,11 @@ export class FbuserEditModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   public formData = linkedSignal(() => Object.assign(new FirebaseUserModel(), removeUndefinedFields(this.fbuser() as unknown as Record<string, unknown>)));
 
   /******************************* actions *************************************** */

@@ -1,13 +1,15 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { vestForms } from 'ngx-vest-forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NumberInput, PropertyList, TextInput } from '@bk2/shared-ui';
+import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
+import { PFX } from './scope';
 
 export interface ResourceFormI18n {
   cardTitle: string;
@@ -27,11 +29,11 @@ export interface ResourceFormI18n {
       <form scVestForm
         [formValue]="formData()"
         (formValueChange)="onFormChange($event)"
-        [suite]="suite" 
+        [suite]="suite"
         (dirtyChange)="dirty.emit($event)"
         (validChange)="valid.emit($event)"
       >
-    
+
         @switch(resourceType()) {
           <!-- ***************************************** ROWING BOAT ***************************************** -->
           @case('rboat') {
@@ -44,13 +46,13 @@ export interface ResourceFormI18n {
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                        <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                       <bk-error-note [errors]="nameErrors()" />
                     </ion-col>
                     <ion-col size="12">
@@ -60,16 +62,16 @@ export interface ResourceFormI18n {
                       <bk-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onFieldChange('usage', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="loadErrors()" />                                                                                                                                                             
+                      <bk-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="loadErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />                                        
-                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                             
+                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)"  [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />                                                                                  
+                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -88,35 +90,35 @@ export interface ResourceFormI18n {
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                        <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
-                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                             
+                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />
                     </ion-col>
-  <!--                   tbd. boat subtype and category
+<!--                   tbd. boat subtype and category
                     <ion-col size="12">
                       <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col> -->
                     <ion-col size="12" size-md="6">
-                      <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
-                      <bk-error-note [errors]="loadErrors()" />                                                                                                                                                             
+                      <bk-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="loadErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />                                        
-                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                             
+                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
+                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
-            </ion-card>        
+            </ion-card>
           }
 
           <!-- ***************************************** CAR ***************************************** -->
@@ -130,34 +132,34 @@ export interface ResourceFormI18n {
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                        <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                       
+                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />
                     </ion-col>
                     <ion-col size="12">
                       <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="loadErrors()" />                                                                                                                                                                                                
+                      <bk-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="loadErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                    
+                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
+                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
-            </ion-card>        
+            </ion-card>
           }
 
           <!-- ***************************************** LOCKER ***************************************** -->
@@ -171,27 +173,27 @@ export interface ResourceFormI18n {
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                        <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input name="lockerNr" [value]="lockerNr()" (valueChange)="onFieldChange('lockerNr', $event)" [maxLength]=3 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="lockerNrErrors()" />                                                                                                                                                                                                                                
+                      <bk-number-input [i18n]="lockerNrI18n()" [value]="lockerNr()" (valueChange)="onFieldChange('lockerNr', $event)" [maxLength]=3 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="lockerNrErrors()" />
                     </ion-col>
-            
+
                     <ion-col size="12" size-md="6">
-                      <bk-number-input name="keyNr" [value]="keyNr()" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=5 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="keyNrErrors()" />                                                                                                                                                                                                                             
-                    </ion-col> 
+                      <bk-number-input [i18n]="keyNrNumI18n()" [value]="keyNr()" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=5 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="keyNrErrors()" />
+                    </ion-col>
                     <ion-col size="12">
                       <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
-            </ion-card>        
+            </ion-card>
           }
 
           <!-- ***************************************** KEY ***************************************** -->
@@ -205,15 +207,15 @@ export interface ResourceFormI18n {
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                        <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                    <bk-text-input name="keyNr" [value]="keyNr() + ''" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                    <bk-error-note [errors]="keyNrErrors()" />                                                                                                                                                                                                    
-                    </ion-col>        
+                      <bk-text-input [i18n]="keyNrTextI18n()" [value]="keyNr() + ''" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="keyNrErrors()" />
+                    </ion-col>
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
@@ -231,26 +233,26 @@ export interface ResourceFormI18n {
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                        <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                                                          
+                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />
                     </ion-col>
                   <ion-col size="12">
                       <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
+                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
-            </ion-card>        
+            </ion-card>
           }
 
           <!-- ***************************************** REAL ESTATE ***************************************** -->
@@ -264,23 +266,23 @@ export interface ResourceFormI18n {
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                        <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                                                          
+                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                                                  
+                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
-            </ion-card>        
+            </ion-card>
           }
 
           <!-- ***************************************** OTHER RESOURCE ***************************************** -->
@@ -294,28 +296,28 @@ export interface ResourceFormI18n {
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                        <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row >
                     <ion-col size="12">
-                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                    
+                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />
                     </ion-col>
-                    
+
                     <ion-col size="12" size-md="6">
-                      <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="loadErrors()" />                                                                                                                                                                                                                                 
+                      <bk-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="loadErrors()" />
                     </ion-col>
-            
+
                     <ion-col size="12" size-md="6">
-                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                                                                                  
+                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
+                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -329,15 +331,17 @@ export interface ResourceFormI18n {
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
-      
+
         @if(hasRole('admin')) {
-          <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+          <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
         }
     </form>
   }
   `
 })
 export class ResourceForm {
+  private readonly i18nService = inject(I18nService);
+
   // inputs
   public readonly i18n = input<ResourceFormI18n>({ cardTitle: '' });
   public formData = model.required<ResourceModel>();
@@ -365,7 +369,7 @@ export class ResourceForm {
   protected keyNrErrors = computed(() => this.validationResult().getErrors('keyNr'));
   protected lockerNrErrors = computed(() => this.validationResult().getErrors('lockerNr'));
   protected errors = computed(() => this.validationResult().getErrors());
-  
+
   // fields
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected resourceType = linkedSignal(() => this.formData().type ?? '');
@@ -381,6 +385,85 @@ export class ResourceForm {
   protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
   protected bkey = computed(() => this.formData().bkey ?? DEFAULT_NAME);
 
+  // i18n
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label:           PFX + 'bkey.label',
+    bkey_placeholder:     PFX + 'bkey.placeholder',
+    bkey_helper:          PFX + 'bkey.helper',
+    name_label:           PFX + 'name.label',
+    name_placeholder:     PFX + 'name.placeholder',
+    name_helper:          PFX + 'name.helper',
+    load_label:           PFX + 'load.label',
+    load_placeholder:     PFX + 'load.placeholder',
+    load_helper:          PFX + 'load.helper',
+    keyNr_label:              PFX + 'keyNr.label',
+    keyNr_placeholder:        PFX + 'keyNr.placeholder',
+    keyNr_helper:             PFX + 'keyNr.helper',
+    currentValue_label:       PFX + 'currentValue.label',
+    currentValue_placeholder: PFX + 'currentValue.placeholder',
+    currentValue_helper:      PFX + 'currentValue.helper',
+    lockerNr_label:           PFX + 'lockerNr.label',
+    lockerNr_placeholder:     PFX + 'lockerNr.placeholder',
+    lockerNr_helper:          PFX + 'lockerNr.helper',
+    description_label:        PFX + 'description.label',
+    description_placeholder:  PFX + 'description.placeholder',
+    color_label:              PFX + 'color.label',
+  });
+
+  protected bkeyI18n = computed(() => ({
+    name: 'bkey',
+    label: this.fieldI18n.bkey_label(),
+    placeholder: this.fieldI18n.bkey_placeholder(),
+    helper: this.fieldI18n.bkey_helper()
+  } as TextInputI18n));
+
+  protected nameI18n = computed(() => ({
+    name: 'name',
+    label: this.fieldI18n.name_label(),
+    placeholder: this.fieldI18n.name_placeholder(),
+    helper: this.fieldI18n.name_helper()
+  } as TextInputI18n));
+
+  protected loadI18n = computed(() => ({
+    name: 'load',
+    label: this.fieldI18n.load_label(),
+    placeholder: this.fieldI18n.load_placeholder(),
+    helper: this.fieldI18n.load_helper()
+  } as TextInputI18n));
+
+  protected keyNrTextI18n = computed(() => ({
+    name: 'keyNr',
+    label: this.fieldI18n.keyNr_label(),
+    placeholder: this.fieldI18n.keyNr_placeholder(),
+    helper: this.fieldI18n.keyNr_helper()
+  } as TextInputI18n));
+
+  protected currentValueI18n = computed(() => ({
+    name: 'currentValue',
+    label: this.fieldI18n.currentValue_label(),
+    placeholder: this.fieldI18n.currentValue_placeholder(),
+    helper: this.fieldI18n.currentValue_helper()
+  } as NumberInputI18n));
+
+  protected lockerNrI18n = computed(() => ({
+    name: 'lockerNr',
+    label: this.fieldI18n.lockerNr_label(),
+    placeholder: this.fieldI18n.lockerNr_placeholder(),
+    helper: this.fieldI18n.lockerNr_helper()
+  } as NumberInputI18n));
+
+  protected keyNrNumI18n = computed(() => ({
+    name: 'keyNr',
+    label: this.fieldI18n.keyNr_label(),
+    placeholder: this.fieldI18n.keyNr_placeholder(),
+    helper: this.fieldI18n.keyNr_helper()
+  } as NumberInputI18n));
+
+  protected descriptionI18n = computed(() => ({
+    name: 'description', label: this.fieldI18n.description_label(), placeholder: this.fieldI18n.description_placeholder()
+  } as NotesInputI18n));
+  protected colorLabel = computed(() => this.fieldI18n.color_label());
+
   /******************************* actions *************************************** */
   private getDefaultType(type: string): string {
     switch (type) {
@@ -391,7 +474,7 @@ export class ResourceForm {
       // tbd: define other defaults: boat, realestate, locker,
       default: return DEFAULT_NAME;
     }
-  } 
+  }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);

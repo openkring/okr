@@ -4,7 +4,7 @@ import { IonButton, IonButtons, IonContent, IonItem, IonInput, IonLabel, IonTogg
 import { signalStore, withProps } from '@ngrx/signals';
 
 import { I18nService } from '@bk2/shared-i18n';
-import { BkEditor, Header } from '@bk2/shared-ui';
+import { BkEditor, ButtonCopyI18n, Header } from '@bk2/shared-ui';
 import { WebsiteContentModel } from '@bk2/shared-models';
 import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
 
@@ -16,6 +16,7 @@ const AocWebsiteEditStore = signalStore(
       is_html_label: '@aoc.website.isHtml.label',
       cancel:       '@general.operation.cancel',
       save:         '@general.operation.save',
+      copy_conf:    '@shared/ui.copy.conf',
     }),
   })),
 );
@@ -31,7 +32,7 @@ const AocWebsiteEditStore = signalStore(
     IonItem, IonLabel, IonInput, IonToggle, IonTextarea
   ],
   template: `
-    <bk-header title="@aoc.website.edit.title" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@aoc.website.edit.title' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-label position="stacked">{{ store.i18n.key_label() }}</ion-label>
@@ -48,7 +49,7 @@ const AocWebsiteEditStore = signalStore(
         <ion-item lines="none">
           <ion-label>DE:</ion-label>
         </ion-item>
-        <bk-editor [(content)]="deContent" [readOnly]="false" />
+        <bk-editor [(content)]="deContent" [readOnly]="false" [buttonCopyI18n]="buttonCopyI18n()" />
       } @else {
         <ion-item>
           <ion-textarea [value]="formData().de" label="DE" (ionInput)="onDeInput($event)" />
@@ -59,7 +60,7 @@ const AocWebsiteEditStore = signalStore(
         <ion-item lines="none">
           <ion-label>EN:</ion-label>
         </ion-item>
-        <bk-editor [(content)]="enContent" [readOnly]="false" />
+        <bk-editor [(content)]="enContent" [readOnly]="false" [buttonCopyI18n]="buttonCopyI18n()" />
       } @else {
         <ion-item>
           <ion-textarea [value]="formData().en" label="EN" (ionInput)="onEnInput($event)" />
@@ -82,6 +83,7 @@ const AocWebsiteEditStore = signalStore(
 export class AocWebsiteEditModal {
   protected readonly store = inject(AocWebsiteEditStore);
   private readonly modalController = inject(ModalController);
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.store.i18n.copy_conf() } as ButtonCopyI18n));
 
   public item = input.required<WebsiteContentModel>();
 

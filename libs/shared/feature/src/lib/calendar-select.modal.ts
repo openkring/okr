@@ -23,7 +23,7 @@ import { CalendarSelectStore } from './calendar-select.store';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      title="@input.calendarName.select"
+      [i18n]="{ title: '@input.calendarName.select' }"
       [isModal]="true"
     />
     <ion-content>

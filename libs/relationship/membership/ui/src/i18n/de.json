@@ -17,5 +17,59 @@
     "misc": "Verschiedenes",
     "membership": "Mitgliedschaft (optional)"
   },
-  "memberState": "Mitgliederstatus"
+  "memberState": "Mitgliederstatus",
+  "rebate": {
+    "label": "Rabatt",
+    "placeholder": "",
+    "helper": ""
+  },
+  "jb": {
+    "label": "Jahresbeitrag",
+    "placeholder": "",
+    "helper": ""
+  },
+  "srv": {
+    "label": "SRV",
+    "placeholder": "",
+    "helper": ""
+  },
+  "bev": {
+    "label": "BEV",
+    "placeholder": "",
+    "helper": ""
+  },
+  "entryFee": {
+    "label": "Eintrittsgeld",
+    "placeholder": "",
+    "helper": ""
+  },
+  "locker": {
+    "label": "Spind",
+    "placeholder": "",
+    "helper": ""
+  },
+  "skiff": {
+    "label": "Skiff",
+    "placeholder": "",
+    "helper": ""
+  },
+  "skiffInsurance": {
+    "label": "Skiff-Versicherung",
+    "placeholder": "",
+    "helper": ""
+  },
+  "email":  { "label": "E-Mail",  "placeholder": "E-Mail Adresse eingeben" },
+  "phone":  { "label": "Telefon", "placeholder": "+41 XX XXX XX XX" },
+  "notes":  { "label": "Notizen", "placeholder": "" },
+  "dateOfEntry": { "label": "Eintrittsdatum", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "dateOfExit":  { "label": "Austrittsdatum",  "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "dateOfChange": { "label": "Datum", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "rebateReason": { "label": "Rabattgrund" },
+  "invoiceState": { "label": "Rechnungsstatus" },
+  "memberId": { "label": "Mitglied-Nr.", "placeholder": "", "helper": "" },
+  "memberBexioId": { "label": "Bexio-ID", "placeholder": "", "helper": "" },
+  "memberAbbreviation": { "label": "Kürzel", "placeholder": "", "helper": "" },
+  "memberNickName": { "label": "Spitzname", "placeholder": "", "helper": "" },
+  "orgFunction": { "label": "Funktion", "placeholder": "", "helper": "" },
+  "bkey": { "label": "Dok.-Schlüssel", "placeholder": "", "helper": "" }
 }

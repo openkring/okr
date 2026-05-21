@@ -4,7 +4,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { ChSsnMask } from "@bk2/shared-config";
 import { CategoryListModel, PersonModel, UserModel } from "@bk2/shared-models";
-import { CategorySelect, DateInput, ErrorNote, TextInput } from "@bk2/shared-ui";
+import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel } from "@bk2/shared-util-core";
 import { DEFAULT_GENDER } from "@bk2/shared-constants";
 import { AhvFormat, formatAhv } from "@bk2/shared-util-angular";
@@ -14,6 +14,12 @@ import { personValidations } from "@bk2/subject-person-util";
 export interface ProfileDataFormI18n {
   title: string;
   description: string;
+  dob_label: string;
+  dob_placeholder: string;
+  dob_helper: string;
+  ssn_label: string;
+  ssn_placeholder: string,
+  ssn_helper: string;
 }
 
 @Component({
@@ -54,11 +60,10 @@ export interface ProfileDataFormI18n {
             <ion-row> 
               <ion-col size="12" size-md="6">                                                              
                 <bk-date-input
-                  name="dateOfBirth"
+                  [i18n]="dobI18n()"
                   [storeDate]="dateOfBirth()"
                   (storeDateChange)="onFieldChange('dateOfBirth', $event)"
                   autocomplete="bday"
-                  [showHelper]="showHelper()"
                   [readOnly]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -71,7 +76,7 @@ export interface ProfileDataFormI18n {
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-text-input
-                  name="ssnId"
+                  [i18n]="ssnI18n()"
                   [value]="ssnId()" 
                   (valueChange)="onFieldChange('ssnId', $event)"
                   [maxLength]=16
@@ -92,7 +97,7 @@ export interface ProfileDataFormI18n {
 })
 export class ProfileDataAccordion {
   // inputs
-  public readonly i18n = input<ProfileDataFormI18n>({ title: '', description: '' });
+  public readonly i18n = input.required<ProfileDataFormI18n>();
   public formData = model.required<PersonModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
@@ -111,6 +116,21 @@ export class ProfileDataAccordion {
   protected readonly suite = personValidations;
   private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.tags()));
   protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssnId'));
+  protected dobI18n = computed(() => ({
+    name: 'dateOfBirth',
+    label: this.i18n().dob_label,
+    placeholder: this.i18n().dob_placeholder,
+    helper: this.i18n().dob_helper
+  } as DateInputI18n));
+
+  protected ssnI18n = computed(() => {
+    return {
+      name: 'ssn',
+      label: this.i18n().ssn_label,
+      placeholder: this.i18n().ssn_placeholder,
+      helper: this.i18n().ssn_helper
+    } as TextInputI18n
+  });
 
   // fields
   protected dateOfBirth = linkedSignal(() => this.formData().dateOfBirth ?? '');

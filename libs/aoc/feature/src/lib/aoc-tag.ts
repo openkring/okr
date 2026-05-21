@@ -22,7 +22,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
   ],
   providers: [AocTagStore],
   template: `
-    <bk-header [title]="aocTagStore.i18n.title()" />
+    <bk-header [i18n]="{ title: aocTagStore.i18n.title() }" />
     <ion-content>
 
       <!-- Filter toolbar -->

@@ -73,6 +73,7 @@
   "album": {
     "zoomed": "Bild zoomen"
   },
+  "albumStyle": { "label": "Album-Stil" },
   "email": {
     "conf": "Email(s) wurde(n) abgeschickt.",
     "error": "Email(s) konnte(n) nicht verschickt werden."
@@ -84,5 +85,10 @@
   },
   "view": "Sektionskonfiguration anzeigen",
   "edit": "Sektion bearbeiten",
-  "create": "Sektion erstellen"
+  "create": "Sektion erstellen",
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
+  }
 }

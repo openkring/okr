@@ -16,6 +16,7 @@ export type MatrixMessageInputI18n = {
   and: string;
   areTypeing: string;
   othersTypeing: string;
+  copy_conf: string;
 };
 
 @Component({
@@ -269,7 +270,7 @@ export type MatrixMessageInputI18n = {
           <ion-icon src="{{'cancel' | svgIcon }}" />
         </ion-button>
 
-        <bk-button-copy [value]="messageText()" />
+        <bk-button-copy [value]="messageText()" [i18n]="buttonCopyI18n()" />
 
         <div class="emoji-picker-wrapper">
           <ion-button fill="clear" class="action-button" (click)="toggleEmojiPicker($event)">
@@ -324,7 +325,7 @@ export class MatrixMessageInput {
   private actionSheetController = inject(ActionSheetController);
   private appStore = inject(AppStore);
 
-  public i18n = input<MatrixMessageInputI18n>({ isTypeing: '', and: '', areTypeing: '', othersTypeing: '' });
+  public i18n = input.required<MatrixMessageInputI18n>();
 
   disabled = input<boolean>(false);
   roomId = input<string | undefined>(undefined);
@@ -349,6 +350,7 @@ export class MatrixMessageInput {
   private typingTimeout: any;
 
   private draftKey = computed(() => this.roomId() ? `chat-draft:${this.roomId()}` : undefined);
+  protected buttonCopyI18n = computed(() => { return { copy_conf: this.i18n().copy_conf } });
 
   constructor() {
     // Restore draft when roomId changes

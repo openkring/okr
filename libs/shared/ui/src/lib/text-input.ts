@@ -11,11 +11,18 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
 
+export interface TextInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+  helper: string;
+  copy_conf?: string;
+}
+
 @Component({
   selector: 'bk-text-input',
   standalone: true,
   imports: [
-    
     ButtonCopy,
     FormsModule, MaskitoDirective,
     IonItem, IonNote, IonInput
@@ -25,12 +32,11 @@ import { ButtonCopy } from './button-copy';
     <ion-item lines="none" [button]="false">
       <ion-input #textInput
         type="text"
-        [name]="name()" 
-        [ngModel]="value()"
-        (ngModelChange)="onChange($event)"
+        [name]="i18n().name"
+        [ngModel]="value()" (ngModelChange)="onChange($event)"
         labelPlacement="floating"
-        label="{{label2() }}"
-        placeholder="{{placeholder2() }}"
+        label="{{i18n().label }}"
+        placeholder="{{i18n().placeholder }}"
         [inputMode]="inputMode()"
         [counter]="!isReadOnly()"
         [maxlength]="maxLength()"
@@ -42,12 +48,12 @@ import { ButtonCopy } from './button-copy';
         [attr.dir]="dir()"
       />
       @if (isCopyable()) {
-        <bk-button-copy [value]="value()" tabindex="-1" />
+        <bk-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
       }
     </ion-item>
     @if(shouldShowHelper()) {
       <ion-item lines="none" class="helper" [button]="false">
-        <ion-note>{{helper2() }}</ion-note>
+        <ion-note>{{i18n().helper }}</ion-note>
       </ion-item>
     }
   `
@@ -58,7 +64,7 @@ export class TextInput {
   public valueChange = output<string>();
 
   // inputs
-  public name = input.required<string>(); // mandatory name of the input field
+  public i18n = input.required<TextInputI18n>();
   public readOnly = input.required<boolean>();
   public maxLength = input(NAME_LENGTH); // max number of characters allowed
   public clearInput = input(true); // show an icon to clear the input field
@@ -67,9 +73,6 @@ export class TextInput {
   public autocomplete = input<AutoComplete>('off'); // Automated input assistance in filling out form field values
   public inputMode = input<InputMode>('text'); // A hint to the browser for which keyboard to display.
   public mask = input(AnyCharacterMask);
-  public label = input<string>(); // optional custom label of the input field
-  public placeholder = input<string>(); // optional custom placeholder of the input field
-  public helper = input<string>(); // optional custom helper text of the input field
   public dir = input<'ltr' | 'rtl' | 'auto'>('ltr');
   public autofocus = input(false); // if true, the input field is focused on component initialization
 
@@ -81,11 +84,7 @@ export class TextInput {
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
-
-  // computed
-  protected label2 = computed(() => this.label() ?? `@input.${this.name()}.label`);
-  protected placeholder2 = computed(() => this.placeholder() ?? `@input.${this.name()}.placeholder`);
-  protected helper2 = computed(() => this.helper() ?? `@input.${this.name()}.helper`);  
+  protected buttonCopyI18n = computed(() =>  { return { copy_conf: this.i18n().copy_conf ?? 'TEXT_INPUT: NYI'}});
 
   // passing constants to the template
   readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();

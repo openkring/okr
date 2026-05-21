@@ -1,12 +1,14 @@
-import { Component, computed, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, inject, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { CategoryListModel, UserModel } from "@bk2/shared-models";
-import { Checkbox, Chips } from "@bk2/shared-ui";
+import { Checkbox, CheckboxI18n, Chips } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel, getCategoryItemNames } from "@bk2/shared-util-core";
+import { I18nService } from "@bk2/shared-i18n";
 
 import { flattenRoles, UserAuthFormModel, userAuthFormValidations } from "@bk2/user-util";
+import { PFX } from "./scope";
 
 export interface UserAuthFormI18n {
   authTitle: string;
@@ -42,10 +44,10 @@ export interface UserAuthFormI18n {
             <ion-grid>
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="useTouchId" [checked]="useTouchId()" (checkedChange)="onFieldChange('useTouchId', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <bk-checkbox [i18n]="useTouchIdI18n()" [checked]="useTouchId()" (checkedChange)="onFieldChange('useTouchId', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="useFaceId" [checked]="useFaceId()" (checkedChange)="onFieldChange('useFaceId', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <bk-checkbox [i18n]="useFaceIdI18n()" [checked]="useFaceId()" (checkedChange)="onFieldChange('useFaceId', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -59,6 +61,16 @@ export interface UserAuthFormI18n {
   `
 })
 export class UserAuthForm {
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    useTouchId_label:  PFX + 'useTouchId.label',
+    useTouchId_helper: PFX + 'useTouchId.helper',
+    useFaceId_label:   PFX + 'useFaceId.label',
+    useFaceId_helper:  PFX + 'useFaceId.helper',
+  });
+  protected useTouchIdI18n = computed(() => ({ name: 'useTouchId', label: this.fieldI18n.useTouchId_label(), helper: this.fieldI18n.useTouchId_helper() } as CheckboxI18n));
+  protected useFaceIdI18n  = computed(() => ({ name: 'useFaceId',  label: this.fieldI18n.useFaceId_label(),  helper: this.fieldI18n.useFaceId_helper()  } as CheckboxI18n));
+
   // inputs
   public readonly i18n = input<UserAuthFormI18n>({ authTitle: '', authDescription: '' });
   public formData = model.required<UserAuthFormModel>();

@@ -1,11 +1,14 @@
-import { Component, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ButtonAction, ButtonActionConfig } from '@bk2/shared-models';
-import { CategoryOld, TextInput } from '@bk2/shared-ui';
+import { CategoryOld, CategoryOldI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_LABEL, DEFAULT_URL } from '@bk2/shared-constants';
 import { ButtonActions } from '@bk2/shared-categories';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-button-action',
@@ -16,7 +19,7 @@ import { ButtonActions } from '@bk2/shared-categories';
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  template: ` 
+  template: `
     <ion-card>
       <ion-card-header>
         <ion-card-title>Action - Konfiguration</ion-card-title>
@@ -27,20 +30,20 @@ import { ButtonActions } from '@bk2/shared-categories';
           @if(intro.length > 0) {
             <small><div [innerHTML]="intro"></div></small>
           }
-        }        
+        }
 
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-category-old name="buttonAction" [value]="type()" (valueChange)="onFieldChange('type', $event)" [categories]="buttonActions" [readOnly]="readOnly()" />
+              <bk-category-old [i18n]="buttonActionI18n()" [value]="type()" (valueChange)="onFieldChange('type', $event)" [categories]="buttonActions" [readOnly]="readOnly()" />
             </ion-col>
             @if(type() !== BA.None) {
               <ion-col size="12" size-md="6">
-                <bk-text-input name="actionUrl" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]=400 />                             
+                <bk-text-input [i18n]="actionUrlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]=400 />
               </ion-col>
             }
             <ion-col size="12" size-md="6">
-              <bk-text-input name="altText" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [maxLength]=400 />                             
+              <bk-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [maxLength]=400 />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -49,6 +52,8 @@ import { ButtonActions } from '@bk2/shared-categories';
   `
 })
 export class ButtonActionConfiguration {
+  private readonly i18nService = inject(I18nService);
+
   // inputs
   public formData = model.required<ButtonActionConfig>();
   public title = input('@content.section.type.button.action.title');
@@ -73,6 +78,31 @@ export class ButtonActionConfiguration {
   // passing constants to template
   protected BA = ButtonAction;
   protected buttonActions = ButtonActions;
+
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    actionUrl_label:       PFX + 'actionUrl.label',
+    actionUrl_placeholder: PFX + 'actionUrl.placeholder',
+    actionUrl_helper:      PFX + 'actionUrl.helper',
+    altText_label:         PFX + 'altText.label',
+    altText_placeholder:   PFX + 'altText.placeholder',
+    altText_helper:        PFX + 'altText.helper',
+    buttonAction_label:    PFX + 'buttonAction.label',
+  });
+
+  protected actionUrlI18n = computed(() => ({
+    name: 'actionUrl',
+    label: this.fieldI18n.actionUrl_label(),
+    placeholder: this.fieldI18n.actionUrl_placeholder(),
+    helper: this.fieldI18n.actionUrl_helper(),
+  } as TextInputI18n));
+
+  protected altTextI18n = computed(() => ({
+    name: 'altText',
+    label: this.fieldI18n.altText_label(),
+    placeholder: this.fieldI18n.altText_placeholder(),
+    helper: this.fieldI18n.altText_helper(),
+  } as TextInputI18n));
+  protected buttonActionI18n = computed(() => ({ name: 'buttonAction', label: this.fieldI18n.buttonAction_label() } as CategoryOldI18n));
 
   protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));

@@ -44,6 +44,8 @@ export const AocAdminOpsStore = signalStore(
       iban_button:         PFX + 'adminops.iban.button',
       oldJuniors_label:    PFX + 'adminops.oldJuniors.label',
       oldJuniors_button:   PFX + 'adminops.oldJuniors.button',
+      club_label:          PFX + 'adminops.club.label',
+      year_label:          PFX + 'adminops.year.label',
     }),
   })),
   withProps(store => ({

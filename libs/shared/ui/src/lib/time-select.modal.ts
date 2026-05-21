@@ -1,27 +1,31 @@
 import { Component, inject, input } from '@angular/core';
 import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
 
-
 import { Header } from './header';
+
+export interface TimeSelectModalI18n {
+  title: string;
+  ok: string;
+  cancel: string;
+}
 
 @Component({
   selector: 'bk-time-select-modal',
   standalone: true,
   imports: [
-    
     Header,
     IonContent, IonDatetime
   ],
   template: `
-      <bk-header [title]="title()" [isModal]="true" />
+      <bk-header [i18n]="{ title: i18n().title }" [isModal]="true" />
       <ion-content class="ion-no-padding">
-        <ion-datetime 
+        <ion-datetime
             [value]="time()"
             [locale]="locale()"
             presentation="time"
             [showDefaultButtons]="true"
-            doneText="{{'@general.operation.change.ok' }}"
-            cancelText="{{'@general.operation.change.cancel' }}"
+            [doneText]="i18n().ok"
+            [cancelText]="i18n().cancel"
             (ionChange)="onTimeSelected($event.detail)" />
       </ion-content>
   `,
@@ -31,7 +35,7 @@ export class TimeSelectModal {
 
   // inputs
   public time = input.required<string>();
-  public title = input('@general.operation.select.time');
+  public i18n = input<TimeSelectModalI18n>({ title: 'Zeit auswählen', ok: 'OK', cancel: 'Abbrechen' });
   protected locale = input.required<string>(); // mandatory locale for the input field, used for formatting
 
   /**

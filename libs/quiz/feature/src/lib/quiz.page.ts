@@ -13,7 +13,7 @@ import { QuizStore } from './quiz.store';
     IonContent, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonButton
   ],
   template: `
-    <bk-header title="Quiz" />
+    <bk-header [i18n]="{ title: 'Quiz' }" />
     <ion-content>
       @for(question of quizStore.questions(); track question) {
         <ion-card>

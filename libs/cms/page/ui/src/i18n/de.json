@@ -5,5 +5,17 @@
     "add": {
       "label": "Neue Sektion hinzufügen"
     }
-  }
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "pageTitle": {
+    "label": "Titel",
+    "placeholder": "Titel eingeben",
+    "helper": ""
+  },
+  "notes": { "label": "Notizen", "placeholder": "" },
+  "blogType": { "label": "Blog-Typ" }
 }

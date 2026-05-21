@@ -33,8 +33,9 @@ export const AlbumStore = signalStore(
     modalController: inject(ModalController),
     httpClient: inject(HttpClient),
     i18n: inject(I18nService).translateAll({
-      no_images: PFX + 'noImages',
-      zoomed: PFX + 'album.zoomed'
+      no_images:         PFX + 'noImages',
+      zoomed:            PFX + 'album.zoomed',
+      albumStyle_label:  PFX + 'albumStyle.label',
     }),
   })),
 

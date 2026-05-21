@@ -1,8 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
+import { I18nService } from '@bk2/shared-i18n';
 import { RoleName, SectionModel, UserModel } from '@bk2/shared-models';
-import { Spinner } from '@bk2/shared-ui';
+import { ButtonCopyI18n, Spinner } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { AccordionSectionComponent } from './accordion-section';
@@ -138,7 +139,7 @@ import { ResponsibilitySectionComponent } from './responsibility-section';
             <bk-activities-section [section]="section" [editMode]="editMode()" />
           }
           @case('tracker') {
-            <bk-tracker-section [section]="section" [editMode]="editMode()" />
+            <bk-tracker-section [section]="section" [editMode]="editMode()" [buttonCopyI18n]="buttonCopyI18n()" />
           }
           @case('video') {
             <bk-video-section [section]="section" />
@@ -156,6 +157,9 @@ import { ResponsibilitySectionComponent } from './responsibility-section';
   `
 })
 export class SectionDispatcher {
+  private readonly i18nService = inject(I18nService);
+  private readonly copyI18n = this.i18nService.translateAll({ copy_conf: '@shared/ui.copy.conf' });
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.copyI18n.copy_conf() } as ButtonCopyI18n));
   public section = input.required<SectionModel>();
   public currentUser = input.required<UserModel | undefined>();
   public editMode = input.required<boolean>();

@@ -1,7 +1,9 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
+import { PFX } from './scope';
 import { AppStore, OrgSelectModal } from '@bk2/shared-feature';
 import { getDefaultCategoryName, isOrg } from '@bk2/shared-util-core';
 import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
@@ -18,9 +20,9 @@ import { MemberNewForm } from '@bk2/relationship-membership-ui';
     IonContent
   ],
   template: `
-    <bk-header title="@membership.operation.createMember.label" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@membership.operation.createMember.label' }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
@@ -46,6 +48,17 @@ import { MemberNewForm } from '@bk2/relationship-membership-ui';
 export class MemberNewModal {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
+  private readonly i18nService = inject(I18nService);
+  private readonly confirmI18n = this.i18nService.translateAll({
+    changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+    changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+    changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  });
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.confirmI18n.changeConfirmation_ok(),
+    cancel: this.confirmI18n.changeConfirmation_cancel(),
+    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   // we can not use the membership store here, because the membership store is used to open this modal, which would cause a circular dependency.
 
   // inputs

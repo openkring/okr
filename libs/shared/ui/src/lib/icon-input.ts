@@ -6,7 +6,7 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
-import { TextInput } from 'libs/shared/ui/src/lib/text-input';
+import { TextInput, TextInputI18n } from './text-input';
 
 @Component({
   selector: 'bk-icon-input',
@@ -23,13 +23,14 @@ import { TextInput } from 'libs/shared/ui/src/lib/text-input';
   `],
   template: `
     <ion-item lines="none" class="ion-no-padding">
-      <bk-text-input name="icon" [value]="icn()" (valueChange)="iconChange.emit($event)" [maxLength]="30" [showHelper]=true [readOnly]="isReadOnly()" />
+      <bk-text-input [i18n]="i18n()" [value]="icn()" (valueChange)="iconChange.emit($event)" [maxLength]="30" [showHelper]=true [readOnly]="isReadOnly()" />
       <ion-icon src="{{'search' | svgIcon }}" slot="end" (click)="selectClicked.emit()" />
     </ion-item>
   `
 })
 export class IconInput {
   public icon = input<string>('');
+  public i18n = input.required<TextInputI18n>();
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

@@ -74,7 +74,7 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
 }
   `],
   template: `
-    <bk-header [title]="title()" [isRoot]="true" />
+    <bk-header [i18n]="{ title: title() }" [isRoot]="true" />
     <ion-content>
       <div class="landing-container">
         <img class="background-image" [src]="bannerUrl()" alt="Background" fetchpriority="high" />

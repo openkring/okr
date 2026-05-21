@@ -22,7 +22,6 @@ import { PageStore } from './page.store';
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonPopover
   ],
-  providers: [PageStore, SectionStore],
   styles: [`
     :host {
       display: flex;

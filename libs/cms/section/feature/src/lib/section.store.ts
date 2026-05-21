@@ -7,7 +7,6 @@ import { getApp } from 'firebase/app';
 
 import { AppStore } from '@bk2/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@bk2/shared-models';
-import { CardSelectModal } from '@bk2/shared-ui';
 import { chipMatches, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
 import { confirm, showToast } from '@bk2/shared-util-angular';
@@ -21,6 +20,7 @@ import { createSection, narrowSection } from '@bk2/cms-section-util';
 import { SectionEditModal } from './section-edit.modal';
 import { MessageCenterModal } from './message-center.modal';
 import { PFX } from './scope';
+import { CardSelectModal } from './card-select.modal';
 
 export type SectionState = {
   sectionId: string;
@@ -93,7 +93,10 @@ export const _SectionStore = signalStore(
       edit:                       PFX + 'edit',
       create:                     PFX + 'create',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     sectionsResource: rxResource({

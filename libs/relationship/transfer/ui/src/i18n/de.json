@@ -10,5 +10,19 @@
   "resourceName": "Name",
   "select": {
     "resource": "Auswählen"
+  },
+  "price": {
+    "label": "Preis",
+    "placeholder": "",
+    "helper": ""
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
+  },
+  "dateOfTransfer": {
+    "label": "Datum",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
   }
 }

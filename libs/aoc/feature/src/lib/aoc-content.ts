@@ -20,7 +20,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
   ],
   providers: [AocContentStore],
   template: `
-    <bk-header [title]="store.i18n.title()" />
+    <bk-header [i18n]="{ title: store.i18n.title() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>

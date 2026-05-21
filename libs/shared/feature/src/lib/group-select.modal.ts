@@ -25,7 +25,7 @@ import { GroupSelectStore } from './group-select.store';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      title="@subject.group.operation.select.label"
+      [i18n]="{ title: '@subject.group.operation.select.label' }"
       [isModal]="true"
     />   
     <ion-content>

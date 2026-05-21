@@ -25,7 +25,7 @@ import { AocRolesStore } from './aoc-roles.store';
   ],
   providers: [AocRolesStore],
   template: `
-    <bk-header [title]="aocRolesStore.i18n.roles_title()" />
+    <bk-header [i18n]="{ title: aocRolesStore.i18n.roles_title() }" />
     <ion-content>
       <ion-card>
         <ion-card-header>

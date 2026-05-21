@@ -57,8 +57,11 @@ export const ResponsibilityStore = signalStore(
       as_edit:                PFX + 'actionsheet.edit',
       as_create:               PFX + 'actionsheet.create',
       as_delete:               PFX + 'actionsheet.delete',
-      ok:                     '@ok',
-      cancel:                 '@cancel'
+      ok:                              '@ok',
+      cancel:                          '@cancel',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     allResponsibilitiesResource: rxResource({

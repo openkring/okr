@@ -1,14 +1,16 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { FolderModel, UserModel } from '@bk2/shared-models';
-import { Chips, NotesInput, TextInput } from '@bk2/shared-ui';
+import { Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { folderValidations } from '@bk2/folder-util';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-folder-form',
@@ -34,20 +36,20 @@ import { folderValidations } from '@bk2/folder-util';
             <ion-grid>
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)"
-                    label="@folder.field.name.label" [maxLength]="50" [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
+                    [maxLength]="50" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input name="title" [value]="title()" (valueChange)="onFieldChange('title', $event)"
-                    label="@folder.field.title.label" [maxLength]="50" [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
+                    [maxLength]="50" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)"
-                    label="@folder.field.description.label" [readOnly]="isReadOnly()" />
+                  <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
+                    [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -63,6 +65,8 @@ import { folderValidations } from '@bk2/folder-util';
   `
 })
 export class FolderForm {
+  private readonly i18nService = inject(I18nService);
+
   // inputs
   public readonly formData = input.required<FolderModel>();
   public readonly currentUser = input<UserModel | undefined>();
@@ -83,6 +87,38 @@ export class FolderForm {
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
 
   protected readonly suite = folderValidations;
+
+  // i18n
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    name_label:         PFX + 'name.label',
+    name_placeholder:   PFX + 'name.placeholder',
+    name_helper:        PFX + 'name.helper',
+    title_label:           PFX + 'title.label',
+    title_placeholder:     PFX + 'title.placeholder',
+    title_helper:          PFX + 'title.helper',
+    description_label:     PFX + 'description.label',
+    description_placeholder: PFX + 'description.placeholder',
+  });
+
+  protected nameI18n = computed(() => ({
+    name: 'name',
+    label: this.fieldI18n.name_label(),
+    placeholder: this.fieldI18n.name_placeholder(),
+    helper: this.fieldI18n.name_helper()
+  } as TextInputI18n));
+
+  protected titleI18n = computed(() => ({
+    name: 'title',
+    label: this.fieldI18n.title_label(),
+    placeholder: this.fieldI18n.title_placeholder(),
+    helper: this.fieldI18n.title_helper()
+  } as TextInputI18n));
+
+  protected descriptionI18n = computed(() => ({
+    name: 'description',
+    label: this.fieldI18n.description_label(),
+    placeholder: this.fieldI18n.description_placeholder()
+  } as NotesInputI18n));
 
   protected onFormChange(formData: FolderModel): void {
     this.formDataChange.emit(formData);

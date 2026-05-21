@@ -18,5 +18,10 @@
     "edit": "Verantwortlichkeit ändern",
     "create": "Verantwortlichkeit erstellen",
     "delete": "Verantwortlichkeit löschen"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

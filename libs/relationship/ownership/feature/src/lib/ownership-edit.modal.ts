@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { DocumentsAccordion } from '@bk2/document-feature';
@@ -24,10 +24,10 @@ import { OwnershipStore } from './ownership.store';
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   providers: [OwnershipStore],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
-    } 
+      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
+    }
     <ion-content class="ion-no-padding">
       @if (currentUser(); as currentUser) {
         <bk-relationship-toolbar
@@ -86,6 +86,11 @@ export class OwnershipEditModal {
 
   // derived signals
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.ownership()?.bkey));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   protected readonly parentKey = computed(() => `${OwnershipModelName}.${this.bkey()}`);
   protected readonly tags = computed(() => this.store.getTags());
   protected readonly name = computed(() => getOwnerName(this.ownership()));

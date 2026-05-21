@@ -18,7 +18,7 @@ import { PageStore } from './page.store';
     IonContent, IonReorderGroup, IonReorder, IonItem
   ],
   template: `
-    <bk-header [title]="store.i18n.sort_label()" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
+    <bk-header [i18n]="{ title: store.i18n.sort_label() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
     <ion-content>
       @if (sections(); as sections) {
         <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->

@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
-import { CategorySelect, ChangeConfirmation, Header, IconToolbar } from '@bk2/shared-ui';
+import { CategorySelect, ChangeConfirmation, ChangeConfirmationI18n, Header, IconToolbar } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
 
@@ -23,12 +23,12 @@ import { ResourceStore } from './resource.store';
   ],
   providers: [ResourceStore],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-icon-toolbar icon="{{icon()}}" title="{{ toolbarTitle() }}"/>
+      <bk-icon-toolbar icon="{{icon()}}" [title]="toolbarTitle()"/>
       @if(isTypeEditable() && types()) {
         <ion-grid>
           <ion-row>
@@ -80,6 +80,11 @@ export class ResourceEditModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   public formData = linkedSignal(() => safeStructuredClone(this.resource()));
   protected showForm = signal(true);
 

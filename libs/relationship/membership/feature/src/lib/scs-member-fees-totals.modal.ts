@@ -45,7 +45,7 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
     .divider ion-label { border-top: 2px solid var(--ion-color-medium); padding-top: 4px; }
   `],
   template: `
-    <bk-header [title]="store.i18n.totals_label()" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.totals_label() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
         <ion-row>

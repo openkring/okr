@@ -3,7 +3,7 @@ import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { AlbumSection, AlbumStyle, BackgroundStyle, ImageActionType, ImageConfig, ImageStyle, ImageType } from '@bk2/shared-models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
-import { browse, CategoryOld, Img, Label, showZoomedImage, Spinner, Video } from '@bk2/shared-ui';
+import { browse, CategoryOld, CategoryOldI18n, Img, Label, showZoomedImage, Spinner, Video } from '@bk2/shared-ui';
 import { downloadToBrowser, isBrowser } from '@bk2/shared-util-angular';
 import { debugData, debugMessage } from '@bk2/shared-util-core';
 
@@ -68,7 +68,7 @@ import { AlbumStore } from './album-section.store';
                 }
             </ion-col>
             <ion-col size="6" size-md="4">
-                <bk-category-old name="albumStyle" [value]="albumStyle()" (valueChange)="onAlbumStyleChange($event)" [categories]="albumStyles" [readOnly]="false" />
+                <bk-category-old [i18n]="albumStyleI18n()" [value]="albumStyle()" (valueChange)="onAlbumStyleChange($event)" [categories]="albumStyles" [readOnly]="false" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -224,6 +224,9 @@ export class AlbumSectionComponent {
   protected currentDirLength = computed(() => this.store.currentDirLength());
   protected parentDirectory = computed(() => this.store.parentDirectory());
   protected isTopDirectory = computed(() => this.store.currentDirLength() === this.store.initialDirLength());
+
+  // i18n
+  protected albumStyleI18n = computed(() => ({ name: 'albumStyle', label: this.store.i18n.albumStyle_label() } as CategoryOldI18n));
 
   // passing constants to template
   protected IT = ImageType;

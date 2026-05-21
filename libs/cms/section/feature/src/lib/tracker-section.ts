@@ -2,7 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input } fr
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 
 import { TrackerSection } from '@bk2/shared-models';
-import { ButtonCopy, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
 import { lookupAddress } from '@bk2/shared-util-angular';
 
 import { TrackerSectionStore } from './tracker-section.store';
@@ -72,7 +72,7 @@ import { TrackerSectionStore } from './tracker-section.store';
                   <ion-label>Longitude: </ion-label>
                   <ion-label>{{ longitude()}}</ion-label>
                   @if(!editMode()) {
-                    <bk-button-copy [value]="longitude()" />
+                    <bk-button-copy [value]="longitude()" [i18n]="buttonCopyI18n()" />
                   }
                 </ion-item>
               </ion-col>
@@ -81,7 +81,7 @@ import { TrackerSectionStore } from './tracker-section.store';
                   <ion-label>Latitude: </ion-label>
                   <ion-label>{{ latitude()}}</ion-label>
                   @if(!editMode()) {
-                    <bk-button-copy [value]="latitude()" />
+                    <bk-button-copy [value]="latitude()" [i18n]="buttonCopyI18n()" />
                   }
                 </ion-item>
               </ion-col>
@@ -90,7 +90,7 @@ import { TrackerSectionStore } from './tracker-section.store';
                   <ion-label>Altitude: </ion-label>
                   <ion-label>{{ altitude()}}</ion-label>
                   @if(!editMode()) {
-                    <bk-button-copy [value]="altitude()" />
+                    <bk-button-copy [value]="altitude()" [i18n]="buttonCopyI18n()" />
                   }
                 </ion-item>
               </ion-col>
@@ -110,6 +110,7 @@ export class TrackerSectionComponent {
   // inputs
   public section = input<TrackerSection>();
   public editMode = input(false);
+  public buttonCopyI18n = input.required<ButtonCopyI18n>();
 
   // derived signals
   protected title = computed(() => this.section()?.title);  

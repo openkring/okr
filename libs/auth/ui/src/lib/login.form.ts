@@ -1,10 +1,12 @@
-import { Component, linkedSignal, model, output, input, computed, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, model, output, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AuthCredentials } from '@bk2/shared-models';
-import { EmailInput, ErrorNote, PasswordInput } from '@bk2/shared-ui';
+import { EmailInput, EmailInputI18n, ErrorNote, PasswordInput, PasswordInputI18n } from '@bk2/shared-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { PFX } from './scope';
 
 import { authCredentialsValidations, emailValidations, loginValidations, passwordValidations } from '@bk2/auth-util';
 
@@ -35,11 +37,9 @@ import { authCredentialsValidations, emailValidations, loginValidations, passwor
             <ion-row>
               <ion-col size="12">
                 <bk-email
-                  name="loginEmail"
+                  [i18n]="loginEmailI18n()"
                   [(value)]="loginEmail"
                   [autofocus]="true"
-                  [showHelper]="true"
-                  [helperText]="emailHelper()"
                   [copyable]="false"
                   [clearInput]="false"
                   [readOnly]="false"
@@ -53,10 +53,8 @@ import { authCredentialsValidations, emailValidations, loginValidations, passwor
             <ion-row>
               <ion-col size="12">
                 <bk-password-input
-                  name="loginPassword"
+                  [i18n]="loginPasswordI18n()"
                   [(value)]="loginPassword"
-                  [showHelper]="true"
-                  [helperText]="pwdHelper()"
                 />
                 <bk-error-note [errors]="passwordErrors()" />
               </ion-col>
@@ -73,6 +71,26 @@ export class LoginForm {
   public readonly context = input<'login' | 'email' | 'password'>('login');
   public readonly emailHelper = input.required<string>();
   public readonly pwdHelper = input.required<string>();
+
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    loginEmail_label:            PFX + 'loginEmail.label',
+    loginEmail_placeholder:      PFX + 'loginEmail.placeholder',
+    loginPassword_label:         PFX + 'loginPassword.label',
+    loginPassword_placeholder:   PFX + 'loginPassword.placeholder',
+  });
+  protected loginEmailI18n = computed(() => ({
+    name: 'loginEmail',
+    label: this.fieldI18n.loginEmail_label(),
+    placeholder: this.fieldI18n.loginEmail_placeholder(),
+    helper: this.emailHelper()
+  } as EmailInputI18n));
+  protected loginPasswordI18n = computed(() => ({
+    name: 'loginPassword',
+    label: this.fieldI18n.loginPassword_label(),
+    placeholder: this.fieldI18n.loginPassword_placeholder(),
+    helper: this.pwdHelper()
+  } as PasswordInputI18n));
 
   protected get suite() {
     switch (this.context()) {

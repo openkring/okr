@@ -35,5 +35,37 @@
     "delete": "Dokument löschen",
     "revisions": "Versionen anzeigen",
     "download": "Dokument herunterladen"
+  },
+  "imageConfig": {
+    "label": {
+      "label": "Bezeichnung",
+      "placeholder": "Bezeichnung eingeben",
+      "helper": ""
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "https://...",
+      "helper": ""
+    },
+    "actionUrl": {
+      "label": "Aktions-URL",
+      "placeholder": "https://...",
+      "helper": ""
+    },
+    "altText": {
+      "label": "Alt-Text",
+      "placeholder": "",
+      "helper": ""
+    },
+    "overlay": {
+      "label": "Überblendtext",
+      "placeholder": "",
+      "helper": ""
+    }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

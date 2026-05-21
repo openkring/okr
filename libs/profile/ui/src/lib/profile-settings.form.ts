@@ -5,10 +5,12 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@bk2/shared-models";
 import { FcmService } from "@bk2/shared-data-access";
-import { CategoryOld, Checkbox, ErrorNote, TextInput } from "@bk2/shared-ui";
+import { I18nService } from "@bk2/shared-i18n";
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
+import { PFX } from "./scope";
 
 export interface ProfileSettingsFormI18n {
   title: string;
@@ -50,50 +52,50 @@ export interface ProfileSettingsFormI18n {
             <ion-row> 
               @if(hasRole('admin')) {
                 <ion-col size="12">
-                  <bk-category-old name="language" [value]="language()" (valueChange)="onFieldChange('language', $event)"  [categories]="languages" [readOnly]="isReadOnly()" />                                                             
+                  <bk-category-old [i18n]="languageI18n()" [value]="language()" (valueChange)="onFieldChange('language', $event)"  [categories]="languages" [readOnly]="isReadOnly()" />                                                             
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="showDebugInfo" [checked]="showDebugInfo()" (checkedChange)="onFieldChange('showDebugInfo', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <bk-checkbox [i18n]="showDebugInfoI18n()" [checked]="showDebugInfo()" (checkedChange)="onFieldChange('showDebugInfo', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="showArchivedData" [checked]="showArchivedData()" (checkedChange)="onFieldChange('showArchivedData', $event)" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
+                  <bk-checkbox [i18n]="showArchivedDataI18n()" [checked]="showArchivedData()" (checkedChange)="onFieldChange('showArchivedData', $event)" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
                 </ion-col>
               }
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showHelpers" [checked]="showHelpers()" (checkedChange)="onFieldChange('showHelpers', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                <bk-checkbox [i18n]="showHelpersI18n()" [checked]="showHelpers()" (checkedChange)="onFieldChange('showHelpers', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
               </ion-col>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="useTouchId" [checked]="useTouchId()" (checkedChange)="onFieldChange('useTouchId', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <bk-checkbox [i18n]="useTouchIdI18n()" [checked]="useTouchId()" (checkedChange)="onFieldChange('useTouchId', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="useFaceId" [checked]="useFaceId()" (checkedChange)="onFieldChange('useFaceId', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <bk-checkbox [i18n]="useFaceIdI18n()" [checked]="useFaceId()" (checkedChange)="onFieldChange('useFaceId', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
                 </ion-col>
               }
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="avatarUsage" [value]="avatarUsage()" (valueChange)="onFieldChange('avatarUsage', $event)" [categories]="avatarUsages" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />  
+                <bk-category-old [i18n]="avatarUsageI18n()" [value]="avatarUsage()" (valueChange)="onFieldChange('avatarUsage', $event)" [categories]="avatarUsages" [readOnly]="isReadOnly()" />  
               </ion-col>
               @if(avatarUsage() === avatarUsageEnum.GravatarFirst || avatarUsage() === avatarUsageEnum.PhotoFirst) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="gravatarEmail" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [showHelper]="showHelper()" [copyable]=true [readOnly]="isReadOnly()" /> 
+                  <bk-text-input [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [showHelper]="showHelper()" [copyable]=true [readOnly]="isReadOnly()" />
                   <bk-error-note [errors]="gravatarEmailErrors()" />                                                 
                 </ion-col>
               }
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="nameDisplay" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [categories]="nameDisplays" [readOnly]="isReadOnly()"  [showHelper]="showHelper()" />  
+                <bk-category-old [i18n]="nameDisplayI18n()" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [categories]="nameDisplays" [readOnly]="isReadOnly()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="personSortCriteria" [value]="personSortCriteria()" (valueChange)="onFieldChange('personSortCriteria', $event)" [categories]="personSortCriterias" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />  
+                <bk-category-old [i18n]="personSortCriteriaI18n()" [value]="personSortCriteria()" (valueChange)="onFieldChange('personSortCriteria', $event)" [categories]="personSortCriterias" [readOnly]="isReadOnly()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="newsDelivery" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
+                <bk-category-old [i18n]="newsDeliveryI18n()" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="invoiceDelivery" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
+                <bk-category-old [i18n]="invoiceDeliveryI18n()" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if (fcmService.isSupported()) {
@@ -129,6 +131,45 @@ export interface ProfileSettingsFormI18n {
 export class ProfileSettingsAccordion {
   protected readonly modalController = inject(ModalController);
   protected readonly fcmService = inject(FcmService);
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    gravatarEmail_label:        PFX + 'gravatarEmail.label',
+    gravatarEmail_placeholder:  PFX + 'gravatarEmail.placeholder',
+    gravatarEmail_helper:       PFX + 'gravatarEmail.helper',
+    language_label:             PFX + 'language.label',
+    avatarUsage_label:          PFX + 'avatarUsage.label',
+    nameDisplay_label:          PFX + 'nameDisplay.label',
+    personSortCriteria_label:   PFX + 'personSortCriteria.label',
+    newsDelivery_label:         PFX + 'newsDelivery.label',
+    invoiceDelivery_label:      PFX + 'invoiceDelivery.label',
+    showDebugInfo_label:        PFX + 'showDebugInfo.label',
+    showDebugInfo_helper:       PFX + 'showDebugInfo.helper',
+    showArchivedData_label:     PFX + 'showArchivedData.label',
+    showArchivedData_helper:    PFX + 'showArchivedData.helper',
+    showHelpers_label:          PFX + 'showHelpers.label',
+    showHelpers_helper:         PFX + 'showHelpers.helper',
+    useTouchId_label:           PFX + 'useTouchId.label',
+    useTouchId_helper:          PFX + 'useTouchId.helper',
+    useFaceId_label:            PFX + 'useFaceId.label',
+    useFaceId_helper:           PFX + 'useFaceId.helper',
+  });
+  protected gravatarEmailI18n = computed(() => ({
+    name: 'gravatarEmail',
+    label: this.fieldI18n.gravatarEmail_label(),
+    placeholder: this.fieldI18n.gravatarEmail_placeholder(),
+    helper: this.fieldI18n.gravatarEmail_helper(),
+  } as TextInputI18n));
+  protected languageI18n          = computed(() => ({ name: 'language',           label: this.fieldI18n.language_label()           } as CategoryOldI18n));
+  protected avatarUsageI18n       = computed(() => ({ name: 'avatarUsage',        label: this.fieldI18n.avatarUsage_label()        } as CategoryOldI18n));
+  protected nameDisplayI18n       = computed(() => ({ name: 'nameDisplay',        label: this.fieldI18n.nameDisplay_label()        } as CategoryOldI18n));
+  protected personSortCriteriaI18n= computed(() => ({ name: 'personSortCriteria', label: this.fieldI18n.personSortCriteria_label() } as CategoryOldI18n));
+  protected newsDeliveryI18n      = computed(() => ({ name: 'newsDelivery',       label: this.fieldI18n.newsDelivery_label()       } as CategoryOldI18n));
+  protected invoiceDeliveryI18n   = computed(() => ({ name: 'invoiceDelivery',    label: this.fieldI18n.invoiceDelivery_label()   } as CategoryOldI18n));
+  protected showDebugInfoI18n     = computed(() => ({ name: 'showDebugInfo',    label: this.fieldI18n.showDebugInfo_label(),    helper: this.fieldI18n.showDebugInfo_helper()    } as CheckboxI18n));
+  protected showArchivedDataI18n  = computed(() => ({ name: 'showArchivedData', label: this.fieldI18n.showArchivedData_label(), helper: this.fieldI18n.showArchivedData_helper() } as CheckboxI18n));
+  protected showHelpersI18n       = computed(() => ({ name: 'showHelpers',      label: this.fieldI18n.showHelpers_label(),      helper: this.fieldI18n.showHelpers_helper()      } as CheckboxI18n));
+  protected useTouchIdI18n        = computed(() => ({ name: 'useTouchId',       label: this.fieldI18n.useTouchId_label(),       helper: this.fieldI18n.useTouchId_helper()       } as CheckboxI18n));
+  protected useFaceIdI18n         = computed(() => ({ name: 'useFaceId',        label: this.fieldI18n.useFaceId_label(),        helper: this.fieldI18n.useFaceId_helper()        } as CheckboxI18n));
 
   protected notificationPermission = signal<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'

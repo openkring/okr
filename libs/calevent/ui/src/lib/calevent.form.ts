@@ -5,12 +5,14 @@ import { vestForms } from 'ngx-vest-forms';
 import { ChFutureDate, LowercaseWordMask } from '@bk2/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Checkbox, Chips, DateInput, ErrorNote, NotesInput, NumberInput, StringList, TextInput, TimeInput } from '@bk2/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { ModelSelectService } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { Avatars } from '@bk2/avatar-ui';
 import { calEventValidations } from '@bk2/calevent-util';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-calevent-form',
@@ -22,12 +24,12 @@ import { calEventValidations } from '@bk2/calevent-util';
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  template: ` 
+  template: `
   @if (showForm()) {
-  <form scVestForm 
+  <form scVestForm
     [formValue]="formData()"
     (formValueChange)="onFormChange($event)"
-    [suite]="suite" 
+    [suite]="suite"
     (dirtyChange)="dirty.emit($event)"
     (validChange)="valid.emit($event)"
   >
@@ -38,10 +40,10 @@ import { calEventValidations } from '@bk2/calevent-util';
           @if(expertMode()) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="seriesId" [value]="seriesId()" label="seriesId" [readOnly]="true" [copyable]="true" />
+                <bk-text-input [i18n]="seriesIdI18n()" [value]="seriesId()" [readOnly]="true" [copyable]="true" />
               </ion-col>
             </ion-row>
           }
@@ -52,34 +54,34 @@ import { calEventValidations } from '@bk2/calevent-util';
             </ion-row>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" /> 
-                <bk-error-note [errors]="nameErrors()" />                                                                               
+                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" />
+                <bk-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="fullDay" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <bk-checkbox [i18n]="fullDayI18n()" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if(!fullDay()) {
               <ion-row>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-time-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <bk-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-number-input name="durationMinutes" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="isReadOnly()" />
+                  <bk-number-input [i18n]="durationMinutesI18n()" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             } @else {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="endDate"  [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <bk-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
@@ -89,7 +91,7 @@ import { calEventValidations } from '@bk2/calevent-util';
               </ion-col>
               @if(isRecurring()) {
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <bk-date-input [i18n]="repeatUntilDateI18n()" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" />
                 </ion-col>
               }
             </ion-row>
@@ -97,14 +99,14 @@ import { calEventValidations } from '@bk2/calevent-util';
               <ion-row>
                 <ion-col size="12">
                   <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
-                  <bk-text-input name="locationKey" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [readOnly]="isReadOnly()" />                                        
+                  <bk-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
           </ion-grid>
       </ion-card-content>
     </ion-card>
- 
+
     @if(currentUser(); as currentUser) {
       <bk-avatars name="responsiblePersons"
         [avatars]="responsiblePersons()" (avatarsChange)="onFieldChange('responsiblePersons', $event)"
@@ -120,7 +122,7 @@ import { calEventValidations } from '@bk2/calevent-util';
     <bk-strings
       [strings]="calendars()"
       (stringsChange)="onFieldChange('calendars', $event)"
-      [mask]="calendarMask" 
+      [mask]="calendarMask"
       [maxLength]="nameLength"
       [readOnly]="isReadOnly()"
       inputStyle="select" (selectClicked)="calendarSelectClicked.emit()"
@@ -128,17 +130,17 @@ import { calEventValidations } from '@bk2/calevent-util';
       description="@input.calendarName.description"
       addLabel="@input.calendarName.addLabel"
       selectLabel="@input.calendarName.select"
-    />           
+    />
 
   <!---------------------------------------------------
-    TAG, NOTES 
+    TAG, NOTES
     --------------------------------------------------->
     @if(expertMode()) {
       <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
     }
 
     @if(hasRole('admin')) {
-      <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+      <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
     }
   </form>
   }
@@ -146,6 +148,7 @@ import { calEventValidations } from '@bk2/calevent-util';
 })
 export class CalEventForm {
   private readonly modelSelectService = inject(ModelSelectService);
+  private readonly i18nService = inject(I18nService);
 
   // inputs
   public formData = model.required<CalEventModel>();
@@ -202,6 +205,112 @@ export class CalEventForm {
   protected chFutureDate = ChFutureDate;
   protected calendarMask = LowercaseWordMask;
   protected nameLength = NAME_LENGTH;
+
+  // i18n
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label:           PFX + 'bkey.label',
+    bkey_placeholder:     PFX + 'bkey.placeholder',
+    bkey_helper:          PFX + 'bkey.helper',
+    seriesId_label:       PFX + 'seriesId.label',
+    seriesId_placeholder: PFX + 'seriesId.placeholder',
+    seriesId_helper:      PFX + 'seriesId.helper',
+    name_label:           PFX + 'name.label',
+    name_placeholder:     PFX + 'name.placeholder',
+    name_helper:          PFX + 'name.helper',
+    locationKey_label:            PFX + 'locationKey.label',
+    locationKey_placeholder:      PFX + 'locationKey.placeholder',
+    locationKey_helper:           PFX + 'locationKey.helper',
+    durationMinutes_label:        PFX + 'durationMinutes.label',
+    durationMinutes_placeholder:  PFX + 'durationMinutes.placeholder',
+    durationMinutes_helper:       PFX + 'durationMinutes.helper',
+    description_label:            PFX + 'description.label',
+    description_placeholder:      PFX + 'description.placeholder',
+    startDate_label:              PFX + 'startDate.label',
+    startDate_placeholder:        PFX + 'startDate.placeholder',
+    startDate_helper:             PFX + 'startDate.helper',
+    endDate_label:                PFX + 'endDate.label',
+    endDate_placeholder:          PFX + 'endDate.placeholder',
+    endDate_helper:               PFX + 'endDate.helper',
+    repeatUntilDate_label:        PFX + 'repeatUntilDate.label',
+    repeatUntilDate_placeholder:  PFX + 'repeatUntilDate.placeholder',
+    repeatUntilDate_helper:       PFX + 'repeatUntilDate.helper',
+    startTime_label:              PFX + 'startTime.label',
+    startTime_placeholder:        PFX + 'startTime.placeholder',
+    fullDay_label:                PFX + 'fullDay.label',
+    fullDay_helper:               PFX + 'fullDay.helper',
+  });
+
+  protected bkeyI18n = computed(() => ({
+    name: 'bkey',
+    label: this.fieldI18n.bkey_label(),
+    placeholder: this.fieldI18n.bkey_placeholder(),
+    helper: this.fieldI18n.bkey_helper()
+  } as TextInputI18n));
+
+  protected seriesIdI18n = computed(() => ({
+    name: 'seriesId',
+    label: this.fieldI18n.seriesId_label(),
+    placeholder: this.fieldI18n.seriesId_placeholder(),
+    helper: this.fieldI18n.seriesId_helper()
+  } as TextInputI18n));
+
+  protected nameI18n = computed(() => ({
+    name: 'name',
+    label: this.fieldI18n.name_label(),
+    placeholder: this.fieldI18n.name_placeholder(),
+    helper: this.fieldI18n.name_helper()
+  } as TextInputI18n));
+
+  protected locationKeyI18n = computed(() => ({
+    name: 'locationKey',
+    label: this.fieldI18n.locationKey_label(),
+    placeholder: this.fieldI18n.locationKey_placeholder(),
+    helper: this.fieldI18n.locationKey_helper()
+  } as TextInputI18n));
+
+  protected durationMinutesI18n = computed(() => ({
+    name: 'durationMinutes',
+    label: this.fieldI18n.durationMinutes_label(),
+    placeholder: this.fieldI18n.durationMinutes_placeholder(),
+    helper: this.fieldI18n.durationMinutes_helper()
+  } as NumberInputI18n));
+
+  protected descriptionI18n = computed(() => ({
+    name: 'description', label: this.fieldI18n.description_label(), placeholder: this.fieldI18n.description_placeholder()
+  } as NotesInputI18n));
+
+  protected startDateI18n = computed(() => ({
+    name: 'startDate',
+    label: this.fieldI18n.startDate_label(),
+    placeholder: this.fieldI18n.startDate_placeholder(),
+    helper: this.fieldI18n.startDate_helper()
+  } as DateInputI18n));
+
+  protected endDateI18n = computed(() => ({
+    name: 'endDate',
+    label: this.fieldI18n.endDate_label(),
+    placeholder: this.fieldI18n.endDate_placeholder(),
+    helper: this.fieldI18n.endDate_helper()
+  } as DateInputI18n));
+
+  protected repeatUntilDateI18n = computed(() => ({
+    name: 'repeatUntilDate',
+    label: this.fieldI18n.repeatUntilDate_label(),
+    placeholder: this.fieldI18n.repeatUntilDate_placeholder(),
+    helper: this.fieldI18n.repeatUntilDate_helper()
+  } as DateInputI18n));
+
+  protected startTimeI18n = computed(() => ({
+    name: 'startTime',
+    label: this.fieldI18n.startTime_label(),
+    placeholder: this.fieldI18n.startTime_placeholder(),
+  } as TimeInputI18n));
+
+  protected fullDayI18n = computed(() => ({
+    name: 'fullDay',
+    label: this.fieldI18n.fullDay_label(),
+    helper: this.fieldI18n.fullDay_helper(),
+  } as CheckboxI18n));
 
   /******************************* actions *************************************** */
   public async selectPerson(): Promise<void> {

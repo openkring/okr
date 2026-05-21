@@ -1,4 +1,3 @@
-
 import { Component, computed, input, linkedSignal, model, viewChild } from '@angular/core';
 import { IonIcon, IonItem, IonNote } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
@@ -9,14 +8,21 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared-util-core';
 import { ChAnyDate } from '@bk2/shared-config';
 
-import { ViewDateInput } from './viewdate-input';
+import { ViewDateInput, ViewDateInputI18n } from './viewdate-input';
 import { DatePickerModal } from './date-picker.modal';
+
+export interface DateInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+  helper?: string;
+}
 
 @Component({
   selector: 'bk-date-input',
   standalone: true,
   imports: [
-    SvgIconPipe, 
+    SvgIconPipe,
     ViewDateInput, DatePickerModal,
     IonItem, IonIcon, IonNote
   ],
@@ -33,14 +39,14 @@ import { DatePickerModal } from './date-picker.modal';
       <bk-viewdate-input
         [viewDate]="viewDate()"
         (viewDateChange)="onViewDateChange($event)"
-        [name]="name()" 
+        [i18n]="viewDateI18n()"
         [readOnly]="isReadOnly()"
         [clearInput]="shouldShowClearInput()"
         [inputMode]="inputMode()"
         [maxLength]="maxLength()"
         [mask]="mask()"
         [autocomplete]="autocomplete()"
-       />
+      />
     </ion-item>
 
     <bk-date-picker-modal #datePicker
@@ -48,9 +54,9 @@ import { DatePickerModal } from './date-picker.modal';
       (dateSelected)="updateStoreDate($event, isoFormat)"
     />
 
-    @if(shouldShowHelper()) {
+    @if(i18n().helper) {
       <ion-item lines="none" class="helper">
-        <ion-note>{{'@input.' + name() + '.helper' }}</ion-note>
+        <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
     }
   `
@@ -75,9 +81,9 @@ export class DateInput {
       false
     );
     return converted ?? '';
-  });  
+  });
 
-  public name = input.required<string>(); // mandatory name of the input field
+  public i18n = input.required<DateInputI18n>();
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public clearInput = input(true); // show an icon to clear the input field
@@ -85,13 +91,16 @@ export class DateInput {
   public inputMode = input<InputMode>('numeric'); // A hint to the browser for which keyboard to display.
   public maxLength = input(DATE_LENGTH);
   public autocomplete = input('off'); // can be set to bday for birth date
-  public showHelper = input(false);
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public showDateSelect = input(true);
   protected shouldShowDateSelect = computed(() => coerceBoolean(this.showDateSelect()));
   public locale = input('de-ch'); // mandatory locale for the input field, used for formatting
-  public header = input('@general.operation.select.date');
   public mask = input<MaskitoOptions>(ChAnyDate);
+
+  protected viewDateI18n = computed(() => ({
+    name: this.i18n().name,
+    label: this.i18n().label,
+    placeholder: this.i18n().placeholder
+  } as ViewDateInputI18n));
 
   protected isoDate = computed(() => { 
     const store = this.storeDate();

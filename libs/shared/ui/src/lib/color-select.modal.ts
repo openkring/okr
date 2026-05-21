@@ -13,6 +13,12 @@ class ColorPickerConfiguration implements IColorPickerConfig {
     }
 }
 
+export interface ColorSelectI18n {
+  select: string;
+  cancel: string;
+  ok: string;
+}
+
 @Component({
   selector: 'bk-color-select-modal',
   standalone: true,
@@ -27,14 +33,14 @@ class ColorPickerConfiguration implements IColorPickerConfig {
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
-        <ion-title>{{ '@input.color.select' }}</ion-title>
+        <ion-title>{{ i18n().select }}</ion-title>
       </ion-toolbar>  
     </ion-header>
     <ion-content>
       <chrome-picker [control]="colorControl" [color]="hexColor()" />
       <ion-item lines="none">
-        <ion-button fill="clear" (click)="cancel()">{{ '@general.operation.change.cancel' }}</ion-button>
-        <ion-button fill="clear" (click)="save()">{{ '@general.operation.change.ok' }}</ion-button>
+        <ion-button fill="clear" (click)="cancel()">{{ i18n().cancel }}</ion-button>
+        <ion-button fill="clear" (click)="save()">{{ i18n().ok }}</ion-button>
       </ion-item>
     </ion-content>
   `
@@ -43,6 +49,7 @@ export class ColorSelectModal implements OnInit{
   private readonly modalController = inject(ModalController);
 
   // inputs
+  public i18n = input.required<ColorSelectI18n>();
   public hexColor = input(DEFAULT_COLOR);
   public colorControl = new ColorPickerControl();
 

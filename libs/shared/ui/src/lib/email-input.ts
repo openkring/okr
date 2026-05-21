@@ -8,11 +8,18 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
 
+export interface EmailInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+  helper?: string;
+  copy_conf?: string;
+}
+
 @Component({
   selector: 'bk-email',
   standalone: true,
   imports: [
-    
     FormsModule,
     IonItem, IonNote, IonInput,
     ButtonCopy
@@ -22,27 +29,27 @@ import { ButtonCopy } from './button-copy';
   template: `
   <ion-item lines="none" [button]="false">
     <ion-input #emailInput
-      type="email" 
-      [name]="name()" 
+      type="email"
+      [name]="i18n().name"
       [ngModel]="value()"
       (ngModelChange)="value.set($event)"
       labelPlacement="floating"
-      label="{{'@input.' + name() + '.label' }}"
-      placeholder="{{'@input.' + name() + '.placeholder' }}"
+      [label]="i18n().label"
+      [placeholder]="i18n().placeholder"
       inputmode="email"
       [counter]="!isReadOnly()"
       [maxlength]="maxLength()"
       [autocomplete]="autocomplete()"
       [clearInput]="shouldShowClearInput()"
-      [readonly]="isReadOnly()" 
+      [readonly]="isReadOnly()"
     />
     @if (isCopyable()) {
-      <bk-button-copy [value]="value()" tabindex="-1" />
+      <bk-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
     }
   </ion-item>
-  @if(shouldShowHelper()) {
+  @if(i18n().helper) {
     <ion-item lines="none" class="helper" [button]="false">
-      <ion-note>{{helper() }}</ion-note>
+      <ion-note>{{ i18n().helper }}</ion-note>
     </ion-item>
   }
   `
@@ -50,12 +57,10 @@ import { ButtonCopy } from './button-copy';
 export class EmailInput {
   // inputs
   public value = model.required<string>(); // mandatory view model
-  public name = input('email'); // name of the input field
+  public i18n = input.required<EmailInputI18n>();
   public readOnly = input.required<boolean>();
   public maxLength = input(EMAIL_LENGTH); // max number of characters allowed
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
-  public showHelper = input(false); // helper text to be shown below the input field
-  public helperText = input<string>();
   public clearInput = input(true); // show an icon to clear the input field
   public autocomplete = input('email'); // autocomplete value for the input field
   public autofocus = input(false); // if true, the input field is focused on component initialization
@@ -66,14 +71,9 @@ export class EmailInput {
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   protected shouldShowClearInput = computed(() => coerceBoolean(this.clearInput()));
-  protected helper = computed(() => this.helperText() ?? '@input.' + this.name() + '.helper');
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'EMAIL_INPUT: NYI' }));
 
-  /**
-   * sets focus into the search input field
-   * see https://stackoverflow.com/questions/45786205/how-to-focus-ion-searchbar-on-button-click#45786266
-   */
   constructor() {
     effect(() => {
       if (this.autofocus()) {

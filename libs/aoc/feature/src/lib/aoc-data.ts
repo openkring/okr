@@ -20,7 +20,7 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
   ],
   providers: [AocDataStore],
   template: `
-    <bk-header [title]="aocDataStore.i18n.title()" />
+    <bk-header [i18n]="{ title: aocDataStore.i18n.title() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>

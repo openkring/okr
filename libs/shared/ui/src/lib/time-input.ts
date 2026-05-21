@@ -1,4 +1,3 @@
-
 import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon, IonInput, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
@@ -14,6 +13,13 @@ import { coerceBoolean, getCurrentTime } from '@bk2/shared-util-core';
 
 import { TimeSelectModal } from './time-select.modal';
 
+export interface TimeInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+  helper?: string;
+}
+
 @Component({
   selector: 'bk-time-input',
   standalone: true,
@@ -26,16 +32,16 @@ import { TimeSelectModal } from './time-select.modal';
   viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
-        <ion-icon  src="{{'calendar' | svgIcon }}" slot="start" (click)="selectTime()" />
+        <ion-icon src="{{'calendar' | svgIcon }}" slot="start" (click)="selectTime()" />
         <ion-input
           type="text"
-          [name]="name()"
+          [name]="i18n().name"
           [ngModel]="value()"
           (ngModelChange)="value.set($event)"
           [value]="value()"
           labelPlacement="floating"
-          label="{{'@input.' + name() + '.label' }}"
-          placeholder="{{'@input.' + name() + '.placeholder' }}"
+          [label]="i18n().label"
+          [placeholder]="i18n().placeholder"
           [inputMode]="inputMode()"
           [counter]="!isReadOnly()"
           [maxlength]="timeLength"
@@ -46,9 +52,9 @@ import { TimeSelectModal } from './time-select.modal';
           [readonly]="isReadOnly()"
           />
     </ion-item>
-    @if(shouldShowHelper()) {
+    @if(i18n().helper) {
       <ion-item lines="none" class="helper">
-        <ion-note>{{'@input.' + name() + '.helper' }}</ion-note>
+        <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
     }
   `
@@ -58,17 +64,15 @@ export class TimeInput {
 
   // inputs
   public value = model.required<string>(); // mandatory view model
-  public name = input.required<string>(); // mandatory name of the input field
+  public i18n = input.required<TimeInputI18n>();
   public readOnly = input.required<boolean>();
   public clearInput = input(true); // show an icon to clear the input field
   public inputMode = input<InputMode>('numeric'); // A hint to the browser for which keyboard to display.
-  public showHelper = input(false); // helper text to be shown below the input field
   public locale = input.required<string>(); // mandatory locale for the input field, used for formatting
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
 
   // passing constants to the template
   protected timeLength = TIME_LENGTH;

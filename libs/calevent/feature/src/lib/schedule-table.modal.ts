@@ -14,7 +14,7 @@ import { CalEventStore } from './calevent.store';
     Header,
   ],
   template: `
-    <bk-header title="@schedule.tableTitle" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@schedule.tableTitle' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <div class="schedule-table-wrapper">
         <table class="schedule-table">

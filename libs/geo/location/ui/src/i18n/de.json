@@ -1,0 +1,56 @@
+{
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "latitude": {
+    "label": "Breitengrad",
+    "placeholder": "",
+    "helper": ""
+  },
+  "longitude": {
+    "label": "Längengrad",
+    "placeholder": "",
+    "helper": ""
+  },
+  "placeId": {
+    "label": "Orts-ID",
+    "placeholder": "",
+    "helper": "Google Maps Orts-Identifikator"
+  },
+  "what3words": {
+    "label": "What3Words",
+    "placeholder": "",
+    "helper": "What3Words-Adresse (z.B. word.word.word)"
+  },
+  "seaLevel": {
+    "label": "Meereshöhe",
+    "placeholder": "",
+    "helper": ""
+  },
+  "speed": {
+    "label": "Geschwindigkeit",
+    "placeholder": "",
+    "helper": ""
+  },
+  "direction": {
+    "label": "Richtung",
+    "placeholder": "",
+    "helper": ""
+  },
+  "distance": {
+    "label": "Distanz",
+    "placeholder": "",
+    "helper": ""
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
+  }
+}

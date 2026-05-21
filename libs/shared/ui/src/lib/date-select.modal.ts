@@ -5,22 +5,28 @@ import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
 
 import { Header } from './header';
 
+export interface DateSelectModalI18n {
+  title: string;
+  ok: string;
+  cancel: string;
+}
+
 @Component({
   selector: 'bk-date-select-modal',
   standalone: true,
   imports: [
-    
+
     Header,
     IonContent, IonDatetime
   ],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: i18n().title }" [isModal]="true" />
     <ion-content class="ion-padding">
       @if(intro(); as intro) {
         @if(intro.length > 0) {
           <small><div innerHTML="{{intro }}"></div></small>
         }
-      }        
+      }
 
       <ion-datetime
         #datetimePicker
@@ -31,8 +37,8 @@ import { Header } from './header';
         firstDayOfWeek="1"
         [showDefaultButtons]="true"
         [showAdjacentDays]="true"
-        doneText="{{'@general.operation.change.ok' }}"
-        cancelText="{{'@general.operation.change.cancel' }}"
+        [doneText]="i18n().ok"
+        [cancelText]="i18n().cancel"
         size="cover"
         [preferWheel]="false"
         style="height: 380px; --padding-start: 0;"
@@ -48,7 +54,7 @@ export class DateSelectModal {
 
   // inputs
   public isoDate = input(getTodayStr(DateFormat.IsoDate)); // mandatory date in isoDate format (yyyy-MM-dd)
-  public headerTitle = input('@general.operation.select.date');
+  public i18n = input<DateSelectModalI18n>({ title: 'Datum auswählen', ok: 'OK', cancel: 'Abbrechen' });
   public locale = input('de-ch'); // locale for the input field, used for formatting
   public intro = input<string>();
 

@@ -5,16 +5,22 @@ import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
 
 import { Header } from './header';
 
+export interface DateTimeSelectModalI18n {
+  title: string;
+  ok: string;
+  cancel: string;
+}
+
 @Component({
   selector: 'bk-date-time-select-modal',
   standalone: true,
   imports: [
-    
+
     Header,
     IonContent, IonDatetime
   ],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: i18n().title }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-datetime
         #datetimePicker
@@ -24,8 +30,8 @@ import { Header } from './header';
         locale="de-ch"
         firstDayOfWeek="1"
         [showDefaultButtons]="true"
-        doneText="{{'@general.operation.change.ok' }}"
-        cancelText="{{'@general.operation.change.cancel' }}"
+        [doneText]="i18n().ok"
+        [cancelText]="i18n().cancel"
         size="cover"
         [preferWheel]="false"
         style="height: 480px; --padding-start: 0;"
@@ -40,7 +46,7 @@ export class DateTimeSelectModal {
   protected readonly datetimePicker = viewChild.required<IonDatetime>('datetimePicker');
 
   public isoDateTime = input(getTodayStr(DateFormat.IsoDate) + 'T08:00:00');
-  public headerTitle = input('@general.operation.select.date');
+  public i18n = input<DateTimeSelectModalI18n>({ title: 'Datum & Zeit auswählen', ok: 'OK', cancel: 'Abbrechen' });
 
   protected async onDateTimeChange(event: any): Promise<void> {
     const selected = event.detail.value || this.datetimePicker().value || this.isoDateTime();

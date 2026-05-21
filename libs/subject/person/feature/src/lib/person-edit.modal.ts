@@ -3,7 +3,7 @@ import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { AvatarToolbar } from '@bk2/avatar-feature';
@@ -35,14 +35,14 @@ import { PersonStore } from './person.store';
   providers: [PersonStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} } `],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
         <bk-avatar-toolbar
             key="{{parentKey()}}"
-            title="{{ toolbarTitle() }}"
+            [title]="toolbarTitle()"
             modelType="person"
             [readOnly]="isReadOnly()"
             (imageSelected)="onImageSelected($event)"
@@ -89,6 +89,12 @@ import { PersonStore } from './person.store';
 export class PersonEditModal {
   protected readonly store = inject(PersonStore);
   private readonly modalController = inject(ModalController);
+
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   // inputs
   public person = input.required<PersonModel>();

@@ -2,7 +2,7 @@ import { Component, computed, inject, linkedSignal, signal } from '@angular/core
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CalEventModel, PersonModelName, ReservationApplyModel, ResourceModelName, RoleName } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { getAvatarName, hasRole } from '@bk2/shared-util-core';
 
 import { CalEventEditModal } from '@bk2/calevent-feature';
@@ -23,9 +23,9 @@ import { ReservationStore } from './reservation.store';
   providers: [ReservationStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" [showCloseButton]="false" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" [showCloseButton]="false" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
@@ -33,15 +33,12 @@ import { ReservationStore } from './reservation.store';
           @if(resourceAvatar(); as resource) {
             <bk-relationship-toolbar
               relType="reservation"
-              title="@reservation.reldesc"
               [subjectAvatar]="resource"
               [subjectDefaultIcon]="subjectDefaultIcon()"
               [objectAvatar]="reserver"
               [objectDefaultIcon]="objectDefaultIcon()"
               [currentUser]="currentUser"
               [readOnly]="true"
-              icon="reservation"
-              relLabel="Reservation"
             />
           }
         }
@@ -64,7 +61,7 @@ import { ReservationStore } from './reservation.store';
 })
 export class ReservationApplyModal {
   private readonly modalController = inject(ModalController);
-  private readonly store = inject(ReservationStore);
+  protected readonly store = inject(ReservationStore);
 
   protected readonly currentUser = computed(() => this.store.currentUser());
   private resource = computed(() => this.store.defaultResource());
@@ -80,6 +77,11 @@ export class ReservationApplyModal {
 
   // derived signals
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(false, undefined));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   protected readonly toolbarTitle = computed(() => this.store.i18n.reldesc1() + this.resourceName + this.store.i18n.reldesc1() + this.reserverName());
   protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.reserver);
   protected readonly reserverName = computed(() => this.reserverAvatar() ? getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay) : '');

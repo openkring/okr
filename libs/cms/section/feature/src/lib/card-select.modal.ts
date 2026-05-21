@@ -4,8 +4,10 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
 import { ENV } from '@bk2/shared-config';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { I18nService } from '@bk2/shared-i18n';
+import { Header } from '@bk2/shared-ui';
 
-import { Header } from './header';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-card-select-modal',
@@ -21,7 +23,7 @@ import { Header } from './header';
   `],
   template: `
     @if(slug()) {
-      <bk-header [title]="headerTitle()" [isModal]="true" />
+      <bk-header [i18n]="{ title: i18n().headerTitle() }" [isModal]="true" />
       <ion-content>
         <ion-grid>
           <ion-row>
@@ -47,6 +49,7 @@ import { Header } from './header';
 export class CardSelectModal {
   private readonly env = inject(ENV);
   private readonly modalController = inject(ModalController);
+  private readonly i18nService = inject(I18nService);
 
   // inputs
   public category = input.required<CategoryListModel>();
@@ -56,7 +59,15 @@ export class CardSelectModal {
   protected i18nBase = computed(() => this.category().i18nBase);
   protected items = computed(() => this.category().items);
   protected path = computed(() => `${this.env.services.imgixBaseUrl}/logo/${this.slug()}/`);
-  protected headerTitle = computed(() => `@general.operation.select.${this.slug()}`);
+
+  protected i18n = computed(() => {
+    return this.i18nService.translateAll({
+      headerTitle:        PFX + 'select.' + this.slug(),
+      cardTitle:          PFX + this.items.name + '.label',
+      cancel:             '@cancel',
+      ok:                 '@ok',
+    })
+  });
   
   public async select(item: CategoryItemModel): Promise<boolean> {
     return await this.modalController.dismiss(item, 'confirm');

@@ -2,11 +2,12 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { FolderModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { FolderForm } from '@bk2/folder-ui';
+import { FolderStore } from './folder.store';
 
 @Component({
   selector: 'bk-folder-edit-modal',
@@ -15,10 +16,11 @@ import { FolderForm } from '@bk2/folder-ui';
     Header, ChangeConfirmation, FolderForm,
     IonContent
   ],
+  providers: [FolderStore],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [showCancel]="true" [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {

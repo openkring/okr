@@ -1,15 +1,17 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, NotesInput, NumberInput, TextInput } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
 import { FullNamePipe } from '@bk2/shared-pipes';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { workrelValidations } from '@bk2/relationship-workrel-util';
+import { PFX } from './scope';
 
 export interface WorkrelFormI18n {
   selectLabel: string;
@@ -45,7 +47,7 @@ export interface WorkrelFormI18n {
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -70,7 +72,7 @@ export interface WorkrelFormI18n {
               </ion-col>
               @if(type() === 'custom') {
                 <ion-col size="12" size-md="6">
-                    <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
+                    <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               }
             </ion-row>
@@ -101,13 +103,13 @@ export interface WorkrelFormI18n {
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="validFrom" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="validTo" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                <bk-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-number-input name="order" [value]="order()" (valueChange)="onFieldChange('order', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                <bk-number-input [i18n]="orderI18n()" [value]="order()" (valueChange)="onFieldChange('order', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
@@ -125,10 +127,10 @@ export interface WorkrelFormI18n {
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-              <bk-number-input name="price" [value]="price()" (valueChange)="onFieldChange('price', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+              <bk-number-input [i18n]="priceI18n()" [value]="price()" (valueChange)="onFieldChange('price', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-              <bk-text-input name="currency" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]="3" [readOnly]="isReadOnly()" />
+              <bk-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]="3" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
@@ -143,7 +145,7 @@ export interface WorkrelFormI18n {
       }
 
       @if(hasRole('admin')) {
-        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
@@ -168,6 +170,27 @@ export class WorkrelForm {
   public valid = output<boolean>();
   public selectPerson = output<void>();
   public selectOrg = output<void>();
+
+  // i18n
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label: PFX + 'bkey.label', bkey_placeholder: PFX + 'bkey.placeholder', bkey_helper: PFX + 'bkey.helper',
+    label_label: PFX + 'label.label', label_placeholder: PFX + 'label.placeholder', label_helper: PFX + 'label.helper',
+    currency_label: PFX + 'currency.label', currency_placeholder: PFX + 'currency.placeholder', currency_helper: PFX + 'currency.helper',
+    order_label: PFX + 'order.label', order_placeholder: PFX + 'order.placeholder', order_helper: PFX + 'order.helper',
+    price_label: PFX + 'price.label', price_placeholder: PFX + 'price.placeholder', price_helper: PFX + 'price.helper',
+    notes_label: PFX + 'notes.label', notes_placeholder: PFX + 'notes.placeholder',
+    validFrom_label: PFX + 'validFrom.label', validFrom_placeholder: PFX + 'validFrom.placeholder', validFrom_helper: PFX + 'validFrom.helper',
+    validTo_label:   PFX + 'validTo.label',   validTo_placeholder:   PFX + 'validTo.placeholder',   validTo_helper:   PFX + 'validTo.helper',
+  });
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: this.fieldI18n.bkey_placeholder(), helper: this.fieldI18n.bkey_helper() } as TextInputI18n));
+  protected labelI18n = computed(() => ({ name: 'label', label: this.fieldI18n.label_label(), placeholder: this.fieldI18n.label_placeholder(), helper: this.fieldI18n.label_helper() } as TextInputI18n));
+  protected currencyI18n = computed(() => ({ name: 'currency', label: this.fieldI18n.currency_label(), placeholder: this.fieldI18n.currency_placeholder(), helper: this.fieldI18n.currency_helper() } as TextInputI18n));
+  protected orderI18n = computed(() => ({ name: 'order', label: this.fieldI18n.order_label(), placeholder: this.fieldI18n.order_placeholder(), helper: this.fieldI18n.order_helper() } as NumberInputI18n));
+  protected priceI18n = computed(() => ({ name: 'price', label: this.fieldI18n.price_label(), placeholder: this.fieldI18n.price_placeholder(), helper: this.fieldI18n.price_helper() } as NumberInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
+  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.fieldI18n.validFrom_label(), placeholder: this.fieldI18n.validFrom_placeholder(), helper: this.fieldI18n.validFrom_helper() } as DateInputI18n));
+  protected validToI18n = computed(() => ({ name: 'validTo', label: this.fieldI18n.validTo_label(), placeholder: this.fieldI18n.validTo_placeholder(), helper: this.fieldI18n.validTo_helper() } as DateInputI18n));
 
   // validation and errors
   protected readonly suite = workrelValidations;

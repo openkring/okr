@@ -1,5 +1,76 @@
 {
   "copy": {
     "conf": "Der Wert wurde kopiert."
+  },
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "fullPath": {
+    "label": "Dateipfad",
+    "placeholder": "",
+    "helper": ""
+  },
+  "title": {
+    "label": "Titel",
+    "placeholder": "Titel eingeben",
+    "helper": ""
+  },
+  "altText": {
+    "label": "Alternativtext",
+    "placeholder": "",
+    "helper": ""
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": ""
+  },
+  "mimeType": {
+    "label": "MIME-Typ",
+    "placeholder": "",
+    "helper": ""
+  },
+  "authorKey": {
+    "label": "Autor-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "authorName": {
+    "label": "Autor",
+    "placeholder": "",
+    "helper": ""
+  },
+  "locationKey": {
+    "label": "Ort-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "hash": {
+    "label": "Hash",
+    "placeholder": "",
+    "helper": ""
+  },
+  "priorVersionKey": {
+    "label": "Vorgänger-Schlüssel",
+    "placeholder": "",
+    "helper": "Schlüssel der Vorgängerversion"
+  },
+  "version": {
+    "label": "Version",
+    "placeholder": "",
+    "helper": "Versionsnummer des Dokuments"
+  },
+  "description": { "label": "Beschreibung", "placeholder": "" },
+  "dateOfDocCreation": {
+    "label": "Erstellungsdatum",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
+  },
+  "dateOfDocLastUpdate": {
+    "label": "Letzte Aktualisierung",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
   }
 }

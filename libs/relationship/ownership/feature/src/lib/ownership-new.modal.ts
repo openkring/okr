@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { OwnershipNewForm } from './ownership-new.form';
@@ -18,9 +18,9 @@ import { OwnershipStore } from './ownership.store';
   ],
   providers: [OwnershipStore],
   template: `
-    <bk-header [title]="store.i18n.create_label()" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.create_label() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content>
       @if(formData(); as formData) {
@@ -53,6 +53,11 @@ export class OwnershipNewModal {
 
   // derived signals
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {

@@ -20,7 +20,7 @@ import { SectionStore } from './section.store';
       [searchTerm]="searchTerm()"
       (searchTermChange)="sectionStore.setSelSearchTerm($event)"
       [isSearchable]="true"
-      title="@content.section.operation.select.label"
+      [i18n]="{ title: '@content.section.operation.select.label' }"
       [isModal]="true"
     />
     <ion-content>

@@ -28,7 +28,7 @@ import { I18nOverrideEditModal } from './i18n-override-edit.modal';
   ],
   providers: [I18nOverrideStore],
   template: `
-    <bk-header title="@i18n.override.title" />
+    <bk-header [i18n]="{ title: '@i18n.override.title' }" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar

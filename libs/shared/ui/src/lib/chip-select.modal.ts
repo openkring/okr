@@ -12,7 +12,7 @@ import { Header } from './header';
     IonContent, IonChip, IonLabel
   ],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     <ion-content class="ion-padding">
       @for (chip of chips(); track chip) {
         <ion-chip color="primary" (click)="select(chip)">

@@ -87,7 +87,13 @@ export const OwnershipStore = signalStore(
       as_delete:            PFX + 'actionsheet.delete',
       as_end:               PFX + 'actionsheet.end',
       cancel:               '@cancel',
-      ok:                   '@ok'
+      ok:                   '@ok',
+      validFrom_label:        PFX + 'validFrom.label',
+      validFrom_placeholder:           PFX + 'validFrom.placeholder',
+      validFrom_helper:                PFX + 'validFrom.helper',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     // all ownerships of this tenant

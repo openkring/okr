@@ -14,7 +14,7 @@ import { AocStatisticsStore } from './aoc-statistics.store';
   ],
   providers: [AocStatisticsStore],
   template: `
-    <bk-header [title]="aocStatisticsStore.i18n.statistics_header()" />
+    <bk-header [i18n]="{ title: aocStatisticsStore.i18n.statistics_header() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>

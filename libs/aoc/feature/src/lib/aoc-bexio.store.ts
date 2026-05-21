@@ -126,6 +126,7 @@ export const AocBexioStore = signalStore(
       index_title:             PFX + 'bexio.index.title',
       index_content:           PFX + 'bexio.index.content',
       index_button:            PFX + 'bexio.index.button',
+      index_contactFilter_label: PFX + 'bexio.index.contactFilter.label',
       vendor_title:            PFX + 'bexio.vendor.title',
       vendor_subtitle:         PFX + 'bexio.vendor.subtitle',
       vendor_status_initial:   PFX + 'bexio.vendor.status.initial',

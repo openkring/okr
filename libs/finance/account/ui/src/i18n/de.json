@@ -1,0 +1,8 @@
+{
+  "bkey":     { "label": "Dok.-Schlüssel",        "placeholder": "",                    "helper": "" },
+  "id":       { "label": "Konto-ID",              "placeholder": "Konto-ID eingeben",   "helper": "" },
+  "name":     { "label": "Name",                  "placeholder": "Name eingeben",       "helper": "" },
+  "label":    { "label": "Bezeichnung",           "placeholder": "Bezeichnung eingeben","helper": "" },
+  "parentId": { "label": "Übergeordnetes Konto",  "placeholder": "",                    "helper": "" },
+  "notes":    { "label": "Notizen",               "placeholder": "" }
+}

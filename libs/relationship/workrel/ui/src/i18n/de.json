@@ -1,5 +1,33 @@
 {
   "select": {
     "label": "Auswählen"
-  }
+  },
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "Bezeichnung eingeben",
+    "helper": ""
+  },
+  "currency": {
+    "label": "Währung",
+    "placeholder": "CHF",
+    "helper": ""
+  },
+  "order": {
+    "label": "Reihenfolge",
+    "placeholder": "",
+    "helper": ""
+  },
+  "price": {
+    "label": "Preis",
+    "placeholder": "",
+    "helper": ""
+  },
+  "notes": { "label": "Notizen", "placeholder": "" },
+  "validFrom": { "label": "Gültig ab", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "validTo": { "label": "Gültig bis", "placeholder": "TT.MM.JJJJ", "helper": "" }
 }

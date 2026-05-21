@@ -65,5 +65,10 @@
   "and": "und",
   "areTypeing": "tippen...",
   "othersTypeing": "andere tippen...",
-  "severalTypeing": "Mehrere Personen tippen..."
+  "severalTypeing": "Mehrere Personen tippen...",
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
+  }
 }

@@ -123,5 +123,250 @@
     "coordinates": {
       "label": "Koordinaten"
     }
+  },
+
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "title": {
+    "label": "Titel",
+    "placeholder": "Titel eingeben",
+    "helper": ""
+  },
+  "subTitle": {
+    "label": "Untertitel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "colSize": {
+    "label": "Spaltenbreite",
+    "placeholder": "12",
+    "helper": ""
+  },
+  "youtubeId": {
+    "label": "YouTube-ID",
+    "placeholder": "",
+    "helper": ""
+  },
+  "width": {
+    "label": "Breite",
+    "placeholder": "560",
+    "helper": ""
+  },
+  "height": {
+    "label": "Höhe",
+    "placeholder": "315",
+    "helper": ""
+  },
+  "frameborder": {
+    "label": "Rahmenbreite",
+    "placeholder": "0",
+    "helper": ""
+  },
+  "baseUrl": {
+    "label": "Basis-URL",
+    "placeholder": "https://",
+    "helper": ""
+  },
+  "style": {
+    "label": "CSS-Stil",
+    "placeholder": "",
+    "helper": ""
+  },
+  "template": {
+    "label": "Vorlage",
+    "placeholder": "auto auto",
+    "helper": ""
+  },
+  "gap": {
+    "label": "Abstand",
+    "placeholder": "1px",
+    "helper": ""
+  },
+  "backgroundColor": {
+    "label": "Hintergrundfarbe",
+    "placeholder": "#FFFFFF",
+    "helper": ""
+  },
+  "padding": {
+    "label": "Innenabstand",
+    "placeholder": "0",
+    "helper": ""
+  },
+  "moreUrl": {
+    "label": "Weitere URL",
+    "placeholder": "https://...",
+    "helper": ""
+  },
+  "id": {
+    "label": "ID",
+    "placeholder": "",
+    "helper": ""
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": ""
+  },
+  "description": {
+    "label": "Beschreibung",
+    "placeholder": "",
+    "helper": ""
+  },
+  "textAlign": {
+    "label": "Textausrichtung",
+    "placeholder": "left",
+    "helper": ""
+  },
+  "fontSize": {
+    "label": "Schriftgrösse",
+    "placeholder": "16px",
+    "helper": ""
+  },
+  "textColor": {
+    "label": "Textfarbe",
+    "placeholder": "#000000",
+    "helper": ""
+  },
+  "border": {
+    "label": "Rahmen",
+    "placeholder": "",
+    "helper": ""
+  },
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "Bezeichnung eingeben",
+    "helper": ""
+  },
+  "icon": {
+    "label": "Symbol",
+    "placeholder": "Symbol-Name",
+    "helper": ""
+  },
+  "directory": {
+    "label": "Verzeichnis",
+    "placeholder": "",
+    "helper": ""
+  },
+  "actionUrl": {
+    "label": "Aktions-URL",
+    "placeholder": "https://...",
+    "helper": ""
+  },
+  "altText": {
+    "label": "Alt-Text",
+    "placeholder": "",
+    "helper": ""
+  },
+  "overlay": {
+    "label": "Überblendtext",
+    "placeholder": "",
+    "helper": ""
+  },
+  "bkey": {
+    "label": "Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "linkedSection": {
+    "label": "Verknüpfte Sektion",
+    "placeholder": "",
+    "helper": ""
+  },
+  "imgIxParams": {
+    "label": "ImgIx-Parameter",
+    "placeholder": "",
+    "helper": ""
+  },
+  "sizes": {
+    "label": "Grössen",
+    "placeholder": "(max-width: 1240px) 50vw, 300px",
+    "helper": ""
+  },
+  "borderRadius": {
+    "label": "Eckenradius",
+    "placeholder": "8px",
+    "helper": ""
+  },
+  "autostart": { "label": "Automatisch starten", "helper": "" },
+  "enableHighAccuracy": { "label": "Hohe Genauigkeit", "helper": "" },
+  "showPastEvents": { "label": "Vergangene Veranstaltungen anzeigen", "helper": "" },
+  "showUpcomingEvents": { "label": "Kommende Veranstaltungen anzeigen", "helper": "" },
+  "showEventTime": { "label": "Zeit anzeigen", "helper": "" },
+  "showEventLocation": { "label": "Ort anzeigen", "helper": "" },
+  "showChannelList": { "label": "Kanalliste anzeigen", "helper": "" },
+  "showPastItems": { "label": "Vergangene Einträge anzeigen", "helper": "" },
+  "showUpcomingItems": { "label": "Kommende Einträge anzeigen", "helper": "" },
+  "recursive": { "label": "Unterordner einbeziehen", "helper": "" },
+  "showVideos": { "label": "Videos anzeigen", "helper": "" },
+  "showStreamingVideos": { "label": "Streaming-Videos anzeigen", "helper": "" },
+  "showDocs": { "label": "Dokumente anzeigen", "helper": "" },
+  "showPdfs": { "label": "PDFs anzeigen", "helper": "" },
+  "showAvatar": { "label": "Avatar anzeigen", "helper": "" },
+  "showName": { "label": "Name anzeigen", "helper": "" },
+  "showDescription": { "label": "Beschreibung anzeigen", "helper": "" },
+  "showLabel": { "label": "Beschriftung anzeigen", "helper": "" },
+  "useCurrentLocationAsCenter": { "label": "Aktuellen Standort als Mittelpunkt", "helper": "" },
+  "isThumbnail": { "label": "Vorschaubild", "helper": "" },
+  "imageFill": { "label": "Füllen", "helper": "" },
+  "hasPriority": { "label": "Priorität", "helper": "" },
+  "maxEvents": { "label": "Max. Ereignisse", "placeholder": "", "helper": "" },
+  "maxItems": { "label": "Max. Einträge", "placeholder": "", "helper": "" },
+  "iconSize": { "label": "Grösse", "placeholder": "", "helper": "" },
+  "latitude": { "label": "Breitengrad", "placeholder": "", "helper": "" },
+  "longitude": { "label": "Längengrad", "placeholder": "", "helper": "" },
+  "zoomFactor": { "label": "Zoom-Faktor", "placeholder": "", "helper": "" },
+  "notes": { "label": "Notizen", "placeholder": "" },
+  "albumStyle":   { "label": "Album-Stil" },
+  "effect":       { "label": "Effekt" },
+  "shape":        { "label": "Form" },
+  "fill":         { "label": "Füllung" },
+  "color":        { "label": "Farbe" },
+  "buttonAction": { "label": "Button-Aktion" },
+  "chatType":     { "label": "Chat-Typ" },
+  "position":     { "label": "Position" },
+  "iconSlot":     { "label": "Symbol-Platz" },
+  "imageType":    { "label": "Bildtyp" },
+  "imageSlot":    { "label": "Bild-Platz" },
+  "imageAction":  { "label": "Bild-Aktion" },
+  "peopleType":   { "label": "Personentyp" },
+  "nameDisplay":  { "label": "Namensanzeige" },
+  "exportFormat": { "label": "Exportformat" },
+  "fontWeight":   { "label": "Schriftstärke" },
+  "showTitleAs":  { "label": "Titel anzeigen als" },
+  "cms": {
+    "section": {
+      "ui": {
+        "image": {
+          "label": {
+            "label": "Bezeichnung",
+            "placeholder": "Bezeichnung eingeben",
+            "helper": ""
+          },
+          "url": {
+            "label": "URL",
+            "placeholder": "https://...",
+            "helper": ""
+          },
+          "actionUrl": {
+            "label": "Aktions-URL",
+            "placeholder": "https://...",
+            "helper": ""
+          },
+          "altText": {
+            "label": "Alt-Text",
+            "placeholder": "",
+            "helper": ""
+          },
+          "overlay": {
+            "label": "Überblendtext",
+            "placeholder": "",
+            "helper": ""
+          }
+        }
+      }
+    }
   }
 }

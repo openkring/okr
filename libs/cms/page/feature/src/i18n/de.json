@@ -50,5 +50,10 @@
   "view": "Webseiten-Konfiguration anzeigen",
   "show": "Webseite anzeigen",
   "edit": "Webseite bearbeiten",
-  "create": "Neue Seite erstellen"
+  "create": "Neue Seite erstellen",
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
+  }
 }

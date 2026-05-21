@@ -39,9 +39,12 @@ export const FolderStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      delete_confirm: '@folder.operation.delete.confirm',
-      plural:         '@folder.plural',
-      empty:          '@folder.empty',
+      delete_confirm:                  '@folder.operation.delete.confirm',
+      plural:                          '@folder.plural',
+      empty:                           '@folder.empty',
+      changeConfirmation_ok:           '@folder/feature.changeConfirmation.ok',
+      changeConfirmation_cancel:       '@folder/feature.changeConfirmation.cancel',
+      changeConfirmation_confirmation: '@folder/feature.changeConfirmation.confirmation',
     }),
   })),
   withProps((store) => ({

@@ -36,7 +36,7 @@ const ContextDiagramStore = signalStore(
   ],
   providers: [ContextDiagramStore],
   template: `
-    <bk-header title="@cms.contextDiagram.config.title" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@cms.contextDiagram.config.title' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showAvatar">

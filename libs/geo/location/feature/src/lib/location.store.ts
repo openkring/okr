@@ -62,7 +62,10 @@ export const LocationStore = signalStore(
       copy_coord:           PFX + 'copy.coord',
       copy_w3w:             PFX + 'copy.w3w',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
     locationsResource: rxResource({
       stream: () => {

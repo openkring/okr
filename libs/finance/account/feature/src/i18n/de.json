@@ -13,5 +13,10 @@
     "edit": "Konto editieren",
     "create": "Neues Konto eröffnen",
     "delete": "Konto löschen"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

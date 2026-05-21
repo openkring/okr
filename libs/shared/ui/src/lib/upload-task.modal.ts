@@ -49,7 +49,7 @@ interface UploadState {
     .status-error { color: var(--ion-color-danger); }
   `],
   template: `
-    <bk-header [title]="title()" [isModal]="true" />
+    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content>
       <ion-list lines="none">
         @for(item of uploadStates(); track item.name + $index) {

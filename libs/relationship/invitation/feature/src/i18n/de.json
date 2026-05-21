@@ -26,5 +26,10 @@
     "edit": "Einladung ändern",
     "create": "Neue Einladung erstellen",
     "delete": "Einladung löschen"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

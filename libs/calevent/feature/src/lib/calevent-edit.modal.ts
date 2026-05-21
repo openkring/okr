@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup } from '@ionic/angular/standalone';
 
 import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { CalendarSelectModal } from '@bk2/shared-feature';
 
@@ -26,9 +26,9 @@ import { CalEventStore } from './calevent.store';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   providers: [CalEventStore],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
@@ -89,6 +89,11 @@ export class CalEventEditModal {
   protected formDirty = linkedSignal(() => this.initialDirty());
   protected formValid = linkedSignal(() => this.initialDirty());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   protected formData = linkedSignal(() => safeStructuredClone(this.calevent()));
   protected showForm = signal(true);
 

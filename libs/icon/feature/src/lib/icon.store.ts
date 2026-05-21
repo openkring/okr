@@ -61,7 +61,10 @@ export const IconStore = signalStore(
       as_delete:        PFX + 'actionsheet.delete',
       as_copy:          PFX + 'actionsheet.copy',
       cancel:           '@cancel',
-      ok:               '@ok'
+      ok:               '@ok',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
   })),
   withProps((store) => ({

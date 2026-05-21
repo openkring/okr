@@ -13,5 +13,10 @@
     "view": "Details ansehen",
     "delete": "Transfer löschen",
     "create": "Transfer erstellen"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

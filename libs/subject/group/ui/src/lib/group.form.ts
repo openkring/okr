@@ -1,15 +1,17 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { LowercaseWordMask } from '@bk2/shared-config';
 import { WORD_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopy, Checkbox, Chips, NotesInput, StringSelect, TextInput } from '@bk2/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { Avatars } from '@bk2/avatar-ui';
 import { groupValidations } from '@bk2/subject-group-util';
+import { PFX } from './scope';
 
 export interface GroupFormI18n {
   attributes: string;
@@ -50,9 +52,8 @@ export interface GroupFormI18n {
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="bkey"
+                  <bk-text-input [i18n]="bkeyI18n()"
                     [value]="bkey()"
-                    label="bkey"
                     [readOnly]="true"
                     [copyable]="true"
                   />
@@ -60,7 +61,7 @@ export interface GroupFormI18n {
               }
               <ion-col size="12" size-md="6">
                 @if(isNew()) {
-                  <bk-text-input name="groupId"
+                  <bk-text-input [i18n]="groupIdI18n()"
                     [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)"
                     [maxLength]="maxWordLength"
                     [mask]="mask"
@@ -70,20 +71,20 @@ export interface GroupFormI18n {
                 } @else {
                   <ion-item lines="none">
                     <ion-label>{{ i18n().groupId }}: {{ bkey() }}</ion-label>
-                    <bk-button-copy [value]="bkey()" />
+                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="bkey()" />
                   </ion-item>
                 }                                     
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-text-input
-                  name="groupName"
+                  [i18n]="nameI18n()"
                   [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=50
                   [readOnly]="isReadOnly()"
                   [showHelper]="true"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="icon"
+                <bk-text-input [i18n]="iconI18n()"
                   [value]="icon()" (valueChange)="onFieldChange('icon', $event)"
                   [maxLength]=20
                   [readOnly]="isReadOnly()"
@@ -115,49 +116,49 @@ export interface GroupFormI18n {
           <ion-grid>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="hasContent"
+                <bk-checkbox [i18n]="hasContentI18n()"
                   [checked]="hasContent()" (checkedChange)="onFieldChange('hasContent', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="hasChat"
+                <bk-checkbox [i18n]="hasChatI18n()"
                   [checked]="hasChat()" (checkedChange)="onFieldChange('hasChat', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="hasCalendar"
+                <bk-checkbox [i18n]="hasCalendarI18n()"
                   [checked]="hasCalendar()" (checkedChange)="onFieldChange('hasCalendar', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="hasTasks"
+                <bk-checkbox [i18n]="hasTasksI18n()"
                   [checked]="hasTasks()" (checkedChange)="onFieldChange('hasTasks', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="hasFiles"
+                <bk-checkbox [i18n]="hasFilesI18n()"
                   [checked]="hasFiles()" (checkedChange)="onFieldChange('hasFiles', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="hasAlbum"
+                <bk-checkbox [i18n]="hasAlbumI18n()"
                   [checked]="hasAlbum()" (checkedChange)="onFieldChange('hasAlbum', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="hasMembers"
+                <bk-checkbox [i18n]="hasMembersI18n()"
                   [checked]="hasMembers()" (checkedChange)="onFieldChange('hasMembers', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
@@ -179,7 +180,7 @@ export interface GroupFormI18n {
             <ion-grid>
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input name="visibility"
+                  <bk-text-input [i18n]="visibilityI18n()"
                     [value]="visibility()" (valueChange)="onFieldChange('visibility', $event)"
                     [maxLength]=100
                     [readOnly]="isReadOnly()"
@@ -187,11 +188,10 @@ export interface GroupFormI18n {
                   />
                 </ion-col>
                 <ion-col size="12">
-                  <bk-string-select name="notifyType"
+                  <bk-string-select [i18n]="notifyTypeI18n()"
                     [selectedString]="notifyType()" (selectedStringChange)="onFieldChange('notifyType', $event)"
                     [stringList]="notifyTypeOptions"
                     [readOnly]="isReadOnly()"
-                    [showHelper]="true"
                   />
                 </ion-col>
               </ion-row>
@@ -209,7 +209,7 @@ export interface GroupFormI18n {
       }
 
       @if(hasRole('admin')) { 
-        <bk-notes-input name="notes"
+        <bk-notes-input [i18n]="notesI18n()"
           [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
           [readOnly]="isReadOnly()"
         />
@@ -219,6 +219,58 @@ export interface GroupFormI18n {
   `
 })
 export class GroupForm {
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label:        PFX + 'bkey.label',
+    bkey_placeholder:  PFX + 'bkey.placeholder',
+    bkey_helper:       PFX + 'bkey.helper',
+    groupId_label:     PFX + 'groupId.label',
+    groupId_placeholder: PFX + 'groupId.placeholder',
+    groupId_helper:    PFX + 'groupId.helper',
+    name_label:        PFX + 'name.label',
+    name_placeholder:  PFX + 'name.placeholder',
+    name_helper:       PFX + 'name.helper',
+    icon_label:        PFX + 'icon.label',
+    icon_placeholder:  PFX + 'icon.placeholder',
+    icon_helper:       PFX + 'icon.helper',
+    visibility_label:  PFX + 'visibility.label',
+    visibility_placeholder: PFX + 'visibility.placeholder',
+    visibility_helper: PFX + 'visibility.helper',
+    notes_label:       PFX + 'notes.label',
+    notes_placeholder: PFX + 'notes.placeholder',
+    notifyType_label:    PFX + 'notifyType.label',
+    hasContent_label:    PFX + 'hasContent.label',
+    hasContent_helper:   PFX + 'hasContent.helper',
+    hasChat_label:       PFX + 'hasChat.label',
+    hasChat_helper:      PFX + 'hasChat.helper',
+    hasCalendar_label:   PFX + 'hasCalendar.label',
+    hasCalendar_helper:  PFX + 'hasCalendar.helper',
+    hasTasks_label:      PFX + 'hasTasks.label',
+    hasTasks_helper:     PFX + 'hasTasks.helper',
+    hasFiles_label:      PFX + 'hasFiles.label',
+    hasFiles_helper:     PFX + 'hasFiles.helper',
+    hasAlbum_label:      PFX + 'hasAlbum.label',
+    hasAlbum_helper:     PFX + 'hasAlbum.helper',
+    hasMembers_label:    PFX + 'hasMembers.label',
+    hasMembers_helper:   PFX + 'hasMembers.helper',
+    copy_conf:           '@shared/ui.copy.conf',
+  });
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.fieldI18n.copy_conf() } as ButtonCopyI18n));
+  protected bkeyI18n      = computed(() => ({ name: 'bkey',       label: this.fieldI18n.bkey_label(),       placeholder: this.fieldI18n.bkey_placeholder(),       helper: this.fieldI18n.bkey_helper()       } as TextInputI18n));
+  protected groupIdI18n   = computed(() => ({ name: 'groupId',    label: this.fieldI18n.groupId_label(),    placeholder: this.fieldI18n.groupId_placeholder(),    helper: this.fieldI18n.groupId_helper()    } as TextInputI18n));
+  protected nameI18n      = computed(() => ({ name: 'groupName',  label: this.fieldI18n.name_label(),       placeholder: this.fieldI18n.name_placeholder(),       helper: this.fieldI18n.name_helper()       } as TextInputI18n));
+  protected iconI18n      = computed(() => ({ name: 'icon',       label: this.fieldI18n.icon_label(),       placeholder: this.fieldI18n.icon_placeholder(),       helper: this.fieldI18n.icon_helper()       } as TextInputI18n));
+  protected visibilityI18n = computed(() => ({ name: 'visibility', label: this.fieldI18n.visibility_label(), placeholder: this.fieldI18n.visibility_placeholder(), helper: this.fieldI18n.visibility_helper() } as TextInputI18n));
+  protected notesI18n      = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
+  protected notifyTypeI18n  = computed(() => ({ name: 'notifyType',   label: this.fieldI18n.notifyType_label()  } as StringSelectI18n));
+  protected hasContentI18n  = computed(() => ({ name: 'hasContent',   label: this.fieldI18n.hasContent_label(),   helper: this.fieldI18n.hasContent_helper()   } as CheckboxI18n));
+  protected hasChatI18n     = computed(() => ({ name: 'hasChat',      label: this.fieldI18n.hasChat_label(),      helper: this.fieldI18n.hasChat_helper()      } as CheckboxI18n));
+  protected hasCalendarI18n = computed(() => ({ name: 'hasCalendar',  label: this.fieldI18n.hasCalendar_label(),  helper: this.fieldI18n.hasCalendar_helper()  } as CheckboxI18n));
+  protected hasTasksI18n    = computed(() => ({ name: 'hasTasks',     label: this.fieldI18n.hasTasks_label(),     helper: this.fieldI18n.hasTasks_helper()     } as CheckboxI18n));
+  protected hasFilesI18n    = computed(() => ({ name: 'hasFiles',     label: this.fieldI18n.hasFiles_label(),     helper: this.fieldI18n.hasFiles_helper()     } as CheckboxI18n));
+  protected hasAlbumI18n    = computed(() => ({ name: 'hasAlbum',     label: this.fieldI18n.hasAlbum_label(),     helper: this.fieldI18n.hasAlbum_helper()     } as CheckboxI18n));
+  protected hasMembersI18n  = computed(() => ({ name: 'hasMembers',   label: this.fieldI18n.hasMembers_label(),   helper: this.fieldI18n.hasMembers_helper()   } as CheckboxI18n));
+
   // inputs
   public readonly i18n = input<GroupFormI18n>({ attributes: '', groupId: '', display: '', access: '' });
   public formData = model.required<GroupModel>();

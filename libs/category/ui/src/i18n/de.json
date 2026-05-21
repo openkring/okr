@@ -1,0 +1,25 @@
+{
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "i18nBase": {
+    "label": "i18n Basis",
+    "placeholder": "",
+    "helper": "Basis-Schlüssel für Übersetzungen"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
+  },
+  "translateItems": {
+    "label": "Einträge übersetzen",
+    "helper": ""
+  }
+}

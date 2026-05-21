@@ -18,6 +18,11 @@
   "delete": {
     "confirm": "Normalerweise sollte eine Nutzung beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Nutzung wirklich löschen?"
   },
+  "validFrom": {
+    "label": "Gültig ab",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
+  },
   "actionsheet": {
     "title": "Wähle eine Aktion",
     "view": "Nutzungs Details ansehen",
@@ -25,5 +30,10 @@
     "create": "Neue Nutzung erstellen",
     "delete": "Nutzung löschen",
     "end": "Nutzung beenden"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

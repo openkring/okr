@@ -78,5 +78,10 @@
       "conf": "Der Kalender wurde hinzugefügt.",
       "error": "Der Kalender konnte nicht hinzugefügt werden."
     }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

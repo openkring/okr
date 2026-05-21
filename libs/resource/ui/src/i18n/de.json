@@ -1,0 +1,34 @@
+{
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "load": {
+    "label": "Beladung",
+    "placeholder": "",
+    "helper": ""
+  },
+  "keyNr": {
+    "label": "Schlüsselnummer",
+    "placeholder": "",
+    "helper": ""
+  },
+  "currentValue": {
+    "label": "Aktueller Wert",
+    "placeholder": "",
+    "helper": ""
+  },
+  "lockerNr": {
+    "label": "Spindnummer",
+    "placeholder": "",
+    "helper": ""
+  },
+  "description": { "label": "Beschreibung", "placeholder": "" },
+  "color": { "label": "Farbe" }
+}

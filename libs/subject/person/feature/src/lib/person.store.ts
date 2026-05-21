@@ -91,7 +91,10 @@ export const PersonStore = signalStore(
       empty:                    PFX + 'empty',
       create_label:             PFX + 'create.label',
       edit_label:               PFX + 'edit.label',
-      view_label:               PFX + 'view.label',      
+      view_label:               PFX + 'view.label',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     personUserModelResource: rxResource({

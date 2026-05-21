@@ -6,7 +6,15 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { AutoComplete, InputMode, INT_LENGTH } from '@bk2/shared-constants';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
-import { ButtonCopy } from './button-copy';
+import { ButtonCopy, ButtonCopyI18n } from './button-copy';
+
+export interface NumberInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+  helper: string;
+  copy_conf?: string;
+}
 
 @Component({
   selector: 'bk-number-input',
@@ -22,12 +30,12 @@ import { ButtonCopy } from './button-copy';
   <ion-item lines="none">
     <ion-input
       type="number"
-      [name]="name()"
+      [name]="i18n().name"
       [ngModel]="value()"
       (ngModelChange)="value.set($event)"
       labelPlacement="floating"
-      label="{{label()}}"
-      placeholder="{{placeholder()}}"
+      label="{{i18n().label}}"
+      placeholder="{{i18n().placeholder}}"
       [inputMode]="inputMode()"
       [counter]="!isReadOnly()"
       [maxlength]="maxLength()"
@@ -36,36 +44,32 @@ import { ButtonCopy } from './button-copy';
       [readonly]="isReadOnly()"
     />
     @if (isCopyable()) {
-      <bk-button-copy [value]="value()" tabindex="-1" />
+      <bk-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
     }
   </ion-item>
   @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
-      <ion-note>{{helper()}}</ion-note>
+      <ion-note>{{i18n().helper}}</ion-note>
     </ion-item>
   }
   `
 })
 export class NumberInput {
   // inputs
-  public value = model.required<number>(); // mandatory view model
-  public name = input.required<string>(); // mandatory name of the input field
+  public value = model.required<number>();
+  public i18n = input.required<NumberInputI18n>();
   public readOnly = input.required<boolean>();
-  public maxLength = input(INT_LENGTH); // max number of characters allowed
+  public maxLength = input(INT_LENGTH);
   public showHelper = input(false);
-  public autocomplete = input<AutoComplete>('off'); // Automated input assistance in filling out form field values
-  public copyable = input(false); // if true, a button to copy the value of the input field is shown
-  public inputMode = input<InputMode>('decimal'); // A hint to the browser for which keyboard to display.
-  public clearInput = input(true); // show an icon to clear the input field
+  public autocomplete = input<AutoComplete>('off');
+  public copyable = input(false);
+  public inputMode = input<InputMode>('decimal');
+  public clearInput = input(true);
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
-
-  // computed
-  protected label = computed(() => `@input.${this.name()}.label`);
-  protected placeholder = computed(() => `@input.${this.name()}.placeholder`);
-  protected helper = computed(() => `@input.${this.name()}.helper`);  
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? '' } as ButtonCopyI18n));
 }

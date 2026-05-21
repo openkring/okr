@@ -1,4 +1,57 @@
 {
   "select": "Auswählen",
-  "newDesc": "... möchte die folgende Resource reservieren:"
+  "newDesc": "... möchte die folgende Resource reservieren:",
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "participants": {
+    "label": "Teilnehmer",
+    "placeholder": "Teilnehmer eingeben",
+    "helper": ""
+  },
+  "area": {
+    "label": "Bereich",
+    "placeholder": "Bereich eingeben",
+    "helper": ""
+  },
+  "resref": {
+    "label": "Referenz",
+    "placeholder": "Referenz eingeben",
+    "helper": ""
+  },
+  "currency": {
+    "label": "Währung",
+    "placeholder": "Währung eingeben",
+    "helper": ""
+  },
+  "bhcomp": {
+    "label": "Firma",
+    "placeholder": "Firma eingeben",
+    "helper": ""
+  },
+  "durationMinutes": {
+    "label": "Dauer (Minuten)",
+    "placeholder": "",
+    "helper": ""
+  },
+  "price": {
+    "label": "Preis",
+    "placeholder": "",
+    "helper": ""
+  },
+  "description": { "label": "Beschreibung", "placeholder": "" },
+  "notes": { "label": "Notizen", "placeholder": "" },
+  "startDate": { "label": "Startdatum", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "endDate": { "label": "Enddatum", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "startTime":    { "label": "Startzeit", "placeholder": "HH:MM" },
+  "fullDay":      { "label": "Ganztägig", "helper": "" },
+  "usesTent":     { "label": "Zelt verwenden", "helper": "" },
+  "isConfirmed":  { "label": "Bestätigt", "helper": "" }
 }

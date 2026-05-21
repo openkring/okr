@@ -63,7 +63,10 @@ export const OrgStore = signalStore(
       delete_confirm:       PFX + 'delete.confirm',
       as_title:             PFX + 'actionsheet.title',
       as_edit:              PFX + 'actionsheet.edit',
-      as_delete:            PFX + 'actionsheet.delete'
+      as_delete:            PFX + 'actionsheet.delete',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     orgsResource: rxResource({

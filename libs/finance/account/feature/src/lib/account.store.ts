@@ -44,6 +44,9 @@ export const AccountStore = signalStore(
       as_edit:          PFX + 'actionsheet.edit',
       as_create:        PFX + 'actionsheet.create',
       as_delete:        PFX + 'actionsheet.delete',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
       cancel:           '@cancel',
       ok:               '@ok'
     }),

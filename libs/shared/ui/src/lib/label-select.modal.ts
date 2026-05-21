@@ -14,7 +14,7 @@ import { Header } from './header';
     IonIcon, IonContent, IonItem, IonLabel
   ],
   template: `
-      <bk-header [title]="title()" [isModal]="true" />
+      <bk-header [i18n]="{ title: title() }" [isModal]="true" />
       <ion-content>
         @for (label of labels(); track label; let i = $index) {
           <ion-item lines="none" (click)="select(i)">

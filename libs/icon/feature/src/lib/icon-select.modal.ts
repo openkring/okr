@@ -20,7 +20,7 @@ import { ICON_SETS, IconStore } from './icon.store';
     img.icon-grid { width: 70%; height: 70%; margin: 15%; object-fit: contain; }
   `],
   template: `
-    <bk-header title="@icon.operation.select.label" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@icon.operation.select.label' }" [isModal]="true" />
 
     <bk-list-filter
       [compact]="true"

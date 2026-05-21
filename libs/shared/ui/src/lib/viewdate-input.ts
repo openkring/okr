@@ -9,6 +9,12 @@ import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
 import { coerceBoolean, DateFormat, getTodayStr } from '@bk2/shared-util-core';
 import { ChAnyDate } from '@bk2/shared-config';
 
+export interface ViewDateInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+}
+
 /**
  * This ui component enables to input a date in ViewDate format (dd.MM.yyyy) in a text input field.
  * The input field is masked to accept only valid dates.
@@ -18,18 +24,17 @@ import { ChAnyDate } from '@bk2/shared-config';
   selector: 'bk-viewdate-input',
   standalone: true,
   imports: [
-    
     FormsModule, MaskitoDirective,
     IonInput
   ],
   template: `
     <ion-input
       type="text"
-      [name]="name()"
+      [name]="i18n().name"
       [(ngModel)]="viewDate"
       labelPlacement="floating"
-      label="{{ label() }}"
-      placeholder="{{ placeholder() }}"
+      [label]="i18n().label"
+      [placeholder]="i18n().placeholder"
       [inputMode]="inputMode()"
       [maxlength]="maxLength()"
       [autocomplete]="autocomplete()"
@@ -45,8 +50,8 @@ export class ViewDateInput {
 
   // inputs
   // optional date in ViewDate format (dd.MM.yyyy); default is today
-  public viewDate = model(getTodayStr(DateFormat.ViewDate)); 
-  public name = input.required<string>(); // mandatory name of the input field
+  public viewDate = model(getTodayStr(DateFormat.ViewDate));
+  public i18n = input.required<ViewDateInputI18n>();
   public readOnly = input.required<boolean>();
   public inputMode = input<InputMode>('numeric'); // A hint to the browser for which keyboard to display.
   public maxLength = input(DATE_LENGTH);
@@ -57,10 +62,6 @@ export class ViewDateInput {
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
-
-  // derived fields
-  protected label = computed(() => '@input.' + this.name() + '.label');
-  protected placeholder = computed(() => '@input.' + this.name() + '.placeholder');
 
   // passing constants to the template
   readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();

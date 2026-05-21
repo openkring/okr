@@ -1,4 +1,41 @@
 {
+  "roomId": {
+    "label": "Raum-ID",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "invite": {
+    "label": "Einladung",
+    "placeholder": "",
+    "helper": ""
+  },
+  "unreadCount": {
+    "label": "Ungelesene Nachrichten",
+    "placeholder": "",
+    "helper": ""
+  },
+  "topic": {
+    "label": "Thema",
+    "placeholder": ""
+  },
+  "avatar": {
+    "label": "Avatar-URL",
+    "placeholder": "https://...",
+    "helper": ""
+  },
+  "isDirect": {
+    "label": "Direktnachricht",
+    "helper": ""
+  },
+  "allowMultipleAnswers": {
+    "label": "Mehrfachauswahl erlauben",
+    "helper": ""
+  },
   "typeMessage": "Schreibe eine Nachricht...",
   "recordAudio": "Sprachnachricht aufnehmen",
   "videoCall": "Video-Chat starten",

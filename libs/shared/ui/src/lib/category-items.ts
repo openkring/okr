@@ -1,4 +1,3 @@
-
 import { Component, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
@@ -8,6 +7,13 @@ import { LowercaseWordMask } from '@bk2/shared-config';
 import { CategoryItemModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { die } from '@bk2/shared-util-core';
+
+export interface CategoryItemsI18n {
+  title: string;
+  subTitle: string;
+  add: string;
+  empty: string;
+}
 
 @Component({
   selector: 'bk-category-items',
@@ -23,8 +29,8 @@ import { die } from '@bk2/shared-util-core';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() }}</ion-card-title>
-        <ion-card-subtitle>{{ subTitle() }}</ion-card-subtitle>
+        <ion-card-title>{{ i18n().title }}</ion-card-title>
+        <ion-card-subtitle>{{ i18n().subTitle }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         <ion-item lines="none">
@@ -56,13 +62,13 @@ import { die } from '@bk2/shared-util-core';
             [counter]="true"
             [maxlength]="20"
             placeholder="ssssss"/>
-          <ion-button [disabled]="isDisabled()" (click)="add()">Add</ion-button>
+          <ion-button [disabled]="isDisabled()" (click)="add()">{{ i18n().add }}</ion-button>
         </ion-item>
 
         @if(items(); as items) {
           @if(items.length === 0) {
             <ion-item lines="none">
-              <ion-label>{{'@input.categoryItems.empty' }}</ion-label>
+              <ion-label>{{ i18n().empty }}</ion-label>
             </ion-item>
           } @else {
             <ion-list>
@@ -88,9 +94,8 @@ import { die } from '@bk2/shared-util-core';
   `
 })
 export class CategoryItems {
-  public items = model.required<CategoryItemModel[]>(); 
-  public title = input('@input.categoryItems.title');
-  public subTitle = input('@input.categoryItems.subTitle');
+  public items = model.required<CategoryItemModel[]>();
+  public i18n = input<CategoryItemsI18n>({ title: 'Kategorie-Einträge', subTitle: '', add: 'Hinzufügen', empty: 'Keine Einträge' });
   public wordMask = input(LowercaseWordMask);
   public hasAbbreviation = input<boolean>(false);
   public changed = output<CategoryItemModel[]>();

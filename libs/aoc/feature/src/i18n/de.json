@@ -21,7 +21,9 @@
       "label": "Umzuteilende (zu alte) Jugendliche auflisten",
       "button": "Anzeigen",
       "nodob": "Kein Geburtsdatum"
-    }
+    },
+    "club": { "label": "Verein" },
+    "year": { "label": "Jahr" }
   },
 
   "bexio": {
@@ -57,7 +59,8 @@
     "index": {
       "title": "Bexio Kontakte synchronisieren",
       "content": "Es werden alle Personen, Organisationen und ihre Mitgliedschaften mit der Default Organisation geladen. Die BexioID in diesen Entitäten wird abgeglichen. Dann werden alle Kontakte von Bexio geladen und in die gleiche Liste eingefügt und geprüft. Bei fehlenden Einträgen erscheint ein add Button für den Abgleich.",
-      "button": "Sync"
+      "button": "Sync",
+      "contactFilter": { "label": "Kontakt-Filter" }
     },
     "vendor": {
       "title": "Lieferanten (Vendor)",

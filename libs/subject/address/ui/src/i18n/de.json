@@ -1,0 +1,77 @@
+{
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "addressChannelLabel": {
+    "label": "Kanal-Bezeichnung",
+    "placeholder": "",
+    "helper": ""
+  },
+  "addressUsageLabel": {
+    "label": "Verwendung",
+    "placeholder": "",
+    "helper": ""
+  },
+  "streetName": {
+    "label": "Strasse",
+    "placeholder": "Strasse eingeben",
+    "helper": ""
+  },
+  "streetNumber": {
+    "label": "Nr.",
+    "placeholder": "",
+    "helper": ""
+  },
+  "addressValue2": {
+    "label": "Adresszusatz",
+    "placeholder": "",
+    "helper": ""
+  },
+  "countryCode": {
+    "label": "Land (ISO)",
+    "placeholder": "CH",
+    "helper": ""
+  },
+  "zipCode": {
+    "label": "PLZ",
+    "placeholder": "8000",
+    "helper": ""
+  },
+  "city": {
+    "label": "Ort",
+    "placeholder": "Ort eingeben",
+    "helper": ""
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": ""
+  },
+  "iban": {
+    "label": "IBAN",
+    "placeholder": "CH00 0000 0000 0000 0000 0",
+    "helper": ""
+  },
+  "email": {
+    "label": "E-Mail",
+    "placeholder": "E-Mail Adresse eingeben"
+  },
+  "phone": {
+    "label": "Telefon",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
+  },
+  "isFavorite": {
+    "label": "Favorit",
+    "helper": ""
+  },
+  "isCc": {
+    "label": "CC",
+    "helper": ""
+  }
+}

@@ -1,13 +1,15 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@bk2/shared-constants';
 import { CategoryListModel, RoleName, TaskModel, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, ErrorNote, NotesInput, TextInput } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { taskValidations } from '@bk2/task-util';
+import { PFX } from './scope';
 
 export interface TaskFormI18n {
   stateLabel: string;
@@ -27,9 +29,9 @@ export interface TaskFormI18n {
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm 
+    <form scVestForm
       [formValue]="formData()"
-      [suite]="suite" 
+      [suite]="suite"
       (dirtyChange)="dirty.emit($event)"
       (validChange)="valid.emit($event)"
       (formValueChange)="onFormChange($event)">
@@ -40,20 +42,20 @@ export interface TaskFormI18n {
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
             <ion-row>
-              <ion-col size="12"> 
-                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [autofocus]="true" [readOnly]="isReadOnly()" [copyable]="true" /> 
-                <bk-error-note [errors]="nameErrors()" />                                                                               
+              <ion-col size="12">
+                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [autofocus]="true" [readOnly]="isReadOnly()" [copyable]="true" />
+                <bk-error-note [errors]="nameErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="dueDate" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                <bk-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="completionDate" [storeDate]="completionDate()" (storeDateChange)="onFieldChange('completionDate', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
+                <bk-date-input [i18n]="completionDateI18n()" [storeDate]="completionDate()" (storeDateChange)="onFieldChange('completionDate', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -68,7 +70,7 @@ export interface TaskFormI18n {
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
                   <ion-label>{{ i18n().priorityLabel }}:</ion-label>
-                  <bk-cat-select [category]="priorities()!" [selectedItemName]="priority()" (selectedItemNameChange)="onFieldChange('priority', $event)" [readOnly]="isReadOnly()" [withAll]="false" /> 
+                  <bk-cat-select [category]="priorities()!" [selectedItemName]="priority()" (selectedItemNameChange)="onFieldChange('priority', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -85,15 +87,17 @@ export interface TaskFormI18n {
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
-    
+
       @if(hasRole('admin')) {
-        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
 `
 })
 export class TaskForm {
+  private readonly i18nService = inject(I18nService);
+
   // inputs
   public readonly i18n = input<TaskFormI18n>({ stateLabel: '', priorityLabel: '', importanceLabel: '' });
   public readonly formData = model.required<TaskModel>();
@@ -106,7 +110,7 @@ export class TaskForm {
   public readonly importances = input.required<CategoryListModel>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  
+
  // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
@@ -129,6 +133,47 @@ export class TaskForm {
 
   // passing constants to template
   protected nameLength = LONG_NAME_LENGTH;
+
+  // i18n
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label:        PFX + 'bkey.label',
+    bkey_placeholder:  PFX + 'bkey.placeholder',
+    bkey_helper:       PFX + 'bkey.helper',
+    name_label:        PFX + 'name.label',
+    name_placeholder:  PFX + 'name.placeholder',
+    name_helper:       PFX + 'name.helper',
+    notes_label:       PFX + 'notes.label',
+    notes_placeholder: PFX + 'notes.placeholder',
+    dueDate_label:        PFX + 'dueDate.label',
+    dueDate_placeholder:  PFX + 'dueDate.placeholder',
+    dueDate_helper:       PFX + 'dueDate.helper',
+    completionDate_label:        PFX + 'completionDate.label',
+    completionDate_placeholder:  PFX + 'completionDate.placeholder',
+    completionDate_helper:       PFX + 'completionDate.helper',
+  });
+
+  protected bkeyI18n = computed(() => ({
+    name: 'bkey',
+    label: this.fieldI18n.bkey_label(),
+    placeholder: this.fieldI18n.bkey_placeholder(),
+    helper: this.fieldI18n.bkey_helper()
+  } as TextInputI18n));
+
+  protected nameI18n = computed(() => ({
+    name: 'name',
+    label: this.fieldI18n.name_label(),
+    placeholder: this.fieldI18n.name_placeholder(),
+    helper: this.fieldI18n.name_helper()
+  } as TextInputI18n));
+
+  protected notesI18n = computed(() => ({
+    name: 'notes',
+    label: this.fieldI18n.notes_label(),
+    placeholder: this.fieldI18n.notes_placeholder()
+  } as NotesInputI18n));
+
+  protected dueDateI18n = computed(() => ({ name: 'dueDate', label: this.fieldI18n.dueDate_label(), placeholder: this.fieldI18n.dueDate_placeholder(), helper: this.fieldI18n.dueDate_helper() } as DateInputI18n));
+  protected completionDateI18n = computed(() => ({ name: 'completionDate', label: this.fieldI18n.completionDate_label(), placeholder: this.fieldI18n.completionDate_placeholder(), helper: this.fieldI18n.completionDate_helper() } as DateInputI18n));
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

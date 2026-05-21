@@ -26,7 +26,7 @@ import { ResourceSelectStore } from './resource-select.store';
       [searchTerm]="searchTerm()"
       (searchTermChange)="resourceSelectStore.setSearchTerm($event)"
       [isSearchable]="true"
-      title="@resource.operation.select.label"
+      [i18n]="{ title: '@resource.operation.select.label' }"
       [isModal]="true"
     />   
     <ion-content>

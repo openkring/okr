@@ -1,4 +1,12 @@
 {
+  "loginEmail": {
+    "label": "E-Mail Adresse",
+    "placeholder": "E-Mail Adresse eingeben"
+  },
+  "loginPassword": {
+    "label": "Passwort",
+    "placeholder": "Passwort eingeben"
+  },
   "input": {
     "emailEmail": {
       "helper": "Bitte verwende die gleiche E-Mail Adresse, auf der du die Vereinsinformationen erhälst. Wir senden dir dann eine Email an diese Adresse mit einem Link, wo du dein Passwort neu setzen kannst. Falls du das Email nicht findest, schaue bitte auch in deinem Spam-Ordner nach."

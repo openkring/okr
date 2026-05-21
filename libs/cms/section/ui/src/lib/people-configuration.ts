@@ -1,15 +1,17 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 import { FormsModule } from '@angular/forms';
 
 import { ColorsIonic, NameDisplays } from '@bk2/shared-categories';
 import { AvatarInfo, ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@bk2/shared-models';
-import { CategoryOld, Checkbox, StringSelect, TextInput } from '@bk2/shared-ui';
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { Avatars } from '@bk2/avatar-ui';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-people-config',
@@ -30,19 +32,19 @@ import { Avatars } from '@bk2/avatar-ui';
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input name="title" [value]="title()" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" />
+                <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input name="altText" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
+                <bk-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showName" [checked]="showName()" (checkedChange)="onFieldChange('showName', $event)" [readOnly]="isReadOnly()" />
+                <bk-checkbox [i18n]="showNameI18n()" [checked]="showName()" (checkedChange)="onFieldChange('showName', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showLabel" [checked]="showLabel()" (checkedChange)="onFieldChange('showLabel', $event)" [readOnly]="isReadOnly()" />
+                <bk-checkbox [i18n]="showLabelI18n()" [checked]="showLabel()" (checkedChange)="onFieldChange('showLabel', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                  <bk-string-select name="peopleType" [selectedString]="type()" (selectedStringChange)="onTypeChange($event)" [readOnly]="readOnly()" [showHelper]="true" [stringList]="['persons', 'group', 'responsibility']" />
+                  <bk-string-select [i18n]="peopleTypeI18n()" [selectedString]="type()" (selectedStringChange)="onTypeChange($event)" [readOnly]="readOnly()" [stringList]="['persons', 'group', 'responsibility']" />
               </ion-col>
                <ion-col size="12" size-md="6">
                 @if(type() === 'group') {
@@ -55,16 +57,17 @@ import { Avatars } from '@bk2/avatar-ui';
                   <ion-button fill="outline" [disabled]="isReadOnly()" (click)="responsibilitySelectClicked.emit()">
                     <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
                     {{ groupId() || '@content.section.type.people.select.responsibility' }}
-                  </ion-button>                }
+                  </ion-button>
+                }
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="color" [value]="color()" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />
+                <bk-category-old [i18n]="colorI18n()" [value]="color()" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="nameDisplay" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [readOnly]="isReadOnly()" [categories]="nameDisplays" />
+                <bk-category-old [i18n]="nameDisplayI18n()" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [readOnly]="isReadOnly()" [categories]="nameDisplays" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="linkedSection" [value]="linkedSection()" (valueChange)="onFieldChange('linkedSection', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
+                <bk-text-input [i18n]="linkedSectionI18n()" [value]="linkedSection()" (valueChange)="onFieldChange('linkedSection', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -85,6 +88,8 @@ import { Avatars } from '@bk2/avatar-ui';
   `
 })
 export class PeopleConfiguration {
+  private readonly i18nService = inject(I18nService);
+
   // inputs
   public formData = model.required<PeopleConfig>();
   public headerTitle = input('@content.section.type.people.edit');
@@ -112,6 +117,61 @@ export class PeopleConfiguration {
   // passing constants to template
   protected nameDisplays = NameDisplays;
   protected colors = ColorsIonic;
+
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    title_label:           PFX + 'title.label',
+    title_placeholder:     PFX + 'title.placeholder',
+    title_helper:          PFX + 'title.helper',
+    altText_label:         PFX + 'altText.label',
+    altText_placeholder:   PFX + 'altText.placeholder',
+    altText_helper:        PFX + 'altText.helper',
+    linkedSection_label:       PFX + 'linkedSection.label',
+    linkedSection_placeholder: PFX + 'linkedSection.placeholder',
+    linkedSection_helper:      PFX + 'linkedSection.helper',
+    peopleType_label:          PFX + 'peopleType.label',
+    color_label:               PFX + 'color.label',
+    nameDisplay_label:         PFX + 'nameDisplay.label',
+    showName_label:            PFX + 'showName.label',
+    showName_helper:           PFX + 'showName.helper',
+    showLabel_label:           PFX + 'showLabel.label',
+    showLabel_helper:          PFX + 'showLabel.helper',
+  });
+
+  protected titleI18n = computed(() => ({
+    name: 'title',
+    label: this.fieldI18n.title_label(),
+    placeholder: this.fieldI18n.title_placeholder(),
+    helper: this.fieldI18n.title_helper(),
+  } as TextInputI18n));
+
+  protected altTextI18n = computed(() => ({
+    name: 'altText',
+    label: this.fieldI18n.altText_label(),
+    placeholder: this.fieldI18n.altText_placeholder(),
+    helper: this.fieldI18n.altText_helper(),
+  } as TextInputI18n));
+
+  protected linkedSectionI18n = computed(() => ({
+    name: 'linkedSection',
+    label: this.fieldI18n.linkedSection_label(),
+    placeholder: this.fieldI18n.linkedSection_placeholder(),
+    helper: this.fieldI18n.linkedSection_helper(),
+  } as TextInputI18n));
+  protected peopleTypeI18n  = computed(() => ({ name: 'peopleType',  label: this.fieldI18n.peopleType_label()  } as StringSelectI18n));
+  protected colorI18n       = computed(() => ({ name: 'color',       label: this.fieldI18n.color_label()       } as CategoryOldI18n));
+  protected nameDisplayI18n = computed(() => ({ name: 'nameDisplay', label: this.fieldI18n.nameDisplay_label() } as CategoryOldI18n));
+
+  protected showNameI18n = computed(() => ({
+    name: 'showName',
+    label: this.fieldI18n.showName_label(),
+    helper: this.fieldI18n.showName_helper(),
+  } as CheckboxI18n));
+
+  protected showLabelI18n = computed(() => ({
+    name: 'showLabel',
+    label: this.fieldI18n.showLabel_label(),
+    helper: this.fieldI18n.showLabel_helper(),
+  } as CheckboxI18n));
 
   /************************************** actions *********************************************** */
   protected onPersonsChange(persons: AvatarInfo[]): void {

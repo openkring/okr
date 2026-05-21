@@ -67,7 +67,7 @@ import { YearSelect } from './year-select';
           }
           @if(showStrings()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
-              <bk-string-select [name]="stringsName()" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [readOnly]="false" />
+              <bk-string-select [i18n]="{ name: stringsName(), label: stringsLabel() }" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [readOnly]="false" />
             </ion-col>
           }
         </ion-row>
@@ -95,6 +95,7 @@ export class ListFilter {
   public initialView = input<'list' | 'grid' | undefined>();
   public strings = input<string[]>([]);
   public stringsName = input<string>('iconSet');
+  public stringsLabel = input<string>('');
 
   public selectedTag = input<string>('');
   public selectedType = input<string>('');

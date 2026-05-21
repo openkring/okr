@@ -11,7 +11,7 @@ import { Counter, Header } from '@bk2/shared-ui';
     IonContent, 
   ],
   template: `
-    <bk-header title="Counter" />
+    <bk-header [i18n]="{ title: 'Counter' }" />
     <ion-content #content>
       <bk-counter />
     </ion-content>

@@ -10,6 +10,12 @@ import { ENV } from '@bk2/shared-config';
 export type CheckboxLabelPlacement = 'start' | 'end' | 'fixed';
 export type CheckboxJustification = 'start' | 'end' | 'space-between';
 
+export interface CheckboxI18n {
+  name: string;
+  label: string;
+  helper: string;
+}
+
 @Component({
   selector: 'bk-checkbox',
   standalone: true,
@@ -23,13 +29,13 @@ export type CheckboxJustification = 'start' | 'end' | 'space-between';
       @if (isReadOnly()) { <!-- read-only mode: just show icon and label -->
         <ion-label>
           <ion-icon slot="start" [src]="svgIconUrl()" />
-          {{ this.label() }}
+          {{ i18n().label }}
         </ion-label>
       } @else { <!-- editable mode: show checkbox -->
         <ion-checkbox required
           [checked]="checked()"
           (ionChange)="onChange($event.detail.checked)"
-          [name]="name()"
+          [name]="i18n().name"
           [labelPlacement]="labelPlacement()"
           [justify]="justify()"
           [disabled]="isReadOnly()" 
@@ -37,14 +43,14 @@ export type CheckboxJustification = 'start' | 'end' | 'space-between';
           [indeterminate]="isIndeterminate()"
         >
           <div class="ion-text-wrap">
-            {{ label() }}
+            {{ i18n().label }}
           </div>
         </ion-checkbox>
       }
     </ion-item>
     @if(shouldShowHelper()) {
       <ion-item lines="none">
-        <ion-note>{{ helperText() }}</ion-note>
+        <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
     }
   `
@@ -57,7 +63,7 @@ export class Checkbox {
   public checkedChange = output<boolean>();
 
   // inputs
-  public name = input.required<string>();   // mandatory name of the form control
+  public i18n = input.required<CheckboxI18n>();
   public readOnly = input.required<boolean>();
   public color = input<ColorIonic>(ColorIonic.Secondary);
   public justify = input<'start'|'end'|'space-between'>('start');
@@ -71,8 +77,6 @@ export class Checkbox {
   protected isIndeterminate = computed(() => coerceBoolean(this.indeterminate()));
 
   // derived values
-  protected label = computed(() => `@checkbox.${this.name()}.label`);
-  protected helperText = computed(() => `@checkbox.${this.name()}.helperText`);
   protected colorName = computed(() => {
     if (!this.color() || this.color() === ColorIonic.White) return ''; 
     return getCategoryStringField(ColorsIonic, this.color(), 'name');

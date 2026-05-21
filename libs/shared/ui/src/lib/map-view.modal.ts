@@ -39,7 +39,7 @@ export interface GeoCoordinates {
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-      <bk-header [title]="title()" [isModal]="true" />
+      <bk-header [i18n]="{ title: title() }" [isModal]="true" />
       <ion-content>
         <capacitor-google-map id="map" />
       </ion-content>

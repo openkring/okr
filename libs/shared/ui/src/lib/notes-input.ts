@@ -1,17 +1,21 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input, model } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
-import { switchMap } from 'rxjs';
 
 import { DESCRIPTION_LENGTH } from '@bk2/shared-constants';
 import { I18nService } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, decrypt, encrypt } from '@bk2/shared-util-core';
 
-import { ButtonCopy } from './button-copy';
+import { ButtonCopy, ButtonCopyI18n } from './button-copy';
 import { PFX } from './scope';
+
+export interface NotesInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+}
 
 /**
  * Vest updates work by binding to ngModel.
@@ -47,17 +51,17 @@ import { PFX } from './scope';
         <ion-item lines="none">
           <ion-textarea
             type="text"
-            [name]="name()"
+            [name]="i18n().name"
             [ngModel]="value()"
             (ngModelChange)="value.set($event)"
-            placeholder="{{ placeholder() }}"
-            aria-label="{{ ariaLabel() }}"
+            placeholder="{{ i18n().placeholder }}"
+            aria-label="{{ i18n().label }}"
             inputMode="text"
             [counter]="!isReadOnly()"
             fill="outline"
             [autoGrow]="isAutoGrow()"
             [maxlength]="maxLength()"
-            [rows]="rows()" 
+            [rows]="rows()"
             [readonly]="isReadOnly()"
           />
           <!--
@@ -70,7 +74,7 @@ import { PFX } from './scope';
             <ion-icon src="{{'cancel' | svgIcon }}" (click)="clearValue()" tabindex="-1" />
           }
           @if (isCopyable()) {
-            <bk-button-copy [value]="value()" tabindex="-1" />
+            <bk-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
           }
           @if (isEncryptable()) {
             <ion-icon src="{{ 'key' | svgIcon }}" (click)="dencrypt()" tabindex="-1" />
@@ -90,17 +94,17 @@ export class NotesInput {
   private readonly i18nService = inject(I18nService);
 
   // inputs
-  public value = model.required<string>(); // mandatory view model
-  public name = input('notes'); // name of the input field
+  public value = model.required<string>();
+  public i18n = input.required<NotesInputI18n>();
   public readOnly = input.required<boolean>();
-  public maxLength = input(DESCRIPTION_LENGTH); // max number of characters allowed
-  public rows = input(5); // number of rows
+  public maxLength = input(DESCRIPTION_LENGTH);
+  public rows = input(5);
   public showTitle = input<boolean>(false);
-  public title = input(PFX + 'notes.notes');
-  protected clearable = input(true); // show a button to clear the notes
-  protected copyable = input(true); // show a button to copy the notes
-  protected encryptable = input(true); // show a button to encrypt or decrypt the notes
-  public autoGrow = input(true); // if true, the input field grows with the content
+  public title = input('');
+  protected clearable = input(true);
+  protected copyable = input(true);
+  protected encryptable = input(true);
+  public autoGrow = input(true);
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -110,24 +114,16 @@ export class NotesInput {
   protected isEncryptable = computed(() => coerceBoolean(this.encryptable()));
   protected isAutoGrow = computed(() => coerceBoolean(this.autoGrow()));
 
-  // reactive i18n signals for dynamic keys
-  protected readonly placeholder = toSignal(
-    toObservable(this.name).pipe(switchMap(name => this.i18nService.translate(PFX + name + '.placeholder'))),
-    { initialValue: '' }
-  );
-  protected readonly ariaLabel = toSignal(
-    toObservable(this.name).pipe(switchMap(name => this.i18nService.translate(PFX + name + '.label'))),
-    { initialValue: '' }
-  );
-
-  // static i18n strings for dencrypt alert
-  private readonly i18n = this.i18nService.translateAll({
+  // i18n for dencrypt alert
+  private readonly alertI18n = this.i18nService.translateAll({
     pwd_header:      PFX + 'notes.pwd.header',
     pwd_message:     PFX + 'notes.pwd.message',
     pwd_placeholder: PFX + 'notes.pwd.placeholder',
     cancel:          '@operation.cancel',
     ok:              '@operation.ok',
+    copy_conf:       PFX + 'copy.conf',
   });
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.alertI18n.copy_conf() } as ButtonCopyI18n));
 
   private password = '';
 
@@ -138,18 +134,18 @@ export class NotesInput {
   public async dencrypt(): Promise<void> {
     if (!this.password || this.password.length === 0) {
       const alert = await this.alertController.create({
-        header: this.i18n.pwd_header(),
-        message: this.i18n.pwd_message(),
+        header: this.alertI18n.pwd_header(),
+        message: this.alertI18n.pwd_message(),
         inputs: [{
           name: 'PasswordPrompt',
           type: 'text',
-          placeholder: this.i18n.pwd_placeholder()
+          placeholder: this.alertI18n.pwd_placeholder()
         }],
         buttons: [{
-          text: this.i18n.cancel(),
+          text: this.alertI18n.cancel(),
           role: 'cancel'
         }, {
-          text: this.i18n.ok(),
+          text: this.alertI18n.ok(),
           handler: (data) => {
             this.password = data['PasswordPrompt'];
             this.dencryptWithPassword(this.password);

@@ -6,13 +6,20 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { URL_LENGTH } from '@bk2/shared-constants';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
-import { ButtonCopy } from './button-copy';
+import { ButtonCopy, ButtonCopyI18n } from './button-copy';
+
+export interface ImageUrlInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+  helper?: string;
+  copy_conf?: string;
+}
 
 @Component({
   selector: 'bk-image-url-input',
   standalone: true,
   imports: [
-    
     FormsModule,
     IonItem, IonInput, IonNote,
     ButtonCopy
@@ -23,44 +30,44 @@ import { ButtonCopy } from './button-copy';
     <ion-item lines="none">
       <ion-input (ionInput)="onChange($event)"
         type="url"
-        [name]="name()"
+        [name]="i18n().name"
         [ngModel]="value()"
         labelPlacement="floating"
-        label="{{'@input.' + name() + '.label' }}"
-        placeholder="{{'@input.' + name() + '.placeholder' }}"
+        [label]="i18n().label"
+        [placeholder]="i18n().placeholder"
         inputmode="url"
         [counter]="!isReadOnly()"
         [maxlength]="maxLength()"
         autocomplete="url"
         [clearInput]="shouldClearInput()"
-        [readonly]="isReadOnly()" 
+        [readonly]="isReadOnly()"
       />
       @if (isCopyable()) {
-        <bk-button-copy [value]="value()" tabindex="-1" />
+        <bk-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
       }
     </ion-item>
-    @if(shouldShowHelper()) {
-    <ion-item lines="none" class="helper">
-      <ion-note>{{'@input.' + name() + '.helper' }}</ion-note>
-    </ion-item>
-  }
+    @if(i18n().helper) {
+      <ion-item lines="none" class="helper">
+        <ion-note>{{ i18n().helper }}</ion-note>
+      </ion-item>
+    }
   `
 })
 export class ImageUrlInput {
   // inputs
   public value = model.required<string>(); // mandatory view model
-  public name = input('url'); // name of the input field
+  public i18n = input.required<ImageUrlInputI18n>();
   public readOnly = input.required<boolean>();
   public maxLength = input(URL_LENGTH); // max number of characters allowed
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
-  public showHelper = input(false);
   public clearInput = input(true); // show an icon to clear the input field
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
+
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'IMAGE_URL_INPUT: NYI' } as ButtonCopyI18n));
 
   // outputs
   public changed = output<string>();

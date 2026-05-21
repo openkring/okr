@@ -10,13 +10,20 @@ import { ChIbanMask } from '@bk2/shared-config';
 import { IBAN_LENGTH } from '@bk2/shared-constants';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
-import { ButtonCopy } from './button-copy';
+import { ButtonCopy, ButtonCopyI18n } from './button-copy';
+
+export interface IbanInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+  helper?: string;
+  copy_conf?: string;
+}
 
 @Component({
   selector: 'bk-iban',
   standalone: true,
   imports: [
-    
     MaskitoDirective, FormsModule,
     IonItem, IonNote, IonInput,
     ButtonCopy
@@ -27,47 +34,47 @@ import { ButtonCopy } from './button-copy';
     <ion-item lines="none">
       <ion-input
         type="text"
-        [name]="name()"
+        [name]="i18n().name"
         [ngModel]="value()"
         (ngModelChange)="value.set($event)"
         labelPlacement="floating"
-        label="{{'@input.' + name() + '.label' }}"
-        placeholder="{{'@input.' + name() + '.placeholder' }}"
+        [label]="i18n().label"
+        [placeholder]="i18n().placeholder"
         inputMode="text"
         [counter]="!isReadOnly()"
         [maxlength]="maxLength()"
         autocomplete="off"
         [clearInput]="shouldClearInput()"
-        [readonly]="isReadOnly()" 
+        [readonly]="isReadOnly()"
         [maskito]="chIbanMask"
         [maskitoElement]="maskPredicate"
       />
       @if (isCopyable()) {
-        <bk-button-copy [value]="value()" tabindex="-1" />
+        <bk-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
       }
     </ion-item>
-    @if(shouldShowHelper()) {
-    <ion-item lines="none" class="helper">
-      <ion-note>{{'@input.' + name() + '.helper' }}</ion-note>
-    </ion-item>
-  }
+    @if(i18n().helper) {
+      <ion-item lines="none" class="helper">
+        <ion-note>{{ i18n().helper }}</ion-note>
+      </ion-item>
+    }
   `
 })
 export class IbanInput {
   // inputs
   public value = model.required<string>(); // mandatory view model
-  public name = input('iban'); // name of the input field
+  public i18n = input.required<IbanInputI18n>();
   public readOnly = input.required<boolean>();
   public maxLength = input(IBAN_LENGTH); // max number of characters allowed
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
-  public showHelper = input(true);
   public clearInput = input(true); // show an icon to clear the input field
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
+
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'IBAN_INPUT: NYI' } as ButtonCopyI18n));
 
   // passing constants to the template
   protected chIbanMask = ChIbanMask;

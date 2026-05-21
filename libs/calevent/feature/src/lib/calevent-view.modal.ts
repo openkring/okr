@@ -36,7 +36,7 @@ function storeToView(d: string): string {
     .responsible-name { font-size: 0.9rem; }
   `],
   template: `
-    <bk-header [title]="calevent().name" [isModal]="true" />
+    <bk-header [i18n]="{ title: calevent().name }" [isModal]="true" />
 
     <ion-content class="ion-padding">    
       <ion-card>

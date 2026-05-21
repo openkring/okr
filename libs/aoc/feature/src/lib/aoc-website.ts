@@ -28,7 +28,7 @@ import { AocWebsiteEditModal } from './aoc-website-edit.modal';
   ],
   providers: [AocWebsiteStore],
   template: `
-    <bk-header title="@aoc.website.title" />
+    <bk-header [i18n]="{ title: '@aoc.website.title' }" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar

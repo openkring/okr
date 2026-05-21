@@ -11,7 +11,7 @@ import { Header } from '@bk2/shared-ui';
     IonContent, IonRadioGroup, IonRadio, IonLabel, IonItem, IonList
   ],
   template: `
-    <bk-header [title]="title()" [showOkButton]="true" (okClicked)="save()" [isModal]="true" />
+    <bk-header [i18n]="{ title: title() }" [showOkButton]="true" (okClicked)="save()" [isModal]="true" />
     <ion-content class="ion-no-padding">
       <ion-item>
         <ion-label>{{'@calevent.operation.seriesupdate.intro' }}</ion-label>

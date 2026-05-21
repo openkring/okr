@@ -263,5 +263,10 @@
       "edit": "Person oder Organisation ändern"
     },
     "hide": "Ausblenden"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

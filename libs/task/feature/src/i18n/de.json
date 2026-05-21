@@ -17,5 +17,10 @@
     "create": "Neues Todo erstellen",
     "delete": "Todo löschen",
     "done": "Todo auf Erledigt setzen"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

@@ -4,5 +4,10 @@
   "view": "Ort-Details ansehen",
   "edit": "Ort ändern",
   "create": "Neuen Ort erstellen",
-  "delete": "Ort löschen"
+  "delete": "Ort löschen",
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
+  }
 }

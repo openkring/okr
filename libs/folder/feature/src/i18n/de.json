@@ -6,5 +6,10 @@
     "label": {
       "choose": "Wähle eine Aktion"
     }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

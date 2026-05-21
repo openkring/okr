@@ -4,7 +4,9 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { CategoryChangeForm } from '@bk2/relationship-membership-ui';
 import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm } from '@bk2/relationship-membership-util';
 import { AvatarInfo, CategoryListModel, MembershipModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
+import { PFX } from './scope';
 import { getFullName, newAvatarInfo } from '@bk2/shared-util-core';
 
 import { RelationshipToolbar } from '@bk2/avatar-ui';
@@ -17,9 +19,9 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
     IonContent
 ],
   template: `
-    <bk-header [title]="title()" [isModal]="true" />
+    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     } 
     <ion-content class="ion-no-padding">
       @if (currentUser(); as currentUser) {
@@ -48,6 +50,17 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
 })
 export class CategoryChangeModal {
   private readonly modalController = inject(ModalController);
+  private readonly i18nService = inject(I18nService);
+  private readonly confirmI18n = this.i18nService.translateAll({
+    changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+    changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+    changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  });
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.confirmI18n.changeConfirmation_ok(),
+    cancel: this.confirmI18n.changeConfirmation_cancel(),
+    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   // inputs
   public membership = input.required<MembershipModel>();

@@ -4,18 +4,23 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { coerceBoolean } from '@bk2/shared-util-core';
 
+export interface StringSelectI18n {
+  name: string;
+  label: string;
+  helper?: string;
+}
+
 @Component({
   selector: 'bk-string-select',
   standalone: true,
   imports: [
-    
     IonSelect, IonSelectOption, IonNote, IonItem
   ],
   viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
-      <ion-select [name]="name()"
-        label="{{ label() }}"
+      <ion-select [name]="i18n().name"
+        [label]="i18n().label"
         [disabled]="isReadOnly()"
         label-placement="floating"
         interface="popover"
@@ -26,32 +31,23 @@ import { coerceBoolean } from '@bk2/shared-util-core';
         }
       </ion-select>
     </ion-item>
-
-      @if(shouldShowHelper()) {
-    <ion-item lines="none">
-        <ion-note style="white-space: pre-line">{{ helperNote() }}</ion-note>
-    </ion-item>
-      }
+    @if(i18n().helper) {
+      <ion-item lines="none">
+        <ion-note style="white-space: pre-line">{{ i18n().helper }}</ion-note>
+      </ion-item>
+    }
   `
 })
 export class StringSelect {
-
   // inputs
-  public name = input.required<string>(); // mandatory name of the input field
+  public i18n = input.required<StringSelectI18n>();
   public selectedString = model(''); // initial selection
 
   // if you have a string enum, you may convert it with:
   // Object.values(YourEnum)
   public stringList = input.required<string[]>(); // mandatory view model
   public readOnly = input.required<boolean>();
-  public showHelper = input(false);
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
-
-  // computed derived fields
-  protected helperNote = computed(() => `@input.${this.name()}.helper`);
-  protected label = computed(() => `@input.${this.name()}.label`);
-
 }

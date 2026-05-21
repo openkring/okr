@@ -1,5 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { switchMap } from 'rxjs';
 import { IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@bk2/shared-categories';
@@ -7,7 +9,7 @@ import { ColorsIonic } from '@bk2/shared-categories';
 import { AvatarInfo, CategoryListModel, ColorIonic, UserModel } from '@bk2/shared-models';
 import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
-
+import { I18nService } from '@bk2/shared-i18n';
 
 import { BkAvatar } from './avatar';
 
@@ -25,7 +27,7 @@ import { BkAvatar } from './avatar';
       <ion-row class="ion-align-items-center ion-justify-content-center">
         <ion-col size="12">
           <ion-item lines="none" class="title" [color]="color() | categoryPlainName:colorsIonic">
-            <ion-label>{{ '@' + relType() + '.reldesc1' }}</ion-label>
+            <ion-label>{{ relDesc1() }}</ion-label>
           </ion-item>
         </ion-col>
       </ion-row>
@@ -37,7 +39,7 @@ import { BkAvatar } from './avatar';
         </ion-col>
         <ion-col size="2" class="ion-align-items-center ion-justify-content-center">
           <ion-item lines="none" [color]="color() | categoryPlainName:colorsIonic">
-            <ion-label>{{ '@' + relType() + '.reldesc2' }}</ion-label>
+            <ion-label>{{ relDesc2() }}</ion-label>
           </ion-item>
         </ion-col>
         <ion-col size="5" class="ion-align-items-center ion-justify-content-center">
@@ -60,6 +62,7 @@ export class RelationshipToolbar {
   private readonly router = inject(Router);
   private readonly modalController = inject(ModalController);
   private readonly appNavigationService = inject(AppNavigationService);
+  private readonly i18nService = inject(I18nService);
 
   // inputs
   public relType = input.required<string>();
@@ -71,6 +74,16 @@ export class RelationshipToolbar {
   public subjectDefaultIcon = input<string>();
   public objectDefaultIcon = input<string>();
   public readOnly = input<boolean>(false);
+
+  // dynamic i18n: keys depend on relType input, so use toSignal + switchMap
+  protected readonly relDesc1 = toSignal(
+    toObservable(this.relType).pipe(switchMap(type => this.i18nService.translate('@' + type + '.reldesc1'))),
+    { initialValue: '' }
+  );
+  protected readonly relDesc2 = toSignal(
+    toObservable(this.relType).pipe(switchMap(type => this.i18nService.translate('@' + type + '.reldesc2'))),
+    { initialValue: '' }
+  );
 
   // passing constants to the template
   protected colorsIonic = ColorsIonic;

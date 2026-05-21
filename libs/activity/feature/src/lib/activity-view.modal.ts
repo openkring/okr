@@ -23,7 +23,7 @@ import { ActivityStore } from './activity.store';
     ion-item { --padding-start: 0; --inner-padding-end: 0; }
   `],
   template: `
-    <bk-header [title]="store.i18n.view_title()" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.view_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
 
       <ion-item lines="none">

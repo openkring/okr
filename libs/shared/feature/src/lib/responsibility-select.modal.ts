@@ -22,7 +22,7 @@ import { ResponsibilitySelectStore } from './responsibility-select.store';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      title="@responsibility.operation.select.label"
+      [i18n]="{ title: '@responsibility.operation.select.label' }"
       [isModal]="true"
     />
     <ion-content>

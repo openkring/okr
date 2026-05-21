@@ -68,7 +68,13 @@ export const TaskStore = signalStore(
       as_delete:               PFX + 'actionsheet.delete',
       as_done:                 PFX + 'actionsheet.done',
       cancel:                  '@cancel',
-      ok:                      '@ok'
+      ok:                      '@ok',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+      calendarName_label:              PFX + 'calendarName.label',
+      calendarName_description:        PFX + 'calendarName.description',
+      calendarName_addLabel:           PFX + 'calendarName.addLabel',
     }),
     tasksResource: rxResource({
       params: () => ({

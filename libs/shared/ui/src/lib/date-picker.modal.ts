@@ -3,6 +3,11 @@ import { IonModal, IonContent, IonDatetime } from '@ionic/angular/standalone';
 
 import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
 
+export interface DatePickerModalI18n {
+  ok: string;
+  cancel: string;
+}
+
 @Component({
   selector: 'bk-date-picker-modal',
   standalone: true,
@@ -22,8 +27,8 @@ import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
             locale="de-ch"
             firstDayOfWeek="1"
             showDefaultButtons="true"
-            doneText="{{ '@general.operation.change.ok' }}"
-            cancelText="{{ '@general.operation.change.cancel' }}"
+            [doneText]="i18n().ok"
+            [cancelText]="i18n().cancel"
             style="height: 380px;"
             (ionChange)="onDateChange($event.detail.value)"
             (ionCancel)="isOpen.set(false)"
@@ -36,6 +41,7 @@ import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
 export class DatePickerModal {
   // inputs
   isoDate = input<string>(getTodayStr(DateFormat.IsoDate)); // yyyy-MM-dd
+  public i18n = input<DatePickerModalI18n>({ ok: 'OK', cancel: 'Abbrechen' });
 
   // outputs
   dateSelected = output<string>();  // yyyy-MM-dd

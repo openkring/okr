@@ -1,7 +1,9 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
+import { PFX } from './scope';
 import { OrgNewForm } from '@bk2/subject-org-ui';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 
@@ -15,9 +17,9 @@ import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
     IonContent
   ],
   template: `
-    <bk-header title="@subject.org.operation.create.label" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@subject.org.operation.create.label' }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
@@ -36,6 +38,17 @@ import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
 })
 export class OrgNewModal {
   private readonly modalController = inject(ModalController);
+  private readonly i18nService = inject(I18nService);
+  private readonly confirmI18n = this.i18nService.translateAll({
+    changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+    changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+    changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  });
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.confirmI18n.changeConfirmation_ok(),
+    cancel: this.confirmI18n.changeConfirmation_cancel(),
+    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   // inputs
   public currentUser = input.required<UserModel>();

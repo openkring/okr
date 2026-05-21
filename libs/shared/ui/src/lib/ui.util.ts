@@ -59,7 +59,7 @@ export async function selectDate(modalController: ModalController, isoDate?: str
     cssClass,
     componentProps: {
       isoDate,
-      headerTitle,
+      i18n: { title: headerTitle ?? 'Datum auswählen', ok: 'OK', cancel: 'Abbrechen' },
       intro,
       locale: 'de-ch'
     }

@@ -1,14 +1,16 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@bk2/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, ErrorNote, NotesInput, StringList, TextInput, UrlInput, IconInput } from '@bk2/shared-ui';
+import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { menuItemValidations } from '@bk2/cms-menu-util';
+import { PFX } from './scope';
 
 export interface MenuFormI18n {
   title: string;
@@ -41,7 +43,7 @@ export interface MenuFormI18n {
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" [showHelper]=true />
+                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" [showHelper]=true />
                 <bk-error-note [errors]="nameErrors()" />
               </ion-col>
 
@@ -53,21 +55,18 @@ export interface MenuFormI18n {
             @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call') {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-icon-input [icon]="icon()" (iconChange)="onFieldChange('icon', $event)" (selectClicked)="iconSelectClicked.emit()" [readOnly]="isReadOnly()" />
+                  <bk-icon-input [i18n]="iconI18n()" [icon]="icon()" (iconChange)="onFieldChange('icon', $event)" (selectClicked)="iconSelectClicked.emit()" [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
                   <bk-error-note [errors]="labelErrors()" />
                 </ion-col>
 
                 <ion-col size="12">
-                  <bk-url name="url"
+                  <bk-url [i18n]="urlI18n()"
                     [value]="url()" (valueChange)="onFieldChange('url', $event)"
-                    [showHelper]=true
                     [readOnly]="isReadOnly()"
-                    [placeholder]="i18n().urlPlaceholder"
-                    [helper]="i18n().urlHelper"
                   />
                   <bk-error-note [errors]="urlErrors()" />
                 </ion-col>
@@ -77,7 +76,7 @@ export interface MenuFormI18n {
             @if(menuAction() === 'sub') {
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
                   <bk-error-note [errors]="labelErrors()" />
                 </ion-col>
               </ion-row>
@@ -115,7 +114,7 @@ export interface MenuFormI18n {
       }
 
       @if(hasRole('contentAdmin')) {
-        <bk-notes-input name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
@@ -135,6 +134,46 @@ export class MenuForm {
 
   // i18n
   public readonly i18n = input<MenuFormI18n>({ title: '', addLabel: '', urlPlaceholder: '', urlHelper: '' });
+
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    name_label:       PFX + 'name.label',
+    name_placeholder: PFX + 'name.placeholder',
+    name_helper:      PFX + 'name.helper',
+    label_label:      PFX + 'label.label',
+    label_placeholder: PFX + 'label.placeholder',
+    label_helper:     PFX + 'label.helper',
+    icon_label:             PFX + 'icon.label',
+    icon_placeholder:       PFX + 'icon.placeholder',
+    icon_helper:            PFX + 'icon.helper',
+    description_label:      PFX + 'description.label',
+    description_placeholder: PFX + 'description.placeholder',
+    url_label:              PFX + 'url.label',
+    url_placeholder:        PFX + 'url.placeholder',
+    url_helper:             PFX + 'url.helper',
+  });
+
+  protected nameI18n = computed(() => ({
+    name: 'name', label: this.fieldI18n.name_label(), placeholder: this.fieldI18n.name_placeholder(), helper: this.fieldI18n.name_helper()
+  } as TextInputI18n));
+
+  protected labelI18n = computed(() => ({
+    name: 'label', label: this.fieldI18n.label_label(), placeholder: this.fieldI18n.label_placeholder(), helper: this.fieldI18n.label_helper()
+  } as TextInputI18n));
+
+  protected iconI18n = computed(() => ({
+    name: 'icon', label: this.fieldI18n.icon_label(), placeholder: this.fieldI18n.icon_placeholder(), helper: this.fieldI18n.icon_helper()
+  } as TextInputI18n));
+
+  protected descriptionI18n = computed(() => ({
+    name: 'description', label: this.fieldI18n.description_label(), placeholder: this.fieldI18n.description_placeholder()
+  } as NotesInputI18n));
+  protected urlI18n = computed(() => ({
+    name: 'url',
+    label: this.fieldI18n.url_label(),
+    placeholder: this.fieldI18n.url_placeholder(),
+    helper: this.fieldI18n.url_helper(),
+  } as UrlInputI18n));
 
   // signals
   public dirty = output<boolean>();

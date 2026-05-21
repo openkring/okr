@@ -2,11 +2,13 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent } from '@ionic/angular/standalone';
 import { ModalController } from '@ionic/angular/standalone';
 
+import { I18nService } from '@bk2/shared-i18n';
 import { InvoiceModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { InvoiceEditForm } from '@bk2/finance-invoice-ui';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-invoice-edit-modal',
@@ -17,9 +19,9 @@ import { InvoiceEditForm } from '@bk2/finance-invoice-ui';
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
@@ -38,6 +40,17 @@ import { InvoiceEditForm } from '@bk2/finance-invoice-ui';
 })
 export class InvoiceEditModal {
   private readonly modalController = inject(ModalController);
+  private readonly i18nService = inject(I18nService);
+  private readonly confirmI18n = this.i18nService.translateAll({
+    changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+    changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+    changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  });
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.confirmI18n.changeConfirmation_ok(),
+    cancel: this.confirmI18n.changeConfirmation_cancel(),
+    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   public readonly invoice = input.required<InvoiceModel>();
   public readonly currentUser = input.required<UserModel>();

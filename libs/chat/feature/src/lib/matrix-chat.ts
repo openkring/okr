@@ -545,6 +545,7 @@ export class MatrixChat implements OnDestroy {
     and:            this.store.i18n.and(),
     areTypeing:     this.store.i18n.areTypeing(),
     othersTypeing:  this.store.i18n.othersTypeing(),
+    copy_conf:      this.store.i18n.copy_conf()
   }));
 
   // Thread signals

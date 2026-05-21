@@ -37,7 +37,7 @@ import { Header } from './header';
     }
   `],
   template: `
-      <bk-header [title]="title()" [isModal]="true" />
+      <bk-header [i18n]="{ title: title() }" [isModal]="true" />
       <ion-content>
           <div class="image-container">
             <img [src]="imgixUrl()"

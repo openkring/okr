@@ -81,8 +81,11 @@ export const ReservationStore = signalStore(
       as_end:                  PFX + 'actionsheet.end',
       as_delete:               PFX + 'actionsheet.delete',
       as_create:               PFX + 'actionsheet.create',
-      ok:                      '@ok',
-      cancel:                  '@cancel'
+      ok:                              '@ok',
+      cancel:                          '@cancel',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     allReservationsResource: rxResource({

@@ -4,7 +4,7 @@ import { IonContent, ModalController, Platform } from '@ionic/angular/standalone
 
 import { ENV } from '@bk2/shared-config';
 import { UserModel, UserModelName } from '@bk2/shared-models';
-import { ChangeConfirmation, Chips, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@bk2/shared-ui';
 import { getFullName } from '@bk2/shared-util-core';
 
 import { AvatarService, UploadService } from '@bk2/avatar-data-access';
@@ -26,12 +26,12 @@ import { UserStore } from './user.store';
   ],
   providers: [UserStore],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
-      } 
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      }
     <ion-content class="ion-no-padding">
-      <bk-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" title="{{ toolbarTitle() }}"/>
+      <bk-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
       @if(user(); as user) {
         <bk-user-model-form
             [formData]="userModelVm()" 
@@ -84,6 +84,11 @@ export class UserEditModal {
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly allRoles = computed(() => this.store.appStore.getCategory('roles'));
   protected tags = linkedSignal(() => this.user().tags);
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   protected async save(): Promise<void> {

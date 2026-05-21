@@ -1,15 +1,17 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
-import { CategorySelect, Chips, DateInput, NotesInput, TextInput } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
+import { PFX } from './scope';
 
 export interface PersonalRelFormI18n {
   selectLabel: string;
@@ -45,7 +47,7 @@ export interface PersonalRelFormI18n {
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -70,7 +72,7 @@ export interface PersonalRelFormI18n {
               </ion-col>
               @if(type() === 'custom') {
                 <ion-col size="12" size-md="6">
-                    <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
+                    <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               }
             </ion-row>
@@ -101,10 +103,10 @@ export interface PersonalRelFormI18n {
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="validFrom" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="validTo" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                <bk-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -116,13 +118,32 @@ export interface PersonalRelFormI18n {
       }
 
       @if(hasRole('admin')) {
-        <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
   `
 })
 export class PersonalRelForm {
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label: PFX + 'bkey.label',
+    bkey_placeholder: PFX + 'bkey.placeholder',
+    bkey_helper: PFX + 'bkey.helper',
+    label_label: PFX + 'label.label',
+    label_placeholder: PFX + 'label.placeholder',
+    label_helper: PFX + 'label.helper',
+    notes_label: PFX + 'notes.label',
+    notes_placeholder: PFX + 'notes.placeholder',
+    validFrom_label: PFX + 'validFrom.label', validFrom_placeholder: PFX + 'validFrom.placeholder', validFrom_helper: PFX + 'validFrom.helper',
+    validTo_label:   PFX + 'validTo.label',   validTo_placeholder:   PFX + 'validTo.placeholder',   validTo_helper:   PFX + 'validTo.helper',
+  });
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: this.fieldI18n.bkey_placeholder(), helper: this.fieldI18n.bkey_helper() } as TextInputI18n));
+  protected labelI18n = computed(() => ({ name: 'label', label: this.fieldI18n.label_label(), placeholder: this.fieldI18n.label_placeholder(), helper: this.fieldI18n.label_helper() } as TextInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
+  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.fieldI18n.validFrom_label(), placeholder: this.fieldI18n.validFrom_placeholder(), helper: this.fieldI18n.validFrom_helper() } as DateInputI18n));
+  protected validToI18n = computed(() => ({ name: 'validTo', label: this.fieldI18n.validTo_label(), placeholder: this.fieldI18n.validTo_placeholder(), helper: this.fieldI18n.validTo_helper() } as DateInputI18n));
+
   // inputs
   public readonly i18n = input<PersonalRelFormI18n>({ selectLabel: '' });
   public formData = model.required<PersonalRelModel>();

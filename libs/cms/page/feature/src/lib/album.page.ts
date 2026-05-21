@@ -24,7 +24,7 @@ import { PageStore } from './page.store';
   template: `
     @if(id(); as id) {
       @if(showMenu()) {
-        <bk-header [title]="headerTitle()" [isRoot]="true" />
+        <bk-header [i18n]="{ title: headerTitle() }" [isRoot]="true" />
       }
       <ion-content>
         <bk-album-section [section]="section()" />

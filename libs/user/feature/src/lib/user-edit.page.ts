@@ -4,7 +4,7 @@ import { IonContent, Platform } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
 import { UserModelName } from '@bk2/shared-models';
-import { ChangeConfirmation, Chips, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@bk2/shared-ui';
 import { debugFormModel, getFullName, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarService, UploadService } from '@bk2/avatar-data-access';
@@ -26,12 +26,12 @@ import { UserStore } from './user.store';
   ],
   providers: [UserStore],
   template: `
-    <bk-header [title]="headerTitle()" [showCloseButton]="false" />
+    <bk-header [i18n]="{ title: headerTitle() }" [showCloseButton]="false" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
-      } 
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      }
     <ion-content>
-      <bk-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" title="{{ toolbarTitle() }}"/>
+      <bk-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
       @if(user(); as user) {
         <bk-user-model-form [formData]="userModelVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
         <bk-user-auth-form [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
@@ -78,6 +78,11 @@ export class UserEditPage{
   protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
   protected readonly allRoles = computed(() => this.store.appStore.getCategory('roles'));
   protected tags = linkedSignal(() => this.user().tags);
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   constructor() {
     effect(() => { this.store.setUserKey(this.userKey()); });

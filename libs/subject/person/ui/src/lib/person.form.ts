@@ -1,15 +1,17 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
 import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, NotesInput, TextInput } from '@bk2/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { areNotesVisible, areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
 import { personValidations } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-person-form',
@@ -36,17 +38,17 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
-            <ion-row> 
+            <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="firstName" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [autofocus]="true" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
+                <bk-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [autofocus]="true" [maxLength]=30 [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="lastName" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
+                <bk-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [maxLength]=30 [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
 
@@ -54,13 +56,13 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
               <ion-row>
                 @if(isVisibleToUser('dob', priv().showDateOfBirth)) {
                   <ion-col size="12" size-md="6"> 
-                    <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" autocomplete="bday" [readOnly]="isReadOnly()" />
+                    <bk-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" autocomplete="bday" [readOnly]="isReadOnly()" />
                   </ion-col>
                 }
 
                 @if(isDeathDateVisible()) {
                   <ion-col size="12" size-md="6">
-                    <bk-date-input name="dateOfDeath" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [readOnly]="isReadOnly()" />
+                    <bk-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                 }
               </ion-row>
@@ -75,12 +77,12 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
       
               @if(isVisibleToUser('taxId', priv().showTaxId)) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="ssnId" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="isReadOnly()" />                                        
+                  <bk-text-input [i18n]="ssnIdI18n()" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="isReadOnly()" />
                 </ion-col>
               }
               @if(isVisibleToUser('bexioId', priv().showBexioId)) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="bexioId" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                  <bk-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
                 </ion-col>
               }
             </ion-row>
@@ -93,13 +95,48 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
       }
       
       @if(hasRole('admin')) {
-        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
   `
 })
-export class PersonForm {  
+export class PersonForm {
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label:            PFX + 'bkey.label',
+    bkey_placeholder:      PFX + 'bkey.placeholder',
+    bkey_helper:           PFX + 'bkey.helper',
+    firstName_label:       PFX + 'firstName.label',
+    firstName_placeholder: PFX + 'firstName.placeholder',
+    firstName_helper:      PFX + 'firstName.helper',
+    lastName_label:        PFX + 'lastName.label',
+    lastName_placeholder:  PFX + 'lastName.placeholder',
+    lastName_helper:       PFX + 'lastName.helper',
+    ssnId_label:           PFX + 'ssnId.label',
+    ssnId_placeholder:     PFX + 'ssnId.placeholder',
+    ssnId_helper:          PFX + 'ssnId.helper',
+    bexioId_label:         PFX + 'bexioId.label',
+    bexioId_placeholder:   PFX + 'bexioId.placeholder',
+    bexioId_helper:        PFX + 'bexioId.helper',
+    notes_label:           PFX + 'notes.label',
+    notes_placeholder:     PFX + 'notes.placeholder',
+    dateOfBirth_label:     PFX + 'dateOfBirth.label',
+    dateOfBirth_placeholder: PFX + 'dateOfBirth.placeholder',
+    dateOfBirth_helper:    PFX + 'dateOfBirth.helper',
+    dateOfDeath_label:     PFX + 'dateOfDeath.label',
+    dateOfDeath_placeholder: PFX + 'dateOfDeath.placeholder',
+    dateOfDeath_helper:    PFX + 'dateOfDeath.helper',
+  });
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: this.fieldI18n.bkey_placeholder(), helper: this.fieldI18n.bkey_helper() } as TextInputI18n));
+  protected firstNameI18n = computed(() => ({ name: 'firstName', label: this.fieldI18n.firstName_label(), placeholder: this.fieldI18n.firstName_placeholder(), helper: this.fieldI18n.firstName_helper() } as TextInputI18n));
+  protected lastNameI18n = computed(() => ({ name: 'lastName', label: this.fieldI18n.lastName_label(), placeholder: this.fieldI18n.lastName_placeholder(), helper: this.fieldI18n.lastName_helper() } as TextInputI18n));
+  protected ssnIdI18n = computed(() => ({ name: 'ssnId', label: this.fieldI18n.ssnId_label(), placeholder: this.fieldI18n.ssnId_placeholder(), helper: this.fieldI18n.ssnId_helper() } as TextInputI18n));
+  protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.fieldI18n.bexioId_label(), placeholder: this.fieldI18n.bexioId_placeholder(), helper: this.fieldI18n.bexioId_helper() } as TextInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
+  protected dateOfBirthI18n = computed(() => ({ name: 'dateOfBirth', label: this.fieldI18n.dateOfBirth_label(), placeholder: this.fieldI18n.dateOfBirth_placeholder(), helper: this.fieldI18n.dateOfBirth_helper() } as DateInputI18n));
+  protected dateOfDeathI18n = computed(() => ({ name: 'dateOfDeath', label: this.fieldI18n.dateOfDeath_label(), placeholder: this.fieldI18n.dateOfDeath_placeholder(), helper: this.fieldI18n.dateOfDeath_helper() } as DateInputI18n));
+
   // inputs
   public readonly formData = model.required<PersonModel>();
   public readonly currentUser = input<UserModel | undefined>();

@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AVATAR_INFO_SHAPE, GroupModel, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 import { PersonSelectModal } from '@bk2/shared-feature';
 
@@ -19,9 +19,9 @@ import { GroupStore } from './group.store';
   ],
   providers: [GroupStore],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
@@ -66,6 +66,11 @@ export class GroupEditModal {
 
   // fields
   protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.group().bkey));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

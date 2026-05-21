@@ -12,6 +12,14 @@ import { ChPhoneMask } from '@bk2/shared-config';
 
 import { ButtonCopy } from './button-copy';
 
+export interface PhoneInputI18n {
+  name: string;
+  label: string;
+  placeholder: string;
+  helper?: string;
+  copy_conf?: string;
+}
+
 @Component({
   selector: 'bk-phone',
   standalone: true,
@@ -26,12 +34,12 @@ import { ButtonCopy } from './button-copy';
   <ion-item lines="none">
     <ion-input
       type="tel"
-      [name]="name()"
+      [name]="i18n().name"
       [ngModel]="value()"
       (ngModelChange)="value.set($event)"
       labelPlacement="floating"
-      label="{{'@input.' + name() + '.label'}}"
-      placeholder="{{'@input.' + name() + '.placeholder'}}"
+      [label]="i18n().label"
+      [placeholder]="i18n().placeholder"
       inputMode="tel"
       [counter]="!isReadOnly()"
       [maxlength]="maxLength()"
@@ -42,12 +50,12 @@ import { ButtonCopy } from './button-copy';
       [maskitoElement]="maskPredicate"
     />
     @if (isCopyable()) {
-      <bk-button-copy [value]="value()" tabindex="-1" />
+      <bk-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
     }
   </ion-item>
-  @if(shouldShowHelper()) {
+  @if(i18n().helper) {
     <ion-item lines="none" class="helper">
-      <ion-note>{{'@input.' + name() + '.helper'}}</ion-note>
+      <ion-note>{{ i18n().helper }}</ion-note>
     </ion-item>
   }
   `
@@ -55,20 +63,19 @@ import { ButtonCopy } from './button-copy';
 export class PhoneInput {
   // inputs
   public value = model.required<string>(); // mandatory view model
-  public name = input('phone'); // name of the input field
+  public i18n = input.required<PhoneInputI18n>();
   public readOnly = input.required<boolean>();
   public maxLength = input(PHONE_LENGTH); // max number of characters allowed
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
-  public showHelper = input(false);
   public clearInput = input(true); // show an icon to clear the input field
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'PHONE_INPUT: NYI' }));
 
-  // mask 
+  // mask
   protected phoneMask = ChPhoneMask;
   readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
 }

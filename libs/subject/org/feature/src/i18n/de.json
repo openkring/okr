@@ -22,5 +22,10 @@
     "title": "Wähle eine Aktion",
     "edit": "Organisation ändern",
     "delete": "Organisation löschen"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

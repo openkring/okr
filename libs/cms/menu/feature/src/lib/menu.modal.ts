@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, MenuItemModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { MenuForm, MenuFormI18n } from '@bk2/cms-menu-ui';
@@ -17,10 +17,10 @@ import { MenuStore } from './menu.store';
   ],
   providers: [MenuStore],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
-      } 
+      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
+      }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-menu-item-form
@@ -66,6 +66,11 @@ export class MenuModal {
   // derived signals
   protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.menuItem().bkey));
   protected tenantId = computed(() => this.store.tenantId());
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

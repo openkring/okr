@@ -1,5 +1,30 @@
 {
   "profile": {
+    "ui": {
+      "gravatarEmail": {
+        "label": "Gravatar E-Mail",
+        "placeholder": "email@example.com",
+        "helper": ""
+      },
+      "usageImages":        { "label": "Bilder" },
+      "usageDateOfBirth":   { "label": "Geburtsdatum" },
+      "usagePostalAddress": { "label": "Postadresse" },
+      "usageEmail":         { "label": "E-Mail" },
+      "usagePhone":         { "label": "Telefon" },
+      "usageName":          { "label": "Name" },
+      "language":           { "label": "Sprache" },
+      "avatarUsage":        { "label": "Avatar-Verwendung" },
+      "nameDisplay":        { "label": "Namensanzeige" },
+      "personSortCriteria": { "label": "Personen sortieren nach" },
+      "newsDelivery":       { "label": "News-Zustellung" },
+      "invoiceDelivery":    { "label": "Rechnung-Zustellung" },
+      "srvEmail":           { "label": "SRV E-Mail", "helper": "" },
+      "showDebugInfo":      { "label": "Debug-Informationen anzeigen", "helper": "" },
+      "showArchivedData":   { "label": "Archivierte Daten anzeigen", "helper": "" },
+      "showHelpers":        { "label": "Hilfestellungen anzeigen", "helper": "" },
+      "useTouchId":         { "label": "Touch ID verwenden", "helper": "" },
+      "useFaceId":          { "label": "Face ID verwenden", "helper": "" }
+    },
     "data": {
       "description": "Aktualisiere hier deine persönlichen Daten wie z.B die AHV-Nummer.",
       "title": "Persönliche Daten"

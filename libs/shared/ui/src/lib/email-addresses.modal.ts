@@ -21,7 +21,7 @@ type Segment = 'main' | 'cc';
     IonList, IonItem, IonNote,
   ],
   template: `
-    <bk-header title="@membership.operation.emailAddresses.title" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@membership.operation.emailAddresses.title' }" [isModal]="true" />
     <ion-content>
       <ion-segment [(ngModel)]="activeSegment">
         <ion-segment-button value="main">

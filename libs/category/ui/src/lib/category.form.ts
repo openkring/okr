@@ -1,12 +1,15 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { categoryListValidations } from '@bk2/category-util';
 import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategoryItems, Checkbox, Chips, ErrorNote, NotesInput, TextInput } from '@bk2/shared-ui';
+import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-category-list-form',
@@ -19,9 +22,9 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm 
+    <form scVestForm
       [formValue]="formData()"
-      [suite]="suite" 
+      [suite]="suite"
       (dirtyChange)="dirty.emit($event)"
       (validChange)="valid.emit($event)"
       (formValueChange)="onFormChange($event)">
@@ -32,21 +35,21 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               }
               <ion-col size="12" size-md="6">
-                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" /> 
-                <bk-error-note [errors]="nameErrors()" />                                                                               
+                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
+                <bk-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="i18nBase" [value]="i18nBase()" (valueChange)="onFieldChange('i18nBase', $event)" [showHelper]="true" [readOnly]="isReadOnly()" /> 
-                <bk-error-note [errors]="i18nBaseErrors()" />                                                                               
+                <bk-text-input [i18n]="i18nBaseI18n()" [value]="i18nBase()" (valueChange)="onFieldChange('i18nBase', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <bk-error-note [errors]="i18nBaseErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="translateItems" [checked]="translateItems()" (checkedChange)="onFieldChange('translateItems', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <bk-checkbox [i18n]="translateItemsI18n()" [checked]="translateItems()" (checkedChange)="onFieldChange('translateItems', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -64,13 +67,15 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants
       }
 
       @if(hasRole('admin')) {
-        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
 `
 })
 export class CategoryListForm {
+  private readonly i18nService = inject(I18nService);
+
   // inputs
   public formData = model.required<CategoryListModel>();
   public currentUser = input<UserModel>();
@@ -80,7 +85,7 @@ export class CategoryListForm {
   public tenants = input.required<string>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  
+
  // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
@@ -99,6 +104,56 @@ export class CategoryListForm {
   protected items = linkedSignal(() => this.formData().items ?? []);
   protected translateItems = linkedSignal(() => this.formData().translateItems ?? false);
   protected bkey = computed(() => this.formData().bkey ?? '');
+
+  // i18n
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label:          PFX + 'bkey.label',
+    bkey_placeholder:    PFX + 'bkey.placeholder',
+    bkey_helper:         PFX + 'bkey.helper',
+    name_label:          PFX + 'name.label',
+    name_placeholder:    PFX + 'name.placeholder',
+    name_helper:         PFX + 'name.helper',
+    i18nBase_label:      PFX + 'i18nBase.label',
+    i18nBase_placeholder: PFX + 'i18nBase.placeholder',
+    i18nBase_helper:     PFX + 'i18nBase.helper',
+    notes_label:              PFX + 'notes.label',
+    notes_placeholder:        PFX + 'notes.placeholder',
+    translateItems_label:     PFX + 'translateItems.label',
+    translateItems_helper:    PFX + 'translateItems.helper',
+  });
+
+  protected bkeyI18n = computed(() => ({
+    name: 'bkey',
+    label: this.fieldI18n.bkey_label(),
+    placeholder: this.fieldI18n.bkey_placeholder(),
+    helper: this.fieldI18n.bkey_helper()
+  } as TextInputI18n));
+
+  protected nameI18n = computed(() => ({
+    name: 'name',
+    label: this.fieldI18n.name_label(),
+    placeholder: this.fieldI18n.name_placeholder(),
+    helper: this.fieldI18n.name_helper()
+  } as TextInputI18n));
+
+  protected i18nBaseI18n = computed(() => ({
+    name: 'i18nBase',
+    label: this.fieldI18n.i18nBase_label(),
+    placeholder: this.fieldI18n.i18nBase_placeholder(),
+    helper: this.fieldI18n.i18nBase_helper()
+  } as TextInputI18n));
+
+  protected notesI18n = computed(() => ({
+    name: 'notes',
+    label: this.fieldI18n.notes_label(),
+    placeholder: this.fieldI18n.notes_placeholder()
+  } as NotesInputI18n));
+
+  protected translateItemsI18n = computed(() => ({
+    name: 'translateItems',
+    label: this.fieldI18n.translateItems_label(),
+    helper: this.fieldI18n.translateItems_helper()
+  } as CheckboxI18n));
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | CategoryItemModel[] | boolean): void {

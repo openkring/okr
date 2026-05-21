@@ -3,7 +3,7 @@ import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, OrgModel, OrgModelName, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_TITLE } from '@bk2/shared-constants';
 import { ENV } from '@bk2/shared-config';
@@ -37,13 +37,13 @@ import { OrgStore } from './org.store';
   providers: [OrgStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} } `],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(!isNew()) {
-        <bk-avatar-toolbar key="{{parentKey()}}" title="{{ toolbarTitle() }}" modelType="org" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
+        <bk-avatar-toolbar key="{{parentKey()}}" [title]="toolbarTitle()" modelType="org" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
       }
       @if(formData(); as formData) {
         <bk-org-form
@@ -118,6 +118,11 @@ export class OrgEditModal {
   protected isNew = computed(() => !this.org()?.bkey.length);
   protected listId = computed(() => 'o_' + this.orgKey());
   protected priv = computed(() => this.store.privacySettings());
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

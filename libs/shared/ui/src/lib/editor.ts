@@ -7,7 +7,7 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
-import { ButtonCopy } from './button-copy';
+import { ButtonCopy, ButtonCopyI18n } from './button-copy';
 import { EditorToolbar } from './editor-toolbar';
 
 @Component({
@@ -48,7 +48,7 @@ import { EditorToolbar } from './editor-toolbar';
               </ion-button>
             }
             @if (isCopyable()) {
-              <bk-button-copy [value]="content()" [label]="'@general.operation.copy.label'" />
+              <bk-button-copy [i18n]="buttonCopyI18n()" [value]="content()" />
             }
           </ion-item>
         } @else {           <!-- viewing mode -->
@@ -66,6 +66,7 @@ export class BkEditor implements OnInit, OnDestroy {
   // inputs
   public content = model('<p></p>'); // the HTML content
   public readOnly = input.required<boolean>();
+  public buttonCopyI18n = input.required<ButtonCopyI18n>();
   public clearable = input(true); // show a button to clear the notes
   public copyable = input(true); // show a button to copy the notes
 

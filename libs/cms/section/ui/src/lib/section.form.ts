@@ -1,10 +1,13 @@
 import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
 
 import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
-import { Chips, ImageConfigEdit, NotesInput } from '@bk2/shared-ui';
+import { Chips, ImageConfigEdit, ImageConfigI18n, NotesInput, NotesInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { ModelSelectService } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { PFX } from './scope';
 
 import { SectionConfiguration } from './section-configuration';
 import { EditorConfiguration } from './editor-configuration';
@@ -101,10 +104,10 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('hero') {
           @if(logoConfig(); as logoConfig) {
-            <bk-image-config [formData]="logoConfig" (formDataChange)="onImageConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-image-config [formData]="logoConfig" [i18n]="imageConfigI18n()" (formDataChange)="onImageConfigChange($event)" [readOnly]="isReadOnly()" />
           }
           @if(heroConfig(); as heroConfig) {
-            <bk-image-config [formData]="heroConfig" (formDataChange)="onImageConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-image-config [formData]="heroConfig" [i18n]="imageConfigI18n()" (formDataChange)="onImageConfigChange($event)" [readOnly]="isReadOnly()" />
           }
           @if(imageStyle(); as imageStyle) {
             <bk-image-style [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)" [readOnly]="isReadOnly()" />
@@ -181,7 +184,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
       }
       @if(hasRole('admin')) {
-        <bk-notes-input [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     }
   `
@@ -191,6 +194,36 @@ import { TrackerConfiguration } from './tracker-configuration';
  */
 export class SectionForm {
   private readonly modelSelectService = inject(ModelSelectService);
+  private readonly i18nService = inject(I18nService);
+
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    imgLabel_label:         PFX + 'image.label.label',
+    imgLabel_placeholder:   PFX + 'image.label.placeholder',
+    imgLabel_helper:        PFX + 'image.label.helper',
+    imgUrl_label:           PFX + 'image.url.label',
+    imgUrl_placeholder:     PFX + 'image.url.placeholder',
+    imgUrl_helper:          PFX + 'image.url.helper',
+    imgActionUrl_label:     PFX + 'image.actionUrl.label',
+    imgActionUrl_placeholder: PFX + 'image.actionUrl.placeholder',
+    imgActionUrl_helper:    PFX + 'image.actionUrl.helper',
+    imgAltText_label:       PFX + 'image.altText.label',
+    imgAltText_placeholder: PFX + 'image.altText.placeholder',
+    imgAltText_helper:      PFX + 'image.altText.helper',
+    imgOverlay_label:       PFX + 'image.overlay.label',
+    imgOverlay_placeholder: PFX + 'image.overlay.placeholder',
+    imgOverlay_helper:      PFX + 'image.overlay.helper',
+    notes_label:            PFX + 'notes.label',
+    notes_placeholder:      PFX + 'notes.placeholder',
+  });
+
+  protected imageConfigI18n = computed(() => ({
+    label:     { name: 'label',     label: this.fieldI18n.imgLabel_label(),     placeholder: this.fieldI18n.imgLabel_placeholder(),     helper: this.fieldI18n.imgLabel_helper()     },
+    url:       { name: 'url',       label: this.fieldI18n.imgUrl_label(),       placeholder: this.fieldI18n.imgUrl_placeholder(),       helper: this.fieldI18n.imgUrl_helper()       },
+    actionUrl: { name: 'actionUrl', label: this.fieldI18n.imgActionUrl_label(), placeholder: this.fieldI18n.imgActionUrl_placeholder(), helper: this.fieldI18n.imgActionUrl_helper() },
+    altText:   { name: 'altText',   label: this.fieldI18n.imgAltText_label(),   placeholder: this.fieldI18n.imgAltText_placeholder(),   helper: this.fieldI18n.imgAltText_helper()   },
+    overlay:   { name: 'overlay',   label: this.fieldI18n.imgOverlay_label(),   placeholder: this.fieldI18n.imgOverlay_placeholder(),   helper: this.fieldI18n.imgOverlay_helper()   },
+  } as ImageConfigI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
 
   // inputs
   public formData = model.required<SectionModel>();

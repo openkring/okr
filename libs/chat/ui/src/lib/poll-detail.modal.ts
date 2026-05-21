@@ -52,7 +52,7 @@ import { hashUserIdToColor } from '@bk2/chat-util';
     }
   `],
   template: `
-    <bk-header title="@chat.survey.viewVotes.title" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@chat.survey.viewVotes.title' }" [isModal]="true" />
     <ion-content>
       @for(answer of pollAnswers(); track answer.id) {
         <div class="answer-header">{{ answer.body }} ({{ voteCount(answer.id) }})</div>

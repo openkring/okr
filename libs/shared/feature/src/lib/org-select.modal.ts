@@ -26,7 +26,7 @@ import { OrgSelectStore } from './org-select.store';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      title="@subject.org.operation.select.label"
+      [i18n]="{ title: '@subject.org.operation.select.label' }"
       [isModal]="true"
     />   
     <ion-content>

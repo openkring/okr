@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, model, output } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import { IonChip, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
@@ -40,7 +40,7 @@ export class Color {
 
   // inputs
   public hexColor = model<string>('#ffffcc');
-  public label = input('@input.color.label');
+  public label = input.required<string>();
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

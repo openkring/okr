@@ -9,6 +9,11 @@ import { MetaTag } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { getIndexOfMetaTag } from '@bk2/shared-util-core';
 
+export interface MetaTagListI18n {
+  title: string;
+  empty: string;
+}
+
 @Component({
   selector: 'bk-meta-tag-list',
   standalone: true,
@@ -23,7 +28,7 @@ import { getIndexOfMetaTag } from '@bk2/shared-util-core';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() }}</ion-card-title>
+        <ion-card-title>{{ i18n().title }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-item lines="none">
@@ -51,7 +56,7 @@ import { getIndexOfMetaTag } from '@bk2/shared-util-core';
         @if(metaTagList(); as metaTagList) {
           @if(metaTagList.length === 0) {
             <ion-item lines="none">
-              <ion-label>{{'@input.meta.empty'}}</ion-label>
+              <ion-label>{{ i18n().empty }}</ion-label>
             </ion-item>
           } @else {
             <ion-list>
@@ -76,7 +81,7 @@ import { getIndexOfMetaTag } from '@bk2/shared-util-core';
 export class MetaTagList {
   // inputs
   public metaTagList = model.required<MetaTag[]>(); // the keys of the menu items
-  public title = input('@input.meta.label');
+  public i18n = input<MetaTagListI18n>({ title: 'Meta-Tags', empty: 'Keine Meta-Tags' });
   public wordMask = input(LowercaseWordMask);
 
   // outputs

@@ -36,7 +36,7 @@ const JournalViewStore = signalStore(
     .view-label { font-size: 0.8rem; }
   `],
   template: `
-    <bk-header [title]="store.i18n.view_title()" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.view_title() }" [isModal]="true" />
     <ion-content class="ion-no-padding">
       @if(entry(); as entry) {
         <ion-card>

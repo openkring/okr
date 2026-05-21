@@ -101,7 +101,10 @@ export const AddressStore = signalStore(
       as_web_open:        PFX + 'actionsheet.web.open', 
       as_subject_edit:    PFX + 'actionsheet.subject.edit',
       cancel:             '@cancel',
-      ok:                 '@ok'
+      ok:                 '@ok',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
     addressesResource: rxResource({
       params: () => ({
@@ -119,22 +122,22 @@ export const AddressStore = signalStore(
     }),
   })),
 
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      addresses: computed(() => state.addressesResource.value()),
+      addresses: computed(() => store.addressesResource.value()),
       filteredAddresses: computed(() =>
-        state.addressesResource.value()?.filter((address: AddressModel) =>
-          nameMatches(address.index, state.searchTerm()) &&
-          nameMatches(address.addressChannel, state.selectedChannel()) &&
-          chipMatches(address.tags, state.selectedTag())
+        store.addressesResource.value()?.filter((address: AddressModel) =>
+          nameMatches(address.index, store.searchTerm()) &&
+          nameMatches(address.addressChannel, store.selectedChannel()) &&
+          chipMatches(address.tags, store.selectedTag())
         ) ?? []
       ),
-      currentUser: computed(() => state.appStore.currentUser()),
-      currentPerson: computed(() => state.appStore.currentPerson()),
-      defaultOrg: computed(() => state.appStore.defaultOrg()),
-      tenantId: computed(() => state.appStore.tenantId()),
-      imgixBaseUrl: computed(() => state.appStore.env.services.imgixBaseUrl),
-      isLoading: computed(() => state.addressesResource.isLoading()),
+      currentUser: computed(() => store.appStore.currentUser()),
+      currentPerson: computed(() => store.appStore.currentPerson()),
+      defaultOrg: computed(() => store.appStore.defaultOrg()),
+      tenantId: computed(() => store.appStore.tenantId()),
+      imgixBaseUrl: computed(() => store.appStore.env.services.imgixBaseUrl),
+      isLoading: computed(() => store.addressesResource.isLoading()),
     };
   }),
 

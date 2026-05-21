@@ -33,7 +33,7 @@ const DEFAULT_FOOTER = '<span>Vielen Dank f&uuml;r die Bezahlung der Rechnung in
     ion-textarea { --padding-top: 6px; }
   `],
   template: `
-    <bk-header title="@finance.scsMemberFee.operation.upload.label" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@finance.scsMemberFee.operation.upload.label' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
         <ion-row>

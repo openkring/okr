@@ -61,8 +61,11 @@ export const WorkrelStore = signalStore(
       as_create:            PFX + 'actionsheet.create',
       as_delete:            PFX + 'actionsheet.delete',
       as_end:               PFX + 'actionsheet.end',
-      cancel:               '@cancel',
-      ok:                   '@ok'
+      cancel:                          '@cancel',
+      ok:                              '@ok',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     workrelsResource: rxResource({

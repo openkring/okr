@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonToggle } from '@ionic/angular/standalone';
 
-import { Button, Header, ResultLog, StringSelect } from '@bk2/shared-ui';
+import { Button, Header, ResultLog, StringSelect, StringSelectI18n } from '@bk2/shared-ui';
 
 import { AocAdminOpsStore } from './aoc-adminops.store';
 
@@ -16,7 +16,7 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
   ],
   providers: [AocAdminOpsStore],
   template: `
-    <bk-header title="{{ store.i18n.title() }}" />
+    <bk-header [i18n]="{ title: '{{ store.i18n.title() }}' }" />
     <ion-content>
       <!-- Debug Card -->
       <ion-card>
@@ -62,10 +62,10 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-string-select name="club"  [selectedString]="club()" (selectedStringChange)="onFieldChange('club', $event)" [readOnly]="false" [stringList] = "['scs', 'srv']" />
+                <bk-string-select [i18n]="clubI18n()" [selectedString]="club()" (selectedStringChange)="onFieldChange('club', $event)" [readOnly]="false" [stringList]="['scs', 'srv']" />
               </ion-col>
               <ion-col size="6">      
-                <bk-string-select name="year"  [selectedString]="year()" (selectedStringChange)="onFieldChange('year', $event)" [readOnly]="false" [stringList] = "['2026', '2025', '2024', '2023', '2022', '2021']" />           
+                <bk-string-select [i18n]="yearI18n()" [selectedString]="year()" (selectedStringChange)="onFieldChange('year', $event)" [readOnly]="false" [stringList]="['2026', '2025', '2024', '2023', '2022', '2021']" />           
               </ion-col>
               <ion-col size="6">
               </ion-col>
@@ -88,6 +88,9 @@ export class AocAdminOps {
   protected readonly logTitle = computed(() => this.store.logTitle());
   protected readonly logInfo = computed(() => this.store.log());
   protected readonly isLoading = computed(() => this.store.isLoading());
+
+  protected clubI18n = computed(() => ({ name: 'club', label: this.store.i18n.club_label() } as StringSelectI18n));
+  protected yearI18n = computed(() => ({ name: 'year', label: this.store.i18n.year_label() } as StringSelectI18n));
 
   protected club = signal('scs');
   protected year = signal('2025');

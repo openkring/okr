@@ -1,14 +1,16 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { InvoiceModel, UserModel } from '@bk2/shared-models';
-import { Chips, DateInput, NotesInput, NumberInput, StringSelect, TextInput } from '@bk2/shared-ui';
+import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { invoiceValidations } from '@bk2/finance-invoice-util';
+import { PFX } from './scope';
 
 const INVOICE_STATES = ['draft', 'pending', 'paid', 'cancelled'];
 const VAT_TYPES = ['included', 'excluded', 'exempt'];
@@ -37,42 +39,39 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
             <ion-grid>
               <ion-row>
                 <ion-col size="4">
-                  <bk-text-input name="invoiceId" [value]="invoiceId()" (valueChange)="onFieldChange('invoiceId', $event)"
-                    label="@finance.invoice.field.invoiceId.label" [maxLength]="30" [readOnly]="isReadOnly() || !isNew()" />
+                  <bk-text-input [i18n]="invoiceIdI18n()" [value]="invoiceId()" (valueChange)="onFieldChange('invoiceId', $event)"
+                    [maxLength]="30" [readOnly]="isReadOnly() || !isNew()" />
                 </ion-col>
                 <ion-col size="8">
-                  <bk-text-input name="title" [value]="title()" (valueChange)="onFieldChange('title', $event)"
-                    label="@finance.invoice.field.title.label" [maxLength]="100" [readOnly]="isReadOnly()" />
+                  <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
+                    [maxLength]="100" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
-                  <bk-date-input name="invoiceDate" [storeDate]="invoiceDate()" (storeDateChange)="onFieldChange('invoiceDate', $event)"
-                    label="@finance.invoice.field.invoiceDate.label" [readOnly]="isReadOnly()" />
+                  <bk-date-input [i18n]="invoiceDateI18n()" [storeDate]="invoiceDate()" (storeDateChange)="onFieldChange('invoiceDate', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="6">
-                  <bk-date-input name="dueDate" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)"
-                    label="@finance.invoice.field.dueDate.label" [readOnly]="isReadOnly()" />
+                  <bk-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
-                  <bk-number-input name="amount" [value]="amountInCHF()" (valueChange)="onAmountChange($event)"
-                    label="@finance.invoice.field.amount.label" [readOnly]="isReadOnly()" />
+                  <bk-number-input [i18n]="amountI18n()" [value]="amountInCHF()" (valueChange)="onAmountChange($event)"
+                    [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="6">
-                  <bk-string-select name="vatType" [stringList]="vatTypes" [selectedString]="vatType()"
+                  <bk-string-select [i18n]="vatTypeI18n()" [stringList]="vatTypes" [selectedString]="vatType()"
                     (selectedStringChange)="onFieldChange('vatType', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
-                  <bk-string-select name="state" [stringList]="states" [selectedString]="state()"
+                  <bk-string-select [i18n]="stateI18n()" [stringList]="states" [selectedString]="state()"
                     (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="6">
-                  <bk-date-input name="paymentDate" [storeDate]="paymentDate()" (storeDateChange)="onFieldChange('paymentDate', $event)"
-                    label="@finance.invoice.field.paymentDate.label" [readOnly]="isReadOnly()" />
+                  <bk-date-input [i18n]="paymentDateI18n()" [storeDate]="paymentDate()" (storeDateChange)="onFieldChange('paymentDate', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -83,8 +82,7 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
-                    label="@finance.invoice.field.notes.label" [readOnly]="isReadOnly()" />
+                  <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -101,6 +99,54 @@ export class InvoiceEditForm {
   public readonly readOnly = input(true);
   public readonly isNew = input(false);
   public readonly showForm = input(true);
+
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    invoiceId_label:      PFX + 'invoiceId.label',
+    invoiceId_placeholder: PFX + 'invoiceId.placeholder',
+    invoiceId_helper:     PFX + 'invoiceId.helper',
+    title_label:          PFX + 'title.label',
+    title_placeholder:    PFX + 'title.placeholder',
+    title_helper:         PFX + 'title.helper',
+    amount_label:         PFX + 'amount.label',
+    amount_placeholder:   PFX + 'amount.placeholder',
+    amount_helper:        PFX + 'amount.helper',
+    notes_label:          PFX + 'notes.label',
+    notes_placeholder:    PFX + 'notes.placeholder',
+    invoiceDate_label:        PFX + 'invoiceDate.label',
+    invoiceDate_placeholder:  PFX + 'invoiceDate.placeholder',
+    invoiceDate_helper:       PFX + 'invoiceDate.helper',
+    dueDate_label:            PFX + 'dueDate.label',
+    dueDate_placeholder:      PFX + 'dueDate.placeholder',
+    dueDate_helper:           PFX + 'dueDate.helper',
+    paymentDate_label:        PFX + 'paymentDate.label',
+    paymentDate_placeholder:  PFX + 'paymentDate.placeholder',
+    paymentDate_helper:       PFX + 'paymentDate.helper',
+    vatType_label:            PFX + 'vatType.label',
+    state_label:              PFX + 'state.label',
+  });
+
+  protected invoiceIdI18n = computed(() => ({
+    name: 'invoiceId', label: this.fieldI18n.invoiceId_label(), placeholder: this.fieldI18n.invoiceId_placeholder(), helper: this.fieldI18n.invoiceId_helper()
+  } as TextInputI18n));
+
+  protected titleI18n = computed(() => ({
+    name: 'title', label: this.fieldI18n.title_label(), placeholder: this.fieldI18n.title_placeholder(), helper: this.fieldI18n.title_helper()
+  } as TextInputI18n));
+
+  protected amountI18n = computed(() => ({
+    name: 'amount', label: this.fieldI18n.amount_label(), placeholder: this.fieldI18n.amount_placeholder(), helper: this.fieldI18n.amount_helper()
+  } as NumberInputI18n));
+
+  protected notesI18n = computed(() => ({
+    name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder()
+  } as NotesInputI18n));
+
+  protected invoiceDateI18n = computed(() => ({ name: 'invoiceDate', label: this.fieldI18n.invoiceDate_label(), placeholder: this.fieldI18n.invoiceDate_placeholder(), helper: this.fieldI18n.invoiceDate_helper() } as DateInputI18n));
+  protected dueDateI18n = computed(() => ({ name: 'dueDate', label: this.fieldI18n.dueDate_label(), placeholder: this.fieldI18n.dueDate_placeholder(), helper: this.fieldI18n.dueDate_helper() } as DateInputI18n));
+  protected paymentDateI18n = computed(() => ({ name: 'paymentDate', label: this.fieldI18n.paymentDate_label(), placeholder: this.fieldI18n.paymentDate_placeholder(), helper: this.fieldI18n.paymentDate_helper() } as DateInputI18n));
+  protected vatTypeI18n = computed(() => ({ name: 'vatType', label: this.fieldI18n.vatType_label() } as StringSelectI18n));
+  protected stateI18n   = computed(() => ({ name: 'state',   label: this.fieldI18n.state_label()   } as StringSelectI18n));
 
   public readonly formDataChange = output<InvoiceModel>();
   public readonly dirty = output<boolean>();

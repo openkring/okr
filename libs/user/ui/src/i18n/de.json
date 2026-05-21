@@ -1,45 +1,35 @@
 {
-  "user": {
-    "auth": {
-      "title": "Authentifizierung",
-      "description": "Einstellungen zur Authentifizierung des Users. Diese Einstellungen gelten nur für den selektierten User."
-    },
-    "display": {
-      "title": "Anzeige",
-      "description": "Einstellungen zur Darstellungsart von verschiedenen Daten. Diese Einstellungen überschreiben die Standardeinstellungen und gelten nur für den selektierten User."
-    },
-    "model": {
-      "title": "User Attribute",
-      "description": "Allgemeine Attribute, welche diesen User beschreiben."
-    },
-    "notification": {
-      "title": "Notifizierungen",
-      "description": "Wie soll der selektierte User notifiziert werden ?"
-    },
-    "privacy": {
-      "title": "Datenschutz",
-      "description": "Wie dürfen die sensitiven Daten des selektierten Users verwendet werden."
-    }
-  },
-  "input": {
-    "userKey": {
-      "label": "Benutzer ID",
-      "placeholder": "key"
-    },
-    "displayName": {
-      "label": "Angezeigter Name",
-      "placeholder": "ssssssss"
-    },
-    "photoUrl": {
-      "label": "Photo URL",
-      "placeholder": "URL"
-    }
-  },
-  "auth": {
-    "privacyUsage": {
-      "srv": {
-        "description": "Der Seeclub Stäfa ist Mitglied beim Schweizerischen Ruderverband SRV. Als Mitglied beim SCS bist du automatisch auch Mitglied beim SRV. Der SRV verlangt von uns die Weiterleitung von persönlichen Informationen (Name, Vorname, Post-Adresse, Tel Nr.) von allen unseren Mitgliedern. Mit der Mitgliedschaft beim SCS willigst du implizit ein, dass diese Daten jährlich an SRV weiter gegeben werden."
-      }
-    }
-  }
+  "uid":           { "label": "Benutzer-ID",        "placeholder": "",                      "helper": "" },
+  "displayName":   { "label": "Anzeigename",         "placeholder": "",                      "helper": "" },
+  "photoUrl":      { "label": "Foto-URL",            "placeholder": "https://...",            "helper": "" },
+  "bkey":          { "label": "Benutzer-ID",         "placeholder": "",                      "helper": "" },
+  "personKey":     { "label": "Personen-Schlüssel",  "placeholder": "",                      "helper": "" },
+  "firstName":     { "label": "Vorname",             "placeholder": "Vorname eingeben",      "helper": "" },
+  "lastName":      { "label": "Nachname",            "placeholder": "Nachname eingeben",     "helper": "" },
+  "tenants":       { "label": "Mandanten",           "placeholder": "",                      "helper": "" },
+  "loginEmail":    { "label": "Login E-Mail",        "placeholder": "E-Mail Adresse eingeben" },
+  "gravatarEmail": { "label": "Gravatar E-Mail",     "placeholder": "E-Mail Adresse eingeben" },
+  "email":         { "label": "E-Mail",              "placeholder": "E-Mail Adresse eingeben" },
+  "phone":         { "label": "Telefon",             "placeholder": "+41 XX XXX XX XX" },
+  "notes":         { "label": "Notizen",             "placeholder": "" },
+  "avatarUsage":        { "label": "Avatar-Verwendung" },
+  "personSortCriteria": { "label": "Personen sortieren nach" },
+  "userLanguage":       { "label": "Sprache" },
+  "nameDisplay":        { "label": "Namensanzeige" },
+  "usageImages":        { "label": "Bilder" },
+  "usageDateOfBirth":   { "label": "Geburtsdatum" },
+  "usagePostalAddress": { "label": "Postadresse" },
+  "usageEmail":         { "label": "E-Mail" },
+  "usagePhone":         { "label": "Telefon" },
+  "usageName":          { "label": "Name" },
+  "newsDelivery":       { "label": "News-Zustellung" },
+  "invoiceDelivery":    { "label": "Rechnung-Zustellung" },
+  "emailVerified":      { "label": "E-Mail bestätigt", "helper": "" },
+  "disabled":           { "label": "Deaktiviert", "helper": "" },
+  "useTouchId":         { "label": "Touch ID verwenden", "helper": "" },
+  "useFaceId":          { "label": "Face ID verwenden", "helper": "" },
+  "showArchivedData":   { "label": "Archivierte Daten anzeigen", "helper": "" },
+  "showDebugInfo":      { "label": "Debug-Informationen anzeigen", "helper": "" },
+  "showHelpers":        { "label": "Hilfestellungen anzeigen", "helper": "" },
+  "srvEmail":           { "label": "SRV E-Mail", "helper": "" }
 }

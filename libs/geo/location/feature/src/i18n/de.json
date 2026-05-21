@@ -12,5 +12,10 @@
   "create": "Neuen Ort erstellen",
   "delete": "Ort löschen",
   "show": "Ort auf der Karte anzeigen",
-  "convert": "Formate konvertieren"
+  "convert": "Formate konvertieren",
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
+  }
 }

@@ -98,5 +98,10 @@
     "create": "Neue Beschäftigung erstellen",
     "delete": "Beschäftigung löschen",
     "albums": "Album"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

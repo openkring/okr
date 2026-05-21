@@ -35,7 +35,7 @@ const I18nDefaultEditStore = signalStore(
   ],
   providers: [I18nDefaultEditStore],
   template: `
-    <bk-header title="@i18n.default.edit.title" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@i18n.default.edit.title' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-label position="stacked">{{ store.i18n.module_label() }}</ion-label>

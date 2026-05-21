@@ -19,7 +19,7 @@ import { FlightTrackerStore } from './flighttracker.store';
     IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
   template: `
-    <bk-header [title]="store.i18n.detailTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.detailTitle() }" [isModal]="true" />
     <ion-content>
       <ion-grid>
         <!-- Departure -->

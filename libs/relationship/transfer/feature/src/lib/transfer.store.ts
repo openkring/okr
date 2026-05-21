@@ -56,8 +56,11 @@ export const TransferStore = signalStore(
       as_view:                      PFX + 'actionsheet.view',
       as_delete:                    PFX + 'actionsheet.delete',
       as_create:                    PFX + 'actionsheet.create',
-      cancel:                       '@cancel',
-      ok:                           '@ok'
+      cancel:                          '@cancel',
+      ok:                              '@ok',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     transfersResource: rxResource({

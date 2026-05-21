@@ -151,6 +151,9 @@ export const CalEventStore = signalStore(
       as_subscribe:         PFX + 'invitation.subscribe',
       as_unsubscribe:       PFX + 'invitation.unsubscribe',
       as_albums:            PFX + 'actionsheet.albums',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
       ok: '@ok',
       cancel: '@cancel'
     }),

@@ -15,7 +15,7 @@ import { Header } from '@bk2/shared-ui';
     IonContent, IonFooter, IonToolbar, IonButtons, IonButton, IonItem, IonInput,
   ],
   template: `
-    <bk-header title="@finance.scsMemberFee.operation.download.enterInvoiceId" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@finance.scsMemberFee.operation.download.enterInvoiceId' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item lines="none">
         <ion-input

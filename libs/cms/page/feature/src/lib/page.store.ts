@@ -100,7 +100,10 @@ export const _PageStore = signalStore(
       search:                       '@search.label',
       filter_all:                   '@filter.all',
       ok:                           '@ok',
-      cancel:                       '@cancel'
+      cancel:                       '@cancel',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
 
     pagesResource: rxResource({

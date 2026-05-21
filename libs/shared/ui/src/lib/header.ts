@@ -7,6 +7,11 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { Searchbar } from './searchbar';
 
+export interface HeaderI18n {
+  title: string;
+  placeholder?: string;
+}
+
 @Component({
   selector: 'bk-header',
   standalone: true,
@@ -23,7 +28,7 @@ import { Searchbar } from './searchbar';
             <ion-menu-button />
           </ion-buttons>
         }
-        <ion-title>{{ title() }}</ion-title>
+        <ion-title>{{ i18n().title }}</ion-title>
         @if(isRootPage() === false) {
           <ion-buttons slot="end">
             @if(shouldShowCloseButton()) {
@@ -41,7 +46,7 @@ import { Searchbar } from './searchbar';
       </ion-toolbar>
       @if(isSearchablePage()) {
         <ion-toolbar>
-          <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ placeholder() }}" />
+          <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ i18n().placeholder ?? '@general.operation.search.placeholder' }}" />
         </ion-toolbar>
       }
     </ion-header>
@@ -57,13 +62,12 @@ export class Header {
 
   // inputs
   public searchTerm = model(''); // search term for the search bar
-  public title = input.required<string>();
+  public i18n = input.required<HeaderI18n>();
   public isModal = input(false);
   public isRoot = input(false);
   public isSearchable = input(false);
   public showOkButton = input(false);
   public showCloseButton = input(true);
-  public placeholder = input('@general.operation.search.placeholder');
 
   // coerced boolean inputs
   protected isModalDialog = computed(() => coerceBoolean(this.isModal()));

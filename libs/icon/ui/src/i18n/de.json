@@ -14,5 +14,34 @@
         "label": "Index"
       }
     }
+  },
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Icon Name",
+    "placeholder": "",
+    "helper": ""
+  },
+  "type": {
+    "label": "Icon Set",
+    "placeholder": "",
+    "helper": ""
+  },
+  "fullPath": {
+    "label": "Storage Path",
+    "placeholder": "",
+    "helper": ""
+  },
+  "index": {
+    "label": "Index",
+    "placeholder": "",
+    "helper": "Leerzeichen-getrennte Suchbegriffe"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
   }
 }

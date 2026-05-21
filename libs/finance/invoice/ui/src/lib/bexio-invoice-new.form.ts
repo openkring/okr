@@ -1,13 +1,15 @@
-import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { DateInput, NotesInput, NumberInput, StringSelect, TextInput } from '@bk2/shared-ui';
+import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInvoicePositions, bexioInvoiceValidations, defaultInvoicePositionToBexio } from '@bk2/finance-invoice-util';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-bexio-invoice-new-form',
@@ -34,35 +36,31 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
             <ion-grid>
               <ion-row>
                 <ion-col size="8">
-                  <bk-text-input name="title" [value]="title()"
+                  <bk-text-input [i18n]="titleI18n()" [value]="title()"
                     (valueChange)="onFieldChange('title', $event)"
-                    label="@finance.invoice.field.title.label"
                     [maxLength]="100" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="4">
-                  <bk-text-input name="bexioId" [value]="bexioId()"
+                  <bk-text-input [i18n]="bexioIdI18n()" [value]="bexioId()"
                     (valueChange)="onFieldChange('bexioId', $event)"
-                    label="@finance.invoice.field.bexioId.label"
                     [maxLength]="30" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
-                  <bk-date-input name="validFrom" [storeDate]="validFrom()"
+                  <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()"
                     (storeDateChange)="onFieldChange('validFrom', $event)"
-                    label="@finance.invoice.field.validFrom.label"
                     [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="6">
-                  <bk-date-input name="validTo" [storeDate]="validTo()"
+                  <bk-date-input [i18n]="validToI18n()" [storeDate]="validTo()"
                     (storeDateChange)="onFieldChange('validTo', $event)"
-                    label="@finance.invoice.field.validTo.label"
                     [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-string-select name="template"
+                  <bk-string-select [i18n]="templateI18n()"
                     [stringList]="templateNames"
                     [selectedString]="selectedTemplateName()"
                     (selectedStringChange)="onTemplateChange($event)"
@@ -71,7 +69,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes-input name="header" [value]="header()"
+                  <bk-notes-input [i18n]="headerI18n()" [value]="header()"
                     (valueChange)="onFieldChange('header', $event)"
                     title="@finance.invoice.field.header.label" [showTitle]="true"
                     [readOnly]="isReadOnly()" />
@@ -79,7 +77,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes-input name="footer" [value]="footer()"
+                  <bk-notes-input [i18n]="footerI18n()" [value]="footer()"
                     (valueChange)="onFieldChange('footer', $event)"
                     title="@finance.invoice.field.footer.label" [showTitle]="true"
                     [readOnly]="isReadOnly()" />
@@ -99,27 +97,23 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
                 <ion-grid>
                   <ion-row>
                     <ion-col size="5">
-                      <bk-text-input name="text" [value]="pos.text"
+                      <bk-text-input [i18n]="positionTextI18n()" [value]="pos.text"
                         (valueChange)="onPositionFieldChange($index, 'text', $event)"
-                        label="@finance.invoice.field.position.text.label"
                         [maxLength]="200" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="2">
-                      <bk-number-input name="unitPrice" [value]="toNumber(pos.unit_price)"
+                      <bk-number-input [i18n]="unitPriceI18n()" [value]="toNumber(pos.unit_price)"
                         (valueChange)="onPositionPriceChange($index, $event)"
-                        label="@finance.invoice.field.position.unitPrice.label"
                         [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="2">
-                      <bk-number-input name="amount" [value]="toNumber(pos.amount)"
+                      <bk-number-input [i18n]="posAmountI18n()" [value]="toNumber(pos.amount)"
                         (valueChange)="onPositionAmountChange($index, $event)"
-                        label="@finance.invoice.field.position.amount.label"
                         [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="2">
-                      <bk-number-input name="accountId" [value]="pos.account_id"
+                      <bk-number-input [i18n]="accountIdI18n()" [value]="pos.account_id"
                         (valueChange)="onPositionFieldChange($index, 'account_id', $event + '')"
-                        label="@finance.invoice.field.position.accountId.label"
                         [readOnly]="isReadOnly()" />
                     </ion-col>
                     @if (!isReadOnly()) {
@@ -138,7 +132,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
             <ion-grid>
               <ion-row class="ion-align-items-center">
                 <ion-col size="9">
-                  <bk-string-select name="defaultPosition"
+                  <bk-string-select [i18n]="defaultPositionI18n()"
                     [stringList]="defaultPositionNames"
                     [selectedString]="selectedDefaultName()"
                     (selectedStringChange)="selectedDefaultName.set($event)"
@@ -161,6 +155,77 @@ export class BexioInvoiceNewForm {
   public readonly formData = input.required<BexioInvoiceFormModel>();
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
+
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    title_label:           PFX + 'title.label',
+    title_placeholder:     PFX + 'title.placeholder',
+    title_helper:          PFX + 'title.helper',
+    bexioId_label:         PFX + 'bexioId.label',
+    bexioId_placeholder:   PFX + 'bexioId.placeholder',
+    bexioId_helper:        PFX + 'bexioId.helper',
+    posText_label:         PFX + 'position.text.label',
+    posText_placeholder:   PFX + 'position.text.placeholder',
+    posText_helper:        PFX + 'position.text.helper',
+    unitPrice_label:       PFX + 'position.unitPrice.label',
+    unitPrice_placeholder: PFX + 'position.unitPrice.placeholder',
+    unitPrice_helper:      PFX + 'position.unitPrice.helper',
+    posAmount_label:       PFX + 'position.amount.label',
+    posAmount_placeholder: PFX + 'position.amount.placeholder',
+    posAmount_helper:      PFX + 'position.amount.helper',
+    accountId_label:       PFX + 'position.accountId.label',
+    accountId_placeholder: PFX + 'position.accountId.placeholder',
+    accountId_helper:      PFX + 'position.accountId.helper',
+    header_label:          PFX + 'header.label',
+    header_placeholder:    PFX + 'header.placeholder',
+    footer_label:          PFX + 'footer.label',
+    footer_placeholder:    PFX + 'footer.placeholder',
+    validFrom_label:        PFX + 'validFrom.label',
+    validFrom_placeholder:  PFX + 'validFrom.placeholder',
+    validFrom_helper:       PFX + 'validFrom.helper',
+    validTo_label:          PFX + 'validTo.label',
+    validTo_placeholder:    PFX + 'validTo.placeholder',
+    validTo_helper:         PFX + 'validTo.helper',
+    template_label:         PFX + 'template.label',
+    defaultPosition_label:  PFX + 'defaultPosition.label',
+  });
+
+  protected titleI18n = computed(() => ({
+    name: 'title', label: this.fieldI18n.title_label(), placeholder: this.fieldI18n.title_placeholder(), helper: this.fieldI18n.title_helper()
+  } as TextInputI18n));
+
+  protected bexioIdI18n = computed(() => ({
+    name: 'bexioId', label: this.fieldI18n.bexioId_label(), placeholder: this.fieldI18n.bexioId_placeholder(), helper: this.fieldI18n.bexioId_helper()
+  } as TextInputI18n));
+
+  protected positionTextI18n = computed(() => ({
+    name: 'text', label: this.fieldI18n.posText_label(), placeholder: this.fieldI18n.posText_placeholder(), helper: this.fieldI18n.posText_helper()
+  } as TextInputI18n));
+
+  protected unitPriceI18n = computed(() => ({
+    name: 'unitPrice', label: this.fieldI18n.unitPrice_label(), placeholder: this.fieldI18n.unitPrice_placeholder(), helper: this.fieldI18n.unitPrice_helper()
+  } as NumberInputI18n));
+
+  protected posAmountI18n = computed(() => ({
+    name: 'amount', label: this.fieldI18n.posAmount_label(), placeholder: this.fieldI18n.posAmount_placeholder(), helper: this.fieldI18n.posAmount_helper()
+  } as NumberInputI18n));
+
+  protected accountIdI18n = computed(() => ({
+    name: 'accountId', label: this.fieldI18n.accountId_label(), placeholder: this.fieldI18n.accountId_placeholder(), helper: this.fieldI18n.accountId_helper()
+  } as NumberInputI18n));
+
+  protected headerI18n = computed(() => ({
+    name: 'header', label: this.fieldI18n.header_label(), placeholder: this.fieldI18n.header_placeholder()
+  } as NotesInputI18n));
+
+  protected footerI18n = computed(() => ({
+    name: 'footer', label: this.fieldI18n.footer_label(), placeholder: this.fieldI18n.footer_placeholder()
+  } as NotesInputI18n));
+
+  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.fieldI18n.validFrom_label(), placeholder: this.fieldI18n.validFrom_placeholder(), helper: this.fieldI18n.validFrom_helper() } as DateInputI18n));
+  protected validToI18n = computed(() => ({ name: 'validTo', label: this.fieldI18n.validTo_label(), placeholder: this.fieldI18n.validTo_placeholder(), helper: this.fieldI18n.validTo_helper() } as DateInputI18n));
+  protected templateI18n        = computed(() => ({ name: 'template',        label: this.fieldI18n.template_label()        } as StringSelectI18n));
+  protected defaultPositionI18n = computed(() => ({ name: 'defaultPosition', label: this.fieldI18n.defaultPosition_label() } as StringSelectI18n));
 
   public readonly formDataChange = output<BexioInvoiceFormModel>();
   public readonly dirty = output<boolean>();

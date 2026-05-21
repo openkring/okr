@@ -89,10 +89,11 @@ export const _MatrixChatStore = signalStore(
       video_incoming:            PFX + 'video.incoming',
       video_connecting:          PFX + 'video.connecting',
       // MatrixMessageInput typing indicator
-      isTypeing:       PFX + 'isTypeing',
-      and:             PFX + 'and',
-      areTypeing:      PFX + 'areTypeing',
-      othersTypeing:   PFX + 'othersTypeing',
+      isTypeing:                PFX + 'isTypeing',
+      and:                      PFX + 'and',
+      areTypeing:               PFX + 'areTypeing',
+      othersTypeing:            PFX + 'othersTypeing',
+      copy_conf:                '@copy.conf'
 
     }),
     syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),

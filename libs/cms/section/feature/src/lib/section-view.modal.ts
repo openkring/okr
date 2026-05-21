@@ -14,7 +14,7 @@ import { SectionDispatcher } from "./section-dispatcher";
     SectionDispatcher, Header
 ],
   template: `
-    <bk-header [title]="title()" [isModal]="true" />
+    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content>
       <bk-section-dispatcher [section]="section()" [currentUser]="undefined" [editMode]="false" />
     </ion-content>

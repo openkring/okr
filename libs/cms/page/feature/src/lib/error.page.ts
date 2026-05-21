@@ -72,7 +72,7 @@ import { PageStore } from './page.store';
     }
   `],
   template: `
-    <bk-header [title]="title()" [showCloseButton]="false" />
+    <bk-header [i18n]="{ title: title() }" [showCloseButton]="false" />
     <ion-content>
       <div class="error-container">
         <img class="error-image" [src]="bannerUrl()" alt="Background" />

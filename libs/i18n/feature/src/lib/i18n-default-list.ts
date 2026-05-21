@@ -28,7 +28,7 @@ import { I18nDefaultEditModal } from './i18n-default-edit.modal';
   ],
   providers: [I18nDefaultStore],
   template: `
-    <bk-header title="@i18n.default.title" />
+    <bk-header [i18n]="{ title: '@i18n.default.title' }" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar

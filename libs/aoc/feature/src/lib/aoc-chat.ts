@@ -115,7 +115,7 @@ import { PFX } from './scope';
     }
   `],
   template: `
-      <bk-header title="{{ i18n.title() }}" />
+      <bk-header [i18n]="{ title: '{{ i18n.title() }}' }" />
     <ion-content>
       <div class="person-bar">
         <bk-avatar-select

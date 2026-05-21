@@ -1,4 +1,18 @@
 {
+  "personal": {
+    "title": "Persönliche Daten",
+    "description": "Aktualisiere hier deine persönlichen Daten wie z.B. die AHV-Nummer.",
+    "dateOfBirth": {
+      "label": "Geburtsdatum",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Wir benötigen dein richtiges Geburtsdatum zB. für Statistiken oder externe Meldungen (AHV, Verband etc.). In den Datenschutz Einstellungen unten kannst du die Sichtbarkeit deines Geburtsdatums für andere Nutzende einstellen."
+    },
+    "ssn": {
+      "label": "AHV-Nummmer",
+      "placeholder": "756.nnnn.nnnn.nn",
+      "helper": "Die AHV-Nummer ist eine optionale Eingabe. Sie wird z.B. bei Reinigungspersonal für AHV-Meldungen oder Versicherungen verwendet oder bei Verbänden für den Altersnachweis verlangt."
+    }
+  },
   "addresses": {
     "description": "Hier kannst du deine Adressen verwalten. Du kannst verschiedene Adressen für unterschiedliche Verwendungszwecke angeben, z.B. Privat, Geschäft, Notfallkontakt, etc. Die Sichtbarkeit dieser Adressen kannst du unten bei den Datenschutz-Einstellungen einstellen. Bank-Konto Informationen (IBAN-Nummer) für Rückerstattungen kannst du als Adressen mit Typ Bank-Konto eingeben. "
   },
@@ -10,5 +24,10 @@
   },
   "view": "Profil Details ansehen",
   "edit": "Profil ändern",
-  "create": "Profil kreieren ? das sollte nicht gehen !"
+  "create": "Profil kreieren ? das sollte nicht gehen !",
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
+  }
 }

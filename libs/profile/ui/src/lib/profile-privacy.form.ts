@@ -1,13 +1,15 @@
-import { Component, computed, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, inject, input, linkedSignal, model, output } from "@angular/core";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { PrivacyUsages } from "@bk2/shared-categories";
 import { PrivacyUsage, UserModel } from "@bk2/shared-models";
-import { CategoryOld, Checkbox } from "@bk2/shared-ui";
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
+import { I18nService } from "@bk2/shared-i18n";
 import { coerceBoolean, debugFormErrors, debugFormModel } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
+import { PFX } from "./scope";
 
 export interface ProfilePrivacyFormI18n {
   title: string;
@@ -52,22 +54,22 @@ export interface ProfilePrivacyFormI18n {
             </ion-row>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <bk-category-old name="usageImages" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="usageDateOfBirth" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="usagePostalAddress" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old [i18n]="usagePostalAddressI18n()" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="usageEmail" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old [i18n]="usageEmailI18n()" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="usagePhone" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old [i18n]="usagePhoneI18n()" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old name="usageName" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />  
+                <bk-category-old [i18n]="usageNameI18n()" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -80,7 +82,7 @@ export interface ProfilePrivacyFormI18n {
               </ion-row>
               <ion-row>
                 <ion-col>
-                  <bk-checkbox name="srvEmail" [checked]="srvEmail()" (checkedChange)="onFieldChange('srvEmail', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <bk-checkbox [i18n]="srvEmailI18n()" [checked]="srvEmail()" (checkedChange)="onFieldChange('srvEmail', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
@@ -92,6 +94,25 @@ export interface ProfilePrivacyFormI18n {
   `,
 })
 export class ProfilePrivacyAccordion {
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    usageImages_label:        PFX + 'usageImages.label',
+    usageDateOfBirth_label:   PFX + 'usageDateOfBirth.label',
+    usagePostalAddress_label: PFX + 'usagePostalAddress.label',
+    usageEmail_label:         PFX + 'usageEmail.label',
+    usagePhone_label:         PFX + 'usagePhone.label',
+    usageName_label:          PFX + 'usageName.label',
+    srvEmail_label:           PFX + 'srvEmail.label',
+    srvEmail_helper:          PFX + 'srvEmail.helper',
+  });
+  protected usageImagesI18n        = computed(() => ({ name: 'usageImages',        label: this.fieldI18n.usageImages_label()        } as CategoryOldI18n));
+  protected usageDateOfBirthI18n   = computed(() => ({ name: 'usageDateOfBirth',   label: this.fieldI18n.usageDateOfBirth_label()   } as CategoryOldI18n));
+  protected usagePostalAddressI18n = computed(() => ({ name: 'usagePostalAddress', label: this.fieldI18n.usagePostalAddress_label() } as CategoryOldI18n));
+  protected usageEmailI18n         = computed(() => ({ name: 'usageEmail',         label: this.fieldI18n.usageEmail_label()         } as CategoryOldI18n));
+  protected usagePhoneI18n         = computed(() => ({ name: 'usagePhone',         label: this.fieldI18n.usagePhone_label()         } as CategoryOldI18n));
+  protected usageNameI18n          = computed(() => ({ name: 'usageName',          label: this.fieldI18n.usageName_label()          } as CategoryOldI18n));
+  protected srvEmailI18n           = computed(() => ({ name: 'srvEmail', label: this.fieldI18n.srvEmail_label(), helper: this.fieldI18n.srvEmail_helper() } as CheckboxI18n));
+
   // inputs
   public readonly i18n = input<ProfilePrivacyFormI18n>({ title: '', description: '', srvDescription: '' });
   public formData = model.required<UserModel>();

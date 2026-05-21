@@ -1,10 +1,12 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME } from '@bk2/shared-constants';
 import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Checkbox, DateInput, NotesInput, NumberInput, TextInput, TimeInput } from '@bk2/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { PFX } from './scope';
 import { debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
 import { reservationApplyValidations } from '@bk2/relationship-reservation-util';
@@ -38,28 +40,28 @@ import { reservationApplyValidations } from '@bk2/relationship-reservation-util'
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="fullDay" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="false" />
+                <bk-checkbox [i18n]="fullDayI18n()" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="false" />
               </ion-col>
             </ion-row>
             @if(!fullDay()) {
               <ion-row>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" [showHelper]=true />
+                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-time-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="false" />
+                  <bk-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-number-input name="durationMinutes" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="false" />
+                  <bk-number-input [i18n]="durationMinutesI18n()" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="false" />
                 </ion-col>
               </ion-row>
             } @else {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" [showHelper]=true />
+                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="endDate"  [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="false" [showHelper]=true />
+                  <bk-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
               </ion-row>
             }
@@ -75,7 +77,7 @@ import { reservationApplyValidations } from '@bk2/relationship-reservation-util'
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="false" /> 
+                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="false" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -84,23 +86,23 @@ import { reservationApplyValidations } from '@bk2/relationship-reservation-util'
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="participants" [value]="participants()" (valueChange)="onFieldChange('participants', $event)"  [readOnly]="false" />                                        
+                <bk-text-input [i18n]="participantsI18n()" [value]="participants()" (valueChange)="onFieldChange('participants', $event)" [readOnly]="false" />
               </ion-col>
 
               <ion-col size="12" size-md="6"> 
-                <bk-text-input name="area" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]=20 [readOnly]="false" />                                        
+                <bk-text-input [i18n]="areaI18n()" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]=20 [readOnly]="false" />
               </ion-col>
               <ion-col size="12" size-md="6"> 
-                <bk-text-input name="bhcomp" [value]="company()" (valueChange)="onFieldChange('company', $event)" [maxLength]=50 [readOnly]="false" />                                        
+                <bk-text-input [i18n]="bhcompI18n()" [value]="company()" (valueChange)="onFieldChange('company', $event)" [maxLength]=50 [readOnly]="false" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="usesTent" [checked]="usesTent()" (checkedChange)="onFieldChange('usesTent', $event)" [showHelper]="true" [readOnly]="false" />
+                <bk-checkbox [i18n]="usesTentI18n()" [checked]="usesTent()" (checkedChange)="onFieldChange('usesTent', $event)" [showHelper]="true" [readOnly]="false" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-notes-input name="bhdesc" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="false" />
+      <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="false" />
 
       <ion-card>
         <ion-card-header>
@@ -175,7 +177,7 @@ zukünftige Veranstaltungen zu sperren.
             <ion-card-title>Bestätigung</ion-card-title>
             </ion-card-header>
         <ion-card-content class="ion-no-padding">
-          <bk-checkbox name="bhresconf" [checked]="isConfirmed()" (checkedChange)="onFieldChange('isConfirmed', $event)" [showHelper]="false" [readOnly]="false" />
+          <bk-checkbox [i18n]="isConfirmedI18n()" [checked]="isConfirmed()" (checkedChange)="onFieldChange('isConfirmed', $event)" [showHelper]="false" [readOnly]="false" />
         </ion-card-content>
       </ion-card>
 
@@ -183,6 +185,54 @@ zukünftige Veranstaltungen zu sperren.
   `
 })
 export class ReservationApplyForm {
+  // i18n
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    name_label: PFX + 'name.label',
+    name_placeholder: PFX + 'name.placeholder',
+    name_helper: PFX + 'name.helper',
+    participants_label: PFX + 'participants.label',
+    participants_placeholder: PFX + 'participants.placeholder',
+    participants_helper: PFX + 'participants.helper',
+    area_label: PFX + 'area.label',
+    area_placeholder: PFX + 'area.placeholder',
+    area_helper: PFX + 'area.helper',
+    bhcomp_label: PFX + 'bhcomp.label',
+    bhcomp_placeholder: PFX + 'bhcomp.placeholder',
+    bhcomp_helper: PFX + 'bhcomp.helper',
+    durationMinutes_label: PFX + 'durationMinutes.label',
+    durationMinutes_placeholder: PFX + 'durationMinutes.placeholder',
+    durationMinutes_helper: PFX + 'durationMinutes.helper',
+    description_label: PFX + 'description.label',
+    description_placeholder: PFX + 'description.placeholder',
+    startDate_label:          PFX + 'startDate.label',
+    startDate_placeholder:    PFX + 'startDate.placeholder',
+    startDate_helper:         PFX + 'startDate.helper',
+    endDate_label:            PFX + 'endDate.label',
+    endDate_placeholder:      PFX + 'endDate.placeholder',
+    endDate_helper:           PFX + 'endDate.helper',
+    startTime_label:          PFX + 'startTime.label',
+    startTime_placeholder:    PFX + 'startTime.placeholder',
+    fullDay_label:            PFX + 'fullDay.label',
+    fullDay_helper:           PFX + 'fullDay.helper',
+    usesTent_label:           PFX + 'usesTent.label',
+    usesTent_helper:          PFX + 'usesTent.helper',
+    isConfirmed_label:        PFX + 'isConfirmed.label',
+    isConfirmed_helper:       PFX + 'isConfirmed.helper',
+  });
+  protected nameI18n = computed(() => ({ name: 'name', label: this.fieldI18n.name_label(), placeholder: this.fieldI18n.name_placeholder(), helper: this.fieldI18n.name_helper() } as TextInputI18n));
+  protected participantsI18n = computed(() => ({ name: 'participants', label: this.fieldI18n.participants_label(), placeholder: this.fieldI18n.participants_placeholder(), helper: this.fieldI18n.participants_helper() } as TextInputI18n));
+  protected areaI18n = computed(() => ({ name: 'area', label: this.fieldI18n.area_label(), placeholder: this.fieldI18n.area_placeholder(), helper: this.fieldI18n.area_helper() } as TextInputI18n));
+  protected bhcompI18n = computed(() => ({ name: 'bhcomp', label: this.fieldI18n.bhcomp_label(), placeholder: this.fieldI18n.bhcomp_placeholder(), helper: this.fieldI18n.bhcomp_helper() } as TextInputI18n));
+  protected durationMinutesI18n = computed(() => ({ name: 'durationMinutes', label: this.fieldI18n.durationMinutes_label(), placeholder: this.fieldI18n.durationMinutes_placeholder(), helper: this.fieldI18n.durationMinutes_helper() } as NumberInputI18n));
+  protected descriptionI18n = computed(() => ({ name: 'description', label: this.fieldI18n.description_label(), placeholder: this.fieldI18n.description_placeholder() } as NotesInputI18n));
+  protected startDateI18n = computed(() => ({ name: 'startDate', label: this.fieldI18n.startDate_label(), placeholder: this.fieldI18n.startDate_placeholder(), helper: this.fieldI18n.startDate_helper() } as DateInputI18n));
+  protected endDateI18n = computed(() => ({ name: 'endDate', label: this.fieldI18n.endDate_label(), placeholder: this.fieldI18n.endDate_placeholder(), helper: this.fieldI18n.endDate_helper() } as DateInputI18n));
+  protected startTimeI18n  = computed(() => ({ name: 'startTime',    label: this.fieldI18n.startTime_label(),    placeholder: this.fieldI18n.startTime_placeholder()                                              } as TimeInputI18n));
+  protected fullDayI18n    = computed(() => ({ name: 'fullDay',      label: this.fieldI18n.fullDay_label(),      helper: this.fieldI18n.fullDay_helper()      } as CheckboxI18n));
+  protected usesTentI18n   = computed(() => ({ name: 'usesTent',     label: this.fieldI18n.usesTent_label(),     helper: this.fieldI18n.usesTent_helper()     } as CheckboxI18n));
+  protected isConfirmedI18n = computed(() => ({ name: 'bhresconf',   label: this.fieldI18n.isConfirmed_label(),  helper: this.fieldI18n.isConfirmed_helper()  } as CheckboxI18n));
+
   // inputs
   public formData = model.required<ReservationApplyModel>();
   public readonly currentUser = input<UserModel | undefined>();

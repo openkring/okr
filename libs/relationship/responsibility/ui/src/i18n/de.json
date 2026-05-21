@@ -1,0 +1,8 @@
+{
+  "respId": { "label": "Schlüssel", "placeholder": "", "helper": "" },
+  "name": { "label": "Bezeichnung", "placeholder": "Bezeichnung eingeben", "helper": "" },
+  "validFrom": { "label": "Gültig ab", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "validTo": { "label": "Gültig bis", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "delegateValidFrom": { "label": "Stellvertretung ab", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "delegateValidTo": { "label": "Stellvertretung bis", "placeholder": "TT.MM.JJJJ", "helper": "" }
+}

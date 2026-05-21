@@ -76,6 +76,9 @@ export const DocumentStore = signalStore(
       as_delete:        PFX + 'actionsheet.delete',
       as_revisions:     PFX + 'actionsheet.revisions',
       as_download:      PFX + 'actionsheet.download',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
       ok: '@ok',
       cancel: '@cancel'
     }),

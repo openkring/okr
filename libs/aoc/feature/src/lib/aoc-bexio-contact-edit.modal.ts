@@ -22,7 +22,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
     .sync-row { margin-top: 1rem; }
   `],
   template: `
-    <bk-header title="@aoc.bexio.index.title" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@aoc.bexio.index.title' }" [isModal]="true" />
     <ion-content class="ion-no-padding">
       @if(bexioIndex(); as bx) {
       <ion-grid>

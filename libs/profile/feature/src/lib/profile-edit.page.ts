@@ -2,18 +2,14 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel } from '@ionic/angular/standalone';
-import { firstValueFrom } from 'rxjs';
 
-import { I18nService } from '@bk2/shared-i18n';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { safeStructuredClone } from '@bk2/shared-util-core';
+import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 
 import { AddressesAccordion } from '@bk2/subject-address-feature';
-
 import { AvatarToolbar } from '@bk2/avatar-feature';
-
-import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
-import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
+import { ProfileDataAccordion, ProfileDataFormI18n, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
 import { ProfileStore } from './profile.store';
 
 @Component({
@@ -26,16 +22,16 @@ import { ProfileStore } from './profile.store';
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
-    styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [title]="headerTitle()" [showCloseButton]="false" />
+    <bk-header [i18n]="{ title: headerTitle() }" [showCloseButton]="false" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       <bk-avatar-toolbar
         key="{{ parentKey() }}"
-        title="{{ avatarTitle() }}"
+        [title]="avatarTitle()"
         modelType="person"
         subTitle="{{ 'mailto:' + loginEmail() }}"
         [readOnly]="false"
@@ -58,6 +54,7 @@ import { ProfileStore } from './profile.store';
                   [tenantId]="tenantId()"
                   [showForm]="showForm()"
                   [readOnly]="false"
+                  [i18n]="i18n()"
                   (valid)="formValid.set($event)" 
                   (dirty)="formDirty.set($event)"
                 />
@@ -98,15 +95,20 @@ import { ProfileStore } from './profile.store';
 })
 export class ProfileEditPage {
   private readonly store = inject(ProfileStore);
-  private readonly i18nService = inject(I18nService);
 
   // inputs
   // readOnly is always false for profile page as we work with the current user's own profile
+  // person is read from currentUser
 
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
   protected personFormData = linkedSignal(() => safeStructuredClone(this.currentPerson()));
   protected userFormData = linkedSignal(() => safeStructuredClone(this.currentUser()));
   protected showForm = signal(true);
@@ -124,6 +126,18 @@ export class ProfileEditPage {
   protected introHtml = computed(async () => this.store.i18n.intro() + ' <a href=mailto:"' + this.store.appStore.appConfig().opEmail + '">Website Admin</a>.');
   protected tags = computed(() => this.store.getTags());
   protected priv = computed(() => this.store.privacySettings());
+
+  protected i18n = computed(() => {
+    return   {
+      title: this.store.i18n.personal_title(),
+      description: this.store.i18n.personal_description(),
+      dob_label: this.store.i18n.personal_dob_label(),
+      dob_helper: this.store.i18n.personal_dob_helper(),
+      ssn_label: this.store.i18n.personal_ssn_label(),
+      ssn_placeholder: this.store.i18n.personal_ssn_placeholder(),
+      ssn_helper: this.store.i18n.personal_ssn_helper()
+    } as ProfileDataFormI18n;
+  });
 
   constructor() {
     effect(() => {

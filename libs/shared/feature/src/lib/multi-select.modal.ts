@@ -46,7 +46,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      title="@shared.operation.select.label"
+      [i18n]="{ title: '@shared.operation.select.label' }"
       [isModal]="true"
     />
     <ion-content>

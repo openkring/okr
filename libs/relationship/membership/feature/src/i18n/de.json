@@ -58,6 +58,11 @@
       "conf": "Die Rechnung wurde erstellt."
     }
   },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
+  },
   "scsMemberFee": {
     "archive": {
       "confirm": "Der Rechnungslauf wird abgeschlossen und all Rechnungen auf archiviert gesetzt.",

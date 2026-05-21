@@ -24,7 +24,7 @@ import { AocStorageStore } from './aoc-storage.store';
   ],
   providers: [AocStorageStore],
   template: `
-    <bk-header [title]="aocStorageStore.i18n.title()" />
+    <bk-header [i18n]="{ title: aocStorageStore.i18n.title() }" />
     <ion-content>
       <ion-card>
         <ion-card-header>

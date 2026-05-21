@@ -1,3 +1,16 @@
 {
-  "select": "Auswählen"
+  "select": "Auswählen",
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "Bezeichnung eingeben",
+    "helper": ""
+  },
+  "notes": { "label": "Notizen", "placeholder": "" },
+  "validFrom": { "label": "Gültig ab", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "validTo": { "label": "Gültig bis", "placeholder": "TT.MM.JJJJ", "helper": "" }
 }

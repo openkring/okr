@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSign
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, Header } from '@bk2/shared-ui';
+import { I18nService } from '@bk2/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
+import { PFX } from './scope';
 import { getFullName, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { AvatarToolbar } from '@bk2/avatar-feature';
@@ -19,14 +21,14 @@ import { ScsMemberFeeEditForm } from '@bk2/relationship-membership-ui';
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
-    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if (showConfirmation()) {
-      <bk-change-confirmation [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       <bk-avatar-toolbar 
         key="{{parentKey()}}" 
-        title="{{ memberName() }}" 
+        [title]="memberName()" 
         modelType="person" 
         [readOnly]="true" 
       />
@@ -45,6 +47,17 @@ import { ScsMemberFeeEditForm } from '@bk2/relationship-membership-ui';
 })
 export class ScsMemberFeeEditModal {
   private readonly modalController = inject(ModalController);
+  private readonly i18nService = inject(I18nService);
+  private readonly confirmI18n = this.i18nService.translateAll({
+    changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+    changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+    changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  });
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.confirmI18n.changeConfirmation_ok(),
+    cancel: this.confirmI18n.changeConfirmation_cancel(),
+    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   // inputs
   public fee = input.required<ScsMemberFeesModel>();

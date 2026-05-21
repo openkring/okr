@@ -41,16 +41,27 @@ export const ProfileStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll({
-      intro:            PFX + 'intro',
-      update_conf:      PFX + 'update.conf',
-      update_error:     PFX + 'update.error',
+      intro:                  PFX + 'intro',
+      update_conf:            PFX + 'update.conf',
+      update_error:           PFX + 'update.error',
 
-      as_title:         '@actionsheet.title',
-      view:             PFX + 'view',
-      edit:             PFX + 'edit',
-      create:           PFX + 'create',
-      cancel:           '@cancel',
-      ok:               '@ok'
+      as_title:               '@actionsheet.title',
+      view:                   PFX + 'view',
+      edit:                   PFX + 'edit',
+      create:                 PFX + 'create',
+      personal_title:         PFX + 'personal.title',
+      personal_description:   PFX + 'personal.description',
+      personal_dob_label:       PFX + 'personal.dateOfBirth.label',
+      personal_dob_placeholder: PFX + 'personal.dateOfBirth.placeholder',
+      personal_dob_helper:      PFX + 'personal.dateOfBirth.helper',
+      personal_ssn_label:     PFX + 'personal.ssn.label',
+      personal_ssn_placeholder: PFX + 'personal.ssn.placeholder',
+      personal_ssn_helper:    PFX + 'personal.ssn.helper',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+      cancel:                 '@cancel',
+      ok:                     '@ok'
     }),
   })),
 

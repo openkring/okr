@@ -84,6 +84,9 @@ export const ResourceStore = signalStore(
       rboat_edit:           PFX + 'rboat.edit',
       rboat_delete:         PFX + 'rboat.delete',
       rboat_create:         PFX + 'rboat.create',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
       as_title:             PFX + 'actionsheet.title',
       cancel:               '@cancel',
       ok:                   '@ok'
@@ -106,75 +109,75 @@ export const ResourceStore = signalStore(
     }),    
   })),
 
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      resources: computed(() => state.resourceResource.value() ?? []),
-      resourcesCount: computed(() => state.resourceResource.value()?.length ?? 0), 
+      resources: computed(() => store.resourceResource.value() ?? []),
+      resourcesCount: computed(() => store.resourceResource.value()?.length ?? 0), 
       filteredResources: computed(() => 
-        state.resourceResource.value()?.filter((resource: ResourceModel) => 
-          nameMatches(resource.index, state.searchTerm()) &&
-          nameMatches(resource.type, state.selectedResourceType()) &&
-          chipMatches(resource.tags, state.selectedTag()))
+        store.resourceResource.value()?.filter((resource: ResourceModel) => 
+          nameMatches(resource.index, store.searchTerm()) &&
+          nameMatches(resource.type, store.selectedResourceType()) &&
+          chipMatches(resource.tags, store.selectedTag()))
       ),
-      boats: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'boat') ?? []),
-      rboats: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'rboat') ?? []),
-      cars: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'car') ?? []),
-      lockers: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'locker') ?? []),
-      keys: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'key') ?? []),
-      realestate: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'realestate') ?? []),
-      pets: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'pet') ?? []),
-      resource: computed(() => state.resResource.value()),
-      currentUser: computed(() => state.appStore.currentUser()),
-      tenantId: computed(() => state.appStore.tenantId()),
-      isLoading: computed(() => state.resourceResource.isLoading()),
+      boats: computed(() => store.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'boat') ?? []),
+      rboats: computed(() => store.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'rboat') ?? []),
+      cars: computed(() => store.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'car') ?? []),
+      lockers: computed(() => store.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'locker') ?? []),
+      keys: computed(() => store.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'key') ?? []),
+      realestate: computed(() => store.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'realestate') ?? []),
+      pets: computed(() => store.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'pet') ?? []),
+      resource: computed(() => store.resResource.value()),
+      currentUser: computed(() => store.appStore.currentUser()),
+      tenantId: computed(() => store.appStore.tenantId()),
+      isLoading: computed(() => store.resourceResource.isLoading()),
     };
   }),
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      boatsCount: computed(() => state.boats().length ?? 0), 
+      boatsCount: computed(() => store.boats().length ?? 0), 
       filteredBoats: computed(() => 
-        state.boats()?.filter((resource: ResourceModel) => 
-          nameMatches(resource.index, state.searchTerm()) &&
-          nameMatches(resource.subType, state.selectedSubType()) &&
-          chipMatches(resource.tags, state.selectedTag()))
+        store.boats()?.filter((resource: ResourceModel) => 
+          nameMatches(resource.index, store.searchTerm()) &&
+          nameMatches(resource.subType, store.selectedSubType()) &&
+          chipMatches(resource.tags, store.selectedTag()))
       ),
-      rboatsCount: computed(() => state.rboats().length ?? 0), 
+      rboatsCount: computed(() => store.rboats().length ?? 0), 
       filteredRboats: computed(() => 
-        state.rboats()?.filter((resource: ResourceModel) => 
-          nameMatches(resource.index, state.searchTerm()) &&
-          nameMatches(resource.subType, state.selectedSubType(), true) &&
-          chipMatches(resource.tags, state.selectedTag()))
+        store.rboats()?.filter((resource: ResourceModel) => 
+          nameMatches(resource.index, store.searchTerm()) &&
+          nameMatches(resource.subType, store.selectedSubType(), true) &&
+          chipMatches(resource.tags, store.selectedTag()))
       ),
-      carsCount: computed(() => state.cars().length ?? 0),
+      carsCount: computed(() => store.cars().length ?? 0),
       filteredCars: computed(() =>
-        state.cars()?.filter((resource: ResourceModel) =>
-          nameMatches(resource.index, state.searchTerm()) &&
-          chipMatches(resource.tags, state.selectedTag()))
+        store.cars()?.filter((resource: ResourceModel) =>
+          nameMatches(resource.index, store.searchTerm()) &&
+          chipMatches(resource.tags, store.selectedTag()))
       ),
-      lockersCount: computed(() => state.lockers().length ?? 0),
+      lockersCount: computed(() => store.lockers().length ?? 0),
       filteredLockers: computed(() =>
-        state.lockers()?.filter((resource: ResourceModel) =>
-          nameMatches(resource.index, state.searchTerm()) &&
-          nameMatches(resource.subType, state.selectedGender()) &&
-          chipMatches(resource.tags, state.selectedTag()))
+        store.lockers()?.filter((resource: ResourceModel) =>
+          nameMatches(resource.index, store.searchTerm()) &&
+          nameMatches(resource.subType, store.selectedGender()) &&
+          chipMatches(resource.tags, store.selectedTag()))
       ),
-      keysCount: computed(() => state.keys().length ?? 0),
+      keysCount: computed(() => store.keys().length ?? 0),
       filteredKeys: computed(() =>
-        state.keys()?.filter((resource: ResourceModel) =>
-          nameMatches(resource.index, state.searchTerm()) &&
-          chipMatches(resource.tags, state.selectedTag()))
+        store.keys()?.filter((resource: ResourceModel) =>
+          nameMatches(resource.index, store.searchTerm()) &&
+          chipMatches(resource.tags, store.selectedTag()))
       ),
-      realestateCount: computed(() => state.realestate().length ?? 0),
+      realestateCount: computed(() => store.realestate().length ?? 0),
       filteredRealestate: computed(() =>
-        state.realestate()?.filter((resource: ResourceModel) =>
-          nameMatches(resource.index, state.searchTerm()) &&
-          chipMatches(resource.tags, state.selectedTag()))
+        store.realestate()?.filter((resource: ResourceModel) =>
+          nameMatches(resource.index, store.searchTerm()) &&
+          chipMatches(resource.tags, store.selectedTag()))
       ),
-      petsCount: computed(() => state.pets().length ?? 0),
+      petsCount: computed(() => store.pets().length ?? 0),
       filteredPets: computed(() =>
-        state.pets()?.filter((resource: ResourceModel) =>
-          nameMatches(resource.index, state.searchTerm()) &&
-          chipMatches(resource.tags, state.selectedTag()))
+        store.pets()?.filter((resource: ResourceModel) =>
+          nameMatches(resource.index, store.searchTerm()) &&
+          chipMatches(resource.tags, store.selectedTag()))
       )
     }
   }),

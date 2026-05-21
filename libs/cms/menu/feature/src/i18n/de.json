@@ -185,5 +185,10 @@
       "section": {
         "plural": "Sektionen"
       }
+    },
+    "changeConfirmation": {
+      "ok": "OK",
+      "cancel": "Abbrechen",
+      "confirmation": "Speichern"
     }
 }

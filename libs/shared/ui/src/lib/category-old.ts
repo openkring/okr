@@ -1,4 +1,4 @@
-import { Component, computed, input, model, output } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { IonItem, IonLabel, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
@@ -6,12 +6,17 @@ import { compareCategories } from '@bk2/shared-categories';
 import { CategoryModel } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
+export interface CategoryOldI18n {
+  name: string;
+  label: string;
+  helper?: string;
+}
+
 /**
  * A component to select a category from a list of categories.
  * The selected category is shown as a ready-only text if the `readOnly` input is true.
  * Usage example:
- *  <bk-cat name="orgType" [value]="orgType" (valueChange)="onFieldChange('orgType', $event)" [categories]="orgTypes" [readOnly]="false" />
- *  name and readOnly are optional
+ *  <bk-cat [i18n]="catI18n()" [value]="orgType" (valueChange)="onFieldChange('orgType', $event)" [categories]="orgTypes" [readOnly]="false" />
  */
 @Component({
   selector: 'bk-category-old',
@@ -24,10 +29,10 @@ import { coerceBoolean } from '@bk2/shared-util-core';
     @if(selectedCategory(); as selectedCategory) {
       <ion-item lines="none">
         @if(isReadOnly()) {
-          <ion-label>{{ this.label() }}: {{ '@' + selectedCategory.i18nBase + '.label' }}</ion-label>
+          <ion-label>{{ i18n().label }}: {{ '@' + selectedCategory.i18nBase + '.label' }}</ion-label>
         } @else {
-          <ion-select [name]="name()" (ionChange)="onCategoryChange($event)"
-            label="{{ this.label() }}"
+          <ion-select [name]="i18n().name" (ionChange)="onCategoryChange($event)"
+            [label]="i18n().label"
             [disabled]="isReadOnly()"
             label-placement="floating"
             interface="popover"
@@ -35,9 +40,9 @@ import { coerceBoolean } from '@bk2/shared-util-core';
             [compareWith]="compareWith">
             @for (cat of this.categories(); track cat) {
               <ion-select-option [value]="cat">
-    <!--       
-              unfortunately, Ionic is not supporting icons within ion-select-option   
-    -->            
+    <!--
+              unfortunately, Ionic is not supporting icons within ion-select-option
+    -->
                 {{ '@' + cat.i18nBase + '.label' }}
               </ion-select-option>
             }
@@ -45,23 +50,20 @@ import { coerceBoolean } from '@bk2/shared-util-core';
         }
       </ion-item>
     }
-    @if(shouldShowHelper()) {
-    <ion-item lines="none" class="helper">
-      <ion-note>{{'@input.' + name() + '.helper'}}</ion-note>
-    </ion-item>
-  }
+    @if(i18n().helper) {
+      <ion-item lines="none" class="helper">
+        <ion-note>{{ i18n().helper }}</ion-note>
+      </ion-item>
+    }
   `
 })
 export class CategoryOld {
-  public name = input('cat'); // name of the input field, determines the label of the input field
+  public i18n = input.required<CategoryOldI18n>();
   public value = model.required<number>(); // the selected category id
   public categories = input.required<CategoryModel[]>(); // mandatory view model
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  public showHelper = input(false);
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
 
-  protected label = computed(() => `@input.${this.name()}.label`);
   protected selectedCategory = computed(() => {
     const id = this.value();
     return this.categories().find(cat => cat.id === id) ?? null;

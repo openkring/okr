@@ -19,7 +19,7 @@ import { CalEventStore } from './calevent.store';
     Header,
   ],
   template: `
-    <bk-header [title]="store.i18n.schedule_title()" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.schedule_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-input

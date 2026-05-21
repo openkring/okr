@@ -18,5 +18,10 @@
     "end": "Reservation beenden",
     "delete": "Reservation löschen",
     "create": "Neue Reservation erstellen"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
   }
 }

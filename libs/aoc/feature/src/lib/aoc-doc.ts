@@ -21,7 +21,7 @@ import { PFX } from './scope';
   ],
   providers: [AocDocStore],
   template: `
-    <bk-header [title]="i18n.title()" />
+    <bk-header [i18n]="{ title: i18n.title() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>

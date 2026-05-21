@@ -15,5 +15,65 @@
         "addLabel": "Organisierende hinzufügen"
       }
     }
+  },
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "groupId": {
+    "label": "Gruppen-ID",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "icon": {
+    "label": "Symbol",
+    "placeholder": "Symbol-Name",
+    "helper": ""
+  },
+  "visibility": {
+    "label": "Sichtbarkeit",
+    "placeholder": "",
+    "helper": ""
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
+  },
+  "notifyType": {
+    "label": "Benachrichtigungstyp"
+  },
+  "hasContent": {
+    "label": "Inhalte",
+    "helper": ""
+  },
+  "hasChat": {
+    "label": "Chat",
+    "helper": ""
+  },
+  "hasCalendar": {
+    "label": "Kalender",
+    "helper": ""
+  },
+  "hasTasks": {
+    "label": "Aufgaben",
+    "helper": ""
+  },
+  "hasFiles": {
+    "label": "Dateien",
+    "helper": ""
+  },
+  "hasAlbum": {
+    "label": "Album",
+    "helper": ""
+  },
+  "hasMembers": {
+    "label": "Mitglieder",
+    "helper": ""
   }
 }

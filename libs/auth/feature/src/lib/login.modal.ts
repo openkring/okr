@@ -19,7 +19,7 @@ import { AuthStore } from './auth.store';
     IonContent, IonButton, IonItem
   ],
   template: `
-    <bk-header [title]="store.i18n.login_title()" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.login_title() }" [isModal]="true" />
     <ion-content>
       <bk-login-form context="login"
         [(vm)]="currentCredentials" (validChange)="formIsValid = $event"

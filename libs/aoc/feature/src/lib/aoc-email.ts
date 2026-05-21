@@ -50,7 +50,7 @@ const EVENT_TYPES = ['delivery', 'open', 'click', 'bounce', 'spam', 'reject', 'u
     IonList, IonItem, IonLabel, IonNote, IonBadge,
   ],
   template: `
-    <bk-header title="Email Events" />
+    <bk-header [i18n]="{ title: 'Email Events' }" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar [value]="searchTerm()"

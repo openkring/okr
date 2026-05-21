@@ -4,12 +4,14 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@bk2/shared-models';
-import { Chips, DateInput, NotesInput, StringSelect, TextInput } from '@bk2/shared-ui';
+import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
 import { PrettyDatePipe } from '@bk2/shared-pipes';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { AvatarDisplay, AvatarInput } from '@bk2/avatar-ui';
 import { invitationValidations, createPersonAvatar } from '@bk2/relationship-invitation-util';
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-invitation-form',
@@ -40,7 +42,7 @@ import { invitationValidations, createPersonAvatar } from '@bk2/relationship-inv
                 @if(hasRole('admin')) {
                   <ion-row>
                     <ion-col size="12" size-md="6">
-                      <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
                     </ion-col>
                   </ion-row>
                 }
@@ -85,20 +87,20 @@ import { invitationValidations, createPersonAvatar } from '@bk2/relationship-inv
 
                   <!-- state -->
                   <ion-col size="12" size-md="6">
-                    <bk-string-select name="state"  [selectedString]="state()" (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="readOnly()" [stringList] = "['pending', 'accepted', 'declined', 'maybe']" />           
+                    <bk-string-select [i18n]="stateI18n()" [selectedString]="state()" (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="readOnly()" [stringList]="['pending', 'accepted', 'declined', 'maybe']" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-string-select name="role"  [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList] = "['required', 'optional', 'info']" />           
+                    <bk-string-select [i18n]="roleI18n()" [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList]="['required', 'optional', 'info']" />           
                   </ion-col>
 
                   <!-- sentAt -->
                   <ion-col size="12" size-md="6">
-                    <bk-date-input name="sentAt"  [storeDate]="sentAt()" (storeDateChange)="onFieldChange('sentAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                    <bk-date-input [i18n]="sentAtI18n()" [storeDate]="sentAt()" (storeDateChange)="onFieldChange('sentAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <!-- respondedAt -->
                   <ion-col size="12" size-md="6">
-                    <bk-date-input name="respondedAt"  [storeDate]="respondedAt()" (storeDateChange)="onFieldChange('respondedAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                    <bk-date-input [i18n]="respondedAtI18n()" [storeDate]="respondedAt()" (storeDateChange)="onFieldChange('respondedAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -111,13 +113,36 @@ import { invitationValidations, createPersonAvatar } from '@bk2/relationship-inv
         } 
         
         @if(hasRole('admin')) {
-          <bk-notes-input name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }
   `,
 })
 export class InvitationForm {
+  private readonly i18nService = inject(I18nService);
+  protected readonly fieldI18n = this.i18nService.translateAll({
+    bkey_label: PFX + 'bkey.label',
+    bkey_placeholder: PFX + 'bkey.placeholder',
+    bkey_helper: PFX + 'bkey.helper',
+    notes_label: PFX + 'notes.label',
+    notes_placeholder: PFX + 'notes.placeholder',
+    sentAt_label:          PFX + 'sentAt.label',
+    sentAt_placeholder:    PFX + 'sentAt.placeholder',
+    sentAt_helper:         PFX + 'sentAt.helper',
+    respondedAt_label:     PFX + 'respondedAt.label',
+    respondedAt_placeholder: PFX + 'respondedAt.placeholder',
+    respondedAt_helper:    PFX + 'respondedAt.helper',
+    state_label:           PFX + 'state.label',
+    role_label:            PFX + 'role.label',
+  });
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: this.fieldI18n.bkey_placeholder(), helper: this.fieldI18n.bkey_helper() } as TextInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
+  protected sentAtI18n = computed(() => ({ name: 'sentAt', label: this.fieldI18n.sentAt_label(), placeholder: this.fieldI18n.sentAt_placeholder(), helper: this.fieldI18n.sentAt_helper() } as DateInputI18n));
+  protected respondedAtI18n = computed(() => ({ name: 'respondedAt', label: this.fieldI18n.respondedAt_label(), placeholder: this.fieldI18n.respondedAt_placeholder(), helper: this.fieldI18n.respondedAt_helper() } as DateInputI18n));
+  protected stateI18n       = computed(() => ({ name: 'state', label: this.fieldI18n.state_label() } as StringSelectI18n));
+  protected roleI18n        = computed(() => ({ name: 'role',  label: this.fieldI18n.role_label()  } as StringSelectI18n));
+
   // inputs
   public readonly formData = model.required<InvitationModel>();
   public readonly currentUser = input<UserModel | undefined>();

@@ -2,7 +2,6 @@ export * from './lib/autofocus.directive';
 export * from './lib/avatar-user';
 export * from './lib/button-copy';
 export * from './lib/button';
-export * from './lib/card-select.modal';
 export * from './lib/category-old';
 export * from './lib/category-items';
 export * from './lib/category-select.modal';

@@ -42,7 +42,10 @@ export const CategoryStore = signalStore(
       delete:               PFX + 'delete',
       as_title:             '@actionsheet.title',
       ok: '@ok',
-      cancel: '@cancel'
+      cancel: '@cancel',
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     }),
   })),
   withProps((store) => ({
