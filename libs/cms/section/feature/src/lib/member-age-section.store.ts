@@ -13,7 +13,7 @@ export type AgeRow = { label: string; male: number; female: number; total: numbe
 
 const AGE_BUCKETS: Array<{ label: string; test: (age: number) => boolean }> = [
   { label: '< 20',  test: (a) => a < 20 },
-  { label: '21–30', test: (a) => a >= 21 && a <= 30 },
+  { label: '20–30', test: (a) => a >= 20 && a <= 30 },
   { label: '31–40', test: (a) => a >= 31 && a <= 40 },
   { label: '41–50', test: (a) => a >= 41 && a <= 50 },
   { label: '51–60', test: (a) => a >= 51 && a <= 60 },
