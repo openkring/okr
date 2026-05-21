@@ -1,14 +1,19 @@
-import { Component, computed, inject, linkedSignal, model, output, input, signal } from '@angular/core';
+import { Component, computed, linkedSignal, model, output, input, signal, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AuthCredentials } from '@bk2/shared-models';
 import { EmailInput, EmailInputI18n, ErrorNote, PasswordInput, PasswordInputI18n } from '@bk2/shared-ui';
-import { I18nService } from '@bk2/shared-i18n';
-import { PFX } from './scope';
 
 import { authCredentialsValidations, emailValidations, loginValidations, passwordValidations } from '@bk2/auth-util';
+
+export interface LoginFormI18n {
+  loginEmail_label: Signal<string>;
+  loginEmail_placeholder: Signal<string>;
+  loginPassword_label: Signal<string>;
+  loginPassword_placeholder: Signal<string>;
+}
 
 /**
  * We use this same form in three different contexts:
@@ -21,8 +26,8 @@ import { authCredentialsValidations, emailValidations, loginValidations, passwor
   selector: 'bk-login-form',
   standalone: true,
   imports: [
-    vestForms, 
-    FormsModule, 
+    vestForms,
+    FormsModule,
     EmailInput, PasswordInput, ErrorNote,
     IonGrid, IonRow, IonCol
   ],
@@ -67,28 +72,22 @@ import { authCredentialsValidations, emailValidations, loginValidations, passwor
 })
 export class LoginForm {
   // inputs
+  public readonly i18n = input.required<LoginFormI18n>();
   public readonly vm = model.required<AuthCredentials>(); // vm always contains the current values of the form
   public readonly context = input<'login' | 'email' | 'password'>('login');
   public readonly emailHelper = input.required<string>();
   public readonly pwdHelper = input.required<string>();
 
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    loginEmail_label:            PFX + 'loginEmail.label',
-    loginEmail_placeholder:      PFX + 'loginEmail.placeholder',
-    loginPassword_label:         PFX + 'loginPassword.label',
-    loginPassword_placeholder:   PFX + 'loginPassword.placeholder',
-  });
   protected loginEmailI18n = computed(() => ({
     name: 'loginEmail',
-    label: this.fieldI18n.loginEmail_label(),
-    placeholder: this.fieldI18n.loginEmail_placeholder(),
+    label: this.i18n().loginEmail_label(),
+    placeholder: this.i18n().loginEmail_placeholder(),
     helper: this.emailHelper()
   } as EmailInputI18n));
   protected loginPasswordI18n = computed(() => ({
     name: 'loginPassword',
-    label: this.fieldI18n.loginPassword_label(),
-    placeholder: this.fieldI18n.loginPassword_placeholder(),
+    label: this.i18n().loginPassword_label(),
+    placeholder: this.i18n().loginPassword_placeholder(),
     helper: this.pwdHelper()
   } as PasswordInputI18n));
 

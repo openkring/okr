@@ -1,12 +1,15 @@
-import { Component, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, input, output, signal, Signal } from '@angular/core';
 import { IonItem, IonInput, IonList } from '@ionic/angular/standalone';
 
 import { AnyCharacterMask } from '@bk2/shared-config';
 import { Checkbox, CheckboxI18n, StringList } from '@bk2/shared-ui';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { MatrixPollData } from '@bk2/chat-data-access';
-import { PFX } from './scope';
+
+export interface PollCreateFormI18n {
+  allowMultipleAnswers_label: Signal<string>;
+  allowMultipleAnswers_helper: Signal<string>;
+}
 
 @Component({
   selector: 'bk-poll-create-form',
@@ -52,20 +55,17 @@ import { PFX } from './scope';
   `
 })
 export class PollCreateForm implements OnInit {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    allowMultipleAnswers_label:  PFX + 'allowMultipleAnswers.label',
-    allowMultipleAnswers_helper: PFX + 'allowMultipleAnswers.helper',
-  });
-  protected allowMultipleAnswersI18n = computed(() => ({
-    name: 'allowMultipleAnswers',
-    label: this.fieldI18n.allowMultipleAnswers_label(),
-    helper: this.fieldI18n.allowMultipleAnswers_helper(),
-  } as CheckboxI18n));
-
+  // inputs
+  public readonly i18n = input.required<PollCreateFormI18n>();
   public formData = input.required<MatrixPollData>();
   public formDataChange = output<MatrixPollData>();
   public valid = output<boolean>();
+
+  protected allowMultipleAnswersI18n = computed(() => ({
+    name: 'allowMultipleAnswers',
+    label: this.i18n().allowMultipleAnswers_label(),
+    helper: this.i18n().allowMultipleAnswers_helper(),
+  } as CheckboxI18n));
 
   protected readonly anyCharMask = AnyCharacterMask;
 

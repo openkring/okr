@@ -10,6 +10,8 @@ import { safeStructuredClone } from '@bk2/shared-util-core';
 import { RoomEditForm } from '@bk2/chat-ui';
 import { PFX } from './scope';
 
+const UI = '@chat/ui.';
+
 @Component({
   selector: 'bk-room-edit-modal',
   standalone: true,
@@ -30,6 +32,7 @@ import { PFX } from './scope';
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
             [showForm]="showForm()"
+            [i18n]="i18n"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
           />
@@ -42,15 +45,34 @@ export class RoomEditModal {
   private modalController = inject(ModalController);
   protected readonly env = inject(ENV);
   private readonly i18nService = inject(I18nService);
-  private readonly confirmI18n = this.i18nService.translateAll({
+  protected readonly i18n = this.i18nService.translateAll({
     changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
     changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
     changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+    roomId_label:            UI + 'roomId.label',
+    roomId_placeholder:      UI + 'roomId.placeholder',
+    roomId_helper:           UI + 'roomId.helper',
+    name_label:              UI + 'name.label',
+    name_placeholder:        UI + 'name.placeholder',
+    name_helper:             UI + 'name.helper',
+    invite_label:            UI + 'invite.label',
+    invite_placeholder:      UI + 'invite.placeholder',
+    invite_helper:           UI + 'invite.helper',
+    unreadCount_label:       UI + 'unreadCount.label',
+    unreadCount_placeholder: UI + 'unreadCount.placeholder',
+    unreadCount_helper:      UI + 'unreadCount.helper',
+    topic_label:             UI + 'topic.label',
+    topic_placeholder:       UI + 'topic.placeholder',
+    avatar_label:            UI + 'avatar.label',
+    avatar_placeholder:      UI + 'avatar.placeholder',
+    avatar_helper:           UI + 'avatar.helper',
+    isDirect_label:          UI + 'isDirect.label',
+    isDirect_helper:         UI + 'isDirect.helper',
   });
   protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.confirmI18n.changeConfirmation_ok(),
-    cancel: this.confirmI18n.changeConfirmation_cancel(),
-    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+    ok: this.i18n.changeConfirmation_ok(),
+    cancel: this.i18n.changeConfirmation_cancel(),
+    confirmation: this.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
 
 // inputs
@@ -67,7 +89,7 @@ export class RoomEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');  
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

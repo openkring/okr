@@ -308,6 +308,7 @@ import { PollCreateModal } from './poll-create.modal';
               <bk-matrix-room-list
                 [rooms]="rooms()"
                 [selectedRoomId]="currentRoomId()"
+                [i18n]="store.i18n"
                 (roomSelected)="onRoomSelected($event)"
               />
             </div>

@@ -1,15 +1,18 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, input, output, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail } from '@ionic/angular/standalone';
 
 import { MatrixRoom } from '@bk2/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { formatMatrixTimestamp, isMatrixPhotoUrl } from '@bk2/chat-util';
 
-import { PFX } from './scope';
-
+export interface MatrixRoomListI18n {
+  isTypeing: Signal<string>;
+  areTypeing: Signal<string>;
+  severalTypeing: Signal<string>;
+  room_none: Signal<string>;
+}
 
 @Component({
   selector: 'bk-matrix-room-list',
@@ -96,7 +99,7 @@ import { PFX } from './scope';
       @if (rooms().length === 0) {
         <ion-item>
           <ion-label class="ion-text-center">
-            <p>i18n.room_none()</p>
+            <p>{{ i18n().room_none() }}</p>
           </ion-label>
         </ion-item>
       }
@@ -104,19 +107,12 @@ import { PFX } from './scope';
   `
 })
 export class MatrixRoomList {
-  private readonly i18nService = inject(I18nService);
-
+  // inputs
+  public readonly i18n = input.required<MatrixRoomListI18n>();
   rooms = input.required<MatrixRoom[]>();
   selectedRoomId = input<string>();
 
   roomSelected = output<string>();
-
-  private i18n = this.i18nService.translateAll({
-    isTypeing: PFX + 'isTypeing',
-    areTypeing: PFX + 'areTypeing',
-    severalTypeing: PFX + 'severalTypeing',
-    room_none: PFX + 'room.none'
-  });
 
   isPhotoUrl = isMatrixPhotoUrl;
   formatTimestamp = formatMatrixTimestamp;
@@ -125,13 +121,10 @@ export class MatrixRoomList {
     return name ? name.charAt(0).toUpperCase() : '?';
   }
 
-  /**
-   * Returns a human-readable "is typing" label for a list of Matrix user IDs.
-   */
   protected getTypingText(userIds: string[]): string {
     if (userIds.length === 0) return '';
-    if (userIds.length === 1) return this.i18n.isTypeing();
-    if (userIds.length === 2) return userIds.length + this.i18n.areTypeing();
-    return this.i18n.severalTypeing();
+    if (userIds.length === 1) return this.i18n().isTypeing();
+    if (userIds.length === 2) return userIds.length + this.i18n().areTypeing();
+    return this.i18n().severalTypeing();
   }
 }

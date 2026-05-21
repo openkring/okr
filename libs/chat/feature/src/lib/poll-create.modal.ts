@@ -7,6 +7,8 @@ import { MatrixPollData } from '@bk2/chat-data-access';
 import { PollCreateForm } from '@bk2/chat-ui';
 import { PFX } from './scope';
 
+const UI = '@chat/ui.';
+
 @Component({
   selector: 'bk-poll-create-modal',
   standalone: true,
@@ -22,6 +24,7 @@ import { PFX } from './scope';
     <ion-content class="ion-no-padding">
       <bk-poll-create-form
         [formData]="formData()"
+        [i18n]="i18n"
         (formDataChange)="onFormDataChange($event)"
         (valid)="formValid.set($event)"
       />
@@ -31,15 +34,17 @@ import { PFX } from './scope';
 export class PollCreateModal {
   private readonly modalController = inject(ModalController);
   private readonly i18nService = inject(I18nService);
-  private readonly confirmI18n = this.i18nService.translateAll({
+  protected readonly i18n = this.i18nService.translateAll({
     changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
     changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
     changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+    allowMultipleAnswers_label:  UI + 'allowMultipleAnswers.label',
+    allowMultipleAnswers_helper: UI + 'allowMultipleAnswers.helper',
   });
   protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.confirmI18n.changeConfirmation_ok(),
-    cancel: this.confirmI18n.changeConfirmation_cancel(),
-    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+    ok: this.i18n.changeConfirmation_ok(),
+    cancel: this.i18n.changeConfirmation_cancel(),
+    confirmation: this.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
 
   protected formData = signal<MatrixPollData>({ question: '', answers: [] });

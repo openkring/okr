@@ -13,6 +13,10 @@ const AUTH_I18N_KEYS = {
   invalid_link: '@user.auth.pwdreset.invalidLink',
   success: '@user.auth.pwdreset.success',
   savepwd: '@user.auth.pwdreset.savepwd',
+  loginEmail_label:          '@auth/ui.loginEmail.label',
+  loginEmail_placeholder:    '@auth/ui.loginEmail.placeholder',
+  loginPassword_label:       '@auth/ui.loginPassword.label',
+  loginPassword_placeholder: '@auth/ui.loginPassword.placeholder',
 } satisfies Record<string, string>;
 
 export type AuthI18n = { [K in keyof typeof AUTH_I18N_KEYS]: Signal<string> };

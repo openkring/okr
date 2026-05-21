@@ -23,6 +23,7 @@ import { AuthStore } from './auth.store';
     <ion-content>
       <bk-login-form context="login"
         [(vm)]="currentCredentials" (validChange)="formIsValid = $event"
+        [i18n]="store.i18n"
         [emailHelper]="emailHelper()"
         [pwdHelper]="pwdHelper()"
       />

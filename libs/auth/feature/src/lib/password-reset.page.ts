@@ -45,6 +45,7 @@ import { AuthStore } from './auth.store';
           <ion-label class="title"><strong>{{ store.i18n.pwdreset_title() }}</strong></ion-label>
           <bk-login-form context="email"
             [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
+            [i18n]="store.i18n"
             [emailHelper]="emailHelper()"
             [pwdHelper]="pwdHelper()"
           />

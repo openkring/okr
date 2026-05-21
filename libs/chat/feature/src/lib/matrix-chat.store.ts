@@ -59,6 +59,8 @@ const MATRIX_CHAT_I18N_KEYS = {
   and:                      PFX + 'and',
   areTypeing:               PFX + 'areTypeing',
   othersTypeing:            PFX + 'othersTypeing',
+  severalTypeing:           PFX + 'severalTypeing',
+  room_none:                PFX + 'room.none',
   copy_conf:                '@copy.conf'
 } satisfies Record<string, string>;
 

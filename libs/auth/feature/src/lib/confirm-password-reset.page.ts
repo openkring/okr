@@ -55,6 +55,7 @@ import { AuthStore } from './auth.store';
           } @else {
             <bk-login-form context="password"
               [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
+              [i18n]="store.i18n"
               [emailHelper]="emailHelper()"
               [pwdHelper]="pwdHelper()"
             />
