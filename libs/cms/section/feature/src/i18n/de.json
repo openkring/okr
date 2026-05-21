@@ -90,5 +90,12 @@
     "ok": "OK",
     "cancel": "Abbrechen",
     "confirmation": "Speichern"
+  },
+  "memberAge": {
+    "ageGroup": "Altersgruppe",
+    "male": "Männer",
+    "female": "Frauen",
+    "total": "Total",
+    "empty": "Keine aktiven Mitglieder gefunden."
   }
 }
