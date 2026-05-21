@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController } from '@ionic/angular/standalone';
@@ -33,6 +33,48 @@ const initialState: IconState = {
 
 const PFX = '@icon.';
 
+const ICON_I18N_KEYS = {
+  icons:            PFX + 'icons',
+  empty:            PFX + 'empty',
+  name:             PFX + 'name',
+  type:             PFX + 'type',
+  size:             PFX + 'size',
+  updated:          PFX + 'updated',
+  create_label:     PFX + 'create.label',
+  exportRaw_label:  PFX + 'exportRaw.label',
+  sync_label:       PFX + 'sync.label',
+  as_title:         PFX + 'actionsheet.title',
+  as_view:          PFX + 'actionsheet.view',
+  as_edit:          PFX + 'actionsheet.edit',
+  as_create:        PFX + 'actionsheet.create',
+  as_delete:        PFX + 'actionsheet.delete',
+  as_copy:          PFX + 'actionsheet.copy',
+  cancel:           '@cancel',
+  ok:               '@ok',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  bkey_label:        '@icon/ui.bkey.label',
+  bkey_placeholder:  '@icon/ui.bkey.placeholder',
+  bkey_helper:       '@icon/ui.bkey.helper',
+  name_label:        '@icon/ui.name.label',
+  name_placeholder:  '@icon/ui.name.placeholder',
+  name_helper:       '@icon/ui.name.helper',
+  type_label:        '@icon/ui.type.label',
+  type_placeholder:  '@icon/ui.type.placeholder',
+  type_helper:       '@icon/ui.type.helper',
+  fullPath_label:    '@icon/ui.fullPath.label',
+  fullPath_placeholder: '@icon/ui.fullPath.placeholder',
+  fullPath_helper:   '@icon/ui.fullPath.helper',
+  index_label:       '@icon/ui.index.label',
+  index_placeholder: '@icon/ui.index.placeholder',
+  index_helper:      '@icon/ui.index.helper',
+  notes_label:       '@icon/ui.notes.label',
+  notes_placeholder: '@icon/ui.notes.placeholder',
+} satisfies Record<string, string>;
+
+export type IconI18n = { [K in keyof typeof ICON_I18N_KEYS]: Signal<string> };
+
 export const IconStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -44,28 +86,7 @@ export const IconStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      icons:            PFX + 'icons',
-      empty:            PFX + 'empty',
-      name:             PFX + 'name',
-      type:             PFX + 'type',
-      size:             PFX + 'size',
-      updated:          PFX + 'updated',
-      create_label:     PFX + 'create.label',
-      exportRaw_label:  PFX + 'exportRaw.label',
-      sync_label:       PFX + 'sync.label',
-      as_title:         PFX + 'actionsheet.title',
-      as_view:          PFX + 'actionsheet.view',
-      as_edit:          PFX + 'actionsheet.edit',
-      as_create:        PFX + 'actionsheet.create',
-      as_delete:        PFX + 'actionsheet.delete',
-      as_copy:          PFX + 'actionsheet.copy',
-      cancel:           '@cancel',
-      ok:               '@ok',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(ICON_I18N_KEYS),
   })),
   withProps((store) => ({
     iconsResource: rxResource({

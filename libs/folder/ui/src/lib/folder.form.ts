@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, input, output, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -7,10 +7,19 @@ import { FolderModel, UserModel } from '@bk2/shared-models';
 import { Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { folderValidations } from '@bk2/folder-util';
-import { PFX } from './scope';
+
+export interface FolderFormI18n {
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  title_label: Signal<string>;
+  title_placeholder: Signal<string>;
+  title_helper: Signal<string>;
+  description_label: Signal<string>;
+  description_placeholder: Signal<string>;
+}
 
 @Component({
   selector: 'bk-folder-form',
@@ -65,9 +74,8 @@ import { PFX } from './scope';
   `
 })
 export class FolderForm {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
+  public readonly i18n = input.required<FolderFormI18n>();
   public readonly formData = input.required<FolderModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly allTags = input(DEFAULT_TAGS);
@@ -88,36 +96,24 @@ export class FolderForm {
 
   protected readonly suite = folderValidations;
 
-  // i18n
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    name_label:         PFX + 'name.label',
-    name_placeholder:   PFX + 'name.placeholder',
-    name_helper:        PFX + 'name.helper',
-    title_label:           PFX + 'title.label',
-    title_placeholder:     PFX + 'title.placeholder',
-    title_helper:          PFX + 'title.helper',
-    description_label:     PFX + 'description.label',
-    description_placeholder: PFX + 'description.placeholder',
-  });
-
   protected nameI18n = computed(() => ({
     name: 'name',
-    label: this.fieldI18n.name_label(),
-    placeholder: this.fieldI18n.name_placeholder(),
-    helper: this.fieldI18n.name_helper()
+    label: this.i18n().name_label(),
+    placeholder: this.i18n().name_placeholder(),
+    helper: this.i18n().name_helper()
   } as TextInputI18n));
 
   protected titleI18n = computed(() => ({
     name: 'title',
-    label: this.fieldI18n.title_label(),
-    placeholder: this.fieldI18n.title_placeholder(),
-    helper: this.fieldI18n.title_helper()
+    label: this.i18n().title_label(),
+    placeholder: this.i18n().title_placeholder(),
+    helper: this.i18n().title_helper()
   } as TextInputI18n));
 
   protected descriptionI18n = computed(() => ({
     name: 'description',
-    label: this.fieldI18n.description_label(),
-    placeholder: this.fieldI18n.description_placeholder()
+    label: this.i18n().description_label(),
+    placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
 
   protected onFormChange(formData: FolderModel): void {

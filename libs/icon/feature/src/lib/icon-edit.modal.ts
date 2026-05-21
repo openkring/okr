@@ -32,6 +32,7 @@ import { IconStore } from './icon.store';
             [tenants]="tenantId()"
             [readOnly]="isReadOnly()"
             [showForm]="showForm()"
+            [i18n]="store.i18n"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
           />

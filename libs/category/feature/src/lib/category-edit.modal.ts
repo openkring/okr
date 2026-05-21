@@ -32,6 +32,7 @@ import { CategoryStore } from './category.store';
             [tenants]="tenantId()"
             [hasAbbreviation]="hasAbbreviation()"
             [readOnly]="isReadOnly()"
+            [i18n]="store.i18n"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
           />

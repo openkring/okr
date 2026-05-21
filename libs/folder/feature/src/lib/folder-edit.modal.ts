@@ -30,6 +30,7 @@ import { FolderStore } from './folder.store';
           [currentUser]="currentUser()"
           [showForm]="showForm()"
           [readOnly]="isReadOnly()"
+          [i18n]="store.i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -39,6 +40,7 @@ import { FolderStore } from './folder.store';
 })
 export class FolderEditModal {
   private readonly modalController = inject(ModalController);
+  protected readonly store = inject(FolderStore);
 
   // inputs
   public readonly folder = input.required<FolderModel>();
@@ -55,6 +57,11 @@ export class FolderEditModal {
 
   // derived
   protected readonly headerTitle = computed(() => getTitleLabel('folder', this.folder().bkey, this.isReadOnly()));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

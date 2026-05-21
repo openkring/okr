@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -8,9 +8,26 @@ import { IconModel, RoleName, UserModel } from '@bk2/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+export interface IconEditFormI18n {
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  type_label: Signal<string>;
+  type_placeholder: Signal<string>;
+  type_helper: Signal<string>;
+  fullPath_label: Signal<string>;
+  fullPath_placeholder: Signal<string>;
+  fullPath_helper: Signal<string>;
+  index_label: Signal<string>;
+  index_placeholder: Signal<string>;
+  index_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+}
 
 @Component({
   selector: 'bk-icon-edit-form',
@@ -87,9 +104,8 @@ import { PFX } from './scope';
 `
 })
 export class IconEditForm {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
+  public readonly i18n = input.required<IconEditFormI18n>();
   public formData = model.required<IconModel>();
   public currentUser = input<UserModel>();
   public showForm = input(true);
@@ -119,66 +135,45 @@ export class IconEditForm {
   protected size = linkedSignal(() => this.formData().size ?? 0);
   protected updated = linkedSignal(() => this.formData().updated ?? '');
 
-  // i18n
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:          PFX + 'bkey.label',
-    bkey_placeholder:    PFX + 'bkey.placeholder',
-    bkey_helper:         PFX + 'bkey.helper',
-    name_label:          PFX + 'name.label',
-    name_placeholder:    PFX + 'name.placeholder',
-    name_helper:         PFX + 'name.helper',
-    type_label:          PFX + 'type.label',
-    type_placeholder:    PFX + 'type.placeholder',
-    type_helper:         PFX + 'type.helper',
-    fullPath_label:      PFX + 'fullPath.label',
-    fullPath_placeholder: PFX + 'fullPath.placeholder',
-    fullPath_helper:     PFX + 'fullPath.helper',
-    index_label:         PFX + 'index.label',
-    index_placeholder:   PFX + 'index.placeholder',
-    index_helper:        PFX + 'index.helper',
-    notes_label:         PFX + 'notes.label',
-    notes_placeholder:   PFX + 'notes.placeholder',
-  });
-
   protected bkeyI18n = computed(() => ({
     name: 'bkey',
-    label: this.fieldI18n.bkey_label(),
-    placeholder: this.fieldI18n.bkey_placeholder(),
-    helper: this.fieldI18n.bkey_helper()
+    label: this.i18n().bkey_label(),
+    placeholder: this.i18n().bkey_placeholder(),
+    helper: this.i18n().bkey_helper()
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({
     name: 'name',
-    label: this.fieldI18n.name_label(),
-    placeholder: this.fieldI18n.name_placeholder(),
-    helper: this.fieldI18n.name_helper()
+    label: this.i18n().name_label(),
+    placeholder: this.i18n().name_placeholder(),
+    helper: this.i18n().name_helper()
   } as TextInputI18n));
 
   protected typeI18n = computed(() => ({
     name: 'type',
-    label: this.fieldI18n.type_label(),
-    placeholder: this.fieldI18n.type_placeholder(),
-    helper: this.fieldI18n.type_helper()
+    label: this.i18n().type_label(),
+    placeholder: this.i18n().type_placeholder(),
+    helper: this.i18n().type_helper()
   } as TextInputI18n));
 
   protected fullPathI18n = computed(() => ({
     name: 'fullPath',
-    label: this.fieldI18n.fullPath_label(),
-    placeholder: this.fieldI18n.fullPath_placeholder(),
-    helper: this.fieldI18n.fullPath_helper()
+    label: this.i18n().fullPath_label(),
+    placeholder: this.i18n().fullPath_placeholder(),
+    helper: this.i18n().fullPath_helper()
   } as TextInputI18n));
 
   protected indexI18n = computed(() => ({
     name: 'index',
-    label: this.fieldI18n.index_label(),
-    placeholder: this.fieldI18n.index_placeholder(),
-    helper: this.fieldI18n.index_helper()
+    label: this.i18n().index_label(),
+    placeholder: this.i18n().index_placeholder(),
+    helper: this.i18n().index_helper()
   } as TextInputI18n));
 
   protected notesI18n = computed(() => ({
     name: 'notes',
-    label: this.fieldI18n.notes_label(),
-    placeholder: this.fieldI18n.notes_placeholder()
+    label: this.i18n().notes_label(),
+    placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
 
   /******************************* actions *************************************** */

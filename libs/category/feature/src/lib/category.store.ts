@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -24,6 +24,36 @@ export const initialState: CategoryState = {
 
 const PFX = '@category.';
 
+const CATEGORY_I18N_KEYS = {
+  categories:           PFX + 'categories',
+  empty:                PFX + 'empty',
+  view:                 PFX + 'view',
+  edit:                 PFX + 'edit',
+  create:               PFX + 'create',
+  delete:               PFX + 'delete',
+  as_title:             '@actionsheet.title',
+  ok: '@ok',
+  cancel: '@cancel',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  bkey_label:              '@category/ui.bkey.label',
+  bkey_placeholder:        '@category/ui.bkey.placeholder',
+  bkey_helper:             '@category/ui.bkey.helper',
+  name_label:              '@category/ui.name.label',
+  name_placeholder:        '@category/ui.name.placeholder',
+  name_helper:             '@category/ui.name.helper',
+  i18nBase_label:          '@category/ui.i18nBase.label',
+  i18nBase_placeholder:    '@category/ui.i18nBase.placeholder',
+  i18nBase_helper:         '@category/ui.i18nBase.helper',
+  notes_label:             '@category/ui.notes.label',
+  notes_placeholder:       '@category/ui.notes.placeholder',
+  translateItems_label:    '@category/ui.translateItems.label',
+  translateItems_helper:   '@category/ui.translateItems.helper',
+} satisfies Record<string, string>;
+
+export type CategoryI18n = { [K in keyof typeof CATEGORY_I18N_KEYS]: Signal<string> };
+
 export const CategoryStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -33,20 +63,7 @@ export const CategoryStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      categories:           PFX + 'categories',
-      empty:                PFX + 'empty',
-      view:                 PFX + 'view',
-      edit:                 PFX + 'edit',
-      create:               PFX + 'create',
-      delete:               PFX + 'delete',
-      as_title:             '@actionsheet.title',
-      ok: '@ok',
-      cancel: '@cancel',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    }),
+    i18n: store.i18nService.translateAll(CATEGORY_I18N_KEYS),
   })),
   withProps((store) => ({
     categoriesResource: rxResource({
