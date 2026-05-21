@@ -1,20 +1,37 @@
-import { Component, computed, inject, input, linkedSignal, model, output, signal } from "@angular/core";
+import { Component, computed, inject, input, linkedSignal, model, output, signal, Signal } from "@angular/core";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@bk2/shared-models";
 import { FcmService } from "@bk2/shared-data-access";
-import { I18nService } from "@bk2/shared-i18n";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
-import { PFX } from "./scope";
 
 export interface ProfileSettingsFormI18n {
-  title: string;
-  description: string;
+  settings_title: Signal<string>;
+  settings_description: Signal<string>;
+  gravatar_label: Signal<string>;
+  gravatar_placeholder: Signal<string>;
+  gravatar_helper: Signal<string>;
+  language_label: Signal<string>;
+  avatar_usage: Signal<string>;
+  name_display_label: Signal<string>;
+  sort_person_label: Signal<string>;
+  deliver_news_label: Signal<string>;
+  deliver_invoice_label: Signal<string>;
+  show_debug_label: Signal<string>;
+  show_debug_helper: Signal<string>;
+  show_archived_label: Signal<string>;
+  show_archived_helper: Signal<string>;
+  show_helpers_label: Signal<string>;
+  show_helpers_helper: Signal<string>;
+  use_touchid_label: Signal<string>;
+  use_touchid_helper: Signal<string>;
+  use_faceid_label: Signal<string>;
+  use_faceid_helper: Signal<string>;
 }
 
 @Component({
@@ -30,7 +47,7 @@ export interface ProfileSettingsFormI18n {
   template: `
   <ion-accordion toggle-icon-slot="start" value="profile-settings">
     <ion-item slot="header" [color]="color()">
-        <ion-label>{{ i18n().title }}</ion-label>
+        <ion-label>{{ i18n().settings_title() }}</ion-label>
     </ion-item>
     <div slot="content">
       @if (showForm()) {
@@ -45,7 +62,7 @@ export interface ProfileSettingsFormI18n {
             <ion-row>
               <ion-col>
                 <ion-item lines="none">
-                  <ion-label>{{ i18n().description }}</ion-label>
+                  <ion-label>{{ i18n().settings_description() }}</ion-label>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -131,52 +148,30 @@ export interface ProfileSettingsFormI18n {
 export class ProfileSettingsAccordion {
   protected readonly modalController = inject(ModalController);
   protected readonly fcmService = inject(FcmService);
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    gravatarEmail_label:        PFX + 'gravatarEmail.label',
-    gravatarEmail_placeholder:  PFX + 'gravatarEmail.placeholder',
-    gravatarEmail_helper:       PFX + 'gravatarEmail.helper',
-    language_label:             PFX + 'language.label',
-    avatarUsage_label:          PFX + 'avatarUsage.label',
-    nameDisplay_label:          PFX + 'nameDisplay.label',
-    personSortCriteria_label:   PFX + 'personSortCriteria.label',
-    newsDelivery_label:         PFX + 'newsDelivery.label',
-    invoiceDelivery_label:      PFX + 'invoiceDelivery.label',
-    showDebugInfo_label:        PFX + 'showDebugInfo.label',
-    showDebugInfo_helper:       PFX + 'showDebugInfo.helper',
-    showArchivedData_label:     PFX + 'showArchivedData.label',
-    showArchivedData_helper:    PFX + 'showArchivedData.helper',
-    showHelpers_label:          PFX + 'showHelpers.label',
-    showHelpers_helper:         PFX + 'showHelpers.helper',
-    useTouchId_label:           PFX + 'useTouchId.label',
-    useTouchId_helper:          PFX + 'useTouchId.helper',
-    useFaceId_label:            PFX + 'useFaceId.label',
-    useFaceId_helper:           PFX + 'useFaceId.helper',
-  });
   protected gravatarEmailI18n = computed(() => ({
     name: 'gravatarEmail',
-    label: this.fieldI18n.gravatarEmail_label(),
-    placeholder: this.fieldI18n.gravatarEmail_placeholder(),
-    helper: this.fieldI18n.gravatarEmail_helper(),
+    label: this.i18n().gravatar_label(),
+    placeholder: this.i18n().gravatar_placeholder(),
+    helper: this.i18n().gravatar_helper(),
   } as TextInputI18n));
-  protected languageI18n          = computed(() => ({ name: 'language',           label: this.fieldI18n.language_label()           } as CategoryOldI18n));
-  protected avatarUsageI18n       = computed(() => ({ name: 'avatarUsage',        label: this.fieldI18n.avatarUsage_label()        } as CategoryOldI18n));
-  protected nameDisplayI18n       = computed(() => ({ name: 'nameDisplay',        label: this.fieldI18n.nameDisplay_label()        } as CategoryOldI18n));
-  protected personSortCriteriaI18n= computed(() => ({ name: 'personSortCriteria', label: this.fieldI18n.personSortCriteria_label() } as CategoryOldI18n));
-  protected newsDeliveryI18n      = computed(() => ({ name: 'newsDelivery',       label: this.fieldI18n.newsDelivery_label()       } as CategoryOldI18n));
-  protected invoiceDeliveryI18n   = computed(() => ({ name: 'invoiceDelivery',    label: this.fieldI18n.invoiceDelivery_label()   } as CategoryOldI18n));
-  protected showDebugInfoI18n     = computed(() => ({ name: 'showDebugInfo',    label: this.fieldI18n.showDebugInfo_label(),    helper: this.fieldI18n.showDebugInfo_helper()    } as CheckboxI18n));
-  protected showArchivedDataI18n  = computed(() => ({ name: 'showArchivedData', label: this.fieldI18n.showArchivedData_label(), helper: this.fieldI18n.showArchivedData_helper() } as CheckboxI18n));
-  protected showHelpersI18n       = computed(() => ({ name: 'showHelpers',      label: this.fieldI18n.showHelpers_label(),      helper: this.fieldI18n.showHelpers_helper()      } as CheckboxI18n));
-  protected useTouchIdI18n        = computed(() => ({ name: 'useTouchId',       label: this.fieldI18n.useTouchId_label(),       helper: this.fieldI18n.useTouchId_helper()       } as CheckboxI18n));
-  protected useFaceIdI18n         = computed(() => ({ name: 'useFaceId',        label: this.fieldI18n.useFaceId_label(),        helper: this.fieldI18n.useFaceId_helper()        } as CheckboxI18n));
+  protected languageI18n          = computed(() => ({ name: 'language',           label: this.i18n().language_label()           } as CategoryOldI18n));
+  protected avatarUsageI18n       = computed(() => ({ name: 'avatarUsage',        label: this.i18n().avatar_usage()             } as CategoryOldI18n));
+  protected nameDisplayI18n       = computed(() => ({ name: 'nameDisplay',        label: this.i18n().name_display_label()       } as CategoryOldI18n));
+  protected personSortCriteriaI18n= computed(() => ({ name: 'personSortCriteria', label: this.i18n().sort_person_label()        } as CategoryOldI18n));
+  protected newsDeliveryI18n      = computed(() => ({ name: 'newsDelivery',       label: this.i18n().deliver_news_label()       } as CategoryOldI18n));
+  protected invoiceDeliveryI18n   = computed(() => ({ name: 'invoiceDelivery',    label: this.i18n().deliver_invoice_label()    } as CategoryOldI18n));
+  protected showDebugInfoI18n     = computed(() => ({ name: 'showDebugInfo',    label: this.i18n().show_debug_label(),    helper: this.i18n().show_debug_helper()    } as CheckboxI18n));
+  protected showArchivedDataI18n  = computed(() => ({ name: 'showArchivedData', label: this.i18n().show_archived_label(), helper: this.i18n().show_archived_helper() } as CheckboxI18n));
+  protected showHelpersI18n       = computed(() => ({ name: 'showHelpers',      label: this.i18n().show_helpers_label(),  helper: this.i18n().show_helpers_helper()  } as CheckboxI18n));
+  protected useTouchIdI18n        = computed(() => ({ name: 'useTouchId',       label: this.i18n().use_touchid_label(),   helper: this.i18n().use_touchid_helper()   } as CheckboxI18n));
+  protected useFaceIdI18n         = computed(() => ({ name: 'useFaceId',        label: this.i18n().use_faceid_label(),    helper: this.i18n().use_faceid_helper()    } as CheckboxI18n));
 
   protected notificationPermission = signal<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
 
   // inputs
-  public readonly i18n = input<ProfileSettingsFormI18n>({ title: '', description: '' });
+  public readonly i18n = input.required<ProfileSettingsFormI18n>();
   public formData = model.required<UserModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations

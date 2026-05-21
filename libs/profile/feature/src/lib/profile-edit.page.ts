@@ -9,7 +9,7 @@ import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 
 import { AddressesAccordion } from '@bk2/subject-address-feature';
 import { AvatarToolbar } from '@bk2/avatar-feature';
-import { ProfileDataAccordion, ProfileDataFormI18n, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
+import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
 import { ProfileStore } from './profile.store';
 
 @Component({
@@ -54,7 +54,7 @@ import { ProfileStore } from './profile.store';
                   [tenantId]="tenantId()"
                   [showForm]="showForm()"
                   [readOnly]="false"
-                  [i18n]="i18n()"
+                  [i18n]="store.i18n"
                   (valid)="formValid.set($event)" 
                   (dirty)="formDirty.set($event)"
                 />
@@ -70,7 +70,8 @@ import { ProfileStore } from './profile.store';
                 [tags]="tags()"
                 [tenantId]="tenantId()"
                 [showForm]="showForm()"
-                (valid)="formValid.set($event)" 
+                [i18n]="store.i18n"
+                (valid)="formValid.set($event)"
                 (dirty)="formDirty.set($event)"
               />
             }
@@ -94,7 +95,7 @@ import { ProfileStore } from './profile.store';
   `
 })
 export class ProfileEditPage {
-  private readonly store = inject(ProfileStore);
+  protected readonly store = inject(ProfileStore);
 
   // inputs
   // readOnly is always false for profile page as we work with the current user's own profile
@@ -126,18 +127,6 @@ export class ProfileEditPage {
   protected introHtml = computed(async () => this.store.i18n.intro() + ' <a href=mailto:"' + this.store.appStore.appConfig().opEmail + '">Website Admin</a>.');
   protected tags = computed(() => this.store.getTags());
   protected priv = computed(() => this.store.privacySettings());
-
-  protected i18n = computed(() => {
-    return   {
-      title: this.store.i18n.personal_title(),
-      description: this.store.i18n.personal_description(),
-      dob_label: this.store.i18n.personal_dob_label(),
-      dob_helper: this.store.i18n.personal_dob_helper(),
-      ssn_label: this.store.i18n.personal_ssn_label(),
-      ssn_placeholder: this.store.i18n.personal_ssn_placeholder(),
-      ssn_helper: this.store.i18n.personal_ssn_helper()
-    } as ProfileDataFormI18n;
-  });
 
   constructor() {
     effect(() => {

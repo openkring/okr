@@ -9,7 +9,7 @@ import { safeStructuredClone } from '@bk2/shared-util-core';
 
 import { AvatarToolbar } from '@bk2/avatar-feature';
 import { AddressesAccordion } from '@bk2/subject-address-feature';
-import { ProfileDataAccordion, ProfileDataFormI18n, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
+import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
 
 import { ProfileStore } from './profile.store';
 
@@ -25,7 +25,7 @@ import { ProfileStore } from './profile.store';
   providers: [ProfileStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} } `],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <bk-header [i18n]="headerI18n()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
@@ -54,7 +54,7 @@ import { ProfileStore } from './profile.store';
                   [tenantId]="tenantId()"
                   [showForm]="showForm()"
                   [readOnly]="false"
-                  [i18n]="i18n()"
+                  [i18n]="store.i18n"
                   (valid)="formValid.set($event)" 
                   (dirty)="formDirty.set($event)"
                 />
@@ -69,7 +69,8 @@ import { ProfileStore } from './profile.store';
                 [tags]="tags()"
                 [tenantId]="tenantId()"
                 [showForm]="showForm()"
-                (valid)="formValid.set($event)" 
+                [i18n]="store.i18n"
+                (valid)="formValid.set($event)"
                 (dirty)="formDirty.set($event)"
               />
             }
@@ -103,11 +104,16 @@ export class ProfileEditModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+
   protected readonly changeConfirmationI18n = computed(() => ({
     ok: this.store.i18n.changeConfirmation_ok(),
     cancel: this.store.i18n.changeConfirmation_cancel(),
     confirmation: this.store.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
+  protected readonly headerI18n = computed(() => ({
+    title: this.store.getTitleLabel(false, this.currentUser()?.bkey),
+    placeholder: this.store.i18n.search_placeholder()
+  }));
   protected personFormData = linkedSignal(() => safeStructuredClone(this.currentPerson()));
   protected userFormData = linkedSignal(() => safeStructuredClone(this.currentUser()));
   protected showForm = signal(true);
@@ -125,19 +131,6 @@ export class ProfileEditModal {
   protected introHtml = computed(async () => this.store.i18n.intro() + ' <a href=mailto:"' + this.store.appStore.appConfig().opEmail + '">Website Admin</a>.');
   protected tags = computed(() => this.store.getTags());
   protected priv = computed(() => this.store.privacySettings());
-
-  protected i18n = computed(() => {
-    return   {
-      title: this.store.i18n.personal_title(),
-      description: this.store.i18n.personal_description(),
-      dob_label: this.store.i18n.personal_dob_label(),
-      dob_placeholder: this.store.i18n.personal_dob_placeholder(),
-      dob_helper: this.store.i18n.personal_dob_helper(),
-      ssn_label: this.store.i18n.personal_ssn_label(),
-      ssn_placeholder: this.store.i18n.personal_ssn_placeholder(),
-      ssn_helper: this.store.i18n.personal_ssn_helper()
-    } as ProfileDataFormI18n;
-  });
 
   constructor() {
     effect(() => {
