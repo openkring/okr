@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, ToastController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -10,10 +10,55 @@ import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants
 import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { documentValidations } from '@bk2/document-util';
-import { PFX } from './scope';
+
+export interface DocumentFormI18n {
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  fullPath_label: Signal<string>;
+  fullPath_placeholder: Signal<string>;
+  fullPath_helper: Signal<string>;
+  title_label: Signal<string>;
+  title_placeholder: Signal<string>;
+  title_helper: Signal<string>;
+  altText_label: Signal<string>;
+  altText_placeholder: Signal<string>;
+  altText_helper: Signal<string>;
+  url_label: Signal<string>;
+  url_placeholder: Signal<string>;
+  url_helper: Signal<string>;
+  mimeType_label: Signal<string>;
+  mimeType_placeholder: Signal<string>;
+  mimeType_helper: Signal<string>;
+  authorKey_label: Signal<string>;
+  authorKey_placeholder: Signal<string>;
+  authorKey_helper: Signal<string>;
+  authorName_label: Signal<string>;
+  authorName_placeholder: Signal<string>;
+  authorName_helper: Signal<string>;
+  locationKey_label: Signal<string>;
+  locationKey_placeholder: Signal<string>;
+  locationKey_helper: Signal<string>;
+  hash_label: Signal<string>;
+  hash_placeholder: Signal<string>;
+  hash_helper: Signal<string>;
+  priorVersionKey_label: Signal<string>;
+  priorVersionKey_placeholder: Signal<string>;
+  priorVersionKey_helper: Signal<string>;
+  version_label: Signal<string>;
+  version_placeholder: Signal<string>;
+  version_helper: Signal<string>;
+  description_label: Signal<string>;
+  description_placeholder: Signal<string>;
+  dateOfDocCreation_label: Signal<string>;
+  dateOfDocCreation_placeholder: Signal<string>;
+  dateOfDocCreation_helper: Signal<string>;
+  dateOfDocLastUpdate_label: Signal<string>;
+  dateOfDocLastUpdate_placeholder: Signal<string>;
+  dateOfDocLastUpdate_helper: Signal<string>;
+}
 
 @Component({
   selector: 'bk-document-form',
@@ -145,9 +190,9 @@ import { PFX } from './scope';
 export class DocumentForm {
   private toastController = inject(ToastController);
   private env = inject(ENV);
-  private readonly i18nService = inject(I18nService);
 
   // inputs
+  public readonly i18n = input.required<DocumentFormI18n>();
   public readonly formData = model.required<DocumentModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -186,144 +231,96 @@ export class DocumentForm {
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected bkey = computed(() => this.formData().bkey ?? '');
 
-  // i18n
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:              PFX + 'bkey.label',
-    bkey_placeholder:        PFX + 'bkey.placeholder',
-    bkey_helper:             PFX + 'bkey.helper',
-    fullPath_label:          PFX + 'fullPath.label',
-    fullPath_placeholder:    PFX + 'fullPath.placeholder',
-    fullPath_helper:         PFX + 'fullPath.helper',
-    title_label:             PFX + 'title.label',
-    title_placeholder:       PFX + 'title.placeholder',
-    title_helper:            PFX + 'title.helper',
-    altText_label:           PFX + 'altText.label',
-    altText_placeholder:     PFX + 'altText.placeholder',
-    altText_helper:          PFX + 'altText.helper',
-    url_label:               PFX + 'url.label',
-    url_placeholder:         PFX + 'url.placeholder',
-    url_helper:              PFX + 'url.helper',
-    mimeType_label:          PFX + 'mimeType.label',
-    mimeType_placeholder:    PFX + 'mimeType.placeholder',
-    mimeType_helper:         PFX + 'mimeType.helper',
-    authorKey_label:         PFX + 'authorKey.label',
-    authorKey_placeholder:   PFX + 'authorKey.placeholder',
-    authorKey_helper:        PFX + 'authorKey.helper',
-    authorName_label:        PFX + 'authorName.label',
-    authorName_placeholder:  PFX + 'authorName.placeholder',
-    authorName_helper:       PFX + 'authorName.helper',
-    locationKey_label:       PFX + 'locationKey.label',
-    locationKey_placeholder: PFX + 'locationKey.placeholder',
-    locationKey_helper:      PFX + 'locationKey.helper',
-    hash_label:              PFX + 'hash.label',
-    hash_placeholder:        PFX + 'hash.placeholder',
-    hash_helper:             PFX + 'hash.helper',
-    priorVersionKey_label:       PFX + 'priorVersionKey.label',
-    priorVersionKey_placeholder: PFX + 'priorVersionKey.placeholder',
-    priorVersionKey_helper:      PFX + 'priorVersionKey.helper',
-    version_label:           PFX + 'version.label',
-    version_placeholder:     PFX + 'version.placeholder',
-    version_helper:          PFX + 'version.helper',
-    description_label:       PFX + 'description.label',
-    description_placeholder: PFX + 'description.placeholder',
-    dateOfDocCreation_label:       PFX + 'dateOfDocCreation.label',
-    dateOfDocCreation_placeholder: PFX + 'dateOfDocCreation.placeholder',
-    dateOfDocCreation_helper:      PFX + 'dateOfDocCreation.helper',
-    dateOfDocLastUpdate_label:       PFX + 'dateOfDocLastUpdate.label',
-    dateOfDocLastUpdate_placeholder: PFX + 'dateOfDocLastUpdate.placeholder',
-    dateOfDocLastUpdate_helper:      PFX + 'dateOfDocLastUpdate.helper',
-  });
-
   protected bkeyI18n = computed(() => ({
     name: 'bkey',
-    label: this.fieldI18n.bkey_label(),
-    placeholder: this.fieldI18n.bkey_placeholder(),
-    helper: this.fieldI18n.bkey_helper()
+    label: this.i18n().bkey_label(),
+    placeholder: this.i18n().bkey_placeholder(),
+    helper: this.i18n().bkey_helper()
   } as TextInputI18n));
 
   protected fullPathI18n = computed(() => ({
     name: 'fullPath',
-    label: this.fieldI18n.fullPath_label(),
-    placeholder: this.fieldI18n.fullPath_placeholder(),
-    helper: this.fieldI18n.fullPath_helper()
+    label: this.i18n().fullPath_label(),
+    placeholder: this.i18n().fullPath_placeholder(),
+    helper: this.i18n().fullPath_helper()
   } as TextInputI18n));
 
   protected titleI18n = computed(() => ({
     name: 'title',
-    label: this.fieldI18n.title_label(),
-    placeholder: this.fieldI18n.title_placeholder(),
-    helper: this.fieldI18n.title_helper()
+    label: this.i18n().title_label(),
+    placeholder: this.i18n().title_placeholder(),
+    helper: this.i18n().title_helper()
   } as TextInputI18n));
 
   protected altTextI18n = computed(() => ({
     name: 'altText',
-    label: this.fieldI18n.altText_label(),
-    placeholder: this.fieldI18n.altText_placeholder(),
-    helper: this.fieldI18n.altText_helper()
+    label: this.i18n().altText_label(),
+    placeholder: this.i18n().altText_placeholder(),
+    helper: this.i18n().altText_helper()
   } as TextInputI18n));
 
   protected urlI18n = computed(() => ({
     name: 'url',
-    label: this.fieldI18n.url_label(),
-    placeholder: this.fieldI18n.url_placeholder(),
-    helper: this.fieldI18n.url_helper()
+    label: this.i18n().url_label(),
+    placeholder: this.i18n().url_placeholder(),
+    helper: this.i18n().url_helper()
   } as TextInputI18n));
 
   protected mimeTypeI18n = computed(() => ({
     name: 'mimeType',
-    label: this.fieldI18n.mimeType_label(),
-    placeholder: this.fieldI18n.mimeType_placeholder(),
-    helper: this.fieldI18n.mimeType_helper()
+    label: this.i18n().mimeType_label(),
+    placeholder: this.i18n().mimeType_placeholder(),
+    helper: this.i18n().mimeType_helper()
   } as TextInputI18n));
 
   protected authorKeyI18n = computed(() => ({
     name: 'authorKey',
-    label: this.fieldI18n.authorKey_label(),
-    placeholder: this.fieldI18n.authorKey_placeholder(),
-    helper: this.fieldI18n.authorKey_helper()
+    label: this.i18n().authorKey_label(),
+    placeholder: this.i18n().authorKey_placeholder(),
+    helper: this.i18n().authorKey_helper()
   } as TextInputI18n));
 
   protected authorNameI18n = computed(() => ({
     name: 'authorName',
-    label: this.fieldI18n.authorName_label(),
-    placeholder: this.fieldI18n.authorName_placeholder(),
-    helper: this.fieldI18n.authorName_helper()
+    label: this.i18n().authorName_label(),
+    placeholder: this.i18n().authorName_placeholder(),
+    helper: this.i18n().authorName_helper()
   } as TextInputI18n));
 
   protected locationKeyI18n = computed(() => ({
     name: 'locationKey',
-    label: this.fieldI18n.locationKey_label(),
-    placeholder: this.fieldI18n.locationKey_placeholder(),
-    helper: this.fieldI18n.locationKey_helper()
+    label: this.i18n().locationKey_label(),
+    placeholder: this.i18n().locationKey_placeholder(),
+    helper: this.i18n().locationKey_helper()
   } as TextInputI18n));
 
   protected hashI18n = computed(() => ({
     name: 'hash',
-    label: this.fieldI18n.hash_label(),
-    placeholder: this.fieldI18n.hash_placeholder(),
-    helper: this.fieldI18n.hash_helper()
+    label: this.i18n().hash_label(),
+    placeholder: this.i18n().hash_placeholder(),
+    helper: this.i18n().hash_helper()
   } as TextInputI18n));
 
   protected priorVersionKeyI18n = computed(() => ({
     name: 'priorVersionKey',
-    label: this.fieldI18n.priorVersionKey_label(),
-    placeholder: this.fieldI18n.priorVersionKey_placeholder(),
-    helper: this.fieldI18n.priorVersionKey_helper()
+    label: this.i18n().priorVersionKey_label(),
+    placeholder: this.i18n().priorVersionKey_placeholder(),
+    helper: this.i18n().priorVersionKey_helper()
   } as TextInputI18n));
 
   protected versionI18n = computed(() => ({
     name: 'version',
-    label: this.fieldI18n.version_label(),
-    placeholder: this.fieldI18n.version_placeholder(),
-    helper: this.fieldI18n.version_helper()
+    label: this.i18n().version_label(),
+    placeholder: this.i18n().version_placeholder(),
+    helper: this.i18n().version_helper()
   } as TextInputI18n));
 
   protected descriptionI18n = computed(() => ({
-    name: 'description', label: this.fieldI18n.description_label(), placeholder: this.fieldI18n.description_placeholder()
+    name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
 
-  protected dateOfDocCreationI18n = computed(() => ({ name: 'dateOfDocCreation', label: this.fieldI18n.dateOfDocCreation_label(), placeholder: this.fieldI18n.dateOfDocCreation_placeholder(), helper: this.fieldI18n.dateOfDocCreation_helper() } as DateInputI18n));
-  protected dateOfDocLastUpdateI18n = computed(() => ({ name: 'dateOfDocLastUpdate', label: this.fieldI18n.dateOfDocLastUpdate_label(), placeholder: this.fieldI18n.dateOfDocLastUpdate_placeholder(), helper: this.fieldI18n.dateOfDocLastUpdate_helper() } as DateInputI18n));
+  protected dateOfDocCreationI18n = computed(() => ({ name: 'dateOfDocCreation', label: this.i18n().dateOfDocCreation_label(), placeholder: this.i18n().dateOfDocCreation_placeholder(), helper: this.i18n().dateOfDocCreation_helper() } as DateInputI18n));
+  protected dateOfDocLastUpdateI18n = computed(() => ({ name: 'dateOfDocLastUpdate', label: this.i18n().dateOfDocLastUpdate_label(), placeholder: this.i18n().dateOfDocLastUpdate_placeholder(), helper: this.i18n().dateOfDocLastUpdate_helper() } as DateInputI18n));
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {

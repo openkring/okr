@@ -27,7 +27,8 @@ import { DocumentStore } from './document.store';
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-document-form
-          [formData]="formData" (formDataChange)="onFormDataChange($event)" 
+          [formData]="formData" (formDataChange)="onFormDataChange($event)"
+          [i18n]="store.i18n"
           [currentUser]="currentUser()"
           [types]="types()"
           [sources]="sources()"

@@ -28,7 +28,8 @@ import { DocumentStore } from './document.store';
       @if(formData(); as formData) {
         <bk-document-form
           [formData]="formData"
-          (formDataChange)="onFormDataChange($event)" 
+          (formDataChange)="onFormDataChange($event)"
+          [i18n]="store.i18n"
           [currentUser]="currentUser()"
           [types]="types()"
           [sources]="sources()"
@@ -43,7 +44,7 @@ import { DocumentStore } from './document.store';
   `
 })
 export class DocumentEditPage {
-  private readonly store = inject(DocumentStore);
+  protected readonly store = inject(DocumentStore);
 
   // inputs
   public documentKey = input.required<string>();

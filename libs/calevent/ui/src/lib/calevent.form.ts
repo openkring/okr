@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -8,11 +8,42 @@ import { AvatarInfo, CalEventModel, CategoryListModel, RoleName, UserModel } fro
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { ModelSelectService } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { Avatars } from '@bk2/avatar-ui';
 import { calEventValidations } from '@bk2/calevent-util';
-import { PFX } from './scope';
+
+export interface CaleventFormI18n {
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  seriesId_label: Signal<string>;
+  seriesId_placeholder: Signal<string>;
+  seriesId_helper: Signal<string>;
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  locationKey_label: Signal<string>;
+  locationKey_placeholder: Signal<string>;
+  locationKey_helper: Signal<string>;
+  durationMinutes_label: Signal<string>;
+  durationMinutes_placeholder: Signal<string>;
+  durationMinutes_helper: Signal<string>;
+  description_label: Signal<string>;
+  description_placeholder: Signal<string>;
+  startDate_label: Signal<string>;
+  startDate_placeholder: Signal<string>;
+  startDate_helper: Signal<string>;
+  endDate_label: Signal<string>;
+  endDate_placeholder: Signal<string>;
+  endDate_helper: Signal<string>;
+  repeatUntilDate_label: Signal<string>;
+  repeatUntilDate_placeholder: Signal<string>;
+  repeatUntilDate_helper: Signal<string>;
+  startTime_label: Signal<string>;
+  startTime_placeholder: Signal<string>;
+  fullDay_label: Signal<string>;
+  fullDay_helper: Signal<string>;
+}
 
 @Component({
   selector: 'bk-calevent-form',
@@ -148,9 +179,9 @@ import { PFX } from './scope';
 })
 export class CalEventForm {
   private readonly modelSelectService = inject(ModelSelectService);
-  private readonly i18nService = inject(I18nService);
 
   // inputs
+  public readonly i18n = input.required<CaleventFormI18n>();
   public formData = model.required<CalEventModel>();
   public readonly currentUser = input.required<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -206,110 +237,76 @@ export class CalEventForm {
   protected calendarMask = LowercaseWordMask;
   protected nameLength = NAME_LENGTH;
 
-  // i18n
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:           PFX + 'bkey.label',
-    bkey_placeholder:     PFX + 'bkey.placeholder',
-    bkey_helper:          PFX + 'bkey.helper',
-    seriesId_label:       PFX + 'seriesId.label',
-    seriesId_placeholder: PFX + 'seriesId.placeholder',
-    seriesId_helper:      PFX + 'seriesId.helper',
-    name_label:           PFX + 'name.label',
-    name_placeholder:     PFX + 'name.placeholder',
-    name_helper:          PFX + 'name.helper',
-    locationKey_label:            PFX + 'locationKey.label',
-    locationKey_placeholder:      PFX + 'locationKey.placeholder',
-    locationKey_helper:           PFX + 'locationKey.helper',
-    durationMinutes_label:        PFX + 'durationMinutes.label',
-    durationMinutes_placeholder:  PFX + 'durationMinutes.placeholder',
-    durationMinutes_helper:       PFX + 'durationMinutes.helper',
-    description_label:            PFX + 'description.label',
-    description_placeholder:      PFX + 'description.placeholder',
-    startDate_label:              PFX + 'startDate.label',
-    startDate_placeholder:        PFX + 'startDate.placeholder',
-    startDate_helper:             PFX + 'startDate.helper',
-    endDate_label:                PFX + 'endDate.label',
-    endDate_placeholder:          PFX + 'endDate.placeholder',
-    endDate_helper:               PFX + 'endDate.helper',
-    repeatUntilDate_label:        PFX + 'repeatUntilDate.label',
-    repeatUntilDate_placeholder:  PFX + 'repeatUntilDate.placeholder',
-    repeatUntilDate_helper:       PFX + 'repeatUntilDate.helper',
-    startTime_label:              PFX + 'startTime.label',
-    startTime_placeholder:        PFX + 'startTime.placeholder',
-    fullDay_label:                PFX + 'fullDay.label',
-    fullDay_helper:               PFX + 'fullDay.helper',
-  });
-
   protected bkeyI18n = computed(() => ({
     name: 'bkey',
-    label: this.fieldI18n.bkey_label(),
-    placeholder: this.fieldI18n.bkey_placeholder(),
-    helper: this.fieldI18n.bkey_helper()
+    label: this.i18n().bkey_label(),
+    placeholder: this.i18n().bkey_placeholder(),
+    helper: this.i18n().bkey_helper()
   } as TextInputI18n));
 
   protected seriesIdI18n = computed(() => ({
     name: 'seriesId',
-    label: this.fieldI18n.seriesId_label(),
-    placeholder: this.fieldI18n.seriesId_placeholder(),
-    helper: this.fieldI18n.seriesId_helper()
+    label: this.i18n().seriesId_label(),
+    placeholder: this.i18n().seriesId_placeholder(),
+    helper: this.i18n().seriesId_helper()
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({
     name: 'name',
-    label: this.fieldI18n.name_label(),
-    placeholder: this.fieldI18n.name_placeholder(),
-    helper: this.fieldI18n.name_helper()
+    label: this.i18n().name_label(),
+    placeholder: this.i18n().name_placeholder(),
+    helper: this.i18n().name_helper()
   } as TextInputI18n));
 
   protected locationKeyI18n = computed(() => ({
     name: 'locationKey',
-    label: this.fieldI18n.locationKey_label(),
-    placeholder: this.fieldI18n.locationKey_placeholder(),
-    helper: this.fieldI18n.locationKey_helper()
+    label: this.i18n().locationKey_label(),
+    placeholder: this.i18n().locationKey_placeholder(),
+    helper: this.i18n().locationKey_helper()
   } as TextInputI18n));
 
   protected durationMinutesI18n = computed(() => ({
     name: 'durationMinutes',
-    label: this.fieldI18n.durationMinutes_label(),
-    placeholder: this.fieldI18n.durationMinutes_placeholder(),
-    helper: this.fieldI18n.durationMinutes_helper()
+    label: this.i18n().durationMinutes_label(),
+    placeholder: this.i18n().durationMinutes_placeholder(),
+    helper: this.i18n().durationMinutes_helper()
   } as NumberInputI18n));
 
   protected descriptionI18n = computed(() => ({
-    name: 'description', label: this.fieldI18n.description_label(), placeholder: this.fieldI18n.description_placeholder()
+    name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
 
   protected startDateI18n = computed(() => ({
     name: 'startDate',
-    label: this.fieldI18n.startDate_label(),
-    placeholder: this.fieldI18n.startDate_placeholder(),
-    helper: this.fieldI18n.startDate_helper()
+    label: this.i18n().startDate_label(),
+    placeholder: this.i18n().startDate_placeholder(),
+    helper: this.i18n().startDate_helper()
   } as DateInputI18n));
 
   protected endDateI18n = computed(() => ({
     name: 'endDate',
-    label: this.fieldI18n.endDate_label(),
-    placeholder: this.fieldI18n.endDate_placeholder(),
-    helper: this.fieldI18n.endDate_helper()
+    label: this.i18n().endDate_label(),
+    placeholder: this.i18n().endDate_placeholder(),
+    helper: this.i18n().endDate_helper()
   } as DateInputI18n));
 
   protected repeatUntilDateI18n = computed(() => ({
     name: 'repeatUntilDate',
-    label: this.fieldI18n.repeatUntilDate_label(),
-    placeholder: this.fieldI18n.repeatUntilDate_placeholder(),
-    helper: this.fieldI18n.repeatUntilDate_helper()
+    label: this.i18n().repeatUntilDate_label(),
+    placeholder: this.i18n().repeatUntilDate_placeholder(),
+    helper: this.i18n().repeatUntilDate_helper()
   } as DateInputI18n));
 
   protected startTimeI18n = computed(() => ({
     name: 'startTime',
-    label: this.fieldI18n.startTime_label(),
-    placeholder: this.fieldI18n.startTime_placeholder(),
+    label: this.i18n().startTime_label(),
+    placeholder: this.i18n().startTime_placeholder(),
   } as TimeInputI18n));
 
   protected fullDayI18n = computed(() => ({
     name: 'fullDay',
-    label: this.fieldI18n.fullDay_label(),
-    helper: this.fieldI18n.fullDay_helper(),
+    label: this.i18n().fullDay_label(),
+    helper: this.i18n().fullDay_helper(),
   } as CheckboxI18n));
 
   /******************************* actions *************************************** */

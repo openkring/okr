@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -19,6 +19,82 @@ import { UploadService } from '@bk2/avatar-data-access';
 
 import { PFX } from './scope';
 import { DocumentEditModal } from 'libs/document/feature/src/lib/document-edit.modal';
+
+const DOCUMENT_I18N_KEYS = {
+  documents:        PFX + 'documents',
+  revisions:        PFX + 'revisions',
+  empty:            PFX + 'empty',
+  name:             PFX + 'name',
+  size:             PFX + 'size',
+  lastUpdate:       PFX + 'lastUpdate',
+  revision_list:    PFX + 'revision.list.title',
+  upload_single:    PFX + 'upload.single.title',
+  upload_multiple:  PFX + 'upload.multiple.title',
+  image_add:        PFX + 'image.add',
+  image_select:     PFX + 'image.select',
+  image_upload:     PFX + 'image.upload',
+  delete_confirm:   PFX + 'delete.confirm',
+  as_title:         PFX + 'actionsheet.title',
+  as_view:          PFX + 'actionsheet.view',
+  as_edit:          PFX + 'actionsheet.edit',
+  as_update:        PFX + 'actionsheet.update',
+  as_create:        PFX + 'actionsheet.create',
+  as_delete:        PFX + 'actionsheet.delete',
+  as_revisions:     PFX + 'actionsheet.revisions',
+  as_download:      PFX + 'actionsheet.download',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  ok: '@ok',
+  cancel: '@cancel',
+  // form keys (document/ui scope)
+  bkey_label:                    '@document/ui.bkey.label',
+  bkey_placeholder:              '@document/ui.bkey.placeholder',
+  bkey_helper:                   '@document/ui.bkey.helper',
+  fullPath_label:                '@document/ui.fullPath.label',
+  fullPath_placeholder:          '@document/ui.fullPath.placeholder',
+  fullPath_helper:               '@document/ui.fullPath.helper',
+  title_label:                   '@document/ui.title.label',
+  title_placeholder:             '@document/ui.title.placeholder',
+  title_helper:                  '@document/ui.title.helper',
+  altText_label:                 '@document/ui.altText.label',
+  altText_placeholder:           '@document/ui.altText.placeholder',
+  altText_helper:                '@document/ui.altText.helper',
+  url_label:                     '@document/ui.url.label',
+  url_placeholder:               '@document/ui.url.placeholder',
+  url_helper:                    '@document/ui.url.helper',
+  mimeType_label:                '@document/ui.mimeType.label',
+  mimeType_placeholder:          '@document/ui.mimeType.placeholder',
+  mimeType_helper:               '@document/ui.mimeType.helper',
+  authorKey_label:               '@document/ui.authorKey.label',
+  authorKey_placeholder:         '@document/ui.authorKey.placeholder',
+  authorKey_helper:              '@document/ui.authorKey.helper',
+  authorName_label:              '@document/ui.authorName.label',
+  authorName_placeholder:        '@document/ui.authorName.placeholder',
+  authorName_helper:             '@document/ui.authorName.helper',
+  locationKey_label:             '@document/ui.locationKey.label',
+  locationKey_placeholder:       '@document/ui.locationKey.placeholder',
+  locationKey_helper:            '@document/ui.locationKey.helper',
+  hash_label:                    '@document/ui.hash.label',
+  hash_placeholder:              '@document/ui.hash.placeholder',
+  hash_helper:                   '@document/ui.hash.helper',
+  priorVersionKey_label:         '@document/ui.priorVersionKey.label',
+  priorVersionKey_placeholder:   '@document/ui.priorVersionKey.placeholder',
+  priorVersionKey_helper:        '@document/ui.priorVersionKey.helper',
+  version_label:                 '@document/ui.version.label',
+  version_placeholder:           '@document/ui.version.placeholder',
+  version_helper:                '@document/ui.version.helper',
+  description_label:             '@document/ui.description.label',
+  description_placeholder:       '@document/ui.description.placeholder',
+  dateOfDocCreation_label:       '@document/ui.dateOfDocCreation.label',
+  dateOfDocCreation_placeholder: '@document/ui.dateOfDocCreation.placeholder',
+  dateOfDocCreation_helper:      '@document/ui.dateOfDocCreation.helper',
+  dateOfDocLastUpdate_label:     '@document/ui.dateOfDocLastUpdate.label',
+  dateOfDocLastUpdate_placeholder: '@document/ui.dateOfDocLastUpdate.placeholder',
+  dateOfDocLastUpdate_helper:    '@document/ui.dateOfDocLastUpdate.helper',
+} satisfies Record<string, string>;
+
+export type DocumentI18n = { [K in keyof typeof DOCUMENT_I18N_KEYS]: Signal<string> };
 
 export type DocumentState = {
   documentKey: string;
@@ -54,34 +130,7 @@ export const DocumentStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      documents:        PFX + 'documents',
-      revisions:        PFX + 'revisions',
-      empty:            PFX + 'empty',
-      name:             PFX + 'name',
-      size:             PFX + 'size',
-      lastUpdate:       PFX + 'lastUpdate',
-      revision_list:    PFX + 'revision.list.title',
-      upload_single:    PFX + 'upload.single.title',
-      upload_multiple:  PFX + 'upload.multiple.title',
-      image_add:        PFX + 'image.add',
-      image_select:     PFX + 'image.select',
-      image_upload:     PFX + 'image.upload',
-      delete_confirm:   PFX + 'delete.confirm',
-      as_title:         PFX + 'actionsheet.title',
-      as_view:          PFX + 'actionsheet.view',
-      as_edit:          PFX + 'actionsheet.edit',
-      as_update:        PFX + 'actionsheet.update',
-      as_create:        PFX + 'actionsheet.create',
-      as_delete:        PFX + 'actionsheet.delete',
-      as_revisions:     PFX + 'actionsheet.revisions',
-      as_download:      PFX + 'actionsheet.download',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-      ok: '@ok',
-      cancel: '@cancel'
-    }),
+    i18n: store.i18nService.translateAll(DOCUMENT_I18N_KEYS),
 
     documentsResource: rxResource({
       params: () => ({

@@ -33,13 +33,14 @@ import { CalEventStore } from './calevent.store';
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-calevent-form
-          [formData]="formData" 
+          [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
+          [i18n]="store.i18n"
           [currentUser]="currentUser()"
           [showForm]="showForm()"
           [types]="types()"
           [periodicities]="periodicities()"
-          [allTags]="tags()" 
+          [allTags]="tags()"
           [tenantId]="tenantId()"
           [locale]="locale()"
           [readOnly]="isReadOnly()"
