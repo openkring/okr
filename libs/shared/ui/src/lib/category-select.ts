@@ -1,7 +1,11 @@
-import { Component, computed, input, model, output } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
+import { switchMap } from 'rxjs/operators';
 
+import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, getItemLabel } from '@bk2/shared-util-core';
@@ -25,7 +29,7 @@ let id = 0;
   selector: 'bk-cat-select',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    AsyncPipe, TranslatePipe, SvgIconPipe,
     IonItem, IonNote, IonButton, IonPopover, IonContent, IonList, IonIcon, IonLabel
   ],
   viewProviders: [vestFormsViewProviders],
@@ -39,7 +43,7 @@ let id = 0;
       @if(showIcons() && selectedItem().icon.length > 0) {
         <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
       }
-      {{ getItemLabel(selectedItem()) }}
+      {{ getItemLabel(selectedItem()) | translate | async }}
       <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
     </ion-button>
   } @else {
@@ -47,7 +51,7 @@ let id = 0;
       @if(showIcons() && selectedItem().icon.length > 0) {
         <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
       }
-      <ion-label>{{ getItemLabel(selectedItem()) }}</ion-label>
+      <ion-label>{{ getItemLabel(selectedItem()) | translate | async }}</ion-label>
     </ion-item>
   }
   @if(!isReadOnly()) {
@@ -65,7 +69,7 @@ let id = 0;
               @if(shouldShowIcons()) {
                 <ion-icon slot="start" src="{{ item.icon| svgIcon }}" />
               }
-              <ion-label class="ion-text-wrap">{{ getItemLabel(item) }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ getItemLabel(item) | translate | async }}</ion-label>
             </ion-item>
             }
           </ion-list>
@@ -94,9 +98,12 @@ export class CategorySelect {
   public showIcons = input(true);
   protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
 
-  protected name = computed(() => this.category().name); // category name, determines the label
-  protected label = computed(() => `@${this.category().i18nBase}.${this.labelName()}`);
-  protected helper = computed(() => `@input.${this.name()}.helper`);
+  private i18nService = inject(I18nService);
+  protected name = computed(() => this.category().name);
+  private labelKey = computed(() => `@${this.category().i18nBase}.${this.labelName()}`);
+  private helperKey = computed(() => `@input.${this.name()}.helper`);
+  protected label = toSignal(toObservable(this.labelKey).pipe(switchMap(key => this.i18nService.translate(key))), { initialValue: '' });
+  protected helper = toSignal(toObservable(this.helperKey).pipe(switchMap(key => this.i18nService.translate(key))), { initialValue: '' });
 
   protected hovered = '';
 
