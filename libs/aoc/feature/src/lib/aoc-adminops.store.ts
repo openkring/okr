@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of, take } from 'rxjs';
@@ -10,6 +10,25 @@ import { AddressCollection, AddressModel, BkModel, LogInfo, MembershipCollection
 import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@bk2/shared-util-core';
 import { getMembershipCategoryChanges } from '@bk2/relationship-membership-util';
 import { PFX } from './scope';
+
+const AOC_ADMINOPS_I18N_KEYS = {
+  oldjuniors_title:    PFX + 'adminops.oldJuniors.title',
+  oldjuniors_nodob:    PFX + 'adminops.oldJuniors.nodob',
+  title:               PFX + 'title',
+  mcatchange_title:    PFX + 'adminops.mcatchange.title',
+  result_title:        PFX + 'result.title',
+  adminops_title:      PFX + 'adminops.title',
+  debug_tools:         PFX + 'adminops.debug.tools',
+  focus_event_logging: PFX + 'adminops.debug.focus_event_logging',
+  iban_label:          PFX + 'adminops.iban.label',
+  iban_button:         PFX + 'adminops.iban.button',
+  oldJuniors_label:    PFX + 'adminops.oldJuniors.label',
+  oldJuniors_button:   PFX + 'adminops.oldJuniors.button',
+  club_label:          PFX + 'adminops.club.label',
+  year_label:          PFX + 'adminops.year.label',
+} satisfies Record<string, string>;
+
+export type AocAdminopsI18n = { [K in keyof typeof AOC_ADMINOPS_I18N_KEYS]: Signal<string> };
 
 export type AocAdminOpsState = {
   modelType: string | undefined;
@@ -31,22 +50,7 @@ export const AocAdminOpsStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      oldjuniors_title:    PFX + 'adminops.oldJuniors.title',
-      oldjuniors_nodob:    PFX + 'adminops.oldJuniors.nodob',
-      title:               PFX + 'title',
-      mcatchange_title:    PFX + 'adminops.mcatchange.title',
-      result_title:        PFX + 'result.title',
-      adminops_title:      PFX + 'adminops.title',
-      debug_tools:         PFX + 'adminops.debug.tools',
-      focus_event_logging: PFX + 'adminops.debug.focus_event_logging',
-      iban_label:          PFX + 'adminops.iban.label',
-      iban_button:         PFX + 'adminops.iban.button',
-      oldJuniors_label:    PFX + 'adminops.oldJuniors.label',
-      oldJuniors_button:   PFX + 'adminops.oldJuniors.button',
-      club_label:          PFX + 'adminops.club.label',
-      year_label:          PFX + 'adminops.year.label',
-    }),
+    i18n: store.i18nService.translateAll(AOC_ADMINOPS_I18N_KEYS),
   })),
   withProps(store => ({
     dataResource: rxResource({

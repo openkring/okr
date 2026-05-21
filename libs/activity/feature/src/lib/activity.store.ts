@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController } from '@ionic/angular/standalone';
@@ -13,6 +13,19 @@ import { ActivityService } from '@bk2/activity-data-access';
 
 import { ActivityViewModal } from './activity-view.modal';
 import { PFX } from './scope';
+
+const ACTIVITY_I18N_KEYS = {
+  title:      PFX + 'title',
+  empty:      PFX + 'empty',
+  timestamp:  PFX + 'timestamp',
+  scope:      PFX + 'scope',
+  action:     PFX + 'action',
+  author:     PFX + 'author',
+  payload:    PFX + 'payload',
+  view_title: PFX + 'view.title'
+} satisfies Record<string, string>;
+
+export type ActivityI18n = { [K in keyof typeof ACTIVITY_I18N_KEYS]: Signal<string> };
 
 export type ActivityState = {
   searchTerm: string;
@@ -37,16 +50,7 @@ export const ActivityStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-        title:      PFX + 'title',
-        empty:      PFX + 'empty',
-        timestamp:  PFX + 'timestamp',
-        scope:      PFX + 'scope',
-        action:     PFX + 'action',
-        author:     PFX + 'author',
-        payload:    PFX + 'payload',
-        view_title: PFX + 'view.title'
-    }),
+    i18n: store.i18nService.translateAll(ACTIVITY_I18N_KEYS),
   
     activitiesResource: rxResource({
       params: () => ({

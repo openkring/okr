@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { I18nService } from '@bk2/shared-i18n';
 import { PFX } from './scope';
@@ -92,6 +92,49 @@ const initialState: AocBexioState = {
   lastJournalSyncedAt: '',
 };
 
+const AOC_BEXIO_I18N_KEYS = {
+  title:                   PFX + 'bexio.title',
+  invoices_title:          PFX + 'bexio.invoices.title',
+  invoices_subtitle:       PFX + 'bexio.invoices.subtitle',
+  loading:                 '@loading',
+  invoices_nodata:         PFX + 'bexio.invoices.nodata',
+  invoices_status:         PFX + 'bexio.invoices.status',
+  invoices_history:        PFX + 'bexio.invoices.history',
+  bills_title:             PFX + 'bexio.bills.title',
+  bills_subtitle:          PFX + 'bexio.bills.subtitle',
+  bills_nodata:            PFX + 'bexio.bills.nodata',
+  bills_status:            PFX + 'bexio.bills.status',
+  bills_history:           PFX + 'bexio.bills.history',
+  journal_title:           PFX + 'bexio.journal.title',
+  journal_subtitle:        PFX + 'bexio.journal.subtitle',
+  journal_nodata:          PFX + 'bexio.journal.nodata',
+  journal_status:          PFX + 'bexio.journal.status',
+  journal_history:         PFX + 'bexio.journal.history',
+  accounts_title:          PFX + 'bexio.accounts.title',
+  accounts_subtitle:       PFX + 'bexio.accounts.subtitle',
+  accounts_download:       PFX + 'bexio.accounts.download',
+  accounts_history:        PFX + 'bexio.accounts.history',
+  index_title:             PFX + 'bexio.index.title',
+  index_content:           PFX + 'bexio.index.content',
+  index_button:            PFX + 'bexio.index.button',
+  index_contactFilter_label: PFX + 'bexio.index.contactFilter.label',
+  vendor_title:            PFX + 'bexio.vendor.title',
+  vendor_subtitle:         PFX + 'bexio.vendor.subtitle',
+  vendor_status_initial:   PFX + 'bexio.vendor.status.initial',
+  vendor_status_done:      PFX + 'bexio.vendor.status.done',
+  vendor_status_open:      PFX + 'bexio.vendor.status.open',
+  vendor_status_linked:    PFX + 'bexio.vendor.status.linked',
+  vendor_status_unmatched: PFX + 'bexio.vendor.status.unmatched',
+  receiver_title:          PFX + 'bexio.receiver.title',
+  receiver_status_initial: PFX + 'bexio.receiver.status.initial',
+  receiver_status_done:    PFX + 'bexio.receiver.status.done',
+  receiver_status_open:    PFX + 'bexio.receiver.status.open',
+  receiver_status_linked:  PFX + 'bexio.receiver.status.linked',
+  receiver_link:           PFX + 'bexio.receiver.link',
+} satisfies Record<string, string>;
+
+export type AocBexioI18n = { [K in keyof typeof AOC_BEXIO_I18N_KEYS]: Signal<string> };
+
 export const AocBexioStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -101,46 +144,7 @@ export const AocBexioStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      title:                   PFX + 'bexio.title',
-      invoices_title:          PFX + 'bexio.invoices.title',
-      invoices_subtitle:       PFX + 'bexio.invoices.subtitle',
-      loading:                 '@loading',
-      invoices_nodata:         PFX + 'bexio.invoices.nodata',
-      invoices_status:         PFX + 'bexio.invoices.status',
-      invoices_history:        PFX + 'bexio.invoices.history',
-      bills_title:             PFX + 'bexio.bills.title',
-      bills_subtitle:          PFX + 'bexio.bills.subtitle',
-      bills_nodata:            PFX + 'bexio.bills.nodata',
-      bills_status:            PFX + 'bexio.bills.status',
-      bills_history:           PFX + 'bexio.bills.history',
-      journal_title:           PFX + 'bexio.journal.title',
-      journal_subtitle:        PFX + 'bexio.journal.subtitle',
-      journal_nodata:          PFX + 'bexio.journal.nodata',
-      journal_status:          PFX + 'bexio.journal.status',
-      journal_history:         PFX + 'bexio.journal.history',
-      accounts_title:          PFX + 'bexio.accounts.title',
-      accounts_subtitle:       PFX + 'bexio.accounts.subtitle',
-      accounts_download:       PFX + 'bexio.accounts.download',
-      accounts_history:        PFX + 'bexio.accounts.history',
-      index_title:             PFX + 'bexio.index.title',
-      index_content:           PFX + 'bexio.index.content',
-      index_button:            PFX + 'bexio.index.button',
-      index_contactFilter_label: PFX + 'bexio.index.contactFilter.label',
-      vendor_title:            PFX + 'bexio.vendor.title',
-      vendor_subtitle:         PFX + 'bexio.vendor.subtitle',
-      vendor_status_initial:   PFX + 'bexio.vendor.status.initial',
-      vendor_status_done:      PFX + 'bexio.vendor.status.done',
-      vendor_status_open:      PFX + 'bexio.vendor.status.open',
-      vendor_status_linked:    PFX + 'bexio.vendor.status.linked',
-      vendor_status_unmatched: PFX + 'bexio.vendor.status.unmatched',
-      receiver_title:          PFX + 'bexio.receiver.title',
-      receiver_status_initial: PFX + 'bexio.receiver.status.initial',
-      receiver_status_done:    PFX + 'bexio.receiver.status.done',
-      receiver_status_open:    PFX + 'bexio.receiver.status.open',
-      receiver_status_linked:  PFX + 'bexio.receiver.status.linked',
-      receiver_link:           PFX + 'bexio.receiver.link',
-    }),
+    i18n: store.i18nService.translateAll(AOC_BEXIO_I18N_KEYS),
   })),
   withComputed(state => ({
     currentUser: computed(() => state.appStore.currentUser()),

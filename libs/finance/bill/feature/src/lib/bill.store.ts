@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -15,6 +15,14 @@ import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-c
 import { BillService } from '@bk2/finance-bill-data-access';
 
 import { BillViewModal } from './bill-view.modal';
+
+const BILL_I18N_KEYS = {
+  list_title:      '@finance.bill.list.title',
+  accordion_title: '@finance.bill.accordion.title',
+  field_empty:     '@finance.bill.field.empty',
+} satisfies Record<string, string>;
+
+export type BillI18n = { [K in keyof typeof BILL_I18N_KEYS]: Signal<string> };
 
 export type BillState = {
   listId: string;    // 'all' | 'my' | vendorKey
@@ -46,11 +54,7 @@ export const BillStore = signalStore(
     };
   }),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      list_title:      '@finance.bill.list.title',
-      accordion_title: '@finance.bill.accordion.title',
-      field_empty:     '@finance.bill.field.empty',
-    }),
+    i18n: store.i18nService.translateAll(BILL_I18N_KEYS),
   })),
 
   withProps((store) => ({

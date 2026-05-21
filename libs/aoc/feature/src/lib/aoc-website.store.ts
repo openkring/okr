@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -11,6 +11,24 @@ import { WebsiteContentCollection, WebsiteContentModel } from '@bk2/shared-model
 import { bkPrompt } from '@bk2/shared-util-angular';
 import { getSystemQuery } from '@bk2/shared-util-core';
 import { PFX } from './scope';
+
+const AOC_WEBSITE_I18N_KEYS = {
+  key_label: PFX + 'website.key.label',
+  create_conf:  PFX + 'website.create.conf',
+  create_error: PFX + 'website.create.error',
+  update_conf:  PFX + 'website.update.conf',
+  update_error: PFX + 'website.update.error',
+  delete_conf:  PFX + 'website.delete.conf',
+  delete_error: PFX + 'website.delete.error',
+  delete_confirm: PFX + 'website.delete.confirm',
+  ok:               '@ok',
+  cancel:           '@cancel',
+  search_placeholder: '@general.operation.search.placeholder',
+  list_title:       PFX + 'website.list.title',
+  loading:          '@general.operation.loading',
+} satisfies Record<string, string>;
+
+export type AocWebsiteI18n = { [K in keyof typeof AOC_WEBSITE_I18N_KEYS]: Signal<string> };
 
 export type AocWebsiteState = {
   searchTerm: string;
@@ -30,21 +48,7 @@ export const AocWebsiteStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      key_label: PFX + 'website.key.label',
-      create_conf:  PFX + 'website.create.conf',
-      create_error: PFX + 'website.create.error',
-      update_conf:  PFX + 'website.update.conf',
-      update_error: PFX + 'website.update.error',
-      delete_conf:  PFX + 'website.delete.conf',
-      delete_error: PFX + 'website.delete.error',
-      delete_confirm: PFX + 'website.delete.confirm',
-      ok:               '@ok',
-      cancel:           '@cancel',
-      search_placeholder: '@general.operation.search.placeholder',
-      list_title:       PFX + 'website.list.title',
-      loading:          '@general.operation.loading',
-    }),
+    i18n: store.i18nService.translateAll(AOC_WEBSITE_I18N_KEYS),
   })),
   withProps(store => ({
     contentResource: rxResource({

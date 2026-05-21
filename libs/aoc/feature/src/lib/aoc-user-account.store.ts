@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -22,6 +22,18 @@ import { PersonService } from '@bk2/subject-person-data-access';
 import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail } from '@bk2/aoc-util';
 
 import { PFX } from './scope';
+
+const AOC_USER_ACCOUNT_I18N_KEYS = {
+  user_delete_confirm: PFX + 'account.user.delete.confirm',
+  fbuser_delete_confirm: PFX + 'account.fbuser.delete.confirm',
+  ok: '@ok',
+  cancel: '@cancel',
+  account_plural:  '@account.plural',
+  login_email:     '@user.field.loginEmail',
+  name:            '@user.field.name',
+} satisfies Record<string, string>;
+
+export type AocUserAccountI18n = { [K in keyof typeof AOC_USER_ACCOUNT_I18N_KEYS]: Signal<string> };
 
 export type FirebaseAuthUser = {
   uid: string;
@@ -69,15 +81,7 @@ export const AocUserAccountStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      user_delete_confirm: PFX + 'account.user.delete.confirm',
-      fbuser_delete_confirm: PFX + 'account.fbuser.delete.confirm',
-      ok: '@ok',
-      cancel: '@cancel',
-      account_plural:  '@account.plural',
-      login_email:     '@user.field.loginEmail',
-      name:            '@user.field.name',
-    }),
+    i18n: store.i18nService.translateAll(AOC_USER_ACCOUNT_I18N_KEYS),
 
     usersResource: rxResource({
       // the resource will reload whenever the fbUser changes (login/logout).

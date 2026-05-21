@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -19,6 +19,49 @@ import { SectionService } from '@bk2/cms-section-data-access';
 import { SectionEditModal } from '@bk2/cms-section-feature';
 
 import { PFX } from './scope';
+
+const AOC_CONTENT_I18N_KEYS = {
+  section_delete_confirm:    PFX + 'content.section.delete.confirm',
+  menu_delete_conf:          PFX + 'content.menu.delete.conf',
+  menu_delete_confirm:       PFX + 'content.menu.delete.confirm',
+  ok:                        '@ok',
+  cancel:                    '@cancel',
+  title:                     PFX + 'content.title',
+  result_title:              PFX + 'result.title',
+  content:                   PFX + 'content.content',
+  orphaned_sections_title:   PFX + 'content.orphanedSections.title',
+  orphaned_sections_content: PFX + 'content.orphanedSections.content',
+  orphaned_sections_hide:    PFX + 'content.orphanedSections.hide',
+  orphaned_sections_show:    PFX + 'content.orphanedSections.show',
+  missing_sections_title:    PFX + 'content.missingSections.title',
+  missing_sections_content:  PFX + 'content.missingSections.content',
+  missing_sections_hide:     PFX + 'content.missingSections.hide',
+  missing_sections_show:     PFX + 'content.missingSections.show',
+  orphaned_menus_title:      PFX + 'content.orphanedMenus.title',
+  orphaned_menus_content:    PFX + 'content.orphanedMenus.content',
+  orphaned_menus_hide:       PFX + 'content.orphanedMenus.hide',
+  orphaned_menus_show:       PFX + 'content.orphanedMenus.show',
+  missing_menus_title:       PFX + 'content.missingMenus.title',
+  missing_menus_content:     PFX + 'content.missingMenus.content',
+  missing_menus_hide:        PFX + 'content.missingMenus.hide',
+  missing_menus_show:        PFX + 'content.missingMenus.show',
+  check_links_title:         PFX + 'content.checkLinks.title',
+  check_links_content:       PFX + 'content.checkLinks.content',
+  check_links_show:          PFX + 'content.checkLinks.show',
+  as_title:                  PFX + 'content.actionsheet.title',
+  as_section_edit:           PFX + 'content.actionsheet.section.edit',
+  as_section_delete:         PFX + 'content.actionsheet.section.delete',
+  as_copy_bkey:              PFX + 'content.actionsheet.copy.bkey',
+  as_page_edit:              PFX + 'content.actionsheet.page.edit',
+  as_section_create:         PFX + 'content.actionsheet.section.create',
+  as_section_removeref:      PFX + 'content.actionsheet.section.removeRef',
+  as_menu_create:            PFX + 'content.actionsheet.menu.create',
+  as_menu_delete:            PFX + 'content.actionsheet.menu.delete',
+  as_menu_edit:              PFX + 'content.actionsheet.menu.edit',
+  as_menu_removeref:         PFX + 'content.actionsheet.menu.removeRef',
+} satisfies Record<string, string>;
+
+export type AocContentI18n = { [K in keyof typeof AOC_CONTENT_I18N_KEYS]: Signal<string> };
 
 export type MissingMenuRef = {
   parent: MenuItemModel;   // menu item that contains the broken reference
@@ -65,46 +108,7 @@ export const AocContentStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      section_delete_confirm:    PFX + 'content.section.delete.confirm',
-      menu_delete_conf:          PFX + 'content.menu.delete.conf',
-      menu_delete_confirm:       PFX + 'content.menu.delete.confirm',
-      ok:                        '@ok',
-      cancel:                    '@cancel',
-      title:                     PFX + 'content.title',
-      result_title:              PFX + 'result.title',
-      content:                   PFX + 'content.content',
-      orphaned_sections_title:   PFX + 'content.orphanedSections.title',
-      orphaned_sections_content: PFX + 'content.orphanedSections.content',
-      orphaned_sections_hide:    PFX + 'content.orphanedSections.hide',
-      orphaned_sections_show:    PFX + 'content.orphanedSections.show',
-      missing_sections_title:    PFX + 'content.missingSections.title',
-      missing_sections_content:  PFX + 'content.missingSections.content',
-      missing_sections_hide:     PFX + 'content.missingSections.hide',
-      missing_sections_show:     PFX + 'content.missingSections.show',
-      orphaned_menus_title:      PFX + 'content.orphanedMenus.title',
-      orphaned_menus_content:    PFX + 'content.orphanedMenus.content',
-      orphaned_menus_hide:       PFX + 'content.orphanedMenus.hide',
-      orphaned_menus_show:       PFX + 'content.orphanedMenus.show',
-      missing_menus_title:       PFX + 'content.missingMenus.title',
-      missing_menus_content:     PFX + 'content.missingMenus.content',
-      missing_menus_hide:        PFX + 'content.missingMenus.hide',
-      missing_menus_show:        PFX + 'content.missingMenus.show',
-      check_links_title:         PFX + 'content.checkLinks.title',
-      check_links_content:       PFX + 'content.checkLinks.content',
-      check_links_show:          PFX + 'content.checkLinks.show',
-      as_title:                  PFX + 'content.actionsheet.title',
-      as_section_edit:           PFX + 'content.actionsheet.section.edit',
-      as_section_delete:         PFX + 'content.actionsheet.section.delete',
-      as_copy_bkey:              PFX + 'content.actionsheet.copy.bkey',
-      as_page_edit:              PFX + 'content.actionsheet.page.edit',
-      as_section_create:         PFX + 'content.actionsheet.section.create',
-      as_section_removeref:      PFX + 'content.actionsheet.section.removeRef',
-      as_menu_create:            PFX + 'content.actionsheet.menu.create',
-      as_menu_delete:            PFX + 'content.actionsheet.menu.delete',
-      as_menu_edit:              PFX + 'content.actionsheet.menu.edit',
-      as_menu_removeref:         PFX + 'content.actionsheet.menu.removeRef',
-    }),
+    i18n: store.i18nService.translateAll(AOC_CONTENT_I18N_KEYS),
 
     dataResource: rxResource({
       params: () => ({

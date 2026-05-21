@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { AppStore } from '@bk2/shared-feature';
@@ -7,6 +7,14 @@ import { debugListLoaded } from '@bk2/shared-util-core';
 
 import { CommentService } from '@bk2/comment-data-access';
 import { AlertService } from '@bk2/shared-util-angular';
+
+const COMMENT_LIST_I18N_KEYS = {
+  add_title: '@comment.operation.add.title',
+  add_placeholder: '@comment.operation.add.placeholder',
+  comment_plural: '@comment.plural'
+} satisfies Record<string, string>;
+
+export type CommentListI18n = { [K in keyof typeof COMMENT_LIST_I18N_KEYS]: Signal<string> };
 
 export type CommentListState = {
   parentKey: string; // modelType.key of the parent model
@@ -24,7 +32,7 @@ export const CommentListStore = signalStore(
       commentService: inject(CommentService),
       alertService: inject(AlertService),
       appStore: inject(AppStore),
-      i18n: i18nService.translateAll({ add_title: '@comment.operation.add.title', add_placeholder: '@comment.operation.add.placeholder', comment_plural: '@comment.plural' }),
+      i18n: i18nService.translateAll(COMMENT_LIST_I18N_KEYS),
     };
   }),
   withProps((store) => ({

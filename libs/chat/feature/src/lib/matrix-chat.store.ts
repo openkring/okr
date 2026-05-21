@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
@@ -19,6 +19,50 @@ import { MatrixChatService, MatrixPollData } from '@bk2/chat-data-access';
 
 import { RoomEditModal } from './room-edit.modal';
 import { PFX } from './scope';
+
+const MATRIX_CHAT_I18N_KEYS = {
+  room_create_conf:          PFX + 'room.create.conf',
+  room_create_error:         PFX + 'room.create.error',
+  room_update_conf:          PFX + 'room.update.conf',
+  room_update_error:         PFX + 'room.update.error',
+  thread_reply_header:       PFX + 'thread.reply.header',
+  thread_reply_placeholder:  PFX + 'thread.reply.placeholder',
+  thread_reply_error:        PFX + 'thread.reply.error',
+  msg_report_header:         PFX + 'message.report.header',
+  msg_report_placeholder:    PFX + 'message.report.placeholder',
+  msg_report_noChannel:      PFX + 'message.report.noChannel',
+  msg_report_conf:           PFX + 'message.report.conf',
+  msg_report_error:          PFX + 'message.report.error',
+  msg_update_header:         PFX + 'message.update.header',
+  msg_update_placeholder:    PFX + 'message.update.placeholder',
+  msg_update_conf:           PFX + 'message.update.conf',
+  msg_update_error:          PFX + 'message.update.error',
+  msg_delete_confirm:        PFX + 'message.delete.confirm',
+  msg_delete_conf:           PFX + 'message.delete.conf',
+  msg_delete_error:          PFX + 'message.delete.error',
+  react_header:              PFX + 'message.react.header',
+  react_cancel:              PFX + 'message.react.cancel',
+  msg_report_messageFrom:    PFX + 'message.report.messageFrom',
+  msg_report_message:        PFX + 'message.report.message',
+  msg_report_comment:        PFX + 'message.report.comment',
+  msg_report_showMessage:    PFX + 'message.report.showMessage',
+  reconnecting:              PFX + 'reconnecting',
+  connectionError:           PFX + 'connectionError',
+  connecting:                PFX + 'connecting',
+  selectRoom:                PFX + 'selectRoom',
+  noRoomsError:              PFX + 'noRoomsError',
+  createTestRoom:            PFX + 'createTestRoom',
+  thread_empty:              PFX + 'thread.empty',
+  video_incoming:            PFX + 'video.incoming',
+  video_connecting:          PFX + 'video.connecting',
+  isTypeing:                PFX + 'isTypeing',
+  and:                      PFX + 'and',
+  areTypeing:               PFX + 'areTypeing',
+  othersTypeing:            PFX + 'othersTypeing',
+  copy_conf:                '@copy.conf'
+} satisfies Record<string, string>;
+
+export type MatrixChatI18n = { [K in keyof typeof MATRIX_CHAT_I18N_KEYS]: Signal<string> };
 
 export type MatrixChatState = {
   isMatrixInitialized: boolean;
@@ -49,53 +93,7 @@ export const _MatrixChatStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      room_create_conf:          PFX + 'room.create.conf',
-      room_create_error:         PFX + 'room.create.error',
-      room_update_conf:          PFX + 'room.update.conf',
-      room_update_error:         PFX + 'room.update.error',
-      thread_reply_header:       PFX + 'thread.reply.header',
-      thread_reply_placeholder:  PFX + 'thread.reply.placeholder',
-      thread_reply_error:        PFX + 'thread.reply.error',
-      msg_report_header:         PFX + 'message.report.header',
-      msg_report_placeholder:    PFX + 'message.report.placeholder',
-      msg_report_noChannel:      PFX + 'message.report.noChannel',
-      msg_report_conf:           PFX + 'message.report.conf',
-      msg_report_error:          PFX + 'message.report.error',
-      msg_update_header:         PFX + 'message.update.header',
-      msg_update_placeholder:    PFX + 'message.update.placeholder',
-      msg_update_conf:           PFX + 'message.update.conf',
-      msg_update_error:          PFX + 'message.update.error',
-      msg_delete_confirm:        PFX + 'message.delete.confirm',
-      msg_delete_conf:           PFX + 'message.delete.conf',
-      msg_delete_error:          PFX + 'message.delete.error',
-      react_header:              PFX + 'message.react.header',
-      react_cancel:              PFX + 'message.react.cancel',
-      msg_report_messageFrom:    PFX + 'message.report.messageFrom',
-      msg_report_message:        PFX + 'message.report.message',
-      msg_report_comment:        PFX + 'message.report.comment',
-      msg_report_showMessage:    PFX + 'message.report.showMessage',
-      // matrix-chat.ts status badges
-      reconnecting:              PFX + 'reconnecting',
-      connectionError:           PFX + 'connectionError',
-      connecting:                PFX + 'connecting',
-      // matrix-chat.ts empty state
-      selectRoom:                PFX + 'selectRoom',
-      noRoomsError:              PFX + 'noRoomsError',
-      createTestRoom:            PFX + 'createTestRoom',
-      // matrix-chat.ts thread panel
-      thread_empty:              PFX + 'thread.empty',
-      // matrix-chat.ts video call overlay
-      video_incoming:            PFX + 'video.incoming',
-      video_connecting:          PFX + 'video.connecting',
-      // MatrixMessageInput typing indicator
-      isTypeing:                PFX + 'isTypeing',
-      and:                      PFX + 'and',
-      areTypeing:               PFX + 'areTypeing',
-      othersTypeing:            PFX + 'othersTypeing',
-      copy_conf:                '@copy.conf'
-
-    }),
+    i18n: store.i18nService.translateAll(MATRIX_CHAT_I18N_KEYS),
     syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),
     roomsResource: rxResource({ stream: () => store.matrixService.rooms }),
     imageUrlResource: rxResource({

@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -12,6 +12,12 @@ import { AccountModel, BookingJournalModel, JournalCollection } from '@bk2/share
 import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@bk2/shared-util-core';
 
 import { JournalViewModal } from './journal-view.modal';
+
+const JOURNAL_I18N_KEYS = {
+  list_title: '@finance.journal.list.title',
+} satisfies Record<string, string>;
+
+export type JournalI18n = { [K in keyof typeof JOURNAL_I18N_KEYS]: Signal<string> };
 
 export type JournalState = {
   searchTerm: string;
@@ -33,9 +39,7 @@ export const JournalStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      list_title: '@finance.journal.list.title',
-    }),
+    i18n: store.i18nService.translateAll(JOURNAL_I18N_KEYS),
   })),
 
   withProps((store) => ({

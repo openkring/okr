@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -20,6 +20,17 @@ import { InvoiceEditModal } from './invoice-edit.modal';
 import { InvoiceViewModal } from './invoice-view.modal';
 
 import { PFX } from './scope';
+
+const INVOICE_I18N_KEYS = {
+  delete_confirm: PFX + 'delete.confirm',
+  ok: '@ok',
+  cancel: '@cancel',
+  list_title:      '@finance.invoice.list.title',
+  accordion_title: '@invoice.accordion.title',
+  field_empty:     '@finance.invoice.field.empty',
+} satisfies Record<string, string>;
+
+export type InvoiceI18n = { [K in keyof typeof INVOICE_I18N_KEYS]: Signal<string> };
 
 export type InvoiceState = {
   listId: string;         // 'all' | 'my' | personKey
@@ -56,14 +67,7 @@ export const InvoiceStore = signalStore(
   }),
 
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'delete.confirm',
-      ok: '@ok',
-      cancel: '@cancel',
-      list_title:      '@finance.invoice.list.title',
-      accordion_title: '@invoice.accordion.title',
-      field_empty:     '@finance.invoice.field.empty',
-    }),
+    i18n: store.i18nService.translateAll(INVOICE_I18N_KEYS),
 
     allInvoicesResource: rxResource({
       params: () => ({

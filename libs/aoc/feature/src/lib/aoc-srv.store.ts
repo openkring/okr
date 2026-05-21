@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular/standalone';
@@ -145,6 +145,16 @@ function loadIndex(tenantId: string): SrvIndex[] {
   } catch { return []; }
 }
 
+const AOC_SRV_I18N_KEYS = {
+  srv_title:      '@aoc.srv.title',
+  index_title:    '@aoc.srv.index.title',
+  index_subtitle: '@aoc.srv.index.subtitle',
+  index_reset:    '@aoc.srv.index.reset',
+  index_button:   '@aoc.srv.index.button',
+} satisfies Record<string, string>;
+
+export type AocSrvI18n = { [K in keyof typeof AOC_SRV_I18N_KEYS]: Signal<string> };
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const AocSrvStore = signalStore(
@@ -160,13 +170,7 @@ export const AocSrvStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      srv_title:     '@aoc.srv.title',
-      index_title:   '@aoc.srv.index.title',
-      index_subtitle: '@aoc.srv.index.subtitle',
-      index_reset:   '@aoc.srv.index.reset',
-      index_button:  '@aoc.srv.index.button',
-    }),
+    i18n: store.i18nService.translateAll(AOC_SRV_I18N_KEYS),
   })),
 
   withComputed(state => ({

@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -19,6 +19,34 @@ import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { FbuserEditModal } from '@bk2/user-feature';
 import { PFX } from './scope';
+
+const AOC_ROLES_I18N_KEYS = {
+  person_select_title:   PFX + 'roles.personSelect.title',
+  person_select_content: PFX + 'roles.personSelect.content',
+  account_select:        PFX + 'roles.account.select',
+  check_title:           PFX + 'roles.check.title',
+  check_content:         PFX + 'roles.check.content',
+  check_button:          PFX + 'roles.check.button',
+  account_title:         PFX + 'roles.account.title',
+  account_content:       PFX + 'roles.account.content',
+  account_button:        PFX + 'roles.account.button',
+  account_pwd_set:       PFX + 'roles.account.password-set',
+  account_pwd_reset:     PFX + 'roles.account.password-reset',
+  fbuser_title:          PFX + 'roles.fbuser.title',
+  fbuser_content:        PFX + 'roles.fbuser.content',
+  fbuser_button:         PFX + 'roles.fbuser.button',
+  impersonate_title:     PFX + 'roles.impersonate.title',
+  impersonate_content:   PFX + 'roles.impersonate.content',
+  impersonate_button:    PFX + 'roles.impersonate.button',
+  pwd_label:             '@input.passwordAoc.label',
+  pwd_placeholder:       '@input.passwordAoc.placeholder',
+  pwd_helper:            '@input.passwordAoc.helper',
+  pwd_set:               '@input.passwordAoc.set',
+  pwd_reset:             '@input.passwordAoc.reset',
+  roles_title:           PFX + 'roles.title',
+} satisfies Record<string, string>;
+
+export type AocRolesI18n = { [K in keyof typeof AOC_ROLES_I18N_KEYS]: Signal<string> };
 
 export type AocRolesState = {
   calendarName: string;
@@ -51,31 +79,7 @@ export const AocRolesStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      person_select_title:   PFX + 'roles.personSelect.title',
-      person_select_content: PFX + 'roles.personSelect.content',
-      account_select:        PFX + 'roles.account.select',
-      check_title:           PFX + 'roles.check.title',
-      check_content:         PFX + 'roles.check.content',
-      check_button:          PFX + 'roles.check.button',
-      account_title:         PFX + 'roles.account.title',
-      account_content:       PFX + 'roles.account.content',
-      account_button:        PFX + 'roles.account.button',
-      account_pwd_set:       PFX + 'roles.account.password-set',
-      account_pwd_reset:     PFX + 'roles.account.password-reset',
-      fbuser_title:          PFX + 'roles.fbuser.title',
-      fbuser_content:        PFX + 'roles.fbuser.content',
-      fbuser_button:         PFX + 'roles.fbuser.button',
-      impersonate_title:     PFX + 'roles.impersonate.title',
-      impersonate_content:   PFX + 'roles.impersonate.content',
-      impersonate_button:    PFX + 'roles.impersonate.button',
-      pwd_label:             '@input.passwordAoc.label',
-      pwd_placeholder:       '@input.passwordAoc.placeholder',
-      pwd_helper:            '@input.passwordAoc.helper',
-      pwd_set:               '@input.passwordAoc.set',
-      pwd_reset:             '@input.passwordAoc.reset',
-      roles_title:           PFX + 'roles.title',
-    }),
+    i18n: store.i18nService.translateAll(AOC_ROLES_I18N_KEYS),
   })),
   withProps(store => ({
     personsResource: rxResource({

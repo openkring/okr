@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { FirebaseStorage, StorageReference, deleteObject, getDownloadURL, getMetadata, listAll, ref } from 'firebase/storage';
 import { AlertController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -15,6 +15,16 @@ import { I18nService } from '@bk2/shared-i18n';
 import { DocumentService } from '@bk2/document-data-access';
 import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@bk2/document-util';
 import { PFX } from './scope';
+
+const AOC_DOC_I18N_KEYS = {
+  delete_confirm: PFX + 'doc.delete.confirm',
+  create_conf: PFX + 'doc.create.conf',
+  create_error: PFX + 'doc.create.error',
+  ok: '@ok',
+  cancel: '@cancel'
+} satisfies Record<string, string>;
+
+export type AocDocI18n = { [K in keyof typeof AOC_DOC_I18N_KEYS]: Signal<string> };
 
 export type StorageFileInfo = {
   fullPath: string;
@@ -59,13 +69,7 @@ export const AocDocStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      delete_confirm: PFX + 'doc.delete.confirm',
-      create_conf: PFX + 'doc.create.conf',
-      create_error: PFX + 'doc.create.error',
-      ok: '@ok',
-      cancel: '@cancel'
-    }),
+    i18n: store.i18nService.translateAll(AOC_DOC_I18N_KEYS),
   })),
   withComputed(state => ({
     currentUser: computed(() => state.appStore.currentUser()),

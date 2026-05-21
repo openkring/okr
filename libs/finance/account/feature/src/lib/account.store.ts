@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -12,6 +12,27 @@ import { flattenAccountTree, isAccount } from '@bk2/finance-account-util';
 
 import { AccountEditModal } from './account-edit.modal';
 import { PFX } from './scope';
+
+const ACCOUNT_I18N_KEYS = {
+  accounts:         PFX + 'accounts',
+  empty:            PFX + 'empty',
+  id:               PFX + 'id',
+  name:             PFX + 'name',
+  select_root:      PFX + 'select.root',
+  select_hint:      PFX + 'select.hint',
+  as_title:         PFX + 'actionsheet.title',
+  as_view:          PFX + 'actionsheet.view',
+  as_edit:          PFX + 'actionsheet.edit',
+  as_create:        PFX + 'actionsheet.create',
+  as_delete:        PFX + 'actionsheet.delete',
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  cancel:           '@cancel',
+  ok:               '@ok'
+} satisfies Record<string, string>;
+
+export type AccountI18n = { [K in keyof typeof ACCOUNT_I18N_KEYS]: Signal<string> };
 
 export type AccountListState = {
   selectedRootKey: string;
@@ -32,24 +53,7 @@ export const AccountStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      accounts:         PFX + 'accounts',
-      empty:            PFX + 'empty',
-      id:               PFX + 'id',
-      name:             PFX + 'name',
-      select_root:      PFX + 'select.root',
-      select_hint:      PFX + 'select.hint',
-      as_title:         PFX + 'actionsheet.title',
-      as_view:          PFX + 'actionsheet.view',
-      as_edit:          PFX + 'actionsheet.edit',
-      as_create:        PFX + 'actionsheet.create',
-      as_delete:        PFX + 'actionsheet.delete',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-      cancel:           '@cancel',
-      ok:               '@ok'
-    }),
+    i18n: store.i18nService.translateAll(ACCOUNT_I18N_KEYS),
   })),
   withProps((store) => ({
     accountsResource: rxResource({
