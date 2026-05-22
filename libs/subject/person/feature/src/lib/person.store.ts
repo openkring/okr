@@ -62,6 +62,16 @@ const PERSON_I18N_KEYS = {
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  as_edit:                         PFX + 'actionsheet.edit',
+  as_delete:                       PFX + 'actionsheet.delete',
+  as_view:                         PFX + 'actionsheet.view',
+  as_chat:                         PFX + 'actionsheet.chat',
+  as_copyemail:                    PFX + 'actionsheet.copyemail',
+  as_sendemail:                    PFX + 'actionsheet.sendemail',
+  as_copyphone:                    PFX + 'actionsheet.copyphone',
+  as_call:                         PFX + 'actionsheet.call',
+  as_show:                         PFX + 'actionsheet.show',
+  cancel:                          '@cancel',
 } satisfies Record<string, string>;
 
 export type PersonI18n = { [K in keyof typeof PERSON_I18N_KEYS]: Signal<string> };

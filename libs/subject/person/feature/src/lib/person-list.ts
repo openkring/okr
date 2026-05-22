@@ -164,34 +164,34 @@ export class PersonList {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param person 
    */
-  private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> { 
+  private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
       if (this.hasRole('admin')) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.imgixBaseUrl, 'trash'));
-      } 
+        actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      }
     } else {  // registered user
-      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // all users
     if (await this.store.isPersonUser(person.bkey)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.imgixBaseUrl, 'chatbubbles'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.as_chat(), this.imgixBaseUrl, 'chatbubbles'));
     }
     if (person.favEmail) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
-      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.imgixBaseUrl, 'email'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.store.i18n.as_copyemail(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.store.i18n.as_sendemail(), this.imgixBaseUrl, 'email'));
     }
     if (person.favPhone) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.store.i18n.as_copyphone(), this.imgixBaseUrl, 'copy'));
       //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
-      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.store.i18n.as_call(), this.imgixBaseUrl, 'tel'));
     }
     if (person.favZipCode) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.imgixBaseUrl, 'location'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.store.i18n.as_show(), this.imgixBaseUrl, 'location'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

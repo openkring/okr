@@ -24,7 +24,16 @@
     }
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "edit": "Person ändern",
+    "delete": "Person löschen",
+    "view": "Person anzeigen",
+    "chat": "Chat öffnen",
+    "copyemail": "E-Mail kopieren",
+    "sendemail": "E-Mail senden",
+    "copyphone": "Telefonnummer kopieren",
+    "call": "Anrufen",
+    "show": "Auf Karte anzeigen"
   },
   "changeConfirmation": {
     "ok": "OK",
