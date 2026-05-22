@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kring-website",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "nx", "serve", "kring-website"],
+      "port": 4200
+    },
+    {
+      "name": "okr-website",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "nx", "serve", "okr-website"],
+      "port": 4200
+    },
+    {
+      "name": "p13-website",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "nx", "serve", "p13-website"],
+      "port": 4200
+    }
+  ]
+}
