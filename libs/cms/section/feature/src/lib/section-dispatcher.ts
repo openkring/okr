@@ -1,5 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { I18nService } from '@bk2/shared-i18n';
 import { RoleName, SectionModel, UserModel } from '@bk2/shared-models';
@@ -33,6 +34,13 @@ import { ContextDiagramSectionComponent } from './context-diagram-section';
 import { ResponsibilitySectionComponent } from './responsibility-section';
 import { MemberAgeSectionComponent } from './member-age-section';
 
+const SectionDispatcherStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({ copy_conf: '@shared/ui.copy.conf' }),
+  })),
+);
+
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
  * The section renders differently depending on the type property.
@@ -41,6 +49,7 @@ import { MemberAgeSectionComponent } from './member-age-section';
 @Component({
   selector: 'bk-section-dispatcher',
   standalone: true,
+  providers: [SectionDispatcherStore],
   imports: [
     // Eagerly loaded — lightweight sections, needed immediately
     AccordionSectionComponent,
@@ -161,9 +170,8 @@ import { MemberAgeSectionComponent } from './member-age-section';
   `
 })
 export class SectionDispatcher {
-  private readonly i18nService = inject(I18nService);
-  private readonly copyI18n = this.i18nService.translateAll({ copy_conf: '@shared/ui.copy.conf' });
-  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.copyI18n.copy_conf() } as ButtonCopyI18n));
+  private readonly store = inject(SectionDispatcherStore);
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.store.i18n.copy_conf() } as ButtonCopyI18n));
   public section = input.required<SectionModel>();
   public currentUser = input.required<UserModel | undefined>();
   public editMode = input.required<boolean>();
