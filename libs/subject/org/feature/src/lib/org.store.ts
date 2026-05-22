@@ -49,6 +49,7 @@ const ORG_I18N_KEYS = {
   as_title:                        PFX + 'actionsheet.title',
   as_edit:                         PFX + 'actionsheet.edit',
   as_delete:                       PFX + 'actionsheet.delete',
+  cancel:                          '@cancel',
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
