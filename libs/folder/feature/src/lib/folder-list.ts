@@ -108,13 +108,13 @@ export class FolderList {
   protected async showActions(folder: FolderModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('folder.cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton(this.folderStore.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('folder.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton(this.folderStore.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('folder.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton(this.folderStore.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
 
     if (actionSheetOptions.buttons.length > 0) {

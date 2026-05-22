@@ -32,6 +32,9 @@ const FOLDER_I18N_KEYS = {
   title_helper:             '@folder/ui.title.helper',
   description_label:        '@folder/ui.description.label',
   description_placeholder:  '@folder/ui.description.placeholder',
+  as_edit:                  '@folder/feature.actionsheet.edit',
+  as_delete:                '@folder/feature.actionsheet.delete',
+  cancel:                   '@cancel',
 } satisfies Record<string, string>;
 
 export type FolderI18n = { [K in keyof typeof FOLDER_I18N_KEYS]: Signal<string> };

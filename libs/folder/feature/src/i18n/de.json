@@ -5,7 +5,9 @@
   "actionsheet": {
     "label": {
       "choose": "Wähle eine Aktion"
-    }
+    },
+    "edit": "Ordner ändern",
+    "delete": "Ordner löschen"
   },
   "changeConfirmation": {
     "ok": "OK",
