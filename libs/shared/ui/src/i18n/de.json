@@ -31,7 +31,12 @@
     "label": "MetaTags (SEO)"
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "address": {
+      "edit": "E-Mail Adresse ändern",
+      "view": "E-Mail Adresse anzeigen",
+      "hide": "E-Mail Adresse ausblenden"
+    }
   },
   "address": {
     "email": {

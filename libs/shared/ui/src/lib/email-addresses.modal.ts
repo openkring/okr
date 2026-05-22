@@ -1,18 +1,33 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonFooter, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { ENV } from '@bk2/shared-config';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, EmailEntry } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { Header } from './header';
 
 type Segment = 'main' | 'cc';
 
+const EmailAddressStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      as_edit:  '@shared/ui.actionsheet.address.edit',
+      as_view:  '@shared/ui.actionsheet.address.view',
+      as_hide:  '@shared/ui.actionsheet.address.hide',
+      cancel:   '@cancel',
+    }),
+  })),
+);
+
 @Component({
   selector: 'bk-email-addresses-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [EmailAddressStore],
   imports: [
     FormsModule,
     Header,
@@ -82,6 +97,7 @@ export class EmailAddressesModal {
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
   private readonly env = inject(ENV);
+  private readonly emailStore = inject(EmailAddressStore);
 
   public mainEmails = input.required<EmailEntry[]>();
   public ccEmails = input.required<EmailEntry[]>();
@@ -106,12 +122,12 @@ export class EmailAddressesModal {
     const url = this.env.services.imgixBaseUrl;
     const opts: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
     if (this.canChange()) {
-      opts.buttons.push(createActionSheetButton('person.edit', url, 'edit'));
+      opts.buttons.push(createActionSheetButton('person.edit', this.emailStore.i18n.as_edit(), url, 'edit'));
     } else {
-      opts.buttons.push(createActionSheetButton('person.view', url, 'show'));
+      opts.buttons.push(createActionSheetButton('person.view', this.emailStore.i18n.as_view(), url, 'show'));
     }
-    opts.buttons.push(createActionSheetButton('address.hide', url, 'eye-off'));
-    opts.buttons.push(createActionSheetButton('cancel', url, 'cancel'));
+    opts.buttons.push(createActionSheetButton('address.hide', this.emailStore.i18n.as_hide(), url, 'eye-off'));
+    opts.buttons.push(createActionSheetButton('cancel', this.emailStore.i18n.cancel(), url, 'cancel'));
 
     const sheet = await this.actionSheetController.create(opts);
     await sheet.present();
