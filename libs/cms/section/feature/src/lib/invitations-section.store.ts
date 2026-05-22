@@ -8,7 +8,11 @@ import { AppStore, ModelSelectService } from '@bk2/shared-feature';
 import { CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
 import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
 
+import { I18nService } from '@bk2/shared-i18n';
+
 import { InvitationService } from '@bk2/relationship-invitation-data-access';
+
+import { PFX } from './scope';
 
 export type InvitationSectionState = {
   showOnlyCurrent: boolean;  // whether to show only current memberships or all memberships that ever existed
@@ -51,6 +55,14 @@ export const InvitationSectionStore = signalStore(
     modalController: inject(ModalController),
     modelSelectService: inject(ModelSelectService),
     alertController: inject(AlertController),
+    i18nService: inject(I18nService),
+  })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      as_subscribe:   PFX + 'invitation.actionsheet.subscribe',
+      as_unsubscribe: PFX + 'invitation.actionsheet.unsubscribe',
+      cancel:         '@cancel',
+    }),
   })),
   withProps((store) => ({
     invitationsResource: rxResource({

@@ -16,11 +16,15 @@ import { OrgEditModal } from '@bk2/subject-org-feature';
 import { PFX } from './scope';
 
 const ORGCHART_SECTION_I18N_KEYS = {
-  group_detach_confirm: PFX + 'group.detach.confirm',
-  ok:                   '@ok',
-  cancel:               '@cancel',
-  view_accordion:       '@cms.orgchart.view.accordion',
-  view_chart:           '@cms.orgchart.view.chart',
+  group_detach_confirm:    PFX + 'group.detach.confirm',
+  ok:                      '@ok',
+  cancel:                  '@cancel',
+  view_accordion:          '@cms.orgchart.view.accordion',
+  view_chart:              '@cms.orgchart.view.chart',
+  as_addNewGroup:          PFX + 'orgchart.actionsheet.addNewGroup',
+  as_addExistingGroup:     PFX + 'orgchart.actionsheet.addExistingGroup',
+  as_editGroup:            PFX + 'orgchart.actionsheet.editGroup',
+  as_removeGroup:          PFX + 'orgchart.actionsheet.removeGroup',
 } satisfies Record<string, string>;
 
 export type OrgchartSectionI18n = { [K in keyof typeof ORGCHART_SECTION_I18N_KEYS]: Signal<string> };

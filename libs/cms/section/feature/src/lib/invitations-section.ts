@@ -158,12 +158,12 @@ export class InvitationsSectionComponent implements OnInit {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, inv: InvitationModel): void {
     if (hasRole('registered', this.currentUser())) {
       if (inv.state !== 'accepted') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.invitationStore.i18n.as_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
       }
       if (inv.state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.imgixBaseUrl, 'cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.invitationStore.i18n.as_unsubscribe(), this.imgixBaseUrl, 'cancel'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.invitationStore.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       if (actionSheetOptions.buttons.length === 1) { // only cancel button
         actionSheetOptions.buttons = [];
       }

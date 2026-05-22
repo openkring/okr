@@ -8,6 +8,9 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@bk2/shared-feature';
 import { ContextDiagramConfig, ContextDiagramSection, GroupModelName, MembershipModel, OrgModelName, PersonalRelModel, PersonModelName, ResponsibilityModel, WorkrelModel } from '@bk2/shared-models';
 import { getFullName, isPerson } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
+
+import { PFX } from './scope';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { WorkrelService } from '@bk2/relationship-workrel-data-access';
@@ -106,6 +109,15 @@ export const ContextDiagramStore = signalStore(
     groupEditModal: inject(GROUP_EDIT_MODAL),
     personService: inject(PersonService),
     responsibilityService: inject(ResponsibilityService),
+    i18nService: inject(I18nService),
+  })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      as_edit:          PFX + 'contextDiagram.actionsheet.edit',
+      as_center:        PFX + 'contextDiagram.actionsheet.center',
+      as_displayConfig: PFX + 'contextDiagram.actionsheet.displayConfig',
+      cancel:           '@cancel',
+    }),
   })),
   withProps((store) => ({
     relationsResource: rxResource<RelationsData, { center: string; config: ContextDiagramConfig }>({

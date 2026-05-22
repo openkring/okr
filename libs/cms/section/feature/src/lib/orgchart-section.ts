@@ -155,13 +155,13 @@ export class OrgchartSectionComponent {
   protected async showActions(node: OrgchartTreeNode): Promise<void> {
     const options = createActionSheetOptions('@actionsheet.label.choose');
     options.buttons = [
-      createActionSheetButton('orgchart.addNewGroup', this.imgixBaseUrl, 'add-circle'),
-      createActionSheetButton('orgchart.addExistingGroup', this.imgixBaseUrl, 'search'),
+      createActionSheetButton('orgchart.addNewGroup', this.store.i18n.as_addNewGroup(), this.imgixBaseUrl, 'add-circle'),
+      createActionSheetButton('orgchart.addExistingGroup', this.store.i18n.as_addExistingGroup(), this.imgixBaseUrl, 'search'),
       ...(node.modelType === 'group' ? [
-        createActionSheetButton('orgchart.editGroup', this.imgixBaseUrl, 'edit'),
-        createActionSheetButton('orgchart.removeGroup', this.imgixBaseUrl, 'trash'),
+        createActionSheetButton('orgchart.editGroup', this.store.i18n.as_editGroup(), this.imgixBaseUrl, 'edit'),
+        createActionSheetButton('orgchart.removeGroup', this.store.i18n.as_removeGroup(), this.imgixBaseUrl, 'trash'),
       ] : []),
-      createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'),
+      createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'),
     ];
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();

@@ -16,8 +16,12 @@ import { isTask } from '@bk2/task-util';
 import { PFX } from './scope';
 
 const TASKS_SECTION_I18N_KEYS = {
-  empty: PFX + 'tasks.empty',
-  more:  '@more',
+  empty:       PFX + 'tasks.empty',
+  more:        '@more',
+  as_complete: PFX + 'task.actionsheet.complete',
+  as_view:     PFX + 'task.actionsheet.view',
+  as_edit:     PFX + 'task.actionsheet.edit',
+  cancel:      '@cancel',
 } satisfies Record<string, string>;
 
 export type TasksSectionI18n = { [K in keyof typeof TASKS_SECTION_I18N_KEYS]: Signal<string> };

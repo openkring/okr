@@ -120,12 +120,12 @@ export class NewsSectionComponent implements OnInit {
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('news.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('news.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('eventAdmin', this.currentUser()) || hasRole('privileged', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('news.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('news.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) actionSheetOptions.buttons = [];
   }
 

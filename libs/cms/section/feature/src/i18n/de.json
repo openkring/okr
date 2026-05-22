@@ -36,6 +36,10 @@
       "label": "Einladung ändern",
       "conf": "Die Einladung wurde geändert.",
       "error": "Die Einladung konnte nicht geändert werden."
+    },
+    "actionsheet": {
+      "subscribe": "Einladung annehmen",
+      "unsubscribe": "Einladung ablehnen"
     }
   },
   "context": {
@@ -55,15 +59,32 @@
     "empty": "Du hast keine offenen Mitteilungen."
   },
   "news": {
-    "empty": "Es gibt keine Neuigkeiten."
+    "empty": "Es gibt keine Neuigkeiten.",
+    "actionsheet": {
+      "view": "Artikel anzeigen",
+      "edit": "Artikel ändern"
+    }
   },
   "tasks": {
     "empty": "Gratulation ! - du hast keine offenen Aufgaben."
+  },
+  "task": {
+    "actionsheet": {
+      "complete": "Als erledigt markieren",
+      "view": "Aufgabe anzeigen",
+      "edit": "Aufgabe bearbeiten"
+    }
   },
   "orgchart": {
     "view": {
       "accordion": "Liste",
       "chart": "Organigramm"
+    },
+    "actionsheet": {
+      "addNewGroup": "Neue Gruppe hinzufügen",
+      "addExistingGroup": "Bestehende Gruppe hinzufügen",
+      "editGroup": "Gruppe bearbeiten",
+      "removeGroup": "Gruppe entfernen"
     }
   },
   "rag": {
@@ -102,5 +123,12 @@
     "view": "Sektion anzeigen",
     "edit": "Sektion ändern",
     "delete": "Sektion löschen"
+  },
+  "contextDiagram": {
+    "actionsheet": {
+      "edit": "Knoten bearbeiten",
+      "center": "Als Zentrum festlegen",
+      "displayConfig": "Anzeigeeinstellungen"
+    }
   }
 }
