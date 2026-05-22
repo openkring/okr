@@ -587,10 +587,10 @@ export class CalEventList implements OnInit {
 
     actionSheetOptions.buttons.push(createActionSheetDivider());
     // tbd: not sure who should have permission to change events, we currently leave it open
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
 
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }
