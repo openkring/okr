@@ -22,8 +22,6 @@ import { CalEventService } from '@bk2/calevent-data-access';
 import { getCaleventIndex, isCalEvent } from '@bk2/calevent-util';
 import { RegressionSelectionModal } from '@bk2/calevent-ui';
 
-import { CalEventEditModal } from './calevent-edit.modal';
-import { CalEventViewModal } from './calevent-view.modal';
 import { PFX } from './scope';
 
 const CALEVENT_I18N_KEYS = {
@@ -535,6 +533,7 @@ export const CalEventStore = signalStore(
       },
 
       async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false, skipReload = false): Promise<boolean> {
+        const { CalEventEditModal } = await import('./calevent-edit.modal');
         const modal = await store.modalController.create({
           component: CalEventEditModal,
           componentProps: {
@@ -578,6 +577,7 @@ export const CalEventStore = signalStore(
       },
 
       async view(calevent: CalEventModel): Promise<void> {
+        const { CalEventViewModal } = await import('./calevent-view.modal');
         const modal = await store.modalController.create({
           component: CalEventViewModal,
           componentProps: {
