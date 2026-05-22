@@ -69,7 +69,15 @@
       "call": "Anrufen"
     },
     "invoice": {
-      "create": "Rechnung erstellen"
+      "create": "Rechnung erstellen",
+      "edit": "Rechnung ändern",
+      "upload": "Rechnung hochladen",
+      "download": "Rechnung herunterladen",
+      "paid": "Als bezahlt markieren",
+      "delete": "Rechnung löschen"
+    },
+    "member": {
+      "edit": "Mitglied ändern"
     }
   },
   "invoice": {

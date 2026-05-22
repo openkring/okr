@@ -51,6 +51,13 @@ const SCS_MEMBER_FEES_I18N_KEYS = {
   ok:               '@ok',
   cancel:           '@cancel',
   list_title:       '@finance.scsMemberFee.list.title',
+  as_invoice_edit:     PFX + 'actionsheet.invoice.edit',
+  as_invoice_upload:   PFX + 'actionsheet.invoice.upload',
+  as_invoice_download: PFX + 'actionsheet.invoice.download',
+  as_invoice_paid:     PFX + 'actionsheet.invoice.paid',
+  as_invoice_delete:   PFX + 'actionsheet.invoice.delete',
+  as_person_edit:      PFX + 'actionsheet.person.edit',
+  as_member_edit:      PFX + 'actionsheet.member.edit',
 } satisfies Record<string, string>;
 
 export type ScsMemberFeesI18n = { [K in keyof typeof SCS_MEMBER_FEES_I18N_KEYS]: Signal<string> };
