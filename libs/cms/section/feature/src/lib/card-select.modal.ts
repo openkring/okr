@@ -8,12 +8,18 @@ import { ENV } from '@bk2/shared-config';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { I18nService } from '@bk2/shared-i18n';
 import { Header } from '@bk2/shared-ui';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { PFX } from './scope';
+
+const CardSelectStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+);
 
 @Component({
   selector: 'bk-card-select-modal',
   standalone: true,
+  providers: [CardSelectStore],
   imports: [
     SvgIconPipe,
     Header,
@@ -49,9 +55,9 @@ import { PFX } from './scope';
   `,
 })
 export class CardSelectModal {
+  protected readonly store = inject(CardSelectStore);
   private readonly env = inject(ENV);
   private readonly modalController = inject(ModalController);
-  private readonly i18nService = inject(I18nService);
 
   // inputs
   public category = input.required<CategoryListModel>();
@@ -64,7 +70,7 @@ export class CardSelectModal {
 
   private readonly headerKey = computed(() => PFX + 'select.' + this.slug());
   protected readonly headerTitle = toSignal(
-    toObservable(this.headerKey).pipe(switchMap(key => this.i18nService.translate(key))),
+    toObservable(this.headerKey).pipe(switchMap(key => this.store.i18nService.translate(key))),
     { initialValue: '' }
   );
 
