@@ -16,6 +16,7 @@
     "view": "Reservations-Details anzeigen",
     "edit": "Reservation ändern",
     "end": "Reservation beenden",
+    "endres": "Reservation beenden",
     "delete": "Reservation löschen",
     "create": "Neue Reservation erstellen"
   },

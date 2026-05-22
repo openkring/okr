@@ -99,19 +99,19 @@ export class ReservationsAccordion {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param reservation 
    */
-   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {  
+   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {
       if (hasRole('registered', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
-        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on', this.reservationStore.i18n.as_view()));
+        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel', this.reservationStore.i18n.cancel()));
       }
       if (!this.isReadOnly()) {
-        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'edit'));
+        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'edit', this.reservationStore.i18n.as_edit()));
         if (isOngoing(reservation.endDate)) {
-          actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl, 'stop-circle'));
+          actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl, 'stop-circle', this.reservationStore.i18n.as_endres()));
         }
       }
       if (hasRole('admin', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash'));
+        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash', this.reservationStore.i18n.as_delete()));
       }
       if (actionSheetOptions.buttons.length === 1) { // only cancel button
         actionSheetOptions.buttons = [];

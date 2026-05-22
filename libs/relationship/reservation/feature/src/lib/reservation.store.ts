@@ -68,6 +68,7 @@ const RESERVATION_I18N_KEYS = {
   as_view:                         PFX + 'actionsheet.view',
   as_edit:                         PFX + 'actionsheet.edit',
   as_end:                          PFX + 'actionsheet.end',
+  as_endres:                       PFX + 'actionsheet.endres',
   as_delete:                       PFX + 'actionsheet.delete',
   as_create:                       PFX + 'actionsheet.create',
   ok:                              '@ok',
