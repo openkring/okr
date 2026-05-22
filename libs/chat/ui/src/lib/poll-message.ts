@@ -1,18 +1,33 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, ModalController } from '@ionic/angular/standalone';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { MatrixMessage } from '@bk2/shared-models';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
+import { I18nService } from '@bk2/shared-i18n';
 import { hashUserIdToColor } from '@bk2/chat-util';
 
 import { PollDetailModal } from './poll-detail.modal';
+import { PFX } from './scope';
+
+const PollMessageStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll({
+      as_viewVotes: PFX + 'poll.actionsheet.viewVotes',
+      as_end:       PFX + 'poll.actionsheet.end',
+      cancel:       '@cancel',
+    }),
+  })),
+);
 
 @Component({
   selector: 'bk-poll-message',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [],
+  providers: [PollMessageStore],
   styles: [`
     .poll-question {
       font-weight: 600;
@@ -162,6 +177,7 @@ export class PollMessage {
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
   private readonly env = inject(ENV);
+  private readonly pollStore = inject(PollMessageStore);
 
   public message = input.required<MatrixMessage>();
   public currentUserId = input.required<string>();
@@ -240,11 +256,11 @@ export class PollMessage {
   protected async onHeaderClick(): Promise<void> {
     const url = this.env.services.imgixBaseUrl;
     const opts: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    opts.buttons.push(createActionSheetButton('poll.viewVotes', url, 'chart'));
+    opts.buttons.push(createActionSheetButton('poll.viewVotes', this.pollStore.i18n.as_viewVotes(), url, 'chart'));
     if (!this.message().pollEnded && this.message().sender === this.currentUserId()) {
-      opts.buttons.push(createActionSheetButton('poll.end', url, 'cancel-circle'));
+      opts.buttons.push(createActionSheetButton('poll.end', this.pollStore.i18n.as_end(), url, 'cancel-circle'));
     }
-    opts.buttons.push(createActionSheetButton('cancel', url, 'cancel'));
+    opts.buttons.push(createActionSheetButton('cancel', this.pollStore.i18n.cancel(), url, 'cancel'));
 
     const sheet = await this.actionSheetController.create(opts);
     await sheet.present();

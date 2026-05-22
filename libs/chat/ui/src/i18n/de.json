@@ -72,6 +72,12 @@
       "one": "Wähle eine Option aus"
     }
   },
+  "poll": {
+    "actionsheet": {
+      "viewVotes": "Abstimmungsergebnisse anzeigen",
+      "end": "Umfrage beenden"
+    }
+  },
   "attachment": {
     "image": "Bild anhängen",
     "file": "Datei anhängen",
