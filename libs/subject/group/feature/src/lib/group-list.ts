@@ -157,16 +157,16 @@ export class GroupList {
    * @param group 
    */
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): Promise<void> {
-    actionSheetOptions.buttons.push(createActionSheetButton('as_show', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('as_show', this.store.i18n.as_show(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.store.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetDivider());
       if (await this.store.doesGroupContentPageExist(group.bkey) === false) {
-        actionSheetOptions.buttons.push(createActionSheetButton('as_addPage', this.imgixBaseUrl, 'add'));
+        actionSheetOptions.buttons.push(createActionSheetButton('as_addPage', this.store.i18n.as_addPage(), this.imgixBaseUrl, 'add'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**
