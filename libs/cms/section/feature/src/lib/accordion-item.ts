@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 
 import { ButtonCopyI18n, Spinner } from '@bk2/shared-ui';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { SectionStore } from './section.store';
 import { ArticleSectionComponent } from './article-section';
@@ -70,9 +69,7 @@ import { SliderSectionComponent } from './slider-section';
 })
 export class AccordionItemContentComponent {
   protected store = inject(SectionStore);
-  private readonly i18nService = inject(I18nService);
-  private readonly copyI18n = this.i18nService.translateAll({ copy_conf: '@shared/ui.copy.conf' });
-  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.copyI18n.copy_conf() } as ButtonCopyI18n));
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.store.i18n.copy_conf() } as ButtonCopyI18n));
   public sectionId = input.required<string>();
   
   constructor() {
