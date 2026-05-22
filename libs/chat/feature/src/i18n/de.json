@@ -6,6 +6,7 @@
   "noRoomsError": "Keine Chat-Räume vorhanden. Erstelle einen Raum oder nimm in einem Raum teil um zu starten.",
   "createTestRoom": "Test Raum erstellen",
   "room": {
+    "none": "Keine Chat-Räume gefunden.",
     "create": {
       "header": "Neuen Chat-Raum erstellen",
       "conf": "Neuer Chat-Raum wurde erstellt.",
@@ -18,6 +19,16 @@
     }
   },
   "message": {
+    "actionsheet": {
+      "edit": "Nachricht bearbeiten",
+      "delete": "Nachricht löschen",
+      "react": "Reaktion hinzufügen",
+      "reply": "Antworten",
+      "thread": "Thread öffnen",
+      "report": "Problem melden",
+      "copy": "Nachricht kopieren",
+      "raw": "Rohdaten anzeigen"
+    },
     "react": {
       "header": "Reaktion wählen",
       "cancel": "Abbrechen"
@@ -60,6 +71,12 @@
   "survey": {
     "title": "Umfrage erstellen",
     "create": "Umfrage erstellen"
+  },
+  "attachment": {
+    "image": "Bild anhängen",
+    "file": "Datei anhängen",
+    "position": "Position senden",
+    "survey": "Umfrage erstellen"
   },
   "isTypeing": "tippt...",
   "and": "und",

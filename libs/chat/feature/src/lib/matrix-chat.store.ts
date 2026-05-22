@@ -61,7 +61,20 @@ const MATRIX_CHAT_I18N_KEYS = {
   othersTypeing:            PFX + 'othersTypeing',
   severalTypeing:           PFX + 'severalTypeing',
   room_none:                PFX + 'room.none',
-  copy_conf:                '@copy.conf'
+  copy_conf:                '@copy.conf',
+  as_msg_edit:              PFX + 'message.actionsheet.edit',
+  as_msg_delete:            PFX + 'message.actionsheet.delete',
+  as_msg_react:             PFX + 'message.actionsheet.react',
+  as_msg_reply:             PFX + 'message.actionsheet.reply',
+  as_msg_thread:            PFX + 'message.actionsheet.thread',
+  as_msg_report:            PFX + 'message.actionsheet.report',
+  as_msg_copy:              PFX + 'message.actionsheet.copy',
+  as_msg_raw:               PFX + 'message.actionsheet.raw',
+  cancel:                   '@cancel',
+  as_attachment_image:      PFX + 'attachment.image',
+  as_attachment_file:       PFX + 'attachment.file',
+  as_attachment_position:   PFX + 'attachment.position',
+  as_attachment_survey:     PFX + 'attachment.survey',
 } satisfies Record<string, string>;
 
 export type MatrixChatI18n = { [K in keyof typeof MATRIX_CHAT_I18N_KEYS]: Signal<string> };
