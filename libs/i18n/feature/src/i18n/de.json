@@ -66,6 +66,8 @@
     }
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "edit": "Eintrag ändern",
+    "delete": "Eintrag löschen"
   }
 }

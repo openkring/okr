@@ -24,6 +24,8 @@ const I18N_OVERRIDE_I18N_KEYS = {
   key_prompt:         PFX + 'override.key.prompt',
   ok:                 '@ok',
   cancel:             '@cancel',
+  as_edit:            '@actionsheet.edit',
+  as_delete:          '@actionsheet.delete',
   search_placeholder: '@general.operation.search.placeholder',
   list_title:         '@i18n.override.list.title',
   loading:            '@general.operation.loading',

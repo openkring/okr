@@ -23,6 +23,8 @@ const I18N_DEFAULT_I18N_KEYS = {
   key_prompt:         PFX + 'default.key.prompt',
   ok:                 '@ok',
   cancel:             '@cancel',
+  as_edit:            '@actionsheet.edit',
+  as_delete:          '@actionsheet.delete',
   search_placeholder: '@general.operation.search.placeholder',
   list_title:         '@i18n.default.list.title',
   loading:            '@general.operation.loading',

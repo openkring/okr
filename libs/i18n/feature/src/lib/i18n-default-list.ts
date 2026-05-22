@@ -87,9 +87,9 @@ export class I18nDefaultList {
   protected async showActions(item: I18nDefaultModel): Promise<void> {
     const base = this.store.appStore.env.services.imgixBaseUrl;
     const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    options.buttons.push(createActionSheetButton('i18n.default.edit', base, 'edit'));
-    options.buttons.push(createActionSheetButton('i18n.default.delete', base, 'trash'));
-    options.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.as_edit(), base, 'edit'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.as_delete(), base, 'trash'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.cancel(), base, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
