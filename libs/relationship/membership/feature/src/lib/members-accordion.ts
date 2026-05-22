@@ -83,7 +83,6 @@ export class MembersAccordion {
   protected readonly memberTypes: ('person' | 'org' | 'group')[] = ['person', 'org', 'group'];
   protected selectedMemberType = signal<'person' | 'org' | 'group'>('person');
 
-  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
   protected membersForType = computed(() =>
     this.store.members().filter(m => m.memberModelType === this.selectedMemberType())
   );
@@ -117,17 +116,17 @@ export class MembersAccordion {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, member: MembershipModel): void {
     if (!this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.as_membership_edit(), 'edit'));
       if (isOngoing(member.dateOfExit)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.store.i18n.as_membership_end(), 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.store.i18n.as_membership_changecat(), 'mcatchange'));
       }
     }
     if (hasRole('admin', this.store.appStore.currentUser()) && !this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.store.i18n.as_membership_delete(), 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.store.i18n.as_membership_view(), 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), 'cancel'));
   }
 
   /**

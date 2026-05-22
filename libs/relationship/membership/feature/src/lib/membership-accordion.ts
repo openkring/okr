@@ -72,7 +72,6 @@ export class MembershipAccordion {
   protected memberships = computed(() => this.store.memberships());
   private currentUser = computed(() => this.store.currentUser());
   private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
-  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => { 
@@ -103,18 +102,18 @@ export class MembershipAccordion {
    * @param membership 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.store.i18n.as_membership_view(), 'eye-on'));
     if (!this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.as_membership_edit(), 'edit'));
       if (isOngoing(membership.dateOfExit)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.store.i18n.as_membership_end(), 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.store.i18n.as_membership_changecat(), 'mcatchange'));
       }
     }
     if (hasRole('admin', this.currentUser()) && !this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.store.i18n.as_membership_delete(), 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), 'cancel'));
   }
 
   /**

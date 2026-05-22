@@ -51,7 +51,26 @@
     "confirm": "Normalerweise sollte eine Mitgliedschaft beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Mitgliedschaft wirklich löschen?"
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "membership": {
+      "view": "Mitgliedschaft anzeigen",
+      "edit": "Mitgliedschaft ändern",
+      "end": "Mitgliedschaft beenden",
+      "changecat": "Mitgliedschaftskategorie ändern",
+      "delete": "Mitgliedschaft löschen",
+      "chat": "Chat öffnen"
+    },
+    "person": {
+      "edit": "Person ändern",
+      "view": "Person anzeigen",
+      "copyemail": "E-Mail kopieren",
+      "sendemail": "E-Mail senden",
+      "copyphone": "Telefonnummer kopieren",
+      "call": "Anrufen"
+    },
+    "invoice": {
+      "create": "Rechnung erstellen"
+    }
   },
   "invoice": {
     "create": {

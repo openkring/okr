@@ -209,7 +209,6 @@ export class MembershipList {
   protected selectedMembershipsCount = computed(() => this.filteredMemberships().length);
   protected isLoading = computed(() => this.membershipStore.isLoading());
 
-  private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
   protected personModelName = PersonModelName;
   
   constructor() {
@@ -306,49 +305,49 @@ export class MembershipList {
     // view/edit on membership and person
     if (this.canChange(membership)) {
       if (!this.group()) { // group memberships can not be edited
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.membershipStore.i18n.as_membership_edit(), 'edit'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.membershipStore.i18n.as_person_edit(), 'edit'));
     } else { // registered
       if (!this.group()) { // group memberships can not be viewed
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.membershipStore.i18n.as_membership_view(), 'eye-on'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.membershipStore.i18n.as_person_view(), 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // privileged operations on membership
     if (this.canChange(membership) || this.canDelete(membership)) {
       if (isOngoing(membership.dateOfExit) && !this.group()) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.membershipStore.i18n.as_membership_changecat(), 'mcatchange'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.membershipStore.i18n.as_membership_end(), 'stop-circle'));
       }
       if (this.canDelete(membership)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.membershipStore.i18n.as_membership_delete(), 'trash'));
       }
       actionSheetOptions.buttons.push(createActionSheetDivider());
     }
 
     // finance operations
     if (this.hasRole('treasurer')) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invoice.create', this.imgixBaseUrl, 'invoice'));
+      actionSheetOptions.buttons.push(createActionSheetButton('invoice.create', this.membershipStore.i18n.as_invoice_create(), 'invoice'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
     }
 
     // contact operations
     if (await this.membershipStore.isPersonUser(membership.memberKey)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.imgixBaseUrl, 'chatbubbles'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.membershipStore.i18n.as_membership_chat(), 'chatbubbles'));
     }
     if (this.membershipStore.getEmail(membership)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
-      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.imgixBaseUrl, 'email'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.membershipStore.i18n.as_person_copyemail(), 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.membershipStore.i18n.as_person_sendemail(), 'email'));
     }
     if (this.membershipStore.getPhone(membership)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.membershipStore.i18n.as_person_copyphone(), 'copy'));
       //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
-      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.membershipStore.i18n.as_person_call(), 'tel'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.membershipStore.i18n.cancel(), 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

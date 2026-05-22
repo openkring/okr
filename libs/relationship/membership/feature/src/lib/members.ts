@@ -57,8 +57,6 @@ export class Members {
   private currentUser = computed(() => this.membershipStore.currentUser());
   private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
-
   constructor() {
     effect(() => this.membershipStore.setOrgId(this.orgKey(), this.orgType()));
     effect(() => this.membershipStore.setShowMode(!this.maySeeOldMemberships()));
@@ -86,19 +84,19 @@ export class Members {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, member: MembershipModel): void {
     if (hasRole('registered')) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.membershipStore.i18n.as_membership_view(), 'eye-on'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.membershipStore.i18n.as_membership_edit(), 'edit'));
       if (isOngoing(member.dateOfExit)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.membershipStore.i18n.as_membership_end(), 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.membershipStore.i18n.as_membership_changecat(), 'mcatchange'));
       }
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.membershipStore.i18n.as_membership_delete(), 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.membershipStore.i18n.cancel(), 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

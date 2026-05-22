@@ -85,6 +85,19 @@ const MEMBERSHIP_I18N_KEYS = {
   list_header_phone:     '@subject.list.header.phone',
   list_header_email:     '@subject.list.header.email',
   list_header_title_rel: '@membership.list.header.titleRel',
+  as_membership_view:    PFX + 'actionsheet.membership.view',
+  as_membership_edit:    PFX + 'actionsheet.membership.edit',
+  as_membership_end:     PFX + 'actionsheet.membership.end',
+  as_membership_changecat: PFX + 'actionsheet.membership.changecat',
+  as_membership_delete:  PFX + 'actionsheet.membership.delete',
+  as_membership_chat:    PFX + 'actionsheet.membership.chat',
+  as_person_edit:        PFX + 'actionsheet.person.edit',
+  as_person_view:        PFX + 'actionsheet.person.view',
+  as_person_copyemail:   PFX + 'actionsheet.person.copyemail',
+  as_person_sendemail:   PFX + 'actionsheet.person.sendemail',
+  as_person_copyphone:   PFX + 'actionsheet.person.copyphone',
+  as_person_call:        PFX + 'actionsheet.person.call',
+  as_invoice_create:     PFX + 'actionsheet.invoice.create',
 } satisfies Record<string, string>;
 
 export type MembershipI18n = { [K in keyof typeof MEMBERSHIP_I18N_KEYS]: Signal<string> };
