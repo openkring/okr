@@ -144,14 +144,14 @@ export class SectionAllListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
     if (hasRole('registered', this.currentUser())) {
-            actionSheetOptions.buttons.push(createActionSheetButton('section.view', this.sectionStore.imgixBaseUrl(), 'eye-on'));
-            actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.sectionStore.imgixBaseUrl(), 'cancel'));
+            actionSheetOptions.buttons.push(createActionSheetButton('section.view', this.sectionStore.i18n.as_view(), 'eye-on'));
+            actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.sectionStore.i18n.cancel(), 'cancel'));
     }
     if (!this.readOnly()) {
-            actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.sectionStore.imgixBaseUrl(), 'edit'));
+            actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.sectionStore.i18n.as_edit(), 'edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('section.delete', this.sectionStore.imgixBaseUrl(), 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('section.delete', this.sectionStore.i18n.as_delete(), 'trash'));
     }
   }
 

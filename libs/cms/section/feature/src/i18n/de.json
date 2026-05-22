@@ -36,7 +36,18 @@
       "label": "Einladung ändern",
       "conf": "Die Einladung wurde geändert.",
       "error": "Die Einladung konnte nicht geändert werden."
-    }
+    },
+    "subscribe": "Ich nehme teil",
+    "unsubscribe": "Ich kann nicht teilnehmen"
+  },
+  "weekDayAbbreviation": {
+    "monday": "Mo",
+    "tuesday": "Di",
+    "wednesday": "Mi",
+    "thursday": "Do",
+    "friday": "Fr",
+    "saturday": "Sa",
+    "sunday": "So"
   },
   "context": {
     "title": "Anzeigeoptionen",
@@ -86,10 +97,16 @@
   "view": "Sektionskonfiguration anzeigen",
   "edit": "Sektion bearbeiten",
   "create": "Sektion erstellen",
+  "download": {
+    "ics": "ICS Kalendereintrag herunter laden"
+  },
   "changeConfirmation": {
     "ok": "OK",
     "cancel": "Abbrechen",
     "confirmation": "Speichern"
+  },
+  "copy": {
+    "conf": "Der Wert wurde kopiert."
   },
   "memberAge": {
     "ageGroup": "Altersgruppe",
@@ -97,5 +114,10 @@
     "female": "Frauen",
     "total": "Total",
     "empty": "Keine aktiven Mitglieder gefunden."
+  },
+  "actionsheet": {
+    "view": "Sektion anzeigen",
+    "edit": "Sektion ändern",
+    "delete": "Sektion löschen"
   }
 }
