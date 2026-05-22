@@ -191,16 +191,16 @@ export class InvoiceList {
 
   private async addActionSheetButtons(options: ActionSheetOptions, _invoice: InvoiceModel): Promise<void> {
     const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton('invoice.view', base, 'eye-on'));
-    options.buttons.push(createActionSheetButton('invoice.showpdf', base, 'download'));
-/*. invoices are currently read-only; they are processed in Bexio 
+    options.buttons.push(createActionSheetButton(this.store.i18n.as_view(), base, 'eye-on'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.as_showpdf(), base, 'download'));
+/*. invoices are currently read-only; they are processed in Bexio
     if (this.canChange()) {
-      options.buttons.push(createActionSheetButton('invoice.edit', base, 'edit'));
+      options.buttons.push(createActionSheetButton(this.store.i18n.as_edit(), base, 'edit'));
     }
     if (this.canDelete()) {
-      options.buttons.push(createActionSheetButton('invoice.delete', base, 'trash'));
+      options.buttons.push(createActionSheetButton(this.store.i18n.as_delete(), base, 'trash'));
     } */
-    options.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.cancel(), base, 'cancel'));
     if (options.buttons.length === 1) options.buttons = [];
   }
 

@@ -22,7 +22,11 @@
     "title": "Rechnungsübersicht"
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "view": "Rechnung anzeigen",
+    "showpdf": "PDF anzeigen",
+    "edit": "Rechnung ändern",
+    "delete": "Rechnung löschen"
   },
   "changeConfirmation": {
     "ok": "OK",

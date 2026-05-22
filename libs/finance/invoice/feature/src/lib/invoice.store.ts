@@ -28,6 +28,10 @@ const INVOICE_I18N_KEYS = {
   list_title:      '@finance.invoice.list.title',
   accordion_title: '@invoice.accordion.title',
   field_empty:     '@finance.invoice.field.empty',
+  as_view:    PFX + 'actionsheet.view',
+  as_showpdf: PFX + 'actionsheet.showpdf',
+  as_edit:    PFX + 'actionsheet.edit',
+  as_delete:  PFX + 'actionsheet.delete',
 } satisfies Record<string, string>;
 
 export type InvoiceI18n = { [K in keyof typeof INVOICE_I18N_KEYS]: Signal<string> };
