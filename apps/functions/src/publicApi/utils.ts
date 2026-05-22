@@ -1,3 +1,5 @@
+export type I18nString = Record<string, string>;
+
 export function storeDateToIso(storeDate: string): string {
   if (!storeDate || storeDate.length !== 8) return '';
   return `${storeDate.slice(0, 4)}-${storeDate.slice(4, 6)}-${storeDate.slice(6, 8)}`;
