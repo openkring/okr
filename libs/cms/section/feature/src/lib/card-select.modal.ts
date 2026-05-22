@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular/standalone';
 import { switchMap } from 'rxjs/operators';
@@ -8,12 +8,24 @@ import { ENV } from '@bk2/shared-config';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { I18nService } from '@bk2/shared-i18n';
 import { Header } from '@bk2/shared-ui';
-import { signalStore, withProps } from '@ngrx/signals';
+import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { PFX } from './scope';
 
 const CardSelectStore = signalStore(
+  withState({ slug: '' }),
   withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps(store => ({
+    headerTitle: toSignal(
+      toObservable(computed(() => PFX + 'select.' + store.slug())).pipe(
+        switchMap(key => store.i18nService.translate(key))
+      ),
+      { initialValue: '' }
+    ),
+  })),
+  withMethods(store => ({
+    setSlug(slug: string): void { patchState(store, { slug }); },
+  })),
 );
 
 @Component({
@@ -31,7 +43,7 @@ const CardSelectStore = signalStore(
   `],
   template: `
     @if(slug()) {
-      <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+      <bk-header [i18n]="{ title: store.headerTitle() }" [isModal]="true" />
       <ion-content>
         <ion-grid>
           <ion-row>
@@ -68,11 +80,9 @@ export class CardSelectModal {
   protected items = computed(() => this.category().items);
   protected path = computed(() => `${this.env.services.imgixBaseUrl}/logo/${this.slug()}/`);
 
-  private readonly headerKey = computed(() => PFX + 'select.' + this.slug());
-  protected readonly headerTitle = toSignal(
-    toObservable(this.headerKey).pipe(switchMap(key => this.store.i18nService.translate(key))),
-    { initialValue: '' }
-  );
+  constructor() {
+    effect(() => this.store.setSlug(this.slug()));
+  }
 
   public async select(item: CategoryItemModel): Promise<boolean> {
     return await this.modalController.dismiss(item, 'confirm');
