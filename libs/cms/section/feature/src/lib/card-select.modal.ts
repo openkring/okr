@@ -1,5 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular/standalone';
+import { switchMap } from 'rxjs/operators';
 
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
 import { ENV } from '@bk2/shared-config';
@@ -23,7 +25,7 @@ import { PFX } from './scope';
   `],
   template: `
     @if(slug()) {
-      <bk-header [i18n]="{ title: i18n().headerTitle() }" [isModal]="true" />
+      <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
       <ion-content>
         <ion-grid>
           <ion-row>
@@ -60,15 +62,12 @@ export class CardSelectModal {
   protected items = computed(() => this.category().items);
   protected path = computed(() => `${this.env.services.imgixBaseUrl}/logo/${this.slug()}/`);
 
-  protected i18n = computed(() => {
-    return this.i18nService.translateAll({
-      headerTitle:        PFX + 'select.' + this.slug(),
-      cardTitle:          PFX + this.items.name + '.label',
-      cancel:             '@cancel',
-      ok:                 '@ok',
-    })
-  });
-  
+  private readonly headerKey = computed(() => PFX + 'select.' + this.slug());
+  protected readonly headerTitle = toSignal(
+    toObservable(this.headerKey).pipe(switchMap(key => this.i18nService.translate(key))),
+    { initialValue: '' }
+  );
+
   public async select(item: CategoryItemModel): Promise<boolean> {
     return await this.modalController.dismiss(item, 'confirm');
   }
