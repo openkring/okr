@@ -109,7 +109,7 @@ export class DocumentsAccordion {
     actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.store.i18n.as_update(), this.imgixBaseUrl, 'upload'));
     actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.store.i18n.as_revisions(), this.imgixBaseUrl, 'timeline'));
     actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**
