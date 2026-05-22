@@ -256,16 +256,14 @@ export const CalendarStore = signalStore(
         });
         modal.present();
         const { data, role } = await modal.onDidDismiss();
-        if (role === 'confirm' && data && !readOnly) {
-          if (isNew) {
-            await store.calEventService.create(data, store.currentUser());
-          } else {
-            await store.calEventService.update(data, store.currentUser());
-          }
-          this.reload();
-          return true;
+        if (!data || readOnly || role !== 'confirm') return false;
+        if (isNew) {
+          await store.calEventService.create(data, store.currentUser());
+        } else {
+          await store.calEventService.update(data, store.currentUser());
         }
-        return false;
+        this.reload();
+        return true;
       },
 
       async view(calevent: CalEventModel): Promise<void> {
