@@ -64,6 +64,7 @@ const SECTION_I18N_KEYS = {
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  copy_conf:                       '@shared/ui.copy.conf',
 } satisfies Record<string, string>;
 
 export type SectionI18n = { [K in keyof typeof SECTION_I18N_KEYS]: Signal<string> };
