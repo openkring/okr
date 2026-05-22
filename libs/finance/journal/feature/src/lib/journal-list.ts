@@ -100,10 +100,10 @@ export class JournalList {
   protected async showActions(entry: BookingJournalModel): Promise<void> {
     const options = createActionSheetOptions('@actionsheet.label.choose');
     const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton('journal.view', base, 'eye-on'));
-    options.buttons.push(createActionSheetButton('journal.showDebitAccount', base, 'information'));
-    options.buttons.push(createActionSheetButton('journal.showCreditAccount', base, 'information'));
-    options.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.as_view(), base, 'eye-on'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.as_showDebitAccount(), base, 'information'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.as_showCreditAccount(), base, 'information'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.cancel(), base, 'cancel'));
 
     const actionSheet = await this.actionSheetController.create(options);
     await actionSheet.present();

@@ -13,6 +13,9 @@
     "label": "Buchung anzeigen"
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "view": "Buchung anzeigen",
+    "showDebitAccount": "Soll-Konto anzeigen",
+    "showCreditAccount": "Haben-Konto anzeigen"
   }
 }

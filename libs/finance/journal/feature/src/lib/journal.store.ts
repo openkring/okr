@@ -13,8 +13,14 @@ import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@bk2/shar
 
 import { JournalViewModal } from './journal-view.modal';
 
+const PFX = '@finance.journal.';
+
 const JOURNAL_I18N_KEYS = {
-  list_title: '@finance.journal.list.title',
+  list_title:           PFX + 'list.title',
+  as_view:              PFX + 'actionsheet.view',
+  as_showDebitAccount:  PFX + 'actionsheet.showDebitAccount',
+  as_showCreditAccount: PFX + 'actionsheet.showCreditAccount',
+  cancel:               '@cancel',
 } satisfies Record<string, string>;
 
 export type JournalI18n = { [K in keyof typeof JOURNAL_I18N_KEYS]: Signal<string> };
