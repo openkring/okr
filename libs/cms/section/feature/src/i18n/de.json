@@ -29,6 +29,13 @@
       "label": "Ereignis ändern",
       "conf": "Das Ereignis wurde geändert.",
       "error": "Das Ereignis konnte nicht geändert werden."
+    },
+    "actionsheet": {
+      "subscribe": "Anmelden",
+      "unsubscribe": "Abmelden",
+      "edit": "Ereignis bearbeiten",
+      "view": "Ereignis anzeigen",
+      "downloadIcs": "Kalender-Datei herunterladen"
     }
   },
   "invitation": {
