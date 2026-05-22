@@ -16,6 +16,8 @@
     "label": "Rechnung anzeigen"
   },
   "actionsheet": {
-    "title": "Wähle eine Aktion"
+    "title": "Wähle eine Aktion",
+    "view": "Rechnung anzeigen",
+    "download": "Rechnung herunterladen"
   }
 }

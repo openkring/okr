@@ -67,11 +67,11 @@ export class BillAccordion implements OnInit {
   protected async showActions(bill: BillModel): Promise<void> {
     const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
     const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton('bill.view', base, 'eye-on'));
+    options.buttons.push(createActionSheetButton('bill.view', base, 'eye-on', this.store.i18n.as_view()));
     if (bill.attachments.length > 0) {
-      options.buttons.push(createActionSheetButton('bill.download', base, 'download'));
+      options.buttons.push(createActionSheetButton('bill.download', base, 'download', this.store.i18n.as_download()));
     }
-    options.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
+    options.buttons.push(createActionSheetButton('cancel', base, 'cancel', this.store.i18n.cancel()));
 
     const actionSheet = await this.actionSheetController.create(options);
     await actionSheet.present();
