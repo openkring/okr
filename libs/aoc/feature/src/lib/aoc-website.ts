@@ -88,9 +88,9 @@ export class AocWebsite {
   protected async showActions(item: WebsiteContentModel): Promise<void> {
     const base = this.store.appStore.env.services.imgixBaseUrl;
     const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    options.buttons.push(createActionSheetButton('website.edit', base, 'edit'));
-    options.buttons.push(createActionSheetButton('website.delete', base, 'trash'));
-    options.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
+    options.buttons.push(createActionSheetButton('website.edit', base, 'edit', this.store.i18n.as_edit()));
+    options.buttons.push(createActionSheetButton('website.delete', base, 'trash', this.store.i18n.as_delete()));
+    options.buttons.push(createActionSheetButton('cancel', base, 'cancel', this.store.i18n.cancel()));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();

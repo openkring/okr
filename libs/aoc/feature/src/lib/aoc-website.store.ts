@@ -26,6 +26,8 @@ const AOC_WEBSITE_I18N_KEYS = {
   search_placeholder: '@general.operation.search.placeholder',
   list_title:       PFX + 'website.list.title',
   loading:          '@general.operation.loading',
+  as_edit:   PFX + 'actionsheet.website.edit',
+  as_delete: PFX + 'actionsheet.website.delete',
 } satisfies Record<string, string>;
 
 export type AocWebsiteI18n = { [K in keyof typeof AOC_WEBSITE_I18N_KEYS]: Signal<string> };

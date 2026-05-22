@@ -43,6 +43,10 @@ const AOC_TAG_I18N_KEYS = {
   strings_title:     PFX + 'tag.strings.title',
   string_add_button: PFX + 'tag.string.add.button',
   strings_empty:     PFX + 'tag.strings.empty',
+  as_edit:          PFX + 'actionsheet.tag.edit',
+  as_delete:        PFX + 'actionsheet.tag.delete',
+  as_string_edit:   PFX + 'actionsheet.tag.string.edit',
+  as_string_remove: PFX + 'actionsheet.tag.string.remove',
 } satisfies Record<string, string>;
 
 export type AocTagI18n = { [K in keyof typeof AOC_TAG_I18N_KEYS]: Signal<string> };

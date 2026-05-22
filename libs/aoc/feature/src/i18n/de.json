@@ -484,6 +484,18 @@
   "actionsheet": {
     "label": {
       "choose": "Wähle eine Aktion"
+    },
+    "tag": {
+      "edit": "Tag ändern",
+      "delete": "Tag löschen",
+      "string": {
+        "edit": "Wert ändern",
+        "remove": "Wert entfernen"
+      }
+    },
+    "website": {
+      "edit": "Website-Text ändern",
+      "delete": "Website-Text löschen"
     }
   },
 
