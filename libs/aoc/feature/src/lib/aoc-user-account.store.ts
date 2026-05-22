@@ -31,6 +31,13 @@ const AOC_USER_ACCOUNT_I18N_KEYS = {
   account_plural:  '@account.plural',
   login_email:     '@user.field.loginEmail',
   name:            '@user.field.name',
+  as_fbuser_delete:     PFX + 'actionsheet.fbuser.delete',
+  as_user_edit:         PFX + 'actionsheet.user.edit',
+  as_user_delete:       PFX + 'actionsheet.user.delete',
+  as_membership_edit:   PFX + 'actionsheet.membership.edit',
+  as_account_copyemail: PFX + 'actionsheet.account.copyemail',
+  as_account_copyuid:   PFX + 'actionsheet.account.copyuid',
+  as_account_copypkey:  PFX + 'actionsheet.account.copypkey',
 } satisfies Record<string, string>;
 
 export type AocUserAccountI18n = { [K in keyof typeof AOC_USER_ACCOUNT_I18N_KEYS]: Signal<string> };

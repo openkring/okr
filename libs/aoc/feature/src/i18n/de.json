@@ -496,6 +496,21 @@
     "website": {
       "edit": "Website-Text ändern",
       "delete": "Website-Text löschen"
+    },
+    "fbuser": {
+      "delete": "Firebase-Benutzer löschen"
+    },
+    "user": {
+      "edit": "Benutzer ändern",
+      "delete": "Benutzer löschen"
+    },
+    "membership": {
+      "edit": "Mitgliedschaft ändern"
+    },
+    "account": {
+      "copyemail": "E-Mail kopieren",
+      "copyuid": "UID kopieren",
+      "copypkey": "Person-Key kopieren"
     }
   },
 
