@@ -397,16 +397,16 @@ protected async buildIndex(): Promise<void> {
    */
   protected async showIndexActions(item: SrvIndex): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.create', this.imgixBaseUrl, 'add'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.as_person_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.as_membership_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.store.i18n.as_parentmembership_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.create', this.store.i18n.as_parentmembership_create(), this.imgixBaseUrl, 'add'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.imgixBaseUrl, 'copy'));
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.add', this.imgixBaseUrl, 'add'));
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.update', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.store.i18n.as_regasoft_copy(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.store.i18n.as_regasoft_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.add', this.store.i18n.as_regasoft_add(), this.imgixBaseUrl, 'add'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.update', this.store.i18n.as_regasoft_update(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, item);
   }
 
@@ -417,16 +417,16 @@ protected async buildIndex(): Promise<void> {
    */
   protected async showLicenseActions(item: SrvIndex): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.as_person_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.as_membership_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.store.i18n.as_parentmembership_edit(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.imgixBaseUrl, 'copy'));
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.store.i18n.as_regasoft_copy(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.store.i18n.as_regasoft_view(), this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('license.create', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('license.download', this.imgixBaseUrl, 'download'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('license.create', this.store.i18n.as_license_create(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('license.download', this.store.i18n.as_license_download(), this.imgixBaseUrl, 'download'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, item);
   }
 
@@ -437,13 +437,13 @@ protected async buildIndex(): Promise<void> {
    */
   protected async showForeignerActions(item: SrvIndex): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.as_person_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.as_membership_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.store.i18n.as_parentmembership_edit(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.imgixBaseUrl, 'copy'));
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.store.i18n.as_regasoft_copy(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.store.i18n.as_regasoft_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, item);
   }
 
@@ -454,14 +454,14 @@ protected async buildIndex(): Promise<void> {
    */
   protected async showClubActions(item: SrvIndex): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.as_person_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.as_membership_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.store.i18n.as_parentmembership_edit(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.imgixBaseUrl, 'copy'));
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.store.i18n.as_regasoft_copy(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.store.i18n.as_regasoft_view(), this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, item);
   }
 

@@ -504,8 +504,25 @@
       "edit": "Benutzer ändern",
       "delete": "Benutzer löschen"
     },
+    "person": {
+      "edit": "Person ändern"
+    },
     "membership": {
       "edit": "Mitgliedschaft ändern"
+    },
+    "parentMembership": {
+      "edit": "Dachverband-Mitgliedschaft ändern",
+      "create": "Dachverband-Mitgliedschaft erstellen"
+    },
+    "regasoft": {
+      "copy": "Regasoft-Daten kopieren",
+      "view": "Regasoft-Daten anzeigen",
+      "add": "Regasoft-Eintrag erstellen",
+      "update": "Regasoft-Eintrag aktualisieren"
+    },
+    "license": {
+      "create": "Lizenz erstellen",
+      "download": "Lizenz herunterladen"
     },
     "account": {
       "copyemail": "E-Mail kopieren",

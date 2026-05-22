@@ -22,6 +22,7 @@ import { PersonEditModal } from '@bk2/subject-person-feature';
 import { newMembershipForPerson } from '@bk2/relationship-membership-util';
 
 import { AocSrvMismatchModal } from './aoc-srv-mismatch.modal';
+import { PFX } from './scope';
 
 export { getMismatches };
 
@@ -146,11 +147,22 @@ function loadIndex(tenantId: string): SrvIndex[] {
 }
 
 const AOC_SRV_I18N_KEYS = {
-  srv_title:      '@aoc.srv.title',
-  index_title:    '@aoc.srv.index.title',
-  index_subtitle: '@aoc.srv.index.subtitle',
-  index_reset:    '@aoc.srv.index.reset',
-  index_button:   '@aoc.srv.index.button',
+  srv_title:                  '@aoc.srv.title',
+  index_title:                '@aoc.srv.index.title',
+  index_subtitle:             '@aoc.srv.index.subtitle',
+  index_reset:                '@aoc.srv.index.reset',
+  index_button:               '@aoc.srv.index.button',
+  as_person_edit:             PFX + 'actionsheet.person.edit',
+  as_membership_edit:         PFX + 'actionsheet.membership.edit',
+  as_parentmembership_edit:   PFX + 'actionsheet.parentMembership.edit',
+  as_parentmembership_create: PFX + 'actionsheet.parentMembership.create',
+  as_regasoft_copy:           PFX + 'actionsheet.regasoft.copy',
+  as_regasoft_view:           PFX + 'actionsheet.regasoft.view',
+  as_regasoft_add:            PFX + 'actionsheet.regasoft.add',
+  as_regasoft_update:         PFX + 'actionsheet.regasoft.update',
+  as_license_create:          PFX + 'actionsheet.license.create',
+  as_license_download:        PFX + 'actionsheet.license.download',
+  cancel:                     '@cancel',
 } satisfies Record<string, string>;
 
 export type AocSrvI18n = { [K in keyof typeof AOC_SRV_I18N_KEYS]: Signal<string> };
