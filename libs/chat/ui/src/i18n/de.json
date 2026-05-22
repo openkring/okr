@@ -54,7 +54,7 @@
   "survey": {
     "question": {
       "label": "Frage oder Thema",
-      "placeholder": "Schreibe etwas ...",
+      "placeholder": "Schreibe etwas ..."
     },
     "answer": {
       "create": "Antwortmöglichkeiten erstellen",
@@ -71,6 +71,12 @@
       "multiple": "Wähle mindestens eine Option aus",
       "one": "Wähle eine Option aus"
     }
+  },
+  "attachment": {
+    "image": "Bild anhängen",
+    "file": "Datei anhängen",
+    "position": "Position senden",
+    "survey": "Umfrage erstellen"
   },
   "actionsheet": {
     "label": {

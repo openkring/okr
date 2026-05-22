@@ -17,6 +17,11 @@ export type MatrixMessageInputI18n = {
   areTypeing: string;
   othersTypeing: string;
   copy_conf: string;
+  as_attachment_image: string;
+  as_attachment_file: string;
+  as_attachment_position: string;
+  as_attachment_survey: string;
+  cancel: string;
 };
 
 @Component({
@@ -563,11 +568,11 @@ export class MatrixMessageInput {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.image', this.imgixBaseUrl, 'image'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.file', this.imgixBaseUrl, 'document'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.position', this.imgixBaseUrl, 'location'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.survey', this.imgixBaseUrl, 'help-circle'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.image', this.i18n().as_attachment_image, this.imgixBaseUrl, 'image'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.file', this.i18n().as_attachment_file, this.imgixBaseUrl, 'document'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.position', this.i18n().as_attachment_position, this.imgixBaseUrl, 'location'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.survey', this.i18n().as_attachment_survey, this.imgixBaseUrl, 'help-circle'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.i18n().cancel, this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }
