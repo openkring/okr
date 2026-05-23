@@ -16,6 +16,12 @@
       }
     }
   },
+  "field": {
+    "attributes": "Gruppen-Eigenschaften",
+    "groupId": "Gruppen ID",
+    "display": "Darstellung",
+    "access": "Zugang & Benachrichtigungen"
+  },
   "bkey": {
     "label": "Dok.-Schlüssel",
     "placeholder": "",

@@ -1,4 +1,26 @@
 {
+  "fbuser": {
+    "auth": {
+      "title": "Firebase-Benutzer",
+      "description": "Angaben zum Firebase-Authentifizierungs-Konto."
+    }
+  },
+  "auth": {
+    "title": "Authentifizierung",
+    "description": "Einstellungen zur Authentifizierung und biometrischen Anmeldung."
+  },
+  "display": {
+    "title": "Darstellung",
+    "description": "Einstellungen zur Darstellung von Namen, Avatar und Sortierung."
+  },
+  "model": {
+    "title": "Benutzer-Daten",
+    "description": "Technische Benutzer-Daten und Verknüpfungen."
+  },
+  "notification": {
+    "title": "Benachrichtigungen",
+    "description": "Einstellungen zur Zustellung von Nachrichten und Rechnungen."
+  },
   "uid":           { "label": "Benutzer-ID",        "placeholder": "",                      "helper": "" },
   "displayName":   { "label": "Anzeigename",         "placeholder": "",                      "helper": "" },
   "photoUrl":      { "label": "Foto-URL",            "placeholder": "https://...",            "helper": "" },

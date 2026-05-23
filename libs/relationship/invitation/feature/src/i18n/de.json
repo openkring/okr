@@ -2,7 +2,9 @@
   "invitations": "Einladungen",
   "invitee": "Teilnehmer",
   "inviter": "Organisator",
-  "state": "Status",
+  "state": {
+    "label": "Status"
+  },
   "empty": "Es sind noch keine Einladungen erstellt worden. Erstelle eine mit Klicken des + Buttons.",
   "create": {
     "label": "Person einladen",
@@ -31,5 +33,10 @@
     "ok": "OK",
     "cancel": "Abbrechen",
     "confirmation": "Speichern"
-  }
+  },
+  "bkey": { "label": "Dok.-Schlüssel", "placeholder": "", "helper": "" },
+  "notes": { "label": "Notizen", "placeholder": "" },
+  "sentAt": { "label": "Gesendet am", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "respondedAt": { "label": "Beantwortet am", "placeholder": "TT.MM.JJJJ", "helper": "" },
+  "role": { "label": "Rolle" }
 }

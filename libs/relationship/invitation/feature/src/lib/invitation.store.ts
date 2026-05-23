@@ -44,7 +44,7 @@ const INVITATION_I18N_KEYS = {
   name:                            '@name',
   invitee:                         PFX + 'invitee',
   inviter:                         PFX + 'inviter',
-  state:                           PFX + 'state',
+  state:                           PFX + 'state.label',
   empty:                           PFX + 'empty',
   delete_confirm:                  PFX + 'delete.confirm',
   invite_conf:                     PFX + 'invite.conf',

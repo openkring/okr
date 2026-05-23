@@ -106,6 +106,31 @@
     "edit": {
       "title": "Bild Eigenschaften",
       "header": "Bild bearbeiten"
+    },
+    "label": {
+      "label": "Bezeichnung",
+      "placeholder": "Bezeichnung eingeben",
+      "helper": ""
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "https://...",
+      "helper": ""
+    },
+    "actionUrl": {
+      "label": "Aktions-URL",
+      "placeholder": "https://...",
+      "helper": ""
+    },
+    "altText": {
+      "label": "Alt-Text",
+      "placeholder": "",
+      "helper": ""
+    },
+    "overlay": {
+      "label": "Überblendtext",
+      "placeholder": "",
+      "helper": ""
     }
   },
   "error": {
