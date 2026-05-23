@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,14 +7,34 @@ import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInput
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
 import { FullNamePipe } from '@bk2/shared-pipes';
-import { I18nService } from '@bk2/shared-i18n';
-
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { workrelValidations } from '@bk2/relationship-workrel-util';
-import { PFX } from './scope';
 
 export interface WorkrelFormI18n {
-  selectLabel: string;
+  selectLabel: Signal<string>;
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  label_label: Signal<string>;
+  label_placeholder: Signal<string>;
+  label_helper: Signal<string>;
+  currency_label: Signal<string>;
+  currency_placeholder: Signal<string>;
+  currency_helper: Signal<string>;
+  order_label: Signal<string>;
+  order_placeholder: Signal<string>;
+  order_helper: Signal<string>;
+  price_label: Signal<string>;
+  price_placeholder: Signal<string>;
+  price_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+  validFrom_label: Signal<string>;
+  validFrom_placeholder: Signal<string>;
+  validFrom_helper: Signal<string>;
+  validTo_label: Signal<string>;
+  validTo_placeholder: Signal<string>;
+  validTo_helper: Signal<string>;
 }
 
 @Component({
@@ -62,7 +82,7 @@ export interface WorkrelFormI18n {
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit()">{{ i18n().selectLabel }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit()">{{ i18n().selectLabel() }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -87,7 +107,7 @@ export interface WorkrelFormI18n {
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                <ion-button slot="start" fill="clear" (click)="selectOrg.emit()">{{ i18n().selectLabel }}</ion-button>
+                <ion-button slot="start" fill="clear" (click)="selectOrg.emit()">{{ i18n().selectLabel() }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>        
@@ -153,7 +173,7 @@ export interface WorkrelFormI18n {
 })
 export class WorkrelForm {
   // inputs
-  public readonly i18n = input<WorkrelFormI18n>({ selectLabel: '' });
+  public readonly i18n = input.required<WorkrelFormI18n>();
   public formData = model.required<WorkrelModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -172,25 +192,14 @@ export class WorkrelForm {
   public selectOrg = output<void>();
 
   // i18n
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label: PFX + 'bkey.label', bkey_placeholder: PFX + 'bkey.placeholder', bkey_helper: PFX + 'bkey.helper',
-    label_label: PFX + 'label.label', label_placeholder: PFX + 'label.placeholder', label_helper: PFX + 'label.helper',
-    currency_label: PFX + 'currency.label', currency_placeholder: PFX + 'currency.placeholder', currency_helper: PFX + 'currency.helper',
-    order_label: PFX + 'order.label', order_placeholder: PFX + 'order.placeholder', order_helper: PFX + 'order.helper',
-    price_label: PFX + 'price.label', price_placeholder: PFX + 'price.placeholder', price_helper: PFX + 'price.helper',
-    notes_label: PFX + 'notes.label', notes_placeholder: PFX + 'notes.placeholder',
-    validFrom_label: PFX + 'validFrom.label', validFrom_placeholder: PFX + 'validFrom.placeholder', validFrom_helper: PFX + 'validFrom.helper',
-    validTo_label:   PFX + 'validTo.label',   validTo_placeholder:   PFX + 'validTo.placeholder',   validTo_helper:   PFX + 'validTo.helper',
-  });
-  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: this.fieldI18n.bkey_placeholder(), helper: this.fieldI18n.bkey_helper() } as TextInputI18n));
-  protected labelI18n = computed(() => ({ name: 'label', label: this.fieldI18n.label_label(), placeholder: this.fieldI18n.label_placeholder(), helper: this.fieldI18n.label_helper() } as TextInputI18n));
-  protected currencyI18n = computed(() => ({ name: 'currency', label: this.fieldI18n.currency_label(), placeholder: this.fieldI18n.currency_placeholder(), helper: this.fieldI18n.currency_helper() } as TextInputI18n));
-  protected orderI18n = computed(() => ({ name: 'order', label: this.fieldI18n.order_label(), placeholder: this.fieldI18n.order_placeholder(), helper: this.fieldI18n.order_helper() } as NumberInputI18n));
-  protected priceI18n = computed(() => ({ name: 'price', label: this.fieldI18n.price_label(), placeholder: this.fieldI18n.price_placeholder(), helper: this.fieldI18n.price_helper() } as NumberInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
-  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.fieldI18n.validFrom_label(), placeholder: this.fieldI18n.validFrom_placeholder(), helper: this.fieldI18n.validFrom_helper() } as DateInputI18n));
-  protected validToI18n = computed(() => ({ name: 'validTo', label: this.fieldI18n.validTo_label(), placeholder: this.fieldI18n.validTo_placeholder(), helper: this.fieldI18n.validTo_helper() } as DateInputI18n));
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
+  protected labelI18n = computed(() => ({ name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper() } as TextInputI18n));
+  protected currencyI18n = computed(() => ({ name: 'currency', label: this.i18n().currency_label(), placeholder: this.i18n().currency_placeholder(), helper: this.i18n().currency_helper() } as TextInputI18n));
+  protected orderI18n = computed(() => ({ name: 'order', label: this.i18n().order_label(), placeholder: this.i18n().order_placeholder(), helper: this.i18n().order_helper() } as NumberInputI18n));
+  protected priceI18n = computed(() => ({ name: 'price', label: this.i18n().price_label(), placeholder: this.i18n().price_placeholder(), helper: this.i18n().price_helper() } as NumberInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.i18n().validFrom_label(), placeholder: this.i18n().validFrom_placeholder(), helper: this.i18n().validFrom_helper() } as DateInputI18n));
+  protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));
 
   // validation and errors
   protected readonly suite = workrelValidations;

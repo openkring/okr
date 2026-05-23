@@ -28,6 +28,7 @@ import { WorkrelStore } from './workrel.store';
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
           <bk-workrel-form
+            [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
