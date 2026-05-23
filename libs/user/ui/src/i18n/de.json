@@ -16,6 +16,13 @@
   "personSortCriteria": { "label": "Personen sortieren nach" },
   "userLanguage":       { "label": "Sprache" },
   "nameDisplay":        { "label": "Namensanzeige" },
+  "privacy": {
+    "title": "Datenschutz",
+    "description": "Hier kannst du für alle sensitiven Attribute festlegen, wer diese sehen darf. Öffentliche Attribute sind für alle sichtbar. Eingeschränkte Attribute sind nur für Mitglieder innerhalb der App sichtbar. Geschützte Attribute sind nur für privilegierte Personen sichtbar."
+  },
+  "srv": {
+    "description": "Folgende Einstellungen gelten für die Nutzung deiner Daten durch den SRV."
+  },
   "usageImages":        { "label": "Bilder" },
   "usageDateOfBirth":   { "label": "Geburtsdatum" },
   "usagePostalAddress": { "label": "Postadresse" },

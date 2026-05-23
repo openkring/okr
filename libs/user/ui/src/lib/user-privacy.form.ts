@@ -1,20 +1,26 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, input, linkedSignal, model, output, Signal } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { PrivacyUsages } from "@bk2/shared-categories";
 import { PrivacyUsage, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
-import { I18nService } from "@bk2/shared-i18n";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
 import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidations } from "@bk2/user-util";
-import { PFX } from "./scope";
 
 export interface UserPrivacyFormI18n {
-  privacyTitle: string;
-  privacyDescription: string;
-  srvDescription: string;
+  privacy_title: Signal<string>;
+  privacy_description: Signal<string>;
+  srv_description: Signal<string>;
+  usageImages_label: Signal<string>;
+  usageDateOfBirth_label: Signal<string>;
+  usagePostalAddress_label: Signal<string>;
+  usageEmail_label: Signal<string>;
+  usagePhone_label: Signal<string>;
+  usageName_label: Signal<string>;
+  srvEmail_label: Signal<string>;
+  srvEmail_helper: Signal<string>;
 }
 
 @Component({
@@ -32,15 +38,15 @@ export interface UserPrivacyFormI18n {
     <form scVestForm
       [formShape]="shape"
       [formValue]="formData()"
-      [suite]="suite" 
+      [suite]="suite"
       (dirtyChange)="dirty.emit($event)"
       (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().privacyTitle }}</ion-card-title>
+          <ion-card-title>{{ i18n().privacy_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-        {{ i18n().privacyDescription }}
+        {{ i18n().privacy_description() }}
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
@@ -66,7 +72,7 @@ export interface UserPrivacyFormI18n {
               <ion-row>
                 <ion-col>
                   <ion-item lines="none">
-                    <ion-label>{{ i18n().srvDescription }}</ion-label>
+                    <ion-label>{{ i18n().srv_description() }}</ion-label>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -83,27 +89,16 @@ export interface UserPrivacyFormI18n {
   `
 })
 export class UserPrivacyForm {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    usageImages_label:        PFX + 'usageImages.label',
-    usageDateOfBirth_label:   PFX + 'usageDateOfBirth.label',
-    usagePostalAddress_label: PFX + 'usagePostalAddress.label',
-    usageEmail_label:         PFX + 'usageEmail.label',
-    usagePhone_label:         PFX + 'usagePhone.label',
-    usageName_label:          PFX + 'usageName.label',
-    srvEmail_label:           PFX + 'srvEmail.label',
-    srvEmail_helper:          PFX + 'srvEmail.helper',
-  });
-  protected usageImagesI18n        = computed(() => ({ name: 'usageImages',        label: this.fieldI18n.usageImages_label()        } as CategoryOldI18n));
-  protected usageDateOfBirthI18n   = computed(() => ({ name: 'usageDateOfBirth',   label: this.fieldI18n.usageDateOfBirth_label()   } as CategoryOldI18n));
-  protected usagePostalAddressI18n = computed(() => ({ name: 'usagePostalAddress', label: this.fieldI18n.usagePostalAddress_label() } as CategoryOldI18n));
-  protected usageEmailI18n         = computed(() => ({ name: 'usageEmail',         label: this.fieldI18n.usageEmail_label()         } as CategoryOldI18n));
-  protected usagePhoneI18n         = computed(() => ({ name: 'usagePhone',         label: this.fieldI18n.usagePhone_label()         } as CategoryOldI18n));
-  protected usageNameI18n          = computed(() => ({ name: 'usageName',          label: this.fieldI18n.usageName_label()          } as CategoryOldI18n));
-  protected srvEmailI18n           = computed(() => ({ name: 'srvEmail', label: this.fieldI18n.srvEmail_label(), helper: this.fieldI18n.srvEmail_helper() } as CheckboxI18n));
+  protected usageImagesI18n        = computed(() => ({ name: 'usageImages',        label: this.i18n().usageImages_label()        } as CategoryOldI18n));
+  protected usageDateOfBirthI18n   = computed(() => ({ name: 'usageDateOfBirth',   label: this.i18n().usageDateOfBirth_label()   } as CategoryOldI18n));
+  protected usagePostalAddressI18n = computed(() => ({ name: 'usagePostalAddress', label: this.i18n().usagePostalAddress_label() } as CategoryOldI18n));
+  protected usageEmailI18n         = computed(() => ({ name: 'usageEmail',         label: this.i18n().usageEmail_label()         } as CategoryOldI18n));
+  protected usagePhoneI18n         = computed(() => ({ name: 'usagePhone',         label: this.i18n().usagePhone_label()         } as CategoryOldI18n));
+  protected usageNameI18n          = computed(() => ({ name: 'usageName',          label: this.i18n().usageName_label()          } as CategoryOldI18n));
+  protected srvEmailI18n           = computed(() => ({ name: 'srvEmail', label: this.i18n().srvEmail_label(), helper: this.i18n().srvEmail_helper() } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input<UserPrivacyFormI18n>({ privacyTitle: '', privacyDescription: '', srvDescription: '' });
+  public readonly i18n = input.required<UserPrivacyFormI18n>();
   public formData = model.required<UserPrivacyFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

@@ -102,6 +102,18 @@ const USER_I18N_KEYS = {
   notification_description: '@user/ui.notification.description',
   newsDelivery_label:       '@user/ui.newsDelivery.label',
   invoiceDelivery_label:    '@user/ui.invoiceDelivery.label',
+  // user-privacy.form.ts keys
+  privacy_title:             '@user/ui.privacy.title',
+  privacy_description:       '@user/ui.privacy.description',
+  srv_description:           '@user/ui.srv.description',
+  usageImages_label:         '@user/ui.usageImages.label',
+  usageDateOfBirth_label:    '@user/ui.usageDateOfBirth.label',
+  usagePostalAddress_label:  '@user/ui.usagePostalAddress.label',
+  usageEmail_label:          '@user/ui.usageEmail.label',
+  usagePhone_label:          '@user/ui.usagePhone.label',
+  usageName_label:           '@user/ui.usageName.label',
+  srvEmail_label:            '@user/ui.srvEmail.label',
+  srvEmail_helper:           '@user/ui.srvEmail.helper',
 } satisfies Record<string, string>;
 
 export type UserI18n = { [K in keyof typeof USER_I18N_KEYS]: Signal<string> };
