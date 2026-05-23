@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,17 +7,48 @@ import { WORD_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { Avatars } from '@bk2/avatar-ui';
 import { groupValidations } from '@bk2/subject-group-util';
-import { PFX } from './scope';
 
 export interface GroupFormI18n {
-  attributes: string;
-  groupId: string;
-  display: string;
-  access: string;
+  attributes: Signal<string>;
+  groupId: Signal<string>;
+  display: Signal<string>;
+  access: Signal<string>;
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  groupId_label: Signal<string>;
+  groupId_placeholder: Signal<string>;
+  groupId_helper: Signal<string>;
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  icon_label: Signal<string>;
+  icon_placeholder: Signal<string>;
+  icon_helper: Signal<string>;
+  visibility_label: Signal<string>;
+  visibility_placeholder: Signal<string>;
+  visibility_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+  notifyType_label: Signal<string>;
+  hasContent_label: Signal<string>;
+  hasContent_helper: Signal<string>;
+  hasChat_label: Signal<string>;
+  hasChat_helper: Signal<string>;
+  hasCalendar_label: Signal<string>;
+  hasCalendar_helper: Signal<string>;
+  hasTasks_label: Signal<string>;
+  hasTasks_helper: Signal<string>;
+  hasFiles_label: Signal<string>;
+  hasFiles_helper: Signal<string>;
+  hasAlbum_label: Signal<string>;
+  hasAlbum_helper: Signal<string>;
+  hasMembers_label: Signal<string>;
+  hasMembers_helper: Signal<string>;
+  copy_conf: Signal<string>;
 }
 
 @Component({
@@ -45,7 +76,7 @@ export interface GroupFormI18n {
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().attributes }}</ion-card-title>
+          <ion-card-title>{{ i18n().attributes() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -70,7 +101,7 @@ export interface GroupFormI18n {
                   />
                 } @else {
                   <ion-item lines="none">
-                    <ion-label>{{ i18n().groupId }}: {{ bkey() }}</ion-label>
+                    <ion-label>{{ i18n().groupId() }}: {{ bkey() }}</ion-label>
                     <bk-button-copy [i18n]="buttonCopyI18n()" [value]="bkey()" />
                   </ion-item>
                 }                                     
@@ -110,7 +141,7 @@ export interface GroupFormI18n {
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().display }}</ion-card-title>
+          <ion-card-title>{{ i18n().display() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -174,7 +205,7 @@ export interface GroupFormI18n {
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-card>
           <ion-card-header>
-            <ion-card-title>{{ i18n().access }}</ion-card-title>
+            <ion-card-title>{{ i18n().access() }}</ion-card-title>
           </ion-card-header>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
@@ -219,60 +250,24 @@ export interface GroupFormI18n {
   `
 })
 export class GroupForm {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:        PFX + 'bkey.label',
-    bkey_placeholder:  PFX + 'bkey.placeholder',
-    bkey_helper:       PFX + 'bkey.helper',
-    groupId_label:     PFX + 'groupId.label',
-    groupId_placeholder: PFX + 'groupId.placeholder',
-    groupId_helper:    PFX + 'groupId.helper',
-    name_label:        PFX + 'name.label',
-    name_placeholder:  PFX + 'name.placeholder',
-    name_helper:       PFX + 'name.helper',
-    icon_label:        PFX + 'icon.label',
-    icon_placeholder:  PFX + 'icon.placeholder',
-    icon_helper:       PFX + 'icon.helper',
-    visibility_label:  PFX + 'visibility.label',
-    visibility_placeholder: PFX + 'visibility.placeholder',
-    visibility_helper: PFX + 'visibility.helper',
-    notes_label:       PFX + 'notes.label',
-    notes_placeholder: PFX + 'notes.placeholder',
-    notifyType_label:    PFX + 'notifyType.label',
-    hasContent_label:    PFX + 'hasContent.label',
-    hasContent_helper:   PFX + 'hasContent.helper',
-    hasChat_label:       PFX + 'hasChat.label',
-    hasChat_helper:      PFX + 'hasChat.helper',
-    hasCalendar_label:   PFX + 'hasCalendar.label',
-    hasCalendar_helper:  PFX + 'hasCalendar.helper',
-    hasTasks_label:      PFX + 'hasTasks.label',
-    hasTasks_helper:     PFX + 'hasTasks.helper',
-    hasFiles_label:      PFX + 'hasFiles.label',
-    hasFiles_helper:     PFX + 'hasFiles.helper',
-    hasAlbum_label:      PFX + 'hasAlbum.label',
-    hasAlbum_helper:     PFX + 'hasAlbum.helper',
-    hasMembers_label:    PFX + 'hasMembers.label',
-    hasMembers_helper:   PFX + 'hasMembers.helper',
-    copy_conf:           '@shared/ui.copy.conf',
-  });
-  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.fieldI18n.copy_conf() } as ButtonCopyI18n));
-  protected bkeyI18n      = computed(() => ({ name: 'bkey',       label: this.fieldI18n.bkey_label(),       placeholder: this.fieldI18n.bkey_placeholder(),       helper: this.fieldI18n.bkey_helper()       } as TextInputI18n));
-  protected groupIdI18n   = computed(() => ({ name: 'groupId',    label: this.fieldI18n.groupId_label(),    placeholder: this.fieldI18n.groupId_placeholder(),    helper: this.fieldI18n.groupId_helper()    } as TextInputI18n));
-  protected nameI18n      = computed(() => ({ name: 'groupName',  label: this.fieldI18n.name_label(),       placeholder: this.fieldI18n.name_placeholder(),       helper: this.fieldI18n.name_helper()       } as TextInputI18n));
-  protected iconI18n      = computed(() => ({ name: 'icon',       label: this.fieldI18n.icon_label(),       placeholder: this.fieldI18n.icon_placeholder(),       helper: this.fieldI18n.icon_helper()       } as TextInputI18n));
-  protected visibilityI18n = computed(() => ({ name: 'visibility', label: this.fieldI18n.visibility_label(), placeholder: this.fieldI18n.visibility_placeholder(), helper: this.fieldI18n.visibility_helper() } as TextInputI18n));
-  protected notesI18n      = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
-  protected notifyTypeI18n  = computed(() => ({ name: 'notifyType',   label: this.fieldI18n.notifyType_label()  } as StringSelectI18n));
-  protected hasContentI18n  = computed(() => ({ name: 'hasContent',   label: this.fieldI18n.hasContent_label(),   helper: this.fieldI18n.hasContent_helper()   } as CheckboxI18n));
-  protected hasChatI18n     = computed(() => ({ name: 'hasChat',      label: this.fieldI18n.hasChat_label(),      helper: this.fieldI18n.hasChat_helper()      } as CheckboxI18n));
-  protected hasCalendarI18n = computed(() => ({ name: 'hasCalendar',  label: this.fieldI18n.hasCalendar_label(),  helper: this.fieldI18n.hasCalendar_helper()  } as CheckboxI18n));
-  protected hasTasksI18n    = computed(() => ({ name: 'hasTasks',     label: this.fieldI18n.hasTasks_label(),     helper: this.fieldI18n.hasTasks_helper()     } as CheckboxI18n));
-  protected hasFilesI18n    = computed(() => ({ name: 'hasFiles',     label: this.fieldI18n.hasFiles_label(),     helper: this.fieldI18n.hasFiles_helper()     } as CheckboxI18n));
-  protected hasAlbumI18n    = computed(() => ({ name: 'hasAlbum',     label: this.fieldI18n.hasAlbum_label(),     helper: this.fieldI18n.hasAlbum_helper()     } as CheckboxI18n));
-  protected hasMembersI18n  = computed(() => ({ name: 'hasMembers',   label: this.fieldI18n.hasMembers_label(),   helper: this.fieldI18n.hasMembers_helper()   } as CheckboxI18n));
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
+  protected bkeyI18n      = computed(() => ({ name: 'bkey',       label: this.i18n().bkey_label(),       placeholder: this.i18n().bkey_placeholder(),       helper: this.i18n().bkey_helper()       } as TextInputI18n));
+  protected groupIdI18n   = computed(() => ({ name: 'groupId',    label: this.i18n().groupId_label(),    placeholder: this.i18n().groupId_placeholder(),    helper: this.i18n().groupId_helper()    } as TextInputI18n));
+  protected nameI18n      = computed(() => ({ name: 'groupName',  label: this.i18n().name_label(),       placeholder: this.i18n().name_placeholder(),       helper: this.i18n().name_helper()       } as TextInputI18n));
+  protected iconI18n      = computed(() => ({ name: 'icon',       label: this.i18n().icon_label(),       placeholder: this.i18n().icon_placeholder(),       helper: this.i18n().icon_helper()       } as TextInputI18n));
+  protected visibilityI18n = computed(() => ({ name: 'visibility', label: this.i18n().visibility_label(), placeholder: this.i18n().visibility_placeholder(), helper: this.i18n().visibility_helper() } as TextInputI18n));
+  protected notesI18n      = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notifyTypeI18n  = computed(() => ({ name: 'notifyType',   label: this.i18n().notifyType_label()  } as StringSelectI18n));
+  protected hasContentI18n  = computed(() => ({ name: 'hasContent',   label: this.i18n().hasContent_label(),   helper: this.i18n().hasContent_helper()   } as CheckboxI18n));
+  protected hasChatI18n     = computed(() => ({ name: 'hasChat',      label: this.i18n().hasChat_label(),      helper: this.i18n().hasChat_helper()      } as CheckboxI18n));
+  protected hasCalendarI18n = computed(() => ({ name: 'hasCalendar',  label: this.i18n().hasCalendar_label(),  helper: this.i18n().hasCalendar_helper()  } as CheckboxI18n));
+  protected hasTasksI18n    = computed(() => ({ name: 'hasTasks',     label: this.i18n().hasTasks_label(),     helper: this.i18n().hasTasks_helper()     } as CheckboxI18n));
+  protected hasFilesI18n    = computed(() => ({ name: 'hasFiles',     label: this.i18n().hasFiles_label(),     helper: this.i18n().hasFiles_helper()     } as CheckboxI18n));
+  protected hasAlbumI18n    = computed(() => ({ name: 'hasAlbum',     label: this.i18n().hasAlbum_label(),     helper: this.i18n().hasAlbum_helper()     } as CheckboxI18n));
+  protected hasMembersI18n  = computed(() => ({ name: 'hasMembers',   label: this.i18n().hasMembers_label(),   helper: this.i18n().hasMembers_helper()   } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input<GroupFormI18n>({ attributes: '', groupId: '', display: '', access: '' });
+  public readonly i18n = input.required<GroupFormI18n>();
   public formData = model.required<GroupModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

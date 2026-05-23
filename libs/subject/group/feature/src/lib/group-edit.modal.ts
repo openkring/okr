@@ -27,8 +27,9 @@ import { GroupStore } from './group.store';
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
           <bk-group-form
+              [i18n]="store.i18n"
               [formData]="formData"
-              (formDataChange)="onFormDataChange($event)" 
+              (formDataChange)="onFormDataChange($event)"
               [currentUser]="currentUser"
               [showForm]="showForm()"
               [allTags]="tags()"
