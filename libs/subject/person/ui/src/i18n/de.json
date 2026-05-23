@@ -58,5 +58,36 @@
   "shouldAddMembership": {
     "label": "Mitgliedschaft hinzufügen",
     "helper": ""
+  },
+  "select": "Auswählen",
+  "streetName": {
+    "label": "Strasse",
+    "placeholder": "Strasse eingeben",
+    "helper": ""
+  },
+  "streetNumber": {
+    "label": "Nr.",
+    "placeholder": "",
+    "helper": ""
+  },
+  "countryCode": {
+    "label": "Land (ISO)",
+    "placeholder": "CH",
+    "helper": ""
+  },
+  "zipCode": {
+    "label": "PLZ",
+    "placeholder": "8000",
+    "helper": ""
+  },
+  "city": {
+    "label": "Ort",
+    "placeholder": "Ort eingeben",
+    "helper": ""
+  },
+  "web": {
+    "label": "Web",
+    "placeholder": "https://...",
+    "helper": ""
   }
 }

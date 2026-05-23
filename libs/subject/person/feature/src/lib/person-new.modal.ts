@@ -27,12 +27,13 @@ import { PersonStore } from './person.store';
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-person-new-form
+          [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [genders]="genders()"
           [allTags]="tags()"
-          [tenantId]="tenantId()" 
+          [tenantId]="tenantId()"
           [readOnly]="false"
           [membershipCategories]="mcat()"
           (selectClicked)="selectOrg()"
