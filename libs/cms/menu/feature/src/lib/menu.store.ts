@@ -36,6 +36,19 @@ const MENU_I18N_KEYS = {
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  // menu form field i18n (resolved from @cms/menu/ui.*)
+  name_label:               '@cms/menu/ui.name.label',
+  name_placeholder:         '@cms/menu/ui.name.placeholder',
+  name_helper:              '@cms/menu/ui.name.helper',
+  label_label:              '@cms/menu/ui.label.label',
+  label_placeholder:        '@cms/menu/ui.label.placeholder',
+  label_helper:             '@cms/menu/ui.label.helper',
+  icon_label:               '@cms/menu/ui.icon.label',
+  icon_placeholder:         '@cms/menu/ui.icon.placeholder',
+  icon_helper:              '@cms/menu/ui.icon.helper',
+  description_label:        '@cms/menu/ui.description.label',
+  description_placeholder:  '@cms/menu/ui.description.placeholder',
+  url_label:                '@cms/menu/ui.url.label',
 } satisfies Record<string, string>;
 
 export type MenuI18n = { [K in keyof typeof MENU_I18N_KEYS]: Signal<string> };
@@ -212,12 +225,6 @@ export const _MenuStore = signalStore(
             roles: this.getRoles(),
             types: this.getTypes(),
             readOnly,
-            i18n: {
-              title:          store.i18n.submenus(),
-              addLabel:       store.i18n.add_submenu(),
-              urlPlaceholder: store.i18n.url_placeholder(),
-              urlHelper:      store.i18n.url_helper(),
-            },
           }
         });
         modal.present();

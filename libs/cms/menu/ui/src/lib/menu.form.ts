@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -7,16 +7,26 @@ import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { menuItemValidations } from '@bk2/cms-menu-util';
-import { PFX } from './scope';
 
 export interface MenuFormI18n {
-  title: string;
-  addLabel: string;
-  urlPlaceholder: string;
-  urlHelper: string;
+  submenus: Signal<string>;
+  add_submenu: Signal<string>;
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  label_label: Signal<string>;
+  label_placeholder: Signal<string>;
+  label_helper: Signal<string>;
+  icon_label: Signal<string>;
+  icon_placeholder: Signal<string>;
+  icon_helper: Signal<string>;
+  description_label: Signal<string>;
+  description_placeholder: Signal<string>;
+  url_label: Signal<string>;
+  url_placeholder: Signal<string>;
+  url_helper: Signal<string>;
 }
 
 @Component({
@@ -103,8 +113,8 @@ export interface MenuFormI18n {
       @if(menuAction() === 'main' || menuAction() === 'context' || menuAction() === 'sub') {
         <bk-strings
           [strings]="menuItems()" (stringsChange)="onFieldChange('menuItems', $event)"
-          [title]="i18n().title"
-          [add]="i18n().addLabel"
+          [title]="i18n().submenus()"
+          [add]="i18n().add_submenu()"
           [readOnly]="isReadOnly()"
         />
       }
@@ -133,46 +143,29 @@ export class MenuForm {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // i18n
-  public readonly i18n = input<MenuFormI18n>({ title: '', addLabel: '', urlPlaceholder: '', urlHelper: '' });
-
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    name_label:       PFX + 'name.label',
-    name_placeholder: PFX + 'name.placeholder',
-    name_helper:      PFX + 'name.helper',
-    label_label:      PFX + 'label.label',
-    label_placeholder: PFX + 'label.placeholder',
-    label_helper:     PFX + 'label.helper',
-    icon_label:             PFX + 'icon.label',
-    icon_placeholder:       PFX + 'icon.placeholder',
-    icon_helper:            PFX + 'icon.helper',
-    description_label:      PFX + 'description.label',
-    description_placeholder: PFX + 'description.placeholder',
-    url_label:              PFX + 'url.label',
-    url_placeholder:        PFX + 'url.placeholder',
-    url_helper:             PFX + 'url.helper',
-  });
+  public readonly i18n = input.required<MenuFormI18n>();
 
   protected nameI18n = computed(() => ({
-    name: 'name', label: this.fieldI18n.name_label(), placeholder: this.fieldI18n.name_placeholder(), helper: this.fieldI18n.name_helper()
+    name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper()
   } as TextInputI18n));
 
   protected labelI18n = computed(() => ({
-    name: 'label', label: this.fieldI18n.label_label(), placeholder: this.fieldI18n.label_placeholder(), helper: this.fieldI18n.label_helper()
+    name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper()
   } as TextInputI18n));
 
   protected iconI18n = computed(() => ({
-    name: 'icon', label: this.fieldI18n.icon_label(), placeholder: this.fieldI18n.icon_placeholder(), helper: this.fieldI18n.icon_helper()
+    name: 'icon', label: this.i18n().icon_label(), placeholder: this.i18n().icon_placeholder(), helper: this.i18n().icon_helper()
   } as TextInputI18n));
 
   protected descriptionI18n = computed(() => ({
-    name: 'description', label: this.fieldI18n.description_label(), placeholder: this.fieldI18n.description_placeholder()
+    name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
+
   protected urlI18n = computed(() => ({
     name: 'url',
-    label: this.fieldI18n.url_label(),
-    placeholder: this.fieldI18n.url_placeholder(),
-    helper: this.fieldI18n.url_helper(),
+    label: this.i18n().url_label(),
+    placeholder: this.i18n().url_placeholder(),
+    helper: this.i18n().url_helper(),
   } as UrlInputI18n));
 
   // signals

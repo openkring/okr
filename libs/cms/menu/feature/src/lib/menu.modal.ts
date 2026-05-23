@@ -5,7 +5,7 @@ import { CategoryListModel, MenuItemModel, UserModel } from '@bk2/shared-models'
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 
-import { MenuForm, MenuFormI18n } from '@bk2/cms-menu-ui';
+import { MenuForm } from '@bk2/cms-menu-ui';
 import { MenuStore } from './menu.store';
 
 @Component({
@@ -33,7 +33,7 @@ import { MenuStore } from './menu.store';
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           [allTags]="tags()"
-          [i18n]="i18n()"
+          [i18n]="store.i18n"
           (iconSelectClicked)="selectIcon()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -53,7 +53,6 @@ export class MenuModal {
   public roles = input.required<CategoryListModel>();
   public types = input.required<CategoryListModel>();
   public readonly readOnly = input(true);
-  public readonly i18n = input<MenuFormI18n>({ title: '', addLabel: '', urlPlaceholder: '', urlHelper: '' });
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
