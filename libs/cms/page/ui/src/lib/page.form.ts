@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -8,13 +8,23 @@ import { CategoryListModel, PageModel, RoleName, UserModel } from '@bk2/shared-m
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { pageValidations } from '@bk2/cms-page-util';
-import { PFX } from './scope';
 
 export interface PageFormI18n {
-  title: string;
+  page_title: Signal<string>;
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  pageTitle_label: Signal<string>;
+  pageTitle_placeholder: Signal<string>;
+  pageTitle_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+  blogType_label: Signal<string>;
+  copy_conf: Signal<string>;
+  section_label: Signal<string>;
+  section_add_label: Signal<string>;
 }
 
 @Component({
@@ -40,7 +50,7 @@ export interface PageFormI18n {
         --------------------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().title }}</ion-card-title>
+          <ion-card-title>{{ i18n().page_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -85,8 +95,8 @@ export interface PageFormI18n {
           [maxLength]="40"
           [copyable]="true"
           [readOnly]="isReadOnly()"
-          title="@content.page.forms.section.label"
-          addLabel="@content.section.operation.add.label" />
+          [title]="i18n().section_label()"
+          [add]="i18n().section_add_label()" />
 
       @if(hasRole('privileged')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
@@ -99,10 +109,8 @@ export interface PageFormI18n {
   `
 })
 export class PageForm {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
-  public readonly i18n = input<PageFormI18n>({ title: '' });
+  public readonly i18n = input.required<PageFormI18n>();
   public readonly formData = model.required<PageModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -137,38 +145,26 @@ export class PageForm {
   // passing constants to template
   protected mask = CaseInsensitiveWordMask;
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    name_label:        PFX + 'name.label',
-    name_placeholder:  PFX + 'name.placeholder',
-    name_helper:       PFX + 'name.helper',
-    pageTitle_label:       PFX + 'pageTitle.label',
-    pageTitle_placeholder: PFX + 'pageTitle.placeholder',
-    pageTitle_helper:      PFX + 'pageTitle.helper',
-    notes_label:           PFX + 'notes.label',
-    notes_placeholder:     PFX + 'notes.placeholder',
-    blogType_label:        PFX + 'blogType.label',
-    copy_conf:             '@shared/ui.copy.conf',
-  });
-  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.fieldI18n.copy_conf() } as ButtonCopyI18n));
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
 
   protected nameI18n = computed(() => ({
     name: 'name',
-    label: this.fieldI18n.name_label(),
-    placeholder: this.fieldI18n.name_placeholder(),
-    helper: this.fieldI18n.name_helper(),
+    label: this.i18n().name_label(),
+    placeholder: this.i18n().name_placeholder(),
+    helper: this.i18n().name_helper(),
   } as TextInputI18n));
 
   protected titleI18n = computed(() => ({
     name: 'title',
-    label: this.fieldI18n.pageTitle_label(),
-    placeholder: this.fieldI18n.pageTitle_placeholder(),
-    helper: this.fieldI18n.pageTitle_helper(),
+    label: this.i18n().pageTitle_label(),
+    placeholder: this.i18n().pageTitle_placeholder(),
+    helper: this.i18n().pageTitle_helper(),
   } as TextInputI18n));
 
   protected notesI18n = computed(() => ({
-    name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder()
+    name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
-  protected blogTypeI18n = computed(() => ({ name: 'blogType', label: this.fieldI18n.blogType_label() } as StringSelectI18n));
+  protected blogTypeI18n = computed(() => ({ name: 'blogType', label: this.i18n().blogType_label() } as StringSelectI18n));
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {

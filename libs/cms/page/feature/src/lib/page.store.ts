@@ -62,6 +62,20 @@ const PAGE_I18N_KEYS = {
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  // page form field i18n (resolved from @cms/page/ui.*)
+  page_title:           '@cms/page/ui.title',
+  name_label:           '@cms/page/ui.name.label',
+  name_placeholder:     '@cms/page/ui.name.placeholder',
+  name_helper:          '@cms/page/ui.name.helper',
+  pageTitle_label:      '@cms/page/ui.pageTitle.label',
+  pageTitle_placeholder: '@cms/page/ui.pageTitle.placeholder',
+  pageTitle_helper:     '@cms/page/ui.pageTitle.helper',
+  notes_label:          '@cms/page/ui.notes.label',
+  notes_placeholder:    '@cms/page/ui.notes.placeholder',
+  blogType_label:       '@cms/page/ui.blogType.label',
+  copy_conf:            '@shared/ui.copy.conf',
+  section_label:        '@cms/page/ui.section.label',
+  section_add_label:    '@cms/page/ui.section.add.label',
 } satisfies Record<string, string>;
 
 export type PageI18n = { [K in keyof typeof PAGE_I18N_KEYS]: Signal<string> };
