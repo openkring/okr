@@ -9,7 +9,7 @@ import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
 import { signalStore, withProps } from '@ngrx/signals';
 
 import { createNewMemberFormModel, MemberNewFormModel } from '@bk2/relationship-membership-util';
-import { MemberNewForm, MemberNewFormI18n } from '@bk2/relationship-membership-ui';
+import { MemberNewForm } from '@bk2/relationship-membership-ui';
 import { PFX } from './scope';
 
 const UI = '@relationship/membership/ui.';
@@ -102,7 +102,7 @@ const MemberNewModalStore = signalStore(
           [tenantId]="tenantId()"
           [readOnly]="false"
           [membershipCategories]="selectedMembershipCategory()"
-          [i18n]="formI18n()"
+          [i18n]="store.i18n"
           (selectClicked)="selectOrg()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -123,59 +123,6 @@ export class MemberNewModal {
     cancel: this.store.i18n.changeConfirmation_cancel(),
     confirmation: this.store.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
-
-  protected readonly formI18n = computed<MemberNewFormI18n>(() => ({
-    personDetails:          this.store.i18n.personDetails,
-    personAddress:          this.store.i18n.personAddress,
-    personMisc:             this.store.i18n.personMisc,
-    personMembership:       this.store.i18n.personMembership,
-    selectLabel:            this.store.i18n.selectLabel,
-    firstName_label:        this.store.i18n.firstName_label,
-    firstName_placeholder:  this.store.i18n.firstName_placeholder,
-    firstName_helper:       this.store.i18n.firstName_helper,
-    lastName_label:         this.store.i18n.lastName_label,
-    lastName_placeholder:   this.store.i18n.lastName_placeholder,
-    lastName_helper:        this.store.i18n.lastName_helper,
-    streetName_label:       this.store.i18n.streetName_label,
-    streetName_placeholder: this.store.i18n.streetName_placeholder,
-    streetName_helper:      this.store.i18n.streetName_helper,
-    streetNumber_label:     this.store.i18n.streetNumber_label,
-    streetNumber_placeholder: this.store.i18n.streetNumber_placeholder,
-    streetNumber_helper:    this.store.i18n.streetNumber_helper,
-    countryCode_label:      this.store.i18n.countryCode_label,
-    countryCode_placeholder: this.store.i18n.countryCode_placeholder,
-    countryCode_helper:     this.store.i18n.countryCode_helper,
-    zipCode_label:          this.store.i18n.zipCode_label,
-    zipCode_placeholder:    this.store.i18n.zipCode_placeholder,
-    zipCode_helper:         this.store.i18n.zipCode_helper,
-    city_label:             this.store.i18n.city_label,
-    city_placeholder:       this.store.i18n.city_placeholder,
-    city_helper:            this.store.i18n.city_helper,
-    web_label:              this.store.i18n.web_label,
-    web_placeholder:        this.store.i18n.web_placeholder,
-    web_helper:             this.store.i18n.web_helper,
-    ssnId_label:            this.store.i18n.ssnId_label,
-    ssnId_placeholder:      this.store.i18n.ssnId_placeholder,
-    ssnId_helper:           this.store.i18n.ssnId_helper,
-    bexioId_label:          this.store.i18n.bexioId_label,
-    bexioId_placeholder:    this.store.i18n.bexioId_placeholder,
-    bexioId_helper:         this.store.i18n.bexioId_helper,
-    notes_label:            this.store.i18n.notes_label,
-    notes_placeholder:      this.store.i18n.notes_placeholder,
-    email_label:            this.store.i18n.email_label,
-    email_placeholder:      this.store.i18n.email_placeholder,
-    phone_label:            this.store.i18n.phone_label,
-    phone_placeholder:      this.store.i18n.phone_placeholder,
-    dateOfBirth_label:      this.store.i18n.dateOfBirth_label,
-    dateOfBirth_placeholder: this.store.i18n.dateOfBirth_placeholder,
-    dateOfBirth_helper:     this.store.i18n.dateOfBirth_helper,
-    dateOfDeath_label:      this.store.i18n.dateOfDeath_label,
-    dateOfDeath_placeholder: this.store.i18n.dateOfDeath_placeholder,
-    dateOfDeath_helper:     this.store.i18n.dateOfDeath_helper,
-    dateOfEntry_label:      this.store.i18n.dateOfEntry_label,
-    dateOfEntry_placeholder: this.store.i18n.dateOfEntry_placeholder,
-    dateOfEntry_helper:     this.store.i18n.dateOfEntry_helper,
-  }));
 
   // inputs
   public currentUser = input.required<UserModel>();

@@ -9,7 +9,7 @@ import { signalStore, withProps } from '@ngrx/signals';
 
 import { AvatarToolbar } from '@bk2/avatar-feature';
 
-import { ScsMemberFeeEditForm, ScsMemberFeeEditFormI18n } from '@bk2/relationship-membership-ui';
+import { ScsMemberFeeEditForm } from '@bk2/relationship-membership-ui';
 import { PFX } from './scope';
 
 const UI = '@relationship/membership/ui.';
@@ -66,7 +66,7 @@ const ScsMemberFeeEditModalStore = signalStore(
         [membershipCategories]="mcat()"
         [showForm]="showForm()"
         [readOnly]="readOnly()"
-        [i18n]="formI18n()"
+        [i18n]="store.i18n"
         (dirty)="manualDirty.set($event)"
         (valid)="formValid.set($event)"
         (formDataChange)="formData.set($event)"
@@ -83,20 +83,6 @@ export class ScsMemberFeeEditModal {
     cancel: this.store.i18n.changeConfirmation_cancel(),
     confirmation: this.store.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
-
-  protected readonly formI18n = computed<ScsMemberFeeEditFormI18n>(() => ({
-    jb_label:             this.store.i18n.jb_label,             jb_placeholder:             this.store.i18n.jb_placeholder,             jb_helper:             this.store.i18n.jb_helper,
-    srv_label:            this.store.i18n.srv_label,            srv_placeholder:            this.store.i18n.srv_placeholder,            srv_helper:            this.store.i18n.srv_helper,
-    bev_label:            this.store.i18n.bev_label,            bev_placeholder:            this.store.i18n.bev_placeholder,            bev_helper:            this.store.i18n.bev_helper,
-    entryFee_label:       this.store.i18n.entryFee_label,       entryFee_placeholder:       this.store.i18n.entryFee_placeholder,       entryFee_helper:       this.store.i18n.entryFee_helper,
-    locker_label:         this.store.i18n.locker_label,         locker_placeholder:         this.store.i18n.locker_placeholder,         locker_helper:         this.store.i18n.locker_helper,
-    skiff_label:          this.store.i18n.skiff_label,          skiff_placeholder:          this.store.i18n.skiff_placeholder,          skiff_helper:          this.store.i18n.skiff_helper,
-    skiffInsurance_label: this.store.i18n.skiffInsurance_label, skiffInsurance_placeholder: this.store.i18n.skiffInsurance_placeholder, skiffInsurance_helper: this.store.i18n.skiffInsurance_helper,
-    rebate_label:         this.store.i18n.rebate_label,         rebate_placeholder:         this.store.i18n.rebate_placeholder,         rebate_helper:         this.store.i18n.rebate_helper,
-    notes_label:          this.store.i18n.notes_label,          notes_placeholder:          this.store.i18n.notes_placeholder,
-    rebateReason_label:   this.store.i18n.rebateReason_label,
-    invoiceState_label:   this.store.i18n.invoiceState_label,
-  }));
 
   // inputs
   public fee = input.required<ScsMemberFeesModel>();

@@ -11,7 +11,7 @@ import { signalStore, withProps } from '@ngrx/signals';
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { DocumentsAccordion } from '@bk2/document-feature';
 
-import { MembershipForm, MembershipFormI18n } from '@bk2/relationship-membership-ui';
+import { MembershipForm } from '@bk2/relationship-membership-ui';
 import { RelationshipToolbar } from '@bk2/avatar-ui';
 import { PFX } from './scope';
 
@@ -99,7 +99,7 @@ const MembershipEditModalStore = signalStore(
               [allTags]="tags()"
               [readOnly]="isReadOnly()"
               [priv]="priv()"
-              [i18n]="formI18n()"
+              [i18n]="store.i18n"
               (dirty)="manualDirty.set($event)"
               (valid)="formValid.set($event)"
             />
@@ -130,44 +130,6 @@ export class MembershipEditModal {
     cancel: this.store.i18n.changeConfirmation_cancel(),
     confirmation: this.store.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
-
-  protected readonly formI18n = computed<MembershipFormI18n>(() => ({
-    selectLabel:                    this.store.i18n.selectLabel,
-    newDesc:                        this.store.i18n.newDesc,
-    categoryLabel:                  this.store.i18n.categoryLabel,
-    categoryHelper:                 this.store.i18n.categoryHelper,
-    categoryName:                   this.store.i18n.categoryName,
-    memberStateLabel:               this.store.i18n.memberStateLabel,
-    stateHelper:                    this.store.i18n.stateHelper,
-    bkey_label:                     this.store.i18n.bkey_label,
-    memberId_label:                 this.store.i18n.memberId_label,
-    memberId_placeholder:           this.store.i18n.memberId_placeholder,
-    memberId_helper:                this.store.i18n.memberId_helper,
-    memberBexioId_label:            this.store.i18n.memberBexioId_label,
-    memberBexioId_placeholder:      this.store.i18n.memberBexioId_placeholder,
-    memberBexioId_helper:           this.store.i18n.memberBexioId_helper,
-    memberAbbreviation_label:       this.store.i18n.memberAbbreviation_label,
-    memberAbbreviation_placeholder: this.store.i18n.memberAbbreviation_placeholder,
-    memberAbbreviation_helper:      this.store.i18n.memberAbbreviation_helper,
-    memberNickName_label:           this.store.i18n.memberNickName_label,
-    memberNickName_placeholder:     this.store.i18n.memberNickName_placeholder,
-    memberNickName_helper:          this.store.i18n.memberNickName_helper,
-    orgFunction_label:              this.store.i18n.orgFunction_label,
-    orgFunction_placeholder:        this.store.i18n.orgFunction_placeholder,
-    orgFunction_helper:             this.store.i18n.orgFunction_helper,
-    rebate_label:                   this.store.i18n.rebate_label,
-    rebate_placeholder:             this.store.i18n.rebate_placeholder,
-    rebate_helper:                  this.store.i18n.rebate_helper,
-    notes_label:                    this.store.i18n.notes_label,
-    notes_placeholder:              this.store.i18n.notes_placeholder,
-    dateOfEntry_label:              this.store.i18n.dateOfEntry_label,
-    dateOfEntry_placeholder:        this.store.i18n.dateOfEntry_placeholder,
-    dateOfEntry_helper:             this.store.i18n.dateOfEntry_helper,
-    dateOfExit_label:               this.store.i18n.dateOfExit_label,
-    dateOfExit_placeholder:         this.store.i18n.dateOfExit_placeholder,
-    dateOfExit_helper:              this.store.i18n.dateOfExit_helper,
-    rebateReason_label:             this.store.i18n.rebateReason_label,
-  }));
 
   // inputs
   public membership = input.required<MembershipModel>();

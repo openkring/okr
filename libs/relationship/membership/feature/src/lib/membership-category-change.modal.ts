@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryChangeForm, CategoryChangeFormI18n } from '@bk2/relationship-membership-ui';
+import { CategoryChangeForm } from '@bk2/relationship-membership-ui';
 import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm } from '@bk2/relationship-membership-util';
 import { AvatarInfo, CategoryListModel, MembershipModel, UserModel } from '@bk2/shared-models';
 import { I18nService } from '@bk2/shared-i18n';
@@ -60,7 +60,7 @@ const CategoryChangeModalStore = signalStore(
               [formData]="formData()"
               [membershipCategory]="membershipCategory()"
               [readOnly]=false
-              [i18n]="formI18n()"
+              [i18n]="store.i18n"
               (formDataChange)="onFormDataChange($event)"
               (dirty)="formDirty.set($event)"
               (valid)="formValid.set($event)"
@@ -80,14 +80,6 @@ export class CategoryChangeModal {
     cancel: this.store.i18n.changeConfirmation_cancel(),
     confirmation: this.store.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
-
-  protected readonly formI18n = computed<CategoryChangeFormI18n>(() => ({
-    helper:                   this.store.i18n.helper,
-    helperDate:               this.store.i18n.helperDate,
-    dateOfChange_label:       this.store.i18n.dateOfChange_label,
-    dateOfChange_placeholder: this.store.i18n.dateOfChange_placeholder,
-    dateOfChange_helper:      this.store.i18n.dateOfChange_helper,
-  }));
 
   // inputs
   public membership = input.required<MembershipModel>();
