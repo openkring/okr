@@ -1,19 +1,41 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryChangeForm } from '@bk2/relationship-membership-ui';
+import { CategoryChangeForm, CategoryChangeFormI18n } from '@bk2/relationship-membership-ui';
 import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm } from '@bk2/relationship-membership-util';
 import { AvatarInfo, CategoryListModel, MembershipModel, UserModel } from '@bk2/shared-models';
 import { I18nService } from '@bk2/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { PFX } from './scope';
 import { getFullName, newAvatarInfo } from '@bk2/shared-util-core';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { RelationshipToolbar } from '@bk2/avatar-ui';
+import { PFX } from './scope';
+
+const UI = '@relationship/membership/ui.';
+
+const CategoryChangeModalStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      // ChangeConfirmation keys
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+      // CategoryChangeForm keys
+      helper:                   UI + 'category.change.helper',
+      helperDate:               UI + 'category.change.helperDate',
+      dateOfChange_label:       UI + 'dateOfChange.label',
+      dateOfChange_placeholder: UI + 'dateOfChange.placeholder',
+      dateOfChange_helper:      UI + 'dateOfChange.helper',
+    } satisfies Record<string, string>),
+  })),
+);
 
 @Component({
   selector: 'bk-category-change-modal',
   standalone: true,
+  providers: [CategoryChangeModalStore],
   imports: [
     Header, ChangeConfirmation, CategoryChangeForm, RelationshipToolbar,
     IonContent
@@ -22,7 +44,7 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
     <bk-header [i18n]="{ title: title() }" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
-    } 
+    }
     <ion-content class="ion-no-padding">
       @if (currentUser(); as currentUser) {
         @if (memberAvatar(); as memberAvatar) {
@@ -38,6 +60,7 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
               [formData]="formData()"
               [membershipCategory]="membershipCategory()"
               [readOnly]=false
+              [i18n]="formI18n()"
               (formDataChange)="onFormDataChange($event)"
               (dirty)="formDirty.set($event)"
               (valid)="formValid.set($event)"
@@ -50,17 +73,21 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
 })
 export class CategoryChangeModal {
   private readonly modalController = inject(ModalController);
-  private readonly i18nService = inject(I18nService);
-  private readonly confirmI18n = this.i18nService.translateAll({
-    changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-    changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-    changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-  });
+  protected readonly store = inject(CategoryChangeModalStore);
+
   protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.confirmI18n.changeConfirmation_ok(),
-    cancel: this.confirmI18n.changeConfirmation_cancel(),
-    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
+
+  protected readonly formI18n = computed<CategoryChangeFormI18n>(() => ({
+    helper:                   this.store.i18n.helper,
+    helperDate:               this.store.i18n.helperDate,
+    dateOfChange_label:       this.store.i18n.dateOfChange_label,
+    dateOfChange_placeholder: this.store.i18n.dateOfChange_placeholder,
+    dateOfChange_helper:      this.store.i18n.dateOfChange_helper,
+  }));
 
   // inputs
   public membership = input.required<MembershipModel>();
@@ -84,11 +111,11 @@ export class CategoryChangeModal {
     const m = this.membership();
       return newAvatarInfo(m.orgKey, '', m.orgName, m.orgModelType, '', '', m.orgName);
   });
-  
+
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     this.formDirty.set(false);
-    await this.modalController.dismiss(this.formData(), 'confirm');  
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

@@ -4,19 +4,71 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { I18nService } from '@bk2/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { PFX } from './scope';
 import { coerceBoolean, getFullName, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
 import { AppStore } from '@bk2/shared-feature';
+import { signalStore, withProps } from '@ngrx/signals';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { DocumentsAccordion } from '@bk2/document-feature';
 
-import { MembershipForm } from '@bk2/relationship-membership-ui';
+import { MembershipForm, MembershipFormI18n } from '@bk2/relationship-membership-ui';
 import { RelationshipToolbar } from '@bk2/avatar-ui';
+import { PFX } from './scope';
+
+const UI = '@relationship/membership/ui.';
+
+const MembershipEditModalStore = signalStore(
+  withProps(() => ({ i18nService: inject(I18nService) })),
+  withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      // ChangeConfirmation keys
+      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+      // MembershipForm keys
+      selectLabel:                    UI + 'newDesc',
+      newDesc:                        UI + 'newDesc',
+      categoryLabel:                  UI + 'category.label',
+      categoryHelper:                 UI + 'category.helper',
+      categoryName:                   UI + 'category.label',
+      memberStateLabel:               UI + 'memberState',
+      stateHelper:                    UI + 'state.helper',
+      bkey_label:                     UI + 'bkey.label',
+      memberId_label:                 UI + 'memberId.label',
+      memberId_placeholder:           UI + 'memberId.placeholder',
+      memberId_helper:                UI + 'memberId.helper',
+      memberBexioId_label:            UI + 'memberBexioId.label',
+      memberBexioId_placeholder:      UI + 'memberBexioId.placeholder',
+      memberBexioId_helper:           UI + 'memberBexioId.helper',
+      memberAbbreviation_label:       UI + 'memberAbbreviation.label',
+      memberAbbreviation_placeholder: UI + 'memberAbbreviation.placeholder',
+      memberAbbreviation_helper:      UI + 'memberAbbreviation.helper',
+      memberNickName_label:           UI + 'memberNickName.label',
+      memberNickName_placeholder:     UI + 'memberNickName.placeholder',
+      memberNickName_helper:          UI + 'memberNickName.helper',
+      orgFunction_label:              UI + 'orgFunction.label',
+      orgFunction_placeholder:        UI + 'orgFunction.placeholder',
+      orgFunction_helper:             UI + 'orgFunction.helper',
+      rebate_label:                   UI + 'rebate.label',
+      rebate_placeholder:             UI + 'rebate.placeholder',
+      rebate_helper:                  UI + 'rebate.helper',
+      notes_label:                    UI + 'notes.label',
+      notes_placeholder:              UI + 'notes.placeholder',
+      dateOfEntry_label:              UI + 'dateOfEntry.label',
+      dateOfEntry_placeholder:        UI + 'dateOfEntry.placeholder',
+      dateOfEntry_helper:             UI + 'dateOfEntry.helper',
+      dateOfExit_label:               UI + 'dateOfExit.label',
+      dateOfExit_placeholder:         UI + 'dateOfExit.placeholder',
+      dateOfExit_helper:              UI + 'dateOfExit.helper',
+      rebateReason_label:             UI + 'rebateReason.label',
+    } satisfies Record<string, string>),
+  })),
+);
 
 @Component({
   selector: 'bk-membership-edit-modal',
   standalone: true,
+  providers: [MembershipEditModalStore],
   imports: [
     CommentsAccordion, MembershipForm, RelationshipToolbar, Header,
     ChangeConfirmation, DocumentsAccordion,
@@ -47,6 +99,7 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
               [allTags]="tags()"
               [readOnly]="isReadOnly()"
               [priv]="priv()"
+              [i18n]="formI18n()"
               (dirty)="manualDirty.set($event)"
               (valid)="formValid.set($event)"
             />
@@ -70,17 +123,51 @@ import { RelationshipToolbar } from '@bk2/avatar-ui';
 export class MembershipEditModal {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
-  private readonly i18nService = inject(I18nService);
-  private readonly confirmI18n = this.i18nService.translateAll({
-    changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-    changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-    changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-  });
+  protected readonly store = inject(MembershipEditModalStore);
+
   protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.confirmI18n.changeConfirmation_ok(),
-    cancel: this.confirmI18n.changeConfirmation_cancel(),
-    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
+
+  protected readonly formI18n = computed<MembershipFormI18n>(() => ({
+    selectLabel:                    this.store.i18n.selectLabel,
+    newDesc:                        this.store.i18n.newDesc,
+    categoryLabel:                  this.store.i18n.categoryLabel,
+    categoryHelper:                 this.store.i18n.categoryHelper,
+    categoryName:                   this.store.i18n.categoryName,
+    memberStateLabel:               this.store.i18n.memberStateLabel,
+    stateHelper:                    this.store.i18n.stateHelper,
+    bkey_label:                     this.store.i18n.bkey_label,
+    memberId_label:                 this.store.i18n.memberId_label,
+    memberId_placeholder:           this.store.i18n.memberId_placeholder,
+    memberId_helper:                this.store.i18n.memberId_helper,
+    memberBexioId_label:            this.store.i18n.memberBexioId_label,
+    memberBexioId_placeholder:      this.store.i18n.memberBexioId_placeholder,
+    memberBexioId_helper:           this.store.i18n.memberBexioId_helper,
+    memberAbbreviation_label:       this.store.i18n.memberAbbreviation_label,
+    memberAbbreviation_placeholder: this.store.i18n.memberAbbreviation_placeholder,
+    memberAbbreviation_helper:      this.store.i18n.memberAbbreviation_helper,
+    memberNickName_label:           this.store.i18n.memberNickName_label,
+    memberNickName_placeholder:     this.store.i18n.memberNickName_placeholder,
+    memberNickName_helper:          this.store.i18n.memberNickName_helper,
+    orgFunction_label:              this.store.i18n.orgFunction_label,
+    orgFunction_placeholder:        this.store.i18n.orgFunction_placeholder,
+    orgFunction_helper:             this.store.i18n.orgFunction_helper,
+    rebate_label:                   this.store.i18n.rebate_label,
+    rebate_placeholder:             this.store.i18n.rebate_placeholder,
+    rebate_helper:                  this.store.i18n.rebate_helper,
+    notes_label:                    this.store.i18n.notes_label,
+    notes_placeholder:              this.store.i18n.notes_placeholder,
+    dateOfEntry_label:              this.store.i18n.dateOfEntry_label,
+    dateOfEntry_placeholder:        this.store.i18n.dateOfEntry_placeholder,
+    dateOfEntry_helper:             this.store.i18n.dateOfEntry_helper,
+    dateOfExit_label:               this.store.i18n.dateOfExit_label,
+    dateOfExit_placeholder:         this.store.i18n.dateOfExit_placeholder,
+    dateOfExit_helper:              this.store.i18n.dateOfExit_helper,
+    rebateReason_label:             this.store.i18n.rebateReason_label,
+  }));
 
   // inputs
   public membership = input.required<MembershipModel>();

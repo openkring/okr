@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -6,15 +6,16 @@ import { CategoryListModel, UserModel } from '@bk2/shared-models';
 import { CategorySelect, DateInput, DateInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
 import { coerceBoolean, debugFormErrors, debugFormModel } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
 import {CategoryChangeFormModel, categoryChangeFormValidations } from '@bk2/relationship-membership-util';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { PFX } from './scope';
 
 export interface CategoryChangeFormI18n {
-  helper: string;
-  helperDate: string;
+  helper: Signal<string>;
+  helperDate: Signal<string>;
+  dateOfChange_label: Signal<string>;
+  dateOfChange_placeholder: Signal<string>;
+  dateOfChange_helper: Signal<string>;
 }
 
 @Component({
@@ -56,7 +57,7 @@ export interface CategoryChangeFormI18n {
               <ion-row>
                 <ion-col size="12">
                   <ion-item lines="none">
-                    <ion-label>{{ i18n().helper }}</ion-label>
+                    <ion-label>{{ i18n().helper() }}</ion-label>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -66,7 +67,7 @@ export interface CategoryChangeFormI18n {
                 </ion-col>
                 <ion-col size="12">
                   <ion-item lines="none">
-                    <ion-label>{{ i18n().helperDate }}</ion-label>
+                    <ion-label>{{ i18n().helperDate() }}</ion-label>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -77,16 +78,10 @@ export interface CategoryChangeFormI18n {
   `
 })
 export class CategoryChangeForm {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    dateOfChange_label:       PFX + 'dateOfChange.label',
-    dateOfChange_placeholder: PFX + 'dateOfChange.placeholder',
-    dateOfChange_helper:      PFX + 'dateOfChange.helper',
-  });
-  protected dateOfChangeI18n = computed(() => ({ name: 'dateOfChange', label: this.fieldI18n.dateOfChange_label(), placeholder: this.fieldI18n.dateOfChange_placeholder(), helper: this.fieldI18n.dateOfChange_helper() } as DateInputI18n));
+  protected dateOfChangeI18n = computed(() => ({ name: 'dateOfChange', label: this.i18n().dateOfChange_label(), placeholder: this.i18n().dateOfChange_placeholder(), helper: this.i18n().dateOfChange_helper() } as DateInputI18n));
 
   // inputs
-  public readonly i18n = input<CategoryChangeFormI18n>({ helper: '', helperDate: '' });
+  public readonly i18n = input.required<CategoryChangeFormI18n>();
   public formData = model.required<CategoryChangeFormModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

@@ -1,28 +1,54 @@
 import { FormsModule } from '@angular/forms';
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask } from '@bk2/shared-config';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { AppStore, OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
 
 import { membershipValidations } from '@bk2/relationship-membership-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { PFX } from './scope';
 
 export interface MembershipFormI18n {
-  selectLabel: string;
-  newDesc: string;
-  categoryLabel: string;
-  categoryHelper: string;
-  categoryName: string;
-  memberStateLabel: string;
-  stateHelper: string;
+  selectLabel: Signal<string>;
+  newDesc: Signal<string>;
+  categoryLabel: Signal<string>;
+  categoryHelper: Signal<string>;
+  categoryName: Signal<string>;
+  memberStateLabel: Signal<string>;
+  stateHelper: Signal<string>;
+  bkey_label: Signal<string>;
+  memberId_label: Signal<string>;
+  memberId_placeholder: Signal<string>;
+  memberId_helper: Signal<string>;
+  memberBexioId_label: Signal<string>;
+  memberBexioId_placeholder: Signal<string>;
+  memberBexioId_helper: Signal<string>;
+  memberAbbreviation_label: Signal<string>;
+  memberAbbreviation_placeholder: Signal<string>;
+  memberAbbreviation_helper: Signal<string>;
+  memberNickName_label: Signal<string>;
+  memberNickName_placeholder: Signal<string>;
+  memberNickName_helper: Signal<string>;
+  orgFunction_label: Signal<string>;
+  orgFunction_placeholder: Signal<string>;
+  orgFunction_helper: Signal<string>;
+  rebate_label: Signal<string>;
+  rebate_placeholder: Signal<string>;
+  rebate_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+  dateOfEntry_label: Signal<string>;
+  dateOfEntry_placeholder: Signal<string>;
+  dateOfEntry_helper: Signal<string>;
+  dateOfExit_label: Signal<string>;
+  dateOfExit_placeholder: Signal<string>;
+  dateOfExit_helper: Signal<string>;
+  rebateReason_label: Signal<string>;
 }
 
 @Component({
@@ -40,11 +66,11 @@ export interface MembershipFormI18n {
     @if (showForm()) {
       <form scVestForm
         [formValue]="formData()"
-        [suite]="suite" 
+        [suite]="suite"
         (dirtyChange)="dirty.emit($event)"
         (validChange)="valid.emit($event)"
         (formValueChange)="onFormChange($event)">
-      
+
           <ion-card>
             <ion-card-content class="ion-no-padding">
               <!------------------------------------------- new membership: select member and org ------------------------------------------------->
@@ -61,14 +87,14 @@ export interface MembershipFormI18n {
                     </ion-col>
                     <ion-col size="3">
                       <ion-item lines="none">
-                        <ion-button slot="start" fill="clear" (click)="selectMember()">{{ i18n().selectLabel }}</ion-button>
+                        <ion-button slot="start" fill="clear" (click)="selectMember()">{{ i18n().selectLabel() }}</ion-button>
                       </ion-item>
                     </ion-col>
                   </ion-row>
                   <ion-row>
                     <ion-col size="12">
                       <ion-item lines="none">
-                        <ion-label>{{ i18n().newDesc }}</ion-label>
+                        <ion-label>{{ i18n().newDesc() }}</ion-label>
                       </ion-item>
                     </ion-col>
                   </ion-row>
@@ -83,7 +109,7 @@ export interface MembershipFormI18n {
                     </ion-col>
                     <ion-col size="3">
                       <ion-item lines="none">
-                      <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ i18n().selectLabel }}</ion-button>
+                      <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ i18n().selectLabel() }}</ion-button>
                       </ion-item>
                     </ion-col>
                   </ion-row>
@@ -120,29 +146,29 @@ export interface MembershipFormI18n {
                   <ion-row>
                     <ion-col size="12" size-md="6">
                       <ion-item lines="none">
-                        <ion-label>{{ i18n().categoryLabel }}:</ion-label>
-                        <ion-label>{{ i18n().categoryName }}</ion-label>
+                        <ion-label>{{ i18n().categoryLabel() }}:</ion-label>
+                        <ion-label>{{ i18n().categoryName() }}</ion-label>
                       </ion-item>
                       <ion-item lines="none">
-                        <ion-note>{{ i18n().categoryHelper }}</ion-note>
+                        <ion-note>{{ i18n().categoryHelper() }}</ion-note>
                       </ion-item>
                     </ion-col>
                     <ion-col size="12" size-md="6">
                       <ion-item lines="none">
-                        <ion-label>{{ i18n().memberStateLabel }}:</ion-label>
+                        <ion-label>{{ i18n().memberStateLabel() }}:</ion-label>
                         <ion-label>{{ membershipState() }}</ion-label>
                       </ion-item>
                       <ion-item lines="none">
-                        <ion-note>{{ i18n().stateHelper }}</ion-note>
+                        <ion-note>{{ i18n().stateHelper() }}</ion-note>
                       </ion-item>
                     </ion-col>
-                    
+
                     <ion-col size="12" size-md="6">
                       <bk-number-input [i18n]="rebateI18n()" [value]="rebate()" (valueChange)="onFieldChange('rebate', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
                       <bk-string-select [i18n]="rebateReasonI18n()" [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" />
-                    </ion-col>         
+                    </ion-col>
                   </ion-row>
                 </ion-grid>
               }
@@ -150,7 +176,7 @@ export interface MembershipFormI18n {
               <!--------------------------------------------------- properties --------------------------------------------------->
               <ion-grid>
                 <ion-row>
-                  <ion-col size="12" size-md="6"> 
+                  <ion-col size="12" size-md="6">
                     <bk-text-input [i18n]="memberIdI18n()" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                   </ion-col>
 
@@ -158,7 +184,7 @@ export interface MembershipFormI18n {
                     <bk-text-input [i18n]="memberBexioIdI18n()" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]=6 [mask]="bexioMask" [readOnly]="isReadOnly()" />
                   </ion-col>
 
-                  <ion-col size="12" size-md="6"> 
+                  <ion-col size="12" size-md="6">
                     <bk-text-input [i18n]="memberAbbreviationI18n()" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                   </ion-col>
 
@@ -167,7 +193,7 @@ export interface MembershipFormI18n {
                     <bk-text-input [i18n]="memberNickNameI18n()" [value]="memberNickName()" (valueChange)="onFieldChange('memberNickName', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                   </ion-col>
 
-                  <ion-col size="12" size-md="6"> 
+                  <ion-col size="12" size-md="6">
                     <bk-text-input [i18n]="orgFunctionI18n()" [value]="orgFunction()" (valueChange)="onFieldChange('orgFunction', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
                   </ion-col>
                   }
@@ -179,7 +205,7 @@ export interface MembershipFormI18n {
           @if(areTagsVisible()) {
             <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
           }
-          
+
           @if(hasRole('admin')) {
             <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
           }
@@ -190,53 +216,22 @@ export interface MembershipFormI18n {
 export class MembershipForm {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
-  private readonly i18nService = inject(I18nService);
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:                   PFX + 'bkey.label',
-    memberId_label:               PFX + 'memberId.label',
-    memberId_placeholder:         PFX + 'memberId.placeholder',
-    memberId_helper:              PFX + 'memberId.helper',
-    memberBexioId_label:          PFX + 'memberBexioId.label',
-    memberBexioId_placeholder:    PFX + 'memberBexioId.placeholder',
-    memberBexioId_helper:         PFX + 'memberBexioId.helper',
-    memberAbbreviation_label:     PFX + 'memberAbbreviation.label',
-    memberAbbreviation_placeholder: PFX + 'memberAbbreviation.placeholder',
-    memberAbbreviation_helper:    PFX + 'memberAbbreviation.helper',
-    memberNickName_label:         PFX + 'memberNickName.label',
-    memberNickName_placeholder:   PFX + 'memberNickName.placeholder',
-    memberNickName_helper:        PFX + 'memberNickName.helper',
-    orgFunction_label:            PFX + 'orgFunction.label',
-    orgFunction_placeholder:      PFX + 'orgFunction.placeholder',
-    orgFunction_helper:           PFX + 'orgFunction.helper',
-    rebate_label:                 PFX + 'rebate.label',
-    rebate_placeholder:           PFX + 'rebate.placeholder',
-    rebate_helper:                PFX + 'rebate.helper',
-    notes_label:                  PFX + 'notes.label',
-    notes_placeholder:            PFX + 'notes.placeholder',
-    dateOfEntry_label:            PFX + 'dateOfEntry.label',
-    dateOfEntry_placeholder:      PFX + 'dateOfEntry.placeholder',
-    dateOfEntry_helper:           PFX + 'dateOfEntry.helper',
-    dateOfExit_label:             PFX + 'dateOfExit.label',
-    dateOfExit_placeholder:       PFX + 'dateOfExit.placeholder',
-    dateOfExit_helper:            PFX + 'dateOfExit.helper',
-    rebateReason_label:           PFX + 'rebateReason.label',
-  });
-
-  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: '', helper: '' }) as TextInputI18n);
-  protected memberIdI18n = computed(() => ({ name: 'memberId', label: this.fieldI18n.memberId_label(), placeholder: this.fieldI18n.memberId_placeholder(), helper: this.fieldI18n.memberId_helper() }) as TextInputI18n);
-  protected memberBexioIdI18n = computed(() => ({ name: 'memberBexioId', label: this.fieldI18n.memberBexioId_label(), placeholder: this.fieldI18n.memberBexioId_placeholder(), helper: this.fieldI18n.memberBexioId_helper() }) as TextInputI18n);
-  protected memberAbbreviationI18n = computed(() => ({ name: 'memberAbbreviation', label: this.fieldI18n.memberAbbreviation_label(), placeholder: this.fieldI18n.memberAbbreviation_placeholder(), helper: this.fieldI18n.memberAbbreviation_helper() }) as TextInputI18n);
-  protected memberNickNameI18n = computed(() => ({ name: 'memberNickName', label: this.fieldI18n.memberNickName_label(), placeholder: this.fieldI18n.memberNickName_placeholder(), helper: this.fieldI18n.memberNickName_helper() }) as TextInputI18n);
-  protected orgFunctionI18n = computed(() => ({ name: 'orgFunction', label: this.fieldI18n.orgFunction_label(), placeholder: this.fieldI18n.orgFunction_placeholder(), helper: this.fieldI18n.orgFunction_helper() }) as TextInputI18n);
-  protected rebateI18n = computed(() => ({ name: 'rebate', label: this.fieldI18n.rebate_label(), placeholder: this.fieldI18n.rebate_placeholder(), helper: this.fieldI18n.rebate_helper() } as NumberInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
-  protected dateOfEntryI18n = computed(() => ({ name: 'dateOfEntry', label: this.fieldI18n.dateOfEntry_label(), placeholder: this.fieldI18n.dateOfEntry_placeholder(), helper: this.fieldI18n.dateOfEntry_helper() } as DateInputI18n));
-  protected dateOfExitI18n    = computed(() => ({ name: 'dateOfExit',    label: this.fieldI18n.dateOfExit_label(),    placeholder: this.fieldI18n.dateOfExit_placeholder(),    helper: this.fieldI18n.dateOfExit_helper()    } as DateInputI18n));
-  protected rebateReasonI18n  = computed(() => ({ name: 'rebateReason',  label: this.fieldI18n.rebateReason_label()  } as StringSelectI18n));
+  // i18n — all field translations come from the i18n input
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: '', helper: '' }) as TextInputI18n);
+  protected memberIdI18n = computed(() => ({ name: 'memberId', label: this.i18n().memberId_label(), placeholder: this.i18n().memberId_placeholder(), helper: this.i18n().memberId_helper() }) as TextInputI18n);
+  protected memberBexioIdI18n = computed(() => ({ name: 'memberBexioId', label: this.i18n().memberBexioId_label(), placeholder: this.i18n().memberBexioId_placeholder(), helper: this.i18n().memberBexioId_helper() }) as TextInputI18n);
+  protected memberAbbreviationI18n = computed(() => ({ name: 'memberAbbreviation', label: this.i18n().memberAbbreviation_label(), placeholder: this.i18n().memberAbbreviation_placeholder(), helper: this.i18n().memberAbbreviation_helper() }) as TextInputI18n);
+  protected memberNickNameI18n = computed(() => ({ name: 'memberNickName', label: this.i18n().memberNickName_label(), placeholder: this.i18n().memberNickName_placeholder(), helper: this.i18n().memberNickName_helper() }) as TextInputI18n);
+  protected orgFunctionI18n = computed(() => ({ name: 'orgFunction', label: this.i18n().orgFunction_label(), placeholder: this.i18n().orgFunction_placeholder(), helper: this.i18n().orgFunction_helper() }) as TextInputI18n);
+  protected rebateI18n = computed(() => ({ name: 'rebate', label: this.i18n().rebate_label(), placeholder: this.i18n().rebate_placeholder(), helper: this.i18n().rebate_helper() } as NumberInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected dateOfEntryI18n = computed(() => ({ name: 'dateOfEntry', label: this.i18n().dateOfEntry_label(), placeholder: this.i18n().dateOfEntry_placeholder(), helper: this.i18n().dateOfEntry_helper() } as DateInputI18n));
+  protected dateOfExitI18n   = computed(() => ({ name: 'dateOfExit',   label: this.i18n().dateOfExit_label(),   placeholder: this.i18n().dateOfExit_placeholder(),   helper: this.i18n().dateOfExit_helper()   } as DateInputI18n));
+  protected rebateReasonI18n = computed(() => ({ name: 'rebateReason', label: this.i18n().rebateReason_label() } as StringSelectI18n));
 
   // inputs
-  public readonly i18n = input<MembershipFormI18n>({ selectLabel: '', newDesc: '', categoryLabel: '', categoryHelper: '', categoryName: '', memberStateLabel: '', stateHelper: '' });
+  public readonly i18n = input.required<MembershipFormI18n>();
   public readonly formData = model.required<MembershipModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -257,7 +252,7 @@ export class MembershipForm {
   // fields
   protected isNew = computed(() => !this.formData().bkey);
   protected memberKey = linkedSignal(() => this.formData().memberKey ?? '');
-  protected memberName1 = computed(() => this.formData().memberName1 ?? DEFAULT_NAME); 
+  protected memberName1 = computed(() => this.formData().memberName1 ?? DEFAULT_NAME);
   protected memberName2 = computed(() => this.formData().memberName2 ?? DEFAULT_NAME);
   protected memberName = linkedSignal(() => getFullName(this.formData().memberName1, this.formData().memberName2, this.currentUser()?.nameDisplay));
   protected memberModelType = computed(() => this.formData().memberModelType ?? 'person');
@@ -289,7 +284,7 @@ export class MembershipForm {
   protected name = computed(() => this.membershipCategories().name);
   protected readonly locale = linkedSignal(() => this.appStore.appConfig().locale);
   protected bkey = computed(() => this.formData().bkey ?? '');
-  
+
   // passing constants to template
   protected bexioMask = BexioIdMask;
   protected endFutureDate = END_FUTURE_DATE_STR;
@@ -372,7 +367,7 @@ export class MembershipForm {
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
   }
-  
+
   protected areTagsVisible(): boolean {
     return areTagsVisible(this.currentUser(), this.priv(), this.tags(), this.isReadOnly())  ;
   }

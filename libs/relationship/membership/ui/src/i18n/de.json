@@ -11,13 +11,13 @@
   "state": {
     "helper": "Der Mitgliederstatus kann nicht editiert werden. Er wird automatisch von der Mitgliederkategorie abgeleitet. Der Status kann in der Kategorien-Definition pro Kategorie gesetzt werden."
   },
+  "memberState": "Mitgliederstatus",
   "person": {
     "details": "Angaben zur Person",
     "address": "Adressen",
     "misc": "Verschiedenes",
     "membership": "Mitgliedschaft (optional)"
   },
-  "memberState": "Mitgliederstatus",
   "rebate": {
     "label": "Rabatt",
     "placeholder": "",
@@ -67,9 +67,21 @@
   "rebateReason": { "label": "Rabattgrund" },
   "invoiceState": { "label": "Rechnungsstatus" },
   "memberId": { "label": "Mitglied-Nr.", "placeholder": "", "helper": "" },
-  "memberBexioId": { "label": "Bexio-ID", "placeholder": "", "helper": "" },
+  "memberBexioId": { "label": "Bexio-ID (Mitglied)", "placeholder": "", "helper": "" },
   "memberAbbreviation": { "label": "Kürzel", "placeholder": "", "helper": "" },
   "memberNickName": { "label": "Spitzname", "placeholder": "", "helper": "" },
   "orgFunction": { "label": "Funktion", "placeholder": "", "helper": "" },
-  "bkey": { "label": "Dok.-Schlüssel", "placeholder": "", "helper": "" }
+  "bkey": { "label": "Dok.-Schlüssel", "placeholder": "", "helper": "" },
+  "firstName":    { "label": "Vorname",        "placeholder": "Vorname eingeben",       "helper": "" },
+  "lastName":     { "label": "Nachname",       "placeholder": "Nachname eingeben",      "helper": "" },
+  "streetName":   { "label": "Strasse",        "placeholder": "Strassenname eingeben",  "helper": "" },
+  "streetNumber": { "label": "Hausnummer",     "placeholder": "Nr.",                    "helper": "" },
+  "countryCode":  { "label": "Land",           "placeholder": "CH",                     "helper": "" },
+  "zipCode":      { "label": "PLZ",            "placeholder": "PLZ eingeben",           "helper": "" },
+  "city":         { "label": "Ort",            "placeholder": "Ort eingeben",           "helper": "" },
+  "web":          { "label": "Website",        "placeholder": "https://...",            "helper": "" },
+  "ssnId":        { "label": "AHV-Nummer",     "placeholder": "756.XXXX.XXXX.XX",      "helper": "Die AHV-Nummer wird für die SRV-Meldung benötigt." },
+  "bexioId":      { "label": "Bexio-ID",       "placeholder": "",                       "helper": "Die Bexio-ID wird für die Bexio-Integration benötigt." },
+  "dateOfBirth":  { "label": "Geburtsdatum",   "placeholder": "TT.MM.JJJJ",            "helper": "" },
+  "dateOfDeath":  { "label": "Todesdatum",     "placeholder": "TT.MM.JJJJ",            "helper": "" }
 }
