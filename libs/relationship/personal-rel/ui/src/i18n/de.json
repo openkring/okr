@@ -1,5 +1,7 @@
 {
-  "select": "Auswählen",
+  "select": {
+    "label": "Auswählen"
+  },
   "bkey": {
     "label": "Dok.-Schlüssel",
     "placeholder": "",

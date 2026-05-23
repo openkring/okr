@@ -34,6 +34,8 @@ const initialState: PersonalRelState = {
   showOnlyCurrent: true,
 };
 
+const UI_PFX = '@relationship/personal-rel/ui.';
+
 const PERSONAL_REL_I18N_KEYS = {
   title:                           PFX + 'title',
   person1:                         PFX + 'person1',
@@ -51,6 +53,22 @@ const PERSONAL_REL_I18N_KEYS = {
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  // form field keys (resolved from ui namespace)
+  selectLabel:                     UI_PFX + 'select.label',
+  bkey_label:                      UI_PFX + 'bkey.label',
+  bkey_placeholder:                UI_PFX + 'bkey.placeholder',
+  bkey_helper:                     UI_PFX + 'bkey.helper',
+  label_label:                     UI_PFX + 'label.label',
+  label_placeholder:               UI_PFX + 'label.placeholder',
+  label_helper:                    UI_PFX + 'label.helper',
+  notes_label:                     UI_PFX + 'notes.label',
+  notes_placeholder:               UI_PFX + 'notes.placeholder',
+  validFrom_label:                 UI_PFX + 'validFrom.label',
+  validFrom_placeholder:           UI_PFX + 'validFrom.placeholder',
+  validFrom_helper:                UI_PFX + 'validFrom.helper',
+  validTo_label:                   UI_PFX + 'validTo.label',
+  validTo_placeholder:             UI_PFX + 'validTo.placeholder',
+  validTo_helper:                  UI_PFX + 'validTo.helper',
 } satisfies Record<string, string>;
 
 export type PersonalRelI18n = { [K in keyof typeof PERSONAL_REL_I18N_KEYS]: Signal<string> };

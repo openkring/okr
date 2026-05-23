@@ -30,9 +30,10 @@ import { PersonalRelStore } from './personal-rel.store';
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-personal-rel-form
+          [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
-          [currentUser]="currentUser()" 
+          [currentUser]="currentUser()"
           [types]="types()"
           [allTags]="tags()"
           [readOnly]="isReadOnly()"
