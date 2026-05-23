@@ -27,7 +27,7 @@ import { browseUrl, copyAddress, isAddress, stringifyPostalAddress } from '@bk2/
 import { AddressEditModal } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
 import { I18nService } from '@bk2/shared-i18n';
-import { PFX } from 'libs/subject/address/feature/src/lib/scope';
+import { PFX } from './scope';
 
 export type AddressState = {
   parentKey: string;
