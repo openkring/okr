@@ -51,6 +51,7 @@ import { PersonStore } from './person.store';
             <bk-person-form
                 [formData]="formData"
                 (formDataChange)="onFormDataChange($event)"
+                [i18n]="store.i18n"
                 [currentUser]="currentUser()"
                 [priv]="priv()"
                 [genders]="genders()"

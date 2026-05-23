@@ -72,6 +72,31 @@ const PERSON_I18N_KEYS = {
   as_call:                         PFX + 'actionsheet.call',
   as_show:                         PFX + 'actionsheet.show',
   cancel:                          '@cancel',
+
+  // person form field keys (from @subject/person/ui)
+  bkey_label:               '@subject/person/ui.bkey.label',
+  bkey_placeholder:         '@subject/person/ui.bkey.placeholder',
+  bkey_helper:              '@subject/person/ui.bkey.helper',
+  firstName_label:          '@subject/person/ui.firstName.label',
+  firstName_placeholder:    '@subject/person/ui.firstName.placeholder',
+  firstName_helper:         '@subject/person/ui.firstName.helper',
+  lastName_label:           '@subject/person/ui.lastName.label',
+  lastName_placeholder:     '@subject/person/ui.lastName.placeholder',
+  lastName_helper:          '@subject/person/ui.lastName.helper',
+  ssnId_label:              '@subject/person/ui.ssnId.label',
+  ssnId_placeholder:        '@subject/person/ui.ssnId.placeholder',
+  ssnId_helper:             '@subject/person/ui.ssnId.helper',
+  bexioId_label:            '@subject/person/ui.bexioId.label',
+  bexioId_placeholder:      '@subject/person/ui.bexioId.placeholder',
+  bexioId_helper:           '@subject/person/ui.bexioId.helper',
+  notes_label:              '@subject/person/ui.notes.label',
+  notes_placeholder:        '@subject/person/ui.notes.placeholder',
+  dateOfBirth_label:        '@subject/person/ui.dateOfBirth.label',
+  dateOfBirth_placeholder:  '@subject/person/ui.dateOfBirth.placeholder',
+  dateOfBirth_helper:       '@subject/person/ui.dateOfBirth.helper',
+  dateOfDeath_label:        '@subject/person/ui.dateOfDeath.label',
+  dateOfDeath_placeholder:  '@subject/person/ui.dateOfDeath.placeholder',
+  dateOfDeath_helper:       '@subject/person/ui.dateOfDeath.helper',
 } satisfies Record<string, string>;
 
 export type PersonI18n = { [K in keyof typeof PERSON_I18N_KEYS]: Signal<string> };

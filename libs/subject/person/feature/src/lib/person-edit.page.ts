@@ -49,13 +49,14 @@ import { PersonStore } from './person.store';
 
       @if(formData(); as formData) {
         <bk-person-form
-          [formData]="formData" 
+          [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
+          [i18n]="store.i18n"
           [currentUser]="currentUser()"
           [priv]="priv()"
           [genders]="genders()"
           [allTags]="tags()"
-          [tenantId]="tenantId()" 
+          [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
