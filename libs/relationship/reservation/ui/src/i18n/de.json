@@ -1,5 +1,5 @@
 {
-  "select": "Auswählen",
+  "select": { "label": "Auswählen" },
   "newDesc": "... möchte die folgende Resource reservieren:",
   "bkey": {
     "label": "Dok.-Schlüssel",

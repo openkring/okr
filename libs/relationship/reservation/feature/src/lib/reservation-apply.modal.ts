@@ -45,6 +45,7 @@ import { ReservationStore } from './reservation.store';
 
         @if(formData(); as formData) {
           <bk-reservation-apply-form
+            [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
