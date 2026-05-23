@@ -49,6 +49,7 @@ import { OrgStore } from './org.store';
         <bk-org-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
+          [i18n]="store.i18n"
           [currentUser]="currentUser()"
           [types]="types()"
           [showForm]="showForm()"

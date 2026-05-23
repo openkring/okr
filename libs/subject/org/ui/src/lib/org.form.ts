@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -6,10 +6,31 @@ import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
 import { CategoryListModel, OrgModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { orgValidations } from '@bk2/subject-org-util';
-import { PFX } from './scope';
+
+export interface OrgFormI18n {
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  taxId_label: Signal<string>;
+  taxId_placeholder: Signal<string>;
+  taxId_helper: Signal<string>;
+  bexioId_label: Signal<string>;
+  bexioId_placeholder: Signal<string>;
+  bexioId_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+  dateOfFoundation_label: Signal<string>;
+  dateOfFoundation_placeholder: Signal<string>;
+  dateOfFoundation_helper: Signal<string>;
+  dateOfLiquidation_label: Signal<string>;
+  dateOfLiquidation_placeholder: Signal<string>;
+  dateOfLiquidation_helper: Signal<string>;
+}
 
 @Component({
   selector: 'bk-org-form',
@@ -86,36 +107,14 @@ import { PFX } from './scope';
   `
 })
 export class OrgForm {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:        PFX + 'bkey.label',
-    bkey_placeholder:  PFX + 'bkey.placeholder',
-    bkey_helper:       PFX + 'bkey.helper',
-    name_label:        PFX + 'name.label',
-    name_placeholder:  PFX + 'name.placeholder',
-    name_helper:       PFX + 'name.helper',
-    taxId_label:       PFX + 'taxId.label',
-    taxId_placeholder: PFX + 'taxId.placeholder',
-    taxId_helper:      PFX + 'taxId.helper',
-    bexioId_label:     PFX + 'bexioId.label',
-    bexioId_placeholder: PFX + 'bexioId.placeholder',
-    bexioId_helper:    PFX + 'bexioId.helper',
-    notes_label:       PFX + 'notes.label',
-    notes_placeholder: PFX + 'notes.placeholder',
-    dateOfFoundation_label:        PFX + 'dateOfFoundation.label',
-    dateOfFoundation_placeholder:  PFX + 'dateOfFoundation.placeholder',
-    dateOfFoundation_helper:       PFX + 'dateOfFoundation.helper',
-    dateOfLiquidation_label:       PFX + 'dateOfLiquidation.label',
-    dateOfLiquidation_placeholder: PFX + 'dateOfLiquidation.placeholder',
-    dateOfLiquidation_helper:      PFX + 'dateOfLiquidation.helper',
-  });
-  protected bkeyI18n   = computed(() => ({ name: 'bkey',   label: this.fieldI18n.bkey_label(),   placeholder: this.fieldI18n.bkey_placeholder(),   helper: this.fieldI18n.bkey_helper()   } as TextInputI18n));
-  protected nameI18n   = computed(() => ({ name: 'name',   label: this.fieldI18n.name_label(),   placeholder: this.fieldI18n.name_placeholder(),   helper: this.fieldI18n.name_helper()   } as TextInputI18n));
-  protected taxIdI18n  = computed(() => ({ name: 'taxId',  label: this.fieldI18n.taxId_label(),  placeholder: this.fieldI18n.taxId_placeholder(),  helper: this.fieldI18n.taxId_helper()  } as TextInputI18n));
-  protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.fieldI18n.bexioId_label(), placeholder: this.fieldI18n.bexioId_placeholder(), helper: this.fieldI18n.bexioId_helper() } as TextInputI18n));
-  protected notesI18n   = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
-  protected dateOfFoundationI18n  = computed(() => ({ name: 'dateOfFoundation',  label: this.fieldI18n.dateOfFoundation_label(),  placeholder: this.fieldI18n.dateOfFoundation_placeholder(),  helper: this.fieldI18n.dateOfFoundation_helper()  } as DateInputI18n));
-  protected dateOfLiquidationI18n = computed(() => ({ name: 'dateOfLiquidation', label: this.fieldI18n.dateOfLiquidation_label(), placeholder: this.fieldI18n.dateOfLiquidation_placeholder(), helper: this.fieldI18n.dateOfLiquidation_helper() } as DateInputI18n));
+  public readonly i18n = input.required<OrgFormI18n>();
+  protected bkeyI18n   = computed(() => ({ name: 'bkey',   label: this.i18n().bkey_label(),   placeholder: this.i18n().bkey_placeholder(),   helper: this.i18n().bkey_helper()   } as TextInputI18n));
+  protected nameI18n   = computed(() => ({ name: 'name',   label: this.i18n().name_label(),   placeholder: this.i18n().name_placeholder(),   helper: this.i18n().name_helper()   } as TextInputI18n));
+  protected taxIdI18n  = computed(() => ({ name: 'taxId',  label: this.i18n().taxId_label(),  placeholder: this.i18n().taxId_placeholder(),  helper: this.i18n().taxId_helper()  } as TextInputI18n));
+  protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() } as TextInputI18n));
+  protected notesI18n   = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected dateOfFoundationI18n  = computed(() => ({ name: 'dateOfFoundation',  label: this.i18n().dateOfFoundation_label(),  placeholder: this.i18n().dateOfFoundation_placeholder(),  helper: this.i18n().dateOfFoundation_helper()  } as DateInputI18n));
+  protected dateOfLiquidationI18n = computed(() => ({ name: 'dateOfLiquidation', label: this.i18n().dateOfLiquidation_label(), placeholder: this.i18n().dateOfLiquidation_placeholder(), helper: this.i18n().dateOfLiquidation_helper() } as DateInputI18n));
 
   // inputs
   public readonly formData = model.required<OrgModel>();

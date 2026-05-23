@@ -1,13 +1,12 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { I18nService } from '@bk2/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { PFX } from './scope';
 import { OrgNewForm } from '@bk2/subject-org-ui';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 
 import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
+import { OrgStore } from './org.store';
 
 @Component({
   selector: 'bk-org-new-modal',
@@ -16,6 +15,7 @@ import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
     Header, ChangeConfirmation, OrgNewForm,
     IonContent
   ],
+  providers: [OrgStore],
   template: `
     <bk-header [i18n]="{ title: '@subject.org.operation.create.label' }" [isModal]="true" />
     @if(showConfirmation()) {
@@ -23,9 +23,10 @@ import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
-        <bk-org-new-form 
+        <bk-org-new-form
           [formData]="formData()"
           (formDataChange)="onFormDataChange($event)"
+          [i18n]="store.i18n"
           [currentUser]="currentUser"
           [allTags]="tags()"
           [types]="types()"
@@ -37,17 +38,12 @@ import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
   `
 })
 export class OrgNewModal {
+  protected readonly store = inject(OrgStore);
   private readonly modalController = inject(ModalController);
-  private readonly i18nService = inject(I18nService);
-  private readonly confirmI18n = this.i18nService.translateAll({
-    changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-    changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-    changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-  });
   protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.confirmI18n.changeConfirmation_ok(),
-    cancel: this.confirmI18n.changeConfirmation_cancel(),
-    confirmation: this.confirmI18n.changeConfirmation_confirmation(),
+    ok: this.store.i18n.changeConfirmation_ok(),
+    cancel: this.store.i18n.changeConfirmation_cancel(),
+    confirmation: this.store.i18n.changeConfirmation_confirmation(),
   } as ChangeConfirmationI18n));
 
   // inputs

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,14 +7,54 @@ import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-m
 import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 import { OrgNewFormModel, orgNewFormValidations } from '@bk2/subject-org-util';
 import { ZefixCompanyDetails } from '@bk2/subject-org-data-access';
 
-import { PFX } from './scope';
 import { ZefixLookup } from './zefix-lookup';
+
+export interface OrgNewFormI18n {
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  streetName_label: Signal<string>;
+  streetName_placeholder: Signal<string>;
+  streetName_helper: Signal<string>;
+  streetNumber_label: Signal<string>;
+  streetNumber_placeholder: Signal<string>;
+  streetNumber_helper: Signal<string>;
+  countryCode_label: Signal<string>;
+  countryCode_placeholder: Signal<string>;
+  countryCode_helper: Signal<string>;
+  zipCode_label: Signal<string>;
+  zipCode_placeholder: Signal<string>;
+  zipCode_helper: Signal<string>;
+  city_label: Signal<string>;
+  city_placeholder: Signal<string>;
+  city_helper: Signal<string>;
+  url_label: Signal<string>;
+  url_placeholder: Signal<string>;
+  url_helper: Signal<string>;
+  taxId_label: Signal<string>;
+  taxId_placeholder: Signal<string>;
+  taxId_helper: Signal<string>;
+  bexioId_label: Signal<string>;
+  bexioId_placeholder: Signal<string>;
+  bexioId_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+  email_label: Signal<string>;
+  email_placeholder: Signal<string>;
+  phone_label: Signal<string>;
+  phone_placeholder: Signal<string>;
+  dateOfFoundation_label: Signal<string>;
+  dateOfFoundation_placeholder: Signal<string>;
+  dateOfFoundation_helper: Signal<string>;
+  dateOfLiquidation_label: Signal<string>;
+  dateOfLiquidation_placeholder: Signal<string>;
+  dateOfLiquidation_helper: Signal<string>;
+}
 
 @Component({
   selector: 'bk-org-new-form',
@@ -145,62 +185,21 @@ import { ZefixLookup } from './zefix-lookup';
   `
 })
 export class OrgNewForm {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    name_label:           PFX + 'name.label',
-    name_placeholder:     PFX + 'name.placeholder',
-    name_helper:          PFX + 'name.helper',
-    streetName_label:     PFX + 'streetName.label',
-    streetName_placeholder: PFX + 'streetName.placeholder',
-    streetName_helper:    PFX + 'streetName.helper',
-    streetNumber_label:   PFX + 'streetNumber.label',
-    streetNumber_placeholder: PFX + 'streetNumber.placeholder',
-    streetNumber_helper:  PFX + 'streetNumber.helper',
-    countryCode_label:    PFX + 'countryCode.label',
-    countryCode_placeholder: PFX + 'countryCode.placeholder',
-    countryCode_helper:   PFX + 'countryCode.helper',
-    zipCode_label:        PFX + 'zipCode.label',
-    zipCode_placeholder:  PFX + 'zipCode.placeholder',
-    zipCode_helper:       PFX + 'zipCode.helper',
-    city_label:           PFX + 'city.label',
-    city_placeholder:     PFX + 'city.placeholder',
-    city_helper:          PFX + 'city.helper',
-    url_label:            PFX + 'url.label',
-    url_placeholder:      PFX + 'url.placeholder',
-    url_helper:           PFX + 'url.helper',
-    taxId_label:          PFX + 'taxId.label',
-    taxId_placeholder:    PFX + 'taxId.placeholder',
-    taxId_helper:         PFX + 'taxId.helper',
-    bexioId_label:        PFX + 'bexioId.label',
-    bexioId_placeholder:  PFX + 'bexioId.placeholder',
-    bexioId_helper:       PFX + 'bexioId.helper',
-    notes_label:          PFX + 'notes.label',
-    notes_placeholder:    PFX + 'notes.placeholder',
-    email_label:          PFX + 'email.label',
-    email_placeholder:    PFX + 'email.placeholder',
-    phone_label:          PFX + 'phone.label',
-    phone_placeholder:    PFX + 'phone.placeholder',
-    dateOfFoundation_label:        PFX + 'dateOfFoundation.label',
-    dateOfFoundation_placeholder:  PFX + 'dateOfFoundation.placeholder',
-    dateOfFoundation_helper:       PFX + 'dateOfFoundation.helper',
-    dateOfLiquidation_label:       PFX + 'dateOfLiquidation.label',
-    dateOfLiquidation_placeholder: PFX + 'dateOfLiquidation.placeholder',
-    dateOfLiquidation_helper:      PFX + 'dateOfLiquidation.helper',
-  });
-  protected nameI18n        = computed(() => ({ name: 'name',        label: this.fieldI18n.name_label(),        placeholder: this.fieldI18n.name_placeholder(),        helper: this.fieldI18n.name_helper()        } as TextInputI18n));
-  protected streetNameI18n  = computed(() => ({ name: 'streetName',  label: this.fieldI18n.streetName_label(),  placeholder: this.fieldI18n.streetName_placeholder(),  helper: this.fieldI18n.streetName_helper()  } as TextInputI18n));
-  protected streetNumberI18n = computed(() => ({ name: 'streetNumber', label: this.fieldI18n.streetNumber_label(), placeholder: this.fieldI18n.streetNumber_placeholder(), helper: this.fieldI18n.streetNumber_helper() } as TextInputI18n));
-  protected countryCodeI18n = computed(() => ({ name: 'countryCode', label: this.fieldI18n.countryCode_label(), placeholder: this.fieldI18n.countryCode_placeholder(), helper: this.fieldI18n.countryCode_helper() } as TextInputI18n));
-  protected zipCodeI18n     = computed(() => ({ name: 'zipCode',     label: this.fieldI18n.zipCode_label(),     placeholder: this.fieldI18n.zipCode_placeholder(),     helper: this.fieldI18n.zipCode_helper()     } as TextInputI18n));
-  protected cityI18n        = computed(() => ({ name: 'city',        label: this.fieldI18n.city_label(),        placeholder: this.fieldI18n.city_placeholder(),        helper: this.fieldI18n.city_helper()        } as TextInputI18n));
-  protected urlI18n         = computed(() => ({ name: 'url',         label: this.fieldI18n.url_label(),         placeholder: this.fieldI18n.url_placeholder(),         helper: this.fieldI18n.url_helper()         } as TextInputI18n));
-  protected taxIdI18n       = computed(() => ({ name: 'taxId',       label: this.fieldI18n.taxId_label(),       placeholder: this.fieldI18n.taxId_placeholder(),       helper: this.fieldI18n.taxId_helper()       } as TextInputI18n));
-  protected bexioIdI18n     = computed(() => ({ name: 'bexioId',     label: this.fieldI18n.bexioId_label(),     placeholder: this.fieldI18n.bexioId_placeholder(),     helper: this.fieldI18n.bexioId_helper()     } as TextInputI18n));
-  protected notesI18n       = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
-  protected emailI18n       = computed(() => ({ name: 'email', label: this.fieldI18n.email_label(), placeholder: this.fieldI18n.email_placeholder() } as EmailInputI18n));
-  protected phoneI18n       = computed(() => ({ name: 'phone', label: this.fieldI18n.phone_label(), placeholder: this.fieldI18n.phone_placeholder() } as PhoneInputI18n));
-  protected dateOfFoundationI18n  = computed(() => ({ name: 'dateOfFoundation',  label: this.fieldI18n.dateOfFoundation_label(),  placeholder: this.fieldI18n.dateOfFoundation_placeholder(),  helper: this.fieldI18n.dateOfFoundation_helper()  } as DateInputI18n));
-  protected dateOfLiquidationI18n = computed(() => ({ name: 'dateOfLiquidation', label: this.fieldI18n.dateOfLiquidation_label(), placeholder: this.fieldI18n.dateOfLiquidation_placeholder(), helper: this.fieldI18n.dateOfLiquidation_helper() } as DateInputI18n));
+  public readonly i18n = input.required<OrgNewFormI18n>();
+  protected nameI18n        = computed(() => ({ name: 'name',        label: this.i18n().name_label(),        placeholder: this.i18n().name_placeholder(),        helper: this.i18n().name_helper()        } as TextInputI18n));
+  protected streetNameI18n  = computed(() => ({ name: 'streetName',  label: this.i18n().streetName_label(),  placeholder: this.i18n().streetName_placeholder(),  helper: this.i18n().streetName_helper()  } as TextInputI18n));
+  protected streetNumberI18n = computed(() => ({ name: 'streetNumber', label: this.i18n().streetNumber_label(), placeholder: this.i18n().streetNumber_placeholder(), helper: this.i18n().streetNumber_helper() } as TextInputI18n));
+  protected countryCodeI18n = computed(() => ({ name: 'countryCode', label: this.i18n().countryCode_label(), placeholder: this.i18n().countryCode_placeholder(), helper: this.i18n().countryCode_helper() } as TextInputI18n));
+  protected zipCodeI18n     = computed(() => ({ name: 'zipCode',     label: this.i18n().zipCode_label(),     placeholder: this.i18n().zipCode_placeholder(),     helper: this.i18n().zipCode_helper()     } as TextInputI18n));
+  protected cityI18n        = computed(() => ({ name: 'city',        label: this.i18n().city_label(),        placeholder: this.i18n().city_placeholder(),        helper: this.i18n().city_helper()        } as TextInputI18n));
+  protected urlI18n         = computed(() => ({ name: 'url',         label: this.i18n().url_label(),         placeholder: this.i18n().url_placeholder(),         helper: this.i18n().url_helper()         } as TextInputI18n));
+  protected taxIdI18n       = computed(() => ({ name: 'taxId',       label: this.i18n().taxId_label(),       placeholder: this.i18n().taxId_placeholder(),       helper: this.i18n().taxId_helper()       } as TextInputI18n));
+  protected bexioIdI18n     = computed(() => ({ name: 'bexioId',     label: this.i18n().bexioId_label(),     placeholder: this.i18n().bexioId_placeholder(),     helper: this.i18n().bexioId_helper()     } as TextInputI18n));
+  protected notesI18n       = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected emailI18n       = computed(() => ({ name: 'email', label: this.i18n().email_label(), placeholder: this.i18n().email_placeholder() } as EmailInputI18n));
+  protected phoneI18n       = computed(() => ({ name: 'phone', label: this.i18n().phone_label(), placeholder: this.i18n().phone_placeholder() } as PhoneInputI18n));
+  protected dateOfFoundationI18n  = computed(() => ({ name: 'dateOfFoundation',  label: this.i18n().dateOfFoundation_label(),  placeholder: this.i18n().dateOfFoundation_placeholder(),  helper: this.i18n().dateOfFoundation_helper()  } as DateInputI18n));
+  protected dateOfLiquidationI18n = computed(() => ({ name: 'dateOfLiquidation', label: this.i18n().dateOfLiquidation_label(), placeholder: this.i18n().dateOfLiquidation_placeholder(), helper: this.i18n().dateOfLiquidation_helper() } as DateInputI18n));
 
   // inputs
   public formData = model.required<OrgNewFormModel>();
