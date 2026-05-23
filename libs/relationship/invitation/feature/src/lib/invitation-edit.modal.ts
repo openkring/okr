@@ -30,6 +30,7 @@ import { InvitationStore } from './invitation.store';
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
           <bk-invitation-form
+            [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"

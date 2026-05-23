@@ -62,6 +62,19 @@ const INVITATION_I18N_KEYS = {
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  bkey_label:                      PFX + 'bkey.label',
+  bkey_placeholder:                PFX + 'bkey.placeholder',
+  bkey_helper:                     PFX + 'bkey.helper',
+  notes_label:                     PFX + 'notes.label',
+  notes_placeholder:               PFX + 'notes.placeholder',
+  sentAt_label:                    PFX + 'sentAt.label',
+  sentAt_placeholder:              PFX + 'sentAt.placeholder',
+  sentAt_helper:                   PFX + 'sentAt.helper',
+  respondedAt_label:               PFX + 'respondedAt.label',
+  respondedAt_placeholder:         PFX + 'respondedAt.placeholder',
+  respondedAt_helper:              PFX + 'respondedAt.helper',
+  state_label:                     PFX + 'state.label',
+  role_label:                      PFX + 'role.label',
 } satisfies Record<string, string>;
 
 export type InvitationI18n = { [K in keyof typeof INVITATION_I18N_KEYS]: Signal<string> };
