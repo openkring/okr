@@ -30,6 +30,7 @@ import { AccountStore } from './account.store';
           [types]="types()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
+          [i18n]="store.i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />

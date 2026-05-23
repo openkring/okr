@@ -1,14 +1,32 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, AccountModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { accountValidations } from '@bk2/finance-account-util';
-import { PFX } from './scope';
+
+export interface AccountFormI18n {
+  bkey_label:           Signal<string>;
+  bkey_placeholder:     Signal<string>;
+  bkey_helper:          Signal<string>;
+  id_label:             Signal<string>;
+  id_placeholder:       Signal<string>;
+  id_helper:            Signal<string>;
+  name_label:           Signal<string>;
+  name_placeholder:     Signal<string>;
+  name_helper:          Signal<string>;
+  label_label:          Signal<string>;
+  label_placeholder:    Signal<string>;
+  label_helper:         Signal<string>;
+  parentId_label:       Signal<string>;
+  parentId_placeholder: Signal<string>;
+  parentId_helper:      Signal<string>;
+  notes_label:          Signal<string>;
+  notes_placeholder:    Signal<string>;
+}
 
 @Component({
   selector: 'bk-account-form',
@@ -75,51 +93,31 @@ export class AccountForm {
   public readonly types = input.required<CategoryListModel>();
   public readonly tenantId = input.required<string>();
   public readonly readOnly = input(true);
+  public readonly i18n = input.required<AccountFormI18n>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:      PFX + 'bkey.label',
-    bkey_placeholder: PFX + 'bkey.placeholder',
-    bkey_helper:     PFX + 'bkey.helper',
-    id_label:        PFX + 'id.label',
-    id_placeholder:  PFX + 'id.placeholder',
-    id_helper:       PFX + 'id.helper',
-    name_label:      PFX + 'name.label',
-    name_placeholder: PFX + 'name.placeholder',
-    name_helper:     PFX + 'name.helper',
-    label_label:     PFX + 'label.label',
-    label_placeholder: PFX + 'label.placeholder',
-    label_helper:    PFX + 'label.helper',
-    parentId_label:  PFX + 'parentId.label',
-    parentId_placeholder: PFX + 'parentId.placeholder',
-    parentId_helper: PFX + 'parentId.helper',
-    notes_label:     PFX + 'notes.label',
-    notes_placeholder: PFX + 'notes.placeholder',
-  });
-
   protected bkeyI18n = computed(() => ({
-    name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: this.fieldI18n.bkey_placeholder(), helper: this.fieldI18n.bkey_helper()
+    name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
   } as TextInputI18n));
 
   protected idI18n = computed(() => ({
-    name: 'id', label: this.fieldI18n.id_label(), placeholder: this.fieldI18n.id_placeholder(), helper: this.fieldI18n.id_helper()
+    name: 'id', label: this.i18n().id_label(), placeholder: this.i18n().id_placeholder(), helper: this.i18n().id_helper()
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({
-    name: 'name', label: this.fieldI18n.name_label(), placeholder: this.fieldI18n.name_placeholder(), helper: this.fieldI18n.name_helper()
+    name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper()
   } as TextInputI18n));
 
   protected labelI18n = computed(() => ({
-    name: 'label', label: this.fieldI18n.label_label(), placeholder: this.fieldI18n.label_placeholder(), helper: this.fieldI18n.label_helper()
+    name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper()
   } as TextInputI18n));
 
   protected parentIdI18n = computed(() => ({
-    name: 'parentId', label: this.fieldI18n.parentId_label(), placeholder: this.fieldI18n.parentId_placeholder(), helper: this.fieldI18n.parentId_helper()
+    name: 'parentId', label: this.i18n().parentId_label(), placeholder: this.i18n().parentId_placeholder(), helper: this.i18n().parentId_helper()
   } as TextInputI18n));
 
   protected notesI18n = computed(() => ({
-    name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder()
+    name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
 
   public dirty = output<boolean>();
