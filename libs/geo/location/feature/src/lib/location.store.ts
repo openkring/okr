@@ -16,6 +16,8 @@ import { isLocation } from '@bk2/location-util';
 import { LocationEditModal } from './location-edit.modal';
 import { PFX } from './scope';
 
+const UI_PFX = '@geo/location/ui.';
+
 const LOCATION_I18N_KEYS = {
   locations:            PFX + 'locations',
   copy_conf:            PFX + 'copy.conf',
@@ -37,6 +39,39 @@ const LOCATION_I18N_KEYS = {
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  // LocationFormI18n keys
+  bkey_label:           UI_PFX + 'bkey.label',
+  bkey_placeholder:     UI_PFX + 'bkey.placeholder',
+  bkey_helper:          UI_PFX + 'bkey.helper',
+  name_label:           UI_PFX + 'name.label',
+  name_placeholder:     UI_PFX + 'name.placeholder',
+  name_helper:          UI_PFX + 'name.helper',
+  latitude_label:       UI_PFX + 'latitude.label',
+  latitude_placeholder: UI_PFX + 'latitude.placeholder',
+  latitude_helper:      UI_PFX + 'latitude.helper',
+  longitude_label:       UI_PFX + 'longitude.label',
+  longitude_placeholder: UI_PFX + 'longitude.placeholder',
+  longitude_helper:      UI_PFX + 'longitude.helper',
+  placeId_label:        UI_PFX + 'placeId.label',
+  placeId_placeholder:  UI_PFX + 'placeId.placeholder',
+  placeId_helper:       UI_PFX + 'placeId.helper',
+  what3words_label:       UI_PFX + 'what3words.label',
+  what3words_placeholder: UI_PFX + 'what3words.placeholder',
+  what3words_helper:      UI_PFX + 'what3words.helper',
+  seaLevel_label:         UI_PFX + 'seaLevel.label',
+  seaLevel_placeholder:   UI_PFX + 'seaLevel.placeholder',
+  seaLevel_helper:        UI_PFX + 'seaLevel.helper',
+  speed_label:            UI_PFX + 'speed.label',
+  speed_placeholder:      UI_PFX + 'speed.placeholder',
+  speed_helper:           UI_PFX + 'speed.helper',
+  direction_label:        UI_PFX + 'direction.label',
+  direction_placeholder:  UI_PFX + 'direction.placeholder',
+  direction_helper:       UI_PFX + 'direction.helper',
+  distance_label:         UI_PFX + 'distance.label',
+  distance_placeholder:   UI_PFX + 'distance.placeholder',
+  distance_helper:        UI_PFX + 'distance.helper',
+  notes_label:            UI_PFX + 'notes.label',
+  notes_placeholder:      UI_PFX + 'notes.placeholder',
 } satisfies Record<string, string>;
 
 export type LocationI18n = { [K in keyof typeof LOCATION_I18N_KEYS]: Signal<string> };

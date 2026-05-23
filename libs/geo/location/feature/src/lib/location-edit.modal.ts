@@ -31,6 +31,7 @@ import { LocationStore } from './location.store';
           [allTags]="tags()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
+          [i18n]="store.i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
