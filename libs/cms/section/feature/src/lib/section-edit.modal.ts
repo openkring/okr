@@ -31,6 +31,7 @@ import { SectionStore } from './section.store';
       <ion-content class="ion-no-padding">
         @if(formData(); as formData) {
           <bk-section-form
+            [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser()"

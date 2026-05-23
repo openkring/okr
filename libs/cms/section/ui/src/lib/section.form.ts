@@ -1,13 +1,30 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
 
 import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
 import { Chips, ImageConfigEdit, ImageConfigI18n, NotesInput, NotesInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { ModelSelectService } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+export interface SectionFormI18n {
+  imgLabel_label: Signal<string>;
+  imgLabel_placeholder: Signal<string>;
+  imgLabel_helper: Signal<string>;
+  imgUrl_label: Signal<string>;
+  imgUrl_placeholder: Signal<string>;
+  imgUrl_helper: Signal<string>;
+  imgActionUrl_label: Signal<string>;
+  imgActionUrl_placeholder: Signal<string>;
+  imgActionUrl_helper: Signal<string>;
+  imgAltText_label: Signal<string>;
+  imgAltText_placeholder: Signal<string>;
+  imgAltText_helper: Signal<string>;
+  imgOverlay_label: Signal<string>;
+  imgOverlay_placeholder: Signal<string>;
+  imgOverlay_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+}
 
 import { SectionConfiguration } from './section-configuration';
 import { EditorConfiguration } from './editor-configuration';
@@ -194,36 +211,18 @@ import { TrackerConfiguration } from './tracker-configuration';
  */
 export class SectionForm {
   private readonly modelSelectService = inject(ModelSelectService);
-  private readonly i18nService = inject(I18nService);
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    imgLabel_label:         PFX + 'image.label.label',
-    imgLabel_placeholder:   PFX + 'image.label.placeholder',
-    imgLabel_helper:        PFX + 'image.label.helper',
-    imgUrl_label:           PFX + 'image.url.label',
-    imgUrl_placeholder:     PFX + 'image.url.placeholder',
-    imgUrl_helper:          PFX + 'image.url.helper',
-    imgActionUrl_label:     PFX + 'image.actionUrl.label',
-    imgActionUrl_placeholder: PFX + 'image.actionUrl.placeholder',
-    imgActionUrl_helper:    PFX + 'image.actionUrl.helper',
-    imgAltText_label:       PFX + 'image.altText.label',
-    imgAltText_placeholder: PFX + 'image.altText.placeholder',
-    imgAltText_helper:      PFX + 'image.altText.helper',
-    imgOverlay_label:       PFX + 'image.overlay.label',
-    imgOverlay_placeholder: PFX + 'image.overlay.placeholder',
-    imgOverlay_helper:      PFX + 'image.overlay.helper',
-    notes_label:            PFX + 'notes.label',
-    notes_placeholder:      PFX + 'notes.placeholder',
-  });
+  // i18n
+  public readonly i18n = input.required<SectionFormI18n>();
 
   protected imageConfigI18n = computed(() => ({
-    label:     { name: 'label',     label: this.fieldI18n.imgLabel_label(),     placeholder: this.fieldI18n.imgLabel_placeholder(),     helper: this.fieldI18n.imgLabel_helper()     },
-    url:       { name: 'url',       label: this.fieldI18n.imgUrl_label(),       placeholder: this.fieldI18n.imgUrl_placeholder(),       helper: this.fieldI18n.imgUrl_helper()       },
-    actionUrl: { name: 'actionUrl', label: this.fieldI18n.imgActionUrl_label(), placeholder: this.fieldI18n.imgActionUrl_placeholder(), helper: this.fieldI18n.imgActionUrl_helper() },
-    altText:   { name: 'altText',   label: this.fieldI18n.imgAltText_label(),   placeholder: this.fieldI18n.imgAltText_placeholder(),   helper: this.fieldI18n.imgAltText_helper()   },
-    overlay:   { name: 'overlay',   label: this.fieldI18n.imgOverlay_label(),   placeholder: this.fieldI18n.imgOverlay_placeholder(),   helper: this.fieldI18n.imgOverlay_helper()   },
+    label:     { name: 'label',     label: this.i18n().imgLabel_label(),     placeholder: this.i18n().imgLabel_placeholder(),     helper: this.i18n().imgLabel_helper()     },
+    url:       { name: 'url',       label: this.i18n().imgUrl_label(),       placeholder: this.i18n().imgUrl_placeholder(),       helper: this.i18n().imgUrl_helper()       },
+    actionUrl: { name: 'actionUrl', label: this.i18n().imgActionUrl_label(), placeholder: this.i18n().imgActionUrl_placeholder(), helper: this.i18n().imgActionUrl_helper() },
+    altText:   { name: 'altText',   label: this.i18n().imgAltText_label(),   placeholder: this.i18n().imgAltText_placeholder(),   helper: this.i18n().imgAltText_helper()   },
+    overlay:   { name: 'overlay',   label: this.i18n().imgOverlay_label(),   placeholder: this.i18n().imgOverlay_placeholder(),   helper: this.i18n().imgOverlay_helper()   },
   } as ImageConfigI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
 
   // inputs
   public formData = model.required<SectionModel>();

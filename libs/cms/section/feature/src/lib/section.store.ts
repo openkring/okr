@@ -68,6 +68,24 @@ const SECTION_I18N_KEYS = {
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
   copy_conf:                       '@shared/ui.copy.conf',
+  // section form image config i18n (resolved from @cms/section/ui.image.*)
+  imgLabel_label:           '@cms/section/ui.image.label.label',
+  imgLabel_placeholder:     '@cms/section/ui.image.label.placeholder',
+  imgLabel_helper:          '@cms/section/ui.image.label.helper',
+  imgUrl_label:             '@cms/section/ui.image.url.label',
+  imgUrl_placeholder:       '@cms/section/ui.image.url.placeholder',
+  imgUrl_helper:            '@cms/section/ui.image.url.helper',
+  imgActionUrl_label:       '@cms/section/ui.image.actionUrl.label',
+  imgActionUrl_placeholder: '@cms/section/ui.image.actionUrl.placeholder',
+  imgActionUrl_helper:      '@cms/section/ui.image.actionUrl.helper',
+  imgAltText_label:         '@cms/section/ui.image.altText.label',
+  imgAltText_placeholder:   '@cms/section/ui.image.altText.placeholder',
+  imgAltText_helper:        '@cms/section/ui.image.altText.helper',
+  imgOverlay_label:         '@cms/section/ui.image.overlay.label',
+  imgOverlay_placeholder:   '@cms/section/ui.image.overlay.placeholder',
+  imgOverlay_helper:        '@cms/section/ui.image.overlay.helper',
+  notes_label:              '@cms/section/ui.notes.label',
+  notes_placeholder:        '@cms/section/ui.notes.placeholder',
 } satisfies Record<string, string>;
 
 export type SectionI18n = { [K in keyof typeof SECTION_I18N_KEYS]: Signal<string> };
