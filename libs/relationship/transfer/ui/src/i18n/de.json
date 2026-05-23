@@ -7,9 +7,28 @@
   "addObject": {
     "label": "Person oder Organisation hinzufügen"
   },
-  "resourceName": "Name",
+  "resource": {
+    "name": {
+      "label": "Objekt"
+    }
+  },
   "select": {
     "resource": "Auswählen"
+  },
+  "name": {
+    "label": "Anlass",
+    "placeholder": "",
+    "helper": ""
+  },
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "",
+    "helper": ""
+  },
+  "currency": {
+    "label": "Währung",
+    "placeholder": "CHF",
+    "helper": ""
   },
   "price": {
     "label": "Preis",

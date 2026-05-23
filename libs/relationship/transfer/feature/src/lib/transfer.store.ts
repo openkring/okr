@@ -32,6 +32,8 @@ export const initialTransferState: TransferState = {
   selectedState: 'all',
 };
 
+const UI_PFX = '@relationship/transfer/ui.';
+
 const TRANSFER_I18N_KEYS = {
   transfers:                       PFX + 'transfers',
   date:                            PFX + 'dateOfTransfer',
@@ -50,6 +52,25 @@ const TRANSFER_I18N_KEYS = {
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  resourceNameLabel:               UI_PFX + 'resource.name.label',
+  selectResource:                  UI_PFX + 'select.resource',
+  name_label:                      UI_PFX + 'name.label',
+  name_placeholder:                UI_PFX + 'name.placeholder',
+  name_helper:                     UI_PFX + 'name.helper',
+  label_label:                     UI_PFX + 'label.label',
+  label_placeholder:               UI_PFX + 'label.placeholder',
+  label_helper:                    UI_PFX + 'label.helper',
+  currency_label:                  UI_PFX + 'currency.label',
+  currency_placeholder:            UI_PFX + 'currency.placeholder',
+  currency_helper:                 UI_PFX + 'currency.helper',
+  price_label:                     UI_PFX + 'price.label',
+  price_placeholder:               UI_PFX + 'price.placeholder',
+  price_helper:                    UI_PFX + 'price.helper',
+  notes_label:                     UI_PFX + 'notes.label',
+  notes_placeholder:               UI_PFX + 'notes.placeholder',
+  dateOfTransfer_label:            UI_PFX + 'dateOfTransfer.label',
+  dateOfTransfer_placeholder:      UI_PFX + 'dateOfTransfer.placeholder',
+  dateOfTransfer_helper:           UI_PFX + 'dateOfTransfer.helper',
 } satisfies Record<string, string>;
 
 export type TransferI18n = { [K in keyof typeof TRANSFER_I18N_KEYS]: Signal<string> };

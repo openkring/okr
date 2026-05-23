@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -6,15 +6,30 @@ import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_
 import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { Avatars } from '@bk2/avatar-ui';
 import { transferValidations } from '@bk2/relationship-transfer-util';
-import { PFX } from './scope';
 
 export interface TransferFormI18n {
-  resourceNameLabel: string;
-  selectResource: string;
+  resourceNameLabel: Signal<string>;
+  selectResource: Signal<string>;
+  name_label: Signal<string>;
+  name_placeholder: Signal<string>;
+  name_helper: Signal<string>;
+  label_label: Signal<string>;
+  label_placeholder: Signal<string>;
+  label_helper: Signal<string>;
+  currency_label: Signal<string>;
+  currency_placeholder: Signal<string>;
+  currency_helper: Signal<string>;
+  price_label: Signal<string>;
+  price_placeholder: Signal<string>;
+  price_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+  dateOfTransfer_label: Signal<string>;
+  dateOfTransfer_placeholder: Signal<string>;
+  dateOfTransfer_helper: Signal<string>;
 }
 
 @Component({
@@ -66,8 +81,8 @@ export interface TransferFormI18n {
             <ion-card-content>
               <ion-item lines="none">
                 <!-- we deliberately use ion-input here, because we do not want to interfere with the vest form update  -->
-                <ion-input [value]="resourceName()" (ionChange)="onResourceNameChange($event)" [label]="i18n().resourceNameLabel" labelPlacement="floating" inputMode="text" type="text" [counter]="true" [maxlength]="nameLength" placeholder="ssssss" />
-                <ion-button slot="end" fill="clear" (click)="selectResource.emit(true)">{{ i18n().selectResource }}</ion-button>
+                <ion-input [value]="resourceName()" (ionChange)="onResourceNameChange($event)" [label]="i18n().resourceNameLabel()" labelPlacement="floating" inputMode="text" type="text" [counter]="true" [maxlength]="nameLength" placeholder="ssssss" />
+                <ion-button slot="end" fill="clear" (click)="selectResource.emit(true)">{{ i18n().selectResource() }}</ion-button>
               </ion-item>
             </ion-card-content>
           </ion-card>
@@ -142,7 +157,7 @@ export interface TransferFormI18n {
 })
 export class TransferForm {
   // inputs
-  public readonly i18n = input<TransferFormI18n>({ resourceNameLabel: '', selectResource: '' });
+  public readonly i18n = input.required<TransferFormI18n>();
   public readonly formData = model.required<TransferModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -185,68 +200,45 @@ export class TransferForm {
   protected currency = linkedSignal(() => this.formData().currency ?? DEFAULT_CURRENCY);
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? 'yearly');
 
-  // i18n
-  private readonly i18nService = inject(I18nService);
-
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    name_label:           PFX + 'name.label',
-    name_placeholder:     PFX + 'name.placeholder',
-    name_helper:          PFX + 'name.helper',
-    label_label:          PFX + 'label.label',
-    label_placeholder:    PFX + 'label.placeholder',
-    label_helper:         PFX + 'label.helper',
-    currency_label:       PFX + 'currency.label',
-    currency_placeholder: PFX + 'currency.placeholder',
-    currency_helper:      PFX + 'currency.helper',
-    price_label:          PFX + 'price.label',
-    price_placeholder:    PFX + 'price.placeholder',
-    price_helper:         PFX + 'price.helper',
-    notes_label:          PFX + 'notes.label',
-    notes_placeholder:    PFX + 'notes.placeholder',
-    dateOfTransfer_label:       PFX + 'dateOfTransfer.label',
-    dateOfTransfer_placeholder: PFX + 'dateOfTransfer.placeholder',
-    dateOfTransfer_helper:      PFX + 'dateOfTransfer.helper',
-  });
-
   protected nameI18n = computed(() => ({
     name:        'name',
-    label:       this.fieldI18n.name_label(),
-    placeholder: this.fieldI18n.name_placeholder(),
-    helper:      this.fieldI18n.name_helper(),
+    label:       this.i18n().name_label(),
+    placeholder: this.i18n().name_placeholder(),
+    helper:      this.i18n().name_helper(),
   } as TextInputI18n));
 
   protected labelI18n = computed(() => ({
     name:        'label',
-    label:       this.fieldI18n.label_label(),
-    placeholder: this.fieldI18n.label_placeholder(),
-    helper:      this.fieldI18n.label_helper(),
+    label:       this.i18n().label_label(),
+    placeholder: this.i18n().label_placeholder(),
+    helper:      this.i18n().label_helper(),
   } as TextInputI18n));
 
   protected currencyI18n = computed(() => ({
     name:        'currency',
-    label:       this.fieldI18n.currency_label(),
-    placeholder: this.fieldI18n.currency_placeholder(),
-    helper:      this.fieldI18n.currency_helper(),
+    label:       this.i18n().currency_label(),
+    placeholder: this.i18n().currency_placeholder(),
+    helper:      this.i18n().currency_helper(),
   } as TextInputI18n));
 
   protected priceI18n = computed(() => ({
     name:        'price',
-    label:       this.fieldI18n.price_label(),
-    placeholder: this.fieldI18n.price_placeholder(),
-    helper:      this.fieldI18n.price_helper(),
+    label:       this.i18n().price_label(),
+    placeholder: this.i18n().price_placeholder(),
+    helper:      this.i18n().price_helper(),
   } as NumberInputI18n));
 
   protected notesI18n = computed(() => ({
     name:        'notes',
-    label:       this.fieldI18n.notes_label(),
-    placeholder: this.fieldI18n.notes_placeholder(),
+    label:       this.i18n().notes_label(),
+    placeholder: this.i18n().notes_placeholder(),
   } as NotesInputI18n));
 
   protected dateOfTransferI18n = computed(() => ({
     name:        'dateOfTransfer',
-    label:       this.fieldI18n.dateOfTransfer_label(),
-    placeholder: this.fieldI18n.dateOfTransfer_placeholder(),
-    helper:      this.fieldI18n.dateOfTransfer_helper(),
+    label:       this.i18n().dateOfTransfer_label(),
+    placeholder: this.i18n().dateOfTransfer_placeholder(),
+    helper:      this.i18n().dateOfTransfer_helper(),
   } as DateInputI18n));
 
   // passing constants to template
