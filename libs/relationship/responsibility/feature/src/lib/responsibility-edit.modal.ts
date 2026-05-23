@@ -25,6 +25,7 @@ import { ResponsibilityStore } from './responsibility.store';
     <ion-content>
       @if(formData(); as formData) {
         <bk-responsibility-form
+          [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
