@@ -25,15 +25,16 @@ import { AddressStore } from "./addresses.store";
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
           <bk-address-form
+            [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
-            [currentUser]="currentUser" 
+            [currentUser]="currentUser"
             [readOnly]="isReadOnly()"
             [showForm]="showForm()"
             [allTags]="tags()"
             [addressChannels]="addressChannels()"
             [addressUsages]="addressUsages()"
-            [tenantId]="tenantId()" 
+            [tenantId]="tenantId()"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
           />

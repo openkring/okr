@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -6,11 +6,55 @@ import { AddressModel, CategoryListModel, RoleName, SwissCity, UserModel } from 
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 import { addressValidations } from '@bk2/subject-address-util';
-import { PFX } from './scope';
+
+export interface AddressFormI18n {
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  addressChannelLabel_label: Signal<string>;
+  addressChannelLabel_placeholder: Signal<string>;
+  addressChannelLabel_helper: Signal<string>;
+  addressUsageLabel_label: Signal<string>;
+  addressUsageLabel_placeholder: Signal<string>;
+  addressUsageLabel_helper: Signal<string>;
+  streetName_label: Signal<string>;
+  streetName_placeholder: Signal<string>;
+  streetName_helper: Signal<string>;
+  streetNumber_label: Signal<string>;
+  streetNumber_placeholder: Signal<string>;
+  streetNumber_helper: Signal<string>;
+  addressValue2_label: Signal<string>;
+  addressValue2_placeholder: Signal<string>;
+  addressValue2_helper: Signal<string>;
+  countryCode_label: Signal<string>;
+  countryCode_placeholder: Signal<string>;
+  countryCode_helper: Signal<string>;
+  zipCode_label: Signal<string>;
+  zipCode_placeholder: Signal<string>;
+  zipCode_helper: Signal<string>;
+  city_label: Signal<string>;
+  city_placeholder: Signal<string>;
+  city_helper: Signal<string>;
+  url_label: Signal<string>;
+  url_placeholder: Signal<string>;
+  url_helper: Signal<string>;
+  iban_label: Signal<string>;
+  iban_placeholder: Signal<string>;
+  iban_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+  email_label: Signal<string>;
+  email_placeholder: Signal<string>;
+  phone_label: Signal<string>;
+  phone_placeholder: Signal<string>;
+  isFavorite_label: Signal<string>;
+  isFavorite_helper: Signal<string>;
+  isCc_label: Signal<string>;
+  isCc_helper: Signal<string>;
+}
 
 @Component({
   selector: 'bk-address-form',
@@ -180,70 +224,25 @@ import { PFX } from './scope';
 ` 
 })
 export class AddressForm {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:                  PFX + 'bkey.label',
-    bkey_placeholder:            PFX + 'bkey.placeholder',
-    bkey_helper:                 PFX + 'bkey.helper',
-    addressChannelLabel_label:   PFX + 'addressChannelLabel.label',
-    addressChannelLabel_placeholder: PFX + 'addressChannelLabel.placeholder',
-    addressChannelLabel_helper:  PFX + 'addressChannelLabel.helper',
-    addressUsageLabel_label:     PFX + 'addressUsageLabel.label',
-    addressUsageLabel_placeholder: PFX + 'addressUsageLabel.placeholder',
-    addressUsageLabel_helper:    PFX + 'addressUsageLabel.helper',
-    streetName_label:            PFX + 'streetName.label',
-    streetName_placeholder:      PFX + 'streetName.placeholder',
-    streetName_helper:           PFX + 'streetName.helper',
-    streetNumber_label:          PFX + 'streetNumber.label',
-    streetNumber_placeholder:    PFX + 'streetNumber.placeholder',
-    streetNumber_helper:         PFX + 'streetNumber.helper',
-    addressValue2_label:         PFX + 'addressValue2.label',
-    addressValue2_placeholder:   PFX + 'addressValue2.placeholder',
-    addressValue2_helper:        PFX + 'addressValue2.helper',
-    countryCode_label:           PFX + 'countryCode.label',
-    countryCode_placeholder:     PFX + 'countryCode.placeholder',
-    countryCode_helper:          PFX + 'countryCode.helper',
-    zipCode_label:               PFX + 'zipCode.label',
-    zipCode_placeholder:         PFX + 'zipCode.placeholder',
-    zipCode_helper:              PFX + 'zipCode.helper',
-    city_label:                  PFX + 'city.label',
-    city_placeholder:            PFX + 'city.placeholder',
-    city_helper:                 PFX + 'city.helper',
-    url_label:                   PFX + 'url.label',
-    url_placeholder:             PFX + 'url.placeholder',
-    url_helper:                  PFX + 'url.helper',
-    iban_label:                  PFX + 'iban.label',
-    iban_placeholder:            PFX + 'iban.placeholder',
-    iban_helper:                 PFX + 'iban.helper',
-    notes_label:                 PFX + 'notes.label',
-    notes_placeholder:           PFX + 'notes.placeholder',
-    email_label:                 PFX + 'email.label',
-    email_placeholder:           PFX + 'email.placeholder',
-    phone_label:                 PFX + 'phone.label',
-    phone_placeholder:           PFX + 'phone.placeholder',
-    isFavorite_label:            PFX + 'isFavorite.label',
-    isFavorite_helper:           PFX + 'isFavorite.helper',
-    isCc_label:                  PFX + 'isCc.label',
-    isCc_helper:                 PFX + 'isCc.helper',
-  });
-  protected bkeyI18n              = computed(() => ({ name: 'bkey',              label: this.fieldI18n.bkey_label(),              placeholder: this.fieldI18n.bkey_placeholder(),              helper: this.fieldI18n.bkey_helper()              } as TextInputI18n));
-  protected addressChannelLabelI18n = computed(() => ({ name: 'addressChannelLabel', label: this.fieldI18n.addressChannelLabel_label(), placeholder: this.fieldI18n.addressChannelLabel_placeholder(), helper: this.fieldI18n.addressChannelLabel_helper() } as TextInputI18n));
-  protected addressUsageLabelI18n = computed(() => ({ name: 'addressUsageLabel', label: this.fieldI18n.addressUsageLabel_label(), placeholder: this.fieldI18n.addressUsageLabel_placeholder(), helper: this.fieldI18n.addressUsageLabel_helper() } as TextInputI18n));
-  protected streetNameI18n        = computed(() => ({ name: 'streetName',        label: this.fieldI18n.streetName_label(),        placeholder: this.fieldI18n.streetName_placeholder(),        helper: this.fieldI18n.streetName_helper()        } as TextInputI18n));
-  protected streetNumberI18n      = computed(() => ({ name: 'streetNumber',      label: this.fieldI18n.streetNumber_label(),      placeholder: this.fieldI18n.streetNumber_placeholder(),      helper: this.fieldI18n.streetNumber_helper()      } as TextInputI18n));
-  protected addressValue2I18n     = computed(() => ({ name: 'addressValue2',     label: this.fieldI18n.addressValue2_label(),     placeholder: this.fieldI18n.addressValue2_placeholder(),     helper: this.fieldI18n.addressValue2_helper()     } as TextInputI18n));
-  protected countryCodeI18n       = computed(() => ({ name: 'countryCode',       label: this.fieldI18n.countryCode_label(),       placeholder: this.fieldI18n.countryCode_placeholder(),       helper: this.fieldI18n.countryCode_helper()       } as TextInputI18n));
-  protected zipCodeI18n           = computed(() => ({ name: 'zipCode',           label: this.fieldI18n.zipCode_label(),           placeholder: this.fieldI18n.zipCode_placeholder(),           helper: this.fieldI18n.zipCode_helper()           } as TextInputI18n));
-  protected cityI18n              = computed(() => ({ name: 'city',              label: this.fieldI18n.city_label(),              placeholder: this.fieldI18n.city_placeholder(),              helper: this.fieldI18n.city_helper()              } as TextInputI18n));
-  protected urlI18n               = computed(() => ({ name: 'url',              label: this.fieldI18n.url_label(),               placeholder: this.fieldI18n.url_placeholder(),               helper: this.fieldI18n.url_helper()               } as TextInputI18n));
-  protected ibanI18n              = computed(() => ({ name: 'iban',             label: this.fieldI18n.iban_label(),              placeholder: this.fieldI18n.iban_placeholder(),              helper: this.fieldI18n.iban_helper()              } as IbanInputI18n));
-  protected notesI18n             = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
-  protected emailI18n             = computed(() => ({ name: 'email', label: this.fieldI18n.email_label(), placeholder: this.fieldI18n.email_placeholder() } as EmailInputI18n));
-  protected phoneI18n             = computed(() => ({ name: 'phone',      label: this.fieldI18n.phone_label(),      placeholder: this.fieldI18n.phone_placeholder()      } as PhoneInputI18n));
-  protected isFavoriteI18n        = computed(() => ({ name: 'isFavorite', label: this.fieldI18n.isFavorite_label(), helper: this.fieldI18n.isFavorite_helper() } as CheckboxI18n));
-  protected isCcI18n              = computed(() => ({ name: 'isCc',       label: this.fieldI18n.isCc_label(),       helper: this.fieldI18n.isCc_helper()       } as CheckboxI18n));
+  protected bkeyI18n              = computed(() => ({ name: 'bkey',              label: this.i18n().bkey_label(),              placeholder: this.i18n().bkey_placeholder(),              helper: this.i18n().bkey_helper()              } as TextInputI18n));
+  protected addressChannelLabelI18n = computed(() => ({ name: 'addressChannelLabel', label: this.i18n().addressChannelLabel_label(), placeholder: this.i18n().addressChannelLabel_placeholder(), helper: this.i18n().addressChannelLabel_helper() } as TextInputI18n));
+  protected addressUsageLabelI18n = computed(() => ({ name: 'addressUsageLabel', label: this.i18n().addressUsageLabel_label(), placeholder: this.i18n().addressUsageLabel_placeholder(), helper: this.i18n().addressUsageLabel_helper() } as TextInputI18n));
+  protected streetNameI18n        = computed(() => ({ name: 'streetName',        label: this.i18n().streetName_label(),        placeholder: this.i18n().streetName_placeholder(),        helper: this.i18n().streetName_helper()        } as TextInputI18n));
+  protected streetNumberI18n      = computed(() => ({ name: 'streetNumber',      label: this.i18n().streetNumber_label(),      placeholder: this.i18n().streetNumber_placeholder(),      helper: this.i18n().streetNumber_helper()      } as TextInputI18n));
+  protected addressValue2I18n     = computed(() => ({ name: 'addressValue2',     label: this.i18n().addressValue2_label(),     placeholder: this.i18n().addressValue2_placeholder(),     helper: this.i18n().addressValue2_helper()     } as TextInputI18n));
+  protected countryCodeI18n       = computed(() => ({ name: 'countryCode',       label: this.i18n().countryCode_label(),       placeholder: this.i18n().countryCode_placeholder(),       helper: this.i18n().countryCode_helper()       } as TextInputI18n));
+  protected zipCodeI18n           = computed(() => ({ name: 'zipCode',           label: this.i18n().zipCode_label(),           placeholder: this.i18n().zipCode_placeholder(),           helper: this.i18n().zipCode_helper()           } as TextInputI18n));
+  protected cityI18n              = computed(() => ({ name: 'city',              label: this.i18n().city_label(),              placeholder: this.i18n().city_placeholder(),              helper: this.i18n().city_helper()              } as TextInputI18n));
+  protected urlI18n               = computed(() => ({ name: 'url',               label: this.i18n().url_label(),               placeholder: this.i18n().url_placeholder(),               helper: this.i18n().url_helper()               } as TextInputI18n));
+  protected ibanI18n              = computed(() => ({ name: 'iban',              label: this.i18n().iban_label(),              placeholder: this.i18n().iban_placeholder(),              helper: this.i18n().iban_helper()              } as IbanInputI18n));
+  protected notesI18n             = computed(() => ({ name: 'notes',  label: this.i18n().notes_label(),     placeholder: this.i18n().notes_placeholder()     } as NotesInputI18n));
+  protected emailI18n             = computed(() => ({ name: 'email',  label: this.i18n().email_label(),     placeholder: this.i18n().email_placeholder()     } as EmailInputI18n));
+  protected phoneI18n             = computed(() => ({ name: 'phone',  label: this.i18n().phone_label(),     placeholder: this.i18n().phone_placeholder()     } as PhoneInputI18n));
+  protected isFavoriteI18n        = computed(() => ({ name: 'isFavorite', label: this.i18n().isFavorite_label(), helper: this.i18n().isFavorite_helper() } as CheckboxI18n));
+  protected isCcI18n              = computed(() => ({ name: 'isCc',       label: this.i18n().isCc_label(),       helper: this.i18n().isCc_helper()       } as CheckboxI18n));
 
   // inputs
+  public readonly i18n = input.required<AddressFormI18n>();
   public readonly formData = model.required<AddressModel>();  
   public readonly currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
