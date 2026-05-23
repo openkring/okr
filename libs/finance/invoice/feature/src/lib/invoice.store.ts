@@ -21,6 +21,8 @@ import { InvoiceViewModal } from './invoice-view.modal';
 
 import { PFX } from './scope';
 
+const UI_PFX = '@finance/invoice/ui.';
+
 const INVOICE_I18N_KEYS = {
   delete_confirm: PFX + 'delete.confirm',
   ok: '@ok',
@@ -32,6 +34,59 @@ const INVOICE_I18N_KEYS = {
   as_showpdf: PFX + 'actionsheet.showpdf',
   as_edit:    PFX + 'actionsheet.edit',
   as_delete:  PFX + 'actionsheet.delete',
+  // InvoiceEditFormI18n keys
+  invoiceId_label:          UI_PFX + 'invoiceId.label',
+  invoiceId_placeholder:    UI_PFX + 'invoiceId.placeholder',
+  invoiceId_helper:         UI_PFX + 'invoiceId.helper',
+  title_label:              UI_PFX + 'title.label',
+  title_placeholder:        UI_PFX + 'title.placeholder',
+  title_helper:             UI_PFX + 'title.helper',
+  amount_label:             UI_PFX + 'amount.label',
+  amount_placeholder:       UI_PFX + 'amount.placeholder',
+  amount_helper:            UI_PFX + 'amount.helper',
+  notes_label:              UI_PFX + 'notes.label',
+  notes_placeholder:        UI_PFX + 'notes.placeholder',
+  invoiceDate_label:        UI_PFX + 'invoiceDate.label',
+  invoiceDate_placeholder:  UI_PFX + 'invoiceDate.placeholder',
+  invoiceDate_helper:       UI_PFX + 'invoiceDate.helper',
+  dueDate_label:            UI_PFX + 'dueDate.label',
+  dueDate_placeholder:      UI_PFX + 'dueDate.placeholder',
+  dueDate_helper:           UI_PFX + 'dueDate.helper',
+  paymentDate_label:        UI_PFX + 'paymentDate.label',
+  paymentDate_placeholder:  UI_PFX + 'paymentDate.placeholder',
+  paymentDate_helper:       UI_PFX + 'paymentDate.helper',
+  vatType_label:            UI_PFX + 'vatType.label',
+  state_label:              UI_PFX + 'state.label',
+  // BexioInvoiceNewFormI18n keys
+  bexioId_label:            UI_PFX + 'bexioId.label',
+  bexioId_placeholder:      UI_PFX + 'bexioId.placeholder',
+  bexioId_helper:           UI_PFX + 'bexioId.helper',
+  posText_label:            UI_PFX + 'position.text.label',
+  posText_placeholder:      UI_PFX + 'position.text.placeholder',
+  posText_helper:           UI_PFX + 'position.text.helper',
+  unitPrice_label:          UI_PFX + 'position.unitPrice.label',
+  unitPrice_placeholder:    UI_PFX + 'position.unitPrice.placeholder',
+  unitPrice_helper:         UI_PFX + 'position.unitPrice.helper',
+  posAmount_label:          UI_PFX + 'position.amount.label',
+  posAmount_placeholder:    UI_PFX + 'position.amount.placeholder',
+  posAmount_helper:         UI_PFX + 'position.amount.helper',
+  accountId_label:          UI_PFX + 'position.accountId.label',
+  accountId_placeholder:    UI_PFX + 'position.accountId.placeholder',
+  accountId_helper:         UI_PFX + 'position.accountId.helper',
+  header_label:             UI_PFX + 'header.label',
+  header_placeholder:       UI_PFX + 'header.placeholder',
+  header_title:             UI_PFX + 'field.header.label',
+  footer_label:             UI_PFX + 'footer.label',
+  footer_placeholder:       UI_PFX + 'footer.placeholder',
+  footer_title:             UI_PFX + 'field.footer.label',
+  validFrom_label:          UI_PFX + 'validFrom.label',
+  validFrom_placeholder:    UI_PFX + 'validFrom.placeholder',
+  validFrom_helper:         UI_PFX + 'validFrom.helper',
+  validTo_label:            UI_PFX + 'validTo.label',
+  validTo_placeholder:      UI_PFX + 'validTo.placeholder',
+  validTo_helper:           UI_PFX + 'validTo.helper',
+  template_label:           UI_PFX + 'template.label',
+  defaultPosition_label:    UI_PFX + 'defaultPosition.label',
 } satisfies Record<string, string>;
 
 export type InvoiceI18n = { [K in keyof typeof INVOICE_I18N_KEYS]: Signal<string> };
