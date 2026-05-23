@@ -34,6 +34,10 @@ const INVOICE_I18N_KEYS = {
   as_showpdf: PFX + 'actionsheet.showpdf',
   as_edit:    PFX + 'actionsheet.edit',
   as_delete:  PFX + 'actionsheet.delete',
+  // ChangeConfirmationI18n keys (used by modals)
+  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
+  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
+  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
   // InvoiceEditFormI18n keys
   invoiceId_label:          UI_PFX + 'invoiceId.label',
   invoiceId_placeholder:    UI_PFX + 'invoiceId.placeholder',
