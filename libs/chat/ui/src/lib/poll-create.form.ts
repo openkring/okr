@@ -9,6 +9,10 @@ import { MatrixPollData } from '@bk2/chat-data-access';
 export interface PollCreateFormI18n {
   allowMultipleAnswers_label: Signal<string>;
   allowMultipleAnswers_helper: Signal<string>;
+  question_label: Signal<string>;
+  question_placeholder: Signal<string>;
+  answers_title: Signal<string>;
+  answer_add: Signal<string>;
 }
 
 @Component({
@@ -23,9 +27,9 @@ export interface PollCreateFormI18n {
       <!-- Question -->
       <ion-item>
         <ion-input
-          [label]="'@chat.survey.questionLabel'"
+          [label]="i18n().question_label()"
           labelPlacement="floating"
-          [placeholder]="'@chat.survey.questionPlaceholder'"
+          [placeholder]="i18n().question_placeholder()"
           [value]="question()"
           (ionInput)="question.set($any($event).detail.value ?? '')"
           [maxlength]="255"
@@ -38,8 +42,8 @@ export interface PollCreateFormI18n {
       <!-- Answers via bk-strings -->
       <bk-strings
         [(strings)]="answers"
-        title="@chat.survey.answers"
-        addLabel="@chat.survey.addAnswer"
+        [title]="i18n().answers_title()"
+        [add]="i18n().answer_add()"
         [readOnly]="false"
         [mask]="anyCharMask"
         [maxLength]="100"

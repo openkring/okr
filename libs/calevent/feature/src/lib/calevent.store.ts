@@ -133,6 +133,11 @@ const CALEVENT_I18N_KEYS = {
   startTime_placeholder:   '@calevent/ui.startTime.placeholder',
   fullDay_label:           '@calevent/ui.fullDay.label',
   fullDay_helper:          '@calevent/ui.fullDay.helper',
+  responsible_title:       '@calevent/ui.responsible.label',
+  responsible_description: '@calevent/ui.responsible.description',
+  calendar_title:          '@calevent/ui.calendar',
+  calendar_add:            '@calevent/ui.add',
+  calendar_selectLabel:    '@calevent/ui.select',
 } satisfies Record<string, string>;
 
 export type CaleventI18n = { [K in keyof typeof CALEVENT_I18N_KEYS]: Signal<string> };

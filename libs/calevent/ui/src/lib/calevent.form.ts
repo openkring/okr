@@ -43,6 +43,11 @@ export interface CaleventFormI18n {
   startTime_placeholder: Signal<string>;
   fullDay_label: Signal<string>;
   fullDay_helper: Signal<string>;
+  responsible_title: Signal<string>;
+  responsible_description: Signal<string>;
+  calendar_title: Signal<string>;
+  calendar_add: Signal<string>;
+  calendar_selectLabel: Signal<string>;
 }
 
 @Component({
@@ -144,9 +149,8 @@ export interface CaleventFormI18n {
         (selectClicked)="selectPerson()"
         [currentUser]="currentUser"
         [readOnly]="isReadOnly()"
-        title="@calevent.field.responsible.label"
-        description="@calevent.field.responsible.description"
-        addLabel="@calevent.field.responsible.addLabel"
+        [title]="i18n().responsible_title()"
+        [description]="i18n().responsible_description()"
       />
     }
 
@@ -157,10 +161,9 @@ export interface CaleventFormI18n {
       [maxLength]="nameLength"
       [readOnly]="isReadOnly()"
       inputStyle="select" (selectClicked)="calendarSelectClicked.emit()"
-      title="@input.calendarName.label"
-      description="@input.calendarName.description"
-      addLabel="@input.calendarName.addLabel"
-      selectLabel="@input.calendarName.select"
+      [title]="i18n().calendar_title()"
+      [add]="i18n().calendar_add()"
+      [selectLabel]="i18n().calendar_selectLabel()"
     />
 
   <!---------------------------------------------------

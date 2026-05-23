@@ -40,6 +40,10 @@ export class PollCreateModal {
     changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
     allowMultipleAnswers_label:  UI + 'allowMultipleAnswers.label',
     allowMultipleAnswers_helper: UI + 'allowMultipleAnswers.helper',
+    question_label:       UI + 'survey.question.label',
+    question_placeholder: UI + 'survey.question.placeholder',
+    answers_title:        UI + 'survey.answer.create',
+    answer_add:           UI + 'survey.answer.add',
   });
   protected readonly changeConfirmationI18n = computed(() => ({
     ok: this.i18n.changeConfirmation_ok(),
