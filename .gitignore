@@ -80,6 +80,9 @@ firebase-export*
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
+# Claude Code worktrees
+.claude/worktrees/
+
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
 
