@@ -1,14 +1,23 @@
 {
-  "auth": {
-    "login": {
-      "title": "Anmelden"
-    },
-    "pwdreset": {
-      "title": "Passwort setzen",
-      "newpwd": "Neues Passwort festlegen",
-      "invalidLink": "Dieser Link ist ungültig oder bereits abgelaufen. Bitte fordere einen neuen Reset-Link an.",
-      "success": "Passwort erfolgreich geändert. Du wirst zur Anmeldeseite weitergeleitet.",
-      "savepwd": "Passwort speichern"
-    }
-  }
+  "title": "Anmelden",
+  "email": {
+    "label": "E-Mail",
+    "placeholder": "ssss@ssssssss.sss",
+    "error": "Bitte eine gültige Email Adresse eingeben.",
+    "helper": "Bitte verwende die gleiche E-Mail Adresse, auf der du die Vereinsinformationen erhälst."
+  },
+  "password": {
+    "label": "Passwort",
+    "placeholder": "Passwort",
+    "error": "Das Passwort muss mindestens 6 Zeichen lang sein und darf die folgenden Sonderzeichen enthalten: -_!@?:;äüö$*+&()=.,£$%",
+    "helper": "Falls du noch kein Passwort hast oder dieses nicht kennst, kannst du unten auf den Button 'Passwort zurücksetzen' klicken und ein neues Passwort setzen."
+  },
+  "pwdreset": {
+    "title": "Passwort setzen",
+    "newpwd": "Neues Passwort festlegen",
+    "invalidLink": "Dieser Link ist ungültig oder bereits abgelaufen. Bitte fordere einen neuen Reset-Link an.",
+    "success": "Passwort erfolgreich geändert. Du wirst zur Anmeldeseite weitergeleitet.",
+    "savepwd": "Passwort speichern"
+  },
+  "pwdconfirm": "Passwort setzen"
 }

@@ -37,9 +37,9 @@ import { MembershipStore } from './membership.store';
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
         @if (hasYearFilter()) {
-          <ion-title>{{ selectedMembershipsCount()}} {{ title() | translate | async }} {{ membershipStore.i18n.list_header_title_rel() }} {{ orgName() }}</ion-title>
+          <ion-title>{{ selectedMembershipsCount()}} {{ title() | translate | async }} {{ membershipStore.i18n.header_title_rel() }} {{ orgName() }}</ion-title>
         } @else {
-          <ion-title>{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ membershipStore.i18n.list_header_title_rel() }} {{ orgName() }}</ion-title>
+          <ion-title>{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ membershipStore.i18n.header_title_rel() }} {{ orgName() }}</ion-title>
         }
         @if(canChange()) {
           <ion-buttons slot="end">
@@ -76,13 +76,13 @@ import { MembershipStore } from './membership.store';
     <!-- list header -->
     <ion-toolbar color="light" class="ion-hide-sm-down">
       <ion-item lines="none">
-        <ion-label><strong>{{ membershipStore.i18n.list_header_name() }}</strong></ion-label>
+        <ion-label><strong>{{ membershipStore.i18n.header_name() }}</strong></ion-label>
         @if(view() === 'mcat') {
-          <ion-label><strong>{{ membershipStore.i18n.list_header_category() }}</strong></ion-label>
+          <ion-label><strong>{{ membershipStore.i18n.header_category() }}</strong></ion-label>
          }
         @if(view() === 'contact') {
-          <ion-label><strong>{{ membershipStore.i18n.list_header_phone() }}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{ membershipStore.i18n.list_header_email() }}</strong></ion-label>
+          <ion-label><strong>{{ membershipStore.i18n.header_phone() }}</strong></ion-label>
+          <ion-label class="ion-hide-md-down"><strong>{{ membershipStore.i18n.header_email() }}</strong></ion-label>
         }
       </ion-item>
     </ion-toolbar>

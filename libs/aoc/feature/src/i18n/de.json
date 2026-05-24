@@ -10,20 +10,45 @@
       "focus_event_logging": "Focus Event Logging einschalten"
     },
     "iban": {
+      "title": "Subjects mit IBAN Nummern:",
       "label": "IBAN Nummern auflisten",
       "button": "Anzeigen"
     },
     "mcatchange": {
       "title": "Änderungen der Mitgliederkategorie"
     },
+    "doubleMembers": {
+      "title": "Doppel-Mitglieder",
+      "label": "Doppel-Mitglieder auflisten",
+      "button": "Anzeigen"
+    },
     "oldJuniors": {
-      "title": "Umzuteilende (zu alte) Jugendliche",
+      "title": "Umzuteilende (zu alte) Jugendliche (>18)",
       "label": "Umzuteilende (zu alte) Jugendliche auflisten",
       "button": "Anzeigen",
-      "nodob": "Kein Geburtsdatum"
+      "nodob": "Kein Geburtsdatum",
+      "description": "Die unten aufgelisteten Mitglieder sind in der Datenbank aktull noch als Junioren geführt und müssen auf Aktive umgeteilt werden, weil sie vor {{ refYear }} geboren sind."
     },
     "club": { "label": "Verein" },
-    "year": { "label": "Jahr" }
+    "year": { "label": "Jahr" },
+    "membershipPrices": {
+      "title": "Jahresbeiträge aktualisieren",
+      "label": "Jahresbeiträge aktualisieren",
+      "button": "Aktualisieren",
+      "description": "Die Jahresbeiträge werden aus den Mitgliedschafts-Kategorien berechnet. Der Standard-Jahresbeitrag wird auf jeder Mitgliedschaft im Feld price gespeichert."
+    },
+    "membershipAttributes": {
+      "title": "Mitglieder Attribute aktualisieren",
+      "label": "Mitglieder Attribute aktualisieren",
+      "button": "Aktualisieren",
+      "description": "Für jede Person weden die Attribute priority, relIsLast und relLog neu berechnet und in Membership gespeichert. Dies ist die Voraussetzung, dass Auswertungen wie z.B. Exit/Entry/Alumni/OldJuniors etc. korrekt funktionieren."
+    },
+    "checkJuniorEntry": {
+      "title": "Junioren-Eintritte prüfen",
+      "label": "Junioren-Eintritte prüfen",
+      "button": "Prüfen",
+      "description": "Die unten aufgelisteten Mitglieder sind in der Datenbank mit Eintritt als Aktivmitglied geführt, sie sollten anfänglich auf Jugendliche umgeteilt werden."
+    }
   },
 
   "bexio": {
@@ -206,7 +231,8 @@
     "checkLinks": {
       "title": "Links prüfen",
       "content": "Prüfe alle Links in allen Pages und Sektionen auf Funktionsfähigkeit.",
-      "show": "Anzeigen"
+      "show": "Anzeigen",
+      "hide": "Ausblenden"
     },
     "section": {
       "delete": {
@@ -244,7 +270,7 @@
 
   "data": {
     "title": "Daten",
-    "content": "Daten validierung und korrigieren",
+    "content": "Daten validieren und korrigieren",
     "fix": {
       "title": "Daten-Korrektur",
       "content": "Bulk-Operation (adminops/fixModels) mit Korrektur-Operationen auf eine Collection. BITTE AUFPASSEN: Die Korrektur-Operationen können nicht rückgängig gemacht werden. Backup machen, Implementierung in fix-Operation testen und zuerst ein dry run ohne update machen.",
@@ -253,12 +279,16 @@
     "validate": {
       "title": "Daten-Validierung",
       "content": "Bulk-Operation (adminops/validateModels) mit Validierungs-Operationen auf eine Collection.",
-      "button": "Daten validieren"
+      "button": "Daten validieren",
+      "validate": "Daten validieren",
+      "select": "Collection wählen"
     },
     "index": {
       "title": "Index erstellen",
       "content": "Erstellt einen Index auf einer Collection. Dies ist nützlich, wenn ein Index in der Datenbank fehlt und eine Abfrage nicht ausgeführt werden kann.",
-      "button": "Index erstellen"
+      "button": "Index erstellen",
+      "create": "Index erstellen",
+      "select": "Collection wählen"
     },
     "check": {
       "console": "Bitte Konfiguration in der Browser Console prüfen und bestätigen."
@@ -320,7 +350,13 @@
       "select": "Person auswählen",
       "title": "User Account erstellen",
       "content": "Eine bestehende Person wird als User in Firebase Auth registriert, dh. das Firebase-Account und der User werden erzeugt. Falls das Firebase-Account bereits existiert, wird nur ein User erstellt, welcher das Firebase Account und die Person verlinkt.",
-      "button": "Konto erstellen"
+      "button": "Konto erstellen",
+      "password-set": "Passwort setzen",
+      "password-reset": "Passwort zurücksetzen"
+    },
+    "assignment": {
+      "title": "Rollen zuweisen",
+      "content": "Zuteilungen von Rollen zu Personen vornehmen und prüfen."
     },
     "check": {
       "title": "User Account prüfen",
@@ -336,6 +372,14 @@
       "title": "Benutzer impersonifizieren",
       "content": "Die Rolle des Users wird temporär auf den ausgewählten User gesetzt. Dadurch kann der Admin die Applikation als dieser User benutzen. Um wieder in die Admin-Rolle zurückzukehren, muss der Admin sich abmelden und wieder anmelden.",
       "button": "Impersonate"
+    },
+    "password": {
+      "label": "Passwort",
+      "placeholder": "Passwort",
+      "error": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+      "helper": "Du kannst hier ein Passwort für den selektierten User setzen (z.B. für Testzwecke). Ein leeres Passwort-Feld führt zu einem zufälligen Passwort. Der User kann anschliessend mit Passwort Reset sein eigenes Passwort setzen.",
+      "set": "Setze ein neues Passwort für den ausgewählten User, ohne eine Passwort-Reset Email auszulösen. Ein leeres Passwort-Feld führt zu einem zufälligen Passwort.",
+      "reset": "Sende eine Passwort-Reset Email an den ausgewählten User."
     }
   },
 
@@ -358,29 +402,45 @@
     "content": "Gewisse Statistiken können hier aus den aktuellen Daten neu berechnet werden. Diese Berechnung sollte nur durchgeführt werden, wenn die Datenbank in einem stabilen Zustand ist. Die Berechnung kann einige Zeit in Anspruch nehmen. Die Statistiken sollten anschliessend überprüft werden und allenfalls manuell korrigiert werden.",
     "title": "Statistiken aktualisieren",
     "competitionLevels": {
+      "title": "Wettkampf-Kategorien",
       "label": "Wettkampf-Kategorien aktualisieren",
-      "button": "Ausführen"
+      "conf": "Wettkampf-Kategorien wurden neu berechnet.",
+      "button": "Ausführen",
+      "description": "Die Collection competitionLevels cached Daten aus den Collections subjects, memberships, ownerships. Diese Daten werden zur Darstellung der Wettkampf-Kategorien benötigt."
     },
     "clStats": {
+      "title": "Übersichts-Statistik",
+      "subTitle": "Statistik der Wettkampf-Kategorien",
       "label": "Statistik der Wettkampf-Kategorien aktualisieren",
+      "conf": "Statistik wurde neu berechnet.",
       "button": "Ausführen"
     },
     "ageByGender": {
+      "title": "Alters-Struktur",
+      "subTitle": "Mitglieder nach Alter und Geschlecht",
       "label": "Alters-Statistik neu berechnen",
+      "conf": "Alters-Statisik wurde neu berechnet.",
       "button": "Ausführen"
     },
     "categoryByGender": {
+      "title": "Mitglieder-Struktur",
+      "subTitle": "Mitglieder nach Kategorie und Geschlecht",
       "label": "Mitglieder-Struktur neu berechnen",
+      "conf": "Mitglieder-Struktur wurde neu berechnet.",
       "button": "Ausführen"
     },
     "memberLocation": {
+      "title": "Herkunft der Aktivmitglieder",
+      "subTitle": "Aktivmitglieder nach Wohnort (PLZ)",
       "label": "Wohnort-Statistik neu berechnen",
+      "conf": "Wohnort-Statistik wurde neu berechnet.",
       "button": "Ausführen"
     }
   },
 
   "storage": {
     "title": "Firebase Storage",
+    "content": "Operationen, um die Dateien und Bilder im Firebase Storage zu verwalten.",
     "info": {
       "title": "Firebase Storage Info",
       "content": "Zeigt Informationen über ein Dokument im Firebase Storage an. Dazu muss die relative URL zu diesem Dokument eingegeben werden.",
@@ -440,20 +500,28 @@
   },
 
   "account": {
+    "title": "User Accounts",
     "plural": "Konti",
     "user": {
       "delete": {
+        "label": "User löschen",
+        "error": "Der User konnte nicht gelöscht werden.",
+        "conf": "Der User wurde gelöscht.",
         "confirm": "Soll der User wirklich gelöscht werden ?"
       }
     },
     "fbuser": {
       "delete": {
-        "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
+          "label": "Firebase User löschen",
+          "error": "Der Firebase User konnte nicht gelöscht werden.",
+          "conf": "Der Firebase User wurde gelöscht.",
+          "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
       }
     }
   },
 
   "website": {
+    "title": "Website Texte",
     "edit": {
       "title": "Texte ändern"
     },
@@ -463,7 +531,6 @@
     "isHtml": {
       "label": "Inhalt ist HTML"
     },
-    "title": "Website Texte",
     "list": {
       "title": "Texte"
     },

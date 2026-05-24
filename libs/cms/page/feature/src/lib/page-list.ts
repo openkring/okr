@@ -65,7 +65,7 @@ import { PageStore } from './page.store';
               <ion-label><strong>{{ store.i18n.key() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
                 <ion-label><strong>{{ store.i18n.sections() }}</strong></ion-label>

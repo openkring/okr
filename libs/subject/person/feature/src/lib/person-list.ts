@@ -60,8 +60,8 @@ import { PersonStore } from './person.store';
     <ion-toolbar color="light" class="ion-hide-sm-down">
       <ion-item lines="none">
         <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.phone() }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.email() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.phone_label() }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.email_label() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -155,7 +155,7 @@ export class PersonList {
    * @param person 
    */
   protected async showActions(person: PersonModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     await this.addActionSheetButtons(actionSheetOptions, person);
     await this.executeActions(actionSheetOptions, person);
   }
@@ -166,30 +166,30 @@ export class PersonList {
    */
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.edit_label(), this.imgixBaseUrl, 'edit'));
       if (this.hasRole('admin')) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+        actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
       }
     } else {  // registered user
-      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // all users
     if (await this.store.isPersonUser(person.bkey)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.as_chat(), this.imgixBaseUrl, 'chatbubbles'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.send_message(), this.imgixBaseUrl, 'chatbubbles'));
     }
     if (person.favEmail) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.store.i18n.as_copyemail(), this.imgixBaseUrl, 'copy'));
-      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.store.i18n.as_sendemail(), this.imgixBaseUrl, 'email'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.store.i18n.copy_email_label(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.store.i18n.send_email(), this.imgixBaseUrl, 'email'));
     }
     if (person.favPhone) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.store.i18n.as_copyphone(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.store.i18n.copy_phone_label(), this.imgixBaseUrl, 'copy'));
       //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
-      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.store.i18n.as_call(), this.imgixBaseUrl, 'tel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.store.i18n.call_phone(), this.imgixBaseUrl, 'tel'));
     }
     if (person.favZipCode) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.store.i18n.as_show(), this.imgixBaseUrl, 'location'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.store.i18n.show_postal(), this.imgixBaseUrl, 'location'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -216,10 +216,10 @@ export class PersonList {
           await this.store.chat(person);
           break;
         case 'person.copyemail':
-          await this.store.copy(person.favEmail, '@subject.person.operation.copy.email.conf');
+          await this.store.copy(person.favEmail, this.store.i18n.copy_email_conf());
           break;
         case 'person.copyphone':
-          await this.store.copy(person.favPhone, '@subject.person.operation.copy.phone.conf');
+          await this.store.copy(person.favPhone, this.store.i18n.copy_phone_conf());
           break;
         case 'person.sendemail':
           await this.store.sendEmail(person.favEmail);

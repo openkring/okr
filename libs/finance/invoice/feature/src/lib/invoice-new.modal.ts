@@ -43,21 +43,21 @@ export class InvoiceNewModal {
   private readonly toastController = inject(ToastController);
   protected readonly store = inject(InvoiceStore);
 
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
-
+  // input
   public readonly membership = input.required<MembershipModel>();
 
+  // signals
   protected formData = linkedSignal<BexioInvoiceFormModel>(() =>
     newInvoiceFormModel(this.membership())
   );
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty());
 
+  // computed
+  protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+
+  // actions
   protected onFormDataChange(data: BexioInvoiceFormModel): void {
     this.formData.set(data);
   }

@@ -15,41 +15,41 @@ import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-membership-util';
 
 export interface MemberNewFormI18n {
-  personDetails: Signal<string>;
-  personAddress: Signal<string>;
-  personMisc: Signal<string>;
-  personMembership: Signal<string>;
-  selectLabel: Signal<string>;
-  firstName_label: Signal<string>;
-  firstName_placeholder: Signal<string>;
-  firstName_helper: Signal<string>;
-  lastName_label: Signal<string>;
-  lastName_placeholder: Signal<string>;
-  lastName_helper: Signal<string>;
-  streetName_label: Signal<string>;
-  streetName_placeholder: Signal<string>;
-  streetName_helper: Signal<string>;
-  streetNumber_label: Signal<string>;
-  streetNumber_placeholder: Signal<string>;
-  streetNumber_helper: Signal<string>;
-  countryCode_label: Signal<string>;
-  countryCode_placeholder: Signal<string>;
-  countryCode_helper: Signal<string>;
-  zipCode_label: Signal<string>;
-  zipCode_placeholder: Signal<string>;
-  zipCode_helper: Signal<string>;
+  person_details: Signal<string>;
+  person_address: Signal<string>;
+  person_misc: Signal<string>;
+  person_membership: Signal<string>;
+  select_label: Signal<string>;
+  firstname_label: Signal<string>;
+  firstname_placeholder: Signal<string>;
+  firstname_helper: Signal<string>;
+  lastname_label: Signal<string>;
+  lastname_placeholder: Signal<string>;
+  lastname_helper: Signal<string>;
+  streetname_label: Signal<string>;
+  streetname_placeholder: Signal<string>;
+  streetname_helper: Signal<string>;
+  streetnumber_label: Signal<string>;
+  streetnumber_placeholder: Signal<string>;
+  streetnumber_helper: Signal<string>;
+  countrycode_label: Signal<string>;
+  countrycode_placeholder: Signal<string>;
+  countrycode_helper: Signal<string>;
+  zipcode_label: Signal<string>;
+  zipcode_placeholder: Signal<string>;
+  zipcode_helper: Signal<string>;
   city_label: Signal<string>;
   city_placeholder: Signal<string>;
   city_helper: Signal<string>;
   web_label: Signal<string>;
   web_placeholder: Signal<string>;
   web_helper: Signal<string>;
-  ssnId_label: Signal<string>;
-  ssnId_placeholder: Signal<string>;
-  ssnId_helper: Signal<string>;
-  bexioId_label: Signal<string>;
-  bexioId_placeholder: Signal<string>;
-  bexioId_helper: Signal<string>;
+  ssnid_label: Signal<string>;
+  ssnid_placeholder: Signal<string>;
+  ssnid_helper: Signal<string>;
+  bexioid_label: Signal<string>;
+  bexioid_placeholder: Signal<string>;
+  bexioid_helper: Signal<string>;
   notes_label: Signal<string>;
   notes_placeholder: Signal<string>;
   email_label: Signal<string>;
@@ -91,7 +91,7 @@ export interface MemberNewFormI18n {
       <!-------------------------------------- PERSON ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().personDetails() }}</ion-card-title>
+          <ion-card-title>{{ i18n().person_details() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -130,7 +130,7 @@ export interface MemberNewFormI18n {
       @if(showAddressInputs()) {
         <ion-card>
           <ion-card-header>
-            <ion-card-title>{{ i18n().personAddress() }}</ion-card-title>
+            <ion-card-title>{{ i18n().person_address() }}</ion-card-title>
           </ion-card-header>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
@@ -183,7 +183,7 @@ export interface MemberNewFormI18n {
       <!-------------------------------------- OTHER ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().personMisc() }}</ion-card-title>
+          <ion-card-title>{{ i18n().person_misc() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -202,7 +202,7 @@ export interface MemberNewFormI18n {
       <!-------------------------------------- MEMBERSHIP ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().personMembership() }}</ion-card-title>
+          <ion-card-title>{{ i18n().person_membership() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -217,7 +217,7 @@ export interface MemberNewFormI18n {
                 </ion-col>
                 <ion-col size="3">
                   <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ i18n().selectLabel() }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ i18n().select_label() }}</ion-button>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -298,16 +298,16 @@ export class MemberNewForm {
   protected dateOfEntry = linkedSignal(() => this.formData().dateOfEntry ?? getTodayStr());
 
   // i18n — all field translations come from the i18n input
-  protected firstNameI18n = computed(() => ({ name: 'firstName', label: this.i18n().firstName_label(), placeholder: this.i18n().firstName_placeholder(), helper: this.i18n().firstName_helper() }) as TextInputI18n);
-  protected lastNameI18n = computed(() => ({ name: 'lastName', label: this.i18n().lastName_label(), placeholder: this.i18n().lastName_placeholder(), helper: this.i18n().lastName_helper() }) as TextInputI18n);
-  protected streetNameI18n = computed(() => ({ name: 'streetName', label: this.i18n().streetName_label(), placeholder: this.i18n().streetName_placeholder(), helper: this.i18n().streetName_helper() }) as TextInputI18n);
-  protected streetNumberI18n = computed(() => ({ name: 'streetNumber', label: this.i18n().streetNumber_label(), placeholder: this.i18n().streetNumber_placeholder(), helper: this.i18n().streetNumber_helper() }) as TextInputI18n);
-  protected countryCodeI18n = computed(() => ({ name: 'countryCode', label: this.i18n().countryCode_label(), placeholder: this.i18n().countryCode_placeholder(), helper: this.i18n().countryCode_helper() }) as TextInputI18n);
-  protected zipCodeI18n = computed(() => ({ name: 'zipCode', label: this.i18n().zipCode_label(), placeholder: this.i18n().zipCode_placeholder(), helper: this.i18n().zipCode_helper() }) as TextInputI18n);
+  protected firstNameI18n = computed(() => ({ name: 'firstName', label: this.i18n().firstname_label(), placeholder: this.i18n().firstname_placeholder(), helper: this.i18n().firstname_helper() }) as TextInputI18n);
+  protected lastNameI18n = computed(() => ({ name: 'lastName', label: this.i18n().lastname_label(), placeholder: this.i18n().lastname_placeholder(), helper: this.i18n().lastname_helper() }) as TextInputI18n);
+  protected streetNameI18n = computed(() => ({ name: 'streetName', label: this.i18n().streetname_label(), placeholder: this.i18n().streetname_placeholder(), helper: this.i18n().streetname_helper() }) as TextInputI18n);
+  protected streetNumberI18n = computed(() => ({ name: 'streetNumber', label: this.i18n().streetnumber_label(), placeholder: this.i18n().streetnumber_placeholder(), helper: this.i18n().streetnumber_helper() }) as TextInputI18n);
+  protected countryCodeI18n = computed(() => ({ name: 'countryCode', label: this.i18n().countrycode_label(), placeholder: this.i18n().countrycode_placeholder(), helper: this.i18n().countrycode_helper() }) as TextInputI18n);
+  protected zipCodeI18n = computed(() => ({ name: 'zipCode', label: this.i18n().zipcode_label(), placeholder: this.i18n().zipcode_placeholder(), helper: this.i18n().zipcode_helper() }) as TextInputI18n);
   protected cityI18n = computed(() => ({ name: 'city', label: this.i18n().city_label(), placeholder: this.i18n().city_placeholder(), helper: this.i18n().city_helper() }) as TextInputI18n);
   protected webI18n = computed(() => ({ name: 'web', label: this.i18n().web_label(), placeholder: this.i18n().web_placeholder(), helper: this.i18n().web_helper() }) as TextInputI18n);
-  protected ssnIdI18n = computed(() => ({ name: 'ssnId', label: this.i18n().ssnId_label(), placeholder: this.i18n().ssnId_placeholder(), helper: this.i18n().ssnId_helper() }) as TextInputI18n);
-  protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() }) as TextInputI18n);
+  protected ssnIdI18n = computed(() => ({ name: 'ssnId', label: this.i18n().ssnid_label(), placeholder: this.i18n().ssnid_placeholder(), helper: this.i18n().ssnid_helper() }) as TextInputI18n);
+  protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioid_label(), placeholder: this.i18n().bexioid_placeholder(), helper: this.i18n().bexioid_helper() }) as TextInputI18n);
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
   protected emailI18n = computed(() => ({ name: 'email', label: this.i18n().email_label(), placeholder: this.i18n().email_placeholder() } as EmailInputI18n));
   protected phoneI18n = computed(() => ({ name: 'phone', label: this.i18n().phone_label(), placeholder: this.i18n().phone_placeholder() } as PhoneInputI18n));

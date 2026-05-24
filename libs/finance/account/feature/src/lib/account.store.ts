@@ -13,8 +13,6 @@ import { flattenAccountTree, isAccount } from '@bk2/finance-account-util';
 import { AccountEditModal } from './account-edit.modal';
 import { PFX } from './scope';
 
-const UI_PFX = '@finance/account/ui.';
-
 const ACCOUNT_I18N_KEYS = {
   accounts:         PFX + 'accounts',
   empty:            PFX + 'empty',
@@ -27,29 +25,26 @@ const ACCOUNT_I18N_KEYS = {
   as_edit:          PFX + 'actionsheet.edit',
   as_create:        PFX + 'actionsheet.create',
   as_delete:        PFX + 'actionsheet.delete',
-  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  save:           '@save.label',
   cancel:           '@cancel',
   ok:               '@ok',
-  // form i18n keys (AccountFormI18n)
-  bkey_label:           UI_PFX + 'bkey.label',
-  bkey_placeholder:     UI_PFX + 'bkey.placeholder',
-  bkey_helper:          UI_PFX + 'bkey.helper',
-  id_label:             UI_PFX + 'id.label',
-  id_placeholder:       UI_PFX + 'id.placeholder',
-  id_helper:            UI_PFX + 'id.helper',
-  name_label:           UI_PFX + 'name.label',
-  name_placeholder:     UI_PFX + 'name.placeholder',
-  name_helper:          UI_PFX + 'name.helper',
-  label_label:          UI_PFX + 'label.label',
-  label_placeholder:    UI_PFX + 'label.placeholder',
-  label_helper:         UI_PFX + 'label.helper',
-  parentId_label:       UI_PFX + 'parentId.label',
-  parentId_placeholder: UI_PFX + 'parentId.placeholder',
-  parentId_helper:      UI_PFX + 'parentId.helper',
-  notes_label:          UI_PFX + 'notes.label',
-  notes_placeholder:    UI_PFX + 'notes.placeholder',
+  bkey_label:           PFX + 'bkey.label',
+  bkey_placeholder:     PFX + 'bkey.placeholder',
+  bkey_helper:          PFX + 'bkey.helper',
+  id_label:             PFX + 'id.label',
+  id_placeholder:       PFX + 'id.placeholder',
+  id_helper:            PFX + 'id.helper',
+  name_label:           PFX + 'name.label',
+  name_placeholder:     PFX + 'name.placeholder',
+  name_helper:          PFX + 'name.helper',
+  label_label:          PFX + 'label.label',
+  label_placeholder:    PFX + 'label.placeholder',
+  label_helper:         PFX + 'label.helper',
+  parentId_label:       PFX + 'parentId.label',
+  parentId_placeholder: PFX + 'parentId.placeholder',
+  parentId_helper:      PFX + 'parentId.helper',
+  notes_label:          PFX + 'notes.label',
+  notes_placeholder:    PFX + 'notes.placeholder',
 } satisfies Record<string, string>;
 
 export type AccountI18n = { [K in keyof typeof ACCOUNT_I18N_KEYS]: Signal<string> };

@@ -24,9 +24,9 @@ import { ResourceSelectStore } from './resource-select.store';
   template: `
     <bk-header
       [searchTerm]="searchTerm()"
-      (searchTermChange)="resourceSelectStore.setSearchTerm($event)"
+      (searchTermChange)="store.setSearchTerm($event)"
       [isSearchable]="true"
-      [i18n]="{ title: '@resource.operation.select.label' }"
+      [i18n]="{ title: store.i18n.resource_select()}"
       [isModal]="true"
     />   
     <ion-content>
@@ -34,7 +34,7 @@ import { ResourceSelectStore } from './resource-select.store';
         <bk-spinner />
       } @else {
         @if(selectedResourcesCount() === 0) {
-          <bk-empty-list message="@resource.field.empty" />
+          <bk-empty-list [message]="store.i18n.resource_empty()" />
         } @else {
           @for(resource of filteredResources(); track $index) {
             <ion-list lines="none">
@@ -50,27 +50,27 @@ import { ResourceSelectStore } from './resource-select.store';
   `
 })
 export class ResourceSelectModal {
-  protected readonly resourceSelectStore = inject(ResourceSelectStore);
+  protected readonly store = inject(ResourceSelectStore);
   private readonly modalController = inject(ModalController);
 
   // inputs
   public selectedTag = input.required<string>();
   public currentUser = input.required<UserModel>();
 
-  protected searchTerm = linkedSignal(() => this.resourceSelectStore.searchTerm());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
 
   // fields
-  protected filteredResources = computed(() => this.resourceSelectStore.filteredResources() ?? []);
-  protected resources = computed(() => this.resourceSelectStore.resources() ?? []);
+  protected filteredResources = computed(() => this.store.filteredResources() ?? []);
+  protected resources = computed(() => this.store.resources() ?? []);
   protected selectedResourcesCount = computed(() => this.resources().length);
-  protected isLoading = computed(() => this.resourceSelectStore.isLoading());
+  protected isLoading = computed(() => this.store.isLoading());
 
   constructor() {
     effect(() => {
-      this.resourceSelectStore.setSelectedTag(this.selectedTag());
+      this.store.setSelectedTag(this.selectedTag());
     });
     effect(() => {
-      this.resourceSelectStore.setCurrentUser(this.currentUser());
+      this.store.setCurrentUser(this.currentUser());
     });
   }
 
@@ -81,9 +81,9 @@ export class ResourceSelectModal {
   protected getIcon(resource: ResourceModel): string {
     let iconName: string;
     if (resource.type === 'rboat')
-      iconName = this.resourceSelectStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon ?? '';
+      iconName = this.store.appStore.getCategoryItem('rboat_type', resource.subType)?.icon ?? '';
     else
-      iconName = this.resourceSelectStore.appStore.getCategoryItem('resource_type', resource.type)?.icon ?? '';
+      iconName = this.store.appStore.getCategoryItem('resource_type', resource.type)?.icon ?? '';
     return iconName ?? '';
   }
 }

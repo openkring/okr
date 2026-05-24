@@ -26,7 +26,7 @@ import { OrgSelectStore } from './org-select.store';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      [i18n]="{ title: '@subject.org.operation.select.label' }"
+      [i18n]="{ title: store.i18n.org_select()}"
       [isModal]="true"
     />   
     <ion-content>
@@ -34,7 +34,7 @@ import { OrgSelectStore } from './org-select.store';
         <bk-spinner />
       } @else {
         @if(selectedOrgsCount() === 0) {
-          <bk-empty-list message="@subject.org.field.empty" />
+          <bk-empty-list [message]="store.i18n.org_empty()" />
         } @else {
           @for(org of filteredOrgs(); track $index) {
             <ion-list lines="none">
@@ -52,32 +52,32 @@ import { OrgSelectStore } from './org-select.store';
   `
 })
 export class OrgSelectModal {
-  protected readonly orgSelectStore = inject(OrgSelectStore);
+  protected readonly store = inject(OrgSelectStore);
   private readonly modalController = inject(ModalController);
 
   // inputs
   public selectedTag = input.required<string>();
   public currentUser = input.required<UserModel>();
 
-  protected searchTerm = linkedSignal(() => this.orgSelectStore.searchTerm());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
 
   // fields
-  protected filteredOrgs = computed(() => this.orgSelectStore.filteredOrgs() ?? []);
-  protected orgs = computed(() => this.orgSelectStore.orgs() ?? []);
+  protected filteredOrgs = computed(() => this.store.filteredOrgs() ?? []);
+  protected orgs = computed(() => this.store.orgs() ?? []);
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
-  protected isLoading = computed(() => this.orgSelectStore.isLoading());
+  protected isLoading = computed(() => this.store.isLoading());
 
-  protected defaultIcon = this.orgSelectStore.appStore.getCategoryIcon('model_type', OrgModelName);
+  protected defaultIcon = this.store.appStore.getCategoryIcon('model_type', OrgModelName);
 
   constructor() {
     effect(() => {
-      this.orgSelectStore.setSelectedTag(this.selectedTag());
+      this.store.setSelectedTag(this.selectedTag());
     });
     effect(() => {
-      this.orgSelectStore.setCurrentUser(this.currentUser());
+      this.store.setCurrentUser(this.currentUser());
     });
     effect(() => {
-      this.orgSelectStore.setSearchTerm(this.searchTerm());
+      this.store.setSearchTerm(this.searchTerm());
     });
   }
 

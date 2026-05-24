@@ -59,7 +59,6 @@ import { InvitationStore } from './invitation.store';
 })
 export class InvitationEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly modelSelectService = inject(ModelSelectService);
   protected readonly store = inject(InvitationStore);
 
   // inputs
@@ -73,19 +72,15 @@ export class InvitationEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected formData = linkedSignal(() => safeStructuredClone(this.invitation()));
   protected showForm = signal(true);
 
   // derived signals
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.invitation()?.bkey));
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
   protected readonly parentKey = computed(() => `${InvitationModelName}.${this.invitationKey()}`);
   protected readonly invitationKey = computed(() => this.invitation().bkey ?? '');
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

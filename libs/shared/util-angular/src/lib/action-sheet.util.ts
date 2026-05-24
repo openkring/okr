@@ -24,11 +24,12 @@ export function createActionSheetOptions(
 }
 
 /**
- * 
- * @param name  [model.]action
- * @param imgixBaseUrl 
- * @param iconName 
- * @returns 
+ * This is a helper to easily create a new menu on an actionsheet
+ * @param name  [model.]action the action identifier
+ * @param text the translated text to show on the actionsheet menu 
+ * @param imgixBaseUrl base url for imgix. This is needed to resolve the icon image over imgix.
+ * @param iconName the name of the icon to show on the actionsheet
+ * @returns an ActionSheetButton
  */
 export function createActionSheetButton(
     name: string,

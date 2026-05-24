@@ -105,11 +105,10 @@ export class OrgEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => safeStructuredClone(this.org()));
   protected showForm = signal(true);
 
-  // derived signals and fields
+  // derived 
   protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.org()?.bkey));
   protected toolbarTitle = computed(() => this.org()?.name ?? DEFAULT_TITLE);
   protected readonly parentKey = computed(() => `${OrgModelName}.${this.orgKey()}`);
@@ -119,11 +118,8 @@ export class OrgEditModal {
   protected isNew = computed(() => !this.org()?.bkey.length);
   protected listId = computed(() => 'o_' + this.orgKey());
   protected priv = computed(() => this.store.privacySettings());
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

@@ -36,37 +36,37 @@ import { GroupStore } from './group.store';
       <ion-segment [scrollable]="true" color="secondary" (ionChange)="onSegmentChanged($event)" value="content">
         @if(hasContent()) {
           <ion-segment-button value="content">
-            <ion-label>{{ groupStore.i18n.segment_content() }}</ion-label>
+            <ion-label>{{ store.i18n.segment_content() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasChat()) {
           <ion-segment-button value="chat">
-            <ion-label>{{ groupStore.i18n.segment_chat() }}</ion-label>
+            <ion-label>{{ store.i18n.segment_chat() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasCalendar()) {
           <ion-segment-button value="calendar">
-            <ion-label>{{ groupStore.i18n.segment_calendar() }}</ion-label>
+            <ion-label>{{ store.i18n.segment_calendar() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasTasks()) {
           <ion-segment-button value="tasks">
-            <ion-label>{{ groupStore.i18n.segment_tasks() }}</ion-label>
+            <ion-label>{{ store.i18n.segment_tasks() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasFiles()) {
           <ion-segment-button value="files">
-            <ion-label>{{ groupStore.i18n.segment_files() }}</ion-label>
+            <ion-label>{{ store.i18n.segment_files() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasAlbum()) {
           <ion-segment-button value="album">
-            <ion-label>{{ groupStore.i18n.segment_album() }}</ion-label>
+            <ion-label>{{ store.i18n.segment_album() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasMembers()) {
           <ion-segment-button value="members">
-            <ion-label>{{ groupStore.i18n.segment_members() }}</ion-label>
+            <ion-label>{{ store.i18n.segment_members() }}</ion-label>
           </ion-segment-button>
         }
       </ion-segment>
@@ -135,7 +135,7 @@ import { GroupStore } from './group.store';
   `
 })
 export class GroupViewPage implements ViewWillEnter {
-  protected readonly groupStore = inject(GroupStore);
+  protected readonly store = inject(GroupStore);
   private readonly pageStore = inject(PageStore);
   private readonly folderService = inject(FolderService);
 
@@ -147,7 +147,6 @@ export class GroupViewPage implements ViewWillEnter {
  // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => safeStructuredClone(this.group()));
   protected showForm = signal(true);
 
@@ -155,16 +154,11 @@ export class GroupViewPage implements ViewWillEnter {
   protected readonly avatarTitle = computed(() => this.name() ?? DEFAULT_NAME);
   protected readonly listId = computed(() => `f:${this.groupKey()}`);
   protected readonly albumId = computed(() => `f:a_${this.groupKey()}`);
-  protected currentUser = computed(() => this.groupStore.currentUser());
+  protected currentUser = computed(() => this.store.currentUser());
   protected isGroupAdmin = computed(() => isAdminMember(this.group(), this.currentUser()?.personKey));
-  protected selectedSegment = computed(() => this.groupStore.segment());
-  protected group = computed(() => this.groupStore.group());
+  protected selectedSegment = computed(() => this.store.segment());
+  protected group = computed(() => this.store.group());
   protected name = computed(() => this.formData()?.name ?? DEFAULT_NAME);
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.groupStore.i18n.changeConfirmation_ok(),
-    cancel: this.groupStore.i18n.changeConfirmation_cancel(),
-    confirmation: this.groupStore.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
   protected id = computed(() => this.formData()?.bkey ?? DEFAULT_ID);
   protected hasContent = computed(() => this.formData()?.hasContent ?? true);
   protected hasChat = computed(() => this.formData()?.hasChat ?? true);
@@ -173,13 +167,15 @@ export class GroupViewPage implements ViewWillEnter {
   protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
   protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
-  protected path = computed(() => getDocumentStoragePath(this.groupStore.tenantId(), 'group', this.group()?.bkey));
-  protected groupTags = computed(() => this.groupStore.getTags());
+  protected path = computed(() => getDocumentStoragePath(this.store.tenantId(), 'group', this.group()?.bkey));
+  protected groupTags = computed(() => this.store.getTags());
   protected color = computed(() => this.id().startsWith('notfall') ? 'danger' : 'light');
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   constructor() {
     effect(() => {
-      this.groupStore.setGroupKey(this.groupKey());
+      this.store.setGroupKey(this.groupKey());
     });
   }
 
@@ -196,7 +192,7 @@ export class GroupViewPage implements ViewWillEnter {
 
   /******************************* actions *************************************** */
   protected async save(): Promise<void> {
-    await this.groupStore.save(this.formData());
+    await this.store.save(this.formData());
   }
 
   protected async cancel(): Promise<void> {
@@ -210,10 +206,10 @@ export class GroupViewPage implements ViewWillEnter {
   /******************************* helpers *************************************** */
   protected async onSegmentChanged($event: CustomEvent): Promise<void> {
     const selectedSegment = $event.detail.value;
-    this.groupStore.setSelectedSegment(selectedSegment);
+    this.store.setSelectedSegment(selectedSegment);
     if (selectedSegment === 'files') {
       await this.folderService.ensureGroupFolder(
-        this.groupKey(), this.name(), this.groupStore.tenantId(), this.currentUser()
+        this.groupKey(), this.name(), this.store.tenantId(), this.currentUser()
       );
     }
   }

@@ -39,6 +39,18 @@ const initialState: ScsMemberFeesState = {
 };
 
 const SCS_MEMBER_FEES_I18N_KEYS = {
+  jb_label:             PFX + 'jb.label',             jb_placeholder:             PFX + 'jb.placeholder',             jb_helper:             PFX + 'jb.helper',
+  srv_label:            PFX + 'srv.label',            srv_placeholder:            PFX + 'srv.placeholder',            srv_helper:            PFX + 'srv.helper',
+  bev_label:            PFX + 'bev.label',            bev_placeholder:            PFX + 'bev.placeholder',            bev_helper:            PFX + 'bev.helper',
+  entryFee_label:       PFX + 'entryFee.label',       entryFee_placeholder:       PFX + 'entryFee.placeholder',       entryFee_helper:       PFX + 'entryFee.helper',
+  locker_label:         PFX + 'locker.label',         locker_placeholder:         PFX + 'locker.placeholder',         locker_helper:         PFX + 'locker.helper',
+  skiff_label:          PFX + 'skiff.label',          skiff_placeholder:          PFX + 'skiff.placeholder',          skiff_helper:          PFX + 'skiff.helper',
+  skiffInsurance_label: PFX + 'skiffInsurance.label', skiffInsurance_placeholder: PFX + 'skiffInsurance.placeholder', skiffInsurance_helper: PFX + 'skiffInsurance.helper',
+  rebate_label:         PFX + 'rebate.label',         rebate_placeholder:         PFX + 'rebate.placeholder',         rebate_helper:         PFX + 'rebate.helper',
+  notes_label:          PFX + 'notes.label',          notes_placeholder:          PFX + 'notes.placeholder',
+  rebateReason_label:   PFX + 'rebateReason.label',
+  invoiceState_label:   PFX + 'invoiceState.label',
+
   archive_confirm:  PFX + 'scsMemberFee.archive.confirm',
   archive_conf:     PFX + 'scsMemberFee.archive.conf',
   generate_confirm: PFX + 'scsMemberFee.generate.confirm',
@@ -50,6 +62,7 @@ const SCS_MEMBER_FEES_I18N_KEYS = {
   upload_conf:      PFX + 'scsMemberFee.upload.conf',
   ok:               '@ok',
   cancel:           '@cancel',
+  save:             '@save.label',
   list_title:       '@finance.scsMemberFee.list.title',
   as_invoice_edit:     PFX + 'actionsheet.invoice.edit',
   as_invoice_upload:   PFX + 'actionsheet.invoice.upload',
@@ -57,7 +70,7 @@ const SCS_MEMBER_FEES_I18N_KEYS = {
   as_invoice_paid:     PFX + 'actionsheet.invoice.paid',
   as_invoice_delete:   PFX + 'actionsheet.invoice.delete',
   as_person_edit:      PFX + 'actionsheet.person.edit',
-  as_member_edit:      PFX + 'actionsheet.member.edit',
+  as_member_edit:      PFX + 'actionsheet.member.edit'
 } satisfies Record<string, string>;
 
 export type ScsMemberFeesI18n = { [K in keyof typeof SCS_MEMBER_FEES_I18N_KEYS]: Signal<string> };
@@ -365,7 +378,7 @@ export const _ScsMemberFeesStore = signalStore(
         return;
       }
 
-      const positions = buildBexioPositions(fee);
+      const positions = bPFXldBexioPositions(fee);
       if (fee.templateId?.length === 0) {
           fee.templateId = getTemplateId(fee.category);
       }
@@ -466,9 +479,9 @@ export const _ScsMemberFeesStore = signalStore(
 );
 
 /**
- * Build Bexio invoice positions from a ScsMemberFeesModel.
+ * BPFXld Bexio invoice positions from a ScsMemberFeesModel.
  */
-function buildBexioPositions(fee: ScsMemberFeesModel): { text: string; unit_price: number; account_id: number; amount: number }[] {
+function bPFXldBexioPositions(fee: ScsMemberFeesModel): { text: string; unit_price: number; account_id: number; amount: number }[] {
   const positions: { text: string; unit_price: number; account_id: number; amount: number }[] = [];
   const addPos = (text: string, unit_price: number, account_id: number) => {
     if (unit_price !== 0) positions.push({ text, unit_price, account_id, amount: 1 });

@@ -3,17 +3,15 @@ import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { authState } from 'rxfire/auth';
 import { of } from 'rxjs';
+import { App } from '@capacitor/app';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
+import { AppConfigService, FirestoreService } from '@bk2/shared-data-access';
 import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { die, getSystemQuery } from '@bk2/shared-util-core';
 import { AppNavigationService, isBrowser } from '@bk2/shared-util-angular';
 
-import { SessionService } from '@bk2/session-data-access';
-import { App } from '@capacitor/app';
-
-import { AppConfigService } from './app-config.service';
+import { SessionService} from '@bk2/session-data-access';
 
 export type AppState = {
   tenantId: string;

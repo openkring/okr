@@ -14,32 +14,33 @@ import { membershipValidations } from '@bk2/relationship-membership-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
 
 export interface MembershipFormI18n {
-  selectLabel: Signal<string>;
-  newDesc: Signal<string>;
-  categoryLabel: Signal<string>;
-  categoryHelper: Signal<string>;
-  categoryName: Signal<string>;
-  memberStateLabel: Signal<string>;
-  stateHelper: Signal<string>;
+  select_label: Signal<string>;
+  new_desc: Signal<string>;
+  category_label: Signal<string>;
+  category_helper: Signal<string>;
+  category_name: Signal<string>;
+  member_state_label: Signal<string>;
+  state_helper: Signal<string>;
   bkey_label: Signal<string>;
-  memberId_label: Signal<string>;
-  memberId_placeholder: Signal<string>;
-  memberId_helper: Signal<string>;
-  memberBexioId_label: Signal<string>;
-  memberBexioId_placeholder: Signal<string>;
-  memberBexioId_helper: Signal<string>;
-  memberAbbreviation_label: Signal<string>;
-  memberAbbreviation_placeholder: Signal<string>;
-  memberAbbreviation_helper: Signal<string>;
-  memberNickName_label: Signal<string>;
-  memberNickName_placeholder: Signal<string>;
-  memberNickName_helper: Signal<string>;
-  orgFunction_label: Signal<string>;
-  orgFunction_placeholder: Signal<string>;
-  orgFunction_helper: Signal<string>;
+  memberid_label: Signal<string>;
+  memberid_placeholder: Signal<string>;
+  memberid_helper: Signal<string>;
+  bexioid_label: Signal<string>;
+  bexioid_placeholder: Signal<string>;
+  bexioid_helper: Signal<string>;
+  abbreviation_label: Signal<string>;
+  abbreviation_placeholder: Signal<string>;
+  abbreviation_helper: Signal<string>;
+  nickname_label: Signal<string>;
+  nickname_placeholder: Signal<string>;
+  nickname_helper: Signal<string>;
+  org_function_label: Signal<string>;
+  org_function_placeholder: Signal<string>;
+  org_function_helper: Signal<string>;
   rebate_label: Signal<string>;
   rebate_placeholder: Signal<string>;
   rebate_helper: Signal<string>;
+  rebate_reason: Signal<string>;
   notes_label: Signal<string>;
   notes_placeholder: Signal<string>;
   dateOfEntry_label: Signal<string>;
@@ -48,7 +49,6 @@ export interface MembershipFormI18n {
   dateOfExit_label: Signal<string>;
   dateOfExit_placeholder: Signal<string>;
   dateOfExit_helper: Signal<string>;
-  rebateReason_label: Signal<string>;
 }
 
 @Component({
@@ -87,14 +87,14 @@ export interface MembershipFormI18n {
                     </ion-col>
                     <ion-col size="3">
                       <ion-item lines="none">
-                        <ion-button slot="start" fill="clear" (click)="selectMember()">{{ i18n().selectLabel() }}</ion-button>
+                        <ion-button slot="start" fill="clear" (click)="selectMember()">{{ i18n().select_label() }}</ion-button>
                       </ion-item>
                     </ion-col>
                   </ion-row>
                   <ion-row>
                     <ion-col size="12">
                       <ion-item lines="none">
-                        <ion-label>{{ i18n().newDesc() }}</ion-label>
+                        <ion-label>{{ i18n().new_desc() }}</ion-label>
                       </ion-item>
                     </ion-col>
                   </ion-row>
@@ -109,7 +109,7 @@ export interface MembershipFormI18n {
                     </ion-col>
                     <ion-col size="3">
                       <ion-item lines="none">
-                      <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ i18n().selectLabel() }}</ion-button>
+                      <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ i18n().select_label() }}</ion-button>
                       </ion-item>
                     </ion-col>
                   </ion-row>
@@ -146,20 +146,20 @@ export interface MembershipFormI18n {
                   <ion-row>
                     <ion-col size="12" size-md="6">
                       <ion-item lines="none">
-                        <ion-label>{{ i18n().categoryLabel() }}:</ion-label>
-                        <ion-label>{{ i18n().categoryName() }}</ion-label>
+                        <ion-label>{{ i18n().category_label() }}:</ion-label>
+                        <ion-label>{{ i18n().category_name() }}</ion-label>
                       </ion-item>
                       <ion-item lines="none">
-                        <ion-note>{{ i18n().categoryHelper() }}</ion-note>
+                        <ion-note>{{ i18n().category_helper() }}</ion-note>
                       </ion-item>
                     </ion-col>
                     <ion-col size="12" size-md="6">
                       <ion-item lines="none">
-                        <ion-label>{{ i18n().memberStateLabel() }}:</ion-label>
+                        <ion-label>{{ i18n().member_state_label() }}:</ion-label>
                         <ion-label>{{ membershipState() }}</ion-label>
                       </ion-item>
                       <ion-item lines="none">
-                        <ion-note>{{ i18n().stateHelper() }}</ion-note>
+                        <ion-note>{{ i18n().state_helper() }}</ion-note>
                       </ion-item>
                     </ion-col>
 
@@ -219,16 +219,16 @@ export class MembershipForm {
 
   // i18n — all field translations come from the i18n input
   protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: '', helper: '' }) as TextInputI18n);
-  protected memberIdI18n = computed(() => ({ name: 'memberId', label: this.i18n().memberId_label(), placeholder: this.i18n().memberId_placeholder(), helper: this.i18n().memberId_helper() }) as TextInputI18n);
-  protected memberBexioIdI18n = computed(() => ({ name: 'memberBexioId', label: this.i18n().memberBexioId_label(), placeholder: this.i18n().memberBexioId_placeholder(), helper: this.i18n().memberBexioId_helper() }) as TextInputI18n);
-  protected memberAbbreviationI18n = computed(() => ({ name: 'memberAbbreviation', label: this.i18n().memberAbbreviation_label(), placeholder: this.i18n().memberAbbreviation_placeholder(), helper: this.i18n().memberAbbreviation_helper() }) as TextInputI18n);
-  protected memberNickNameI18n = computed(() => ({ name: 'memberNickName', label: this.i18n().memberNickName_label(), placeholder: this.i18n().memberNickName_placeholder(), helper: this.i18n().memberNickName_helper() }) as TextInputI18n);
-  protected orgFunctionI18n = computed(() => ({ name: 'orgFunction', label: this.i18n().orgFunction_label(), placeholder: this.i18n().orgFunction_placeholder(), helper: this.i18n().orgFunction_helper() }) as TextInputI18n);
+  protected memberIdI18n = computed(() => ({ name: 'memberId', label: this.i18n().memberid_label(), placeholder: this.i18n().memberid_placeholder(), helper: this.i18n().memberid_helper() }) as TextInputI18n);
+  protected memberBexioIdI18n = computed(() => ({ name: 'member_bexioid', label: this.i18n().bexioid_label(), placeholder: this.i18n().bexioid_placeholder(), helper: this.i18n().bexioid_helper() }) as TextInputI18n);
+  protected memberAbbreviationI18n = computed(() => ({ name: 'memberAbbreviation', label: this.i18n().abbreviation_label(), placeholder: this.i18n().abbreviation_placeholder(), helper: this.i18n().abbreviation_helper() }) as TextInputI18n);
+  protected memberNickNameI18n = computed(() => ({ name: 'memberNickName', label: this.i18n().nickname_label(), placeholder: this.i18n().nickname_placeholder(), helper: this.i18n().nickname_helper() }) as TextInputI18n);
+  protected orgFunctionI18n = computed(() => ({ name: 'orgFunction', label: this.i18n().org_function_label(), placeholder: this.i18n().org_function_placeholder(), helper: this.i18n().org_function_helper() }) as TextInputI18n);
   protected rebateI18n = computed(() => ({ name: 'rebate', label: this.i18n().rebate_label(), placeholder: this.i18n().rebate_placeholder(), helper: this.i18n().rebate_helper() } as NumberInputI18n));
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
   protected dateOfEntryI18n = computed(() => ({ name: 'dateOfEntry', label: this.i18n().dateOfEntry_label(), placeholder: this.i18n().dateOfEntry_placeholder(), helper: this.i18n().dateOfEntry_helper() } as DateInputI18n));
   protected dateOfExitI18n   = computed(() => ({ name: 'dateOfExit',   label: this.i18n().dateOfExit_label(),   placeholder: this.i18n().dateOfExit_placeholder(),   helper: this.i18n().dateOfExit_helper()   } as DateInputI18n));
-  protected rebateReasonI18n = computed(() => ({ name: 'rebateReason', label: this.i18n().rebateReason_label() } as StringSelectI18n));
+  protected rebateReasonI18n = computed(() => ({ name: 'rebateReason', label: this.i18n().rebate_reason() } as StringSelectI18n));
 
   // inputs
   public readonly i18n = input.required<MembershipFormI18n>();

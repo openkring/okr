@@ -6,12 +6,13 @@ import { signalStore, withProps } from '@ngrx/signals';
 import { I18nService } from '@bk2/shared-i18n';
 import { TableSection } from '@bk2/shared-models';
 import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { PFX } from './scope';
 
 const TableSectionStore = signalStore(
   withProps(() => ({ i18nService: inject(I18nService) })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      empty_table: '@content.section.error.emptyTable',
+      empty_table: PFX + 'emptyTable',
     }),
   })),
 );

@@ -21,6 +21,26 @@ import { RoomEditModal } from './room-edit.modal';
 import { PFX } from './scope';
 
 const MATRIX_CHAT_I18N_KEYS = {
+  roomId_label:              PFX + 'roomId.label',
+  roomId_placeholder:        PFX + 'roomId.placeholder',
+  roomId_helper:             PFX + 'roomId.helper',
+  name_label:                PFX + 'name.label',
+  name_placeholder:          PFX + 'name.placeholder',
+  name_helper:               PFX + 'name.helper',
+  invite_label:              PFX + 'invite.label',
+  invite_placeholder:        PFX + 'invite.placeholder',
+  invite_helper:             PFX + 'invite.helper',
+  unreadCount_label:         PFX + 'unreadCount.label',
+  unreadCount_placeholder:   PFX + 'unreadCount.placeholder',
+  unreadCount_helper:        PFX + 'unreadCount.helper',
+  topic_label:               PFX + 'topic.label',
+  topic_placeholder:         PFX + 'topic.placeholder',
+  avatar_label:              PFX + 'avatar.label',
+  avatar_placeholder:        PFX + 'avatar.placeholder',
+  avatar_helper:             PFX + 'avatar.helper',
+  isDirect_label:            PFX + 'isDirect.label',
+  isDirect_helper:           PFX + 'isDirect.helper',
+
   room_create_conf:          PFX + 'room.create.conf',
   room_create_error:         PFX + 'room.create.error',
   room_update_conf:          PFX + 'room.update.conf',
@@ -46,9 +66,11 @@ const MATRIX_CHAT_I18N_KEYS = {
   msg_report_message:        PFX + 'message.report.message',
   msg_report_comment:        PFX + 'message.report.comment',
   msg_report_showMessage:    PFX + 'message.report.showMessage',
+
   reconnecting:              PFX + 'reconnecting',
   connectionError:           PFX + 'connectionError',
   connecting:                PFX + 'connecting',
+
   selectRoom:                PFX + 'selectRoom',
   noRoomsError:              PFX + 'noRoomsError',
   createTestRoom:            PFX + 'createTestRoom',
@@ -62,6 +84,7 @@ const MATRIX_CHAT_I18N_KEYS = {
   severalTypeing:           PFX + 'severalTypeing',
   room_none:                PFX + 'room.none',
   copy_conf:                '@copy.conf',
+
   as_msg_edit:              PFX + 'message.actionsheet.edit',
   as_msg_delete:            PFX + 'message.actionsheet.delete',
   as_msg_react:             PFX + 'message.actionsheet.react',
@@ -70,11 +93,23 @@ const MATRIX_CHAT_I18N_KEYS = {
   as_msg_report:            PFX + 'message.actionsheet.report',
   as_msg_copy:              PFX + 'message.actionsheet.copy',
   as_msg_raw:               PFX + 'message.actionsheet.raw',
-  cancel:                   '@cancel',
+
   as_attachment_image:      PFX + 'attachment.image',
   as_attachment_file:       PFX + 'attachment.file',
   as_attachment_position:   PFX + 'attachment.position',
   as_attachment_survey:     PFX + 'attachment.survey',
+
+  survey_title:             PFX + 'survey.title',
+  allowMultipleAnswers_label:  PFX + 'survey.allowMultipleAnswers.label',
+  allowMultipleAnswers_helper: PFX + 'survey.allowMultipleAnswers.helper',
+  question_label:           PFX + 'survey.question.label',
+  question_placeholder:     PFX + 'survey.question.placeholder',
+  answers_title:            PFX + 'survey.answer.create',
+  answer_add:               PFX + 'survey.answer.add',
+
+  cancel:                   '@cancel',
+  ok:                       '@ok',
+  save:                     '@save.label'
 } satisfies Record<string, string>;
 
 export type MatrixChatI18n = { [K in keyof typeof MATRIX_CHAT_I18N_KEYS]: Signal<string> };
@@ -254,7 +289,7 @@ export const _MatrixChatStore = signalStore(
           ?? rooms.find(r => r.name?.toLowerCase() === roomId.toLowerCase());
         if (found) return found;
         // Fallback: room joined via CF but not yet in rooms$ (sync-delay window).
-        // Return a stub so the UI doesn't show "select a room" while waiting.
+        // Return a stub so the   PFX doesn't show "select a room" while waiting.
         const sdkRoom = state.matrixService.getRoom(roomId);
         if (!sdkRoom) return undefined;
         return {
@@ -331,7 +366,7 @@ export const _MatrixChatStore = signalStore(
           const stored = store.matrixService.getStoredCredentials();
           if (stored) {
             // Validate stored credentials use the person-key-based Matrix ID.
-            // If they don't (e.g., old firebase-uid-based credentials), discard and re-fetch.
+            // If they don't (e.g., old firebase-  PFXd-based credentials), discard and re-fetch.
             const expectedUserId = `@${user.personKey.toLowerCase()}:${store.homeServer()}`;
             if (stored.userId !== expectedUserId) {
               console.log(`MatrixChatStore.getMatrixToken: Clearing stale credentials (${stored.userId} → ${expectedUserId})`);
@@ -384,7 +419,7 @@ export const _MatrixChatStore = signalStore(
         const { roomId, joined } = result.data as { roomId: string; joined: boolean };
         // The CF uses the Synapse admin API (private rooms → client join returns 403).
         // Register as pending so updateRoomsList() injects a stub immediately and the
-        // UI renders the room without waiting for the next sync cycle.
+        //   PFX renders the room without waiting for the next sync cycle.
         store.matrixService.registerPendingRoom(roomId, groupId);
         const payload = 'rid:' + roomId + ', gid:' + groupId;
         void store.activityService.log('chat', 'join', store.currentUser() ?? undefined, payload);

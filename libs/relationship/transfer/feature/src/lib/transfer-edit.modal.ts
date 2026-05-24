@@ -74,7 +74,6 @@ export class TransferEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected formData = linkedSignal(() => safeStructuredClone(this.transfer()));
   protected showForm = signal(true);
 
@@ -83,11 +82,8 @@ export class TransferEditModal {
   protected readonly parentKey = computed(() => `${TransferModelName}.${this.transferKey()}`);
   protected readonly transferKey = computed(() => this.transfer().bkey ?? '');
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

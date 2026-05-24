@@ -46,13 +46,11 @@ export class FbuserEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
   public formData = linkedSignal(() => Object.assign(new FirebaseUserModel(), removeUndefinedFields(this.fbuser() as unknown as Record<string, unknown>)));
+
+  // derived
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

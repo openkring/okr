@@ -23,14 +23,14 @@ import { CalendarSelectStore } from './calendar-select.store';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      [i18n]="{ title: '@input.calendarName.select' }"
+      [i18n]="{ title: store.i18n.calendar_select()}"
       [isModal]="true"
     />
     <ion-content>
       @if (isLoading()) {
         <bk-spinner />
       } @else if (filteredCount() === 0) {
-        <bk-empty-list message="@input.calendarName.field.empty" />
+        <bk-empty-list [message]="store.i18n.calendar_empty()" />
       } @else {
         <ion-list lines="full">
           @for (calendar of filteredCalendars(); track calendar.bkey) {
@@ -56,19 +56,19 @@ import { CalendarSelectStore } from './calendar-select.store';
   `
 })
 export class CalendarSelectModal {
-  private readonly calendarSelectStore = inject(CalendarSelectStore);
+  protected readonly store = inject(CalendarSelectStore);
   private readonly modalController = inject(ModalController);
 
   public currentUser = input.required<UserModel>();
 
-  protected searchTerm = linkedSignal(() => this.calendarSelectStore.searchTerm());
-  protected filteredCalendars = computed(() => this.calendarSelectStore.filteredCalendars());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected filteredCalendars = computed(() => this.store.filteredCalendars());
   protected filteredCount = computed(() => this.filteredCalendars().length);
-  protected isLoading = computed(() => this.calendarSelectStore.isLoading());
+  protected isLoading = computed(() => this.store.isLoading());
 
   constructor() {
-    effect(() => this.calendarSelectStore.setCurrentUser(this.currentUser()));
-    effect(() => this.calendarSelectStore.setSearchTerm(this.searchTerm()));
+    effect(() => this.store.setCurrentUser(this.currentUser()));
+    effect(() => this.store.setSearchTerm(this.searchTerm()));
   }
 
   public select(calendar: CalendarModel): Promise<boolean> {

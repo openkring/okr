@@ -84,22 +84,18 @@ export class TaskEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => safeStructuredClone(this.task()));
   protected showForm = signal(true);
 
-  // derived signals
+  // derived
   protected defaultAvatar = computed(() => newAvatarInfo(this.currentUser()!.personKey, this.currentUser()!.firstName, this.currentUser()!.lastName, 'person', '', '', ''));
   protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.task().bkey, ));
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
   protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().bkey}`);
   protected calendars = linkedSignal(() => (this.formData()?.calendars ?? []) as string[]);
   protected author = linkedSignal(() => this.formData()?.author ?? this.defaultAvatar());
   protected assignee = linkedSignal(() => this.formData()?.assignee ?? this.defaultAvatar());
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   // passing constants to template
   protected calendarMask = LowercaseWordMask;

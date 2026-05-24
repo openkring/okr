@@ -88,12 +88,6 @@ import { PersonStore } from './person.store';
 export class PersonEditPage implements ViewWillEnter   {
   protected readonly store = inject(PersonStore);
 
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
-
   // inputs
   public personKey = input.required<string>();
   public readOnly = input<boolean>(true);
@@ -107,6 +101,7 @@ export class PersonEditPage implements ViewWillEnter   {
   protected showForm = signal(true);
 
   // derived signals
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.person()?.bkey ?? ''));
   protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
   protected parentKey = computed(() => PersonModelName + '.' + this.personKey());

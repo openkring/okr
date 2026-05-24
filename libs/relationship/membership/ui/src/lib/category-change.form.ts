@@ -11,8 +11,8 @@ import {CategoryChangeFormModel, categoryChangeFormValidations } from '@bk2/rela
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
 export interface CategoryChangeFormI18n {
-  helper: Signal<string>;
-  helperDate: Signal<string>;
+  category_change_helper: Signal<string>;
+  category_change_helper_date: Signal<string>;
   dateOfChange_label: Signal<string>;
   dateOfChange_placeholder: Signal<string>;
   dateOfChange_helper: Signal<string>;
@@ -57,7 +57,7 @@ export interface CategoryChangeFormI18n {
               <ion-row>
                 <ion-col size="12">
                   <ion-item lines="none">
-                    <ion-label>{{ i18n().helper() }}</ion-label>
+                    <ion-label>{{ i18n().category_change_helper() }}</ion-label>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -67,7 +67,7 @@ export interface CategoryChangeFormI18n {
                 </ion-col>
                 <ion-col size="12">
                   <ion-item lines="none">
-                    <ion-label>{{ i18n().helperDate() }}</ion-label>
+                    <ion-label>{{ i18n().category_change_helper_date() }}</ion-label>
                   </ion-item>
                 </ion-col>
               </ion-row>

@@ -1,7 +1,9 @@
 {
+  "profile": "Profil",
+  "intro": "Hier kannst du deine Kontaktdaten festlegen und das Verhalten der Applikation an deine Bedürfnisse anpassen. Gewisse Felder kannst du nicht selber ändern, weil sie im System benötigt werden. Bitte wende dich für solche Korrekturen an ",
   "personal": {
     "title": "Persönliche Daten",
-    "description": "Aktualisiere hier deine persönlichen Daten wie z.B. die AHV-Nummer.",
+    "description": "Aktualisiere hier deine persönlichen Daten wie z.B die AHV-Nummer.",
     "dateOfBirth": {
       "label": "Geburtsdatum",
       "placeholder": "TT.MM.JJJJ",
@@ -13,10 +15,37 @@
       "helper": "Die AHV-Nummer ist eine optionale Eingabe. Sie wird z.B. bei Reinigungspersonal für AHV-Meldungen oder Versicherungen verwendet oder bei Verbänden für den Altersnachweis verlangt."
     }
   },
+  "privacy": {
+    "title": "Datenschutz",
+    "description": "In diesen Datenschutzeinstellungen kannst du für alle sensitiven Attribute (z.B. Geburtsdatum) festlegen, wer diese sehen darf. Öffentliche Attribute sind für alle sichtbar, also auch ausserhalb des Vereins z.B. auf der Website. Eingeschränkte Attribute sind nur für Mitglieder innerhalb der App sichtbar. Geschützte Attribute sind nur für chargierte Personen sichtbar (z.B. Vorstand), welche diese Daten für die Arbeit im Verein benötigen. Das Teilen deiner Daten mit anderen Seeclub-Mitgliedern ist in deinem eigenen Interesse, weil du so z.B. für Ruderausfahrten kontaktiert werden kannst."
+  },
+  "settings": {
+    "title": "Applikations-Einstellungen",
+    "description": "Hier kannst du das Verhalten der App an deine Bedürfnisse anpassen. Die Einstellungen gelten nur für dich und nicht für andere Benutzer."
+  },
   "addresses": {
     "description": "Hier kannst du deine Adressen verwalten. Du kannst verschiedene Adressen für unterschiedliche Verwendungszwecke angeben, z.B. Privat, Geschäft, Notfallkontakt, etc. Die Sichtbarkeit dieser Adressen kannst du unten bei den Datenschutz-Einstellungen einstellen. Bank-Konto Informationen (IBAN-Nummer) für Rückerstattungen kannst du als Adressen mit Typ Bank-Konto eingeben. "
   },
-  "intro": "Hier kannst du deine Kontaktdaten festlegen und das Verhalten der Applikation an deine Bedürfnisse anpassen. Gewisse Felder kannst du nicht selber ändern, weil sie im System benötigt werden. Bitte wende dich für solche Korrekturen an ",
+  "gravatar": {
+    "label": "Gravatar E-Mail",
+    "placeholder": "email@example.com",
+    "helper": "Die E-Mail Adresse, die für den Gravatar verwendet wird (globally recognized avatar auf gravatar.com). Wenn du deinen Gravatar angibst, wird dieser anstelle eines hochgeladenen Bildes im Avatar der App verwendet."
+  },
+  "usage": {
+    "images": "Verwendung von Bildern",
+    "dob": "Verwendung des Geburtsdatums",
+    "postal": "Verwendung der Postadresse",
+    "email": "Verwendung der E-Mail Adresse",
+    "phone": "Verwendung der Telefonnummer",
+    "name": "Verwendung deines Namens",
+    "avatar": "Avatar-Verwendung",
+    "srv": {
+      "info": "Der Seeclub Stäfa ist Mitglied beim Schweizerischen Ruderverband SRV. Als Mitglied beim SCS bist du automatisch auch Mitglied beim SRV. Der SRV verlangt von uns die Weiterleitung von persönlichen Informationen (Name, Vorname, Post-Adresse, Tel. Nr., Geburtsdatum etc.) von allen unseren Mitgliedern. Mit der Mitgliedschaft beim SCS willigst du implizit ein, dass diese Daten an SRV weiter gegeben werden.",
+      "label": "Möchtest du die SRV News erhalten ?",
+      "helper": "Für den Versand der SRV-News (früheres Swissrowing Magazin) benötigt der SRV deine E-Mail Adresse. Hier hast du die Opt-out Möglichkeit, falls du diese News nicht erhalten möchtest. In diesem Fall wird deine E-Mail bei der nächsten Synchronisierung nicht an SRV weiter geleitet. Du erhälst so keine weiteren News von SRV mehr."
+    }   
+  },
+  "language": "Sprache",
   "update": {
     "label": "Profil ändern",
     "error": "Die Änderungen konnten nicht gespeichert werden",
@@ -29,5 +58,58 @@
     "ok": "OK",
     "cancel": "Abbrechen",
     "confirmation": "Speichern"
+  },
+  "display": {
+    "name": {
+      "label": "Anzeigeart des Namens",
+      "helper": "Bestimmt die Darstellungsart von Personennamen."
+    }
+  },
+  "sort": {
+    "person": {
+      "label": "Sortierkriterium für Personen",
+      "helper": "Sortierkriterium für Personen in Listen"
+    }
+  },
+  "deliver": {
+    "news": {
+      "label": "Nachrichtenversand",
+      "helper": "Wie sollen dir Nachrichten geschickt werden ?"
+    },
+    "invoice": {
+      "label": "Rechnungsversand",
+      "helper": "Wie sollen dir die Rechnungen geschickt werden ?" 
+    },
+    "messages": {
+      "label": "Push-Benachrichtigungen",
+      "state": {
+        "active": "Aktiv"
+      },
+      "button": "Erneuern"
+    }
+  },
+  "show": {
+    "debug": {
+      "label": "Debug-Informationen anzeigen",
+      "helper": "Zeigt Debug-Informationen der Forms und Menus an. Kann nur von Admin im Profil eingeschaltet werden oder direkt in der Datenbank für einen anderen Benutzer."
+    },
+    "archived": {
+      "label": "Archivierte Daten anzeigen",
+      "helper": "Zeigt archivierte Daten ebenfalls an. Kann nur von Admin im Profil eingeschaltet werden oder direkt in der Datenbank für einen anderen Benutzer." 
+    },
+    "helpers": {
+      "label": "Hilfe-Texte anzeigen",
+      "helper": "Bei vielen Feldern in den Formularen werden Hilfe-Texte angezeigt. Du kannst diese hier ausblenden, was zu einer kompakteren, übersichtlichen Darstellung führt. Das Ausblenden wird nur fortgeschrittenen Anwendern empfohlen."
+    }
+  },
+  "use": {
+    "touchid": {
+      "label": "Touch ID verwenden",
+      "helper": "Authentisierung mittels Fingerabdruck (sofern auf deinem Gerät möglich. Noch nicht fertig implementiert."
+    },
+    "faceid": {
+      "label": "Face ID verwenden",
+      "helper": "Authentisierung mittels Gesichtserkennung (sofern auf deinem Gerät möglich). Noch nicht fertig implementiert."
+    }
   }
 }

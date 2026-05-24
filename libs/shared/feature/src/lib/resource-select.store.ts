@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -6,7 +6,17 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { FirestoreService } from '@bk2/shared-data-access';
 import { ResourceCollection, ResourceModel, UserModel } from '@bk2/shared-models';
 import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
+
 import { AppStore } from './app.store';
+import { PFX } from './scope';
+
+const RESOURCE_SELECT_I18N_KEYS = {
+  resource_select:            PFX + 'resource.select',
+  resource_empty:             PFX + 'resource.empty',
+}
+
+export type ResourceSelectI18n = { [K in keyof typeof RESOURCE_SELECT_I18N_KEYS]: Signal<string> };
 
 export type ResourceSelectState = {
   searchTerm: string;
@@ -25,9 +35,12 @@ export const ResourceSelectStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
-    modalController: inject(ModalController),    
+    modalController: inject(ModalController),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll(RESOURCE_SELECT_I18N_KEYS),
+
     resourcesResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(

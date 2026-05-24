@@ -33,7 +33,7 @@ export class LabelSelectModal {
   // inputs
   public labels = input<string[]>([]);
   public icons = input<string[]>([]);
-  public title = input('@general.operation.select.tag');
+  public title = input('@select.tag');
 
   public async select(index: number): Promise<boolean> {
     return await this.modalController.dismiss(index, 'confirm');

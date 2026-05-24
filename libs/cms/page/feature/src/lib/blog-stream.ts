@@ -38,14 +38,14 @@ const PAGE_SIZE = 10;
         <ion-searchbar
           [value]="searchTerm()"
           (ionInput)="onSearch($event)"
-          [placeholder]="store.i18n.search()"
+          [placeholder]="store.i18n.blog_search()"
           debounce="300"
         />
       </ion-toolbar>
       @if (allTags().length > 0) {
         <div class="chips">
           <ion-chip [color]="selectedTag() === '' ? 'primary' : 'medium'" (click)="selectTag('')">
-            <ion-label>{{ store.i18n.filter_all() }}</ion-label>
+            <ion-label>{{ store.i18n.blog_filter_all() }}</ion-label>
           </ion-chip>
           @for (tag of allTags(); track tag) {
             <ion-chip [color]="selectedTag() === tag ? 'primary' : 'medium'" (click)="selectTag(tag)">

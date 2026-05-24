@@ -4,38 +4,16 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { CategoryChangeForm } from '@bk2/relationship-membership-ui';
 import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm } from '@bk2/relationship-membership-util';
 import { AvatarInfo, CategoryListModel, MembershipModel, UserModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { getFullName, newAvatarInfo } from '@bk2/shared-util-core';
-import { signalStore, withProps } from '@ngrx/signals';
 
 import { RelationshipToolbar } from '@bk2/avatar-ui';
-import { PFX } from './scope';
-
-const UI = '@relationship/membership/ui.';
-
-const CategoryChangeModalStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      // ChangeConfirmation keys
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-      // CategoryChangeForm keys
-      helper:                   UI + 'category.change.helper',
-      helperDate:               UI + 'category.change.helperDate',
-      dateOfChange_label:       UI + 'dateOfChange.label',
-      dateOfChange_placeholder: UI + 'dateOfChange.placeholder',
-      dateOfChange_helper:      UI + 'dateOfChange.helper',
-    } satisfies Record<string, string>),
-  })),
-);
+import { MembershipStore } from 'libs/relationship/membership/feature/src/lib/membership.store';
 
 @Component({
   selector: 'bk-category-change-modal',
   standalone: true,
-  providers: [CategoryChangeModalStore],
+  providers: [MembershipStore],
   imports: [
     Header, ChangeConfirmation, CategoryChangeForm, RelationshipToolbar,
     IonContent
@@ -73,24 +51,17 @@ const CategoryChangeModalStore = signalStore(
 })
 export class CategoryChangeModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(CategoryChangeModalStore);
-
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected readonly store = inject(MembershipStore);
 
   // inputs
   public membership = input.required<MembershipModel>();
   public membershipCategory = input.required<CategoryListModel>();
   public currentUser = input<UserModel>();
-  public title = input('@membership.operation.catChange.label');
+  public title = input(this.store.i18n.category_change_label());
 
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => convertMembershipToCategoryChangeForm(this.membership()));
 
   // derived signals
@@ -103,6 +74,9 @@ export class CategoryChangeModal {
     const m = this.membership();
       return newAvatarInfo(m.orgKey, '', m.orgName, m.orgModelType, '', '', m.orgName);
   });
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

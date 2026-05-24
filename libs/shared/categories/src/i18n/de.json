@@ -5,5 +5,512 @@
         "description": "Die Kategorie wurde entweder noch nicht zugewiesen oder ist nicht bekannt."
       }
     }
+  },
+  "categories": {
+    "albumStyle": {
+      "name": "Album Stil",
+      "grid": {
+        "label": "Grid",
+        "description": "Bilder werden in einem Gitter angezeigt, Bilder werden als background-image gesetzt"
+      },
+      "pinterest": {
+        "label": "Pinterest",
+        "description": "Bilder werden wie in Pinterest angezeigt (Gitter mit variablen Bildgrössen)"
+      },
+      "imgix": {
+        "label": "ImgIx",
+        "description": "Bilder werden in einem Gitter angezeigt, aber von imgix optimiert geladen"
+      },
+      "list": {
+        "label": "Liste",
+        "description": "Die Bilder werden in einer Listen-Darstellung gezeigt."
+      },
+      "avatarlist": {
+        "label": "Liste mit Avatars",
+        "description": "Die Bilder werden in einer Listen-Darstellung gezeigt. Jeder Eintrag hat ein Avatar-Bild."
+      }
+    },
+    "avatarUsage": {
+      "name": "Avatar Verwendung",
+      "none": {
+        "label": "Weder Avatar noch Gravatar anzeigen",
+        "description": "Weder Gravatar noch Photo-Avatar benutzen. Es wird nur ein Standardbild gezeigt."
+      },
+      "gravatarFirst": {
+        "label": "Gravatar priorisieren",
+        "description": "Zuerst den Gravatar mit der login-email Adresse suchen, dann ein eigenes Avatar-Portraitphoto."
+      },
+      "noGravatar": {
+        "label": "Kein Gravatar anzeigen",
+        "description": "Eigenes Avatar Photo benutzen. Falls diese fehlt, das Standardbild anzeigen"
+      },
+      "photoFirst": {
+        "label": "Avatar-Photo priorisieren",
+        "description": "Gravatar nur darstellen, falls kein eigenes Avatar-Photo vorhanden ist."
+      }
+    },
+      "buttonAction": {
+      "name": "Button Aktion",
+      "download": {
+        "label": "Download",
+        "description": "Datei herunterladen"
+      },
+      "navigate": {
+        "label": "Navigieren",
+        "description": "Zu einer anderen Seite navigieren"
+      },
+      "browse": {
+        "label": "Browse",
+        "description": "Externen Link in einem neuen Browser-Fenster öffnen"
+      },
+      "zoom": {
+        "label": "Zoom",
+        "description": "Bild vergrössern"
+      },
+      "none": {
+        "label": "Keine",
+        "description": "Keine Aktion wird ausgeführt"
+      },
+      "notify": {
+        "label": "Reservieren"
+      }
+    },
+    "color": {
+      "ionic": {
+        "primary": {
+          "label": "Primary",
+          "description": "Primary color for the app"
+        },
+        "secondary": {
+          "label": "Secondary",
+          "description": "Secondary color for the app"
+        },
+        "tertiary": {
+          "label": "Tertiary",
+          "description": "Tertiary color for the app"
+        },
+        "success": {
+          "label": "Success",
+          "description": "Success color for the app"
+        },
+        "warning": {
+          "label": "Warning",
+          "description": "Warning color for the app"
+        },
+        "danger": {
+          "label": "Danger",
+          "description": "Danger color for the app"
+        },
+        "light": {
+          "label": "Light",
+          "description": "Light color for the app"
+        },
+        "medium": {
+          "label": "Medium",
+          "description": "Medium color for the app"
+        },
+        "dark": {
+          "label": "Dark",
+          "description": "Dark color for the app"
+        },
+        "white": {
+          "label": "Keine",
+          "description": "Die Standardfarbe wird benutzt, dh. weiss oder schwarz"
+        }
+      }
+    },
+    "export": {
+      "json": {
+        "label": "JSON",
+        "description": "JSON (JavaScript Object Notation) is JavaScripts native data format"
+      },
+      "xml": {
+        "label": "XML",
+        "description": "Extensible Markup Language (XML) is a standardized markup language to represent structured data."
+      },
+      "xlsx": {
+        "label": "Excel (XLSX)",
+        "description": "Microsoft Excel format after 2007, based on Office Open XML format."
+      },
+      "csv": {
+        "label": "CSV",
+        "description": "Comma separated values (CSV) files are plain text files, that save structured data in a tabular form."
+      }
+    },
+    "fileTypeIcon": {
+      "audio": {
+        "label": "Audio",
+        "description": "Audio file (mp3, wav, ogg)"
+      },
+      "code": {
+        "label": "Code",
+        "description": "file with source code, e.g. js, ts, html, css, scss, json"
+      },
+      "csv": {
+        "label": "CSV",
+        "description": "file in comma-separated values format"
+      },
+      "doc": {
+        "label": "Document",
+        "description": "MS Word file (doc, docx, dot, dotx)"
+      },
+      "file": {
+        "label": "File",
+        "description": "File (any other file format)"
+      },
+      "html": {
+        "label": "HTML",
+        "description": "HTML file (html)"
+      },
+      "image": {
+        "label": "Image",
+        "description": "Image file (jpg, png, gif)"
+      },
+      "key": {
+        "label": "Key",
+        "description": "Key file (key)"
+      },
+      "numbers": {
+        "label": "Numbers",
+        "description": "Numbers file (numbers"
+      },
+      "pages": {
+        "label": "Pages",
+        "description": "Pages file (pages)"
+      },
+      "pdf": {
+        "label": "PDF",
+        "description": "PDF file (pdf)"
+      },
+      "ppt": {
+        "label": "Powerpoint",
+        "description": "Powerpoint file (ppt, pptx)"
+      },
+      "txt": {
+        "label": "Text",
+        "description": "Text file (txt, rtf)"
+      },
+      "video": {
+        "label": "Video",
+        "description": "Video file (mp4, mov)"
+      },
+      "xls": {
+        "label": "Excel",
+        "description": "Excel file (xls, xlsx, xlst)"
+      },
+      "zip": {
+        "label": "Zip",
+        "description": "Compressed file(s), e.g. zip, tar, gz"
+      }
+    },
+    "galleryEffect": {
+      "label": "Folienübergang",
+      "slide": {
+        "label": "Slide",
+        "description": "Slide effect"
+      },
+      "fade": {
+        "label": "Fade",
+        "description": "Fade effect"
+      },
+      "cube": {
+        "label": "Cube",
+        "description": "Cube effect"
+      },
+      "coverflow": {
+        "label": "Coverflow",
+        "description": "Coverflow effect"
+      },
+      "flip": {
+        "label": "Flip",
+        "description": "Flip effect"
+      },
+      "creative": {
+        "label": "Creative",
+        "description": "Creative effect"
+      },
+      "cards": {
+        "label": "Cards",
+        "description": "Cards effect"
+      }
+    },
+    "imageAction": {
+      "download": {
+        "label": "Download",
+        "description": "Bild herunterladen"
+      },
+      "zoom": {
+        "label": "Zoom",
+        "description": "Grössere Darstellung des Bildes"
+      },
+      "openslider": {
+        "label": "Open Slider",
+        "description": "Bild in einer Gallery anzeigen"
+      },
+      "opendirectory": {
+        "label": "Open Directory",
+        "description": "Den Ordner öffnen"
+      },
+      "followlink": {
+        "label": "Follow Link",
+        "description": "Dem Link folgen"
+      },
+      "none": {
+        "label": "None",
+        "description": "Keine Aktion"
+      }
+    },
+    "imageType": {
+      "image": {
+        "label": "Bild",
+        "description": "Ein Bild (jpg, png, gif)"
+      },
+      "video": {
+        "label": "Video",
+        "description": "Ein Video (mp4, mov)"
+      },
+      "streamingvideo": {
+        "label": "Streaming Video",
+        "description": "Ein Streaming Video (YouTube, Vimeo)"
+      },
+      "audio": {
+        "label": "Audio",
+        "description": "Eine Audio Datei (mp3, wav, ogg)"
+      },
+      "pdf": {
+        "label": "PDF",
+        "description": "Ein PDF Dokument"
+      },
+      "doc": {
+        "label": "Dokument",
+        "description": "Ein Dokument (doc, docx, txt, rtf)"
+      },
+      "dir": {
+        "label": "Ordner",
+        "description": "Ein Ordner mit Dateien"
+      },
+      "other": {
+        "label": "Andere",
+        "description": "Andere Dateitypen"
+      }
+    },
+    "nameDisplay": {
+      "name": "Anzeigeart des Namens",
+      "firstLast": {
+        "label": "Vorname Nachname",
+        "description": "Zuerst wird der Vorname, dann der Nachname dargestellt."
+      },
+      "lastFirst": {
+        "label": "Nachname Vorname",
+        "description": "Zuerst wird der Nachname, dann der Vorname dargestellt."
+      },
+      "firstOnly": {
+        "label": "Vorname",
+        "description": "Nur der Vorname wird dargestellt. Vorsicht: es können Doubletten entstehen, die kaum zu unterscheiden sind. Mit Übername können diese unterschieden werden."
+      },
+      "lastOnly": {
+        "label": "Nachname",
+        "description": "Nur der Nachname wird dargestellt. Vorsicht: es können Doubletten entstehen, die kaum zu unterschieden sind. Mit Übername kann diese Darstellungsart vielleicht trotzdem Sinn machen."
+      }
+    },
+    "sortCriteria": {
+      "name": "Sortierkriterium für Mitglieder",
+      "firstname": {
+        "label": "Vorname",
+        "description": "Die Mitglieder werden nach ihrem Vornamen sortiert."
+      },
+      "lastname": {
+        "label": "Nachname",
+        "description": "Die Mitglieder werden nach ihrem Familiennamen sortiert."
+      },
+      "fullname": {
+        "label": "Voller Name",
+        "description": "Die Mitglieder werden nach ihrem Vor- und Nachnamen sortiert."
+      },
+      "dob": {
+        "label": "Geburtsdatum",
+        "description": "Die Mitglieder werden nach ihrem Geburtsdatum sortiert."
+      },
+      "key": {
+        "label": "ID",
+        "description": "Die Mitglieder werden nach ihrem Datenbank-Schlüssel sortiert."
+      }
+    },
+    "privacyUsage": {
+      "public": {
+        "label": "Öffentlich",
+        "description": "Keine Einschränkung der Verwendung. Diese Daten dürfen auch auf der Website verwendet werden."
+      },
+      "restricted": {
+        "label": "Eingeschränkt",
+        "description": "Nur für Mitglieder des Seeclubs Stäfa innerhalb der App sichtbar (Registrierte User)."
+      },
+      "protected": {
+        "label": "Geschützt",
+        "description": "Nur für autorisierte Benutzer (z.B. Vorstand) im Rahmen der Vereinsaufgaben nutzbar."
+      },
+      "srv": {
+        "label": "Weiterleitung an SRV",
+        "description": "Der Seeclub Stäfa ist Mitglied beim Schweizerischen Ruderverband SRV. Als Mitglied beim SCS bist du automatisch auch Mitglied beim SRV. Der SRV verlangt von uns die Weiterleitung von persönlichen Informationen (Name, Vorname, Post-Adresse, Tel Nr.) von allen unseren Mitgliedern. Mit der Mitgliedschaft beim SCS willigst du implizit ein, dass diese Daten jährlich an SRV weiter gegeben werden.",
+        "srvemail": "Für den Versand der SRV-News (früheres Swissrowing Magazin) benötigt der SRV deine Email Adresse. Hier hast du eine Opt-Out Möglichkeit, falls du diese News nicht erhalten möchtest. In diesem Fall wird deine Email bei der nächsten Synchronisierung nicht an SRV weiter geleitet. Du erhälst dann auch keine News von SRV mehr."
+      }
+    },
+    "regex": {
+      "simpleName": {
+        "label": "Einfacher Name",
+        "description": "Einfacher Name"
+      },
+      "email": {
+        "label": "E-Mail Addresse (einfach)",
+        "description": "E-Mail Addresse (einfach)"
+      },
+      "phone": {
+        "label": "Telefon-Nummer",
+        "description": "Telefon-Nummer"
+      },
+      "ipv4": {
+        "label": "IP-Adresse (v4)",
+        "description": "IP-Adresse (v4)"
+      },
+      "ipv6": {
+        "label": "IP-Adresse (v6)",
+        "description": "IP-Adresse (v6)"
+      },
+      "filePath": {
+        "label": "Datei Pfad",
+        "description": "Datei Pfad"
+      },
+      "url": {
+        "label": "URL",
+        "description": "URL"
+      },
+      "creditCard": {
+        "label": "Kreditkarte",
+        "description": "Kreditkarte"
+      },
+      "userName": {
+        "label": "Benutzername",
+        "description": "Benutzername"
+      },
+      "password": {
+        "label": "Passwort",
+        "description": "Passwort"
+      },
+      "iban": {
+        "label": "IBAN",
+        "description": "IBAN"
+      },
+      "ahvn13": {
+        "label": "AHV",
+        "description": "AHV"
+      },
+      "macAddress": {
+        "label": "MAC-Adresse",
+        "description": "MAC-Adresse"
+      },
+      "plz": {
+        "label": "PLZ",
+        "description": "PLZ"
+      },
+      "what3words": {
+        "label": "What3words",
+        "description": "What3words"
+      }
+    },
+    "triple-bool": {
+      "true": {
+        "label": "true",
+        "description": "nur true"
+      },
+      "false": {
+        "label": "false",
+        "description": "nur false"
+      },
+      "both": {
+        "label": "beide",
+        "description": "kann sowohl true als auch false sein"
+      },
+      "none": {
+        "label": "nix",
+        "description": "weder true noch false"
+      }
+    },
+
+    "view-position": {
+      "none": {
+        "label": "Keine",
+        "description": "Keine"
+      },
+      "top": {
+        "label": "Oben",
+        "description": "Oben"
+      },
+      "bottom": {
+        "label": "Unten",
+        "description": "Unten"
+      },
+      "left": {
+        "label": "Links",
+        "description": "Links"
+      },
+      "right": {
+        "label": "Rechts",
+        "description": "Rechts"
+      }
+    },
+    "weather": {
+      "condition": {
+        "title": "Wetterbedingungen",
+        "description": "Wetterbedingungen",
+        "thunderstorm": {
+          "label": "Gewitter",
+          "description": "Gewitter"
+        },
+        "drizzle": {
+          "label": "Nieselregen",
+          "description": "Nieselregen"
+        },
+        "rain": {
+          "label": "Regen",
+          "description": "Regen"
+        },
+        "hail": {
+          "label": "Hagel",
+          "description": "Hagel"
+        },
+        "shower": {
+          "label": "Niederschlag",
+          "description": "Niederschlag"
+        },
+        "snow": {
+          "label": "Schnee",
+          "description": "Leichter bis starker Schneefall"
+        },
+        "fog": {
+          "label": "Nebel",
+          "description": "Nebel, Rauch, Dunst, Saharastaub, Vulkanasche, etc."
+        },
+        "clear": {
+          "label": "Sonnig",
+          "description": "Sonnig"
+        },
+        "fewClouds": {
+          "label": "Leicht bewölkt",
+          "description": "Wenige Wolken, ca. 10-25% bedeckt."
+        },
+        "scatteredClouds": {
+          "label": "Bewölkt",
+          "description": "Bewölkt, ca. 25-50% bedeckt."
+        },
+        "overcastClouds": {
+          "label": "Bedeckt",
+          "description": "Stark bewölkt, ca. 50-100% bedeckt."
+        },
+        "wind": {
+          "label": "Wind",
+          "description": "Wind"
+        }
+      }
+    }
   }
 }

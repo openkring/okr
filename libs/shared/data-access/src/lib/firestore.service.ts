@@ -31,8 +31,11 @@ import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@bk2/shared-config'
 import { BkModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@bk2/shared-models";
 import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
 import { TOAST_LENGTH } from '@bk2/shared-constants';
+import { I18nService } from "@bk2/shared-i18n";
 
 import { createComment } from '@bk2/comment-util';
+
+import { PFX } from "./scope";
 
 @Injectable({
   providedIn: 'root'
@@ -43,7 +46,14 @@ export class FirestoreService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly toastController = inject(ToastController);
   private readonly queryCache = new Map<string, Observable<unknown>>();
+  private readonly i18nService = inject(I18nService);
 
+  // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    comment_initial_conf: PFX + 'comment.initial.conf',
+    comment_update_conf: PFX + 'comment.update.conf',
+  })
+  
   private bkError(toastController: ToastController | undefined, message: string, isDebugMode = false): undefined {
     if (isDebugMode) console.error(message);
     if (toastController) this.bkShowToast(toastController, message);
@@ -99,7 +109,7 @@ export class FirestoreService {
       }
       if (currentUser) {
         debugMessage(`FirestoreService.createModel(${collectionName}/${ref.id}) -> OK`, currentUser);
-        const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), '@comment.operation.initial.conf', collectionName + '.' +ref.id, this.env.tenantId);
+        const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), this.i18n.comment_initial_conf(), collectionName + '.' +ref.id, this.env.tenantId);
         await this.saveComment(comment);
       }
       return Promise.resolve(ref.id);
@@ -260,7 +270,7 @@ export class FirestoreService {
       }
       if (currentUser) {
         debugMessage(`FirestoreService.updateModel(${collectionName}/${key}) -> OK`, currentUser);
-        const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), '@comment.operation.update.conf', collectionName + '.' + key, this.env.tenantId);
+        const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), this.i18n.comment_update_conf(), collectionName + '.' + key, this.env.tenantId);
         await this.saveComment(comment);
       }
       return Promise.resolve(key);

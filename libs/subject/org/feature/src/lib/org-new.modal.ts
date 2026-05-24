@@ -40,11 +40,6 @@ import { OrgStore } from './org.store';
 export class OrgNewModal {
   protected readonly store = inject(OrgStore);
   private readonly modalController = inject(ModalController);
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
 
   // inputs
   public currentUser = input.required<UserModel>();
@@ -54,11 +49,12 @@ export class OrgNewModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected formData = signal(ORG_NEW_FORM_SHAPE);
   protected showForm = signal(true);
 
-  // derived signals
+  // derived
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

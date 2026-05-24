@@ -2,21 +2,26 @@ import { inject, Signal } from '@angular/core';
 import { signalStore, withProps } from '@ngrx/signals';
 
 import { I18nService } from '@bk2/shared-i18n';
+import { PFX } from './scope';
 
 const AUTH_I18N_KEYS = {
-  login_title: '@auth.operation.login.title',
-  pwdreset_title: '@auth.operation.pwdreset.title',
-  pwdconfirm_title: '@auth.operation.pwdconfirm.title',
-  cancel: '@general.operation.change.cancel',
-  ok: '@general.operation.change.ok',
-  newpwd: '@user.auth.pwdreset.newpwd',
-  invalid_link: '@user.auth.pwdreset.invalidLink',
-  success: '@user.auth.pwdreset.success',
-  savepwd: '@user.auth.pwdreset.savepwd',
-  loginEmail_label:          '@auth/ui.loginEmail.label',
-  loginEmail_placeholder:    '@auth/ui.loginEmail.placeholder',
-  loginPassword_label:       '@auth/ui.loginPassword.label',
-  loginPassword_placeholder: '@auth/ui.loginPassword.placeholder',
+  title:                    PFX + 'title',
+  email_label:              PFX + 'email.label',
+  email_placeholder:        PFX + 'email.placeholder',
+  email_error:              PFX + 'email.error',
+  email_helper:             PFX + 'email.helper',
+  password_label:           PFX + 'password.label',
+  password_placeholder:     PFX + 'password.placeholder',
+  password_error:           PFX + 'password.error',
+  password_helper:          PFX + 'password.helper',
+  pwdreset_title:           PFX + 'pwdreset.title',
+  pwdconfirm:               PFX + 'pwdconfirm',
+  newpwd:                   PFX + 'pwdreset.newpwd',
+  invalid_link:             PFX + 'pwdreset.invalidLink',
+  success:                  PFX + 'pwdreset.success',
+  savepwd:                  PFX + 'pwdreset.savepwd',
+  cancel:                   '@cancel',
+  ok:                       '@ok',
 } satisfies Record<string, string>;
 
 export type AuthI18n = { [K in keyof typeof AUTH_I18N_KEYS]: Signal<string> };

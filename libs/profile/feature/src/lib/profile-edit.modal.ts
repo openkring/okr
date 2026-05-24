@@ -81,6 +81,7 @@ import { ProfileStore } from './profile.store';
                 [showForm]="showForm()"
                 [readOnly]="false"
                 [tags]="tags()"
+                [i18n]="store.i18n"
                 [tenantId]="tenantId()"
                 (valid)="formValid.set($event)" 
                 (dirty)="formDirty.set($event)"
@@ -103,17 +104,7 @@ export class ProfileEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
 
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
-  protected readonly headerI18n = computed(() => ({
-    title: this.store.getTitleLabel(false, this.currentUser()?.bkey),
-    placeholder: this.store.i18n.search_placeholder()
-  }));
   protected personFormData = linkedSignal(() => safeStructuredClone(this.currentPerson()));
   protected userFormData = linkedSignal(() => safeStructuredClone(this.currentUser()));
   protected showForm = signal(true);
@@ -131,6 +122,13 @@ export class ProfileEditModal {
   protected introHtml = computed(async () => this.store.i18n.intro() + ' <a href=mailto:"' + this.store.appStore.appConfig().opEmail + '">Website Admin</a>.');
   protected tags = computed(() => this.store.getTags());
   protected priv = computed(() => this.store.privacySettings());
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly headerI18n = computed(() => ({
+    title: this.store.getTitleLabel(false, this.currentUser()?.bkey),
+    placeholder: this.store.i18n.search_placeholder()
+  }));
+
 
   constructor() {
     effect(() => {

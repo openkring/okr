@@ -37,13 +37,13 @@ import { AuthStore } from './auth.store';
    }
   `,
   template: `
-    <bk-header [i18n]="{ title: store.i18n.login_title() }" [showCloseButton]="false" />
+    <bk-header [i18n]="{ title: store.i18n.title() }" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
-          <ion-label class="title"><strong>{{ store.i18n.login_title() }}</strong></ion-label>
+          <ion-label class="title"><strong>{{ store.i18n.title() }}</strong></ion-label>
           <bk-login-form context="login"
             [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
             [i18n]="store.i18n"
@@ -54,7 +54,7 @@ import { AuthStore } from './auth.store';
             <ion-grid>
               <ion-row>
                 <ion-col>
-                  <ion-button #loginButton [disabled]="!formIsValid()" (click)="login()">{{ store.i18n.login_title() }}</ion-button>
+                  <ion-button #loginButton [disabled]="!formIsValid()" (click)="login()">{{ store.i18n.title() }}</ion-button>
                 </ion-col>
               </ion-row>
               <ion-row>

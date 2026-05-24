@@ -47,17 +47,13 @@ export class OwnershipNewModal {
    // signals
   protected formDirty = signal(false);
   protected formValid = signal(true);   // default to true as the form is prefilled
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected formData = linkedSignal(() => safeStructuredClone(this.ownership()));
   protected showForm = signal(true);
 
   // derived signals
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {

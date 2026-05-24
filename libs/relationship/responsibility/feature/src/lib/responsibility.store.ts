@@ -49,9 +49,7 @@ const RESPONSIBILITY_I18N_KEYS = {
   as_delete:                       PFX + 'actionsheet.delete',
   ok:                              '@ok',
   cancel:                          '@cancel',
-  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+  save:                            '@save.label',
   respId_label:                    PFX + 'respId.label',
   respId_placeholder:              PFX + 'respId.placeholder',
   respId_helper:                   PFX + 'respId.helper',
@@ -70,7 +68,7 @@ const RESPONSIBILITY_I18N_KEYS = {
   delegateValidTo_label:           PFX + 'delegateValidTo.label',
   delegateValidTo_placeholder:     PFX + 'delegateValidTo.placeholder',
   delegateValidTo_helper:          PFX + 'delegateValidTo.helper',
-  copy_conf:                       '@shared/ui.copy.conf',
+  copy_conf:                       '@copy.conf',
 } satisfies Record<string, string>;
 
 export type ResponsibilityI18n = { [K in keyof typeof RESPONSIBILITY_I18N_KEYS]: Signal<string> };

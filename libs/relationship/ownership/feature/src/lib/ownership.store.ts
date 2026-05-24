@@ -77,6 +77,7 @@ const OWNERSHIP_I18N_KEYS = {
   as_end:                          PFX + 'actionsheet.end',
   cancel:                          '@cancel',
   ok:                              '@ok',
+  save:                            '@save.label',
   validFrom_label:                 PFX + 'validFrom.label',
   validFrom_placeholder:           PFX + 'validFrom.placeholder',
   validFrom_helper:                PFX + 'validFrom.helper',

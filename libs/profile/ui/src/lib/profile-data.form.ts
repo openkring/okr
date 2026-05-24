@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, input, linkedSignal, model, output, Signal } from "@angular/core";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
@@ -12,14 +12,14 @@ import { AhvFormat, formatAhv } from "@bk2/shared-util-angular";
 import { personValidations } from "@bk2/subject-person-util";
 
 export interface ProfileDataFormI18n {
-  title: string;
-  description: string;
-  dob_label: string;
-  dob_placeholder: string;
-  dob_helper: string;
-  ssn_label: string;
-  ssn_placeholder: string,
-  ssn_helper: string;
+  personal_title: Signal<string>;
+  personal_description: Signal<string>;
+  personal_dob_label: Signal<string>;
+  personal_dob_placeholder: Signal<string>;
+  personal_dob_helper: Signal<string>;
+  personal_ssn_label: Signal<string>;
+  personal_ssn_placeholder: Signal<string>;
+  personal_ssn_helper: Signal<string>;
 }
 
 @Component({
@@ -38,7 +38,7 @@ export interface ProfileDataFormI18n {
   template: `
   <ion-accordion toggle-icon-slot="start" value="profile-data">
     <ion-item slot="header" [color]="color()">
-        <ion-label>{{ i18n().title }}</ion-label>
+        <ion-label>{{ i18n().personal_title() }}</ion-label>
     </ion-item>
     <div slot="content">
       @if (showForm()) {
@@ -53,7 +53,7 @@ export interface ProfileDataFormI18n {
             <ion-row>
               <ion-col>
                 <ion-item lines="none">
-                  <ion-label>{{ i18n().description }}</ion-label>
+                  <ion-label>{{ i18n().personal_description() }}</ion-label>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -118,19 +118,17 @@ export class ProfileDataAccordion {
   protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssnId'));
   protected dobI18n = computed(() => ({
     name: 'dateOfBirth',
-    label: this.i18n().dob_label,
-    placeholder: this.i18n().dob_placeholder,
-    helper: this.i18n().dob_helper
+    label: this.i18n().personal_dob_label(),
+    placeholder: this.i18n().personal_dob_placeholder(),
+    helper: this.i18n().personal_dob_helper()
   } as DateInputI18n));
 
-  protected ssnI18n = computed(() => {
-    return {
-      name: 'ssn',
-      label: this.i18n().ssn_label,
-      placeholder: this.i18n().ssn_placeholder,
-      helper: this.i18n().ssn_helper
-    } as TextInputI18n
-  });
+  protected ssnI18n = computed(() => ({
+    name: 'ssn',
+    label: this.i18n().personal_ssn_label(),
+    placeholder: this.i18n().personal_ssn_placeholder(),
+    helper: this.i18n().personal_ssn_helper()
+  } as TextInputI18n));
 
   // fields
   protected dateOfBirth = linkedSignal(() => this.formData().dateOfBirth ?? '');

@@ -92,7 +92,6 @@ export class ReservationEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected formData = linkedSignal(() => safeStructuredClone(this.reservation()));
   protected showForm = signal(true);
   protected calevent = signal<CalEventModel | undefined>(undefined);
@@ -101,11 +100,8 @@ export class ReservationEditModal {
   
   // derived signals
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.reservation()?.bkey));
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected readonly reservationKey = computed(() => this.reservation().bkey ?? '');
   protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.reserver);
   protected readonly reserverName = computed(() => this.reserverAvatar() ? getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay) : '');

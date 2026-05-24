@@ -2,7 +2,6 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { Photo } from '@capacitor/camera';
 import { IonContent, ModalController, Platform } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
 import { UserModel, UserModelName } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@bk2/shared-ui';
 import { getFullName } from '@bk2/shared-util-core';
@@ -57,7 +56,6 @@ export class UserEditModal {
   protected readonly store = inject(UserStore);
   private readonly uploadService = inject(UploadService);
   private readonly platform = inject(Platform);
-  private readonly env = inject(ENV);
 
   // inputs
   protected user = input.required<UserModel>();
@@ -73,10 +71,9 @@ export class UserEditModal {
    // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected showForm = signal(true);
 
-  // derived signals
+  // derived
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.user()?.bkey));
   protected readonly toolbarTitle = computed(() => getFullName(this.user().firstName, this.user().lastName, this.user().nameDisplay));
   protected readonly parentKey = computed(() => `${UserModelName}.${this.user().bkey}`);
@@ -85,11 +82,8 @@ export class UserEditModal {
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly allRoles = computed(() => this.store.appStore.getCategory('roles'));
   protected tags = linkedSignal(() => this.user().tags);
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   protected async save(): Promise<void> {
@@ -115,7 +109,7 @@ export class UserEditModal {
     const user = this.user();
     if (!user) return;
     const file = await readAsFile(photo, this.platform);
-    const avatar = newAvatarModel([this.env.tenantId], 'user', user.bkey, file.name);
+    const avatar = newAvatarModel([this.store.tenantId()], 'user', user.bkey, file.name);
     const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, this.store.i18n.avatar_upload())
 
     if (downloadUrl) {

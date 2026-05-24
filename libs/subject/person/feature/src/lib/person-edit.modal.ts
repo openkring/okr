@@ -91,26 +91,18 @@ export class PersonEditModal {
   protected readonly store = inject(PersonStore);
   private readonly modalController = inject(ModalController);
 
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
-
   // inputs
   public person = input.required<PersonModel>();
   public currentUser = input<UserModel | undefined>();
   public tags = input.required<string>();
   public tenantId = input.required<string>();
   public genders = input.required<CategoryListModel>();
-
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => safeStructuredClone(this.person()));
   protected showForm = signal(true);
 
@@ -127,6 +119,8 @@ export class PersonEditModal {
     if (this.hasRole('resourceAdmin')) return false;
     return this.isReadOnly();
   });
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

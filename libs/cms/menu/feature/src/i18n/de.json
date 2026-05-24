@@ -1,9 +1,7 @@
 {
     "menus": "Menüpunkte",
     "submenus": "Sub-Menüs",
-    "description": "Menu-Einträge verweisen auf interne (Navigation) oder externe (Browse) Webseiten.",
     "empty": "Es sind noch keine Menüpunkte erstellt worden. Erstelle einen mit Klicken des + Buttons.",
-    "name": "Name",
     "link": "URL oder Menüs",
     "action": "Aktion",
     "edit": "Menü bearbeiten",
@@ -12,10 +10,6 @@
     "delete": "Menü löschen",
     "add": {
       "submenu": "Sub-Menü hinzufügen"
-    },
-    "url": {
-      "placeholder": "https://...",
-      "helper": "URL des Menüpunkts"
     },
     "menu": {
       "main": {
@@ -171,24 +165,41 @@
         "version": "Version"
       }
     },
+    "description": {
+      "menu": "Menu-Einträge verweisen auf interne (Navigation) oder externe (Browse) Webseiten.",
+      "label": "Beschreibung",
+      "placeholder": "ssss"
+    },
+    "icon": {
+      "label": "Icon Name",
+      "placeholder": "Name des Icons",
+      "helper": "Der Name des Icons ist typischerweise der Dateiname des svg-Bildes."
+    },
+    "name": {
+      "placeholder": "ssss",
+      "helper": "Ein Name für das Menü, so dass es eindeutig gekennzeichnet ist und wieder gefunden werden kann."
+    },
+    "label": {
+      "label": "Bezeichnung",
+      "placeholder": "Name",
+      "helper": "menu.feature.label.helper"
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "/route/to/page",
+      "helper": "Die URL verweist auf die Seite, die angezeigt werden soll."
+    },
     "category": {
       "plural": "Kategorien"
     },
     "responsibility": {
-      "operation": {
-        "export": {
-          "raw": ""
-        }
+      "export": {
+        "raw": "Verantwortlichkeiten exportieren (Rohdaten)"
       }
     },
     "content": {
       "section": {
         "plural": "Sektionen"
       }
-    },
-    "changeConfirmation": {
-      "ok": "OK",
-      "cancel": "Abbrechen",
-      "confirmation": "Speichern"
     }
 }

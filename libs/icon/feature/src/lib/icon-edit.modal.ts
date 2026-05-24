@@ -56,16 +56,13 @@ export class IconEditModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showForm = signal(true);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => safeStructuredClone(this.icon()));
 
+  // derived
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.icon()?.bkey));
   protected tenantId = computed(() => this.store.tenantId());
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

@@ -1,16 +1,12 @@
 import { Component, computed, inject, input, linkedSignal, model, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
-import { I18nService } from '@bk2/shared-i18n';
 import { MatrixRoom, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { safeStructuredClone } from '@bk2/shared-util-core';
 
 import { RoomEditForm } from '@bk2/chat-ui';
-import { PFX } from './scope';
-
-const UI = '@chat/ui.';
+import { MatrixChatStore } from 'libs/chat/feature/src/lib/matrix-chat.store';
 
 @Component({
   selector: 'bk-room-edit-modal',
@@ -32,7 +28,7 @@ const UI = '@chat/ui.';
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
             [showForm]="showForm()"
-            [i18n]="i18n"
+            [i18n]="store.i18n"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
           />
@@ -43,37 +39,7 @@ const UI = '@chat/ui.';
 })
 export class RoomEditModal {
   private modalController = inject(ModalController);
-  protected readonly env = inject(ENV);
-  private readonly i18nService = inject(I18nService);
-  protected readonly i18n = this.i18nService.translateAll({
-    changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-    changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-    changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-    roomId_label:            UI + 'roomId.label',
-    roomId_placeholder:      UI + 'roomId.placeholder',
-    roomId_helper:           UI + 'roomId.helper',
-    name_label:              UI + 'name.label',
-    name_placeholder:        UI + 'name.placeholder',
-    name_helper:             UI + 'name.helper',
-    invite_label:            UI + 'invite.label',
-    invite_placeholder:      UI + 'invite.placeholder',
-    invite_helper:           UI + 'invite.helper',
-    unreadCount_label:       UI + 'unreadCount.label',
-    unreadCount_placeholder: UI + 'unreadCount.placeholder',
-    unreadCount_helper:      UI + 'unreadCount.helper',
-    topic_label:             UI + 'topic.label',
-    topic_placeholder:       UI + 'topic.placeholder',
-    avatar_label:            UI + 'avatar.label',
-    avatar_placeholder:      UI + 'avatar.placeholder',
-    avatar_helper:           UI + 'avatar.helper',
-    isDirect_label:          UI + 'isDirect.label',
-    isDirect_helper:         UI + 'isDirect.helper',
-  });
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.i18n.changeConfirmation_ok(),
-    cancel: this.i18n.changeConfirmation_cancel(),
-    confirmation: this.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected readonly store = inject(MatrixChatStore);
 
 // inputs
   public room = model.required<MatrixRoom>();
@@ -86,6 +52,9 @@ export class RoomEditModal {
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => safeStructuredClone(this.room()));
   protected showForm = signal(true);
+
+  // computes
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

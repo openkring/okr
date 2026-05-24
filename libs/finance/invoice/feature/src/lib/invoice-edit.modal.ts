@@ -43,23 +43,23 @@ export class InvoiceEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly store = inject(InvoiceStore);
 
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
-
+  // inputs
   public readonly invoice = input.required<InvoiceModel>();
   public readonly currentUser = input.required<UserModel>();
   public readonly isNew = input.required<boolean>();
   public readonly readOnly = input(true);
 
+  // signals
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected formData = linkedSignal(() => safeStructuredClone(this.invoice()));
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty() && !this.isReadOnly());
 
+  // computed
+  protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty() && !this.isReadOnly());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+
+  // actions
   protected readonly headerTitle = computed(() =>
     this.isNew() ? '@finance.invoice.operation.create.label' : '@finance.invoice.operation.update.label'
   );

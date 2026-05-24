@@ -80,17 +80,11 @@ export class OwnershipEditModal {
     // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => safeStructuredClone(this.ownership()));
   protected showForm = signal(true);
 
   // derived signals
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.ownership()?.bkey));
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
   protected readonly parentKey = computed(() => `${OwnershipModelName}.${this.bkey()}`);
   protected readonly tags = computed(() => this.store.getTags());
   protected readonly name = computed(() => getOwnerName(this.ownership()));
@@ -107,6 +101,8 @@ export class OwnershipEditModal {
   protected bkey = computed(() => this.ownership().bkey);
   protected readonly subjectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
   protected readonly objectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(this.ownerAvatar()?.modelType));
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

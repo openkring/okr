@@ -10,39 +10,14 @@ import { signalStore, withProps } from '@ngrx/signals';
 import { AvatarToolbar } from '@bk2/avatar-feature';
 
 import { ScsMemberFeeEditForm } from '@bk2/relationship-membership-ui';
-import { PFX } from './scope';
+import { ScsMemberFeesStore } from 'libs/relationship/membership/feature/src/lib/scs-member-fees.store';
 
-const UI = '@relationship/membership/ui.';
-
-const ScsMemberFeeEditModalStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      // ChangeConfirmation keys
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-      // ScsMemberFeeEditForm keys
-      jb_label:             UI + 'jb.label',             jb_placeholder:             UI + 'jb.placeholder',             jb_helper:             UI + 'jb.helper',
-      srv_label:            UI + 'srv.label',            srv_placeholder:            UI + 'srv.placeholder',            srv_helper:            UI + 'srv.helper',
-      bev_label:            UI + 'bev.label',            bev_placeholder:            UI + 'bev.placeholder',            bev_helper:            UI + 'bev.helper',
-      entryFee_label:       UI + 'entryFee.label',       entryFee_placeholder:       UI + 'entryFee.placeholder',       entryFee_helper:       UI + 'entryFee.helper',
-      locker_label:         UI + 'locker.label',         locker_placeholder:         UI + 'locker.placeholder',         locker_helper:         UI + 'locker.helper',
-      skiff_label:          UI + 'skiff.label',          skiff_placeholder:          UI + 'skiff.placeholder',          skiff_helper:          UI + 'skiff.helper',
-      skiffInsurance_label: UI + 'skiffInsurance.label', skiffInsurance_placeholder: UI + 'skiffInsurance.placeholder', skiffInsurance_helper: UI + 'skiffInsurance.helper',
-      rebate_label:         UI + 'rebate.label',         rebate_placeholder:         UI + 'rebate.placeholder',         rebate_helper:         UI + 'rebate.helper',
-      notes_label:          UI + 'notes.label',          notes_placeholder:          UI + 'notes.placeholder',
-      rebateReason_label:   UI + 'rebateReason.label',
-      invoiceState_label:   UI + 'invoiceState.label',
-    } satisfies Record<string, string>),
-  })),
-);
 
 @Component({
   selector: 'bk-scs-member-fee-edit-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [ScsMemberFeeEditModalStore],
+  providers: [ScsMemberFeesStore],
   imports: [
     ScsMemberFeeEditForm, Header, ChangeConfirmation, AvatarToolbar,
     IonContent,
@@ -76,13 +51,7 @@ const ScsMemberFeeEditModalStore = signalStore(
 })
 export class ScsMemberFeeEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(ScsMemberFeeEditModalStore);
-
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected readonly store = inject(ScsMemberFeesStore);
 
   // inputs
   public fee = input.required<ScsMemberFeesModel>();
@@ -96,12 +65,12 @@ export class ScsMemberFeeEditModal {
   protected formValid = signal(false);
   protected manualDirty = signal(false);
 
-  // computed
+  // derived
   protected memberKey = computed(() => this.fee()?.member?.key ?? '');
   protected memberName = computed(() => getFullName(this.fee()?.member?.name1 ?? '', this.fee()?.member?.name2 ?? '', this.currentUser()?.nameDisplay));
   protected parentKey = computed(() => `person.${this.memberKey()}`);
-
   protected showConfirmation = computed(() => this.formValid() && this.manualDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   protected headerTitle = computed(() =>
     this.readOnly() ? '@finance.scsMemberFee.operation.view.label' : '@finance.scsMemberFee.operation.update.label'

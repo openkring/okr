@@ -57,16 +57,12 @@ export class ResponsibilityEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formDirty() && this.formValid());
   protected formData = linkedSignal(() => safeStructuredClone(this.responsibility()));
 
   // fields
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(false, this.responsibility()?.bkey));
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected showConfirmation = computed(() => this.formDirty() && this.formValid());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected readonly tenantId = computed(() => this.store.tenantId());
   protected readonly parentName = computed(() => {
     const parentKey = this.formData()?.parentKey;

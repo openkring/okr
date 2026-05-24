@@ -16,11 +16,10 @@ import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 import { PersonNewFormModel, personNewFormValidations } from '@bk2/subject-person-util';
 
 export interface PersonNewFormI18n {
-  personDetails: Signal<string>;
-  personAddress: Signal<string>;
-  personMisc: Signal<string>;
-  personMembership: Signal<string>;
-  selectLabel: Signal<string>;
+  details: Signal<string>;
+  addresses: Signal<string>;
+  misc: Signal<string>;
+  select: Signal<string>;
   firstName_label: Signal<string>;
   firstName_placeholder: Signal<string>;
   firstName_helper: Signal<string>;
@@ -66,8 +65,12 @@ export interface PersonNewFormI18n {
   dateOfEntry_label: Signal<string>;
   dateOfEntry_placeholder: Signal<string>;
   dateOfEntry_helper: Signal<string>;
-  shouldAddMembership_label: Signal<string>;
-  shouldAddMembership_helper: Signal<string>;
+  add_membership_label: Signal<string>;
+  add_membership_confirm: Signal<string>;
+  add_membership_conf: Signal<string>;
+  add_membership_error: Signal<string>;
+  add_membership_helper: Signal<string>;
+  add_membership_exists: Signal<string>;
 }
 
 @Component({
@@ -92,7 +95,7 @@ export interface PersonNewFormI18n {
       <!-------------------------------------- PERSON ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().personDetails() }}</ion-card-title>
+          <ion-card-title>{{ i18n().details() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -146,7 +149,7 @@ export interface PersonNewFormI18n {
       @if(showAddressInputs()) {
         <ion-card>
           <ion-card-header>
-            <ion-card-title>{{ i18n().personAddress() }}</ion-card-title>
+            <ion-card-title>{{ i18n().addresses() }}</ion-card-title>
           </ion-card-header>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
@@ -240,7 +243,7 @@ export interface PersonNewFormI18n {
       <!-------------------------------------- OTHER ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().personMisc() }}</ion-card-title>
+          <ion-card-title>{{ i18n().misc() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -274,7 +277,7 @@ export interface PersonNewFormI18n {
       <!-------------------------------------- MEMBERSHIP (optional) ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().personMembership() }}</ion-card-title>
+          <ion-card-title>{{ i18n().add_membership_label() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -295,7 +298,7 @@ export interface PersonNewFormI18n {
                 </ion-col>
                 <ion-col size="3">
                   <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ i18n().selectLabel() }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ i18n().select() }}</ion-button>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -349,7 +352,7 @@ export class PersonNewForm {
   protected dateOfBirthI18n  = computed(() => ({ name: 'dateOfBirth',  label: this.i18n().dateOfBirth_label(),  placeholder: this.i18n().dateOfBirth_placeholder(),  helper: this.i18n().dateOfBirth_helper()  } as DateInputI18n));
   protected dateOfDeathI18n  = computed(() => ({ name: 'dateOfDeath',  label: this.i18n().dateOfDeath_label(),  placeholder: this.i18n().dateOfDeath_placeholder(),  helper: this.i18n().dateOfDeath_helper()  } as DateInputI18n));
   protected dateOfEntryI18n         = computed(() => ({ name: 'dateOfEntry',         label: this.i18n().dateOfEntry_label(),         placeholder: this.i18n().dateOfEntry_placeholder(),         helper: this.i18n().dateOfEntry_helper()         } as DateInputI18n));
-  protected shouldAddMembershipI18n = computed(() => ({ name: 'shouldAddMembership', label: this.i18n().shouldAddMembership_label(), helper: this.i18n().shouldAddMembership_helper() } as CheckboxI18n));
+  protected shouldAddMembershipI18n = computed(() => ({ name: 'shouldAddMembership', label: this.i18n().add_membership_confirm(), helper: this.i18n().add_membership_helper() } as CheckboxI18n));
 
   public membershipCategories = input.required<CategoryListModel>();
   // signals

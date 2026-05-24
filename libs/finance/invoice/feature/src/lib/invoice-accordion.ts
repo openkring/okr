@@ -37,7 +37,7 @@ import { InvoiceStore } from './invoice.store';
           }
           @if(myInvoices().length === 0 && !isLoading()) {
             <ion-item lines="none">
-              <ion-label color="medium">{{ store.i18n.field_empty() }}</ion-label>
+              <ion-label color="medium">{{ store.i18n.empty() }}</ion-label>
             </ion-item>
           }
         </ion-list>

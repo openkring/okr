@@ -35,9 +35,9 @@ const ImageSelectStore = signalStore(
       imgOverlay_label:      PFX + 'imageConfig.overlay.label',
       imgOverlay_placeholder: PFX + 'imageConfig.overlay.placeholder',
       imgOverlay_helper:     PFX + 'imageConfig.overlay.helper',
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
+      ok:                    '@ok',
+      cancel:                '@cancel',
+      save:                  '@save.label',
     }),
   })),
 );
@@ -86,11 +86,7 @@ export class ImageSelectModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
   public formData = signal<ImageConfig>(IMAGE_CONFIG_SHAPE);
 
   protected imageConfigI18n = computed(() => ({

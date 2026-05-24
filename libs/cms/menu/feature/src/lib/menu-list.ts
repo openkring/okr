@@ -52,7 +52,7 @@ import { MenuStore } from './menu.store';
           <ion-grid>
             <ion-row>
               <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ menuStore.i18n.name() }}</strong></ion-label>
+                <ion-label><strong>{{ menuStore.i18n.name_label() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4" class="ion-hide-md-down">
                   <ion-label><strong>{{ menuStore.i18n.link() }}</strong></ion-label>

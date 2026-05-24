@@ -25,7 +25,7 @@ import { GroupSelectStore } from './group-select.store';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      [i18n]="{ title: '@subject.group.operation.select.label' }"
+      [i18n]="{ title: store.i18n.group_select() }"
       [isModal]="true"
     />   
     <ion-content>
@@ -33,7 +33,7 @@ import { GroupSelectStore } from './group-select.store';
         <bk-spinner />
       } @else {
         @if(selectedGroupsCount() === 0) {
-          <bk-empty-list message="@subject.group.field.empty" />
+          <bk-empty-list [message]="store.i18n.group_empty()" />
         } @else {
           <ion-list lines="inset">
             @for(group of filteredGroups(); track $index) {
@@ -46,32 +46,32 @@ import { GroupSelectStore } from './group-select.store';
   `
 })
 export class GroupSelectModal {
-  protected readonly groupSelectStore = inject(GroupSelectStore);
+  protected readonly store = inject(GroupSelectStore);
   private readonly modalController = inject(ModalController);
 
   // inputs
   public selectedTag = input.required<string>();
   public currentUser = input.required<UserModel>();
 
-  protected searchTerm = linkedSignal(() => this.groupSelectStore.searchTerm());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
 
   // fields
-  protected filteredGroups = computed(() => this.groupSelectStore.filteredGroups() ?? []);
-  protected groups = computed(() => this.groupSelectStore.groups() ?? []);
+  protected filteredGroups = computed(() => this.store.filteredGroups() ?? []);
+  protected groups = computed(() => this.store.groups() ?? []);
   protected selectedGroupsCount = computed(() => this.filteredGroups().length);
-  protected isLoading = computed(() => this.groupSelectStore.isLoading());
+  protected isLoading = computed(() => this.store.isLoading());
 
-  protected defaultIcon = this.groupSelectStore.appStore.getCategoryIcon('model_type', GroupModelName);
+  protected defaultIcon = this.store.appStore.getCategoryIcon('model_type', GroupModelName);
 
   constructor() {
     effect(() => {
-      this.groupSelectStore.setSelectedTag(this.selectedTag());
+      this.store.setSelectedTag(this.selectedTag());
     });
     effect(() => {
-      this.groupSelectStore.setCurrentUser(this.currentUser());
+      this.store.setCurrentUser(this.currentUser());
     });
     effect(() => {
-      this.groupSelectStore.setSearchTerm(this.searchTerm());
+      this.store.setSearchTerm(this.searchTerm());
     });
   }
 

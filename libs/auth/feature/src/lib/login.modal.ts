@@ -19,7 +19,7 @@ import { AuthStore } from './auth.store';
     IonContent, IonButton, IonItem
   ],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.login_title() }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.title() }" [isModal]="true" />
     <ion-content>
       <bk-login-form context="login"
         [(vm)]="currentCredentials" (validChange)="formIsValid = $event"
@@ -29,7 +29,7 @@ import { AuthStore } from './auth.store';
       />
       <ion-item lines="none">
         <ion-button slot="start" fill="clear" (click)="cancel()">{{ store.i18n.cancel() }}</ion-button>
-        <ion-button slot="end" fill="clear" [disabled]="!formIsValid" (click)="login()">{{ store.i18n.login_title() }}</ion-button>
+        <ion-button slot="end" fill="clear" [disabled]="!formIsValid" (click)="login()">{{ store.i18n.title() }}</ion-button>
       </ion-item>
     </ion-content>
   `,

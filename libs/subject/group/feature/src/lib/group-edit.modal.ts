@@ -47,7 +47,7 @@ import { GroupStore } from './group.store';
 })
 export class GroupEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly store = inject(GroupStore);
+  protected readonly store = inject(GroupStore);
 
   // inputs
   public group = input.required<GroupModel>();
@@ -61,17 +61,13 @@ export class GroupEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected formData = linkedSignal(() => safeStructuredClone(this.group()));
   protected showForm = signal(true);
 
-  // fields
+  // derived
   protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.group().bkey));
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

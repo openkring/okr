@@ -1,4 +1,39 @@
-{
+{  
+  "roomId": {
+    "label": "Raum-ID",
+    "placeholder": "Raum-ID",
+    "helper": "Die Raum-ID wird verwendet, um einen Chat-Raum eindeutig zu identifizieren.",
+    "error": "Die Raum-ID muss aus einem Wort mit alphanumerischen Zeichen mit Kleinbuchstaben bestehen."
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "invite": {
+    "label": "Einladung",
+    "placeholder": "",
+    "helper": ""
+  },
+  "unreadCount": {
+    "label": "Ungelesene Nachrichten",
+    "placeholder": "",
+    "helper": ""
+  },
+  "topic": {
+    "label": "Thema",
+    "placeholder": ""
+  },
+  "avatar": {
+    "label": "Avatar-URL",
+    "placeholder": "https://...",
+    "helper": ""
+  },
+  "isDirect": {
+    "label": "Direktnachricht",
+    "helper": ""
+  },
+  
   "reconnecting": "Wieder verbinden...",
   "connectionError": "Verbindungsfehler",
   "connecting": "verbinden...",

@@ -1,12 +1,21 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { OrgModel, UserModel } from '@bk2/shared-models';
 import { chipMatches, nameMatches } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { AppStore } from './app.store';
+import { PFX } from './scope';
+
+const ORG_SELECT_I18N_KEYS = {
+  org_select:                 PFX + 'org.select',
+  org_empty:                  PFX + 'org.empty',
+}
+
+export type OrgSelectI18n = { [K in keyof typeof ORG_SELECT_I18N_KEYS]: Signal<string> };
 
 export type OrgSelectState = {
   searchTerm: string;
@@ -25,7 +34,12 @@ export const OrgSelectStore = signalStore(
   withProps(() => ({
     firestoreService: inject(FirestoreService),
     appStore: inject(AppStore),
-    modalController: inject(ModalController),    
+    modalController: inject(ModalController),
+    i18nService: inject(I18nService)  
+  })),
+
+  withProps((store) => ({
+      i18n: store.i18nService.translateAll(ORG_SELECT_I18N_KEYS),
   })),
 
   withComputed((store) => {

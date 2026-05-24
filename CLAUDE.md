@@ -153,6 +153,38 @@ const FeatureStore = signalStore(
 // and in class: protected readonly store = inject(FeatureStore);
 ```
 
+**Typed i18n objects** — when a store has many keys, extract the `translateAll` argument to a named const and derive a `type` from it so callers have a stable, named type:
+```ts
+const FEATURE_I18N_KEYS = {
+  list_title: '@feature.list.title',
+  field_empty: '@feature.field.empty',
+} satisfies Record<string, string>;
+
+export type FeatureI18n = { [K in keyof typeof FEATURE_I18N_KEYS]: Signal<string> };
+
+// in store:
+i18n: store.i18nService.translateAll(FEATURE_I18N_KEYS),
+```
+
+**Passing i18n subsets to child components** — use TypeScript's structural subtyping ("duck typing") instead of unwrapping signals. Define the child component's i18n interface with only the keys it needs, all typed as `Signal<string>`, using the same key names as the parent store. Pass the full store `i18n` object directly — TypeScript accepts it because the store type satisfies the narrower interface:
+```ts
+// in profile-ui (child):
+export interface ProfileDataFormI18n {
+  personal_title: Signal<string>;
+  personal_dob_label: Signal<string>;
+  // ... only the keys this component uses
+}
+// input in child component:
+public readonly i18n = input.required<ProfileDataFormI18n>();
+// template reads signals directly:
+// {{ i18n().personal_title() }}
+
+// in profile-feature (parent) — pass the full store i18n, no mapping needed:
+// [i18n]="store.i18n"
+```
+
+No `computed()` wrapper, no signal unwrapping, no key renaming — full reactivity preserved.
+
 **Exception — keep `TranslatePipe` only when the key is data-driven at runtime** (comes from a DB field, an `input()`, or a dynamically constructed string like `` `@prefix.${variable}.label` ``). Do NOT keep it for hardcoded string literals that happen to live in the component body.
 
 ### Naming conventions

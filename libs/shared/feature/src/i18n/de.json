@@ -1,18 +1,19 @@
 {
   "calendar": {
-    "select": "Kalender wählen"
+    "select": "Kalender wählen",
+    "empty": "Keine Kalendereinträge gefunden."
   },
   "group": {
     "select": "Gruppe wählen",
     "empty": "Keine Gruppen gefunden."
   },
   "org": {
-    "empty": "Keine Organisationen gefunden.",
-    "select": "Organisation wählen"
+    "select": "Organisation wählen",
+    "empty": "Keine Organisationen gefunden."
   },
   "person": {
-    "empty": "Keine Personen gefunden.",
-    "select": "Person wählen"
+    "select": "Person wählen",
+    "empty": "Keine Personen gefunden."
   },
   "resource": {
     "select": "Resource wählen",

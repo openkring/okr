@@ -2,12 +2,32 @@
   "pages": "Webseiten",
   "sections": "Sektionen",
   "empty": "Es sind noch keine Inhalte erfasst worden.",
+  "emptyPage": "Es gibt noch keine Sektionen für diese Seite. Bitte zuerst Sektionen erstellen.",
+  "emptyPageReadOnly": "Diese Seite ist noch leer.",
   "notfound": "Seite nicht gefunden",
   "notexist": "Die aufgerufene Seite existiert nicht.",
   "help": "Bitte überprüfen Sie die URL oder navigieren Sie über das Menü.",
-  "emptyPage": "Es gibt noch keine Sektionen für diese Seite. Bitte zuerst Sektionen erstellen.",
-  "emptyPageReadOnly": "Diese Seite ist noch leer.",
+
+  "name": {
+    "label": "Name",
+    "placeholder": "sssss",
+    "helper": "Der Name der Webseite, beliebig wählebar, dient einfach zum Wiederfinden der Webseite."
+  },
   "description": "Eine Website enthält einen Titel und mehrere Sektionen. Die Reihenfolge der Sektionen kann geändert werden.",
+  "title": {
+    "label": "Titel",
+    "placeholder": "String",
+    "helper": "Der Titel ist optional und wird dem Betrachter der Webseite gezeigt."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Text"
+  },
+
+  "view": "Webseiten-Konfiguration anzeigen",
+  "show": "Webseite anzeigen",
+  "edit": "Webseite bearbeiten",
+  "create": "Neue Seite erstellen",
   "add": {
     "label": "Webseite hinzufügen",
     "placeholder": "Name der Seite",
@@ -29,6 +49,7 @@
     "image": "Bild/er hochladen",
     "file": "File/s hochladen"
   },
+
   "type": {
     "graph": {
       "nomain": "Kein Hauptmenu gefunden.",
@@ -36,24 +57,20 @@
       "description2": "Die Elemente in diesem Graph können selektiert und editiert werden."
     },
     "blog": {
-      "search": "",
+      "label": "Blog Page",
+      "search": "Suchen ...",
       "filter": {
         "all": "Alle"
       }
     }
   },
+
   "section": {
+    "add": "Neue Sektion hinzufügen",
     "edit": "Sektion bearbeiten",
     "send": "Artikel versenden",
-    "remove": "Sektion entfernen"
-  },
-  "view": "Webseiten-Konfiguration anzeigen",
-  "show": "Webseite anzeigen",
-  "edit": "Webseite bearbeiten",
-  "create": "Neue Seite erstellen",
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+    "remove": "Sektion entfernen",
+    "label": "Sektion"
   }
 }
+

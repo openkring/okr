@@ -4,7 +4,7 @@ import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, ModalControll
 import { UserModel } from "@bk2/shared-models";
 import { Header, Spinner } from "@bk2/shared-ui";
 
-import { BexioIndex } from "..";
+import { AocBexioStore, BexioIndex } from "..";
 import { getFullName } from "@bk2/shared-util-core";
 
 type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
@@ -22,7 +22,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
     .sync-row { margin-top: 1rem; }
   `],
   template: `
-    <bk-header [i18n]="{ title: '@aoc.bexio.index.title' }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.title()}" [isModal]="true" />
     <ion-content class="ion-no-padding">
       @if(bexioIndex(); as bx) {
       <ion-grid>
@@ -101,7 +101,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
   `
 })
 export class AocBexioContactEditModal {
-
+  protected readonly store = inject(AocBexioStore);
   private readonly modalController = inject(ModalController);
 
   // inputs

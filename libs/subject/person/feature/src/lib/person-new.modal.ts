@@ -20,7 +20,7 @@ import { PersonStore } from './person.store';
   ],
   providers: [PersonStore],
   template: `
-    <bk-header [i18n]="{ title: '@subject.person.operation.create.label' }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.create_label()}" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
@@ -54,20 +54,16 @@ export class PersonNewModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => createNewPersonFormModel(this.org()));
 
-  // derived signals and fields
+  // derived 
   protected currentUser = computed(() => this.store.currentUser());
   protected mcat = computed(() => this.store.membershipCategory());
   protected tags = computed(() => this.store.getTags());
   protected tenantId = computed(() => this.store.tenantId());
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   constructor() {
     effect(() => this.store.setOrgId(this.org()?.bkey));

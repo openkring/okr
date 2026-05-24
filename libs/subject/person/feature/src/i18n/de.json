@@ -1,43 +1,145 @@
 {
   "persons": "Personen",
   "empty": "Keine Personen gefunden.",
-  "email-copy-conf": "Die E-Mail Adresse wurde kopiert",
-  "phone-copy-conf": "Die Telefonnummer wurde kopiert.",
+  "details": "Angaben zur Person",
+  "addresses": "Adressen",
+  "misc": "Verschiedenes",
+
+   "bkey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "Der Schlüssel des Personeneintrags in der Datenbank."
+  },
+  "firstName": {
+    "label": "Vorname",
+    "placeholder": "Vorname eingeben",
+    "helper": "Die Vornamen einer Person."
+  },
+  "lastName": {
+    "label": "Nachname",
+    "placeholder": "Nachname eingeben",
+    "helper": "Der Familienname einer Person."
+  },
+  "ssnId": {
+    "label": "AHV-Nummer",
+    "placeholder": "756.XXXX.XXXX.XX",
+    "helper": "Die AHV Nummer einer Person"
+  },
+  "bexioId": {
+    "label": "Bexio ID",
+    "placeholder": "nnnnn",
+    "helper": "Die ID des Bexio Kontaktes der Person."
+  },
+  "email": {
+    "label": "E-Mail",
+    "placeholder": "E-Mail Adresse eingeben"
+  },
+  "phone": {
+    "label": "Telefon",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Notizen"
+  },
+  "dateOfBirth": {
+    "label": "Geburtsdatum",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Das Geburtsdatum der Person."
+  },
+  "dateOfDeath": {
+    "label": "Todesdatum",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Das Todesdatum der Person."
+  },
+  "dateOfEntry": {
+    "label": "Eintrittsdatum",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Start der Mitgliedschaft."
+  },
+  "streetName": {
+    "label": "Strasse",
+    "placeholder": "Strasse eingeben",
+    "helper": "Strassenname eine Postadresse."
+  },
+  "streetNumber": {
+    "label": "Nr.",
+    "placeholder": "sss",
+    "helper": "Die Hausnummer einer Postadresse."
+  },
+  "countryCode": {
+    "label": "Land (ISO)",
+    "placeholder": "CH",
+    "helper": "Das ISO Kürzel des Landes."
+  },
+  "zipCode": {
+    "label": "PLZ",
+    "placeholder": "nnnn",
+    "helper": "Eine schweizerische Postleitzahl. 4-stelliger String"
+  },
+  "city": {
+    "label": "Ort",
+    "placeholder": "Ort eingeben",
+    "helper": "Der Ortsname"
+  },
+  "web": {
+    "label": "Web",
+    "placeholder": "https://...",
+    "helper": "Eine Web Adresse (URL auf eine Website)"
+  },
+
+  "call": {
+    "phone": "Anrufen"
+  },
+  "copy": {
+    "email": {
+      "label": "E-Mail kopieren",
+      "conf": "Die E-Mail Adresse wurde kopiert",
+      "error": "Die E-Mail Adresse konnte nicht kopiert werden."
+    },
+    "phone": {
+      "label": "Telefonnummer kopieren",
+      "conf": "Die Telefonnummer wurde kopiert",
+      "error": "Die Telefonnummer konnte nicht kopiert werden."
+    }
+  },
   "create": {
-    "label": "Neue Person erfassen"
+    "label": "Neue Person erfassen",
+    "conf": "Die Person wurde gespeichert",
+    "error": "Die Person konnte nicht gespeichert werden."
   },
   "edit": {
-    "label": "Person ändern"
+    "label": "Person ändern",
+    "conf": "Die Person wurde gespeichert",
+    "error": "Die Person konnte nicht gespeichert werden."
+  },
+  "send": {
+    "message": "Direkt Chat öffnen",
+    "email": "E-Mail senden"
+  },
+  "show": {
+    "postal": "Postadresse auf Karte zeigen"
   },
   "view": {
     "label": "Person anzeigen"
   },
   "delete": {
-    "confirm": "Soll die Person wirklich gelöscht werden ?"
+    "label": "Person löschen",
+    "conf": "Die Person wurde gelöscht",
+    "confirm": "Soll die Person wirklich gelöscht werden ?",
+    "error": "Die Person konnte nicht gelöscht werden."
   },
-  "membership": {
-    "create": {
-      "label": "Mitgliedschaft hinzufügen",
-      "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
-      "conf": "Die Mitgliedschaft wurde erstellt.",
-      "exists": "Dieses Mitglied ist bereits vorhanden."
-    }
+
+  "add_membership": {
+    "label": "Mitgliedschaft (optional)",
+    "confirm": "Soll eine Mitgliedschaft erstellt werden ?",
+    "conf": "Die Mitgliedschaft wurde gespeichert.",
+    "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
+    "helper": "Du kannst eine Organisation wählen, zu der die neue Person als Mitglied erfasst wird. Zusätzlich musst du das Eintrittsdatum und die Mitglieder-Kategorie festlegen.",
+    "exists": "Dieses Mitglied ist bereits vorhanden."
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "edit": "Person ändern",
-    "delete": "Person löschen",
-    "view": "Person anzeigen",
-    "chat": "Chat öffnen",
-    "copyemail": "E-Mail kopieren",
-    "sendemail": "E-Mail senden",
-    "copyphone": "Telefonnummer kopieren",
-    "call": "Anrufen",
-    "show": "Auf Karte anzeigen"
-  },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "validation": {
+    "lastNameRequired": "Die Eingabe eines Nachnamens ist obligatorisch."
   }
 }

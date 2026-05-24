@@ -9,10 +9,10 @@ import { EmailInput, EmailInputI18n, ErrorNote, PasswordInput, PasswordInputI18n
 import { authCredentialsValidations, emailValidations, loginValidations, passwordValidations } from '@bk2/auth-util';
 
 export interface LoginFormI18n {
-  loginEmail_label: Signal<string>;
-  loginEmail_placeholder: Signal<string>;
-  loginPassword_label: Signal<string>;
-  loginPassword_placeholder: Signal<string>;
+  email_label: Signal<string>;
+  email_placeholder: Signal<string>;
+  password_label: Signal<string>;
+  password_placeholder: Signal<string>;
 }
 
 /**
@@ -80,14 +80,14 @@ export class LoginForm {
 
   protected loginEmailI18n = computed(() => ({
     name: 'loginEmail',
-    label: this.i18n().loginEmail_label(),
-    placeholder: this.i18n().loginEmail_placeholder(),
+    label: this.i18n().email_label(),
+    placeholder: this.i18n().email_placeholder(),
     helper: this.emailHelper()
   } as EmailInputI18n));
   protected loginPasswordI18n = computed(() => ({
     name: 'loginPassword',
-    label: this.i18n().loginPassword_label(),
-    placeholder: this.i18n().loginPassword_placeholder(),
+    label: this.i18n().password_label(),
+    placeholder: this.i18n().password_placeholder(),
     helper: this.pwdHelper()
   } as PasswordInputI18n));
 

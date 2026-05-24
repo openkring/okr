@@ -2,73 +2,20 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
-import { AppStore } from '@bk2/shared-feature';
-import { signalStore, withProps } from '@ngrx/signals';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { DocumentsAccordion } from '@bk2/document-feature';
 
 import { MembershipForm } from '@bk2/relationship-membership-ui';
 import { RelationshipToolbar } from '@bk2/avatar-ui';
-import { PFX } from './scope';
-
-const UI = '@relationship/membership/ui.';
-
-const MembershipEditModalStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      // ChangeConfirmation keys
-      changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-      changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-      changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-      // MembershipForm keys
-      selectLabel:                    UI + 'newDesc',
-      newDesc:                        UI + 'newDesc',
-      categoryLabel:                  UI + 'category.label',
-      categoryHelper:                 UI + 'category.helper',
-      categoryName:                   UI + 'category.label',
-      memberStateLabel:               UI + 'memberState',
-      stateHelper:                    UI + 'state.helper',
-      bkey_label:                     UI + 'bkey.label',
-      memberId_label:                 UI + 'memberId.label',
-      memberId_placeholder:           UI + 'memberId.placeholder',
-      memberId_helper:                UI + 'memberId.helper',
-      memberBexioId_label:            UI + 'memberBexioId.label',
-      memberBexioId_placeholder:      UI + 'memberBexioId.placeholder',
-      memberBexioId_helper:           UI + 'memberBexioId.helper',
-      memberAbbreviation_label:       UI + 'memberAbbreviation.label',
-      memberAbbreviation_placeholder: UI + 'memberAbbreviation.placeholder',
-      memberAbbreviation_helper:      UI + 'memberAbbreviation.helper',
-      memberNickName_label:           UI + 'memberNickName.label',
-      memberNickName_placeholder:     UI + 'memberNickName.placeholder',
-      memberNickName_helper:          UI + 'memberNickName.helper',
-      orgFunction_label:              UI + 'orgFunction.label',
-      orgFunction_placeholder:        UI + 'orgFunction.placeholder',
-      orgFunction_helper:             UI + 'orgFunction.helper',
-      rebate_label:                   UI + 'rebate.label',
-      rebate_placeholder:             UI + 'rebate.placeholder',
-      rebate_helper:                  UI + 'rebate.helper',
-      notes_label:                    UI + 'notes.label',
-      notes_placeholder:              UI + 'notes.placeholder',
-      dateOfEntry_label:              UI + 'dateOfEntry.label',
-      dateOfEntry_placeholder:        UI + 'dateOfEntry.placeholder',
-      dateOfEntry_helper:             UI + 'dateOfEntry.helper',
-      dateOfExit_label:               UI + 'dateOfExit.label',
-      dateOfExit_placeholder:         UI + 'dateOfExit.placeholder',
-      dateOfExit_helper:              UI + 'dateOfExit.helper',
-      rebateReason_label:             UI + 'rebateReason.label',
-    } satisfies Record<string, string>),
-  })),
-);
+import { MembershipStore } from './membership.store';
 
 @Component({
   selector: 'bk-membership-edit-modal',
   standalone: true,
-  providers: [MembershipEditModalStore],
+  providers: [MembershipStore],
   imports: [
     CommentsAccordion, MembershipForm, RelationshipToolbar, Header,
     ChangeConfirmation, DocumentsAccordion,
@@ -122,14 +69,7 @@ const MembershipEditModalStore = signalStore(
 })
 export class MembershipEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
-  protected readonly store = inject(MembershipEditModalStore);
-
-  protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.store.i18n.changeConfirmation_ok(),
-    cancel: this.store.i18n.changeConfirmation_cancel(),
-    confirmation: this.store.i18n.changeConfirmation_confirmation(),
-  } as ChangeConfirmationI18n));
+  protected readonly store = inject(MembershipStore);
 
   // inputs
   public membership = input.required<MembershipModel>();
@@ -150,7 +90,6 @@ export class MembershipEditModal {
     return this.isNew() || this.manualDirty();
   });
   protected manualDirty = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
 
   // derived signals
   protected headerTitle = computed(() => this.isReadOnly() ? '@membership.operation.view.label' : '@membership.operation.update.label');
@@ -167,9 +106,11 @@ export class MembershipEditModal {
   protected memberKey = computed(() => this.formData()?.memberKey ?? '');
   protected currentMcat = computed<CategoryListModel>(() => {
     const orgKey = (this.formData() ?? this.membership()).orgKey;
-    const org = this.appStore.allOrgs().find(o => o.bkey === orgKey);
-    return this.appStore.tryGetCategory(org?.membershipCategoryKey ?? 'mcat_default') ?? this.mcat();
+    const org = this.store.appStore.allOrgs().find(o => o.bkey === orgKey);
+    return this.store.appStore.tryGetCategory(org?.membershipCategoryKey ?? 'mcat_default') ?? this.mcat();
   });
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<boolean> {

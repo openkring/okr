@@ -12,19 +12,18 @@ import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DE
 import { pageValidations } from '@bk2/cms-page-util';
 
 export interface PageFormI18n {
-  page_title: Signal<string>;
   name_label: Signal<string>;
   name_placeholder: Signal<string>;
   name_helper: Signal<string>;
-  pageTitle_label: Signal<string>;
-  pageTitle_placeholder: Signal<string>;
-  pageTitle_helper: Signal<string>;
+  title_label: Signal<string>;
+  title_placeholder: Signal<string>;
+  title_helper: Signal<string>;
   notes_label: Signal<string>;
   notes_placeholder: Signal<string>;
-  blogType_label: Signal<string>;
+  blog_type_label: Signal<string>;
   copy_conf: Signal<string>;
   section_label: Signal<string>;
-  section_add_label: Signal<string>;
+  section_add: Signal<string>;
 }
 
 @Component({
@@ -50,7 +49,7 @@ export interface PageFormI18n {
         --------------------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().page_title() }}</ion-card-title>
+          <ion-card-title>{{ i18n().title_label() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -96,7 +95,7 @@ export interface PageFormI18n {
           [copyable]="true"
           [readOnly]="isReadOnly()"
           [title]="i18n().section_label()"
-          [add]="i18n().section_add_label()" />
+          [add]="i18n().section_add()" />
 
       @if(hasRole('privileged')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
@@ -156,15 +155,15 @@ export class PageForm {
 
   protected titleI18n = computed(() => ({
     name: 'title',
-    label: this.i18n().pageTitle_label(),
-    placeholder: this.i18n().pageTitle_placeholder(),
-    helper: this.i18n().pageTitle_helper(),
+    label: this.i18n().title_label(),
+    placeholder: this.i18n().title_placeholder(),
+    helper: this.i18n().title_helper(),
   } as TextInputI18n));
 
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
-  protected blogTypeI18n = computed(() => ({ name: 'blogType', label: this.i18n().blogType_label() } as StringSelectI18n));
+  protected blogTypeI18n = computed(() => ({ name: 'blogType', label: this.i18n().blog_type_label() } as StringSelectI18n));
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {

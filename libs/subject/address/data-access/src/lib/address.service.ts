@@ -5,12 +5,12 @@ import { ENV } from "@bk2/shared-config";
 import { FirestoreService } from "@bk2/shared-data-access";
 import { AddressCollection, AddressModel, UserModel } from "@bk2/shared-models";
 import { die, getSystemQuery } from "@bk2/shared-util-core";
+import { I18nService } from "@bk2/shared-i18n";
 
 import { getAddressIndex, getAddressValueByChannel } from "@bk2/subject-address-util";
 import { ActivityService } from '@bk2/activity-data-access';
 
 import { PFX } from "./scope";
-import { I18nService } from "@bk2/shared-i18n";
 
 
 @Injectable({

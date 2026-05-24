@@ -13,7 +13,6 @@ import { PageStore } from './page.store';
 @Component({
   selector: 'bk-album-page',
   standalone: true,
-  providers: [PageStore],
   imports: [
     Header, Spinner, AlbumSectionComponent,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonContent

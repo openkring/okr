@@ -28,10 +28,8 @@
     "label": "Adresse kopieren",
     "description": "Diese Adresse kopieren, um sie beispielsweise in einem anderen Programm zu verwenden.",
     "conf": "Die Adresse wurde kopiert.",
-    "error": "Die Adresse konnte nicht kopiert werden."
-  },
-  "emailCopy": {
-    "conf": "E-Mail Adressen wurden kopiert."
+    "error": "Die Adresse konnte nicht kopiert werden.",
+    "email": "E-Mail Adressen wurden kopiert."
   },
   "view": {
     "label": "Adresse anzeigen",
@@ -55,8 +53,7 @@
       "label": "Keine Hauptadresse mehr",
       "description": "Diese Adresse soll keine Hauptadresse mehr sein.",
       "conf": "Die Adresse ist jetzt keine Hauptadresse mehr."
-    },
-    "error": "Die Adresse konnte nicht geändert werden."
+    }
   },
   "send": {
     "mail": {
@@ -71,7 +68,7 @@
       "label": "E-Mail senden",
       "description": "Eine E-Mail Nachricht an diese Adresse senden.",
       "subjectPlaceholder": "Information",
-      "bodyPlaceholder": "Liebe Grüsse,\bkaiser.org"
+      "bodyPlaceholder": "Liebe Grüsse"
     }
   },
   "browse": {
@@ -125,7 +122,8 @@
       "label": "Briefpost",
       "description": "Briefpost",
       "street": "Strasse",
-      "placeholder": "Strassenname und Nr.",
+      "streetnr": "Hausnummer",
+      "placeholder": "Strassenname",
       "zip": "PLZ",
       "city": "Ort",
       "country": "Land"
@@ -140,9 +138,9 @@
       "description": "Web Adresse (URL)"
     },
     "twitter": {
-      "label": "Twitter",
+      "label": "X / Twitter",
       "placeholder": "z.B. @staefarowing",
-      "description": "Twitter ID"
+      "description": "X ID"
     },
     "linkedin": {
       "label": "LinkedIn",
@@ -264,9 +262,80 @@
     },
     "hide": "Ausblenden"
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "bkey": {
+    "label": "ID",
+    "placeholder": "ssssssssss",
+    "helper": "Eindeutige ID des Adress-Datensatzes in der Datenbank."
+  },
+  "addressChannelLabel": {
+    "label": "Kanal-Bezeichnung",
+    "placeholder": "ssssssss",
+    "helper": "Das Kommunikatins-Netzwerk oder Produkt."
+  },
+  "addressUsageLabel": {
+    "label": "Verwendung",
+    "placeholder": "sssssssss",
+    "helper": "Die Verwendungsart der Adresse."
+  },
+  "streetName": {
+    "label": "Strasse",
+    "placeholder": "Strasse eingeben",
+    "helper": "Der Name der Strasse"
+  },
+  "streetNumber": {
+    "label": "Nr.",
+    "placeholder": "nnn",
+    "helper": "Die Hausnummer"
+  },
+  "addressValue2": {
+    "label": "Adresszusatz",
+    "placeholder": "ssssssssss",
+    "helper": "Optionale Zusatzangabe zur Adresse (z.B. c/o)"
+  },
+  "countryCode": {
+    "label": "Land (ISO)",
+    "placeholder": "CH",
+    "helper": "Länderkürzel nach ISO Standard"
+  },
+  "zipCode": {
+    "label": "PLZ",
+    "placeholder": "nnnn",
+    "helper": "Schweizerische Postleitzahl (vierstellige Nummer)"
+  },
+  "city": {
+    "label": "Ort",
+    "placeholder": "Ort eingeben",
+    "helper": "Ortsname"
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "Webadresse"
+  },
+  "iban": {
+    "label": "IBAN",
+    "placeholder": "CH00 0000 0000 0000 0000 0",
+    "helper": "International Banking Account Number (Kontonummer)"
+  },
+  "email": {
+    "label": "E-Mail",
+    "placeholder": "E-Mail Adresse eingeben"
+  },
+  "phone": {
+    "label": "Telefon",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Optionale und beliebige Notizen"
+  },
+  "isFavorite": {
+    "label": "Favorit",
+    "helper": "Hauptadresse wird auf Listen und beim Kopieren der Emailadressen verwendet."
+  },
+  "isCc": {
+    "label": "CC",
+    "helper": "CC-Adresse (z.B. Eltern)"
   }
 }

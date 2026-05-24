@@ -29,7 +29,6 @@ import { BlogStream } from './blog-stream';
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonItem, IonLabel, IonPopover
   ],
-  providers: [SectionStore, PageStore],
   styles: [`
     :host { display: flex; flex-direction: column; height: 100%; width: 100%; }
 
