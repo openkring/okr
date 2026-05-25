@@ -9,6 +9,8 @@ import { CategorySelect } from './category-select';
 import { Searchbar } from './searchbar';
 import { SingleTag } from './single-tag';
 import { YearSelect } from './year-select';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AsyncPipe } from '@angular/common';
 
 /**
  * This component shows a list of filters in a toolbar at the top of a list.
@@ -27,7 +29,7 @@ import { YearSelect } from './year-select';
   selector: 'bk-list-filter',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe,
     Searchbar, SingleTag, CategorySelect, YearSelect, StringSelect,
     IonToolbar, IonGrid, IonRow, IonCol, IonButtons, IonButton, IonIcon
   ],
@@ -37,7 +39,7 @@ import { YearSelect } from './year-select';
         <ion-row class="ion-align-items-center">
           @if(showSearch()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
-              <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@general.operation.search.placeholder' }}" />
+              <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@search.label' | translate | async }}" />
             </ion-col>
           }
           @if(showTags()) {
