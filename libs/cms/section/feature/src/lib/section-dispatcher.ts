@@ -33,6 +33,7 @@ import { RagSectionComponent } from './rag-section';
 import { ContextDiagramSectionComponent } from './context-diagram-section';
 import { ResponsibilitySectionComponent } from './responsibility-section';
 import { MemberAgeSectionComponent } from './member-age-section';
+import { MemberCatSectionComponent } from './member-cat-section';
 
 const SectionDispatcherStore = signalStore(
   withProps(() => ({ i18nService: inject(I18nService) })),
@@ -56,7 +57,7 @@ const SectionDispatcherStore = signalStore(
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent,
     IonItem, IonLabel, Spinner,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
   ],
@@ -156,6 +157,9 @@ const SectionDispatcherStore = signalStore(
           }
           @case('member-age') {
             <bk-member-age-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('member-cat') {
+            <bk-member-cat-section [section]="section" [editMode]="editMode()" />
           }
           @default {
             <bk-missing-section [section]="section" />

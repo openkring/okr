@@ -1,0 +1,19 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../../dist/out-tsc/libs/cms/section/feature/spec",
+    "rootDir": "./",
+    "types": ["node", "vitest"],
+    "module": "es2020",
+    "target": "es2020",
+    "esModuleInterop": true,
+    "allowJs": true
+  },
+  "include": ["vite.config.ts", "src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": [],
+  "references": [
+    { "path": "../../../shared/models/tsconfig.lib.json" },
+    { "path": "../../../shared/constants/tsconfig.lib.json" },
+    { "path": "../../../relationship/membership/data-access/tsconfig.lib.json" }
+  ]
+}

@@ -126,6 +126,13 @@
     "total": "Total",
     "empty": "Keine aktiven Mitglieder gefunden."
   },
+  "memberCat": {
+    "category": "Kategorie",
+    "male": "Männer",
+    "female": "Frauen",
+    "total": "Total",
+    "empty": "Keine aktiven Mitglieder gefunden."
+  },
   "actionsheet": {
     "view": "Sektion anzeigen",
     "edit": "Sektion ändern",

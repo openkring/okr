@@ -18,14 +18,14 @@ export const SectionModelName = 'section';
 export type SectionType =
     'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' |
     'people' | 'responsibility' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
-    'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag' | 'orgchart' | 'context' | 'member-age';
+    'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection;
+    NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -70,6 +70,16 @@ export interface MemberAgeConfig {
   orgId: string;
 }
 
+// --------------------------------------- MEMBER CAT ----------------------------------------
+export interface MemberCatSection extends BaseSection {
+  type: 'member-cat';
+  properties: MemberCatConfig;
+}
+
+export interface MemberCatConfig {
+  orgId: string;
+}
+
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 export interface BaseSection {
   bkey: string;
@@ -86,7 +96,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | FilesConfig | LinksConfig | RagConfig | MemberAgeConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | FilesConfig | LinksConfig | RagConfig | MemberAgeConfig | MemberCatConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
