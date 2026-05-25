@@ -8,7 +8,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-
 import { getFullName, newAvatarInfo } from '@bk2/shared-util-core';
 
 import { RelationshipToolbar } from '@bk2/avatar-ui';
-import { MembershipStore } from 'libs/relationship/membership/feature/src/lib/membership.store';
+import { MembershipStore } from './membership.store';
 
 @Component({
   selector: 'bk-category-change-modal',

@@ -10,7 +10,7 @@ import { signalStore, withProps } from '@ngrx/signals';
 import { AvatarToolbar } from '@bk2/avatar-feature';
 
 import { ScsMemberFeeEditForm } from '@bk2/relationship-membership-ui';
-import { ScsMemberFeesStore } from 'libs/relationship/membership/feature/src/lib/scs-member-fees.store';
+import { ScsMemberFeesStore } from './scs-member-fees.store';
 
 
 @Component({

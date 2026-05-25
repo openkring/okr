@@ -1,8 +1,9 @@
 import { Inject, Injectable, InjectionToken } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
-import { FirestoreService } from '@bk2/shared-data-access';
 import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@bk2/shared-models';
+
+import { FirestoreService } from './firestore.service';
 
 /** Minimal shape of AppStore used by this service (avoids circular dep with shared-feature). */
 export interface AppStoreMin {
@@ -58,7 +59,6 @@ export class I18nOverrideService {
 
         const isScoped = override.module.includes('/');
         if (isScoped) {
-          // Scoped modules: pass key as-is and identify scope via lang prefix at runtime.
           // The options cast is intentional — `scope` is a runtime extension point.
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.translocoService.setTranslation(
