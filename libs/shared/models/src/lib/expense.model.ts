@@ -1,5 +1,7 @@
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { AvatarInfo } from './avatar-info';
 
 /**
  * Expense = Spesenrechnung
@@ -26,17 +28,14 @@ export class ExpenseModel implements BkModel, NamedModel, SearchableModel, Tagge
   public isPaid = false; // is the expense paid
   public bookingAccountId = DEFAULT_ID; // Bexio ID of the booking account
 
+  public author?: AvatarInfo;  // expense sender (person)
   // subject = expense sender (Person)
-  public subjectKey = DEFAULT_KEY;
-  public subjectName = DEFAULT_NAME;
-  public subjectModelType = 'person';
-  public subjectBexioId = DEFAULT_ID; // Bexio ID of the subject
-  public subjectIban = ''; // IBAN of the subject
+  public authorBexioId = DEFAULT_ID; // Bexio ID of the subject
+  public authorIban = ''; // IBAN of the subject
 
-  // object = expense receiver (Org) meine Org
-  public objectKey = DEFAULT_KEY;
-  public objectModelType = 'org';
-  public objectBexioId = DEFAULT_ID; // Bexio ID of the object
+  public org?: AvatarInfo; // expense receiver (default org)
+  public orgBexioId = DEFAULT_ID;
+  public orgIban = '';
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
