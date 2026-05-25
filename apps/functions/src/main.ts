@@ -20,6 +20,7 @@ import * as Srv from './srv';
 import * as Flighttracker from './flighttracker';
 import * as Session from './session';
 import * as Task from './task';
+import * as Pdf from './pdf';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -179,3 +180,5 @@ export const getIpInfo = Test.getIpInfo;
 import * as PublicApi from './publicApi';
 export const publicApi = PublicApi.publicApi;
 
+// pdf document generation
+export const generateDocument = Pdf.generateDocument;
