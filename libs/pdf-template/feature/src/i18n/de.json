@@ -1,0 +1,31 @@
+{
+  "list": { "title": "Dokumentvorlagen" },
+  "empty": "Keine Vorlagen gefunden.",
+  "delete": { "confirm": "Soll diese Vorlage wirklich gelöscht werden?" },
+  "actionsheet": {
+    "edit": "Vorlage bearbeiten",
+    "delete": "Vorlage löschen",
+    "duplicate": "Vorlage duplizieren",
+    "archive": "Vorlage archivieren",
+    "preview": "Vorschau"
+  },
+  "save": {
+    "draft": {
+      "conf": "Entwurf gespeichert.",
+      "error": "Entwurf konnte nicht gespeichert werden."
+    }
+  },
+  "publish": {
+    "conf": "Vorlage veröffentlicht.",
+    "error": "Veröffentlichung fehlgeschlagen."
+  },
+  "preview": { "error": "Vorschau-Generierung fehlgeschlagen" },
+  "name": { "label": "Name" },
+  "category": { "label": "Kategorie" },
+  "language": { "label": "Sprache" },
+  "status": { "label": "Status" },
+  "version": { "label": "Version" },
+  "html": { "label": "HTML" },
+  "css": { "label": "CSS" },
+  "cancel": "Abbrechen"
+}
