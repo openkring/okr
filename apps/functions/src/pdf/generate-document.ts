@@ -81,10 +81,17 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
     }
 
     const userId = request.auth.uid;
-    const tenantId: string = (request.auth.token['tenantId'] as string) ?? 'default';
+    const tenantId = typeof request.auth.token['tenantId'] === 'string'
+      ? request.auth.token['tenantId']
+      : 'default';
     const isAdmin: boolean =
       request.auth.token['admin'] === true ||
       request.auth.token['contentAdmin'] === true;
+
+    // Only admin/contentAdmin may use raw-HTML mode
+    if (rawHtml && !isAdmin) {
+      throw new HttpsError('permission-denied', 'Raw HTML mode requires admin or contentAdmin role');
+    }
 
     const outputFormat = options.outputFormat ?? 'pdf';
     const storageMode = options.storageMode ?? 'persist';
@@ -119,6 +126,10 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
       resolvedVersion = request.data.templateVersion ?? tmpl.currentVersion;
       templateName = tmpl.name;
 
+      if (resolvedVersion === undefined || resolvedVersion === 0) {
+        throw new HttpsError('failed-precondition', 'Template has no published version');
+      }
+
       const versionSnap = await db
         .collection(TemplateCollection)
         .doc(templateId)
@@ -135,14 +146,14 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
       const assetUrls = await resolveAssetUrls(version.assets ?? []);
       Handlebars.registerHelper('assetUrl', (key: string) => assetUrls[key] ?? '');
 
-      // Compile template (cached)
-      const cacheKey = `${templateId}@${resolvedVersion}`;
-      const compiled = compileTemplate(cacheKey, version.html, version.css);
-
-      // Register partials
+      // Register partials before compiling (compile may reference them)
       for (const [name, content] of Object.entries(version.partials ?? {})) {
         Handlebars.registerPartial(name, content);
       }
+
+      // Compile template (cached)
+      const cacheKey = `${templateId}@${resolvedVersion}`;
+      const compiled = compileTemplate(cacheKey, version.html, version.css);
 
       htmlToRender = compiled(payload);
     } else {
@@ -151,7 +162,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
     }
 
     // Generate output
-    const ext = outputFormat === 'pdf' ? 'pdf' : outputFormat === 'docx' ? 'docx' : 'html';
+    const ext = outputFormat;
     const filename = options.filename ?? `${templateName}-${Date.now()}.${ext}`;
     const tempPath = path.join(os.tmpdir(), `${generationId}.${ext}`);
 
@@ -204,6 +215,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
       });
 
       const durationMs = Date.now() - startMs;
+      const generatedAt = new Date().toISOString();
 
       // Write audit entry (skip for ephemeral)
       if (storageMode === 'persist') {
@@ -221,7 +233,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
           durationMs,
           entityType: options.metadata?.entityType ?? '',
           entityId: options.metadata?.entityId ?? '',
-          createdAt: new Date().toISOString(),
+          createdAt: generatedAt,
         };
         await getFirestore().collection(DocGenerationCollection).doc(generationId).set(audit);
       }
@@ -234,7 +246,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
         filename,
         sizeBytes,
         outputFormat,
-        generatedAt: new Date().toISOString(),
+        generatedAt,
         templateVersion: resolvedVersion,
         generationId,
       };
@@ -260,7 +272,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
       if (err instanceof HttpsError) throw err;
       throw new HttpsError('internal', message);
     } finally {
-      if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      fs.rmSync(tempPath, { force: true });
     }
   }
 );

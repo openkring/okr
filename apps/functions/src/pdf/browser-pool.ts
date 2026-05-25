@@ -5,7 +5,7 @@ import * as logger from 'firebase-functions/logger';
 let browser: Browser | null = null;
 
 export async function getBrowser(): Promise<Browser> {
-  if (browser?.connected) return browser;
+  if (browser !== null) return browser;
   logger.info('pdf/browser-pool: launching new Puppeteer browser');
   browser = await puppeteer.launch({
     headless: true,
