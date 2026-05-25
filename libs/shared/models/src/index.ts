@@ -63,6 +63,7 @@ export * from './lib/i18n.model';
 export * from './lib/i18n-default.model';
 export * from './lib/i18n-tenant-override.model';
 export * from './lib/website-content.model';
+export * from './lib/pdf-template.model';
 
 // enums
 export * from './lib/enums/album-style.enum';
