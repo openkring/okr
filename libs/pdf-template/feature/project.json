@@ -1,0 +1,24 @@
+{
+  "name": "pdf-template-feature",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/pdf-template/feature/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:pdf-template", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/pdf-template/feature",
+        "main": "libs/pdf-template/feature/src/index.ts",
+        "tsConfig": "libs/pdf-template/feature/tsconfig.lib.json",
+        "assets": ["libs/pdf-template/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

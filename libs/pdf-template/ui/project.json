@@ -1,0 +1,24 @@
+{
+  "name": "pdf-template-ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/pdf-template/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:pdf-template", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/pdf-template/ui",
+        "main": "libs/pdf-template/ui/src/index.ts",
+        "tsConfig": "libs/pdf-template/ui/tsconfig.lib.json",
+        "assets": ["libs/pdf-template/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

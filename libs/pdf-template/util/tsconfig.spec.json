@@ -1,0 +1,18 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc/libs/pdf-template/util/spec",
+    "rootDir": "./",
+    "types": ["node", "vitest"],
+    "module": "es2020",
+    "target": "es2020",
+    "esModuleInterop": true,
+    "allowJs": true
+  },
+  "include": ["vite.config.ts", "src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": [],
+  "references": [
+    { "path": "../../shared/models/tsconfig.lib.json" },
+    { "path": "../../shared/util-core/tsconfig.lib.json" }
+  ]
+}
