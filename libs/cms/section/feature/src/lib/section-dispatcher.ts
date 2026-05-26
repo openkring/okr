@@ -34,6 +34,7 @@ import { ContextDiagramSectionComponent } from './context-diagram-section';
 import { ResponsibilitySectionComponent } from './responsibility-section';
 import { MemberAgeSectionComponent } from './member-age-section';
 import { MemberCatSectionComponent } from './member-cat-section';
+import { TripStatsSectionComponent } from './trip-stats-section';
 
 const SectionDispatcherStore = signalStore(
   withProps(() => ({ i18nService: inject(I18nService) })),
@@ -60,6 +61,7 @@ const SectionDispatcherStore = signalStore(
     InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent,
     IonItem, IonLabel, Spinner,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
+    TripStatsSectionComponent,
   ],
   template: `
     @if (section(); as section) {
@@ -160,6 +162,9 @@ const SectionDispatcherStore = signalStore(
           }
           @case('member-cat') {
             <bk-member-cat-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('trip-stats') {
+            <bk-trip-stats-section [section]="section" [editMode]="editMode()" />
           }
           @default {
             <bk-missing-section [section]="section" />
