@@ -24,6 +24,7 @@ export class TripModel implements BkModel, NamedModel, SearchableModel, TaggedMo
   // soft delete pattern
   public deletedAt?: string | null;      // ISO timestamp, null = active
   public deletedBy?: string | null;     // optional: device id, station name, or admin who deleted
+  public flagged?: boolean;             // set by suspicious activity detection
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

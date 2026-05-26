@@ -13,6 +13,7 @@ export type Roles = {
   groupAdmin?: boolean;
   treasurer?: boolean;
   admin?: boolean;
+  kiosk?: boolean;
 };
 
 // had to move type definition of RoleName into env.ts to avoid circular dependency
