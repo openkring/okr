@@ -361,6 +361,10 @@
   "exportFormat": { "label": "Exportformat" },
   "fontWeight":   { "label": "Schriftstärke" },
   "showTitleAs":  { "label": "Titel anzeigen als" },
+  "tripStats": {
+    "viewType_label":    "Ansichtstyp",
+    "contentType_label": "Inhaltstyp"
+  },
   "cms": {
     "section": {
       "ui": {

@@ -8,6 +8,9 @@
   "select": {
     "label": "Sektion wählen"
   },
+  "view": "Sektionskonfiguration anzeigen",
+  "edit": "Sektion bearbeiten",
+  "create": "Sektion erstellen",
   "delete": {
     "label": "Sektion löschen",
     "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
@@ -16,6 +19,7 @@
     "confirm1": "Sollen wirklich",
     "confirm2": "verschickt werden ?"
   },
+
   "activity": {
     "empty": "Keine Aktivitäten vorhanden."
   },
@@ -30,13 +34,11 @@
       "conf": "Das Ereignis wurde geändert.",
       "error": "Das Ereignis konnte nicht geändert werden."
     },
-    "actionsheet": {
-      "subscribe": "Anmelden",
-      "unsubscribe": "Abmelden",
-      "edit": "Ereignis bearbeiten",
-      "view": "Ereignis anzeigen",
-      "downloadIcs": "Kalender-Datei herunterladen"
-    }
+    "subscribe": "Anmelden",
+    "unsubscribe": "Abmelden",
+    "edit": "Ereignis bearbeiten",
+    "view": "Ereignis anzeigen",
+    "download": "Ereignis herunterladen (ICS)"
   },
   "invitation": {
     "update": {
@@ -44,10 +46,8 @@
       "conf": "Die Einladung wurde geändert.",
       "error": "Die Einladung konnte nicht geändert werden."
     },
-    "actionsheet": {
-      "subscribe": "Einladung annehmen",
-      "unsubscribe": "Einladung ablehnen"
-    }
+    "subscribe": "Einladung annehmen",
+    "unsubscribe": "Einladung ablehnen"
   },
   "context": {
     "title": "Anzeigeoptionen",
@@ -60,38 +60,35 @@
       "personrels": "Beziehungen anzeigen",
       "workrels": "Beschäftigungen anzeigen",
       "save": "Änderungen speichern"
-    }
+    },
+    "edit": "Knoten bearbeiten",
+    "center": "Als Zentrum festlegen",
+    "displayConfig": "Anzeigeeinstellungen"
   },
   "messages": {
     "empty": "Du hast keine offenen Mitteilungen."
   },
   "news": {
     "empty": "Es gibt keine Neuigkeiten.",
-    "actionsheet": {
-      "view": "Artikel anzeigen",
-      "edit": "Artikel ändern"
-    }
-  },
-  "tasks": {
-    "empty": "Gratulation ! - du hast keine offenen Aufgaben."
+    "view": "Artikel anzeigen",
+    "edit": "Artikel ändern"
   },
   "task": {
-    "actionsheet": {
-      "complete": "Als erledigt markieren",
-      "view": "Aufgabe anzeigen",
-      "edit": "Aufgabe bearbeiten"
-    }
+    "empty": "Gratulation ! - du hast keine offenen Aufgaben.",
+    "complete": "Als erledigt markieren",
+    "view": "Aufgabe anzeigen",
+    "edit": "Aufgabe bearbeiten"
   },
   "orgchart": {
-    "view": {
-      "accordion": "Liste",
-      "chart": "Organigramm"
-    },
-    "actionsheet": {
-      "addNewGroup": "Neue Gruppe hinzufügen",
-      "addExistingGroup": "Bestehende Gruppe hinzufügen",
-      "editGroup": "Gruppe bearbeiten",
-      "removeGroup": "Gruppe entfernen"
+    "accordion": "Liste",
+    "chart": "Organigramm",
+    "group": {
+      "add": {
+        "new": "Neue Gruppe hinzufügen",
+        "existing": "Bestehende Gruppe hinzufügen"
+      },
+      "edit": "Gruppe bearbeiten",
+      "remove": "Gruppe entfernen"
     }
   },
   "rag": {
@@ -99,9 +96,9 @@
     "upload": "Dokumente in den RAG-Store hochladen"
   },
   "album": {
-    "zoomed": "Bild zoomen"
+    "zoomed": "Bild zoomen",
+    "style": "Album-Stil"
   },
-  "albumStyle": { "label": "Album-Stil" },
   "email": {
     "conf": "Email(s) wurde(n) abgeschickt.",
     "error": "Email(s) konnte(n) nicht verschickt werden."
@@ -111,38 +108,58 @@
       "confirm": "Soll die Gruppe wirklich entfernt werden ?"
     }
   },
-  "view": "Sektionskonfiguration anzeigen",
-  "edit": "Sektion bearbeiten",
-  "create": "Sektion erstellen",
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
-  },
-  "memberAge": {
-    "ageGroup": "Altersgruppe",
-    "male": "Männer",
-    "female": "Frauen",
-    "total": "Total",
-    "empty": "Keine aktiven Mitglieder gefunden."
-  },
-  "memberCat": {
-    "category": "Kategorie",
-    "male": "Männer",
-    "female": "Frauen",
-    "total": "Total",
-    "empty": "Keine aktiven Mitglieder gefunden."
-  },
-  "actionsheet": {
-    "view": "Sektion anzeigen",
-    "edit": "Sektion ändern",
-    "delete": "Sektion löschen"
-  },
-  "contextDiagram": {
-    "actionsheet": {
-      "edit": "Knoten bearbeiten",
-      "center": "Als Zentrum festlegen",
-      "displayConfig": "Anzeigeeinstellungen"
+  "member": {
+    "age": {
+      "group": "Altersgruppe",
+      "male": "Männer",
+      "female": "Frauen",
+      "total": "Total",
+      "empty": "Keine aktiven Mitglieder gefunden."
+    },
+    "cat": {
+      "category": "Kategorie",
+      "male": "Männer",
+      "female": "Frauen",
+      "total": "Total",
+      "empty": "Keine aktiven Mitglieder gefunden."
+
     }
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "text"
+  },
+  "image": {
+    "label": {
+      "label": "Bildtitel",
+      "placeholder": "Der Titel des Bildes.",
+      "helper": "Der Titel des Bildes ist obligatorisch."
+    },
+    "url": {
+      "label": "Bild-URL",
+      "placeholder": "storage path",
+      "helper": "Die URL, welche zum Bild zeigt. Normalerweise liegen die Bilder im Storage der App. Die URL ist dann eine relative URL /tenant/scs..."
+    },
+    "actionUrl": {
+      "label": "Aktions-URL",
+      "placeholder": "storage path",
+      "helper": "Die URL, welche beim Auslösen einer Aktion benutzt wird. Normalerweise liegen die Bilder im Storage der App. Die URL ist dann eine relative URL /tenant/scs..."
+    },
+    "altText": {
+      "label": "Alt Text",
+      "placeholder": "text",
+      "helper": "Eine Beschreibung, die z.B. blinden Anwendern hilft zu verstehen, was das Bild zeigt."
+    },
+    "overlay": {
+      "label": "Bild-Overlay",
+      "placeholder": "text",
+      "helper": "Ein Text, der auf dem Bild als Overlay angezeigt werden soll."
+    }
+  },
+  "tripStats": {
+    "empty":    "Keine Statistiken für dieses Jahr gefunden.",
+    "colName":  "Name",
+    "colKm":    "km",
+    "colTrips": "Fahrten"
   }
 }
