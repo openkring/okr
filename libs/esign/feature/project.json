@@ -1,0 +1,27 @@
+{
+  "name": "esign-feature",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/esign/feature/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:esign", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/esign/feature",
+        "main": "libs/esign/feature/src/index.ts",
+        "tsConfig": "libs/esign/feature/tsconfig.lib.json",
+        "assets": [
+          "libs/esign/feature/*.md",
+          { "glob": "**/*.json", "input": "libs/esign/feature/src/i18n", "output": "i18n/esign" }
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
