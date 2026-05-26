@@ -21,6 +21,7 @@ import * as Flighttracker from './flighttracker';
 import * as Session from './session';
 import * as Task from './task';
 import * as Pdf from './pdf';
+import * as Esign from './esign';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -182,3 +183,13 @@ export const publicApi = PublicApi.publicApi;
 
 // pdf document generation
 export const generateDocument = Pdf.generateDocument;
+
+// e-signature (DeepSign)
+export const esignScanPredefined     = Esign.esignScanPredefined;
+export const esignSendDocument       = Esign.esignSendDocument;
+export const esignGetDocumentDetails = Esign.esignGetDocumentDetails;
+export const esignResendInvitation   = Esign.esignResendInvitation;
+export const esignDelete             = Esign.esignDelete;
+export const esignSendByEmail        = Esign.esignSendByEmail;
+export const esignWebhook            = Esign.esignWebhook;
+export const esignArchiveSigned      = Esign.esignArchiveSigned;
