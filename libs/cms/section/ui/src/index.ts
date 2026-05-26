@@ -16,3 +16,5 @@ export * from './lib/section-configuration';
 export * from './lib/button-widget';
 export * from './lib/persons-widget';
 export * from './lib/emergency-button-widget';
+
+export * from './lib/trip-stats-configuration';
