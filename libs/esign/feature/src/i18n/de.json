@@ -1,0 +1,15 @@
+{
+  "list": { "title": "E-Signaturen" },
+  "empty": "Keine Signaturprozesse gefunden.",
+  "delete": { "error": "Signaturprozess konnte nicht gelöscht werden." },
+  "send": { "error": "Dokument konnte nicht gesendet werden." },
+  "upload": { "error": "Datei zu gross (max. 40 MB) oder falsches Format." },
+  "scan": { "no_fields": "Keine Signaturfelder im Dokument gefunden. Bitte ein PDF mit eingebetteten Text Field Patterns verwenden." },
+  "actionsheet": {
+    "view": "Signaturstatus anzeigen",
+    "doc_view": "PDF anzeigen",
+    "doc_share": "Teilen",
+    "doc_send": "Per E-Mail senden",
+    "delete": "Signaturprozess löschen"
+  }
+}
