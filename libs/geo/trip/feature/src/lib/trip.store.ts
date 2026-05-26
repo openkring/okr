@@ -42,7 +42,20 @@ const TRIP_I18N_KEYS = {
   as_report_bug:      PFX + 'actionsheet.report_bug',
   as_add_guest:       PFX + 'actionsheet.add_guest',
   as_show_images:     PFX + 'actionsheet.show_images',
-  warning_suspicious: PFX + 'warning.suspicious',
+  warning_suspicious:       PFX + 'warning.suspicious',
+  field_boat:               PFX + 'field.boat',
+  field_location:           PFX + 'field.location',
+  field_custom_location:    PFX + 'field.custom_location',
+  field_distance:           PFX + 'field.distance',
+  field_participants:       PFX + 'field.participants',
+  field_notes:              PFX + 'field.notes',
+  field_start_date:         PFX + 'field.start_date',
+  field_start_time:         PFX + 'field.start_time',
+  field_end_date:           PFX + 'field.end_date',
+  field_end_time:           PFX + 'field.end_time',
+  warning_distance_zero:    PFX + 'warning.distance_zero',
+  warning_distance_high:    PFX + 'warning.distance_high',
+  warning_seats_mismatch:   PFX + 'warning.seats_mismatch',
 } satisfies Record<string, string>;
 
 export type TripI18n = { [K in keyof typeof TRIP_I18N_KEYS]: Signal<string> };
