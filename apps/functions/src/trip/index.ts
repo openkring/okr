@@ -1,5 +1,6 @@
 // apps/functions/src/trip/index.ts
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
@@ -94,5 +95,55 @@ export const onTripWrite = onDocumentWritten(
     });
 
     logger.info(`onTripWrite: applied ${deltas.length} stat delta(s)`);
+  }
+);
+
+export const onTripStatsReconcile = onSchedule(
+  { schedule: '0 2 * * *', timeZone: 'Europe/Zurich', region: REGION },
+  async () => {
+    const db = getFirestore();
+    const year     = new Date().getFullYear();
+    const yearStr  = String(year);
+    const fromDate = `${yearStr}0101`;
+    const toDate   = `${yearStr}1231`;
+
+    const snap = await db.collection('trips')
+      .where('startDate', '>=', fromDate)
+      .where('startDate', '<=', toDate)
+      .get();
+
+    const boatTotals   = new Map<string, { totalKm: number; tripCount: number }>();
+    const memberTotals = new Map<string, { totalKm: number; tripCount: number }>();
+
+    for (const doc of snap.docs) {
+      const t = doc.data() as TripDoc;
+      if (!COUNTING_STATES.has(t.state)) continue;
+
+      const dist = Number(t.distance);
+      if (!Number.isFinite(dist)) continue;
+
+      const boatKey = t.resource?.key;
+      if (boatKey) {
+        const cur = boatTotals.get(boatKey) ?? { totalKm: 0, tripCount: 0 };
+        boatTotals.set(boatKey, { totalKm: cur.totalKm + dist, tripCount: cur.tripCount + 1 });
+      }
+
+      for (const p of t.participants ?? []) {
+        if (!p.key) continue;
+        const cur = memberTotals.get(p.key) ?? { totalKm: 0, tripCount: 0 };
+        memberTotals.set(p.key, { totalKm: cur.totalKm + dist, tripCount: cur.tripCount + 1 });
+      }
+    }
+
+    const batch = db.batch();
+    for (const [key, totals] of boatTotals) {
+      batch.set(db.doc(`stats_boats/${key}/years/${yearStr}`), { ...totals, updatedAt: FieldValue.serverTimestamp() });
+    }
+    for (const [key, totals] of memberTotals) {
+      batch.set(db.doc(`stats_members/${key}/years/${yearStr}`), { ...totals, updatedAt: FieldValue.serverTimestamp() });
+    }
+    await batch.commit();
+
+    logger.info(`onTripStatsReconcile: wrote ${boatTotals.size} boat + ${memberTotals.size} member docs for ${yearStr}`);
   }
 );

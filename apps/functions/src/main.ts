@@ -175,7 +175,8 @@ export const cleanupOrphanSessions = Session.cleanupOrphanSessions;
 export const onTaskWritten = Task.onTaskWritten;
 
 // trip statistics
-export const onTripWrite = Trip.onTripWrite;
+export const onTripWrite             = Trip.onTripWrite;
+export const onTripStatsReconcile    = Trip.onTripStatsReconcile;
 
 // test
 export const getEcho = Test.getEcho;
