@@ -18,7 +18,7 @@ import { PFX } from './scope';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() }}</ion-card-title>
+        <ion-card-title>{{ headerTitle() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
@@ -27,7 +27,7 @@ import { PFX } from './scope';
               <bk-string-select
                 [i18n]="viewTypeI18n()"
                 [selectedString]="viewType()"
-                (selectedStringChange)="onFieldChange('viewType', $event)"
+                (selectedStringChange)="onViewTypeChange($event)"
                 [stringList]="['list', 'graph']"
                 [readOnly]="false"
               />
@@ -36,7 +36,7 @@ import { PFX } from './scope';
               <bk-string-select
                 [i18n]="contentTypeI18n()"
                 [selectedString]="contentType()"
-                (selectedStringChange)="onFieldChange('contentType', $event)"
+                (selectedStringChange)="onContentTypeChange($event)"
                 [stringList]="['boat', 'member']"
                 [readOnly]="false"
               />
@@ -51,7 +51,7 @@ export class TripStatsConfiguration {
   private readonly i18nService = inject(I18nService);
 
   public formData = model.required<TripStatsConfig>();
-  public title = input('@content.section.type.tripStats.edit');
+  public headerTitle = input('@content.section.type.tripStats.edit');
 
   protected viewType    = linkedSignal(() => this.formData().viewType    ?? 'list');
   protected contentType = linkedSignal(() => this.formData().contentType ?? 'boat');
@@ -64,7 +64,11 @@ export class TripStatsConfiguration {
   protected viewTypeI18n    = computed(() => ({ name: 'viewType',    label: this.fieldI18n.viewType_label()    } as StringSelectI18n));
   protected contentTypeI18n = computed(() => ({ name: 'contentType', label: this.fieldI18n.contentType_label() } as StringSelectI18n));
 
-  protected onFieldChange(fieldName: string, fieldValue: string): void {
-    this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
+  protected onViewTypeChange(viewType: string): void {
+    this.formData.update(vm => ({ ...vm, viewType: viewType as TripStatsConfig['viewType'] }));
+  }
+
+  protected onContentTypeChange(contentType: string): void {
+    this.formData.update(vm => ({ ...vm, contentType: contentType as TripStatsConfig['contentType'] }));
   }
 }
