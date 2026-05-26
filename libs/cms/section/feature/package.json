@@ -28,6 +28,7 @@
     "@bk2/activity-data-access": "*",
     "@bk2/activity-feature": "*",
     "@bk2/relationship-membership-data-access": "*",
-    "@bk2/relationship-responsibility-data-access": "*"
+    "@bk2/relationship-responsibility-data-access": "*",
+    "@bk2/trip-data-access": "*"
   }
 }

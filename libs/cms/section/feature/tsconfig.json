@@ -56,6 +56,7 @@
     {"path": "../../../activity/data-access/tsconfig.lib.json"},
     {"path": "../../../activity/feature/tsconfig.lib.json"},
     {"path": "../../../activity/util/tsconfig.lib.json"},
-    {"path": "../../../relationship/responsibility/data-access/tsconfig.lib.json"}
+    {"path": "../../../relationship/responsibility/data-access/tsconfig.lib.json"},
+    {"path": "../../../geo/trip/data-access/tsconfig.lib.json"}
   ]
 }
