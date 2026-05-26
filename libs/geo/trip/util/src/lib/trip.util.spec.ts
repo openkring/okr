@@ -48,12 +48,23 @@ describe('getTripIndex', () => {
       resource: { key: 'r1', name1: 'Skiff', name2: '', modelType: 'resource', type: 'rboat', subType: '', label: 'Skiff' },
       participants: [
         { key: 'p1', name1: 'Anna', name2: 'Müller', modelType: 'person', type: '', subType: '', label: 'Anna Müller' },
+        { key: 'p2', name1: 'Max', name2: 'Muster', modelType: 'person', type: '', subType: '', label: 'Max Muster' },
       ],
     });
     const idx = getTripIndex(trip);
     expect(idx).toContain('Skiff');
     expect(idx).toContain('20240601');
-    expect(idx).toContain('Anna');
+    expect(idx).toContain('Anna Müller');
+    expect(idx).toContain('Max Muster');
+  });
+
+  it('returns index without participants when array is empty', () => {
+    const trip = makeTrip({
+      resource: { key: 'r1', name1: 'Skiff', name2: '', modelType: 'resource', type: 'rboat', subType: '', label: 'Skiff' },
+    });
+    const idx = getTripIndex(trip);
+    expect(idx).toContain('Skiff');
+    expect(idx).not.toContain('p:');
   });
 });
 
@@ -102,6 +113,12 @@ describe('compareTripDate', () => {
     expect(trips[0]).toBe(c);
     expect(trips[1]).toBe(b);
     expect(trips[2]).toBe(a);
+  });
+
+  it('returns 0 for equal date and time', () => {
+    const a = makeTrip({ startDate: '20240601', startTime: '0800' });
+    const b = makeTrip({ startDate: '20240601', startTime: '0800' });
+    expect(compareTripDate(a, b)).toBe(0);
   });
 });
 

@@ -10,6 +10,6 @@ export const tripValidationSuite = staticSuite((trip: TripModel, field?: string)
   });
 
   test('participants', '@trip/field.participants', () => {
-    enforce(trip.participants.length).greaterThan(0);
+    enforce((trip.participants ?? []).length).greaterThan(0);
   });
 });

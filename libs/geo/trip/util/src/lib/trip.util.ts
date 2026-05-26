@@ -19,7 +19,7 @@ export function getTripIndex(trip: TripModel): string {
   let index = '';
   index = addIndexElement(index, 'b', trip.resource?.name1 ?? '');
   index = addIndexElement(index, 'd', trip.startDate);
-  for (const p of trip.participants) {
+  for (const p of trip.participants ?? []) {
     index = addIndexElement(index, 'p', `${p.name1} ${p.name2}`.trim());
   }
   return index;
