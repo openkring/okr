@@ -1,0 +1,22 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../../dist/out-tsc/libs/geo/trip/data-access/spec",
+    "rootDir": "./",
+    "types": ["node", "vitest"],
+    "module": "es2020",
+    "target": "es2020",
+    "esModuleInterop": true,
+    "allowJs": true
+  },
+  "include": ["vite.config.ts", "vite.config.mts", "vitest.config.ts", "vitest.config.mts", "src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": [],
+  "references": [
+    { "path": "../../../shared/models/tsconfig.lib.json" },
+    { "path": "../../../shared/config/tsconfig.lib.json" },
+    { "path": "../../../shared/constants/tsconfig.lib.json" },
+    { "path": "../../../shared/util-core/tsconfig.lib.json" },
+    { "path": "../../../shared/data-access/tsconfig.lib.json" },
+    { "path": "../util/tsconfig.lib.json" }
+  ]
+}
