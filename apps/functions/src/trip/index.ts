@@ -135,15 +135,20 @@ export const onTripStatsReconcile = onSchedule(
       }
     }
 
-    const batch = db.batch();
-    for (const [key, totals] of boatTotals) {
-      batch.set(db.doc(`stats_boats/${key}/years/${yearStr}`), { ...totals, updatedAt: FieldValue.serverTimestamp() });
-    }
-    for (const [key, totals] of memberTotals) {
-      batch.set(db.doc(`stats_members/${key}/years/${yearStr}`), { ...totals, updatedAt: FieldValue.serverTimestamp() });
-    }
-    await batch.commit();
+    const allWrites: Array<{ ref: FirebaseFirestore.DocumentReference; data: { totalKm: number; tripCount: number } }> = [
+      ...[...boatTotals.entries()].map(([key, data]) => ({ ref: db.doc(`stats_boats/${key}/years/${yearStr}`), data })),
+      ...[...memberTotals.entries()].map(([key, data]) => ({ ref: db.doc(`stats_members/${key}/years/${yearStr}`), data })),
+    ];
 
-    logger.info(`onTripStatsReconcile: wrote ${boatTotals.size} boat + ${memberTotals.size} member docs for ${yearStr}`);
+    const CHUNK = 400;
+    for (let i = 0; i < allWrites.length; i += CHUNK) {
+      const batch = db.batch();
+      for (const { ref, data } of allWrites.slice(i, i + CHUNK)) {
+        batch.set(ref, { ...data, updatedAt: FieldValue.serverTimestamp() });
+      }
+      await batch.commit();
+    }
+
+    logger.info(`onTripStatsReconcile: processed ${snap.size} trips, wrote ${boatTotals.size} boat + ${memberTotals.size} member docs for ${yearStr}`);
   }
 );
