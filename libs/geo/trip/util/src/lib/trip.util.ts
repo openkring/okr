@@ -29,8 +29,8 @@ export function groupTripsByDay(trips: TripModel[]): { date: string; trips: Trip
   const map = new Map<string, TripModel[]>();
   for (const trip of trips) {
     const key = trip.startDate;
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(trip);
+    const bucket = map.get(key) ?? [];
+    map.set(key, [...bucket, trip]);
   }
   return Array.from(map.entries())
     .sort(([a], [b]) => b.localeCompare(a))
