@@ -77,6 +77,16 @@ service cloud.firestore {
       allow read, write: if false; // only writable by Cloud Function
     }
 
+    match /esignList/{esignId} {
+      allow read: if request.auth != null
+                  && resource.data.tenantId == request.auth.token.tenantId;
+      allow write: if false; // only writable by Cloud Functions
+    }
+
+    match /esignAudit/{tenantId}/{subcollection=**} {
+      allow read, write: if false; // only accessible by Cloud Functions
+    }
+
   	match /{document=**} {
     	allow read, write: if request.auth != null;
   	}
