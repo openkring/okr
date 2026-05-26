@@ -156,30 +156,30 @@ export class EventsSectionComponent implements OnInit {
     if (calevent.isOpen) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
       if (state !== 'accepted') {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.as_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
       }
       if (state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.as_unsubscribe(), this.imgixBaseUrl, 'cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.unsubscribe(), this.imgixBaseUrl, 'cancel'));
       }
     } else {  // invitation
       // get invitation for current user
       const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.bkey);
       if (inv) {
         if (inv.state !== 'accepted') {
-          actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.as_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+          actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
         }
         if (inv.state !== 'declined') {
-          actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.as_unsubscribe(), this.imgixBaseUrl, 'cancel'));
+          actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.unsubscribe(), this.imgixBaseUrl, 'cancel'));
         }
       }
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
     if (this.canChange(calevent)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
     } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.store.i18n.as_downloadIcs(), this.imgixBaseUrl, 'calendar-number'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.store.i18n.download(), this.imgixBaseUrl, 'calendar-number'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];

@@ -8,30 +8,30 @@
   "name": {
     "label": "Name",
     "placeholder": "Name eingeben",
-    "helper": ""
+    "helper": "Ein Name"
   },
   "invite": {
     "label": "Einladung",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "Einladung",
+    "helper": "Eine Einladung"
   },
   "unreadCount": {
     "label": "Ungelesene Nachrichten",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "ungelesene Nachrichten",
+    "helper": "Ungelesene Nachrichten"
   },
   "topic": {
     "label": "Thema",
-    "placeholder": ""
+    "placeholder": "Thema"
   },
   "avatar": {
     "label": "Avatar-URL",
     "placeholder": "https://...",
-    "helper": ""
+    "helper": "Ein Avatar ist ein Bild einer Person, ein Logo einer Organisation oder Resource etc."
   },
   "isDirect": {
     "label": "Direktnachricht",
-    "helper": ""
+    "helper": "Eine Nachricht zwischen genau zwei Personen."
   },
   
   "reconnecting": "Wieder verbinden...",
@@ -40,6 +40,7 @@
   "selectRoom": "Wähle einen Chat-Raum, um den Chat zu starten",
   "noRoomsError": "Keine Chat-Räume vorhanden. Erstelle einen Raum oder nimm in einem Raum teil um zu starten.",
   "createTestRoom": "Test Raum erstellen",
+
   "room": {
     "none": "Keine Chat-Räume gefunden.",
     "create": {
@@ -53,20 +54,15 @@
       "error": "Der Chat-Raum konnte nicht geändert werden."
     }
   },
+
   "message": {
-    "actionsheet": {
-      "edit": "Nachricht bearbeiten",
-      "delete": "Nachricht löschen",
-      "react": "Reaktion hinzufügen",
-      "reply": "Antworten",
-      "thread": "Thread öffnen",
-      "report": "Problem melden",
-      "copy": "Nachricht kopieren",
-      "raw": "Rohdaten anzeigen"
-    },
+    "edit": "Nachricht bearbeiten",
+    "reply": "Antworten",
+    "copy": "Nachricht kopieren",
+    "raw": "Rohdaten anzeigen",
     "react": {
       "header": "Reaktion wählen",
-      "cancel": "Abbrechen"
+      "add": "Reaktion hinzufügen"
     },
     "report": {
       "header": "Problem melden",
@@ -86,12 +82,15 @@
       "error": "Die Mitteilung konnte nicht geändert werden."
     },
     "delete": {
+      "label": "Nachricht löschen",
       "confirm": "Soll die Nachricht wirklich gelöscht werden ?",
       "conf": "Die Nachricht wurde gelöscht.",
       "error": "Die Nachricht konnte nicht gelöscht werden."
     }
   },
+
   "thread": {
+    "open": "Thread öffnen",
     "reply": {
       "header": "Im Thread antworten",
       "placeholder": "Schreibe deine Mitteilung...",
@@ -99,15 +98,28 @@
     },
     "empty": "Es gibt noch keine Antworten. Starte den Thread!"
   },
+
   "video": {
     "incoming": "Eingehender Video-Anruf...",
     "connecting": "Verbindung wird hergestellt..."
   },
   "survey": {
     "title": "Umfrage erstellen",
-    "create": "Umfrage erstellen"
+    "create": "Umfrage erstellen",
+    "allowMultipleAnswers": {
+      "label": "Mehrere Antworten möglich",
+      "helper": "Es können mehrere Antworten auf die gleiche Frage gegeben werden (Multiple Choice)."
+    },
+    "question": {
+      "label": "Frage",
+      "placeholder": "Die Frage, welche dem Anwender gezeigt wird."
+    },
+    "answer": {
+      "create": "Neue Antwort",
+      "add": "Antwort hinzufügen"
+    }
   },
-  "attachment": {
+  "attach": {
     "image": "Bild anhängen",
     "file": "Datei anhängen",
     "position": "Position senden",
@@ -117,10 +129,5 @@
   "and": "und",
   "areTypeing": "tippen...",
   "othersTypeing": "andere tippen...",
-  "severalTypeing": "Mehrere Personen tippen...",
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
-  }
+  "severalTypeing": "Mehrere Personen tippen..."
 }

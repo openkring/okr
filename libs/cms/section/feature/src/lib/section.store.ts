@@ -33,6 +33,9 @@ const SECTION_I18N_KEYS = {
   no_such_section:           PFX + 'noSuchSection',
   empty_table:               PFX + 'emptyTable',
   select_label:              PFX + 'select.label',
+  view:                       PFX + 'view',
+  edit:                       PFX + 'edit',
+  create:                     PFX + 'create',
   delete:                    PFX + 'delete.label',
   delete_confirm:            PFX + 'delete.confirm',
   send_confirm1:             PFX + 'send.confirm1',
@@ -44,9 +47,18 @@ const SECTION_I18N_KEYS = {
   calevent_update:           PFX + 'calevent.update.label',
   calevent_update_conf:      PFX + 'calevent.update.conf',
   calevent_update_error:     PFX + 'calevent.update.error',
-  invitation_update:         PFX + 'invitation.update.label',
-  invitation_update_conf:    PFX + 'invitation.update.conf',
+  calevent_subscribe:        PFX + 'calevent.subscribe',
+  calevent_unsubscribe:      PFX + 'calevent.unsubscribe',
+  calevent_edit:             PFX + 'calevent.edit',
+  calevent_view:             PFX + 'calevent.view',
+  calevent_download:         PFX + 'calevent.download',
+
+  invitation_update:          PFX + 'invitation.update.label',
+  invitation_update_conf:     PFX + 'invitation.update.conf',
   invitation_update_error:    PFX + 'invitation.update.error',
+  invitation_subscribe:       PFX + 'invitation.subscribe',
+  invitation_unsubscribe:     PFX + 'invitation.unsubscribe',
+  
   context_title:              PFX + 'context.title',
   context_show_avatar:        PFX + 'context.show.avatar',
   context_show_name:          PFX + 'context.show.name',
@@ -56,16 +68,50 @@ const SECTION_I18N_KEYS = {
   context_show_personrels:    PFX + 'context.show.personrels',
   context_show_workrels:      PFX + 'context.show.workrels',
   context_show_save:          PFX + 'context.show.save',
-  view:                       PFX + 'view',
-  edit:                       PFX + 'edit',
-  create:                     PFX + 'create',
-  ok:                         '@ok',
-  cancel:                     '@cancel',
-  save:                       '@save.label',
-  as_view:                    PFX + 'actionsheet.view',
-  as_edit:                    PFX + 'actionsheet.edit',
-  as_delete:                  PFX + 'actionsheet.delete',
-  copy_conf:                       '@copy.conf',
+  context_edit:               PFX + 'context.edit',
+  context_center:               PFX + 'context.center',
+  context_displayConfig:               PFX + 'context.displayConfig',
+
+  messages_empty:             PFX + 'messages.empty',
+  news_empty:                 PFX + 'news.empty',
+  news_view:                  PFX + 'news.view',
+  news_edit:                  PFX + 'news.edit',
+
+  task_empty:                PFX + 'task.empty',
+  task_complete:             PFX + 'task.complete',
+  task_view:                 PFX + 'task.view',
+  task_edit:                 PFX + 'task.edit',
+
+  orgchart_accordion:         PFX + 'orgchart.accordion',
+  orgchart_chart:         PFX + 'orgchart.chart',
+  orgchart_addNewGroup:         PFX + 'orgchart.group.add.new',
+  orgchart_addExistingGroup:         PFX + 'orgchart.group.add.existing',
+  orgchart_editGroup:         PFX + 'orgchart.group.edit',
+  orgchart_removeGroup:         PFX + 'orgchart.group.remove',
+
+  rag_placeholder:            PFX + 'rag.placeholder',
+  rag_upload:                 PFX + 'rag.upload',
+
+  album_zoomed:               PFX + 'album.zoomed',
+  album_style:                PFX + 'album.style',
+
+  email_conf:                 PFX + 'email.conf',
+  email_error:                PFX + 'email.error',
+
+  group_detach_confirm:       PFX + 'group.detach.confirm',
+
+  member_age_group:           PFX + 'member.age.group',
+  member_age_male:           PFX + 'member.age.male',
+  member_age_female:           PFX + 'member.age.female',
+  member_age_total:           PFX + 'member.age.total',
+  member_age_empty:           PFX + 'member.age.empty',
+
+  member_cat_category:           PFX + 'member.cat.category',
+  member_cat_male:           PFX + 'member.cat.male',
+  member_cat_female:           PFX + 'member.cat.female',
+  member_cat_total:           PFX + 'member.cat.total',
+  member_cat_empty:           PFX + 'member.cat.empty',
+
   imgLabel_label:             PFX + 'image.label.label',
   imgLabel_placeholder:       PFX + 'image.label.placeholder',
   imgLabel_helper:            PFX + 'image.label.helper',
@@ -83,6 +129,11 @@ const SECTION_I18N_KEYS = {
   imgOverlay_helper:          PFX + 'image.overlay.helper',
   notes_label:                PFX + 'notes.label',
   notes_placeholder:          PFX + 'notes.placeholder',
+
+  copy_conf:                  '@copy.conf',
+  ok:                         '@ok',
+  cancel:                     '@cancel',
+  save:                       '@save.label'
 } satisfies Record<string, string>;
 
 export type SectionI18n = { [K in keyof typeof SECTION_I18N_KEYS]: Signal<string> };

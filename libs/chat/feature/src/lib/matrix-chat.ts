@@ -547,10 +547,10 @@ export class MatrixChat implements OnDestroy {
     areTypeing:             this.store.i18n.areTypeing(),
     othersTypeing:          this.store.i18n.othersTypeing(),
     copy_conf:              this.store.i18n.copy_conf(),
-    as_attachment_image:    this.store.i18n.as_attachment_image(),
-    as_attachment_file:     this.store.i18n.as_attachment_file(),
-    as_attachment_position: this.store.i18n.as_attachment_position(),
-    as_attachment_survey:   this.store.i18n.as_attachment_survey(),
+    attach_image:           this.store.i18n.attach_image(),
+    attach_file:            this.store.i18n.attach_file(),
+    attach_position:        this.store.i18n.attach_position(),
+    attach_survey:          this.store.i18n.attach_survey(),
     cancel:                 this.store.i18n.cancel(),
   }));
 
@@ -1033,17 +1033,17 @@ export class MatrixChat implements OnDestroy {
     const isAuthor = !!currentUserId && message.sender === currentUserId;
 
     if (isAuthor) { // author of message
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.store.i18n.as_msg_edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.as_msg_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.store.i18n.msg_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
     } else {  // receiver of message
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.as_msg_react(), this.imgixBaseUrl, 'smiley'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.as_msg_reply(), this.imgixBaseUrl, 'return_reply'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.store.i18n.as_msg_thread(), this.imgixBaseUrl, 'branch'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.as_msg_report(), this.imgixBaseUrl, 'alert-circle'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.msg_reply(), this.imgixBaseUrl, 'return_reply'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.store.i18n.thread_open(), this.imgixBaseUrl, 'branch'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.msg_report_header(), this.imgixBaseUrl, 'alert-circle'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.message.copy', this.store.i18n.as_msg_copy(), this.imgixBaseUrl, 'copy'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.message.copy', this.store.i18n.msg_copy(), this.imgixBaseUrl, 'copy'));
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.raw', this.store.i18n.as_msg_raw(), this.imgixBaseUrl, 'code'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.raw', this.store.i18n.msg_raw(), this.imgixBaseUrl, 'code'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button

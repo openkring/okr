@@ -16,11 +16,11 @@ import { isTask } from '@bk2/task-util';
 import { PFX } from './scope';
 
 const TASKS_SECTION_I18N_KEYS = {
-  empty:       PFX + 'tasks.empty',
+  empty:        PFX + 'task.empty',
   more:        '@more',
-  as_complete: PFX + 'task.actionsheet.complete',
-  as_view:     PFX + 'task.actionsheet.view',
-  as_edit:     PFX + 'task.actionsheet.edit',
+  complete:     PFX + 'task.complete',
+  view:         PFX + 'task.view',
+  edit:         PFX + 'task.edit',
   cancel:      '@cancel',
 } satisfies Record<string, string>;
 

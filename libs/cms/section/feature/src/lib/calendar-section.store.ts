@@ -23,11 +23,11 @@ const CALENDAR_SECTION_I18N_KEYS = {
   update_invitation_error:    PFX + 'invitation.update.error',
   calevents:                  PFX + 'calevent.calevents',
   more:                       '@more',
-  as_subscribe:               PFX + 'calevent.actionsheet.subscribe',
-  as_unsubscribe:             PFX + 'calevent.actionsheet.unsubscribe',
-  as_edit:                    PFX + 'calevent.actionsheet.edit',
-  as_view:                    PFX + 'calevent.actionsheet.view',
-  as_downloadIcs:             PFX + 'calevent.actionsheet.downloadIcs',
+  subscribe:                  PFX + 'calevent.subscribe',
+  unsubscribe:                PFX + 'calevent.unsubscribe',
+  edit:                       PFX + 'calevent.edit',
+  view:                       PFX + 'calevent.view',
+  download:                   PFX + 'calevent.download',
   cancel:                     '@cancel',
 } satisfies Record<string, string>;
 

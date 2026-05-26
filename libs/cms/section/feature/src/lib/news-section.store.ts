@@ -12,11 +12,11 @@ import { I18nService } from '@bk2/shared-i18n';
 import { PFX } from './scope';
 
 const NEWS_SECTION_I18N_KEYS = {
-  empty:   PFX + 'news.empty',
-  more:    '@more',
-  as_view: PFX + 'news.actionsheet.view',
-  as_edit: PFX + 'news.actionsheet.edit',
-  cancel:  '@cancel',
+  empty:    PFX + 'news.empty',
+  more:     '@more',
+  view:     PFX + 'news.view',
+  edit:     PFX + 'news.edit',
+  cancel:   '@cancel',
 } satisfies Record<string, string>;
 
 export type NewsSectionI18n = { [K in keyof typeof NEWS_SECTION_I18N_KEYS]: Signal<string> };

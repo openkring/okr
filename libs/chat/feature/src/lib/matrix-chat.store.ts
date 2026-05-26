@@ -24,82 +24,81 @@ const MATRIX_CHAT_I18N_KEYS = {
   roomId_label:              PFX + 'roomId.label',
   roomId_placeholder:        PFX + 'roomId.placeholder',
   roomId_helper:             PFX + 'roomId.helper',
+  roomId_error:              PFX + 'roomId.error',
+
   name_label:                PFX + 'name.label',
   name_placeholder:          PFX + 'name.placeholder',
   name_helper:               PFX + 'name.helper',
+
   invite_label:              PFX + 'invite.label',
   invite_placeholder:        PFX + 'invite.placeholder',
   invite_helper:             PFX + 'invite.helper',
+
   unreadCount_label:         PFX + 'unreadCount.label',
   unreadCount_placeholder:   PFX + 'unreadCount.placeholder',
   unreadCount_helper:        PFX + 'unreadCount.helper',
+
   topic_label:               PFX + 'topic.label',
   topic_placeholder:         PFX + 'topic.placeholder',
+
   avatar_label:              PFX + 'avatar.label',
   avatar_placeholder:        PFX + 'avatar.placeholder',
   avatar_helper:             PFX + 'avatar.helper',
+
   isDirect_label:            PFX + 'isDirect.label',
   isDirect_helper:           PFX + 'isDirect.helper',
-
-  room_create_conf:          PFX + 'room.create.conf',
-  room_create_error:         PFX + 'room.create.error',
-  room_update_conf:          PFX + 'room.update.conf',
-  room_update_error:         PFX + 'room.update.error',
-  thread_reply_header:       PFX + 'thread.reply.header',
-  thread_reply_placeholder:  PFX + 'thread.reply.placeholder',
-  thread_reply_error:        PFX + 'thread.reply.error',
-  msg_report_header:         PFX + 'message.report.header',
-  msg_report_placeholder:    PFX + 'message.report.placeholder',
-  msg_report_noChannel:      PFX + 'message.report.noChannel',
-  msg_report_conf:           PFX + 'message.report.conf',
-  msg_report_error:          PFX + 'message.report.error',
-  msg_update_header:         PFX + 'message.update.header',
-  msg_update_placeholder:    PFX + 'message.update.placeholder',
-  msg_update_conf:           PFX + 'message.update.conf',
-  msg_update_error:          PFX + 'message.update.error',
-  msg_delete_confirm:        PFX + 'message.delete.confirm',
-  msg_delete_conf:           PFX + 'message.delete.conf',
-  msg_delete_error:          PFX + 'message.delete.error',
-  react_header:              PFX + 'message.react.header',
-  react_cancel:              PFX + 'message.react.cancel',
-  msg_report_messageFrom:    PFX + 'message.report.messageFrom',
-  msg_report_message:        PFX + 'message.report.message',
-  msg_report_comment:        PFX + 'message.report.comment',
-  msg_report_showMessage:    PFX + 'message.report.showMessage',
 
   reconnecting:              PFX + 'reconnecting',
   connectionError:           PFX + 'connectionError',
   connecting:                PFX + 'connecting',
-
   selectRoom:                PFX + 'selectRoom',
   noRoomsError:              PFX + 'noRoomsError',
   createTestRoom:            PFX + 'createTestRoom',
+
+  room_none:                PFX + 'room.none',
+  room_create_conf:          PFX + 'room.create.conf',
+  room_create_error:         PFX + 'room.create.error',
+  room_update_conf:          PFX + 'room.update.conf',
+  room_update_error:         PFX + 'room.update.error',
+
+  msg_edit:              PFX + 'message.edit',
+  msg_reply:             PFX + 'message.reply',
+  msg_copy:              PFX + 'message.copy',
+  msg_raw:               PFX + 'message.raw',
+  msg_react_header:              PFX + 'message.react.header',
+  msg_react_cancel:              PFX + 'message.react.cancel',
+
+  msg_report_header:         PFX + 'message.report.header',
+  msg_report_placeholder:    PFX + 'message.report.placeholder',
+  msg_report_noChannel:      PFX + 'message.report.noChannel',
+  msg_report_messageFrom:    PFX + 'message.report.messageFrom',
+  msg_report_message:        PFX + 'message.report.message',
+  msg_report_comment:        PFX + 'message.report.comment',
+  msg_report_showMessage:    PFX + 'message.report.showMessage',
+  msg_report_conf:           PFX + 'message.report.conf',
+  msg_report_error:          PFX + 'message.report.error',
+
+  msg_update_header:         PFX + 'message.update.header',
+  msg_update_placeholder:    PFX + 'message.update.placeholder',
+  msg_update_conf:           PFX + 'message.update.conf',
+  msg_update_error:          PFX + 'message.update.error',
+
+  msg_delete:                PFX + 'message.delete.label',
+  msg_delete_confirm:        PFX + 'message.delete.confirm',
+  msg_delete_conf:           PFX + 'message.delete.conf',
+  msg_delete_error:          PFX + 'message.delete.error',
+
+  thread_open:               PFX + 'thread.open',
+  thread_reply_header:       PFX + 'thread.reply.header',
+  thread_reply_placeholder:  PFX + 'thread.reply.placeholder',
+  thread_reply_error:        PFX + 'thread.reply.error',
   thread_empty:              PFX + 'thread.empty',
+
   video_incoming:            PFX + 'video.incoming',
   video_connecting:          PFX + 'video.connecting',
-  isTypeing:                PFX + 'isTypeing',
-  and:                      PFX + 'and',
-  areTypeing:               PFX + 'areTypeing',
-  othersTypeing:            PFX + 'othersTypeing',
-  severalTypeing:           PFX + 'severalTypeing',
-  room_none:                PFX + 'room.none',
-  copy_conf:                '@copy.conf',
-
-  as_msg_edit:              PFX + 'message.actionsheet.edit',
-  as_msg_delete:            PFX + 'message.actionsheet.delete',
-  as_msg_react:             PFX + 'message.actionsheet.react',
-  as_msg_reply:             PFX + 'message.actionsheet.reply',
-  as_msg_thread:            PFX + 'message.actionsheet.thread',
-  as_msg_report:            PFX + 'message.actionsheet.report',
-  as_msg_copy:              PFX + 'message.actionsheet.copy',
-  as_msg_raw:               PFX + 'message.actionsheet.raw',
-
-  as_attachment_image:      PFX + 'attachment.image',
-  as_attachment_file:       PFX + 'attachment.file',
-  as_attachment_position:   PFX + 'attachment.position',
-  as_attachment_survey:     PFX + 'attachment.survey',
 
   survey_title:             PFX + 'survey.title',
+  survey_create:            PFX + 'survey.create',
   allowMultipleAnswers_label:  PFX + 'survey.allowMultipleAnswers.label',
   allowMultipleAnswers_helper: PFX + 'survey.allowMultipleAnswers.helper',
   question_label:           PFX + 'survey.question.label',
@@ -107,6 +106,18 @@ const MATRIX_CHAT_I18N_KEYS = {
   answers_title:            PFX + 'survey.answer.create',
   answer_add:               PFX + 'survey.answer.add',
 
+  attach_image:      PFX + 'attach.image',
+  attach_file:       PFX + 'attach.file',
+  attach_position:   PFX + 'attach.position',
+  attach_survey:     PFX + 'attach.survey',
+
+  isTypeing:                PFX + 'isTypeing',
+  and:                      PFX + 'and',
+  areTypeing:               PFX + 'areTypeing',
+  othersTypeing:            PFX + 'othersTypeing',
+  severalTypeing:           PFX + 'severalTypeing',
+
+  copy_conf:                '@copy.conf',
   cancel:                   '@cancel',
   ok:                       '@ok',
   save:                     '@save.label'
@@ -707,7 +718,7 @@ export const _MatrixChatStore = signalStore(
         const roomId = store.currentRoomId();
         if (!roomId) return;
         const alert = await store.alertController.create({
-          header: store.i18n.react_header(),
+          header: store.i18n.msg_react_header(),
           buttons: [
             ...QUICK_REACTIONS.map(emoji => ({
               text: emoji,
@@ -717,7 +728,7 @@ export const _MatrixChatStore = signalStore(
                 );
               }
             })),
-            { text: store.i18n.react_cancel(), role: 'cancel' }
+            { text: store.i18n.msg_react_cancel(), role: 'cancel' }
           ],
           cssClass: 'emoji-reaction-alert',
         });

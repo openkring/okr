@@ -143,12 +143,12 @@ export class TasksSectionComponent implements OnInit {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
     if (hasRole('registered', this.currentUser())) {
         if (task.completionDate.length === 0) { // task is not yet completed.
-            actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.as_complete(), this.imgixBaseUrl, 'checkbox-circle'));
+            actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.complete(), this.imgixBaseUrl, 'checkbox-circle'));
         }
-        actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+        actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('eventAdmin', this.currentUser()) || hasRole('privileged', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+        actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
