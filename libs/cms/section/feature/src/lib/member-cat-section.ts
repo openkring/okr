@@ -2,14 +2,17 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { MemberCatSection } from '@bk2/shared-models';
-import { EmptyList, Spinner } from '@bk2/shared-ui';
+import { EmptyList, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
 
 import { MemberCatSectionStore } from './member-cat-section.store';
 
 @Component({
   selector: 'bk-member-cat-section',
   standalone: true,
-  imports: [Spinner, EmptyList, IonCard, IonCardContent, IonGrid, IonRow, IonCol],
+  imports: [
+    Spinner, EmptyList, OptionalCardHeader,
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol
+  ],
   providers: [MemberCatSectionStore],
   styles: [`
     .header-row { font-weight: 600; }
@@ -23,6 +26,7 @@ import { MemberCatSectionStore } from './member-cat-section.store';
       <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-card>
+        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-grid>
             <ion-row class="header-row">
@@ -48,8 +52,13 @@ import { MemberCatSectionStore } from './member-cat-section.store';
 export class MemberCatSectionComponent {
   protected readonly store = inject(MemberCatSectionStore);
 
+  // inputs
   public section = input<MemberCatSection>();
   public editMode = input<boolean>(false);
+
+  // derived
+  protected readonly title = computed(() => this.section()?.title);
+  protected readonly subTitle = computed(() => this.section()?.subTitle);
 
   protected readonly isEmpty = computed(() => {
     const rows = this.store.rows();
