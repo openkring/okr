@@ -1,0 +1,51 @@
+{
+  "list": { "title": "Ausfahrten" },
+  "empty": "Keine Ausfahrten gefunden.",
+  "cancel": "Abbrechen",
+  "add": { "title": "Neue Ausfahrt" },
+  "edit": { "title": "Ausfahrt bearbeiten" },
+  "end": { "title": "Ausfahrt beenden" },
+  "delete": {
+    "confirm": "Soll diese Ausfahrt wirklich gelöscht werden?",
+    "reason": "Grund für die Löschung",
+    "conf": "Ausfahrt gelöscht.",
+    "error": "Löschen fehlgeschlagen."
+  },
+  "actionsheet": {
+    "add": "Ausfahrt erfassen",
+    "edit": "Ausfahrt bearbeiten",
+    "end": "Ausfahrt beenden",
+    "delete": "Ausfahrt löschen",
+    "report_damage": "Schaden melden",
+    "report_bug": "Fehler melden",
+    "add_guest": "Gast hinzufügen",
+    "show_images": "Bilder anzeigen"
+  },
+  "warning": {
+    "suspicious": "Verdächtige Aktivität erkannt. Bitte bestätigen.",
+    "distance_zero": "Distanz ist 0 km. Bitte bestätigen.",
+    "distance_high": "Distanz über 50 km. Bitte bestätigen.",
+    "seats_mismatch": "Anzahl Teilnehmende entspricht nicht der Bootskapazität."
+  },
+  "field": {
+    "boat": "Boot",
+    "location": "Zielort",
+    "custom_location": "Eigener Zielort",
+    "distance": "Distanz (km)",
+    "participants": "Teilnehmende",
+    "notes": "Notizen",
+    "start_date": "Startdatum",
+    "start_time": "Startzeit",
+    "end_date": "Enddatum",
+    "end_time": "Endzeit"
+  },
+  "state": {
+    "draft": "Entwurf",
+    "open": "Offen",
+    "closed": "Abgeschlossen",
+    "deleted": "Gelöscht",
+    "revised": "Überarbeitet",
+    "corrected": "Korrigiert",
+    "all": "Alle"
+  }
+}
