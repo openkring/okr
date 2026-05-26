@@ -98,7 +98,7 @@ describe('compareTripDate', () => {
     const b = makeTrip({ startDate: '20240601', startTime: '0900' });
     const c = makeTrip({ startDate: '20240602', startTime: '0800' });
     const trips = [a, b, c];
-    trips.sort((x, y) => compareTripDate(y, x));
+    trips.sort(compareTripDate);
     expect(trips[0]).toBe(c);
     expect(trips[1]).toBe(b);
     expect(trips[2]).toBe(a);

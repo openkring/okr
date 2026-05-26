@@ -47,7 +47,7 @@ export function matchesStateFilter(state: string, filter: string): boolean {
 export function compareTripDate(a: TripModel, b: TripModel): number {
   const keyA = a.startDate + a.startTime;
   const keyB = b.startDate + b.startTime;
-  return keyA < keyB ? -1 : keyA > keyB ? 1 : 0;
+  return keyA > keyB ? -1 : keyA < keyB ? 1 : 0;
 }
 
 export function formatTripTime(time: string): string {
