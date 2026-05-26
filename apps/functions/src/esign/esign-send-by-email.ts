@@ -41,6 +41,8 @@ export const esignSendByEmail = onCall<{
     if (!snap.exists) throw new HttpsError('not-found', 'Signing process not found');
     const record = snap.data() as { deepsignDocumentId: string; documentName: string };
 
+    const emailHtml = body ?? `<p>Bitte finden Sie das Dokument <strong>${record.documentName}</strong> im Anhang.</p>`;
+
     if (includeSignedPdf) {
       const token = await getDeepSignAccessToken(
         deepsignClientId.value(), deepsignClientSecret.value(),
@@ -50,22 +52,18 @@ export const esignSendByEmail = onCall<{
         `${DEEPSIGN_API_BASE}/documents/${record.deepsignDocumentId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      // documentUrl is short-lived; we just send the email with the link, not the attachment
-      // (attaching binary PDFs via nodemailer requires base64 encoding — keep it simple for v1)
       const documentUrl: string = detailsResponse.data.documentUrl;
-      const emailHtml = body
-        ? body
-        : `<p>Bitte finden Sie das Dokument <strong>${record.documentName}</strong> unter folgendem Link (gültig ca. 1 Minute):</p><p><a href="${documentUrl}">${documentUrl}</a></p>`;
+      const pdfResponse = await axios.get<ArrayBuffer>(documentUrl, { responseType: 'arraybuffer' });
+      const pdfBuffer = Buffer.from(pdfResponse.data);
 
       await sendEmailViaProvider(emailProvider.value(), {
         from: emailFrom.value(),
         to: recipients,
         subject: subject ?? `Dokument: ${record.documentName}`,
         html: emailHtml,
+        attachments: [{ filename: `${record.documentName}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
       });
     } else {
-      const emailHtml = body
-        ?? `<p>Bitte finden Sie das Dokument <strong>${record.documentName}</strong> im Anhang.</p>`;
       await sendEmailViaProvider(emailProvider.value(), {
         from: emailFrom.value(),
         to: recipients,

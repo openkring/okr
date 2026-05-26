@@ -8,6 +8,12 @@ export function isValidProvider(p: string): p is EmailProvider {
   return VALID_PROVIDERS.includes(p as EmailProvider);
 }
 
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
+
 export interface EmailOptions {
   from: string;
   to: string[];
@@ -15,6 +21,7 @@ export interface EmailOptions {
   bcc?: string[];
   subject: string;
   html: string;
+  attachments?: EmailAttachment[];
   template?: string;                            // Mailtrap template name (mailtrap_api only)
   templateVariables?: Record<string, string>;   // Variables passed to the Mailtrap template
 }
@@ -68,6 +75,13 @@ async function sendViaSMTP(config: object, options: EmailOptions): Promise<void>
     ...(options.bcc?.length ? { bcc: options.bcc.join(', ') } : {}),
     subject: options.subject,
     html: options.html,
+    ...(options.attachments?.length ? {
+      attachments: options.attachments.map(a => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType,
+      })),
+    } : {}),
   });
 }
 
@@ -90,6 +104,15 @@ async function sendViaMailtrapApi(options: EmailOptions): Promise<void> {
   } else {
     body['subject'] = options.subject;
     body['html']    = options.html;
+  }
+
+  if (options.attachments?.length) {
+    body['attachments'] = options.attachments.map(a => ({
+      filename:    a.filename,
+      content:     a.content.toString('base64'),
+      type:        a.contentType,
+      disposition: 'attachment',
+    }));
   }
 
   const response = await fetch('https://send.api.mailtrap.io/api/send', {
