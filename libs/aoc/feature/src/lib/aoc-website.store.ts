@@ -13,21 +13,28 @@ import { getSystemQuery } from '@bk2/shared-util-core';
 import { PFX } from './scope';
 
 const AOC_WEBSITE_I18N_KEYS = {
-  key_label: PFX + 'website.key.label',
-  create_conf:  PFX + 'website.create.conf',
-  create_error: PFX + 'website.create.error',
-  update_conf:  PFX + 'website.update.conf',
-  update_error: PFX + 'website.update.error',
-  delete_conf:  PFX + 'website.delete.conf',
-  delete_error: PFX + 'website.delete.error',
+  title:          PFX + 'website.title',
+  key:            PFX + 'website.key',
+  is_html:        PFX + 'website.isHtml',
+  list_title:     PFX + 'website.list.title',
+  edit:           PFX + 'website.edit',
+  create_label:   PFX + 'website.create.label',
+  create_conf:    PFX + 'website.create.conf',
+  create_error:   PFX + 'website.create.error',
+  update_label:   PFX + 'website.update.label',
+  update_conf:    PFX + 'website.update.conf',
+  update_error:   PFX + 'website.update.error',
+  delete_label:   PFX + 'website.delete.label',
+  delete_conf:    PFX + 'website.delete.conf',
+  delete_error:   PFX + 'website.delete.error',
   delete_confirm: PFX + 'website.delete.confirm',
-  ok:               '@ok',
-  cancel:           '@cancel',
-  search_placeholder: '@general.operation.search.placeholder',
-  list_title:       PFX + 'website.list.title',
-  loading:          '@general.operation.loading',
-  as_edit:   PFX + 'actionsheet.website.edit',
-  as_delete: PFX + 'actionsheet.website.delete',
+  as_title:       '@actionsheet.title',
+  copy_conf:      '@copy.conf',
+  save:           '@save.label',
+  loading:        '@loading',
+  ok:             '@ok',
+  cancel:         '@cancel',
+  search_placeholder: '@search.label',
 } satisfies Record<string, string>;
 
 export type AocWebsiteI18n = { [K in keyof typeof AOC_WEBSITE_I18N_KEYS]: Signal<string> };
@@ -86,7 +93,7 @@ export const AocWebsiteStore = signalStore(
     },
 
     async createItem(): Promise<void> {
-      const key = await bkPrompt(store.alertController, store.i18n.key_label(), '', store.i18n.ok(), store.i18n.cancel());
+      const key = await bkPrompt(store.alertController, store.i18n.key(), '', store.i18n.ok(), store.i18n.cancel());
       if (!key) return;
       const item = new WebsiteContentModel(store.appStore.env.tenantId);
       item.key = key.trim();

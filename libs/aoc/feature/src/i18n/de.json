@@ -522,27 +522,24 @@
 
   "website": {
     "title": "Website Texte",
-    "edit": {
-      "title": "Texte ändern"
-    },
-    "key": {
-      "label": "ID"
-    },
-    "isHtml": {
-      "label": "Inhalt ist HTML"
-    },
+    "key": "ID",
+    "isHtml": "Inhalt ist HTML",
     "list": {
       "title": "Texte"
     },
+    "edit": "Text ändern",
     "create": {
+      "label": "Website erstellen",
       "conf": "Website wurde erstellt",
       "error": "Website konnte nicht erstellt werden."
     },
     "update": {
+      "label": "Website ändern",
       "conf": "Website Änderung wurde gespeichert.",
       "error": "Die Änderung konnte nicht gespeichert werden."
     },
     "delete": {
+      "label": "Website entfernen",
       "conf": "Website entfernt",
       "confirm": "Soll die Website wirklich gelöscht werden ?",
       "error": "Die Website konnte nicht gelöscht werden."

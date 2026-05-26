@@ -1,30 +1,16 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonContent, IonItem, IonInput, IonLabel, IonToggle, IonToolbar, ModalController, IonTextarea } from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
 
-import { I18nService } from '@bk2/shared-i18n';
 import { BkEditor, ButtonCopyI18n, Header } from '@bk2/shared-ui';
 import { WebsiteContentModel } from '@bk2/shared-models';
 import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
-
-const AocWebsiteEditStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      key_label:    '@aoc.website.key.label',
-      is_html_label: '@aoc.website.isHtml.label',
-      cancel:       '@general.operation.cancel',
-      save:         '@general.operation.save',
-      copy_conf:    '@shared/ui.copy.conf',
-    }),
-  })),
-);
+import { AocWebsiteStore } from './aoc-website.store';
 
 @Component({
   selector: 'bk-aoc-website-edit-modal',
   standalone: true,
-  providers: [AocWebsiteEditStore],
+  providers: [AocWebsiteStore],
   imports: [
     FormsModule,
     Header, BkEditor,
@@ -32,16 +18,16 @@ const AocWebsiteEditStore = signalStore(
     IonItem, IonLabel, IonInput, IonToggle, IonTextarea
   ],
   template: `
-    <bk-header [i18n]="{ title: '@aoc.website.edit.title' }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.edit()}" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
-        <ion-label position="stacked">{{ store.i18n.key_label() }}</ion-label>
+        <ion-label position="stacked">{{ store.i18n.key() }}</ion-label>
         <ion-input [value]="formData().key" [readonly]="true" />
       </ion-item>
 
       <ion-item>
         <ion-toggle [checked]="formData().isHtml" (ionChange)="onToggleHtml($event)" />
-        <ion-label>{{ store.i18n.is_html_label() }}</ion-label>
+        <ion-label>{{ store.i18n.is_html() }}</ion-label>
       </ion-item>
 
 
@@ -81,7 +67,7 @@ const AocWebsiteEditStore = signalStore(
   `,
 })
 export class AocWebsiteEditModal {
-  protected readonly store = inject(AocWebsiteEditStore);
+  protected readonly store = inject(AocWebsiteStore);
   private readonly modalController = inject(ModalController);
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.store.i18n.copy_conf() } as ButtonCopyI18n));
 

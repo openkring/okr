@@ -28,7 +28,7 @@ import { AocWebsiteEditModal } from './aoc-website-edit.modal';
   ],
   providers: [AocWebsiteStore],
   template: `
-    <bk-header [i18n]="{ title: '@aoc.website.title' }" />
+    <bk-header [i18n]="{ title: store.i18n.title()}" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar
@@ -87,10 +87,10 @@ export class AocWebsite {
 
   protected async showActions(item: WebsiteContentModel): Promise<void> {
     const base = this.store.appStore.env.services.imgixBaseUrl;
-    const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    options.buttons.push(createActionSheetButton('website.edit', base, 'edit', this.store.i18n.as_edit()));
-    options.buttons.push(createActionSheetButton('website.delete', base, 'trash', this.store.i18n.as_delete()));
-    options.buttons.push(createActionSheetButton('cancel', base, 'cancel', this.store.i18n.cancel()));
+    const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    options.buttons.push(createActionSheetButton('website.edit', this.store.i18n.edit(), base, 'edit'));
+    options.buttons.push(createActionSheetButton('website.delete', this.store.i18n.delete_label(), base, 'trash'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), base, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
