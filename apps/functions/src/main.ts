@@ -20,6 +20,7 @@ import * as Srv from './srv';
 import * as Flighttracker from './flighttracker';
 import * as Session from './session';
 import * as Task from './task';
+import * as Trip from './trip';
 import * as Pdf from './pdf';
 import * as Esign from './esign';
 
@@ -172,6 +173,9 @@ export const cleanupOrphanSessions = Session.cleanupOrphanSessions;
 
 // task notifications
 export const onTaskWritten = Task.onTaskWritten;
+
+// trip statistics
+export const onTripWrite = Trip.onTripWrite;
 
 // test
 export const getEcho = Test.getEcho;
