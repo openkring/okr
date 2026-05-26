@@ -1,12 +1,12 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { BarChart, LineChart } from 'echarts/charts';
+import { LineChart } from 'echarts/charts';
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';
 import * as echarts from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
-echarts.use([LineChart, BarChart, GridComponent, CanvasRenderer, LegendComponent, TooltipComponent]);
+echarts.use([LineChart, GridComponent, CanvasRenderer, LegendComponent, TooltipComponent]);
 
 import { TripStatsSection } from '@bk2/shared-models';
 import { EmptyList, ListFilter, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
@@ -37,7 +37,7 @@ import { TripStatsSectionStore } from './trip-stats-section.store';
       <bk-spinner />
     } @else {
       <bk-list-filter
-        [years]="availableYears"
+        [years]="store.viewType() === 'list' ? availableYears : undefined"
         [selectedYear]="store.selectedYear()"
         (yearChanged)="store.setYear($event)"
         (searchTermChanged)="store.setSearchTerm($event)"

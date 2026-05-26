@@ -36,3 +36,5 @@ export * from './lib/responsibility-section';
 export * from './lib/responsibility-section.store';
 export * from './lib/member-age-section';
 export * from './lib/member-age-section.store';
+export * from './lib/trip-stats-section';
+export * from './lib/trip-stats-section.store';
