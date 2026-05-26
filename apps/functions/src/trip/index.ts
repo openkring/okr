@@ -5,6 +5,9 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 const REGION = 'europe-west6';
 
+// Only trips in these states count toward stats.
+// 'open' and 'open.rev' are in-progress and excluded intentionally.
+// Soft-deleted trips without '.corr' don't count.
 const COUNTING_STATES = new Set([
   'closed',
   'closed.rev',
@@ -35,11 +38,14 @@ function collectDeltas(doc: TripDoc, sign: 1 | -1, out: Map<string, StatDelta>):
   const year = (doc.startDate ?? '').substring(0, 4);
   if (!year || year === '0000') return;
 
+  const dist = Number(doc.distance);
+  if (!Number.isFinite(dist)) return;
+
   function accumulate(path: string): void {
     const existing = out.get(path) ?? { path, km: 0, count: 0 };
     out.set(path, {
       path,
-      km:    existing.km    + sign * doc.distance,
+      km:    existing.km    + sign * dist,
       count: existing.count + sign,
     });
   }
@@ -83,7 +89,7 @@ export const onTripWrite = onDocumentWritten(
           totalKm:   (cur['totalKm']   as number ?? 0) + deltas[i].km,
           tripCount: (cur['tripCount'] as number ?? 0) + deltas[i].count,
           updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
+        });
       }
     });
 
