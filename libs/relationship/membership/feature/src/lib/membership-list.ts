@@ -338,13 +338,22 @@ export class MembershipList {
     if (await this.membershipStore.isPersonUser(membership.memberKey)) {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.membershipStore.i18n.as_membership_chat(), 'chatbubbles'));
     }
-    if (this.membershipStore.getEmail(membership)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.membershipStore.i18n.as_person_copyemail(), 'copy'));
+    const email = this.membershipStore.getEmail(membership);
+    if (email) {
+      // handler fires synchronously within the tap gesture — required for iOS clipboard access
+      actionSheetOptions.buttons.push({
+        text: this.membershipStore.i18n.as_person_copyemail(),
+        handler: () => { this.membershipStore.copy(email, '@subject.person.operation.copy.email.conf'); }
+      });
       actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.membershipStore.i18n.as_person_sendemail(), 'email'));
     }
-    if (this.membershipStore.getPhone(membership)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.membershipStore.i18n.as_person_copyphone(), 'copy'));
-      //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
+    const phone = this.membershipStore.getPhone(membership);
+    if (phone) {
+      // handler fires synchronously within the tap gesture — required for iOS clipboard access
+      actionSheetOptions.buttons.push({
+        text: this.membershipStore.i18n.as_person_copyphone(),
+        handler: () => { this.membershipStore.copy(phone, '@subject.person.operation.copy.phone.conf'); }
+      });
       actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.membershipStore.i18n.as_person_call(), 'tel'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.membershipStore.i18n.cancel(), 'cancel'));
@@ -391,18 +400,6 @@ export class MembershipList {
           break;
         case 'invoice.create':
           await this.membershipStore.createInvoice(membership);
-          break;
-        case 'person.copyemail':
-          const email = this.membershipStore.getEmail(membership);
-          if (email) {
-            await this.membershipStore.copy(email, '@subject.person.operation.copy.email.conf');
-          }
-          break;
-        case 'person.copyphone':
-          const phone = this.membershipStore.getPhone(membership);
-          if (phone) {
-            await this.membershipStore.copy(phone, '@subject.person.operation.copy.phone.conf');
-          }
           break;
         case 'person.sendemail':
           await this.membershipStore.sendEmail(membership);

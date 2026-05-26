@@ -1,4 +1,5 @@
 import { Clipboard } from '@capacitor/clipboard';
+import { Capacitor } from '@capacitor/core';
 import { ToastController } from '@ionic/angular';
 import { error, showToast } from './alert.util';
 
@@ -45,30 +46,30 @@ export async function copyToClipboard(content: string | string[] | number | bool
     _content = content ?? '';
   }
   
-  try {
-    // Primary: Use Capacitor for hybrid apps
+  if (Capacitor.isNativePlatform()) {
+    // Native iOS/Android: bridges to native pasteboard, no user gesture required
     await Clipboard.write({ string: _content });
-  } catch (err) {
-    if (typeof document !== 'undefined') {
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        // Works on iOS 13.4+ over HTTPS within a user gesture; more reliable than execCommand
-        await navigator.clipboard.writeText(_content);
-      } else {
-        // Last resort fallback for old browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = _content;
-        textArea.style.position = 'fixed';
-        textArea.style.opacity = '0';
-        document.body.appendChild(textArea);
-        textArea.select();
-        const success = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        if (!success) {
-          throw new Error('execCommand copy failed');
-        }
-      }
-    } else {
-      throw err;
+    return;
+  }
+
+  // Web/PWA: navigator.clipboard must be called before any await to stay within the user gesture context
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    await navigator.clipboard.writeText(_content);
+    return;
+  }
+
+  // Last resort fallback for old browsers
+  if (typeof document !== 'undefined') {
+    const textArea = document.createElement('textarea');
+    textArea.value = _content;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.select();
+    const success = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    if (!success) {
+      throw new Error('execCommand copy failed');
     }
   }
 }
