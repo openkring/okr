@@ -267,10 +267,7 @@ export const GroupStore = signalStore(
           newGroup.admins = [avatar];
         }
         await this.edit(newGroup, readOnly, true);
-        const currentPerson = store.appStore.getPerson(currentUser.personKey);
-        if (currentPerson) {
-          this.addMember(currentPerson);
-        }
+        // ensureAllAdminsAreMember() inside edit() already adds the creator as a member
       }
     },
 

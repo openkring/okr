@@ -587,8 +587,9 @@ export const _MembershipStore = signalStore(
         if (role !== 'confirm') return;
         if (!isPerson(data, store.tenantId())) { console.log('MembershipStore.addMemberToGroup: no valid person selected.'); return; }
         const member = data as PersonModel;
-        const alreadyMember = store.members().some(m => m.memberKey === member.bkey && isOngoing(m.dateOfExit));
-        if (alreadyMember) {
+        const memberAvatar = getAvatarInfo(member, 'person');
+        const groupAvatar = getAvatarInfo(group, 'group');
+        if (memberAvatar && groupAvatar && await store.membershipService.isMemberOf(memberAvatar, groupAvatar)) {
           await showToast(store.toastController, store.i18n.already_member());
           return;
         }
