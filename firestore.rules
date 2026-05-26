@@ -77,6 +77,16 @@ service cloud.firestore {
       allow read, write: if false; // only writable by Cloud Function
     }
 
+    match /stats_boats/{boatKey}/years/{year} {
+      allow read: if request.auth != null;
+      allow write: if false; // only writable by Cloud Functions
+    }
+
+    match /stats_members/{memberKey}/years/{year} {
+      allow read: if request.auth != null;
+      allow write: if false; // only writable by Cloud Functions
+    }
+
     match /esignList/{esignId} {
       allow read: if request.auth != null
                   && resource.data.tenantId == request.auth.token.tenantId;
