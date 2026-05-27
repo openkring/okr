@@ -16,6 +16,9 @@
     "@bk2/finance-accounting-feature": "*",
     "@bk2/finance-booking-data-access": "*",
     "@bk2/finance-booking-util": "*",
-    "@bk2/finance-booking-ui": "*"
+    "@bk2/finance-booking-ui": "*",
+    "@bk2/finance-vat-code-data-access": "*",
+    "@bk2/finance-exchange-rate-data-access": "*",
+    "@bk2/finance-exchange-rate-util": "*"
   }
 }
