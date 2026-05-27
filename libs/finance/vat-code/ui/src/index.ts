@@ -1,1 +1,1 @@
-// populated in Task 4
+// vat-code/ui: no components yet, populated in future tasks
