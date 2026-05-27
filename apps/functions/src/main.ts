@@ -202,3 +202,9 @@ export const esignArchiveSigned      = Esign.esignArchiveSigned;
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';
 export { setManualRate } from './exchange-rate/set-manual-rate';
+
+// payment
+export { generatePain001 } from './payment/generate-pain001';
+export { generateInvoicePdf } from './payment/generate-invoice-pdf';
+export { parseQrInvoice } from './payment/parse-qr-invoice';
+export { generateDunningPdf } from './payment/generate-dunning-pdf';
