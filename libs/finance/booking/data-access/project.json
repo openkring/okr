@@ -1,0 +1,22 @@
+{
+  "name": "finance-booking-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/booking/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/booking/data-access",
+        "main": "libs/finance/booking/data-access/src/index.ts",
+        "tsConfig": "libs/finance/booking/data-access/tsconfig.lib.json",
+        "assets": ["libs/finance/booking/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}
