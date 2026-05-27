@@ -42,6 +42,7 @@ export function hasRole(role: RoleName | undefined, currentUser?: UserModel): bo
     case 'admin':  roles = ['admin']; break;
     case 'groupAdmin': roles = ['groupAdmin', 'admin']; break;
     case 'kiosk': roles = ['kiosk', 'admin']; break;
+    case 'auditor': roles = ['auditor', 'admin']; break;
     default: die('AuthUtil.hasRole: unknown role claimed: ' + role);
   }
   return checkAuthorization(roles, currentUser);
