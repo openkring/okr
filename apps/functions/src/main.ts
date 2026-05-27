@@ -198,3 +198,7 @@ export const esignDelete             = Esign.esignDelete;
 export const esignSendByEmail        = Esign.esignSendByEmail;
 export const esignWebhook            = Esign.esignWebhook;
 export const esignArchiveSigned      = Esign.esignArchiveSigned;
+
+// exchange rates
+export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';
+export { setManualRate } from './exchange-rate/set-manual-rate';
