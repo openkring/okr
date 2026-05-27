@@ -8,6 +8,12 @@ export type VatPeriod = 'quarterly' | 'monthly' | 'semi-annual';
 export type DepreciationFrequency = 'monthly' | 'annual';
 export type DepreciationProRata = 'daily' | 'semi-annual';
 
+// Determines whether bk2 is the system of record or a read-only sync cache.
+// 'native': full CRUD via bk2 accounting features.
+// 'bexio': Bexio is authoritative; bk2 collections are populated by sync Cloud Functions and are read-only in the UI.
+// 'datev': reserved for future DATEV integration.
+export type AccountingBackend = 'native' | 'bexio' | 'datev';
+
 // Historical VAT rates per year — stored inline, no own collection needed.
 export interface VatRateEntry {
   year: number;
@@ -23,6 +29,7 @@ export class AccountingConfigModel implements BkModel {
   public isArchived = false;
 
   public accountingTenantId = '';                     // = org.bkey; also stored as bkey
+  public accountingBackend: AccountingBackend = 'native'; // 'native' = full CRUD; 'bexio'/'datev' = read-only cache
   public functionalCurrency: CurrencyCode = 'CHF';
   public secondaryCurrency: CurrencyCode | undefined; // optional display currency in reports
   public fiscalYearStart = 1;                         // month 1–12; default 1 (January)
