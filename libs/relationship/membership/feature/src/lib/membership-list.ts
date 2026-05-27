@@ -37,9 +37,9 @@ import { MembershipStore } from './membership.store';
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
         @if (hasYearFilter()) {
-          <ion-title>{{ selectedMembershipsCount()}} {{ title() | translate | async }} {{ membershipStore.i18n.header_title_rel() }} {{ orgName() }}</ion-title>
+          <ion-title>{{ selectedMembershipsCount()}} {{ title() | translate | async }} {{ store.i18n.title_rel() }} {{ orgName() }}</ion-title>
         } @else {
-          <ion-title>{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ membershipStore.i18n.header_title_rel() }} {{ orgName() }}</ion-title>
+          <ion-title>{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ store.i18n.title_rel() }} {{ orgName() }}</ion-title>
         }
         @if(canChange()) {
           <ion-buttons slot="end">
@@ -76,13 +76,13 @@ import { MembershipStore } from './membership.store';
     <!-- list header -->
     <ion-toolbar color="light" class="ion-hide-sm-down">
       <ion-item lines="none">
-        <ion-label><strong>{{ membershipStore.i18n.header_name() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
         @if(view() === 'mcat') {
-          <ion-label><strong>{{ membershipStore.i18n.header_category() }}</strong></ion-label>
+          <ion-label><strong>{{ store.i18n.category_abbreviation() }}</strong></ion-label>
          }
         @if(view() === 'contact') {
-          <ion-label><strong>{{ membershipStore.i18n.header_phone() }}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{ membershipStore.i18n.header_email() }}</strong></ion-label>
+          <ion-label><strong>{{ store.i18n.phone() }}</strong></ion-label>
+          <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.email() }}</strong></ion-label>
         }
       </ion-item>
     </ion-toolbar>
@@ -119,7 +119,7 @@ import { MembershipStore } from './membership.store';
     `
 })
 export class MembershipList {
-  protected membershipStore = inject(MembershipStore);
+  protected store = inject(MembershipStore);
   private actionSheetController = inject(ActionSheetController);
   private cdr = inject(ChangeDetectorRef);
 
@@ -134,66 +134,67 @@ export class MembershipList {
   public view = input<'contact' | 'mcat' | 'group'>('mcat');
 
   // filters
-  protected selectedCategory = linkedSignal(() => this.membershipStore.selectedMembershipCategory());
-  protected selectedTag = linkedSignal(() => this.membershipStore.selectedTag());
-  protected selectedYear = linkedSignal(() => this.membershipStore.selectedYear()); 
+  protected selectedCategory = linkedSignal(() => this.store.selectedMembershipCategory());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedYear = linkedSignal(() => this.store.selectedYear()); 
   protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
 
   // computed
   protected hasYearFilter = computed(() => this.listId() === 'entries' || this.listId() === 'exits' || this.listId() === 'deceased'); 
-  protected membershipCategory = linkedSignal(() => this.hasYearFilter() ? undefined : this.membershipStore.membershipCategory());
-  protected genders = computed(() => this.membershipStore.genders());
-  protected orgTypes = computed(() => this.membershipStore.orgTypes());
+  protected membershipCategory = linkedSignal(() => this.hasYearFilter() ? undefined : this.store.membershipCategory());
+  protected genders = computed(() => this.store.genders());
+  protected orgTypes = computed(() => this.store.orgTypes());
   protected readonly popupId = crypto.randomUUID();
-  protected orgName = computed(() => this.membershipStore.orgName());
+  protected orgName = computed(() => this.store.orgName());
   protected admin = computed(() => getMainContact(this.group()));
   protected tags = computed(() => {
     if (typeof window !== 'undefined' && window.innerWidth < SIZE_SM) return ''; // only show types on desktop, on mobile there is not enough space
-    return this.hasYearFilter() ? '' : this.membershipStore.getTags();
+    return this.hasYearFilter() ? '' : this.store.getTags();
   });
   protected types = computed(() => {
     if (typeof window !== 'undefined' && window.innerWidth < SIZE_SM) return undefined; // only show types on desktop, on mobile there is not enough space
-    return this.hasYearFilter() ? undefined : (this.listId() === 'orgs' ? this.membershipStore.orgTypes() : this.membershipStore.genders());
+    return this.hasYearFilter() ? undefined : (this.listId() === 'orgs' ? this.store.orgTypes() : this.store.genders());
   });
   protected years = computed(() => this.hasYearFilter() ? getYearList() : undefined);
-  protected currentUser = computed(() => this.membershipStore.appStore.currentUser());
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   protected readOnly = computed(() => !this.canChange());
   protected selectedType = linkedSignal(() => {
-    return this.listId() === 'orgs' ? this.membershipStore.selectedOrgType() : this.membershipStore.selectedGender();
+    return this.listId() === 'orgs' ? this.store.selectedOrgType() : this.store.selectedGender();
   });
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  protected groupsOfMember = computed(() => this.membershipStore.groupsOfMember())
+  protected groupsOfMember = computed(() => this.store.groupsOfMember())
   protected filteredMemberships = computed(() => {
     switch (this.listId()) {
-      case 'memberships': return this.membershipStore.filteredMembers() ?? [];
-      case 'persons': return this.membershipStore.filteredPersons() ?? [];
-      case 'orgs': return this.membershipStore.filteredOrgs() ?? [];
-      case 'active': return this.membershipStore.filteredActive();
-      case 'applied': return this.membershipStore.filteredApplied();
-      case 'passive': return this.membershipStore.filteredPassive();
-      case 'cancelled': return this.membershipStore.filteredCancelled();
-      case 'deceased': return this.membershipStore.filteredDeceased();
-      case 'entries': return this.membershipStore.filteredEntries();
-      case 'exits': return this.membershipStore.filteredExits();
+      case 'memberships': return this.store.filteredMembers() ?? [];
+      case 'persons': return this.store.filteredPersons() ?? [];
+      case 'orgs': return this.store.filteredOrgs() ?? [];
+      case 'active': return this.store.filteredActive();
+      case 'applied': return this.store.filteredApplied();
+      case 'passive': return this.store.filteredPassive();
+      case 'cancelled': return this.store.filteredCancelled();
+      case 'deceased': return this.store.filteredDeceased();
+      case 'entries': return this.store.filteredEntries();
+      case 'exits': return this.store.filteredExits();
       case 'all':
-      default: return this.membershipStore.filteredMembers() ?? [];
+      default: return this.store.filteredMembers() ?? [];
     }
   });
   protected membershipsCount = computed(() => {
     switch (this.listId()) {
-      case 'memberships': return this.membershipStore.membersCount();
-      case 'persons': return this.membershipStore.personsCount();
-      case 'orgs': return this.membershipStore.orgsCount();
-      case 'active': return this.membershipStore.activeCount();
-      case 'applied': return this.membershipStore.appliedCount();
-      case 'passive': return this.membershipStore.passiveCount();
-      case 'cancelled': return this.membershipStore.cancelledCount();
-      case 'deceased': return this.membershipStore.deceasedCount();
-      case 'entries': return this.membershipStore.entriesCount();
-      case 'exits': return this.membershipStore.exitsCount();
+      case 'memberships': return this.store.membersCount();
+      case 'persons': return this.store.personsCount();
+      case 'orgs': return this.store.orgsCount();
+      case 'active': return this.store.activeCount();
+      case 'applied': return this.store.appliedCount();
+      case 'passive': return this.store.passiveCount();
+      case 'cancelled': return this.store.cancelledCount();
+      case 'deceased': return this.store.deceasedCount();
+      case 'entries': return this.store.entriesCount();
+      case 'exits': return this.store.exitsCount();
       case 'all':
-      default: return this.membershipStore.membersCount() ?? [];
+      default: return this.store.membersCount() ?? [];
     }
   });
   protected title = computed(() => {
@@ -207,7 +208,7 @@ export class MembershipList {
     }
   });
   protected selectedMembershipsCount = computed(() => this.filteredMemberships().length);
-  protected isLoading = computed(() => this.membershipStore.isLoading());
+  protected isLoading = computed(() => this.store.isLoading());
 
   protected personModelName = PersonModelName;
   
@@ -216,50 +217,50 @@ export class MembershipList {
       // Ensure orgId is updated whenever it changes
       const orgId = this.orgId();
       if (orgId) {
-        this.membershipStore.setOrgId(orgId, this.view() === 'group' ? 'group' : 'org');
+        this.store.setOrgId(orgId, this.view() === 'group' ? 'group' : 'org');
       }
     });
 
     effect(() => {
       // Reset filters when listId changes
       const listId = this.listId();
-      const currentListId = this.membershipStore.listId();
+      const currentListId = this.store.listId();
       
       if (listId && listId !== currentListId) {
-        this.membershipStore.setListId(listId);
-        this.membershipStore.resetFilters();
+        this.store.setListId(listId);
+        this.store.resetFilters();
       }
     });
   }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.membershipStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.membershipStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.membershipStore.setSelectedGender(type);
+    this.store.setSelectedGender(type);
   }
 
   protected onCategorySelected(category: string): void {
-    this.membershipStore.setSelectedMembershipCategory(category);
+    this.store.setSelectedMembershipCategory(category);
   }
 
   protected onYearSelected(year: number): void {
-    this.membershipStore.setSelectedYear(year);
+    this.store.setSelectedYear(year);
   }
 
   /******************************* getters *************************************** */
   protected getEmail(membership: MembershipModel): string {
-    return this.membershipStore.getEmail(membership) ?? '';
+    return this.store.getEmail(membership) ?? '';
   }
 
   protected getPhone(membership: MembershipModel): string {
-    return this.membershipStore.getPhone(membership) ?? '';
+    return this.store.getPhone(membership) ?? '';
   }
 
   /******************************* actions *************************************** */
@@ -269,18 +270,18 @@ export class MembershipList {
       case 'add': 
         const group = this.group();
         if (group) {
-          await this.membershipStore.addMemberToGroup(group, this.readOnly());
+          await this.store.addMemberToGroup(group, this.readOnly());
         } else {
-          await this.membershipStore.add(this.readOnly());
+          await this.store.add(this.readOnly());
         }
         break;
-      case 'memberAdd': await this.membershipStore.addNewMember(); break;
-      case 'exportRaw': await this.membershipStore.export("raw", this.filteredMemberships()); break;
-      case 'exportSrv': await this.membershipStore.export("srv", this.filteredMemberships()); break;
-      case 'exportMembers': await this.membershipStore.export("member", this.filteredMemberships()); break;
-      case 'exportClubdesk': await this.membershipStore.export("clubdesk", this.filteredMemberships()); break;
-      case 'exportAddresses': await this.membershipStore.export("address", this.filteredMemberships()); break;
-      case 'copyEmailAddresses': await this.membershipStore.copyEmailAddresses(this.listId(), this.readOnly()); break;
+      case 'memberAdd': await this.store.addNewMember(); break;
+      case 'exportRaw': await this.store.export("raw", this.filteredMemberships()); break;
+      case 'exportSrv': await this.store.export("srv", this.filteredMemberships()); break;
+      case 'exportMembers': await this.store.export("member", this.filteredMemberships()); break;
+      case 'exportClubdesk': await this.store.export("clubdesk", this.filteredMemberships()); break;
+      case 'exportAddresses': await this.store.export("address", this.filteredMemberships()); break;
+      case 'copyEmailAddresses': await this.store.copyEmailAddresses(this.listId(), this.readOnly()); break;
       default: error(undefined, `MembershipList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
     this.cdr.markForCheck();
@@ -292,7 +293,7 @@ export class MembershipList {
    * @param membership 
    */
   protected async showActions(membership: MembershipModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     await this.addActionSheetButtons(actionSheetOptions, membership);
     await this.executeActions(actionSheetOptions, membership);
   }
@@ -305,58 +306,58 @@ export class MembershipList {
     // view/edit on membership and person
     if (this.canChange(membership)) {
       if (!this.group()) { // group memberships can not be edited
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.membershipStore.i18n.as_membership_edit(), 'edit'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.update_label(), this.imgixBaseUrl, 'edit'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.membershipStore.i18n.as_person_edit(), 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.person_edit(), this.imgixBaseUrl, 'edit'));
     } else { // registered
       if (!this.group()) { // group memberships can not be viewed
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.membershipStore.i18n.as_membership_view(), 'eye-on'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.membershipStore.i18n.as_person_view(), 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.person_view(), this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // privileged operations on membership
     if (this.canChange(membership) || this.canDelete(membership)) {
       if (isOngoing(membership.dateOfExit) && !this.group()) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.membershipStore.i18n.as_membership_changecat(), 'mcatchange'));
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.membershipStore.i18n.as_membership_end(), 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.store.i18n.category_change_label(), this.imgixBaseUrl, 'mcatchange'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.store.i18n.end_label(), this.imgixBaseUrl, 'stop-circle'));
       }
       if (this.canDelete(membership)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.membershipStore.i18n.as_membership_delete(), 'trash'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
       }
       actionSheetOptions.buttons.push(createActionSheetDivider());
     }
 
     // finance operations
     if (this.hasRole('treasurer')) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invoice.create', this.membershipStore.i18n.as_invoice_create(), 'invoice'));
+      actionSheetOptions.buttons.push(createActionSheetButton('invoice.create', this.store.i18n.invoice_create_label(), this.imgixBaseUrl, 'invoice'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
     }
 
     // contact operations
-    if (await this.membershipStore.isPersonUser(membership.memberKey)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.membershipStore.i18n.as_membership_chat(), 'chatbubbles'));
+    if (await this.store.isPersonUser(membership.memberKey)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.store.i18n.chat_open(), this.imgixBaseUrl, 'chatbubbles'));
     }
-    const email = this.membershipStore.getEmail(membership);
+    const email = this.store.getEmail(membership);
     if (email) {
       // handler fires synchronously within the tap gesture — required for iOS clipboard access
       actionSheetOptions.buttons.push({
-        text: this.membershipStore.i18n.as_person_copyemail(),
-        handler: () => { this.membershipStore.copy(email, '@subject.person.operation.copy.email.conf'); }
+        text: this.store.i18n.copy_email_label(),
+        handler: () => { this.store.copy(email, '@subject.person.operation.copy.email.conf'); }
       });
-      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.membershipStore.i18n.as_person_sendemail(), 'email'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.store.i18n.send_email(), this.imgixBaseUrl, 'email'));
     }
-    const phone = this.membershipStore.getPhone(membership);
+    const phone = this.store.getPhone(membership);
     if (phone) {
       // handler fires synchronously within the tap gesture — required for iOS clipboard access
       actionSheetOptions.buttons.push({
-        text: this.membershipStore.i18n.as_person_copyphone(),
-        handler: () => { this.membershipStore.copy(phone, '@subject.person.operation.copy.phone.conf'); }
+        text: this.store.i18n.copy_phone_label(),
+        handler: () => { this.store.copy(phone, '@subject.person.operation.copy.phone.conf'); }
       });
-      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.membershipStore.i18n.as_person_call(), 'tel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.store.i18n.call_phone(), this.imgixBaseUrl, 'tel'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.membershipStore.i18n.cancel(), 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }
@@ -375,37 +376,37 @@ export class MembershipList {
       if (!data) return;
       switch (data.action) {
         case 'membership.delete':
-          await this.membershipStore.delete(membership, this.readOnly());
+          await this.store.delete(membership, this.readOnly());
           break;
         case 'membership.edit':
-          await this.membershipStore.edit(membership, this.readOnly());
+          await this.store.edit(membership, this.readOnly());
           break;
         case 'membership.view':
-          await this.membershipStore.edit(membership, true);
+          await this.store.edit(membership, true);
           break;
         case 'membership.chat':
-          await this.membershipStore.chat(membership);
+          await this.store.chat(membership);
           break;
         case 'person.edit':
-          await this.membershipStore.editPerson(membership, this.readOnly());
+          await this.store.editPerson(membership, this.readOnly());
           break;
         case 'person.view':
-          await this.membershipStore.editPerson(membership, true);
+          await this.store.editPerson(membership, true);
           break;
         case 'membership.end':
-          await this.membershipStore.end(membership, undefined, this.readOnly());
+          await this.store.end(membership, undefined, this.readOnly());
           break;
         case 'membership.changecat':
-          await this.membershipStore.changeMembershipCategory(membership, this.readOnly());
+          await this.store.changeMembershipCategory(membership, this.readOnly());
           break;
         case 'invoice.create':
-          await this.membershipStore.createInvoice(membership);
+          await this.store.createInvoice(membership);
           break;
         case 'person.sendemail':
-          await this.membershipStore.sendEmail(membership);
+          await this.store.sendEmail(membership);
           break;
         case 'person.call':
-          await this.membershipStore.call(membership);
+          await this.store.call(membership);
           break;
       }
       this.cdr.markForCheck();
@@ -414,7 +415,7 @@ export class MembershipList {
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.membershipStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected isOngoing(membership: MembershipModel): boolean {

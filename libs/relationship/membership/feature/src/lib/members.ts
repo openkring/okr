@@ -44,27 +44,28 @@ import { MembershipStore } from './membership.store';
   `,
 })
 export class Members {
-  protected readonly membershipStore = inject(MembershipStore);
+  protected readonly store = inject(MembershipStore);
   private actionSheetController = inject(ActionSheetController);
 
   public orgKey = input.required<string>();
   public orgType = input<'org' | 'group'>('org');
   public readonly readOnly = input(true);
 
-  protected members = computed(() => this.membershipStore.members());
+  protected members = computed(() => this.store.members());
   protected isModalOpen = signal(false);
   protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
-  private currentUser = computed(() => this.membershipStore.currentUser());
+  private currentUser = computed(() => this.store.currentUser());
   private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.membershipStore.setOrgId(this.orgKey(), this.orgType()));
-    effect(() => this.membershipStore.setShowMode(!this.maySeeOldMemberships()));
+    effect(() => this.store.setOrgId(this.orgKey(), this.orgType()));
+    effect(() => this.store.setShowMode(!this.maySeeOldMemberships()));
   }
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    await this.membershipStore.add(this.readOnly());
+    await this.store.add(this.readOnly());
   }
 
 /**
@@ -84,19 +85,19 @@ export class Members {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, member: MembershipModel): void {
     if (hasRole('registered')) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.membershipStore.i18n.as_membership_view(), 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.membershipStore.i18n.as_membership_edit(), 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.update_label(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(member.dateOfExit)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.membershipStore.i18n.as_membership_end(), 'stop-circle'));
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.membershipStore.i18n.as_membership_changecat(), 'mcatchange'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.store.i18n.end_label(), this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.store.i18n.category_change_label(), this.imgixBaseUrl, 'mcatchange'));
       }
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.membershipStore.i18n.as_membership_delete(), 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.membershipStore.i18n.cancel(), 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }
@@ -115,19 +116,19 @@ export class Members {
       if (!data) return;
       switch (data.action) {
         case 'membership.delete':
-          await this.membershipStore.delete(membership, this.readOnly());
+          await this.store.delete(membership, this.readOnly());
           break;
         case 'membership.edit':
-          await this.membershipStore.edit(membership, this.readOnly());
+          await this.store.edit(membership, this.readOnly());
           break;
         case 'membership.view':
-          await this.membershipStore.edit(membership, true);
+          await this.store.edit(membership, true);
           break;
         case 'membership.end':
-          await this.membershipStore.end(membership, undefined, this.readOnly());
+          await this.store.end(membership, undefined, this.readOnly());
           break;
         case 'membership.changecat':
-          await this.membershipStore.changeMembershipCategory(membership, this.readOnly());
+          await this.store.changeMembershipCategory(membership, this.readOnly());
           break;
       }
     }

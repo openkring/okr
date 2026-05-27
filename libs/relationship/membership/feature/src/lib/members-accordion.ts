@@ -88,6 +88,7 @@ export class MembersAccordion {
   );
   private currentUser = computed(() => this.store.currentUser());
   private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => this.store.setOrgId(this.orgKey(), this.orgType()));
@@ -105,7 +106,7 @@ export class MembersAccordion {
    * @param member 
    */
   protected async showActions(member: MembershipModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, member);
     await this.executeActions(actionSheetOptions, member);
   }
@@ -116,17 +117,17 @@ export class MembersAccordion {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, member: MembershipModel): void {
     if (!this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.as_membership_edit(), 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.update_label(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(member.dateOfExit)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.store.i18n.as_membership_end(), 'stop-circle'));
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.store.i18n.as_membership_changecat(), 'mcatchange'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.store.i18n.end_label(), this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.store.i18n.category_change_label(), this.imgixBaseUrl, 'mcatchange'));
       }
     }
     if (hasRole('admin', this.store.appStore.currentUser()) && !this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.store.i18n.as_membership_delete(), 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.store.i18n.as_membership_view(), 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**

@@ -1,27 +1,16 @@
 {
   "memberships": "Mitgliedschaften",
   "members": "Mitglieder",
+  "newDesc": "soll Mitglied werden bei",
   "titleRel": "in",
-  "name": "Name",
-  "category": "Kat.",
-  "phone": "Tel.",
-  "email": "E-Mail",
-  "entryYear": "Eintrittsjahr",
-  "exitYear": "Austrittsjahr",
+  "year": {
+    "entry": "Eintrittsjahr",
+    "exit": "Austrittsjahr"
+  },
   "empty": "Es sind noch keine Mitgliedschaften erfasst.",
   "noData": {
     "members": "Die Organisation hat keine Mitglieder.",
     "memberships": "Es gibt keine Mitgliedschaften."
-  },
-  "add": {
-    "conf": "Die Mitgliedschaft wurde erstellt.",
-    "error": "Die Mitgliedschaft konnte nicht erstellt werden."
-  },
-  "createMember": {
-    "label": "Mitglied hinzufügen"
-  },
-  "catChange": {
-    "label": "Mitglieder-Kategorie ändern"
   },
   "view": {
     "label": "Mitgliedschaft anzeigen"
@@ -29,66 +18,75 @@
   "update": {
     "label": "Mitgliedschaft ändern"
   },
+  "chat": {
+    "open": "Chat öffnen"
+  },
   "copy": {
     "email": {
+      "label": "E-Mail kopieren",
       "conf": "Die E-Mail Adresse wurde kopiert."
     },
     "phone": {
+      "label": "Telefonnummer kopieren",
       "conf": "Die Telefonnummer wurde kopiert."
     }
   },
   "create": {
+    "member": "Mitglied hinzufügen",
     "alreadyMember": "Dieses Mitglied ist bereits vorhanden.",
     "label": "Mitgliedschaft hinzufügen",
     "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
     "conf": "Die Mitgliedschaft wurde erstellt."
   },
   "end": {
+    "label": "Mitgliedschaft beenden",
     "select": "Austrittsdatum wählen",
     "intro": "<p>Das Austrittsdatum ist der letzte Tag der Mitgliedschaft. Ab dem nächsten Tag ist die Person kein Mitglied mehr.<br /> Meistens ist dies der 31.12. des aktuellen Jahres.</p>"
   },
   "delete": {
+    "label": "Mitgliedschaft löschen",
     "confirm": "Normalerweise sollte eine Mitgliedschaft beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Mitgliedschaft wirklich löschen?"
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "membership": {
-      "view": "Mitgliedschaft anzeigen",
-      "edit": "Mitgliedschaft ändern",
-      "end": "Mitgliedschaft beenden",
-      "changecat": "Mitgliedschaftskategorie ändern",
-      "delete": "Mitgliedschaft löschen",
-      "chat": "Chat öffnen"
+  "send": {
+    "email": "E-Mail senden"
+  },
+  "call": {
+    "phone": "Anrufen"
+  },
+
+  "category": {
+    "label": {
+      "label": "Kategorie",
+      "old": "Aktuelle Kategorie",
+      "new": "Neue Kategorie"
     },
-    "person": {
-      "edit": "Person ändern",
-      "view": "Person anzeigen",
-      "copyemail": "E-Mail kopieren",
-      "sendemail": "E-Mail senden",
-      "copyphone": "Telefonnummer kopieren",
-      "call": "Anrufen"
-    },
-    "invoice": {
-      "create": "Rechnung erstellen",
-      "edit": "Rechnung ändern",
-      "upload": "Rechnung hochladen",
-      "download": "Rechnung herunterladen",
-      "paid": "Als bezahlt markieren",
-      "delete": "Rechnung löschen"
-    },
-    "member": {
-      "edit": "Mitglied ändern"
+    "abbreviation": "Kat.",
+    "helper": "Die Mitgliederkategorie ist hier fix. Wenn du sie ändern willst, wähle die Aktion Kategorien-Wechsel in der Listen-Darstellung.",
+    "name": "Name der Kategorie",
+    "change": {
+      "label": "Mitglieder-Kategorie ändern",
+      "helper": "Auf der linken Seite siehst du die aktuelle Mitgliederkategorie. Wähle auf der rechten Seite die neue Kategorie aus, in die das Mitglied wechseln soll.",
+      "helperDate": "Das Datum, ab dem die neue Kategorie gelten soll. Die aktuelle Mitgliedschaft wird einen Tag vorher beendet. Standardmässig wird das heutige Datum vorgeschlagen."
     }
   },
+
   "invoice": {
     "create": {
+      "label": "Rechnung erstellen",
       "conf": "Die Rechnung wurde erstellt."
-    }
+    },
+    "edit": "Rechnung ändern",
+    "upload": "Rechnung hochladen",
+    "download": "Rechnung herunterladen",
+    "paid": "Als bezahlt markieren",
+    "delete": "Rechnung löschen"
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+  "member": {
+    "edit": "Mitglied ändern",
+    "state": {
+      "label": "Mitgliederstatus",
+      "helper": "Der aktuelle Status dieser Mitgliedschaft."
+    }
   },
   "scsMemberFee": {
     "archive": {
@@ -136,5 +134,135 @@
     "bev": "Getränke 2025",
     "rebate": "Rabatt",
     "total": "Total"
-  }
+  },
+
+  "memberid": {
+    "label": "Mitglieder ID",
+    "placeholder": "nnnnn",
+    "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden.",
+    "helper": "Die eindeutige Identifikationsnummer des Mitglieds in dieser Organisation."
+  },
+  "person": {
+    "details": "Angaben zur Person",
+    "address": "Adressen",
+    "misc": "Verschiedenes",
+    "membership": "Mitgliedschaft (optional)"
+  },
+  "firstname": {
+    "label": "Vorname",
+    "placeholder": "ssssssss",
+    "helper": "Alle Vornamen der Person."
+  },
+  "lastname": {
+    "label": "Nachname",
+    "placeholder": "ssssssss",
+    "helper": "Familienname der Person."
+  },
+  "ssnid": {
+    "label": "AHV-Nummer",
+    "placeholder": "756.xxxx.xxxx.xc",
+    "helper": "Die AHV-Nummer ist eine optionale Eingabe. Sie wird z.B. bei Reinigungspersonal für AHV-Meldungen oder Versicherungen verwendet oder bei Verbänden für den Altersnachweis verlangt.",
+    "error": "Die AHV-Nummer besteht aus 13 Nummern in folgendem Format 756.xxxx.xxxx.xc."
+  },
+  "bexioid": {
+    "label": "Bexio ID",
+    "placeholder": "nnnnnn",
+    "helper": "Die ID des gleichen Kontaktes in Bexio zum Synchronisieren von Daten.",
+    "error": "Bexio ID ist eine sechsstellige Zahl."
+  },
+  "abbreviation": {
+    "label": "Abkürzung",
+    "placeholder": "ss",
+    "helper": "Abkürzung des Namens, z.B. für Listen, Protokolle."
+  },
+  "nickname": {
+    "label": "Übername",
+    "placeholder": "ssssssss",
+    "helper": "Der Übername wird nur im Suchindex verwendet und ist sonst nicht ersichtlich."
+  },
+  "orgfunction": {
+    "label": "Funktion",
+    "placeholder": "Funktion in der Organisation",
+    "helper": "Die Funktionsbezeichnung einer Person in einer Organisation."
+  },
+  "rebate": {
+    "label": "Rabatt",
+    "placeholder": "n.nn",
+    "helper": "Hier kann ein Rabatt (absolute Zahl in CHF) angegeben werden, die bei Rechnungsstellung berücksichtigt wird.",
+    "reason": "Rabattgrund"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "text",
+    "helper": "irgendwelche Notizen zu dieser Mitgliedschaft, die dauernd festgehalten werden sollen"
+  },
+  "email": {
+    "label": "E-Mail",
+    "placeholder": "john@doe.com"
+  },
+  "phone": {
+    "label": "Tel.",
+    "placeholder": "+41 79 123 1234"
+  },
+  "streetname": {
+      "label": "Strasse",
+      "placeholder": "Strassenname ohne Nr.",
+      "error": "Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen.",
+      "helper": "Strassenname ohne die Hausnummer."
+  },
+  "streetnumber": {
+      "label": "Nr.",
+      "placeholder": "Hausnummer an der Strasse",
+      "error": "Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen.",
+      "helper": "Nur die Hausnummer (ohne Strassenangabe)."
+  },
+  "countrycode": {
+      "label": "Land",
+      "placeholder": "CH",
+      "error": "Es muss ein 2-stelliges Landeskürzel eingegeben werden, z.B. CH für die Schweiz.",
+      "helper": "Das 2-stellige Landeskürzel gemäss ISO 3166-1 alpha 2, siehe https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes"
+  },
+  "zipcode": {
+      "label": "PLZ",
+      "placeholder": "PLZ",
+      "error": "Es muss eine vierstellige Postleitzahl eingegeben werden.",
+      "helper": "Postleitzahl"
+  },
+  "city": {
+      "label": "Ort",
+      "placeholder": "Ortsname",
+      "error": "Es sind nur Buchstaben ohne Sonderzeichen oder Zahlen erlaubt.",
+      "helper": "Eine Ortsangabe, z.B. Name der Stadt oder Gemeinde."
+  },
+  "web": {
+      "label": "Webseite",
+      "placeholder": "https://www.domain.ch",
+      "helper": "Die Webseite der Organisation.",
+      "error": "Die Webseite muss in folgendem Format angegeben werden: https://www.domain.ch."
+  },
+  "dateOfEntry": {
+    "label": "Eintrittsdatum",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "An diesem Datum beginnt die Mitgliedschaft."
+  },
+  "dateOfExit": {
+    "label": "Austrittsdatum",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "An diesem Datum endet die Mitgliedschaft."
+  },
+  "dateOfChange": {
+    "label": "Aenderungsdatum",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "Der Start der geänderten Mitgliedschaft."
+  },
+  "dateOfBirth": {
+    "label": "Geburtsdatum",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "An diesem Datum ist die Person geboren."
+  },
+  "dateOfDeath": {
+    "label": "Todesdatum",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "An diesem Datum ist die Person gestorben."
+  },
 }

@@ -15,53 +15,70 @@ import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-membership-util';
 
 export interface MemberNewFormI18n {
+  select: Signal<string>;
+
   person_details: Signal<string>;
   person_address: Signal<string>;
   person_misc: Signal<string>;
   person_membership: Signal<string>;
-  select_label: Signal<string>;
+
   firstname_label: Signal<string>;
   firstname_placeholder: Signal<string>;
   firstname_helper: Signal<string>;
+
   lastname_label: Signal<string>;
   lastname_placeholder: Signal<string>;
   lastname_helper: Signal<string>;
+
   streetname_label: Signal<string>;
   streetname_placeholder: Signal<string>;
   streetname_helper: Signal<string>;
+
   streetnumber_label: Signal<string>;
   streetnumber_placeholder: Signal<string>;
   streetnumber_helper: Signal<string>;
+
   countrycode_label: Signal<string>;
   countrycode_placeholder: Signal<string>;
   countrycode_helper: Signal<string>;
+
   zipcode_label: Signal<string>;
   zipcode_placeholder: Signal<string>;
   zipcode_helper: Signal<string>;
+
   city_label: Signal<string>;
   city_placeholder: Signal<string>;
   city_helper: Signal<string>;
+
   web_label: Signal<string>;
   web_placeholder: Signal<string>;
   web_helper: Signal<string>;
+
   ssnid_label: Signal<string>;
   ssnid_placeholder: Signal<string>;
   ssnid_helper: Signal<string>;
+
   bexioid_label: Signal<string>;
   bexioid_placeholder: Signal<string>;
   bexioid_helper: Signal<string>;
+
   notes_label: Signal<string>;
   notes_placeholder: Signal<string>;
+
   email_label: Signal<string>;
   email_placeholder: Signal<string>;
+
   phone_label: Signal<string>;
   phone_placeholder: Signal<string>;
+
   dateOfBirth_label: Signal<string>;
   dateOfBirth_placeholder: Signal<string>;
   dateOfBirth_helper: Signal<string>;
+
   dateOfDeath_label: Signal<string>;
   dateOfDeath_placeholder: Signal<string>;
   dateOfDeath_helper: Signal<string>;
+
   dateOfEntry_label: Signal<string>;
   dateOfEntry_placeholder: Signal<string>;
   dateOfEntry_helper: Signal<string>;
@@ -217,7 +234,7 @@ export interface MemberNewFormI18n {
                 </ion-col>
                 <ion-col size="3">
                   <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ i18n().select_label() }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ i18n().select() }}</ion-button>
                   </ion-item>
                 </ion-col>
               </ion-row>

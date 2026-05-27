@@ -14,38 +14,48 @@ import { membershipValidations } from '@bk2/relationship-membership-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
 
 export interface MembershipFormI18n {
-  select_label: Signal<string>;
   new_desc: Signal<string>;
   category_label: Signal<string>;
   category_helper: Signal<string>;
   category_name: Signal<string>;
+  select: Signal<string>;
+  key: Signal<string>;
+
   member_state_label: Signal<string>;
-  state_helper: Signal<string>;
-  bkey_label: Signal<string>;
+  member_state_helper: Signal<string>;
+
   memberid_label: Signal<string>;
   memberid_placeholder: Signal<string>;
   memberid_helper: Signal<string>;
+
   bexioid_label: Signal<string>;
   bexioid_placeholder: Signal<string>;
   bexioid_helper: Signal<string>;
+
   abbreviation_label: Signal<string>;
   abbreviation_placeholder: Signal<string>;
   abbreviation_helper: Signal<string>;
+
   nickname_label: Signal<string>;
   nickname_placeholder: Signal<string>;
   nickname_helper: Signal<string>;
+
   org_function_label: Signal<string>;
   org_function_placeholder: Signal<string>;
   org_function_helper: Signal<string>;
+
   rebate_label: Signal<string>;
   rebate_placeholder: Signal<string>;
   rebate_helper: Signal<string>;
   rebate_reason: Signal<string>;
+
   notes_label: Signal<string>;
   notes_placeholder: Signal<string>;
+
   dateOfEntry_label: Signal<string>;
   dateOfEntry_placeholder: Signal<string>;
   dateOfEntry_helper: Signal<string>;
+
   dateOfExit_label: Signal<string>;
   dateOfExit_placeholder: Signal<string>;
   dateOfExit_helper: Signal<string>;
@@ -87,7 +97,7 @@ export interface MembershipFormI18n {
                     </ion-col>
                     <ion-col size="3">
                       <ion-item lines="none">
-                        <ion-button slot="start" fill="clear" (click)="selectMember()">{{ i18n().select_label() }}</ion-button>
+                        <ion-button slot="start" fill="clear" (click)="selectMember()">{{ i18n().select() }}</ion-button>
                       </ion-item>
                     </ion-col>
                   </ion-row>
@@ -109,7 +119,7 @@ export interface MembershipFormI18n {
                     </ion-col>
                     <ion-col size="3">
                       <ion-item lines="none">
-                      <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ i18n().select_label() }}</ion-button>
+                      <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ i18n().select() }}</ion-button>
                       </ion-item>
                     </ion-col>
                   </ion-row>
@@ -159,7 +169,7 @@ export interface MembershipFormI18n {
                         <ion-label>{{ membershipState() }}</ion-label>
                       </ion-item>
                       <ion-item lines="none">
-                        <ion-note>{{ i18n().state_helper() }}</ion-note>
+                        <ion-note>{{ i18n().member_state_helper() }}</ion-note>
                       </ion-item>
                     </ion-col>
 
@@ -218,7 +228,7 @@ export class MembershipForm {
   private readonly appStore = inject(AppStore);
 
   // i18n — all field translations come from the i18n input
-  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: '', helper: '' }) as TextInputI18n);
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().key(), placeholder: '', helper: '' }) as TextInputI18n);
   protected memberIdI18n = computed(() => ({ name: 'memberId', label: this.i18n().memberid_label(), placeholder: this.i18n().memberid_placeholder(), helper: this.i18n().memberid_helper() }) as TextInputI18n);
   protected memberBexioIdI18n = computed(() => ({ name: 'member_bexioid', label: this.i18n().bexioid_label(), placeholder: this.i18n().bexioid_placeholder(), helper: this.i18n().bexioid_helper() }) as TextInputI18n);
   protected memberAbbreviationI18n = computed(() => ({ name: 'memberAbbreviation', label: this.i18n().abbreviation_label(), placeholder: this.i18n().abbreviation_placeholder(), helper: this.i18n().abbreviation_helper() }) as TextInputI18n);

@@ -11,7 +11,7 @@ import { BookingStore } from './booking.store';
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent,
-    IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, IonButton,
+    IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon,
     SvgIconPipe,
   ],
   providers: [BookingStore],
