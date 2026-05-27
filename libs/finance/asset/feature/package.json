@@ -15,6 +15,7 @@
     "@bk2/shared-feature": "*",
     "@bk2/finance-accounting-feature": "*",
     "@bk2/finance-booking-data-access": "*",
+    "@bk2/finance-booking-util": "*",
     "@bk2/finance-asset-data-access": "*",
     "@bk2/finance-asset-util": "*",
     "@bk2/finance-asset-ui": "*"
