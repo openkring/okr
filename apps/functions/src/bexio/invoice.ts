@@ -6,7 +6,7 @@ import axios from 'axios';
 import * as admin from 'firebase-admin';
 import { convertDateFormatToString, addDuration, getTodayStr, DateFormat } from '@bk2/shared-util-core';
 
-import { bexioApiKey, bexioTenantId, bexioDefaultTaxId, BEXIO_BASE, toStoreDate } from './shared';
+import { bexioApiKey, bexioTenantId, bexioDefaultTaxId, BEXIO_BASE } from './shared';
 
 interface BexioInvoice {
   id: number;
@@ -92,13 +92,14 @@ async function persistInvoices(invoices: BexioInvoice[], tenantId: string, nowSt
       notes: inv.contact_id != null ? String(inv.contact_id) : '',
       title: inv.title ?? inv.document_nr,
       invoiceId: inv.document_nr,
-      invoiceDate: toStoreDate(inv.is_valid_from),
-      dueDate: toStoreDate(inv.is_valid_to),
+      invoiceDate: inv.is_valid_from ? convertDateFormatToString(inv.is_valid_from, DateFormat.IsoDate, DateFormat.StoreDate, false) : '',
+      dueDate: inv.is_valid_to ? convertDateFormatToString(inv.is_valid_to, DateFormat.IsoDate, DateFormat.StoreDate, false) : '',
       totalAmount: { amount: totalCents, currency: 'CHF', periodicity: 'one-time' },
       taxes: parseFloat(inv.total_taxes) || 0,
       vatType: mapVatType(inv.mwst_type),
       state: mapInvoiceStatus(inv.kb_item_status_id),
-      paymentDate: ''
+      paymentDate: '',
+      accountingTenantId: tenantId,
     };
     batch.set(db.collection('invoices').doc(bkey), doc, { merge: true });
   }

@@ -5,7 +5,9 @@ import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
 
-import { bexioApiKey, bexioTenantId, BEXIO_BASE_V4, toStoreDate } from './shared';
+import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+
+import { bexioApiKey, bexioTenantId, BEXIO_BASE_V4 } from './shared';
 
 interface BexioBill {
   id: number;
@@ -71,14 +73,15 @@ async function persistBills(bills: BexioBill[], tenantId: string, nowStr: string
       notes: '',
       title: bill.title ?? bill.document_no,
       billId: bill.document_no,
-      billDate: toStoreDate(bill.bill_date),
-      dueDate: toStoreDate(bill.due_date),
+      billDate: bill.bill_date ? convertDateFormatToString(bill.bill_date, DateFormat.IsoDate, DateFormat.StoreDate, false) : '',
+      dueDate: bill.due_date ? convertDateFormatToString(bill.due_date, DateFormat.IsoDate, DateFormat.StoreDate, false) : '',
       totalAmount: { amount: Math.round(gross * 100), currency: 'CHF', periodicity: 'one-time' },
       state: bill.status.toLowerCase(),
       bexioVender: bill.vendor,
       paymentDate: '',
       bookingAccount: bill.booking_account_ids.map(String).join(','),
       attachments: bill.attachment_ids.map(String),
+      accountingTenantId: tenantId,
     };
     batch.set(db.collection('bills').doc(bkey), doc, { merge: true });
   }

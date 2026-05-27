@@ -69,6 +69,7 @@ async function persistAccounts(
       parentId: '',
       type: 'root',
       label: '',
+      accountingTenantId: tenantId,
     },
   });
 
@@ -89,6 +90,7 @@ async function persistAccounts(
         parentId,
         type: 'group',
         label: '',
+        accountingTenantId: tenantId,
       },
     });
   }
@@ -110,6 +112,7 @@ async function persistAccounts(
         parentId,
         type: 'leaf',
         label: '',
+        accountingTenantId: tenantId,
       },
     });
   }

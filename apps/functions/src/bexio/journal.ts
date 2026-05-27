@@ -4,8 +4,9 @@ import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
+import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
-import { bexioApiKey, bexioTenantId, BEXIO_BASE_V3, toStoreDate } from './shared';
+import { bexioApiKey, bexioTenantId, BEXIO_BASE_V3 } from './shared';
 
 interface BexioJournalEntry {
   id: number;
@@ -50,43 +51,90 @@ async function loadAccountNumberMap(db: admin.firestore.Firestore): Promise<Map<
   return map;
 }
 
-/** Write journal entries to Firestore in chunks and update the sync pointer. */
+/** Convert a Bexio date string (ISO datetime or ISO date) to StoreDate "YYYYMMDD". Returns '' for null/empty. */
+function bexioDateToStoreDate(bexioDate: string | null | undefined): string {
+  if (!bexioDate) return '';
+  const isoDate = bexioDate.length > 10 ? bexioDate.substring(0, 10) : bexioDate;
+  return convertDateFormatToString(isoDate, DateFormat.IsoDate, DateFormat.StoreDate, false);
+}
+
+/**
+ * Write journal entries to Firestore bookings + booking-lines collections in chunks.
+ * Each entry creates 3 documents (1 booking + 2 booking-lines), so we keep
+ * batch size to max 50 entries (150 docs) to stay under Firestore's 500-write limit.
+ */
 async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: string, nowStr: string): Promise<void> {
   const db = admin.firestore();
-  const BATCH_SIZE = 100; // keep well under Firestore's 10 MiB commit limit
+  const BATCH_SIZE = 50; // 50 entries × 3 docs = 150 docs per batch
 
   const accountMap = await loadAccountNumberMap(db);
 
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const chunk = entries.slice(i, i + BATCH_SIZE);
     const batch = db.batch();
+
     for (const entry of chunk) {
       const bkey = String(entry.id);
       const amountCents = Math.round(parseFloat(entry.amount) * 100);
+      const dateStr = bexioDateToStoreDate(entry.date);
+
       const debitAccount = entry.debit_account_id != null
         ? (accountMap.get(String(entry.debit_account_id).padStart(4, '0')) ?? String(entry.debit_account_id))
         : '';
       const creditAccount = entry.credit_account_id != null
         ? (accountMap.get(String(entry.credit_account_id).padStart(4, '0')) ?? String(entry.credit_account_id))
         : '';
-      const doc: Record<string, unknown> = {
+
+      // booking document
+      const bookingDoc: Record<string, unknown> = {
         tenants: [tenantId],
         isArchived: false,
-        index: '',
+        index: `d:${dateStr} no:${bkey}`,
         tags: '',
         notes: '',
         title: entry.description ?? '',
-        date: toStoreDate(entry.date),
-        debitAccount,
-        creditAccount,
-        totalAmount: { amount: amountCents, currency: 'CHF', periodicity: 'one-time' },
+        date: dateStr,
+        bookingNo: entry.id,
+        periodKey: '',
+        documentKey: '',
+        status: 'posted',
+        accountingTenantId: tenantId,
       };
-      doc.index = 'd:' + doc.date + ' a:' + (amountCents / 100).toFixed(2) + ' ' + debitAccount + '/' + creditAccount;
+      batch.set(db.collection('bookings').doc(bkey), bookingDoc, { merge: true });
 
-      batch.set(db.collection('journallogs').doc(bkey), doc, { merge: true });
+      // booking-line debit document
+      const debitDoc: Record<string, unknown> = {
+        tenants: [tenantId],
+        isArchived: false,
+        bookingKey: bkey,
+        accountKey: debitAccount,
+        debitAmount: { amount: amountCents, currency: 'CHF', periodicity: 'one-time' },
+        creditAmount: null,
+        amountFx: null,
+        exchangeRateKey: '',
+        vatCodeKey: '',
+        accountingTenantId: tenantId,
+      };
+      batch.set(db.collection('booking-lines').doc(`${entry.id}-dr`), debitDoc, { merge: true });
+
+      // booking-line credit document
+      const creditDoc: Record<string, unknown> = {
+        tenants: [tenantId],
+        isArchived: false,
+        bookingKey: bkey,
+        accountKey: creditAccount,
+        debitAmount: null,
+        creditAmount: { amount: amountCents, currency: 'CHF', periodicity: 'one-time' },
+        amountFx: null,
+        exchangeRateKey: '',
+        vatCodeKey: '',
+        accountingTenantId: tenantId,
+      };
+      batch.set(db.collection('booking-lines').doc(`${entry.id}-cr`), creditDoc, { merge: true });
     }
+
     await batch.commit();
-    logger.info(`persistJournalEntries: committed chunk ${i / BATCH_SIZE + 1}, entries ${i + 1}-${i + chunk.length}`);
+    logger.info(`persistJournalEntries: committed chunk ${Math.floor(i / BATCH_SIZE) + 1}, entries ${i + 1}-${i + chunk.length}`);
   }
 
   // update sync pointer after all chunks are written
@@ -106,7 +154,8 @@ async function runJournalSync(tenantId: string, label: string): Promise<{ count:
 
 /**
  * Manual one-shot journal sync (onCall).
- * Fetches all journal entries from Bexio and stores them in Firestore collection 'journallogs'.
+ * Fetches all journal entries from Bexio and stores them in Firestore collections
+ * 'bookings' (one doc per entry) and 'booking-lines' (two docs per entry: debit + credit).
  */
 export const syncBexioJournal = onCall(
   {
