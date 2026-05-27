@@ -1,0 +1,27 @@
+{
+  "name": "finance-vat-code-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/vat-code/util/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:util", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/vat-code/util",
+        "main": "libs/finance/vat-code/util/src/index.ts",
+        "tsConfig": "libs/finance/vat-code/util/tsconfig.lib.json",
+        "assets": ["libs/finance/vat-code/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": { "configFile": "libs/finance/vat-code/util/vite.config.ts" }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}

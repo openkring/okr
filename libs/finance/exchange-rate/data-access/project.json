@@ -1,0 +1,22 @@
+{
+  "name": "finance-exchange-rate-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/exchange-rate/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/exchange-rate/data-access",
+        "main": "libs/finance/exchange-rate/data-access/src/index.ts",
+        "tsConfig": "libs/finance/exchange-rate/data-access/tsconfig.lib.json",
+        "assets": ["libs/finance/exchange-rate/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}
