@@ -16,9 +16,16 @@ export class PeriodModel implements BkModel {
   public lockedAt = DEFAULT_DATE;     // StoreDate yyyymmdd
   public accountingTenantId = '';
 
-  constructor(tenantId: string, accountingTenantId: string) {
+  constructor(tenantId: string, accountingTenantId: string, year = 0, month = 0) {
     this.tenants = [tenantId];
     this.accountingTenantId = accountingTenantId;
+    this.year = year;
+    this.month = month;
+    if (year > 0) {
+      this.bkey = month > 0
+        ? `${accountingTenantId}-${year}-${String(month).padStart(2, '0')}`
+        : `${accountingTenantId}-${year}`;
+    }
   }
 }
 
