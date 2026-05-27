@@ -1,1 +1,1 @@
-// populated in Task 6
+export * from './lib/exchange-rate.service';
