@@ -39,13 +39,22 @@ async function fetchBexioJournalEntries(apiKey: string): Promise<BexioJournalEnt
   return all;
 }
 
-/** Load all AccountModel documents from Firestore and return a map of bkey → account number (id field). */
-async function loadAccountNumberMap(db: admin.firestore.Firestore): Promise<Map<string, string>> {
+/**
+ * Load all AccountModel documents from Firestore and return a map of bexio account id → AccountModel bkey.
+ * AccountModel bkeys are stored as `tenantId + String(bexio_id).padStart(4, '0')`.
+ * We strip the tenantId prefix to recover the padded bexio id, then use String(parseInt(...)) as the key
+ * so that lookups by raw numeric ids (e.g. String(entry.debit_account_id)) work correctly.
+ */
+async function loadAccountNumberMap(db: admin.firestore.Firestore, tenantId: string): Promise<Map<string, string>> {
   const snap = await db.collection('accounts').get();
   const map = new Map<string, string>();
   for (const doc of snap.docs) {
-    const accountNo = doc.data()?.['id'];
-    if (accountNo) map.set(doc.id, String(accountNo));
+    const bkey = doc.id;
+    if (!bkey.startsWith(tenantId)) continue;
+    const paddedBexioId = bkey.slice(tenantId.length); // e.g. "0123"
+    if (!paddedBexioId) continue;                       // skip root doc (bkey === tenantId)
+    const bexioIdStr = String(parseInt(paddedBexioId, 10)); // e.g. "123"
+    map.set(bexioIdStr, bkey);
   }
   logger.info(`loadAccountNumberMap: loaded ${map.size} accounts`);
   return map;
@@ -60,6 +69,7 @@ function bexioDateToStoreDate(bexioDate: string | null | undefined): string {
 
 /**
  * Write journal entries to Firestore bookings + booking-lines collections in chunks.
+ * Uses accountMap (bexio account id → AccountModel bkey) to resolve account references.
  * Each entry creates 3 documents (1 booking + 2 booking-lines), so we keep
  * batch size to max 50 entries (150 docs) to stay under Firestore's 500-write limit.
  */
@@ -67,7 +77,7 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
   const db = admin.firestore();
   const BATCH_SIZE = 50; // 50 entries × 3 docs = 150 docs per batch
 
-  const accountMap = await loadAccountNumberMap(db);
+  const accountMap = await loadAccountNumberMap(db, tenantId);
 
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const chunk = entries.slice(i, i + BATCH_SIZE);
@@ -79,10 +89,10 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
       const dateStr = bexioDateToStoreDate(entry.date);
 
       const debitAccount = entry.debit_account_id != null
-        ? (accountMap.get(String(entry.debit_account_id).padStart(4, '0')) ?? String(entry.debit_account_id))
+        ? (accountMap.get(String(entry.debit_account_id)) ?? String(entry.debit_account_id))
         : '';
       const creditAccount = entry.credit_account_id != null
-        ? (accountMap.get(String(entry.credit_account_id).padStart(4, '0')) ?? String(entry.credit_account_id))
+        ? (accountMap.get(String(entry.credit_account_id)) ?? String(entry.credit_account_id))
         : '';
 
       // booking document
