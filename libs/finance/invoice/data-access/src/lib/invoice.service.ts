@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -49,6 +49,16 @@ export class InvoiceService {
   public async delete(invoice: InvoiceModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<InvoiceModel>(InvoiceCollection, invoice, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('invoice', 'delete', currentUser, `${invoice.bkey}: ${invoice.invoiceId}`);
+  }
+
+  public async nextInvoiceNo(year: number, accountingTenantId: string): Promise<number> {
+    const all = await firstValueFrom(this.list());
+    const maxNo = all
+      .filter(inv => inv.accountingTenantId === accountingTenantId)
+      .map(inv => inv.invoiceNo ?? 0)
+      .filter(no => Math.floor(no / 100000) === year)
+      .reduce((max, n) => Math.max(max, n), 0);
+    return maxNo > 0 ? maxNo + 1 : year * 100000 + 1;
   }
 
   private list(): Observable<InvoiceModel[]> {
