@@ -21,7 +21,7 @@ async function parseSnbCsv(csvText: string): Promise<SnbRow[]> {
     const date = parts[0]?.trim();
     const currency = parts[1]?.trim();
     const rateStr = parts[2]?.trim().replace(',', '.');
-    if (!date || !currency || !rateStr) continue;
+    if (!date || !currency || !rateStr || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
     const rate = parseFloat(rateStr);
     if (isNaN(rate)) continue;
     rows.push({ date, currency, rate });

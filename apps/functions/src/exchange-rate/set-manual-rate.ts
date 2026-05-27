@@ -8,21 +8,20 @@ interface SetManualRateData {
   toCurrency: string;
   rate: number;
   date: string;   // ISO date "YYYY-MM-DD"
-  tenants: string[];
 }
 
 export const setManualRate = onCall(
   { region: 'europe-west6', enforceAppCheck: true, memory: '128MiB' },
   async (request: CallableRequest<SetManualRateData>) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    const { fromCurrency, toCurrency, rate, date, tenants } = request.data;
-    if (!fromCurrency || !toCurrency || !rate || !date) {
-      throw new HttpsError('invalid-argument', 'fromCurrency, toCurrency, rate, date are required');
+    const { fromCurrency, toCurrency, rate, date } = request.data;
+    if (!fromCurrency || !toCurrency || typeof rate !== 'number' || rate <= 0 || !date) {
+      throw new HttpsError('invalid-argument', 'fromCurrency, toCurrency, rate (positive number), and date are required');
     }
     const storeDate = convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate);
     const bkey = `${fromCurrency}-${toCurrency}-${storeDate}-manual`;
     await admin.firestore().collection('exchange-rates').doc(bkey).set({
-      tenants: tenants ?? ['scs'],
+      tenants: ['scs'],  // server-controlled, not from client
       isArchived: false,
       fromCurrency,
       toCurrency,

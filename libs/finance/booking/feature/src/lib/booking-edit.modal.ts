@@ -62,6 +62,10 @@ import { VatCodeService } from '@bk2/finance-vat-code-data-access';
             </ion-select>
           </ion-item>
         }
+        <ion-item>
+          <ion-label position="stacked">FX Amount (foreign currency cents, 0 = none)</ion-label>
+          <ion-input type="number" [(ngModel)]="line.amountFx!.amount" [readonly]="readOnly()" />
+        </ion-item>
       }
 
       @if (!isBalanced) {
@@ -93,6 +97,7 @@ export class BookingEditModal implements OnInit {
       ...l,
       debitAmount:  l.debitAmount  ?? { amount: 0, currency: 'CHF' as const, periodicity: 'one-time' as const },
       creditAmount: l.creditAmount ?? { amount: 0, currency: 'CHF' as const, periodicity: 'one-time' as const },
+      amountFx:     l.amountFx    ?? { amount: 0, currency: 'EUR' as const, periodicity: 'one-time' as const },
     }));
     if (this.editBooking.accountingTenantId) {
       this.vatCodes = await firstValueFrom(
@@ -113,6 +118,7 @@ export class BookingEditModal implements OnInit {
     blank.bookingKey = this.editBooking.bkey;
     blank.debitAmount  = { amount: 0, currency: 'CHF', periodicity: 'one-time' };
     blank.creditAmount = { amount: 0, currency: 'CHF', periodicity: 'one-time' };
+    blank.amountFx     = { amount: 0, currency: 'EUR', periodicity: 'one-time' };
     this.editLines = [...this.editLines, blank];
   }
 
@@ -124,8 +130,9 @@ export class BookingEditModal implements OnInit {
     if (!this.isBalanced) return;
     const cleanLines = this.editLines.map(l => ({
       ...l,
-      debitAmount:  (l.debitAmount?.amount ?? 0)  > 0 ? l.debitAmount  : undefined,
+      debitAmount:  (l.debitAmount?.amount  ?? 0) > 0 ? l.debitAmount  : undefined,
       creditAmount: (l.creditAmount?.amount ?? 0) > 0 ? l.creditAmount : undefined,
+      amountFx:     (l.amountFx?.amount     ?? 0) > 0 ? l.amountFx     : undefined,
     }));
     await this.modalController.dismiss({ booking: this.editBooking, lines: cleanLines }, 'confirm');
   }
