@@ -42,18 +42,21 @@ export const PeriodStore = signalStore(
   })),
   withMethods(store => ({
     async lock(period: PeriodModel): Promise<void> {
+      if (store.isReadOnly()) return;
       const user = store.currentUser();
       if (!user) return;
       await store.periodService.lock(period, user);
       store.periodsResource.reload();
     },
     async unlock(period: PeriodModel): Promise<void> {
+      if (store.isReadOnly()) return;
       const user = store.currentUser();
       if (!user) return;
       await store.periodService.unlock(period, user);
       store.periodsResource.reload();
     },
     async create(year: number, month = 0): Promise<void> {
+      if (store.isReadOnly()) return;
       const tenantId = store.appStore.tenantId();
       const accountingTenantId = store.accountingStore.accountingTenantId();
       const period = new PeriodModel(tenantId, accountingTenantId, year, month);

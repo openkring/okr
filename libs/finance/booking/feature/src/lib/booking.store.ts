@@ -67,7 +67,7 @@ export const BookingStore = signalStore(
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<{ booking: BookingModel; lines: BookingLineModel[] }>();
-      if (role === 'confirm' && data) {
+      if (role === 'confirm' && data && !store.isReadOnly()) {
         const bkey = (data.booking as BookingModel & { bkey: string }).bkey;
         if (bkey?.length > 0) {
           await store.bookingService.update(data.booking, data.lines, store.currentUser());
