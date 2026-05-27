@@ -2,7 +2,7 @@ import { AsyncPipe } from "@angular/common";
 import { Component, computed, effect, inject, input } from "@angular/core";
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
 
-import { I18nService, TranslatePipe } from "@bk2/shared-i18n";
+import { TranslatePipe } from "@bk2/shared-i18n";
 import { AddressModel, PrivacySettings, RoleName } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyList } from "@bk2/shared-ui";
@@ -12,8 +12,6 @@ import { coerceBoolean, getCategoryIcon, hasRole, isVisibleToUser } from "@bk2/s
 import { FavoriteColorPipe, FormatAddressPipe } from "@bk2/subject-address-util";
 
 import { AddressStore } from "./addresses.store";
-
-import { PFX } from './scope';
 
 @Component({
   selector: 'bk-addresses-accordion',
@@ -47,7 +45,7 @@ import { PFX } from './scope';
         </ion-item>
       }  
       @if(addresses().length === 0) {
-        <bk-empty-list message="@general.noData.addresses" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(address of addresses(); track $index) {
@@ -78,60 +76,35 @@ import { PFX } from './scope';
   `,
 })
 export class AddressesAccordion {
-  protected readonly addressStore = inject(AddressStore);
+  protected readonly store = inject(AddressStore);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly i18nService = inject(I18nService);
 
   // inputs
   public parentKey = input.required<string>(); // modelType.key of the parent model of the addresses person or org
   public intro = input<string>(); // description shown in the accordion header
   public readOnly = input<boolean>(true);
   public color = input('light'); // color of the accordion
-  public label = input(PFX + 'addresses'); // label of the accordion
+  public label = input(this.store.i18n.addresses()); // label of the accordion
   public readonly priv = input.required<PrivacySettings>();
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
-  protected addresses = computed(() => this.addressStore.addresses() ?? []);
-  private currentUser = computed(() => this.addressStore.currentUser());
+  protected addresses = computed(() => this.store.addresses() ?? []);
+  private currentUser = computed(() => this.store.currentUser());
 
-  // i18n
-  protected readonly i18n = this.i18nService.translateAll({
-    as_title: PFX + 'actionsheet.title',
-    as_view: PFX + 'actionsheet.view',
-    as_edit: PFX + 'actionsheet.edit',
-    as_copy: PFX + 'actionsheet.copy',
-    as_delete: PFX + 'actionsheet.delete',
-    as_email_send: PFX + 'actionsheet.email.send',
-    as_email_copy: PFX + 'actionsheet.email.copy',
-    as_file_upload: PFX + 'actionsheet.file.upload',
-    as_file_view: PFX + 'actionsheet.file.view',
-    as_phone_call: PFX + 'actionsheet.phone.call',
-    as_phone_copy: PFX + 'actionsheet.phone.copy',
-    as_phone_sms: PFX + 'actionsheet.phone.sms',
-    as_chat_start: PFX + 'actionsheet.chat.start',
-    as_postal_view: PFX + 'actionsheet.postal.view',
-    as_iban_view: PFX + 'actionsheet.iban.view',
-    as_iban_generate: PFX + 'actionsheet.iban.generate',
-    as_web_open: PFX + 'actionsheet.web.open',
-    as_web_copy: PFX + 'actionsheet.web.copy',
-    as_subject_edit: PFX + 'actionsheet.subject.edit',
-    as_hide: PFX + 'actionsheet.hide',
-    cancel: '@cancel'
-  });
   // passing constants
-  private imgixBaseUrl = this.addressStore.imgixBaseUrl();
+  private imgixBaseUrl = this.store.imgixBaseUrl();
 
   constructor() {
     effect(() => {
-      this.addressStore.setParentKey(this.parentKey());
+      this.store.setParentKey(this.parentKey());
     });
   }
 
   protected getChannelIcon(addressChannel: string): string {
-    return getCategoryIcon(this.addressStore.getChannels(), addressChannel);
+    return getCategoryIcon(this.store.getChannels(), addressChannel);
   }
 
   protected getAddressUsage(address: AddressModel): string {
@@ -148,7 +121,7 @@ export class AddressesAccordion {
    * @param address 
    */
   protected async showActions(address: AddressModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions(this.i18n.as_title());
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, address);
     await this.executeActions(actionSheetOptions, address);
   }
@@ -161,44 +134,44 @@ export class AddressesAccordion {
     // on address
     actionSheetOptions.buttons.push(createActionSheetDivider());
     if (this.hasRole('memberAdmin') || this.hasRole('admin')) {
-      actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     } else {
-      actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
   
     // with address (usage)
-    actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_copy(), this.imgixBaseUrl, 'copy'));
+    actionSheetOptions.buttons.push(createActionSheetButton('copy', this.store.i18n.as_copy(), this.imgixBaseUrl, 'copy'));
     switch(address.addressChannel) {
       case 'bankaccount':
         if (address.url) {
-          actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_iban_view(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(createActionSheetButton('iban.view', this.store.i18n.as_iban_view(), this.imgixBaseUrl, 'qrcode'));
         } else if (!this.isReadOnly()) {
-          actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_iban_generate(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(createActionSheetButton('iban.generateQr', this.store.i18n.as_iban_genqr(), this.imgixBaseUrl, 'qrcode'));
         }
         break;
       case 'email':
-        actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_email_send(), this.imgixBaseUrl, 'email'));
+        actionSheetOptions.buttons.push(createActionSheetButton('email.send', this.store.i18n.as_email_send(), this.imgixBaseUrl, 'email'));
         break;
       case 'phone':
-        actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_phone_call(), this.imgixBaseUrl, 'tel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('phone.call', this.store.i18n.as_phone_call(), this.imgixBaseUrl, 'tel'));
         break;
       case 'postal':
-        actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_postal_view(), this.imgixBaseUrl, 'location'));
+        actionSheetOptions.buttons.push(createActionSheetButton('postal.view', this.store.i18n.as_postal_view(), this.imgixBaseUrl, 'location'));
         break;
      case 'twint':
         if (address.url) {
-          actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_file_view(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(createActionSheetButton('file.view', this.store.i18n.as_file_view(), this.imgixBaseUrl, 'qrcode'));
         } else if (!this.isReadOnly()) {
-          actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_file_upload(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(createActionSheetButton('file.upload', this.store.i18n.as_file_upload(), this.imgixBaseUrl, 'qrcode'));
         }
         break;
       case 'web':
-        actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.as_web_open(), this.imgixBaseUrl, 'link'));
+        actionSheetOptions.buttons.push(createActionSheetButton('web.open', this.store.i18n.as_web_open(), this.imgixBaseUrl, 'link'));
         break;
     }
-    actionSheetOptions.buttons.push(createActionSheetButton(this.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
+    actionSheetOptions.buttons.push(createActionSheetButton(this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }
@@ -216,51 +189,51 @@ export class AddressesAccordion {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'actionsheet.delete':
-          await this.addressStore.delete(address, this.isReadOnly());
+        case 'delete':
+          await this.store.delete(address, this.isReadOnly());
           break;
-        case 'actionsheet.copy':
-          await this.addressStore.copy(address);
+        case 'copy':
+          await this.store.copy(address);
           break;
-        case 'actionsheet.view':
-          await this.addressStore.edit(address, true);
+        case 'view':
+          await this.store.edit(address, true);
           break;
-        case 'actionsheet.edit':
-          await this.addressStore.edit(address, this.isReadOnly());
+        case 'edit':
+          await this.store.edit(address, this.isReadOnly());
           break;
-        case 'actionsheet.file.view':
-        case 'actionsheet.iban.view':
+        case 'file.view':
+        case 'iban.view':
           await downloadToBrowser(address.url);
           break;
-        case 'actionsheet.iban.generateQr':
-          await this.addressStore.generateQrEzs(address);
+        case 'iban.generateQr':
+          await this.store.generateQrEzs(address);
           break;
-        case 'actionsheet.email.send':
-          await this.addressStore.sendEmail(address.email);
+        case 'email.send':
+          await this.store.sendEmail(address.email);
           break;
-        case 'actionsheet.phone.call':
-          await this.addressStore.call(address.phone);
+        case 'phone.call':
+          await this.store.call(address.phone);
           break;
-        case 'actionsheet.postal.view':
-          await this.addressStore.showPostalAddress(address);
+        case 'postal.view':
+          await this.store.showPostalAddress(address);
           break;
-        case 'actionsheet.file.upload':
-          await this.addressStore.uploadFile(address);
+        case 'file.upload':
+          await this.store.uploadFile(address);
           break;
-        case 'actionsheet.web.open':
-          await this.addressStore.openUrl(address);
+        case 'web.open':
+          await this.store.openUrl(address);
           break;
       }
     }
   }
 
   public async add(): Promise<void> {
-    this.addressStore.add(this.isReadOnly());
+    this.store.add(this.isReadOnly());
   }
 
   /******************************** helpers ******************************************* */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.addressStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected isVisibleToUser(address: AddressModel): boolean {
