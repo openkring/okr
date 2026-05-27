@@ -18,7 +18,9 @@ export class InvoicePositionModel implements BkModel, NamedModel, SearchableMode
   public amount = DEFAULT_PRICE;
   public currency = DEFAULT_CURRENCY;
   public isBillable = true;
-  public bookingAccountId = DEFAULT_ID;
+  public bookingAccountId = DEFAULT_ID;   // Bexio account ID (kept for Bexio compatibility)
+  public accountKey = '';                 // ref to AccountModel (revenue account in bk2 chart of accounts)
+  public vatCodeKey = '';                 // ref to VatCodeModel
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

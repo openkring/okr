@@ -29,6 +29,10 @@ export class InvoiceModel implements BkModel, SearchableModel, TaggedModel {
   // invoice receiver (Person or Org) Rechnungsempfänger
   public receiver: AvatarInfo | undefined;
 
+  public accountingTenantId = '';   // = org.bkey of the accounting tenant
+  public invoiceNo = 0;             // sequential per fiscal year + accountingTenantId
+  public bookingKey = '';           // ref to BookingModel; set when invoice is paid
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }

@@ -19,6 +19,10 @@ export class AccountModel implements BkModel, NamedModel, SearchableModel, Tagge
   public type = DEFAULT_ACCOUNT_NAME; // CategoryList: account_type
   public label = DEFAULT_LABEL; // label for custom account types
 
+  public accountingTenantId = '';     // = org.bkey; separates chart of accounts per accounting tenant
+  public vatCodeKey = '';             // default VatCodeModel bkey suggested when booking to this account
+  public currency = '';               // ISO 4217 code; fixed currency for foreign-currency bank accounts
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }

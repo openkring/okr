@@ -31,6 +31,8 @@ export class BillModel implements BkModel, SearchableModel, TaggedModel {
   // bill sender (person or org) Rechnungssteller
   public vendor: AvatarInfo | undefined;
 
+  public accountingTenantId = '';   // = org.bkey of the accounting tenant
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }

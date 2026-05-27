@@ -14,6 +14,7 @@ export type Roles = {
   treasurer?: boolean;
   admin?: boolean;
   kiosk?: boolean;
+  auditor?: boolean;          // read-only access to closed accounting periods (Revisor)
 };
 
 // had to move type definition of RoleName into env.ts to avoid circular dependency
