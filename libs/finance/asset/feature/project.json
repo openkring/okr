@@ -1,0 +1,22 @@
+{
+  "name": "finance-asset-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/asset/feature/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/asset/feature",
+        "main": "libs/finance/asset/feature/src/index.ts",
+        "tsConfig": "libs/finance/asset/feature/tsconfig.lib.json",
+        "assets": ["libs/finance/asset/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}

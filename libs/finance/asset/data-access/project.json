@@ -1,0 +1,22 @@
+{
+  "name": "finance-asset-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/asset/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/asset/data-access",
+        "main": "libs/finance/asset/data-access/src/index.ts",
+        "tsConfig": "libs/finance/asset/data-access/tsconfig.lib.json",
+        "assets": ["libs/finance/asset/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}
