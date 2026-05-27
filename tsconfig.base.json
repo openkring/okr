@@ -68,6 +68,8 @@
       "@bk2/finance-account-feature": ["libs/finance/account/feature/src/index.ts"],
       "@bk2/finance-account-ui": ["libs/finance/account/ui/src/index.ts"],
       "@bk2/finance-account-util": ["libs/finance/account/util/src/index.ts"],
+      "@bk2/finance-accounting-data-access": ["libs/finance/accounting/data-access/src/index.ts"],
+      "@bk2/finance-accounting-feature": ["libs/finance/accounting/feature/src/index.ts"],
       "@bk2/finance-bill-data-access": ["libs/finance/bill/data-access/src/index.ts"],
       "@bk2/finance-bill-feature": ["libs/finance/bill/feature/src/index.ts"],
       "@bk2/finance-bill-util": ["libs/finance/bill/util/src/index.ts"],
