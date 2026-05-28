@@ -1,4 +1,4 @@
-import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
 
@@ -14,13 +14,13 @@ export class ExpenseModel implements BkModel, SearchableModel, TaggedModel {
 
   public abstract = '';
   public amountTotal = 0;
-  public currency = 'CHF';
+  public currency = DEFAULT_CURRENCY;
   public iban = '';
   public category = '';
   public costCenterId = '';
   public note = '';
   public status: ExpenseStatus = 'draft';
-  public bookingKey = DEFAULT_KEY;
+  public bookingKey = '';
   public userId = DEFAULT_KEY;
   public accountingTenantId = '';
 
