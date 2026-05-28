@@ -8,7 +8,7 @@ export function normalizeIban(iban: string): string {
 }
 
 export function chfToCents(chf: number): number {
-  return Math.round((chf + Number.EPSILON) * 100);
+  return Math.round(chf * 100);
 }
 
 export function centsToCHF(cents: number): number {

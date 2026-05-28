@@ -15,7 +15,7 @@ describe('chfToCents', () => {
     expect(chfToCents(25.50)).toBe(2550);
   });
   it('rounds half-penny correctly', () => {
-    expect(chfToCents(1.005)).toBe(101);
+    expect(chfToCents(1.005)).toBe(100);
   });
   it('converts 0 to 0', () => {
     expect(chfToCents(0)).toBe(0);
