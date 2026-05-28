@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { IonContent, IonSpinner, IonText } from '@ionic/angular/standalone';
 
 /**
@@ -13,7 +13,7 @@ import { IonContent, IonSpinner, IonText } from '@ionic/angular/standalone';
 @Component({
   selector: 'bk-matrix-oidc-callback',
   standalone: true,
-  imports: [CommonModule, RouterLink, IonContent, IonSpinner, IonText],
+  imports: [RouterLink, IonContent, IonSpinner, IonText],
   styles: [`
     :host {
       display: flex;

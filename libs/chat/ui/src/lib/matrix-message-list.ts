@@ -1,5 +1,5 @@
 import { Component, computed, effect, input, output, viewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { IonIcon, IonChip, IonAvatar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -12,11 +12,13 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
   selector: 'bk-matrix-message-list',
   standalone: true,
   imports: [
-    CommonModule,
-    IonIcon, IonChip, IonAvatar,
+    IonIcon,
+    IonChip,
+    IonAvatar,
     SvgIconPipe,
-    PollMessage, MatrixReadReceiptStrip
-  ],
+    PollMessage,
+    MatrixReadReceiptStrip
+],
   styles: [`
     :host {
       display: flex;

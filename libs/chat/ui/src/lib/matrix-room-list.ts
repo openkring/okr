@@ -1,5 +1,5 @@
 import { Component, input, output, Signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail } from '@ionic/angular/standalone';
 
 import { MatrixRoom } from '@bk2/shared-models';
@@ -18,8 +18,15 @@ export interface MatrixRoomListI18n {
   selector: 'bk-matrix-room-list',
   standalone: true,
   imports: [
-    CommonModule, MultiAvatarPipe, SvgIconPipe,
-    IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail
+    MultiAvatarPipe,
+    SvgIconPipe,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonBadge,
+    IonNote,
+    IonIcon,
+    IonThumbnail
 ],
   styles: [`
     :host {

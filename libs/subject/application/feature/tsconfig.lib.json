@@ -4,10 +4,12 @@
     "outDir": "../../../../dist/libs/subject/application/feature",
     "declaration": true,
     "composite": true,
-    "module": "es2020",
+    "module": "preserve",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../../dist/out-tsc/subject-application-feature.tsbuildinfo"
+    "tsBuildInfoFile": "../../../../dist/out-tsc/subject-application-feature.tsbuildinfo",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]

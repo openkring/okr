@@ -5,7 +5,10 @@
     "types": ["node", "vitest"],
     "declaration": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
   },
   "angularCompilerOptions": {
     "strictTemplates": true,
@@ -18,9 +21,17 @@
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
   "references": [
-    {"path": "../../shared/models/tsconfig.lib.json"},
-    {"path": "../../shared/constants/tsconfig.lib.json"},
-    {"path": "../../shared/util-core/tsconfig.lib.json"},
-    {"path": "../../shared/i18n/tsconfig.lib.json"}
+    {
+      "path": "../../shared/models/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/constants/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/util-core/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/i18n/tsconfig.lib.json"
+    }
   ]
 }

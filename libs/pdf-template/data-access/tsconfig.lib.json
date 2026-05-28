@@ -4,14 +4,18 @@
     "outDir": "../../../dist/libs/pdf-template/data-access",
     "declaration": true,
     "composite": true,
-    "module": "es2020",
+    "module": "preserve",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../dist/out-tsc/pdf-template-data-access.tsbuildinfo"
+    "tsBuildInfoFile": "../../../dist/out-tsc/pdf-template-data-access.tsbuildinfo",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
-    { "path": "../util/tsconfig.lib.json" }
+    {
+      "path": "../util/tsconfig.lib.json"
+    }
   ]
 }

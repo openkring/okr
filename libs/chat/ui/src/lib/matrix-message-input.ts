@@ -1,5 +1,5 @@
 import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
 
@@ -30,9 +30,12 @@ export type MatrixMessageInputI18n = {
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     SvgIconPipe,
-    CommonModule, FormsModule, ButtonCopy,
-    IonTextarea, IonButton, IonIcon
-  ],
+    FormsModule,
+    ButtonCopy,
+    IonTextarea,
+    IonButton,
+    IonIcon
+],
   styles: [`
     :host {
       display: flex;

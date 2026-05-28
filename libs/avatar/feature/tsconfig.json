@@ -3,7 +3,10 @@
   "compilerOptions": {
     "noEmit": true,
     "types": ["vitest", "node"],
-    "declaration": true
+    "declaration": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
   },
   "angularCompilerOptions": {
     "strictTemplates": true,
@@ -16,11 +19,23 @@
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
   "references": [
-    {"path": "../../shared/models/tsconfig.lib.json"},
-    {"path": "../../shared/categories/tsconfig.lib.json"},
-    {"path": "../../shared/pipes/tsconfig.lib.json"},
-    {"path": "../../shared/ui/tsconfig.lib.json"},
-    {"path": "../../avatar/data-access/tsconfig.lib.json"},
-    {"path": "../../shared/feature/tsconfig.lib.json"}
+    {
+      "path": "../../shared/models/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/categories/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/pipes/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../avatar/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/feature/tsconfig.lib.json"
+    }
   ]
 }

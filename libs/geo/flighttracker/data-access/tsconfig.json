@@ -3,7 +3,10 @@
   "compilerOptions": {
     "noEmit": true,
     "types": ["node", "vitest"],
-    "declaration": true
+    "declaration": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
   },
   "angularCompilerOptions": {
     "strictTemplates": true,

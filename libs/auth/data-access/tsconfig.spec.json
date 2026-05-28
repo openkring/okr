@@ -1,0 +1,34 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc/libs/auth/data-access/spec",
+    "rootDir": "./",
+    "types": ["node", "vitest"],
+    "module": "preserve",
+    "target": "es2020",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"],
+    "isolatedModules": true
+  },
+  "include": ["vite.config.ts", "src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": [],
+  "references": [
+    {
+      "path": "../../shared/models/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/config/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/util-angular/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/util-core/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/i18n/tsconfig.lib.json"
+    }
+  ]
+}

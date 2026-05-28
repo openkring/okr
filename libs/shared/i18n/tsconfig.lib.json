@@ -4,14 +4,11 @@
     "outDir": "../../../dist/libs/shared/i18n",
     "declaration": true,
     "composite": true,
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-i18n.tsbuildinfo"
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-i18n.tsbuildinfo",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "**/*.spec.ts",
-    "**/test-setup.ts",
-    "vite.config.ts"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"]
 }

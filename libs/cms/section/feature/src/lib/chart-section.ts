@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
@@ -22,10 +22,12 @@ import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
   selector: 'bk-chart-section',
   standalone: true,
   imports: [
-    Spinner, OptionalCardHeader,
-    CommonModule, NgxEchartsDirective,
-    IonCard, IonCardContent
-    ],
+    Spinner,
+    OptionalCardHeader,
+    NgxEchartsDirective,
+    IonCard,
+    IonCardContent
+],
   providers: [
     provideEchartsCore({echarts})
   ],

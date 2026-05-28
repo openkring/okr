@@ -4,16 +4,25 @@
     "outDir": "../../../../dist/out-tsc/libs/cms/section/feature/spec",
     "rootDir": "./",
     "types": ["node", "vitest"],
-    "module": "es2020",
+    "module": "preserve",
     "target": "es2020",
     "esModuleInterop": true,
-    "allowJs": true
+    "allowJs": true,
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"],
+    "isolatedModules": true
   },
   "include": ["vite.config.ts", "src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": [],
   "references": [
-    { "path": "../../../shared/models/tsconfig.lib.json" },
-    { "path": "../../../shared/constants/tsconfig.lib.json" },
-    { "path": "../../../relationship/membership/data-access/tsconfig.lib.json" }
+    {
+      "path": "../../../shared/models/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/constants/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../relationship/membership/data-access/tsconfig.lib.json"
+    }
   ]
 }

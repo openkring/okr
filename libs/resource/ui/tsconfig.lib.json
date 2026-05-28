@@ -4,16 +4,13 @@
     "outDir": "../../../dist/libs/resource/ui",
     "declaration": true,
     "composite": true,
-    "module": "es2020",
+    "module": "preserve",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../dist/out-tsc/resource-ui.tsbuildinfo"
+    "tsBuildInfoFile": "../../../dist/out-tsc/resource-ui.tsbuildinfo",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "**/*.spec.ts",
-    "vite.config.ts"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "vite.config.ts"]
 }

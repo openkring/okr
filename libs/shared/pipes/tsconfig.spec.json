@@ -4,19 +4,34 @@
     "outDir": "../../../dist/out-tsc/libs/shared/pipes/spec",
     "rootDir": "./",
     "types": ["node", "vitest", "@testing-library/jest-dom"],
-    "module": "es2020",
+    "module": "preserve",
     "target": "es2020",
     "esModuleInterop": true,
-    "allowJs": true
+    "allowJs": true,
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"],
+    "isolatedModules": true
   },
   "include": ["vite.config.ts", "vite.config.mts", "vitest.config.ts", "vitest.config.mts", "src/**/*", "**/*.spec.ts", "**/*.test.ts", "src/test-setup.ts"],
   "exclude": [],
   "references": [
-    { "path": "../../shared/models/tsconfig.lib.json" },
-    { "path": "../../shared/constants/tsconfig.lib.json" },
-    { "path": "../../shared/util-core/tsconfig.lib.json" },
-    { "path": "../../shared/categories/tsconfig.lib.json" },
-    { "path": "../../shared/config/tsconfig.lib.json" },
-    { "path": "../../shared/i18n/tsconfig.lib.json" }
+    {
+      "path": "../../shared/models/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/constants/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/util-core/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/categories/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/config/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/i18n/tsconfig.lib.json"
+    }
   ]
 }
