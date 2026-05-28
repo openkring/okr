@@ -64,7 +64,7 @@ export const ExpenseStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(EXPENSE_I18N_KEYS),
-    expensesResource: rxResource({
+    expensesResource: rxResource<ExpenseModel[], unknown>({
       stream: () => {
         const user = store.appStore.currentUser();
         if (!user) return store.expenseService.listForUser('');
