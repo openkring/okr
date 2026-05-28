@@ -27,7 +27,6 @@
     {"path": "../../../relationship/responsibility/data-access/tsconfig.lib.json"},
     {"path": "../../../subject/address/data-access/tsconfig.lib.json"},
     {"path": "../../../subject/address/util/tsconfig.lib.json"},
-    {"path": "../../../subject/person/data-access/tsconfig.lib.json"},
     {"path": "../../../subject/application/util/tsconfig.lib.json"},
     {"path": "../../../task/data-access/tsconfig.lib.json"}
   ]
