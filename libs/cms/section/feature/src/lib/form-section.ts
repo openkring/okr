@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { signalStore, withMethods, withProps } from '@ngrx/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonNote } from '@ionic/angular/standalone';
@@ -26,11 +26,27 @@ const FormSectionStore = signalStore(
     }),
   })),
   withMethods(store => ({
+    async fetchJsToken(formKey: string): Promise<string> {
+      try {
+        const { getFunctions, httpsCallable } = await import('firebase/functions');
+        const { getApp } = await import('firebase/app');
+        const fn = httpsCallable<{ formKey: string }, { token: string }>(
+          getFunctions(getApp(), 'europe-west6'),
+          'getFormToken',
+        );
+        const result = await fn({ formKey });
+        return result.data.token;
+      } catch {
+        return '';   // graceful degradation: server marks as missing_token
+      }
+    },
+
     async submitForm(
       formKey: string,
       sectionConfigRef: string,
       values: Record<string, unknown>,
       pageLoadedAt: string,
+      honeypotKey: string,
     ): Promise<{ submissionId: string }> {
       const { getFunctions, httpsCallable } = await import('firebase/functions');
       const { getApp } = await import('firebase/app');
@@ -40,16 +56,24 @@ const FormSectionStore = signalStore(
       );
       const ua = navigator.userAgent;
       const fingerprint = btoa(ua).substring(0, 32);
+
+      // Extract spam-meta fields from values before sending to server
+      const clean = { ...values };
+      const honeypotWebsite = String(clean[honeypotKey] ?? '');
+      const jsToken = String(clean['_jsToken'] ?? '');
+      delete clean[honeypotKey];
+      delete clean['_jsToken'];
+
       const result = await fn({
         formKey,
         sectionConfigRef,
         tenantId: store.appStore.tenantId(),
-        values,
+        values: clean,
         meta: {
           pageLoadedAt,
           submittedAt: new Date().toISOString(),
-          honeypotWebsite: '',        // Phase 3: populated from hidden field
-          jsToken: '',                // Phase 3: injected by client JS
+          honeypotWebsite,
+          jsToken,
           userAgentFingerprint: fingerprint,
         },
       });
@@ -85,6 +109,7 @@ const FormSectionStore = signalStore(
               [definition]="def"
               [submitLabel]="store.i18n.submit()"
               [submitting]="submitting()"
+              [jsToken]="jsToken()"
               (submitted)="onSubmit($event)"
             />
           }
@@ -106,6 +131,7 @@ export class FormSectionComponent {
   protected readonly submitted = signal(false);
   protected readonly submitting = signal(false);
   protected readonly errorMsg = signal('');
+  protected readonly jsToken = signal('');
 
   protected readonly definitionResource = rxResource({
     params: () => ({ formKey: this.section().properties?.formKey }),
@@ -118,6 +144,17 @@ export class FormSectionComponent {
     return Array.isArray(val) ? val[0] : val;
   });
 
+  constructor() {
+    // Fetch JS token whenever the form definition becomes available
+    effect(async () => {
+      const def = this.definition();
+      if (def?.formKey) {
+        const token = await this.store.fetchJsToken(def.formKey);
+        this.jsToken.set(token);
+      }
+    });
+  }
+
   protected async onSubmit(values: Record<string, unknown>): Promise<void> {
     const def = this.definition();
     if (!def) return;
@@ -129,6 +166,7 @@ export class FormSectionComponent {
         this.section().bkey ?? '',
         values,
         this.pageLoadedAt,
+        def.honeypotKey || 'website',
       );
       this.submitted.set(true);
     } catch {

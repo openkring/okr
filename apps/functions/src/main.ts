@@ -200,7 +200,8 @@ export const esignSendByEmail        = Esign.esignSendByEmail;
 export const esignWebhook            = Esign.esignWebhook;
 export const esignArchiveSigned      = Esign.esignArchiveSigned;
 
-// form submission
+// form submission + JS token endpoint
+export const getFormToken = Forms.getFormToken;
 export const submitForm = Forms.submitForm;
 
 // exchange rates

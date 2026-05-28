@@ -49,6 +49,7 @@ export class FormDefinitionService {
 
   public async create(form: FormDefinitionModel, currentUser?: UserModel): Promise<string | undefined> {
     form.formKey = generateFormKey(form.name);
+    form.honeypotKey = generateFormKey('field').replace(/-[a-z0-9]{4}$/, '');  // random slug, no suffix
     form.createdAt = new Date().toISOString();
     form.updatedAt = new Date().toISOString();
     form.createdBy = currentUser?.bkey ?? '';

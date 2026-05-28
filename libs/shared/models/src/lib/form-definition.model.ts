@@ -83,6 +83,7 @@ export class FormDefinitionModel implements BkModel, NamedModel, TaggedModel {
   public notes = DEFAULT_NOTES;
 
   public formKey = '';
+  public honeypotKey = '';
   public description = '';
   public target: SubmissionTarget = { kind: 'collection', mappingKey: '', modelType: '', collectionName: '' };
   public fields: Field[] = [];
