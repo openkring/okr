@@ -1,0 +1,31 @@
+{
+  "name": "subject-application-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/subject/application/util/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:util", "scope:application", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/subject/application/util",
+        "main": "libs/subject/application/util/src/index.ts",
+        "tsConfig": "libs/subject/application/util/tsconfig.lib.json",
+        "assets": ["libs/subject/application/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/subject/application/util/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
