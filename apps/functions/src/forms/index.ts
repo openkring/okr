@@ -5,9 +5,11 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { createHmac, createHash } from 'node:crypto';
 
 import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
+import { sendEmailViaProvider } from '../auth/email-transport';
 
 const REGION = 'europe-west6';
 const formsHmacSecret = defineSecret('FORMS_HMAC_SECRET');
+const mailgunSmtpPassword = defineSecret('MAILGUN_SMTP_PASSWORD');
 
 // ──────────────────────────────────────────
 // Inlined types (avoids monorepo cross-bundle imports)
@@ -40,6 +42,28 @@ interface FieldDef {
   label: string;
   type: string;
   required: boolean;
+  order: number;
+}
+
+interface AvatarInfoInline {
+  key: string;
+  name1: string;
+  name2: string;
+  modelType: string;
+  type: string;
+  subType: string;
+  label: string;
+}
+
+interface ResponsibilityDoc {
+  name: string;
+  responsibleAvatar?: AvatarInfoInline;
+}
+
+interface FormSectionProperties {
+  formKey?: string;
+  responsibilityKey?: string;
+  emailAddresses?: string[];
 }
 
 interface FormDefinition {
@@ -174,11 +198,117 @@ export const getFormToken = onCall(
 );
 
 // ──────────────────────────────────────────
-// submitForm — Phase 3 (with spam checks)
+// Phase 5 helpers
+// ──────────────────────────────────────────
+
+function buildSubmissionEmailHtml(
+  formDef: FormDefinition,
+  values: Record<string, unknown>,
+  submissionId: string,
+  submittedAt: string,
+): string {
+  const rows = [...formDef.fields]
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map(f => {
+      const val = values[f.key];
+      const display = (val === undefined || val === null || val === '') ? '–' : String(val);
+      return `<tr>
+        <th style="text-align:left;padding:4px 12px 4px 0;font-weight:600;">${f.label}</th>
+        <td style="padding:4px 0;">${display}</td>
+      </tr>`;
+    })
+    .join('');
+
+  return `
+    <h2 style="margin:0 0 16px;">${formDef.name} – neue Einreichung</h2>
+    <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      ${rows}
+    </table>
+    <p style="color:#888;font-size:12px;margin-top:20px;">
+      Eingereicht: ${submittedAt} &middot; ID: ${submissionId}
+    </p>
+  `.trim();
+}
+
+async function runSideEffects(
+  db: FirebaseFirestore.Firestore,
+  sectionConfigRef: string,
+  tenantId: string,
+  formDef: FormDefinition,
+  values: Record<string, unknown>,
+  submissionId: string,
+  submittedAt: string,
+  cfName: string,
+): Promise<void> {
+  // Read section config for responsibilityKey + emailAddresses
+  let sectionProps: FormSectionProperties = {};
+  try {
+    const snap = await db.collection('sections').doc(sectionConfigRef).get();
+    sectionProps = (snap.data()?.['properties'] as FormSectionProperties | undefined) ?? {};
+  } catch (e) {
+    logger.warn(`${cfName}: could not read section ${sectionConfigRef}`, e);
+    return;
+  }
+
+  const { responsibilityKey, emailAddresses } = sectionProps;
+
+  // ── Task creation ────────────────────────
+  if (responsibilityKey) {
+    try {
+      const respSnap = await db.collection('responsibilities').doc(responsibilityKey).get();
+      const resp = respSnap.data() as ResponsibilityDoc | undefined;
+      const assignee = resp?.responsibleAvatar;
+
+      if (assignee) {
+        await db.collection('tasks').add({
+          name: `${formDef.name} – Formulareinreichung`,
+          tenants: [tenantId],
+          isArchived: false,
+          state: 'open',
+          completionDate: '',
+          dueDate: '',
+          priority: 1,
+          importance: 1,
+          assignee,
+          notes: JSON.stringify({ submissionId, formKey: formDef.formKey, values }),
+          tags: ['form.submission'],
+          index: `c:form a:submission s:${submissionId}`,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+        logger.info(`${cfName}: approval task created responsibilityKey=${responsibilityKey}`);
+      } else {
+        logger.warn(`${cfName}: responsibility ${responsibilityKey} has no responsibleAvatar — skipping task`);
+      }
+    } catch (e) {
+      logger.error(`${cfName}: failed to create approval task`, e);
+    }
+  }
+
+  // ── Email notification ───────────────────
+  if (Array.isArray(emailAddresses) && emailAddresses.length > 0) {
+    try {
+      const appConfigSnap = await db.collection('app-config').doc(tenantId).get();
+      const appConfig = appConfigSnap.data();
+      const appName = String(appConfig?.['appName'] ?? 'bk2');
+      const opEmail = String(appConfig?.['opEmail'] ?? 'app@bkaiser.ch');
+      const from = `"${appName}" <${opEmail}>`;
+      const subject = `${formDef.name} – neue Einreichung`;
+      const html = buildSubmissionEmailHtml(formDef, values, submissionId, submittedAt);
+
+      await sendEmailViaProvider('mailgun_smtp', { from, to: emailAddresses, subject, html });
+      logger.info(`${cfName}: notification email sent to ${emailAddresses.join(', ')}`);
+    } catch (e) {
+      logger.error(`${cfName}: failed to send notification email`, e);
+    }
+  }
+}
+
+// ──────────────────────────────────────────
+// submitForm
 // ──────────────────────────────────────────
 
 export const submitForm = onCall(
-  { region: REGION, secrets: [formsHmacSecret] },
+  { region: REGION, secrets: [formsHmacSecret, mailgunSmtpPassword] },
   async (request: CallableRequest<SubmitFormPayload>) => {
     const CF_NAME = 'submitForm';
     const payload = request.data;
@@ -377,9 +507,13 @@ export const submitForm = onCall(
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    // ── 7. Side effects (tasks, email) — Phase 5 ──
-    if (!isSpam) {
-      // placeholder
+    // ── 7. Side effects (tasks, email) ────────────
+    if (!isSpam && payload.sectionConfigRef) {
+      await runSideEffects(
+        db, payload.sectionConfigRef, payload.tenantId,
+        formDef, cleanValues, submissionId, payload.meta.submittedAt,
+        CF_NAME,
+      );
     }
 
     logger.info(`${CF_NAME}: done submissionId=${submissionId} isSpam=${isSpam} durationMs=${durationMs}`);
