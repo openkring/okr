@@ -1,0 +1,24 @@
+{
+  "name": "subject-application-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/subject/application/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:application", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/subject/application/ui",
+        "main": "libs/subject/application/ui/src/index.ts",
+        "tsConfig": "libs/subject/application/ui/tsconfig.lib.json",
+        "assets": [],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
