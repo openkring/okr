@@ -1,5 +1,6 @@
 // models
 export * from './lib/account.model';
+export * from './lib/form-definition.model';
 export * from './lib/activity.model';
 export * from './lib/address.model';
 export * from './lib/application.model';

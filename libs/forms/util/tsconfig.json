@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node", "vitest"],
+    "declaration": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
+  },
+  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": ["dist/**/*"],
+  "references": [
+    { "path": "../../shared/models/tsconfig.lib.json" },
+    { "path": "../../shared/constants/tsconfig.lib.json" }
+  ]
+}

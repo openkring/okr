@@ -1,0 +1,14 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/libs/forms/feature",
+    "declaration": true,
+    "composite": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "types": [],
+    "tsBuildInfoFile": "../../../dist/out-tsc/forms-feature.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]
+}

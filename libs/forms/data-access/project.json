@@ -1,0 +1,24 @@
+{
+  "name": "forms-data-access",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/forms/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:forms"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/forms/data-access",
+        "main": "libs/forms/data-access/src/index.ts",
+        "tsConfig": "libs/forms/data-access/tsconfig.lib.json",
+        "assets": ["libs/forms/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

@@ -144,6 +144,15 @@
     },
     {
       "path": "../../../geo/trip/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../forms/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../forms/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../forms/ui/tsconfig.lib.json"
     }
   ]
 }

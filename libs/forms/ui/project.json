@@ -1,0 +1,24 @@
+{
+  "name": "forms-ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/forms/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:forms"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/forms/ui",
+        "main": "libs/forms/ui/src/index.ts",
+        "tsConfig": "libs/forms/ui/tsconfig.lib.json",
+        "assets": ["libs/forms/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

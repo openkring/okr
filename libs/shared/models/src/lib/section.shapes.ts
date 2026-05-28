@@ -6,6 +6,7 @@ import type {
   AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection,
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection,
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
+  FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
@@ -394,3 +395,16 @@ export const MEMBER_CAT_SECTION_SHAPE = {
   type: 'member-cat' as const,
   properties: MEMBER_CAT_CONFIG_SHAPE,
 } as MemberCatSection;
+
+// --------------------------------------- FORM ----------------------------------------
+export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {
+  formKey: '',
+  showCaptcha: false,
+  encryptFileUpload: false,
+  rateLimit: { limit: 10, periodMinutes: 5 },
+};
+export const FORM_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'form' as const,
+  properties: FORM_SECTION_CONFIG_SHAPE,
+} as FormSection;

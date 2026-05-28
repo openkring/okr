@@ -1,0 +1,24 @@
+{
+  "name": "forms-feature",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/forms/feature/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:forms"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/forms/feature",
+        "main": "libs/forms/feature/src/index.ts",
+        "tsConfig": "libs/forms/feature/tsconfig.lib.json",
+        "assets": ["libs/forms/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
