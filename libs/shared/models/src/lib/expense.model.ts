@@ -1,41 +1,28 @@
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { AvatarInfo } from './avatar-info';
+import { BkModel, SearchableModel, TaggedModel } from './base.model';
 
-/**
- * Expense = Spesenrechnung
- */
-export class ExpenseModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export type ExpenseStatus = 'draft' | 'processing' | 'validated' | 'error' | 'posted';
+
+export class ExpenseModel implements BkModel, SearchableModel, TaggedModel {
   public bkey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
-  public description = DEFAULT_NOTES;
+  public notes = DEFAULT_NOTES;
 
-  public name = DEFAULT_NAME; // title
-  public billId = DEFAULT_ID; // Rechnungsnummer
-  public paidOnDate = DEFAULT_DATE; // Spesen Rechnung bezahlt
-  public expenseDate = DEFAULT_DATE; // Empfangsdatum der Spesenrechnung
-  public expensePaidDate = DEFAULT_DATE; // Datum der Rückerstattung der Spesenrechnung
-  public dueDate = DEFAULT_DATE; // Zahlungsdatum der Spesenrechnung
-
-  public totalAmount = DEFAULT_PRICE; // total amount
-  public currency = DEFAULT_CURRENCY;
-  public taxes = 0; // total taxes
-  public taxRate = 0; // tax rate in percent
-  public isPaid = false; // is the expense paid
-  public bookingAccountId = DEFAULT_ID; // Bexio ID of the booking account
-
-  public author?: AvatarInfo;  // expense sender (person)
-  // subject = expense sender (Person)
-  public authorBexioId = DEFAULT_ID; // Bexio ID of the subject
-  public authorIban = ''; // IBAN of the subject
-
-  public org?: AvatarInfo; // expense receiver (default org)
-  public orgBexioId = DEFAULT_ID;
-  public orgIban = '';
+  public abstract = '';
+  public amountTotal = 0;
+  public currency = 'CHF';
+  public iban = '';
+  public category = '';
+  public costCenterId = '';
+  public note = '';
+  public status: ExpenseStatus = 'draft';
+  public bookingKey = DEFAULT_KEY;
+  public userId = DEFAULT_KEY;
+  public accountingTenantId = '';
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

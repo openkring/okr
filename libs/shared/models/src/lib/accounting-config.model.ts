@@ -42,6 +42,8 @@ export class AccountingConfigModel implements BkModel {
   public assetCapitalizationLimit: MoneyModel | undefined;  // items below limit → immediate expense
   public depreciationFrequency: DepreciationFrequency = 'annual';
   public depreciationProRata: DepreciationProRata = 'daily';
+  public defaultExpenseAccountKey = '';
+  public employeePayablesAccountKey = '';
 
   constructor(tenantId: string, accountingTenantId: string) {
     this.tenants = [tenantId];

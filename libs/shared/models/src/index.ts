@@ -33,6 +33,7 @@ export * from './lib/db-query.model';
 export * from './lib/dimensions.model';
 export * from './lib/document.model';
 export * from './lib/expense.model';
+export * from './lib/expense-document.model';
 export * from './lib/esign.model';
 export * from './lib/firebase-user.model';
 export * from './lib/folder.model';
