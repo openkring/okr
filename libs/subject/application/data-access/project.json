@@ -1,0 +1,24 @@
+{
+  "name": "subject-application-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/subject/application/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:application", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/subject/application/data-access",
+        "main": "libs/subject/application/data-access/src/index.ts",
+        "tsConfig": "libs/subject/application/data-access/tsconfig.lib.json",
+        "assets": ["libs/subject/application/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
