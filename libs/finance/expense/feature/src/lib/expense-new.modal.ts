@@ -1,4 +1,4 @@
-import { Component, inject, model, Signal } from '@angular/core';
+import { Component, inject, model, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   ModalController, ToastController,
@@ -44,7 +44,7 @@ const EXPENSE_MIMETYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/
         [(files)]="files"
         (pickFiles)="onPickFiles()"
         (takePhoto)="onTakePhoto()"
-        (validChange)="isValid = $event"
+        (valid)="isValid.set($event)"
       />
     </ion-content>
     <ion-footer>
@@ -52,7 +52,7 @@ const EXPENSE_MIMETYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/
         <p style="text-align:center; padding: 8px;">{{ store.submitLabel() }}</p>
       }
       <ion-button expand="block"
-        [disabled]="!isValid || files().length === 0 || !store.canSubmit()"
+        [disabled]="!isValid() || files().length === 0 || !store.canSubmit()"
         (click)="onSubmit()">
         {{ i18n.submit() }}
       </ion-button>
@@ -91,7 +91,7 @@ export class ExpenseNewModal {
     abstract: '', amountCHF: 0, currency: 'CHF', iban: '', category: '', costCenterId: '', note: '',
   });
   protected files = model<File[]>([]);
-  protected isValid = false;
+  protected readonly isValid = signal(false);
 
   private readonly ibansResource = rxResource({
     stream: () => {
