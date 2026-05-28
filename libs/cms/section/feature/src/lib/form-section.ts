@@ -8,7 +8,6 @@ import { I18nService } from '@bk2/shared-i18n';
 import { Spinner } from '@bk2/shared-ui';
 import { FormSection } from '@bk2/shared-models';
 import { FormDefinitionService } from '@bk2/forms-data-access';
-import { getFormMapping } from '@bk2/forms-util';
 import { FormRenderer } from '@bk2/forms-ui';
 
 const FormSectionStore = signalStore(
@@ -27,34 +26,34 @@ const FormSectionStore = signalStore(
     }),
   })),
   withMethods(store => ({
-    async submitToCollection(
-      collectionName: string,
-      mappingKey: string,
+    async submitForm(
+      formKey: string,
+      sectionConfigRef: string,
       values: Record<string, unknown>,
-    ): Promise<void> {
-      const mapping = getFormMapping(mappingKey);
-      if (!mapping) throw new Error(`Unknown mapping: ${mappingKey}`);
-      const record: Record<string, unknown> = {
-        ...(mapping.defaults ?? {}),
-        ...values,
-        ...(mapping.defaults ?? {}),       // defaults always win
-        tenants: [store.appStore.tenantId()],
-        submittedAt: new Date().toISOString(),
-        submittedBy: store.appStore.currentUser()?.bkey ?? 'anonymous',
-      };
-      const { getFirestore, collection, addDoc } = await import('firebase/firestore');
-      await addDoc(collection(getFirestore(), collectionName), record);
-    },
-
-    async submitToUrl(url: string, values: Record<string, unknown>): Promise<void> {
-      const body = new URLSearchParams();
-      for (const [k, v] of Object.entries(values)) body.set(k, String(v ?? ''));
-      const res = await fetch(url, {
-        method: 'POST',
-        body,
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      pageLoadedAt: string,
+    ): Promise<{ submissionId: string }> {
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const { getApp } = await import('firebase/app');
+      const fn = httpsCallable<unknown, { submissionId: string }>(
+        getFunctions(getApp(), 'europe-west6'),
+        'submitForm',
+      );
+      const ua = navigator.userAgent;
+      const fingerprint = btoa(ua).substring(0, 32);
+      const result = await fn({
+        formKey,
+        sectionConfigRef,
+        tenantId: store.appStore.tenantId(),
+        values,
+        meta: {
+          pageLoadedAt,
+          submittedAt: new Date().toISOString(),
+          honeypotWebsite: '',        // Phase 3: populated from hidden field
+          jsToken: '',                // Phase 3: injected by client JS
+          userAgentFingerprint: fingerprint,
+        },
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return result.data;
     },
   }))
 );
@@ -102,13 +101,15 @@ export class FormSectionComponent {
   public readonly section = input.required<FormSection>();
   public readonly editMode = input(false);
 
+  private readonly pageLoadedAt = new Date().toISOString();
+
   protected readonly submitted = signal(false);
   protected readonly submitting = signal(false);
   protected readonly errorMsg = signal('');
 
   protected readonly definitionResource = rxResource({
     params: () => ({ formKey: this.section().properties?.formKey }),
-    stream: ({ params }) =>
+    stream: ({ params }: { params: { formKey: string } }) =>
       this.store.formDefinitionService.readByFormKey(params.formKey),
   });
 
@@ -118,16 +119,17 @@ export class FormSectionComponent {
   });
 
   protected async onSubmit(values: Record<string, unknown>): Promise<void> {
+    const def = this.definition();
+    if (!def) return;
     this.submitting.set(true);
     this.errorMsg.set('');
     try {
-      const target = this.definition()?.target;
-      if (!target) return;
-      if (target.kind === 'collection') {
-        await this.store.submitToCollection(target.collectionName, target.mappingKey, values);
-      } else {
-        await this.store.submitToUrl(target.url, values);
-      }
+      await this.store.submitForm(
+        def.formKey,
+        this.section().bkey ?? '',
+        values,
+        this.pageLoadedAt,
+      );
       this.submitted.set(true);
     } catch {
       this.errorMsg.set(this.store.i18n.submit_error());

@@ -23,6 +23,7 @@ import * as Task from './task';
 import * as Trip from './trip';
 import * as Pdf from './pdf';
 import * as Esign from './esign';
+import * as Forms from './forms';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -198,6 +199,9 @@ export const esignDelete             = Esign.esignDelete;
 export const esignSendByEmail        = Esign.esignSendByEmail;
 export const esignWebhook            = Esign.esignWebhook;
 export const esignArchiveSigned      = Esign.esignArchiveSigned;
+
+// form submission
+export const submitForm = Forms.submitForm;
 
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';

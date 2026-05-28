@@ -54,6 +54,11 @@ import { FormDefinitionStore } from './form-definition.store';
                 <ion-button slot="end" fill="clear" (click)="store.openEditModal(form)">
                   <ion-icon src="{{ 'settings' | svgIcon }}" slot="icon-only" />
                 </ion-button>
+                @if (form.target.kind === 'collection') {
+                  <ion-button slot="end" fill="clear" color="primary" (click)="store.downloadCsv(form)">
+                    <ion-icon src="{{ 'download' | svgIcon }}" slot="icon-only" />
+                  </ion-button>
+                }
                 <ion-button slot="end" fill="clear" color="medium" (click)="store.duplicateForm(form)">
                   <ion-icon src="{{ 'copy' | svgIcon }}" slot="icon-only" />
                 </ion-button>

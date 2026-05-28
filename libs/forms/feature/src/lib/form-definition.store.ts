@@ -121,5 +121,44 @@ export const FormDefinitionStore = signalStore(
       await store.formDefinitionService.create(copy, store.currentUser());
       store.formsResource.reload();
     },
+
+    async downloadCsv(form: FormDefinitionModel): Promise<void> {
+      if (form.target.kind !== 'collection') return;
+      const { getFirestore, collection, getDocs, query, where } = await import('firebase/firestore');
+      const db = getFirestore();
+      const snap = await getDocs(
+        query(
+          collection(db, form.target.collectionName),
+          where('tenants', 'array-contains', store.appStore.tenantId()),
+        )
+      );
+
+      const fields = [...form.fields].sort((a, b) => a.order - b.order);
+      const headerRow = fields
+        .map(f => `"${f.label.replace(/"/g, '""')} (${f.key})"`)
+        .concat(['"is_spam"', '"submittedAt"'])
+        .join(',');
+
+      const rows = snap.docs.map(doc => {
+        const data = doc.data();
+        const values = fields.map(f => {
+          const v = data[f.key];
+          const cell = v === undefined || v === null ? '' : String(v);
+          return `"${cell.replace(/"/g, '""')}"`;
+        });
+        values.push(`"${data['isSpam'] ? 'ja' : 'nein'}"`);
+        values.push(`"${data['submittedAt'] ?? ''}"`);
+        return values.join(',');
+      });
+
+      const csv = [headerRow, ...rows].join('\r\n');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `${form.formKey}-submissions.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    },
   }))
 );
