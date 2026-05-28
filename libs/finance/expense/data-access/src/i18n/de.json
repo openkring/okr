@@ -1,0 +1,24 @@
+{
+  "create": {
+    "conf": "Auslage wurde gespeichert.",
+    "error": "Die Auslage konnte nicht gespeichert werden."
+  },
+  "update": {
+    "conf": "Auslage wurde aktualisiert.",
+    "error": "Die Auslage konnte nicht aktualisiert werden."
+  },
+  "delete": {
+    "conf": "Auslage wurde gelöscht.",
+    "error": "Die Auslage konnte nicht gelöscht werden."
+  },
+  "expenseDoc": {
+    "create": {
+      "conf": "Beleg wurde gespeichert.",
+      "error": "Der Beleg konnte nicht gespeichert werden."
+    },
+    "delete": {
+      "conf": "Beleg wurde gelöscht.",
+      "error": "Der Beleg konnte nicht gelöscht werden."
+    }
+  }
+}
