@@ -1,0 +1,59 @@
+{
+  "list": { "title": "Auslagen" },
+  "new": {
+    "title": "Neue Auslage",
+    "cancel": "Abbrechen",
+    "submit": "Einreichen"
+  },
+  "detail": {
+    "title": "Auslage",
+    "close": "Schliessen",
+    "amount": "Betrag",
+    "iban": "IBAN",
+    "status": "Status",
+    "booking": "Buchungsreferenz",
+    "note": "Notiz",
+    "receipt": "Beleg"
+  },
+  "field": {
+    "abstract": "Betreff",
+    "amount": "Betrag (CHF)",
+    "currency": "Währung",
+    "iban": {
+      "label": "IBAN",
+      "new": "+ Neue IBAN"
+    },
+    "category": "Kategorie",
+    "costcenter": "Kostenstelle",
+    "note": "Interne Notiz",
+    "belege": {
+      "label": "Belege",
+      "pick": "Datei wählen",
+      "photo": "Foto aufnehmen"
+    }
+  },
+  "submit": {
+    "iban": "Bankverbindung wird gespeichert…",
+    "upload": "Belege werden hochgeladen…",
+    "saving": "Auslage wird gespeichert…",
+    "booking": "Buchung wird erstellt…",
+    "done": "✓ Auslage eingereicht",
+    "error": "Fehler — Vorgang wurde zurückgerollt"
+  },
+  "status": {
+    "draft": "Entwurf",
+    "processing": "In Bearbeitung",
+    "validated": "Validiert",
+    "error": "Fehler",
+    "posted": "Verbucht"
+  },
+  "validation": {
+    "abstractRequired": "Betreff ist erforderlich.",
+    "abstractMin": "Betreff muss mindestens 3 Zeichen lang sein.",
+    "abstractMax": "Betreff darf maximal 200 Zeichen lang sein.",
+    "amountRequired": "Betrag muss grösser als 0 sein.",
+    "amountMax": "Betrag ist zu gross.",
+    "currencyRequired": "Währung ist erforderlich.",
+    "currencyInvalid": "Ungültige Währung."
+  }
+}
