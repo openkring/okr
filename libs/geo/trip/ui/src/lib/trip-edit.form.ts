@@ -1,14 +1,16 @@
-import { Component, input, output, Signal } from '@angular/core';
+import { Component, computed, input, output, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   IonChip, IonInput, IonItem, IonLabel, IonNote,
   IonSelect, IonSelectOption, IonTextarea,
 } from '@ionic/angular/standalone';
 
-import { AvatarInfo, ResourceModel, TripModel } from '@bk2/shared-models';
+import { AvatarInfo, LocationModel, ResourceModel, TripModel } from '@bk2/shared-models';
 import { formatTripTime } from '@bk2/trip-util';
 
-export interface TripFormI18n {
+import { LocationSelect, LocationSelectI18n } from './location-select';
+
+export interface TripFormI18n extends LocationSelectI18n {
   add_title: Signal<string>;
   edit_title: Signal<string>;
   end_title: Signal<string>;
@@ -25,6 +27,10 @@ export interface TripFormI18n {
   warning_distance_zero: Signal<string>;
   warning_distance_high: Signal<string>;
   warning_seats_mismatch: Signal<string>;
+  location_list_view: Signal<string>;
+  location_map_view: Signal<string>;
+  location_search: Signal<string>;
+  location_none: Signal<string>;
 }
 
 @Component({
@@ -34,6 +40,7 @@ export interface TripFormI18n {
     FormsModule,
     IonItem, IonLabel, IonNote, IonInput, IonTextarea,
     IonSelect, IonSelectOption, IonChip,
+    LocationSelect,
   ],
   template: `
     <!-- Start date/time (display only) -->
@@ -80,15 +87,27 @@ export interface TripFormI18n {
       </ion-select>
     </ion-item>
 
-    <!-- Custom location label -->
+    <!-- Location select (structured) + custom label fallback -->
     <ion-item lines="full">
-      <ion-label position="stacked">{{ i18n().field_custom_location() }}</ion-label>
-      <ion-input
-        [ngModel]="formData().customLocationLabel"
-        (ngModelChange)="patch({ customLocationLabel: $event })"
-        [placeholder]="i18n().field_location()"
-      />
+      <ion-label position="stacked">{{ i18n().field_location() }}</ion-label>
     </ion-item>
+    <bk-location-select
+      [locations]="locations()"
+      [selectedKey]="selectedLocationKey()"
+      [i18n]="i18n()"
+      (locationChange)="onLocationChange($event)"
+    />
+
+    @if (!selectedLocationKey()) {
+      <ion-item lines="full">
+        <ion-label position="stacked">{{ i18n().field_custom_location() }}</ion-label>
+        <ion-input
+          [ngModel]="formData().customLocationLabel"
+          (ngModelChange)="patch({ customLocationLabel: $event })"
+          [placeholder]="i18n().field_location()"
+        />
+      </ion-item>
+    }
 
     <!-- Distance -->
     <ion-item lines="full">
@@ -122,6 +141,7 @@ export class TripEditForm {
   public readonly trip = input.required<TripModel>();
   public readonly mode = input.required<'add' | 'edit' | 'end'>();
   public readonly boats = input.required<ResourceModel[]>();
+  public readonly locations = input.required<LocationModel[]>();
   public readonly i18n = input.required<TripFormI18n>();
 
   public readonly tripChange = output<TripModel>();
@@ -130,6 +150,8 @@ export class TripEditForm {
   protected formData = this.trip;
 
   protected formatTime = formatTripTime;
+
+  protected selectedLocationKey = computed(() => this.formData().locations?.[0] ?? '');
 
   protected endDateIso(): string {
     const d = this.formData().endDate;
@@ -164,6 +186,13 @@ export class TripEditForm {
         subType: boat.subType,
         label: boat.name,
       } as AvatarInfo,
+    });
+  }
+
+  protected onLocationChange(locationKey: string): void {
+    this.patch({
+      locations: locationKey ? [locationKey] : [],
+      customLocationLabel: locationKey ? '' : this.formData().customLocationLabel,
     });
   }
 

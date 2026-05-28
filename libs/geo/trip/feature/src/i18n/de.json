@@ -47,5 +47,28 @@
     "revised": "Überarbeitet",
     "corrected": "Korrigiert",
     "all": "Alle"
+  },
+  "aoc": {
+    "title": "Ausfahrten Administration",
+    "trash": "Papierkorb",
+    "notes": "Ausfahrten mit Notizen",
+    "zero_km": "Ausfahrten mit 0 km",
+    "flagged": "Markierte Ausfahrten",
+    "restore": "Wiederherstellen",
+    "clear_flag": "Markierung entfernen",
+    "hard_delete_confirm": "Ausfahrt endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
+    "restore_conf": "Ausfahrt wiederhergestellt.",
+    "restore_error": "Wiederherstellen fehlgeschlagen."
+  },
+  "location_select": {
+    "list_view": "Liste",
+    "map_view": "Karte",
+    "search": "Ort suchen",
+    "none": "Kein Ort ausgewählt"
+  },
+  "save": {
+    "add": { "conf": "Ausfahrt erfasst.", "error": "Speichern fehlgeschlagen." },
+    "edit": { "conf": "Ausfahrt aktualisiert.", "error": "Aktualisierung fehlgeschlagen." },
+    "end": { "conf": "Ausfahrt beendet.", "error": "Beenden fehlgeschlagen." }
   }
 }

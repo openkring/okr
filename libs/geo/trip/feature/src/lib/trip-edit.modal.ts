@@ -1,13 +1,15 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { format } from 'date-fns';
 import { IonButton, IonContent, ModalController } from '@ionic/angular/standalone';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 import { AppStore } from '@bk2/shared-feature';
 import { Header } from '@bk2/shared-ui';
 import { AlertService } from '@bk2/shared-util-angular';
 import { DateFormat, getTodayStr, safeStructuredClone } from '@bk2/shared-util-core';
-import { ResourceModel, TripModel } from '@bk2/shared-models';
+import { LocationModel, ResourceModel, TripModel } from '@bk2/shared-models';
 
+import { LocationService } from '@bk2/location-data-access';
 import { TripEditForm } from '@bk2/trip-ui';
 import { newTripName, getTripIndex } from '@bk2/trip-util';
 import { TripService } from '@bk2/trip-data-access';
@@ -26,6 +28,7 @@ import { TripStore } from './trip.store';
           [trip]="fd"
           [mode]="mode()"
           [boats]="boats()"
+          [locations]="locations()"
           [i18n]="store.i18n"
           (tripChange)="onTripChange($event)"
           (validityChange)="formValid.set($event)"
@@ -47,6 +50,7 @@ export class TripEditModal {
   private readonly tripService = inject(TripService);
   private readonly alertService = inject(AlertService);
   private readonly appStore = inject(AppStore);
+  private readonly locationService = inject(LocationService);
   protected readonly store = inject(TripStore);
 
   public readonly trip = input.required<TripModel>();
@@ -58,6 +62,13 @@ export class TripEditModal {
   protected boats = computed(() =>
     (this.appStore.allResources() ?? []).filter((r: ResourceModel) => r.type === 'rboat')
   );
+
+  private readonly locationsResource = rxResource({
+    params: () => ({}),
+    stream: () => this.locationService.list(),
+  });
+
+  protected locations = computed(() => this.locationsResource.value() ?? [] as LocationModel[]);
 
   protected headerTitle = computed(() => {
     switch (this.mode()) {
@@ -102,6 +113,13 @@ export class TripEditModal {
         trip.state = trip.state.includes('.rev') ? 'closed.rev' : 'closed';
         await this.tripService.update(trip, currentUser);
         break;
+    }
+
+    if (this.mode() === 'add' || this.mode() === 'edit') {
+      const reasons = this.store.checkSuspiciousActivity(trip);
+      if (reasons.length > 0) {
+        await this.store.recordSuspiciousActivity(trip, reasons);
+      }
     }
 
     await this.modalController.dismiss(null, 'confirm');

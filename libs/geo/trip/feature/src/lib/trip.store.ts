@@ -56,7 +56,18 @@ const TRIP_I18N_KEYS = {
   warning_distance_zero:    PFX + 'warning.distance_zero',
   warning_distance_high:    PFX + 'warning.distance_high',
   warning_seats_mismatch:   PFX + 'warning.seats_mismatch',
+  location_list_view:       PFX + 'location_select.list_view',
+  location_map_view:        PFX + 'location_select.map_view',
+  location_search:          PFX + 'location_select.search',
+  location_none:            PFX + 'location_select.none',
 } satisfies Record<string, string>;
+
+const SUSPICIOUS_WINDOW_MS = 15 * 60 * 1000;
+const SUSPICIOUS_TRIP_COUNT = 3;
+const SUSPICIOUS_DISTANCE_KM = 100;
+const SUSPICIOUS_SEAT_DIFF = 2;
+const SUSPICIOUS_HOUR_EARLY = 5;
+const SUSPICIOUS_HOUR_LATE = 23;
 
 export type TripI18n = { [K in keyof typeof TRIP_I18N_KEYS]: Signal<string> };
 
@@ -181,6 +192,62 @@ export const TripStore = signalStore(
 
     async reportBug(trip: TripModel): Promise<void> {
       await this.notifyResponsibility('dev', `Fehler gemeldet: ${trip.name}`, '', undefined, store.currentUser());
+    },
+
+    checkSuspiciousActivity(trip: TripModel): string[] {
+      const reasons: string[] = [];
+      const now = Date.now();
+      const recentTrips = (store.tripsResource.value() ?? []).filter(t => {
+        if (!t.startDate || !t.startTime) return false;
+        const dateStr = t.startDate;
+        const timeStr = t.startTime.padStart(4, '0');
+        const tripMs = new Date(
+          `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}T${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:00`
+        ).getTime();
+        return now - tripMs < SUSPICIOUS_WINDOW_MS;
+      });
+      if (recentTrips.length > SUSPICIOUS_TRIP_COUNT) reasons.push('multiple_trips');
+      if (trip.distance > SUSPICIOUS_DISTANCE_KM) reasons.push('unusual_distance');
+      const seats = (trip.resource as any)?.seats;
+      if (seats !== undefined && Math.abs(trip.participants.length - seats) >= SUSPICIOUS_SEAT_DIFF) {
+        reasons.push('seat_mismatch');
+      }
+      const hour = new Date().getHours();
+      if (hour < SUSPICIOUS_HOUR_EARLY || hour >= SUSPICIOUS_HOUR_LATE) reasons.push('unusual_hours');
+      return reasons;
+    },
+
+    async recordSuspiciousActivity(trip: TripModel, reasons: string[]): Promise<void> {
+      const confirmed = await store.alertService.confirm(store.i18n.warning_suspicious(), true);
+      if (!confirmed) return;
+
+      let photoUrl: string | undefined;
+      try {
+        const photo = await Camera.getPhoto({
+          quality: 80,
+          allowEditing: false,
+          resultType: CameraResultType.Uri,
+          source: Capacitor.isNativePlatform() ? CameraSource.Prompt : CameraSource.Photos,
+        });
+        const file = await readAsFile(photo, store.platform);
+        if (file) {
+          const fullPath = `${store.tenantId()}/trips/${trip.bkey}/images/flag_${Date.now()}.jpg`;
+          photoUrl = await store.uploadService.uploadFile(file, fullPath, 'Verdacht-Foto');
+        }
+      } catch {
+        // photo capture optional
+      }
+
+      const updatedTrip = { ...trip, flagged: true };
+      await store.tripService.update(updatedTrip as TripModel, store.currentUser());
+      await this.notifyResponsibility(
+        'trip',
+        `Verdächtige Aktivität: ${trip.name} (${reasons.join(', ')})`,
+        reasons.join(', '),
+        photoUrl,
+        store.currentUser(),
+      );
+      store.tripsResource.reload();
     },
 
     async notifyResponsibility(

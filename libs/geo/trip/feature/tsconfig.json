@@ -62,6 +62,9 @@
       "path": "../../../cms/menu/feature/tsconfig.lib.json"
     },
     {
+      "path": "../../../geo/location/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../data-access/tsconfig.lib.json"
     },
     {
