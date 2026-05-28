@@ -1,0 +1,81 @@
+{
+  "list": {
+    "title": "Anträge",
+    "empty": "Keine Anträge gefunden."
+  },
+  "edit": {
+    "title": "Antrag bearbeiten",
+    "save": "Speichern",
+    "accept": "Annehmen",
+    "deny": "Ablehnen",
+    "save_conf": "Antrag aktualisiert.",
+    "save_error": "Aktualisierung fehlgeschlagen.",
+    "accept_confirm": "Antrag annehmen? Es wird eine Person erstellt.",
+    "accept_conf": "Antrag genehmigt — Person wurde erstellt.",
+    "accept_error": "Genehmigung fehlgeschlagen.",
+    "deny_conf": "Antrag abgelehnt.",
+    "deny_error": "Ablehnen fehlgeschlagen.",
+    "deny_reason": "Grund der Ablehnung"
+  },
+  "delete": {
+    "confirm": "Soll dieser Antrag wirklich gelöscht werden?",
+    "conf": "Antrag gelöscht.",
+    "error": "Löschen fehlgeschlagen."
+  },
+  "actions": {
+    "add_membership": "Mitgliedschaft hinzufügen",
+    "add_to_group": "Zu Gruppe einladen",
+    "membership_added": "Mitgliedschaft hinzugefügt.",
+    "group_invited": "Person zu Gruppe eingeladen.",
+    "no_person": "Person noch nicht erstellt — Antrag zuerst annehmen."
+  },
+  "mail": {
+    "confirmation_sent": "Bestätigung an Antragsteller/in versendet.",
+    "decision_sent": "Entscheidung an Antragsteller/in versendet.",
+    "send_failed": "E-Mail konnte nicht versendet werden."
+  },
+  "field": {
+    "first_name": "Vorname",
+    "last_name": "Nachname",
+    "gender": "Geschlecht",
+    "date_of_birth": "Geburtsdatum",
+    "ssn": "AHV-Nummer",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "street_name": "Strasse",
+    "street_number": "Nr.",
+    "zip_code": "PLZ",
+    "city": "Ort",
+    "country_code": "Land",
+    "parent_first_name": "Vorname Elternteil",
+    "parent_last_name": "Nachname Elternteil",
+    "parent_email": "E-Mail Elternteil",
+    "parent_phone": "Telefon Elternteil",
+    "application_as": "Antrag als",
+    "state": "Status",
+    "submitted_at": "Eingegangen",
+    "reviewed_at": "In Bearbeitung seit",
+    "reviewer": "Bearbeiter",
+    "close_reason": "Bemerkung"
+  },
+  "validation": {
+    "email_required_either": "E-Mail ist erforderlich (entweder Antragsteller/in oder Elternteil).",
+    "phone_required_either": "Telefon ist erforderlich (entweder Antragsteller/in oder Elternteil)."
+  },
+  "section": {
+    "person": "Person",
+    "contact": "Kontakt",
+    "address": "Adresse",
+    "parent": "Eltern (Pflicht für Jugendliche)",
+    "application": "Antrag"
+  },
+  "kind_youth": "Jugendliche/r",
+  "kind_adult": "Erwachsene/r",
+  "kind_transfer": "Übertritt",
+  "state_applied": "Eingegangen",
+  "state_reviewing": "In Bearbeitung",
+  "state_closed_approved": "Angenommen",
+  "state_closed_denied": "Abgelehnt",
+  "state_closed_cancelled": "Zurückgezogen",
+  "cancel": "Abbrechen"
+}
