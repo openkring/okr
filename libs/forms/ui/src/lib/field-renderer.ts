@@ -26,7 +26,7 @@ import { Field } from '@bk2/shared-models';
       @case ('text') {
         <ion-item [class]="'field-' + field().width">
           <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
-          @if (field().multiline) {
+          @if ($any(field()).multiline) {
             <ion-textarea [formControl]="control()" [placeholder]="field().placeholder ?? ''" [rows]="4" auto-grow />
           } @else {
             <ion-input [formControl]="control()" [placeholder]="field().placeholder ?? ''" type="text" />
@@ -43,7 +43,7 @@ import { Field } from '@bk2/shared-models';
         <ion-item [class]="'field-' + field().width">
           <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
           <ion-input [formControl]="control()" [placeholder]="field().placeholder ?? ''" type="number"
-            [min]="field().min ?? null" [max]="field().max ?? null" [step]="field().step ?? 1" />
+            [min]="$any(field()).min ?? null" [max]="$any(field()).max ?? null" [step]="$any(field()).step ?? 1" />
         </ion-item>
       }
       @case ('phone') {
@@ -68,15 +68,15 @@ import { Field } from '@bk2/shared-models';
         <ion-item [class]="'field-' + field().width">
           <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
           <ion-select [formControl]="control()" [placeholder]="field().placeholder ?? ''">
-            @for (opt of field().options; track opt.value) {
+            @for (opt of $any(field()).options; track opt.value) {
               <ion-select-option [value]="opt.value">{{ opt.label }}</ion-select-option>
             }
           </ion-select>
         </ion-item>
       }
       @case ('checkbox') {
-        @if (field().options?.length) {
-          @for (opt of field().options; track opt.value) {
+        @if ($any(field()).options?.length) {
+          @for (opt of $any(field()).options; track opt.value) {
             <ion-item>
               <ion-label>{{ opt.label }}</ion-label>
               <ion-checkbox slot="end" />
@@ -94,7 +94,7 @@ import { Field } from '@bk2/shared-models';
           <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
         </ion-item>
         <ion-radio-group [formControl]="control()">
-          @for (opt of field().options; track opt.value) {
+          @for (opt of $any(field()).options; track opt.value) {
             <ion-item>
               <ion-radio [value]="opt.value" />
               <ion-label>{{ opt.label }}</ion-label>
@@ -106,14 +106,14 @@ import { Field } from '@bk2/shared-models';
         <ion-item [class]="'field-' + field().width">
           <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
           <ion-input [formControl]="control()" type="date"
-            [min]="field().min ?? null" [max]="field().max ?? null" />
+            [min]="$any(field()).min ?? null" [max]="$any(field()).max ?? null" />
         </ion-item>
       }
       @case ('time') {
         <ion-item [class]="'field-' + field().width">
           <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
           <ion-input [formControl]="control()" type="time"
-            [min]="field().min ?? null" [max]="field().max ?? null" />
+            [min]="$any(field()).min ?? null" [max]="$any(field()).max ?? null" />
         </ion-item>
       }
       @case ('file') {
