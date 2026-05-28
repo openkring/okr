@@ -1,12 +1,12 @@
 import { Component, computed, effect, inject, input, Signal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { signalStore, withMethods, withProps } from '@ngrx/signals';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonNote } from '@ionic/angular/standalone';
+import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonNote } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { Spinner } from '@bk2/shared-ui';
-import { FormSection as FormSectionModel } from '@bk2/shared-models';
+import { FormDefinitionModel, FormSection as FormSectionModel } from '@bk2/shared-models';
 import { FormDefinitionService } from '@bk2/forms-data-access';
 import { FormRenderer } from '@bk2/forms-ui';
 import { PFX } from './scope';
@@ -53,6 +53,7 @@ const FormSectionStore = signalStore(
       values: Record<string, unknown>,
       pageLoadedAt: string,
       honeypotKey: string,
+      showCaptcha: boolean,
     ): Promise<{ submissionId: string }> {
       const { getFunctions, httpsCallable } = await import('firebase/functions');
       const { getApp } = await import('firebase/app');
@@ -80,6 +81,7 @@ const FormSectionStore = signalStore(
           honeypotWebsite,
           jsToken,
           userAgentFingerprint: fingerprint,
+          showCaptcha,
         },
       });
       return result.data;
@@ -127,6 +129,7 @@ const FormSectionStore = signalStore(
 })
 export class FormSectionComponent {
   protected readonly store = inject(FormSectionStore);
+  private readonly alertController = inject(AlertController);
 
   public readonly section = input.required<FormSectionModel>();
   public readonly editMode = input(false);
@@ -165,12 +168,14 @@ export class FormSectionComponent {
     this.submitting.set(true);
     this.errorMsg.set('');
     try {
+      const processedValues = await this.uploadFiles(values, def);
       await this.store.submitForm(
         def.formKey,
         this.section().bkey ?? '',
-        values,
+        processedValues,
         this.pageLoadedAt,
         def.honeypotKey || 'website',
+        this.section().properties?.showCaptcha ?? false,
       );
       this.submitted.set(true);
     } catch {
@@ -178,5 +183,71 @@ export class FormSectionComponent {
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  private async promptEncryptionPassword(): Promise<string> {
+    return new Promise(resolve => {
+      this.alertController.create({
+        header: 'Datei-Verschlüsselung',
+        message: 'Bitte geben Sie das Verschlüsselungspasswort ein.',
+        inputs: [{ name: 'password', type: 'password', placeholder: 'Passwort' }],
+        buttons: [
+          { text: 'Abbrechen', role: 'cancel', handler: () => resolve('') },
+          { text: 'OK', handler: (data: { password: string }) => resolve(data.password ?? '') },
+        ],
+      }).then(alert => alert.present());
+    });
+  }
+
+  private async uploadFiles(
+    values: Record<string, unknown>,
+    def: FormDefinitionModel,
+  ): Promise<Record<string, unknown>> {
+    const encryptFileUpload = this.section().properties?.encryptFileUpload ?? false;
+    const hasFiles = Object.values(values).some(v => v instanceof File);
+    if (!hasFiles) return values;
+
+    const { uploadToFirebaseStorage } = await import('@bk2/shared-config');
+    const { getDownloadURL } = await import('firebase/storage');
+    const result = { ...values };
+
+    let password = '';
+    if (encryptFileUpload && def.encryptionSalt) {
+      password = await this.promptEncryptionPassword();
+      if (!password) throw new Error('Encryption password not provided');
+    }
+
+    for (const [key, val] of Object.entries(result)) {
+      if (!(val instanceof File)) continue;
+      const path = `forms/${def.formKey}/${crypto.randomUUID()}-${val.name}`;
+
+      if (encryptFileUpload && def.encryptionSalt && password) {
+        const { encryptFile } = await import('@bk2/forms-util');
+        const encrypted = await encryptFile(val, password, def.encryptionSalt);
+        const encBlob = new File([encrypted.ciphertext], val.name + '.enc', { type: 'application/octet-stream' });
+        const task = uploadToFirebaseStorage(path + '.enc', encBlob);
+        const snap = await new Promise<import('firebase/storage').UploadTaskSnapshot>(
+          (res, rej) => task.on('state_changed', undefined, rej, () => res(task.snapshot))
+        );
+        const url = await getDownloadURL(snap.ref);
+        const ivBase64 = btoa(String.fromCharCode(...encrypted.iv));
+        result[key] = {
+          encryptedName: btoa(val.name),
+          ivBase64,
+          saltBase64: def.encryptionSalt,
+          mimeType: val.type,
+          sizeBytes: val.size,
+          storageUrl: url,
+        };
+      } else {
+        const task = uploadToFirebaseStorage(path, val);
+        const snap = await new Promise<import('firebase/storage').UploadTaskSnapshot>(
+          (res, rej) => task.on('state_changed', undefined, rej, () => res(task.snapshot))
+        );
+        const url = await getDownloadURL(snap.ref);
+        result[key] = { name: val.name, mimeType: val.type, sizeBytes: val.size, storageUrl: url };
+      }
+    }
+    return result;
   }
 }

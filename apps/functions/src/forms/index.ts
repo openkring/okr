@@ -64,6 +64,7 @@ interface SubmitFormPayload {
     honeypotWebsite: string;
     jsToken: string;
     userAgentFingerprint: string;
+    showCaptcha: boolean;
   };
 }
 
@@ -255,6 +256,21 @@ export const submitForm = onCall(
       if (deltaMs < 1500) {
         spamReasons.push('too_fast');
         logger.info(`${CF_NAME}: too_fast delta=${deltaMs}ms formKey=${payload.formKey}`);
+      }
+    }
+
+    // §10.5 Optional CAPTCHA — verify App Check token score
+    if (payload.meta.showCaptcha) {
+      if (!request.app) {
+        spamReasons.push('captcha_missing');
+        logger.info(`${CF_NAME}: captcha_missing (no App Check token) formKey=${payload.formKey}`);
+      }
+      // request.app.token.score available with reCAPTCHA Enterprise — threshold 0.5
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const score = (request.app as any)?.token?.score;
+      if (score !== undefined && score < 0.5) {
+        spamReasons.push('captcha_low_score');
+        logger.info(`${CF_NAME}: captcha_low_score score=${score} formKey=${payload.formKey}`);
       }
     }
 

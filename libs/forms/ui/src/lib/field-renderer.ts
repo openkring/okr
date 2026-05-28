@@ -116,6 +116,30 @@ import { Field } from '@bk2/shared-models';
             [min]="field().min ?? null" [max]="field().max ?? null" />
         </ion-item>
       }
+      @case ('file') {
+        <ion-item [class]="'field-' + field().width">
+          <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
+          <input
+            type="file"
+            style="padding: 8px 0; width: 100%;"
+            [attr.accept]="$any(field()).accept ?? '*/*'"
+            [multiple]="($any(field()).maxCount ?? 1) > 1"
+            (change)="onFileChange($event)"
+          />
+        </ion-item>
+      }
+      @case ('images') {
+        <ion-item [class]="'field-' + field().width">
+          <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
+          <input
+            type="file"
+            style="padding: 8px 0; width: 100%;"
+            accept="image/*"
+            [multiple]="($any(field()).maxCount ?? 1) > 1"
+            (change)="onFileChange($event)"
+          />
+        </ion-item>
+      }
       @default {
         <ion-item>
           <ion-label color="medium">{{ field().label }} ({{ field().type }} — not rendered yet)</ion-label>
@@ -141,4 +165,17 @@ import { Field } from '@bk2/shared-models';
 export class FieldRenderer {
   public readonly field = input.required<Field>();
   public readonly control = input.required<FormControl>();
+
+  protected onFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+    if (!files || files.length === 0) {
+      this.control().setValue(null);
+      return;
+    }
+    // Store single File or FileList depending on maxCount
+    const maxCount = (this.field() as unknown as { maxCount?: number }).maxCount ?? 1;
+    this.control().setValue(maxCount > 1 ? Array.from(files) : files[0]);
+    this.control().markAsDirty();
+  }
 }
