@@ -20,8 +20,8 @@
     "lint": { "executor": "@nx/eslint:lint" },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["{workspaceRoot}/coverage/libs/finance/expense/util"],
-      "options": { "reportsDirectory": "../../../coverage/libs/finance/expense/util" }
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": { "configFile": "libs/finance/expense/util/vite.config.ts" }
     }
   }
 }
