@@ -4,7 +4,8 @@
     "outDir": "../../../../dist/libs/subject/group/util",
     "declaration": true,
     "composite": true,
-    "module": "es2020",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "target": "es2020",
     "types": [],
     "tsBuildInfoFile": "../../../../dist/out-tsc/subject-group-util.tsbuildinfo"

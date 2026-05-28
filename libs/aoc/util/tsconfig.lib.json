@@ -4,7 +4,8 @@
     "outDir": "../../../dist/out-tsc/libs/aoc-util",
     "declaration": true,
     "composite": true,
-    "module": "es2020",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "target": "es2020",
     "types": [],
     "tsBuildInfoFile": "../../../dist/out-tsc/aoc-util.tsbuildinfo"

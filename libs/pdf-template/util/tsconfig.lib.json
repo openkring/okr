@@ -4,7 +4,8 @@
     "outDir": "../../../dist/libs/pdf-template/util",
     "declaration": true,
     "composite": true,
-    "module": "es2020",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "target": "es2020",
     "types": [],
     "tsBuildInfoFile": "../../../dist/out-tsc/pdf-template-util.tsbuildinfo"

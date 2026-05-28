@@ -2,7 +2,8 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "../../../../dist/libs/finance/exchange-rate/util",
-    "declaration": true, "composite": true, "module": "es2020", "target": "es2020", "types": [],
+    "declaration": true, "composite": true, "module": "preserve",
+    "moduleResolution": "bundler", "target": "es2020", "types": [],
     "tsBuildInfoFile": "../../../../dist/out-tsc/finance-exchange-rate-util.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],

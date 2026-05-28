@@ -4,7 +4,8 @@
     "outDir": "../../../../dist/libs/cms/menu/util",
     "declaration": true,
     "composite": true,
-    "module": "es2020",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "target": "es2020",
     "types": [],
     "tsBuildInfoFile": "../../../../dist/out-tsc/cms-menu-util.tsbuildinfo"
