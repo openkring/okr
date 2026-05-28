@@ -2,6 +2,7 @@
 export * from './lib/account.model';
 export * from './lib/activity.model';
 export * from './lib/address.model';
+export * from './lib/application.model';
 export * from './lib/app-config.model';
 export * from './lib/auth-credentials.model';
 export * from './lib/avatar-info';
