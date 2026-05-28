@@ -122,6 +122,86 @@ export const FormDefinitionStore = signalStore(
       store.formsResource.reload();
     },
 
+    async downloadPdf(form: FormDefinitionModel, submissionId?: string): Promise<void> {
+      if (form.target.kind !== 'collection') return;
+      const { getFirestore, collection, getDocs, query, where } = await import('firebase/firestore');
+      const db = getFirestore();
+
+      type SubmissionDoc = Record<string, unknown> & { bkey: string };
+      let docsData: SubmissionDoc[];
+
+      if (submissionId) {
+        const { doc, getDoc } = await import('firebase/firestore');
+        const snap = await getDoc(doc(db, form.target.collectionName, submissionId));
+        docsData = snap.exists() ? [{ ...snap.data(), bkey: snap.id } as SubmissionDoc] : [];
+      } else {
+        const snap = await getDocs(
+          query(
+            collection(db, form.target.collectionName),
+            where('tenants', 'array-contains', store.appStore.tenantId()),
+          )
+        );
+        docsData = snap.docs.map(d => ({ ...d.data(), bkey: d.id }) as SubmissionDoc);
+      }
+
+      if (docsData.length === 0) return;
+
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const { getApp } = await import('firebase/app');
+      const fn = httpsCallable<Record<string, unknown>, { url: string; filename: string }>(
+        getFunctions(getApp(), 'europe-west6'),
+        'generateDocument',
+      );
+
+      const fields = [...form.fields].sort((a, b) => a.order - b.order);
+
+      if (submissionId && form.pdfTemplateId) {
+        // Template mode — single submission
+        const result = await fn({
+          templateId: form.pdfTemplateId,
+          payload: docsData[0],
+          options: { outputFormat: 'pdf', storageMode: 'ephemeral', filename: `${form.formKey}-${submissionId}.pdf` },
+        });
+        window.open(result.data.url, '_blank');
+      } else {
+        // Raw HTML mode — batch (or single without template)
+        const buildPage = (data: SubmissionDoc): string => {
+          const rows = fields.map(f => {
+            const v = data[f.key];
+            const display = (v === undefined || v === null || v === '') ? '–' : String(v);
+            return `<tr><th style="text-align:left;padding:4px 12px 4px 0;font-weight:600;">${f.label}</th><td style="padding:4px 0;">${display}</td></tr>`;
+          }).join('');
+          return `<div class="page">
+            <h2 style="margin:0 0 12px;">${form.name}</h2>
+            <table style="border-collapse:collapse;width:100%;">${rows}</table>
+            <p style="color:#888;font-size:11px;margin-top:16px;">ID: ${data['bkey']} · Eingereicht: ${String(data['submittedAt'] ?? '')}</p>
+          </div>`;
+        };
+
+        const pages = docsData
+          .map((data, i) =>
+            i < docsData.length - 1
+              ? `<div style="page-break-after:always;">${buildPage(data)}</div>`
+              : buildPage(data)
+          )
+          .join('');
+
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+          <style>body{font-family:sans-serif;padding:20px;} .page{padding:10px;}</style>
+          </head><body>${pages}</body></html>`;
+
+        const filename = submissionId
+          ? `${form.formKey}-${submissionId}.pdf`
+          : `${form.formKey}-submissions-${Date.now()}.pdf`;
+
+        const result = await fn({
+          html,
+          options: { outputFormat: 'pdf', storageMode: 'ephemeral', filename },
+        });
+        window.open(result.data.url, '_blank');
+      }
+    },
+
     async downloadCsv(form: FormDefinitionModel): Promise<void> {
       if (form.target.kind !== 'collection') return;
       const { getFirestore, collection, getDocs, query, where } = await import('firebase/firestore');

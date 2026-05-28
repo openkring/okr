@@ -86,6 +86,7 @@ export class FormDefinitionModel implements BkModel, NamedModel, TaggedModel {
   public honeypotKey = '';
   public encryptionSalt = '';
   public encryptionKeyHash = '';
+  public pdfTemplateId = '';
   public description = '';
   public target: SubmissionTarget = { kind: 'collection', mappingKey: '', modelType: '', collectionName: '' };
   public fields: Field[] = [];

@@ -79,6 +79,13 @@ import { FORM_MAPPINGS } from '@bk2/forms-util';
             <ion-input [ngModel]="urlTarget()" (ngModelChange)="setUrl($event)" placeholder="https://…" type="url" />
           </ion-item>
         }
+
+        <!-- PDF template (optional) -->
+        <ion-item>
+          <ion-label position="stacked">PDF-Template-ID (optional)</ion-label>
+          <ion-input [(ngModel)]="formData().pdfTemplateId" placeholder="Template-ID aus dem Dokument-Generator" />
+        </ion-item>
+
       </ion-list>
 
       <ion-button expand="block" [disabled]="!isValid()" (click)="save()" style="margin: 16px;">
