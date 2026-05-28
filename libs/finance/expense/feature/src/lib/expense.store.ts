@@ -9,13 +9,12 @@ import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { AddressModel, BookingLineModel, BookingModel, ExpenseModel } from '@bk2/shared-models';
 import { getTodayStr } from '@bk2/shared-util-core';
-import { parseIban } from '@bk2/shared-util-angular';
 
 import { AddressService } from '@bk2/subject-address-data-access';
 import { UploadService } from '@bk2/avatar-data-access';
 import { DocumentService } from '@bk2/document-data-access';
 import { AccountingConfigService } from '@bk2/finance-accounting-data-access';
-import { BookingService, BookingLineService } from '@bk2/finance-booking-data-access';
+import { BookingService } from '@bk2/finance-booking-data-access';
 
 import { ExpenseDocumentService, ExpenseService } from '@bk2/finance-expense-data-access';
 import { chfToCents, ExpenseFormValue, newExpenseDocumentModel, newExpenseModel, normalizeIban } from '@bk2/finance-expense-util';
@@ -59,7 +58,6 @@ export const ExpenseStore = signalStore(
     documentService:         inject(DocumentService),
     accountingConfigService: inject(AccountingConfigService),
     bookingService:          inject(BookingService),
-    _bookingLineService:     inject(BookingLineService),
     expenseService:          inject(ExpenseService),
     expenseDocService:       inject(ExpenseDocumentService),
     i18nService:             inject(I18nService),
@@ -138,8 +136,7 @@ export const ExpenseStore = signalStore(
       try {
         const normalizedIban = normalizeIban(formValue.iban);
         const existingIbans = await firstValueFrom(store.addressService.listBankAccounts(userId));
-        const normalizedExisting = existingIbans.map(a => parseIban(a.iban));
-        const exists = normalizedExisting.includes(parseIban(normalizedIban));
+        const exists = existingIbans.some(a => normalizeIban(a.iban) === normalizedIban);
         if (!exists) {
           const addr = new AddressModel(tenantId);
           addr.addressChannel = 'bankaccount';
