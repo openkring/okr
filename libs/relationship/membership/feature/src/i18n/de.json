@@ -1,6 +1,8 @@
 {
   "memberships": "Mitgliedschaften",
   "members": "Mitglieder",
+  "reldesc1": "Mitgliedschaft von",
+  "reldesc2": "bei",
   "newDesc": "soll Mitglied werden bei",
   "titleRel": "in",
   "year": {
@@ -79,7 +81,8 @@
     "upload": "Rechnung hochladen",
     "download": "Rechnung herunterladen",
     "paid": "Als bezahlt markieren",
-    "delete": "Rechnung löschen"
+    "delete": "Rechnung löschen",
+    "state": "Rechnungsstatus"
   },
   "member": {
     "edit": "Mitglied ändern",
@@ -125,15 +128,48 @@
       "title": "Mitgliedergebühren",
       "empty": "Keine Einträge gefunden"
     },
-    "jb": "Jahresbeitrag",
-    "jbp": "Verbandsbeitrag",
-    "entryFee": "Einmalige Eintrittsgebühr",
-    "locker": "Miete Garderobenkasten",
-    "skiff": "Skiff Lagerplatz Miete",
-    "skiffInsurance": "Skiff Versicherungsanteil",
-    "bev": "Getränke 2025",
-    "rebate": "Rabatt",
-    "total": "Total"
+
+    "total": "Total",
+    "jb": {
+      "label": "Jahresbeitrag",
+      "placeholder": "nnn",
+      "helper": "Der jährliche Beitrag an die eigene Organisation."
+    },
+    "jbp": {
+      "label": "Verbandsbeitrag",
+      "placeholder": "nnn",
+      "helper": "Der jährliche Betirag an die Dachorganisation."
+    },
+    "bev": {
+      "label": "Getränke 2025",
+      "placeholder": "nnn",
+      "helper": "Konsumationen im vergangenen Jahr"
+    },
+    "entryFee": {
+      "label": "Einmalige Eintrittsgebühr",
+      "placeholder": "nnn",
+      "helper": "Einmalige Eintrittsgebühr"
+    },
+    "locker": {
+      "label": "Miete Garderobenkasten",
+      "placeholder": "nn",
+      "helper": "Jährliche Miete eines Garderobenkastens."
+    },
+    "skiff": {
+      "label": "Skiff Lagerplatz Miete",
+      "placeholder": "nnn",
+      "helper": "Jährliche Miete eines Lagerplatzes."
+    },
+    "skiffInsurance": {
+      "label": "Skiff Versicherungsanteil",
+      "placeholder": "nn",
+      "helper": "Anteilsmässige Verrechnung der Versicherungskosten."
+    },
+    "rebate": {
+      "label": "Rabatt",
+      "placeholder": "nnn",
+      "helper": "Ausbildungs- oder Familienrabatt."
+    }
   },
 
   "memberid": {
@@ -264,5 +300,5 @@
     "label": "Todesdatum",
     "placeholder": "dd.mm.yyyy",
     "helper": "An diesem Datum ist die Person gestorben."
-  },
+  }
 }

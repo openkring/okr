@@ -26,7 +26,7 @@ import { MembershipStore } from './membership.store';
   template: `
     <ion-content>
       @if(members().length === 0) {
-        <bk-empty-list message="@general.noData.members" />
+        <bk-empty-list [message]="store.i18n.no_data_members()" />
       } @else {
         <ion-list lines="inset">
           @for(member of members(); track $index) {
@@ -74,7 +74,7 @@ export class Members {
    * @param member 
    */
   protected async showActions(member: MembershipModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, member);
     await this.executeActions(actionSheetOptions, member);
   }

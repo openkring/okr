@@ -37,6 +37,7 @@ import { OwnershipStore } from './ownership.store';
           [types]="resourceTypes()"
           [objectAvatar]="ownerAvatar()"
           [objectDefaultIcon]="objectDefaultIcon()"
+          [relDesc1]="store.i18n.relDesc1()" [relDesc2]="store.i18n.relDesc2()"
           [currentUser]="currentUser"
         />
         
@@ -47,6 +48,7 @@ import { OwnershipStore } from './ownership.store';
             [currentUser]="currentUser"
             [allTags]="tags()"
             [tenantId]="tenantId()"
+            [i18n]="store.i18n"
             [readOnly]="isReadOnly()"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"

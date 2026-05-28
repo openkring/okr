@@ -18,7 +18,7 @@ import { OwnershipStore } from './ownership.store';
   ],
   providers: [OwnershipStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.create_label() }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.create() }" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
     }

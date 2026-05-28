@@ -252,7 +252,7 @@ const ADDRESSES_I18N_KEYS = {
   isFavorite_label:                PFX + 'isFavorite.label',
   isFavorite_helper:               PFX + 'isFavorite.helper',
   isCc_label:                      PFX + 'isCc.label',
-  isCc_helper:                     PFX + 'isCc.helper',
+  isCc_helper:                     PFX + 'isCc.helper',    
 } satisfies Record<string, string>;
 
 export type AddressesI18n = { [K in keyof typeof ADDRESSES_I18N_KEYS]: Signal<string> };

@@ -36,7 +36,7 @@ import { MembershipStore } from './membership.store';
     </ion-item>
     <div slot="content">
         @if(memberships().length === 0) {
-        <bk-empty-list message="@general.noData.memberships" />
+        <bk-empty-list [message]="store.i18n.no_data_memberships()" />
       } @else {
         <ion-list lines="inset">
           @for(membership of memberships(); track $index) {
@@ -62,7 +62,7 @@ export class MembershipAccordion {
   public member = input.required<PersonModel | OrgModel>();
   public readonly modelType = input<'person' | 'org'>('person');
   public readonly color = input('light');
-  public readonly title = input('@membership.plural');
+  public readonly title = input(this.store.i18n.memberships());
   public readonly readOnly = input<boolean>(true);
 
   // coerced boolean inputs

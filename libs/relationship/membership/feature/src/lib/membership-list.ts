@@ -94,7 +94,7 @@ import { MembershipStore } from './membership.store';
       <bk-spinner />
     } @else {
       @if(filteredMemberships().length === 0) {
-        <bk-empty-list message="@membership.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(membership of filteredMemberships(); track membership.bkey) {

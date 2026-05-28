@@ -120,7 +120,7 @@ import { Menu } from '@bk2/cms-menu-feature';
         <bk-spinner />
       } @else {
         @if (sortedFees().length === 0) {
-          <bk-empty-list message="@finance.scsMemberFee.list.empty" />
+          <bk-empty-list [message]="store.i18n.list_empty()" />
         } @else {
           <ion-grid>
             @for (fee of sortedFees(); track $index) {
@@ -319,7 +319,7 @@ export class ScsMemberFees {
   }
 
   protected async showActions(fee: ScsMemberFeesModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addButtons(actionSheetOptions, fee);
     await this.executeActions(actionSheetOptions, fee);
   }
@@ -328,17 +328,17 @@ export class ScsMemberFees {
     const imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
     if (this.canChange()) {
-      opts.buttons.push(createActionSheetButton('invoice.edit', imgixBaseUrl, 'edit', this.store.i18n.as_invoice_edit()));
-      opts.buttons.push(createActionSheetButton('invoice.upload', imgixBaseUrl, 'upload', this.store.i18n.as_invoice_upload()));
-      opts.buttons.push(createActionSheetButton('invoice.download', imgixBaseUrl, 'download', this.store.i18n.as_invoice_download()));
-      opts.buttons.push(createActionSheetButton('invoice.paid', imgixBaseUrl, 'checkmark', this.store.i18n.as_invoice_paid()));
+      opts.buttons.push(createActionSheetButton('invoice.edit', imgixBaseUrl, 'edit', this.store.i18n.invoice_edit()));
+      opts.buttons.push(createActionSheetButton('invoice.upload', imgixBaseUrl, 'upload', this.store.i18n.invoice_upload()));
+      opts.buttons.push(createActionSheetButton('invoice.download', imgixBaseUrl, 'download', this.store.i18n.invoice_download()));
+      opts.buttons.push(createActionSheetButton('invoice.paid', imgixBaseUrl, 'checkmark', this.store.i18n.invoice_paid()));
       opts.buttons.push(createActionSheetDivider());
       if (fee.bkey) {
-        opts.buttons.push(createActionSheetButton('invoice.delete', imgixBaseUrl, 'trash', this.store.i18n.as_invoice_delete()));
+        opts.buttons.push(createActionSheetButton('invoice.delete', imgixBaseUrl, 'trash', this.store.i18n.invoice_delete()));
         opts.buttons.push(createActionSheetDivider());
       }
-      opts.buttons.push(createActionSheetButton('person.edit', imgixBaseUrl, 'edit', this.store.i18n.as_person_edit()));
-      opts.buttons.push(createActionSheetButton('member.edit', imgixBaseUrl, 'edit', this.store.i18n.as_member_edit()));
+      opts.buttons.push(createActionSheetButton('person.edit', imgixBaseUrl, 'edit', this.store.i18n.person_edit()));
+      opts.buttons.push(createActionSheetButton('member.edit', imgixBaseUrl, 'edit', this.store.i18n.member_edit()));
     }
     opts.buttons.push(createActionSheetButton('cancel', imgixBaseUrl, 'cancel', this.store.i18n.cancel()));
   }

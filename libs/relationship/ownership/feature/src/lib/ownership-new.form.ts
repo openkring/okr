@@ -45,14 +45,14 @@ import { OwnershipStore } from './ownership.store';
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectOwner()">{{ formStore.i18n.select_label() }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectOwner()">{{ store.i18n.select() }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12">
                 <ion-item lines="none">
-                  <ion-label>{{ formStore.i18n.new_desc() }}</ion-label>
+                  <ion-label>{{ store.i18n.new_desc() }}</ion-label>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -67,7 +67,7 @@ import { OwnershipStore } from './ownership.store';
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                <ion-button slot="start" fill="clear" (click)="selectResource()">{{ formStore.i18n.select_label() }}</ion-button>
+                <ion-button slot="start" fill="clear" (click)="selectResource()">{{ store.i18n.select() }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -84,8 +84,8 @@ import { OwnershipStore } from './ownership.store';
   `
 })
 export class OwnershipNewForm {
-  protected readonly formStore = inject(OwnershipStore);
-  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.formStore.i18n.validFrom_label(), placeholder: this.formStore.i18n.validFrom_placeholder(), helper: this.formStore.i18n.validFrom_helper() } as DateInputI18n));
+  protected readonly store = inject(OwnershipStore);
+  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.store.i18n.validFrom_label(), placeholder: this.store.i18n.validFrom_placeholder(), helper: this.store.i18n.validFrom_helper() } as DateInputI18n));
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 

@@ -2,10 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSign
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { getFullName, safeStructuredClone } from '@bk2/shared-util-core';
-import { signalStore, withProps } from '@ngrx/signals';
 
 import { AvatarToolbar } from '@bk2/avatar-feature';
 
@@ -73,7 +71,7 @@ export class ScsMemberFeeEditModal {
   protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   protected headerTitle = computed(() =>
-    this.readOnly() ? '@finance.scsMemberFee.operation.view.label' : '@finance.scsMemberFee.operation.update.label'
+    this.readOnly() ? this.store.i18n.view_label() : this.store.i18n.update_label()
   );
 
   public async save(): Promise<boolean> {

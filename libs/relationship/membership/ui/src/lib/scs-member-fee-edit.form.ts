@@ -10,34 +10,43 @@ import { getAge } from '@bk2/shared-util-core';
 import { scsMemberFeeValidations } from '@bk2/relationship-membership-util';
 
 export interface ScsMemberFeeEditFormI18n {
-  jb_label: Signal<string>;
+  jb: Signal<string>;
   jb_placeholder: Signal<string>;
   jb_helper: Signal<string>;
-  srv_label: Signal<string>;
-  srv_placeholder: Signal<string>;
-  srv_helper: Signal<string>;
-  bev_label: Signal<string>;
+
+  jbp: Signal<string>;
+  jbp_placeholder: Signal<string>;
+  jbp_helper: Signal<string>;
+
+  bev: Signal<string>;
   bev_placeholder: Signal<string>;
   bev_helper: Signal<string>;
-  entryFee_label: Signal<string>;
+
+  entryFee: Signal<string>;
   entryFee_placeholder: Signal<string>;
   entryFee_helper: Signal<string>;
-  locker_label: Signal<string>;
+
+  locker: Signal<string>;
   locker_placeholder: Signal<string>;
   locker_helper: Signal<string>;
-  skiff_label: Signal<string>;
+
+  skiff: Signal<string>;
   skiff_placeholder: Signal<string>;
   skiff_helper: Signal<string>;
-  skiffInsurance_label: Signal<string>;
+
+  skiffInsurance: Signal<string>;
   skiffInsurance_placeholder: Signal<string>;
   skiffInsurance_helper: Signal<string>;
+
   rebate_label: Signal<string>;
   rebate_placeholder: Signal<string>;
   rebate_helper: Signal<string>;
+  rebate_reason: Signal<string>;
+
   notes_label: Signal<string>;
   notes_placeholder: Signal<string>;
-  rebateReason_label: Signal<string>;
-  invoiceState_label: Signal<string>;
+
+  invoice_state: Signal<string>;
 }
 
 @Component({
@@ -135,17 +144,17 @@ export interface ScsMemberFeeEditFormI18n {
 })
 export class ScsMemberFeeEditForm {
   // i18n — all translations come from the i18n input
-  protected jbI18n             = computed(() => ({ name: 'jb',             label: this.i18n().jb_label(),             placeholder: this.i18n().jb_placeholder(),             helper: this.i18n().jb_helper()             } as NumberInputI18n));
-  protected srvI18n            = computed(() => ({ name: 'srv',            label: this.i18n().srv_label(),            placeholder: this.i18n().srv_placeholder(),            helper: this.i18n().srv_helper()            } as NumberInputI18n));
-  protected bevI18n            = computed(() => ({ name: 'bev',            label: this.i18n().bev_label(),            placeholder: this.i18n().bev_placeholder(),            helper: this.i18n().bev_helper()            } as NumberInputI18n));
-  protected entryFeeI18n       = computed(() => ({ name: 'entryFee',       label: this.i18n().entryFee_label(),       placeholder: this.i18n().entryFee_placeholder(),       helper: this.i18n().entryFee_helper()       } as NumberInputI18n));
-  protected lockerI18n         = computed(() => ({ name: 'locker',         label: this.i18n().locker_label(),         placeholder: this.i18n().locker_placeholder(),         helper: this.i18n().locker_helper()         } as NumberInputI18n));
-  protected skiffI18n          = computed(() => ({ name: 'skiff',          label: this.i18n().skiff_label(),          placeholder: this.i18n().skiff_placeholder(),          helper: this.i18n().skiff_helper()          } as NumberInputI18n));
-  protected skiffInsuranceI18n = computed(() => ({ name: 'skiffInsurance', label: this.i18n().skiffInsurance_label(), placeholder: this.i18n().skiffInsurance_placeholder(), helper: this.i18n().skiffInsurance_helper() } as NumberInputI18n));
+  protected jbI18n             = computed(() => ({ name: 'jb',             label: this.i18n().jb(),             placeholder: this.i18n().jb_placeholder(),             helper: this.i18n().jb_helper()             } as NumberInputI18n));
+  protected srvI18n            = computed(() => ({ name: 'jbp',            label: this.i18n().jbp(),            placeholder: this.i18n().jbp_placeholder(),            helper: this.i18n().jbp_helper()            } as NumberInputI18n));
+  protected bevI18n            = computed(() => ({ name: 'bev',            label: this.i18n().bev(),            placeholder: this.i18n().bev_placeholder(),            helper: this.i18n().bev_helper()            } as NumberInputI18n));
+  protected entryFeeI18n       = computed(() => ({ name: 'entryFee',       label: this.i18n().entryFee(),       placeholder: this.i18n().entryFee_placeholder(),       helper: this.i18n().entryFee_helper()       } as NumberInputI18n));
+  protected lockerI18n         = computed(() => ({ name: 'locker',         label: this.i18n().locker(),         placeholder: this.i18n().locker_placeholder(),         helper: this.i18n().locker_helper()         } as NumberInputI18n));
+  protected skiffI18n          = computed(() => ({ name: 'skiff',          label: this.i18n().skiff(),          placeholder: this.i18n().skiff_placeholder(),          helper: this.i18n().skiff_helper()          } as NumberInputI18n));
+  protected skiffInsuranceI18n = computed(() => ({ name: 'skiffInsurance', label: this.i18n().skiffInsurance(), placeholder: this.i18n().skiffInsurance_placeholder(), helper: this.i18n().skiffInsurance_helper() } as NumberInputI18n));
   protected rebateI18n         = computed(() => ({ name: 'rebate',         label: this.i18n().rebate_label(),         placeholder: this.i18n().rebate_placeholder(),         helper: this.i18n().rebate_helper()         } as NumberInputI18n));
   protected notesI18n          = computed(() => ({ name: 'notes',          label: this.i18n().notes_label(),          placeholder: this.i18n().notes_placeholder()                                                        } as NotesInputI18n));
-  protected rebateReasonI18n   = computed(() => ({ name: 'rebateReason',   label: this.i18n().rebateReason_label()                                                                                                        } as StringSelectI18n));
-  protected invoiceStateI18n   = computed(() => ({ name: 'invoiceState',   label: this.i18n().invoiceState_label()                                                                                                        } as StringSelectI18n));
+  protected rebateReasonI18n   = computed(() => ({ name: 'rebateReason',   label: this.i18n().rebate_reason()                                                                                                        } as StringSelectI18n));
+  protected invoiceStateI18n   = computed(() => ({ name: 'invoiceState',   label: this.i18n().invoice_state()                                                                                                        } as StringSelectI18n));
 
   // inputs
   public readonly i18n = input.required<ScsMemberFeeEditFormI18n>();

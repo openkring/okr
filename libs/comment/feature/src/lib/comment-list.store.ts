@@ -7,11 +7,13 @@ import { debugListLoaded } from '@bk2/shared-util-core';
 
 import { CommentService } from '@bk2/comment-data-access';
 import { AlertService } from '@bk2/shared-util-angular';
+import { PFX } from './scope';
 
 const COMMENT_LIST_I18N_KEYS = {
-  add_title: '@comment.operation.add.title',
-  add_placeholder: '@comment.operation.add.placeholder',
-  comment_plural: '@comment.plural'
+  comments:             PFX + 'comments',
+  empty:                PFX + 'empty',
+  add_title:            PFX + 'add.title',
+  add_placeholder:      PFX + 'add.placeholder',
 } satisfies Record<string, string>;
 
 export type CommentListI18n = { [K in keyof typeof COMMENT_LIST_I18N_KEYS]: Signal<string> };

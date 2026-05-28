@@ -20,7 +20,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
   template: `
     <ion-accordion toggle-icon-slot="start" value="comments">
       <ion-item slot="header" [color]="color()">
-        <ion-label>{{ commentListStore.i18n.comment_plural() }}</ion-label>
+        <ion-label>{{ store.i18n.comments() }}</ion-label>
         @if(!isReadOnly()) {
           <ion-button fill="clear" (click)="add()" size="default">
             <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -29,13 +29,13 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
       </ion-item>
     <div slot="content">
       <ion-grid style="width: 100%; height: 100%;">
-        <bk-comments-list [comments]="comments()" />
+        <bk-comments-list [comments]="comments()" [empty]="store.i18n.empty()" />
       </ion-grid>
     </div>
   `
 })
 export class CommentsAccordion {
-  protected readonly commentListStore = inject(CommentListStore);
+  protected readonly store = inject(CommentListStore);
 
   public name = input('comment'); // mandatory name for the form control
   public parentKey = input.required<string>();  // modelType.key of the parent model
@@ -43,17 +43,17 @@ export class CommentsAccordion {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public color = input('light');
 
-  public comments = computed(() => this.commentListStore.comments() ?? []);
+  public comments = computed(() => this.store.comments() ?? []);
   protected value = signal<string>('');
 
   constructor() {
     effect(() => {
-      this.commentListStore.setParentKey(this.parentKey());
+      this.store.setParentKey(this.parentKey());
     });
   }
 
   public async add(): Promise<void> {
-    await this.commentListStore.add();
+    await this.store.add();
     this.value.set('');  // reset input field
   }
 }

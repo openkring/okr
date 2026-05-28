@@ -1,15 +1,39 @@
-import { Component, computed, inject, input, linkedSignal, model, output, signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
 import { DEFAULT_CURRENCY } from '@bk2/shared-constants';
 import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { I18nService } from '@bk2/shared-i18n';
-import { PFX } from './scope';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
+
+export interface OwnershipFormI18n {
+  bkey_label: Signal<string>;
+  bkey_placeholder: Signal<string>;
+  bkey_helper: Signal<string>;
+  ownerName1_label: Signal<string>;
+  ownerName1_placeholder: Signal<string>;
+  ownerName1_helper: Signal<string>;
+  ownerName2_label: Signal<string>;
+  ownerName2_placeholder: Signal<string>;
+  ownerName2_helper: Signal<string>;
+  validFrom_label: Signal<string>;
+  validFrom_placeholder: Signal<string>;
+  validFrom_helper: Signal<string>;
+  validTo_label: Signal<string>;
+  validTo_placeholder: Signal<string>;
+  validTo_helper: Signal<string>;
+  price_label: Signal<string>;
+  price_placeholder: Signal<string>;
+  price_helper: Signal<string>;
+  currency_label: Signal<string>;
+  currency_placeholder: Signal<string>;
+  currency_helper: Signal<string>;
+  notes_label: Signal<string>;
+  notes_placeholder: Signal<string>;
+}
 
 @Component({
   selector: 'bk-ownership-form',
@@ -96,39 +120,18 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
   `
 })
 export class OwnershipForm {
-  // i18n
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label: PFX + 'bkey.label',
-    bkey_placeholder: PFX + 'bkey.placeholder',
-    bkey_helper: PFX + 'bkey.helper',
-    ownerName1_label: PFX + 'ownerName1.label',
-    ownerName1_placeholder: PFX + 'ownerName1.placeholder',
-    ownerName1_helper: PFX + 'ownerName1.helper',
-    ownerName2_label: PFX + 'ownerName2.label',
-    ownerName2_placeholder: PFX + 'ownerName2.placeholder',
-    ownerName2_helper: PFX + 'ownerName2.helper',
-    currency_label: PFX + 'currency.label',
-    currency_placeholder: PFX + 'currency.placeholder',
-    currency_helper: PFX + 'currency.helper',
-    price_label: PFX + 'price.label',
-    price_placeholder: PFX + 'price.placeholder',
-    price_helper: PFX + 'price.helper',
-    notes_label: PFX + 'notes.label',
-    notes_placeholder: PFX + 'notes.placeholder',
-    validFrom_label: PFX + 'validFrom.label', validFrom_placeholder: PFX + 'validFrom.placeholder', validFrom_helper: PFX + 'validFrom.helper',
-    validTo_label:   PFX + 'validTo.label',   validTo_placeholder:   PFX + 'validTo.placeholder',   validTo_helper:   PFX + 'validTo.helper',
-  });
-  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.fieldI18n.bkey_label(), placeholder: this.fieldI18n.bkey_placeholder(), helper: this.fieldI18n.bkey_helper() } as TextInputI18n));
-  protected ownerName1I18n = computed(() => ({ name: 'ownerName1', label: this.fieldI18n.ownerName1_label(), placeholder: this.fieldI18n.ownerName1_placeholder(), helper: this.fieldI18n.ownerName1_helper() } as TextInputI18n));
-  protected ownerName2I18n = computed(() => ({ name: 'ownerName2', label: this.fieldI18n.ownerName2_label(), placeholder: this.fieldI18n.ownerName2_placeholder(), helper: this.fieldI18n.ownerName2_helper() } as TextInputI18n));
-  protected currencyI18n = computed(() => ({ name: 'currency', label: this.fieldI18n.currency_label(), placeholder: this.fieldI18n.currency_placeholder(), helper: this.fieldI18n.currency_helper() } as TextInputI18n));
-  protected priceI18n = computed(() => ({ name: 'price', label: this.fieldI18n.price_label(), placeholder: this.fieldI18n.price_placeholder(), helper: this.fieldI18n.price_helper() } as NumberInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.fieldI18n.notes_label(), placeholder: this.fieldI18n.notes_placeholder() } as NotesInputI18n));
-  protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.fieldI18n.validFrom_label(), placeholder: this.fieldI18n.validFrom_placeholder(), helper: this.fieldI18n.validFrom_helper() } as DateInputI18n));
-  protected validToI18n = computed(() => ({ name: 'validTo', label: this.fieldI18n.validTo_label(), placeholder: this.fieldI18n.validTo_placeholder(), helper: this.fieldI18n.validTo_helper() } as DateInputI18n));
+  // i18n - all translations come from the i18n input
+  protected bkeyI18n          = computed(() => ({ name: 'bkey',          label: this.i18n().bkey_label(),          placeholder: this.i18n().bkey_placeholder()} as TextInputI18n));
+  protected ownerName1I18n    = computed(() => ({ name: 'ownerName1',    label: this.i18n().ownerName1_label(),    placeholder: this.i18n().ownerName1_placeholder()} as TextInputI18n));
+  protected ownerName2I18n    = computed(() => ({ name: 'ownerName2',    label: this.i18n().ownerName2_label(),    placeholder: this.i18n().ownerName2_placeholder()} as TextInputI18n));
+  protected validFromI18n     = computed(() => ({ name: 'validFrom',     label: this.i18n().validFrom_label(),     placeholder: this.i18n().validFrom_placeholder()} as DateInputI18n));
+  protected validToI18n       = computed(() => ({ name: 'validTo',       label: this.i18n().validTo_label(),       placeholder: this.i18n().validTo_placeholder()} as DateInputI18n));
+  protected priceI18n         = computed(() => ({ name: 'price',         label: this.i18n().price_label(),         placeholder: this.i18n().price_placeholder()} as NumberInputI18n));
+  protected currencyI18n      = computed(() => ({ name: 'currency',      label: this.i18n().currency_label(),      placeholder: this.i18n().currency_placeholder()} as TextInputI18n));
+  protected notesI18n         = computed(() => ({ name: 'notes',         label: this.i18n().notes_label(),         placeholder: this.i18n().notes_placeholder()} as NotesInputI18n));
 
   // inputs
+  public readonly i18n = input.required<OwnershipFormI18n>();
   public readonly formData = model.required<OwnershipModel>();
   public readonly currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

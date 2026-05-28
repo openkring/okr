@@ -32,7 +32,7 @@ import { OwnershipStore } from './ownership.store';
       </ion-item>
       <div slot="content">
         @if(ownerships().length === 0) {
-          <bk-empty-list message="@general.noData.ownerships" />
+          <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
             @for(ownership of ownerships(); track $index) {
@@ -51,7 +51,7 @@ import { OwnershipStore } from './ownership.store';
     `
 })
 export class OwnershipAccordion {
-  private readonly store = inject(OwnershipStore);
+  protected readonly store = inject(OwnershipStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -103,15 +103,15 @@ export class OwnershipAccordion {
    * @param ownership 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(ownership.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.store.i18n.as_end(), this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
       }
     }
     if (hasRole('admin', this.currentUser()) && !this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }

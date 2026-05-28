@@ -1,39 +1,85 @@
 {
   "ownerships": "Nutzungen",
+  "description": "Person oder Organisation benutzt eine Resource",
   "empty": "Keine Nutzungen gefunden.",
   "duration": "von-bis",
   "ownerName": "Name",
   "resourceName": "Resource",
   "newDesc": "möchte neu die folgende Resource nutzen:",
-  "select": {
-    "label": "Auswählen"
+  "relDesc1": "Nutzung von",
+  "relDesc2": "durch",
+  "revreldesc": "wird benutzt von",
+
+  "bkey": {
+    "label": "bkey",
+    "placeholder": "bkey",
+    "helper": "Der bkey ist der Schlüssel einer Nutzung, eine eindeutige ID in der Datenbank."
+  },
+
+  "ownerName1": {
+    "label": "Vorname",
+    "placeholder": "Name / Firma",
+    "helper": ""
+  },
+  "ownerName2": {
+    "label": "",
+    "placeholder": "",
+    "helper": ""
+  },
+  "currency": {
+    "label": "Währung",
+    "placeholder": "CHF",
+    "helper": ""
+  },
+  "price": {
+    "label": "Preis",
+    "placeholder": "",
+    "helper": ""
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
   },
   "boat": {
     "name": "Bootsname",
     "type": "Bootstyp"
   },
-  "create": {
-    "label": "Nutzung hinzufügen"
-  },
-  "delete": {
-    "confirm": "Normalerweise sollte eine Nutzung beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Nutzung wirklich löschen?"
-  },
   "validFrom": {
     "label": "Gültig ab",
     "placeholder": "TT.MM.JJJJ",
-    "helper": ""
+    "helper": "Die Nutzung startet an diesem Datum."
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Nutzungs Details ansehen",
-    "edit": "Nutzung ändern",
-    "create": "Neue Nutzung erstellen",
-    "delete": "Nutzung löschen",
-    "end": "Nutzung beenden"
+  "validTo": {
+    "label": "Gültig bis",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Die Nutzung endet an diesem Datum."
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "view": {
+    "label": "Nutzungs Details ansehen"
+  },
+  "edit": {
+        "label": "Nutzung ändern",
+        "error": "Die Aenderungen konnten nicht gespeichert werden",
+        "conf": "Die Aenderungen wurden gespeichert."
+  },
+  "end": {
+    "label": "Nutzung beenden"
+  },
+  "create": {
+        "label": "Nutzung hinzufügen",
+        "error": "Nutzung konnte nicht erstellt werden.",
+        "conf": "Nutzung wurde erstellt."
+  },
+  "delete": {
+        "label": "Nutzung löschen",
+        "error": "Nutzung konnte nicht gelöscht werden",
+        "conf": "Nutzung wurde gelöscht",
+        "confirm": "Normalerweise sollte eine Nutzung beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Nutzung wirklich löschen?"
+  },
+  "reactivate": {
+    "label": "Nutzung reaktivieren",
+    "error": "Die Nutzung konnte nicht reaktiviert werden.",
+    "conf": "Die Nutzung wurde reaktiviert."
   }
 }

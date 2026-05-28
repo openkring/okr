@@ -14,7 +14,7 @@ import { PrettyDatePipe } from '@bk2/shared-pipes';
   template: `
     @if(comments().length === 0) {
       <ion-row>
-        <ion-col size="12"><small>{{ '@general.noData.comments' }}</small></ion-col>
+        <ion-col size="12"><small>{{ empty() }}</small></ion-col>
       </ion-row>
     } @else {
       @for (comment of comments(); track comment.bkey) {
@@ -28,5 +28,6 @@ import { PrettyDatePipe } from '@bk2/shared-pipes';
 `
 })
 export class CommentsList {
-  public comments = input.required<CommentModel[]>();  
+  public comments = input.required<CommentModel[]>();
+  public empty = input.required<string>();
 }

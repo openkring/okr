@@ -78,7 +78,12 @@ export interface CategoryChangeFormI18n {
   `
 })
 export class CategoryChangeForm {
-  protected dateOfChangeI18n = computed(() => ({ name: 'dateOfChange', label: this.i18n().dateOfChange_label(), placeholder: this.i18n().dateOfChange_placeholder(), helper: this.i18n().dateOfChange_helper() } as DateInputI18n));
+  protected dateOfChangeI18n = computed(() => ({ 
+    name: 'dateOfChange', 
+    label: this.i18n().dateOfChange_label(), 
+    placeholder: this.i18n().dateOfChange_placeholder(), 
+    helper: this.i18n().dateOfChange_helper()
+  } as DateInputI18n));
 
   // inputs
   public readonly i18n = input.required<CategoryChangeFormI18n>();

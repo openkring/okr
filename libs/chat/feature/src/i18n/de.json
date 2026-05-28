@@ -62,7 +62,8 @@
     "raw": "Rohdaten anzeigen",
     "react": {
       "header": "Reaktion wählen",
-      "add": "Reaktion hinzufügen"
+      "add": "Reaktion hinzufügen",
+      "cancel": "Reaktion löschen"
     },
     "report": {
       "header": "Problem melden",

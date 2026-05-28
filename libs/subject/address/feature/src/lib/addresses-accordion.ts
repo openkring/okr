@@ -60,7 +60,7 @@ import { AddressStore } from "./addresses.store";
                     <ion-icon src="{{ 'shield' | svgIcon }}" />
                   }
                   <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
-                  <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
+                  <span class="ion-hide-md-down"> {{ getAddressUsage(address) }}</span>
                   {{ address | formatAddress }}
                 </ion-label>
                 @if((address.addressChannel === 'bankaccount' || address.addressChannel === 'twint') && address.url) {
@@ -108,10 +108,12 @@ export class AddressesAccordion {
   }
 
   protected getAddressUsage(address: AddressModel): string {
-    if (address.addressUsage === 'custom') {
-      return address.addressUsageLabel;
-    } else {
-      return `${PFX}usage.${address.addressUsage}.label`;
+    if (address.addressUsage === 'custom') return address.addressUsageLabel;
+    switch (address.addressUsage) {
+      case 'home':   return this.store.i18n.usage_home_label();
+      case 'work':   return this.store.i18n.usage_work_label();
+      case 'mobile': return this.store.i18n.usage_mobile_label();
+      default:       return address.addressUsage;
     }
   }
 

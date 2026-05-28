@@ -74,6 +74,8 @@ const initialState: MembershipState = {
 const MEMBERSHIP_I18N_KEYS = {
   memberships:                    PFX + 'memberships',
   members:                        PFX + 'members',
+  reldesc1:                       PFX + 'reldesc1',
+  reldesc2:                       PFX + 'reldesc2',
   new_desc:                       PFX + 'newDesc',
   title_rel:                      PFX + 'in',
   year_entry:                     PFX + 'year.entry',

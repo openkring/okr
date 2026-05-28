@@ -31,6 +31,7 @@ import { MembershipStore } from './membership.store';
               relType="membership"
               [subjectAvatar]="memberAvatar"
               [objectAvatar]="orgAvatar"
+              [relDesc1]="store.i18n.reldesc1()" [relDesc2]="store.i18n.reldesc2()"
               [currentUser]="currentUser"
             />
 

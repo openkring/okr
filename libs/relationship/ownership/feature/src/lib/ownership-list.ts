@@ -239,15 +239,15 @@ export class OwnershipList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
     if (hasRole('resourceAdmin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(ownership.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.store.i18n.as_end(), this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
       }
     }
     if (hasRole('admin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 

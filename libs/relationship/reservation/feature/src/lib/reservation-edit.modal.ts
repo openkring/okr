@@ -34,6 +34,7 @@ import { ReservationStore } from './reservation.store';
               [subjectDefaultIcon]="subjectDefaultIcon()"
               [objectAvatar]="reserver"
               [objectDefaultIcon]="objectDefaultIcon()"
+              [relDesc1]="store.i18n.reldesc1()" [relDesc2]="store.i18n.reldesc2()"
               [currentUser]="currentUser"
             />
           }

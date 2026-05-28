@@ -1,5 +1,6 @@
 {
   "comments": "Kommentare",
+  "empty": "Keine Kommentare vorhanden.",
   "add": {
     "title": "Schreibe hier deinen Kommentar",
     "placeholder": "Text"

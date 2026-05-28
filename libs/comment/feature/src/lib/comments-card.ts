@@ -20,7 +20,7 @@ import { CommentListStore } from './comment-list.store';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ commentListStore.i18n.comment_plural() }}</ion-card-title>
+        <ion-card-title>{{ store.i18n.comments() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid style="width: 100%; height: 100%;">
@@ -28,14 +28,14 @@ import { CommentListStore } from './comment-list.store';
             <bk-comment-input [name]="name()" [value]="" (changed)="addComment($event)" />
           }
           <bk-comment-header />
-          <bk-comments-list [comments]="comments()" />
+          <bk-comments-list [comments]="comments()" [empty]="store.i18n.empty()" />
         </ion-grid>
       </ion-card-content>
     </ion-card>
 `
 })
 export class CommentsCard {
-  protected readonly commentListStore = inject(CommentListStore);
+  protected readonly store = inject(CommentListStore);
 
   public name = input('comment'); // mandatory name for the form control
   public parentKey = input.required<string>();  // modelType.key of the parent model
@@ -43,16 +43,16 @@ export class CommentsCard {
   
   public comments$: Observable<CommentModel[]> | undefined
   protected value = signal<string>('');
-  public comments = computed(() => this.commentListStore.comments() ?? []);
+  public comments = computed(() => this.store.comments() ?? []);
 
   constructor() {
     effect(() => {
-      this.commentListStore.setParentKey(this.parentKey());
+      this.store.setParentKey(this.parentKey());
     });
   }
 
   public async addComment(comment: string): Promise<void> {
-    await this.commentListStore.add(comment);
+    await this.store.add(comment);
     this.value.set('');  // reset input field
   }
 }

@@ -34,6 +34,7 @@ import { MembershipStore } from './membership.store';
           relType="membership"
           [subjectAvatar]="memberAvatar()"
           [objectAvatar]="orgAvatar()"
+          [relDesc1]="store.i18n.reldesc1()" [relDesc2]="store.i18n.reldesc2()"
           [currentUser]="currentUser"
         />
         @if(currentMcat(); as mcat) {
@@ -92,7 +93,7 @@ export class MembershipEditModal {
   protected manualDirty = signal(false);
 
   // derived signals
-  protected headerTitle = computed(() => this.isReadOnly() ? '@membership.operation.view.label' : '@membership.operation.update.label');
+  protected headerTitle = computed(() => this.isReadOnly() ? this.store.i18n.view_label() : this.store.i18n.update_label());
   protected readonly parentKey = computed(() => `${MembershipModelName}.${this.memberKey()}`);
   protected readonly name = computed(() => { const m = this.formData() ?? this.membership(); return getFullName(m.memberName1, m.memberName2, this.currentUser()?.nameDisplay); });
   protected memberAvatar = computed<AvatarInfo>(() => {

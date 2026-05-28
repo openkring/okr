@@ -58,34 +58,66 @@ const initialState: OwnershipState = {
 };
 
 const OWNERSHIP_I18N_KEYS = {
-  ownerships:                      PFX + 'ownerships',
-  empty:                           PFX + 'empty',
-  duration:                        PFX + 'duration',
-  owner_name:                      PFX + 'ownerName',
-  resource_name:                   PFX + 'resourceName',
-  new_desc:                        PFX + 'newDesc',
-  select_label:                    PFX + 'select.label',
-  boat_name:                       PFX + 'boat.name',
-  boat_type:                       PFX + 'boat.type',
-  create_label:                    PFX + 'create.label',
-  delete_confirm:                  PFX + 'delete.confirm',
-  as_title:                        PFX + 'actionsheet.title',
-  as_view:                         PFX + 'actionsheet.view',
-  as_edit:                         PFX + 'actionsheet.edit',
-  as_create:                       PFX + 'actionsheet.create',
-  as_delete:                       PFX + 'actionsheet.delete',
-  as_end:                          PFX + 'actionsheet.end',
-  cancel:                          '@cancel',
-  ok:                              '@ok',
-  save:                            '@save.label',
-  validFrom_label:                 PFX + 'validFrom.label',
-  validFrom_placeholder:           PFX + 'validFrom.placeholder',
-  validFrom_helper:                PFX + 'validFrom.helper',
-  changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
-  changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
-  changeConfirmation_confirmation: PFX + 'changeConfirmation.confirmation',
-} satisfies Record<string, string>;
+  ownerships:                       PFX + 'ownerships',
+  empty:                            PFX + 'empty',
+  duration:                         PFX + 'duration',
+  owner_name:                       PFX + 'ownerName',
+  resource_name:                    PFX + 'resourceName',
+  new_desc:                         PFX + 'newDesc',
+  relDesc1:                         PFX + 'relDesc1',
+  relDesc2:                         PFX + 'relDesc2',
 
+  bkey_label:                       PFX + 'bkey.label',
+  bkey_placeholder:                 PFX + 'bkey.placeholder',
+  bkey_helper:                      PFX + 'bkey.helper',
+
+  ownerName1_label:                 PFX + 'ownerName1.label',
+  ownerName1_placeholder:           PFX + 'ownerName1.placeholder',
+  ownerName1_helper:                PFX + 'ownerName1.helper',
+
+  ownerName2_label:                 PFX + 'ownerName2.label',
+  ownerName2_placeholder:           PFX + 'ownerName2.placeholder',
+  ownerName2_helper:                PFX + 'ownerName2.helper',
+
+  currency_label:                   PFX + 'currency.label',
+  currency_placeholder:             PFX + 'currency.placeholder',
+  currency_helper:                  PFX + 'currency.helper',
+
+  price_label:                      PFX + 'price.label',
+  price_placeholder:                PFX + 'price.placeholder',
+  price_helper:                     PFX + 'price.helper',
+
+  notes_label:                      PFX + 'notes.label',
+  notes_placeholder:                PFX + 'notes.placeholder',
+
+  boat_name:                        PFX + 'boat.name',
+  boat_type:                        PFX + 'boat.type',
+
+  validFrom_label:                  PFX + 'validFrom.label',
+  validFrom_placeholder:            PFX + 'validFrom.placeholder',
+  validFrom_helper:                 PFX + 'validFrom.helper',
+
+  validTo_label:                    PFX + 'validTo.label',
+  validTo_placeholder:              PFX + 'validTo.placeholder',
+  validTo_helper:                   PFX + 'validTo.helper',
+
+  view:                             PFX + 'view.label',
+  edit:                             PFX + 'edit.labe',
+  end:                              PFX + 'end.label',
+  create:                           PFX + 'create.label',
+  delete:                           PFX + 'delete.label',
+  delete_confirm:                   PFX + 'delete.confirm',
+
+  as_title:                         '@actionsheet.title',
+  select:                           '@select.label',
+  cancel:                           '@cancel',
+  ok:                               '@ok',
+  save:                             '@save.label',
+} satisfies Record<string, string>;
+/*
+
+
+*/
 export type OwnershipI18n = { [K in keyof typeof OWNERSHIP_I18N_KEYS]: Signal<string> };
 
 export const OwnershipStore = signalStore(
@@ -417,12 +449,12 @@ export const OwnershipStore = signalStore(
 
       getTitleLabel(readOnly: boolean, key?: string): string {
         if (readOnly) {
-          return store.i18n.as_view();
+          return store.i18n.view();
         }
         if (key && key.length > 0) {
-          return store.i18n.as_edit();
+          return store.i18n.edit();
         } else {
-          return store.i18n.as_create();
+          return store.i18n.create();
         }
       },
     }

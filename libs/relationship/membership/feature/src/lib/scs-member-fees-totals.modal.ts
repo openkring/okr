@@ -1,30 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { IonContent, IonGrid, IonRow, IonCol, IonLabel, ModalController } from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
 
-import { I18nService } from '@bk2/shared-i18n';
 import { ScsMemberFeesModel } from '@bk2/shared-models';
 import { Header } from '@bk2/shared-ui';
 
-const PFX = '@finance.scsMemberFee.';
-
-const ScsMemberFeesTotalsStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      totals_label:       PFX + 'operation.totals.label',
-      field_jb:           PFX + 'field.jb.label',
-      field_srv:          PFX + 'field.srv.label',
-      field_entry_fee:    PFX + 'field.entryFee.label',
-      field_locker:       PFX + 'field.locker.label',
-      field_skiff:        PFX + 'field.skiff.label',
-      field_skiff_ins:    PFX + 'field.skiffInsurance.label',
-      field_bev:          PFX + 'field.bev.label',
-      field_rebate:       PFX + 'field.rebate.label',
-      field_total:        PFX + 'field.total.label',
-    }),
-  })),
-);
+import { ScsMemberFeesStore } from './scs-member-fees.store';
 
 const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -32,7 +12,7 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
   selector: 'bk-scs-member-fees-totals-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [ScsMemberFeesTotalsStore],
+  providers: [ScsMemberFeesStore],
   imports: [
     Header,
     IonContent, IonGrid, IonRow, IonCol, IonLabel,
@@ -49,41 +29,41 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
     <ion-content class="ion-padding">
       <ion-grid>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.field_jb() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.jb() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().jb) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.field_srv() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.jbp() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().srv) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.field_entry_fee() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.entryFee() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().entryFee) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.field_locker() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.locker() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().locker) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.field_skiff() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.skiff() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().skiff) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.field_skiff_ins() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.skiffInsurance() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().skiffInsurance) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.field_bev() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.bev() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().bev) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.field_rebate() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.rebate_label() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().rebate) }}</ion-label></ion-col>
         </ion-row>
 
         <!-- total -->
         <ion-row class="divider">
-          <ion-col size="6"><ion-label class="label">{{ store.i18n.field_total() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label class="label">{{ store.i18n.total() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().total) }}</ion-label></ion-col>
         </ion-row>
 
@@ -140,7 +120,7 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
   `
 })
 export class ScsMemberFeesTotalsModal {
-  protected readonly store = inject(ScsMemberFeesTotalsStore);
+  protected readonly store = inject(ScsMemberFeesStore);
   private readonly modalController = inject(ModalController);
 
   public fees = input.required<ScsMemberFeesModel[]>();

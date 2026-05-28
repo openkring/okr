@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { AppStore, OrgSelectModal } from '@bk2/shared-feature';
+import { OrgSelectModal } from '@bk2/shared-feature';
 import { getDefaultCategoryName, isOrg } from '@bk2/shared-util-core';
 import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
 
@@ -20,7 +20,7 @@ import { MembershipStore } from './membership.store';
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: '@membership.operation.createMember.label' }" [isModal]="true" />
+    <bk-header [i18n]="{ title: this.store.i18n.create_member()}" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
@@ -48,7 +48,6 @@ import { MembershipStore } from './membership.store';
 })
 export class MemberNewModal {
   private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
   protected readonly store = inject(MembershipStore);
 
   // inputs
@@ -101,12 +100,12 @@ export class MemberNewModal {
     if (role === 'confirm') {
       if (isOrg(data, this.tenantId())) {
         // Get the full org from AppStore to extract membershipCategoryKey
-        const selectedOrg = this.appStore.getOrg(data.bkey);
+        const selectedOrg = this.store.appStore.getOrg(data.bkey);
         const membershipCategoryKey = selectedOrg?.membershipCategoryKey;
 
         // Get the CategoryListModel using AppStore.getCategory
         if (membershipCategoryKey) {
-          const membershipCategory = this.appStore.getCategory(membershipCategoryKey);
+          const membershipCategory = this.store.appStore.getCategory(membershipCategoryKey);
           this.selectedMembershipCategory.set(membershipCategory);
         }
 
