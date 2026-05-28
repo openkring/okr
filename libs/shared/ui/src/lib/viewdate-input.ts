@@ -64,5 +64,5 @@ export class ViewDateInput {
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
 
   // passing constants to the template
-  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();
 }

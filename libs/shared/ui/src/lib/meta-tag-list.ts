@@ -88,7 +88,7 @@ export class MetaTagList {
   public changed = output<void>();
   
   // passing constants to template
-  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();
   protected newMetaTag: MetaTag = { name: '', content: '' };
 
   protected onNameChanged(event: CustomEvent): void {

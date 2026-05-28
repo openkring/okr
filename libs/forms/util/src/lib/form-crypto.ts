@@ -101,7 +101,7 @@ export async function encryptFile(
 // Decryption
 // ──────────────────────────────────────────
 
-export async function decryptData(key: CryptoKey, ciphertext: ArrayBuffer, iv: Uint8Array): Promise<ArrayBuffer> {
+export async function decryptData(key: CryptoKey, ciphertext: ArrayBuffer, iv: Uint8Array<ArrayBuffer>): Promise<ArrayBuffer> {
   return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
 }
 

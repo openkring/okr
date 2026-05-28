@@ -87,7 +87,7 @@ export class TextInput {
   protected buttonCopyI18n = computed(() =>  { return { copy_conf: this.i18n().copy_conf ?? 'TEXT_INPUT: NYI'}});
 
   // passing constants to the template
-  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();
 
  /**
    * sets focus into the search input field

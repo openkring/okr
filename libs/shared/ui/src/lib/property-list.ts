@@ -100,7 +100,7 @@ export class PropertyList {
   protected isDisabled = computed(() => this.newKey() === '' || this.newValue() === '');
 
   // passing constants to template
-  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();
 
   protected add(): void {
     if (this.newKey().length > 0 && this.newValue().length > 0 && this.properties()) {

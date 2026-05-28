@@ -77,5 +77,5 @@ export class PhoneInput {
 
   // mask
   protected phoneMask = ChPhoneMask;
-  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();
 }

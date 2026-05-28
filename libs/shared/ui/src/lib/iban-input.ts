@@ -78,6 +78,6 @@ export class IbanInput {
 
   // passing constants to the template
   protected chIbanMask = ChIbanMask;
-  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();
 }
 

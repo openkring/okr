@@ -195,6 +195,6 @@ export class StringList {
     this.strings.set(ev.detail.complete(this.strings()));
   }
 
-  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();
 }
 

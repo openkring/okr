@@ -153,7 +153,7 @@ export function getAddressValueByChannel(address: AddressModel): string {
   switch (address.addressChannel) {
     case 'phone': return address.phone ?? '';
     case 'email': return address.email ?? '';
-    case 'postal': return address.streetName ?? '' + address.streetNumber ?? '';
+    case 'postal': return (address.streetName ?? '') + (address.streetNumber ?? '');
     case 'bankaccount': return formatIban(address.iban ?? '', IbanFormat.Electronic);
     default: return address.url ?? '';
   }

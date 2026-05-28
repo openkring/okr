@@ -77,7 +77,7 @@ export class TimeInput {
   // passing constants to the template
   protected timeLength = TIME_LENGTH;
   protected timeMask = ChTimeMask;
-  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();
 
   protected async selectTime(time?: string): Promise<void> {
     const _time = time && time.length === 5 ? time : getCurrentTime();
