@@ -78,7 +78,7 @@ export interface ExpenseFormI18n {
           <ion-col size="12">
             <ion-item>
               <ion-label>{{ i18n().iban_label() }}</ion-label>
-              <ion-select [(ngModel)]="ibanSelectModel" name="ibanSelect">
+              <ion-select [ngModel]="ibanSelectValue()" (ngModelChange)="setIbanSelect($event)" name="ibanSelect">
                 @for (addr of ibans(); track addr.bkey) {
                   <ion-select-option [value]="addr.iban">
                     {{ addr.isFavorite ? '★ ' : '' }}{{ formatIban(addr.iban) }}
@@ -166,11 +166,12 @@ export class ExpenseForm {
   protected amountCHFStr  = computed(() => this.amountCHF() > 0 ? String(this.amountCHF()) : '');
   protected showIbanInput = computed(() => this.ibans().length === 0 || this.iban() === '' || !this.ibans().some(a => a.iban === this.iban()));
 
-  protected get ibanSelectModel(): string {
+  protected readonly ibanSelectValue = computed(() => {
     const saved = this.ibans().find(a => a.iban === this.iban());
     return saved ? this.iban() : (this.iban() ? '__new__' : '');
-  }
-  protected set ibanSelectModel(v: string) {
+  });
+
+  protected setIbanSelect(v: string): void {
     if (v === '__new__') {
       this.onFieldChange('iban', '');
     } else {
@@ -220,6 +221,7 @@ export class ExpenseForm {
   }
 
   protected removeFile(index: number): void {
+    this.dirty.emit(true);
     this.files.update(fs => fs.filter((_, i) => i !== index));
   }
 }
