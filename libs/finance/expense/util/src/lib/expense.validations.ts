@@ -38,7 +38,7 @@ export const expenseValidations = staticSuite((model: ExpenseFormValue, field?: 
     enforce(model.currency).isNotEmpty();
   });
   test('currency', '@finance/expense/feature.validation.currencyInvalid', () => {
-    enforce(ALLOWED_CURRENCIES as unknown as string[]).isContaining(model.currency);
+    enforce(model.currency).isIn([...ALLOWED_CURRENCIES]);
   });
 
   ibanValidations('iban', model.iban);

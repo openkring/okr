@@ -47,5 +47,6 @@ describe('newExpenseDocumentModel', () => {
     expect(m.expenseKey).toBe('expense1');
     expect(m.documentKey).toBe('doc1');
     expect(m.ocrStatus).toBe('pending');
+    expect(m.tenants).toContain('tenant1');
   });
 });
