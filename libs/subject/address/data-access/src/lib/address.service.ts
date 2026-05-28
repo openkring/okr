@@ -133,4 +133,16 @@ export class AddressService {
       return null;
     }));
   }
+
+  /**
+   * Returns all bank account addresses for a given parent (person/org).
+   * @param parentKey the key of the parent model
+   * @returns an Observable of AddressModel[] sorted by isFavorite descending
+   */
+  public listBankAccounts(parentKey: string): Observable<AddressModel[]> {
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'addressChannel', operator: '==', value: 'bankaccount' });
+    query.push({ key: 'parentKey', operator: '==', value: parentKey });
+    return this.firestoreService.searchData<AddressModel>(AddressCollection, query, 'isFavorite', 'desc');
+  }
 }
