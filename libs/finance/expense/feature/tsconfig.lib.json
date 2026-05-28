@@ -1,0 +1,16 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../../dist/libs/finance/expense/feature",
+    "declaration": true,
+    "composite": true,
+    "module": "preserve",
+    "target": "es2020",
+    "types": [],
+    "tsBuildInfoFile": "../../../../dist/out-tsc/finance-expense-feature.tsbuildinfo",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]
+}

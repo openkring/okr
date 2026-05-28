@@ -1,0 +1,27 @@
+{
+  "name": "finance-expense-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/expense/util/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:util", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/expense/util",
+        "main": "libs/finance/expense/util/src/index.ts",
+        "tsConfig": "libs/finance/expense/util/tsconfig.lib.json",
+        "assets": ["libs/finance/expense/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/libs/finance/expense/util"],
+      "options": { "reportsDirectory": "../../../coverage/libs/finance/expense/util" }
+    }
+  }
+}
