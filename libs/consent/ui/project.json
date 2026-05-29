@@ -1,0 +1,22 @@
+{
+  "name": "consent-ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/consent/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:consent", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/consent/ui",
+        "main": "libs/consent/ui/src/index.ts",
+        "tsConfig": "libs/consent/ui/tsconfig.lib.json",
+        "assets": ["libs/consent/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}
