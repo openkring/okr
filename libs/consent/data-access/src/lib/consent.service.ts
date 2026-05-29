@@ -24,7 +24,7 @@ export class ConsentService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly subject = new BehaviorSubject<ConsentState>(this.load());
 
-  readonly consent$ = this.subject.asObservable();
+  public readonly consent$ = this.subject.asObservable();
 
   public getState(): ConsentState {
     return this.subject.getValue();

@@ -1,7 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { firstValueFrom } from 'rxjs';
 
-// Mock Angular's inject before importing the service
 vi.mock('@angular/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@angular/core')>();
   return {
@@ -10,7 +9,6 @@ vi.mock('@angular/core', async (importOriginal) => {
   };
 });
 
-// Mock isBrowser utility so we can control platform context
 vi.mock('@bk2/shared-util-core', () => ({
   isBrowser: vi.fn(() => true),
 }));
