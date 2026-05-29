@@ -18,7 +18,7 @@ import { newFolderModel } from '@bk2/folder-util';
 import { UploadService } from '@bk2/avatar-data-access';
 
 import { PFX } from './scope';
-import { DocumentEditModal } from 'libs/document/feature/src/lib/document-edit.modal';
+import { DocumentEditModal } from './document-edit.modal';
 
 const DOCUMENT_I18N_KEYS = {
   documents:        PFX + 'documents',
@@ -28,67 +28,105 @@ const DOCUMENT_I18N_KEYS = {
   size:             PFX + 'size',
   lastUpdate:       PFX + 'lastUpdate',
   revision_list:    PFX + 'revision.list.title',
+
+  upload_new:       PFX + 'upload.new',
   upload_single:    PFX + 'upload.single.title',
   upload_multiple:  PFX + 'upload.multiple.title',
+  delete:           PFX + 'delete.label',
+  delete_conf:      PFX + 'delete.conf',
+  delete_confirm:   PFX + 'delete.confirm',
+  delete_error:     PFX + 'delete.error',
+  view:             PFX + 'view.label',
+  view_revisions:   PFX + 'view.revisions',
+  update:           PFX + 'update.label',
+  update_conf:      PFX + 'update.conf',
+  update_error:     PFX + 'update.error',
+  create:           PFX + 'create.label',
+  create_conf:      PFX + 'create.conf',
+  create_error:     PFX + 'create.error',
+  download:         PFX + 'download',
+
   image_add:        PFX + 'image.add',
   image_select:     PFX + 'image.select',
   image_upload:     PFX + 'image.upload',
-  delete_confirm:   PFX + 'delete.confirm',
-  as_title:         PFX + 'actionsheet.title',
-  as_view:          PFX + 'actionsheet.view',
-  as_edit:          PFX + 'actionsheet.edit',
-  as_update:        PFX + 'actionsheet.update',
-  as_create:        PFX + 'actionsheet.create',
-  as_delete:        PFX + 'actionsheet.delete',
-  as_revisions:     PFX + 'actionsheet.revisions',
-  as_download:      PFX + 'actionsheet.download',
-  ok: '@ok',
-  cancel: '@cancel',
-  save: '@save.label',
+
   bkey_label:                    PFX + 'bkey.label',
   bkey_placeholder:              PFX + 'bkey.placeholder',
   bkey_helper:                   PFX + 'bkey.helper',
-  fullPath_label:                PFX + 'fullPath.label',
-  fullPath_placeholder:          PFX + 'fullPath.placeholder',
-  fullPath_helper:               PFX + 'fullPath.helper',
-  title_label:                   PFX + 'title.label',
-  title_placeholder:             PFX + 'title.placeholder',
-  title_helper:                  PFX + 'title.helper',
-  altText_label:                 PFX + 'altText.label',
-  altText_placeholder:           PFX + 'altText.placeholder',
-  altText_helper:                PFX + 'altText.helper',
+
+  label_label:                   PFX + 'label.label',
+  label_placeholder:             PFX + 'label.placeholder',
+  label_helper:                  PFX + 'label.helper',
+
   url_label:                     PFX + 'url.label',
   url_placeholder:               PFX + 'url.placeholder',
   url_helper:                    PFX + 'url.helper',
+
+  actionUrl_helper:              PFX + 'actionUrl.helper',
+  actionUrl_label:               PFX + 'actionUrl.label',
+  actionUrl_placeholder:         PFX + 'actionUrl.placeholder',
+
+  altText_label:                 PFX + 'altText.label',
+  altText_placeholder:           PFX + 'altText.placeholder',
+  altText_helper:                PFX + 'altText.helper',
+
+  overlay_label:                 PFX + 'overlay.label',
+  overlay_placeholder:           PFX + 'overlay.placeholder',
+  overlay_helper:                PFX + 'overlay.helper',
+
+  fullPath_label:                PFX + 'fullPath.label',
+  fullPath_placeholder:          PFX + 'fullPath.placeholder',
+  fullPath_helper:               PFX + 'fullPath.helper',
+
+  title_label:                   PFX + 'title.label',
+  title_placeholder:             PFX + 'title.placeholder',
+  title_helper:                  PFX + 'title.helper',
+
   mimeType_label:                PFX + 'mimeType.label',
   mimeType_placeholder:          PFX + 'mimeType.placeholder',
   mimeType_helper:               PFX + 'mimeType.helper',
+
   authorKey_label:               PFX + 'authorKey.label',
   authorKey_placeholder:         PFX + 'authorKey.placeholder',
   authorKey_helper:              PFX + 'authorKey.helper',
+
   authorName_label:              PFX + 'authorName.label',
   authorName_placeholder:        PFX + 'authorName.placeholder',
   authorName_helper:             PFX + 'authorName.helper',
+
   locationKey_label:             PFX + 'locationKey.label',
   locationKey_placeholder:       PFX + 'locationKey.placeholder',
   locationKey_helper:            PFX + 'locationKey.helper',
+
   hash_label:                    PFX + 'hash.label',
   hash_placeholder:              PFX + 'hash.placeholder',
   hash_helper:                   PFX + 'hash.helper',
+
   priorVersionKey_label:         PFX + 'priorVersionKey.label',
   priorVersionKey_placeholder:   PFX + 'priorVersionKey.placeholder',
   priorVersionKey_helper:        PFX + 'priorVersionKey.helper',
+
   version_label:                 PFX + 'version.label',
   version_placeholder:           PFX + 'version.placeholder',
   version_helper:                PFX + 'version.helper',
+
   description_label:             PFX + 'description.label',
   description_placeholder:       PFX + 'description.placeholder',
+
   dateOfDocCreation_label:       PFX + 'dateOfDocCreation.label',
   dateOfDocCreation_placeholder: PFX + 'dateOfDocCreation.placeholder',
   dateOfDocCreation_helper:      PFX + 'dateOfDocCreation.helper',
+
   dateOfDocLastUpdate_label:     PFX + 'dateOfDocLastUpdate.label',
   dateOfDocLastUpdate_placeholder: PFX + 'dateOfDocLastUpdate.placeholder',
   dateOfDocLastUpdate_helper:    PFX + 'dateOfDocLastUpdate.helper',
+  
+  description:                  '@description',
+  as_title:                     '@actionsheet.title',
+  copy_conf:                    '@copy.conf',
+  ok:                           '@ok',
+  cancel:                       '@cancel',
+  save:                         '@save.label',
 } satisfies Record<string, string>;
 
 export type DocumentI18n = { [K in keyof typeof DOCUMENT_I18N_KEYS]: Signal<string> };
@@ -484,12 +522,12 @@ export const DocumentStore = signalStore(
 
       getTitleLabel(readOnly: boolean, key?: string): string {
         if (readOnly) {
-          return store.i18n.as_view();
+          return store.i18n.view();
         }
         if (key && key.length > 0) {
-          return store.i18n.as_edit();
+          return store.i18n.update();
         } else {
-          return store.i18n.as_create();
+          return store.i18n.create();
         }
       },
 

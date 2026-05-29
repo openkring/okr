@@ -10,7 +10,9 @@
       "title": "Versionsverlauf"
     }
   },
+
   "upload": {
+    "new": "Neue Version hochladen",
     "single": {
       "title": "Dokument hochladen"
     },
@@ -18,54 +20,120 @@
       "title": "Dokumente hochladen"
     }
   },
+  "delete": {
+    "label": "Dokument löschen",
+    "conf": "Dokument wurde gelöscht.",
+    "confirm": "Soll das Dokument wirklich gelöscht werden ?",
+    "error": "Das Dokument konnte nicht gelöscht werden."
+  },
+  "view": {
+    "label": "Dokumenten Details ansehen",
+    "revisions": "Versionen anzeigen"
+  },
+  "update": {
+    "label": "Dokument ändern",
+    "conf": "Das Dokument wurde gespeichert.",
+    "error": "Das Dokument konnte nicht gespeichert werden."
+  },
+  "create": {
+    "label": "Neues Dokument erstellen",
+    "conf": "Das Dokument wurde gespeichert.",
+    "error": "Das Dokument konnte nicht gespeichert werden."
+  },
+  "download": "Dokument herunterladen",
   "image": {
     "add": "Bild hinzufügen",
     "select": "Bild wählen",
     "upload": "Bild hochladen"
   },
-  "delete": {
-    "confirm": "Soll das Dokument wirklich gelöscht werden ?"
+
+  "bkey": {
+    "label": "bkey",
+    "placeholder": "ID",
+    "helper": "Die eindeutige ID des Dokumentes in der Datenbank."
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Dokumenten Details ansehen",
-    "edit": "Dokument ändern",
-    "update": "Neue Version hinzufügen",
-    "create": "Neues Dokument erstellen",
-    "delete": "Dokument löschen",
-    "revisions": "Versionen anzeigen",
-    "download": "Dokument herunterladen"
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "Bezeichnung eingeben",
+    "helper": "Eine kurze Beschreibung des Bildes."
   },
-  "imageConfig": {
-    "label": {
-      "label": "Bezeichnung",
-      "placeholder": "Bezeichnung eingeben",
-      "helper": ""
-    },
-    "url": {
-      "label": "URL",
-      "placeholder": "https://...",
-      "helper": ""
-    },
-    "actionUrl": {
-      "label": "Aktions-URL",
-      "placeholder": "https://...",
-      "helper": ""
-    },
-    "altText": {
-      "label": "Alt-Text",
-      "placeholder": "",
-      "helper": ""
-    },
-    "overlay": {
-      "label": "Überblendtext",
-      "placeholder": "",
-      "helper": ""
-    }
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "Der Link auf das Bild (normalerweise imgix)"
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+  "actionUrl": {
+    "label": "Aktions-URL",
+    "placeholder": "https://...",
+    "helper": "Der Link auf die Aktion, z.B. auf ein gezoomtes Bild in grösserer Auflösung."
+  },
+  "altText": {
+    "label": "Alternativtext",
+    "placeholder": "text",
+    "helper": "Eine kurze Beschreibung des Bildinhaltes für sehbehinderte Personen."
+  },
+  "overlay": {
+    "label": "Überblendtext",
+    "placeholder": "text",
+    "helper": "Text, der auf dem Bild dargestellt werden soll."
+  },
+  "fullPath": {
+    "label": "Dateipfad",
+    "placeholder": "/a/b/c",
+    "helper": "Der Dateipfad zeigt auf den Ort des Dokuments im Storage."
+  },
+  "title": {
+    "label": "Titel",
+    "placeholder": "Titel eingeben",
+    "helper": "Eine kurze Beschreibung des Dokumentes."
+  },
+  "mimeType": {
+    "label": "MIME-Typ",
+    "placeholder": "z.B. application/pdf",
+    "helper": "Der MIME-Typ bezeichnt die Art des Dokuments, z.B. image/jpg, application/pdf"
+  },
+  "authorKey": {
+    "label": "Author Key",
+    "placeholder": "ssssssss",
+    "helper": "Die ID des Authors in der Datenbank"
+  },
+  "authorName": {
+    "label": "Autor",
+    "placeholder": "name",
+    "helper": "Der Name des Autors."
+  },
+  "locationKey": {
+    "label": "Location Key",
+    "placeholder": "Die ID des Ortes in der Datenbank",
+    "helper": "Hiermit kann eine Referenz des Dokuments auf einen Ort gemacht werden."
+  },
+  "hash": {
+    "label": "Hash",
+    "placeholder": "ssssssss",
+    "helper": "Der Hash ist ein eindeutige, verkürzte Darstellung des Inhalts des Dokuments. Er wird für Vergleiche benutzt."
+  },
+  "priorVersionKey": {
+    "label": "Vorgänger-Schlüssel",
+    "placeholder": "ssssssss",
+    "helper": "Schlüssel der Vorgängerversion"
+  },
+  "version": {
+    "label": "Version",
+    "placeholder": "z.B: yyyymmdd",
+    "helper": "Versionsnummer des Dokuments"
+  },
+  "description": {
+    "label": "Beschreibung",
+    "placeholder": "text"
+  },
+  "dateOfDocCreation": {
+    "label": "Erstellungsdatum",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Das Dokument wurde an diesem Datum erstellt."
+  },
+  "dateOfDocLastUpdate": {
+    "label": "Letzte Aktualisierung",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Das Dokument wurde an diesem Datum letztmals aktualisiert."
   }
 }

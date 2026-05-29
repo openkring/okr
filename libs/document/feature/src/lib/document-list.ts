@@ -97,7 +97,7 @@ import { DocumentStore } from './document.store';
     <bk-spinner />
   } @else {
     @if (isEmpty()) {
-      <bk-empty-list message="@document.empty" />
+      <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       @if(isListView() === true) {
         <ion-grid>
@@ -287,15 +287,15 @@ export class DocumentList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
     if (this.canChange()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.store.i18n.as_update(), this.imgixBaseUrl, 'upload'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.store.i18n.upload_new(), this.imgixBaseUrl, 'upload'));
     } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.store.i18n.as_download(), this.imgixBaseUrl, 'download'));
-    actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.store.i18n.as_revisions(), this.imgixBaseUrl, 'timeline'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.store.i18n.download(), this.imgixBaseUrl, 'download'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.store.i18n.revisions(), this.imgixBaseUrl, 'timeline'));
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
