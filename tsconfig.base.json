@@ -64,6 +64,8 @@
       "@bk2/comment-feature": ["libs/comment/feature/src/index.ts"],
       "@bk2/comment-ui": ["libs/comment/ui/src/index.ts"],
       "@bk2/comment-util": ["libs/comment/util/src/index.ts"],
+      "@bk2/consent-data-access": ["libs/consent/data-access/src/index.ts"],
+      "@bk2/consent-ui": ["libs/consent/ui/src/index.ts"],
       "@bk2/document-data-access": ["libs/document/data-access/src/index.ts"],
       "@bk2/document-feature": ["libs/document/feature/src/index.ts"],
       "@bk2/document-ui": ["libs/document/ui/src/index.ts"],
