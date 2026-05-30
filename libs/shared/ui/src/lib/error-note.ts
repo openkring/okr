@@ -45,8 +45,8 @@ export class ErrorNote {
     const key = keys[0];
     if (key.startsWith('@')) {
       return this.translocoService.selectTranslate(key.substring(1));
-    } else {  
-      return of(key);
-    } 
+    } else {
+      return this.translocoService.selectTranslate(`validation.${key}`);
+    }
   }
 }
