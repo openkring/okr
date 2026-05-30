@@ -327,6 +327,40 @@ export function jsonPrettyPrint(value: unknown): string {
         .replace(/\n/g, '<br/>'); // same here
 }
 
+/*-------------------------------------------- PLACEHOLDER ----------------------------------------------------- */
+function formatDate(date: Date): string {
+  return `${pad(date.getDate(), 2)}.${pad(date.getMonth() + 1, 2)}.${date.getFullYear()}`;
+}
+
+function formatDateTime(date: Date): string {
+  return `${formatDate(date)} ${pad(date.getHours(), 2)}:${pad(date.getMinutes(), 2)}`;
+}
+
+/**
+ * Replaces known placeholders in a string with their runtime values.
+ * //now      → current datetime as dd.mm.yyyy hh:mm
+ * //today    → current date as dd.mm.yyyy
+ * //tomorrow → tomorrow's date as dd.mm.yyyy
+ * //yesterday→ yesterday's date as dd.mm.yyyy
+ * @TID@      → tenantId
+ * @DOMAIN@   → appDomain
+ * @param now optional Date for testing; defaults to new Date()
+ */
+export function replacePlaceholders(text: string, tenantId: string, appDomain: string, now = new Date()): string {
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+
+  return text
+    .replace(/\/\/now/g, formatDateTime(now))
+    .replace(/\/\/today/g, formatDate(now))
+    .replace(/\/\/tomorrow/g, formatDate(tomorrow))
+    .replace(/\/\/yesterday/g, formatDate(yesterday))
+    .replace(/@TID@/g, tenantId)
+    .replace(/@DOMAIN@/g, appDomain);
+}
+
 /*-------------------------------------------- HTML ----------------------------------------------------- */
 /**
  * Replace all HTML or XML tags in <> brackets from the string.
@@ -336,3 +370,4 @@ export function jsonPrettyPrint(value: unknown): string {
 export function stripHtml(value: string): string {
     return value.replace(/<.*?>/g, ''); // replace tags
 }
+
