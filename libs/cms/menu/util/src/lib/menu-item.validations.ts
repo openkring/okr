@@ -36,7 +36,7 @@ export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: s
   });
 
   omitWhen(model.menuItems === undefined, () => {
-    test('menuItems', 'menuItemsType', () => {
+    test('menuItems', '@menu.itemsType', () => {
       enforce(isArrayOfStrings(model.menuItems)).isTruthy();
     });
   });
