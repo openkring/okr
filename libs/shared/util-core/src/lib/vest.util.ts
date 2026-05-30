@@ -4,17 +4,6 @@ import { checkDate, DateFormat } from './date.util';
 import { isArrayOfStrings, isAvatarInfo, isMoney } from './type.util';
 import { AddressableModel, AvatarInfo, BkModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, MoneyModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from '@bk2/shared-models';
 
-/**
- * Validates BkModel attributes:
- * - BaseModel: bkey
- * - NamedModel: name
- * - TaggedModel: tags
- * - SearchableModel: index
- * - AddressableModel: favEmail, favPhone, favZipCode
- * - PersistedModel: tenants, isArchived
- * @param model BkModel
- * @param field optional field to validate
- */
 export function baseValidations(model: BkModel, givenTenants: string, givenTags: string, field?: string) {
 
   omitWhen(!isBaseModel(model), () => {
@@ -25,7 +14,7 @@ export function baseValidations(model: BkModel, givenTenants: string, givenTags:
     const m = model as unknown as NamedModel;
     stringValidations('name', m.name, NAME_LENGTH);
   });
-  
+
   omitWhen(!isTaggedModel(model), () => {
     const m = model as unknown as TaggedModel;
     tagValidations('tags', m.tags, givenTags);
@@ -45,7 +34,6 @@ export function baseValidations(model: BkModel, givenTenants: string, givenTags:
 
   omitWhen(!isPersistedModel(model), () => {
     const m = model as unknown as PersistedModel;
-    //tenantValidations(m.tenants, givenTenants);
     booleanValidations('isArchived', m.isArchived, false);
   });
 };
@@ -54,13 +42,11 @@ export function baseValidations(model: BkModel, givenTenants: string, givenTags:
 export function avatarValidations(fieldName: string, avatar: unknown) {
 
   omitWhen(!avatar, () => {
-    // test whether it is of type AvatarInfo
-    test(fieldName, 'isAvatarInfo', () => {
+    test(fieldName, 'avatarFormat', () => {
       enforce(isAvatarInfo(avatar)).isTruthy();
     });
 
-    // test each field of AvatarInfo
-    test(fieldName, '@validation.avatarFormat', () => {
+    test(fieldName, 'avatarFormat', () => {
       const avatarInfo = avatar as AvatarInfo;
       stringValidations(`${fieldName}.key`, avatarInfo.key, NAME_LENGTH, 4, true);
       stringValidations(`${fieldName}.name1`, avatarInfo.name1, LONG_NAME_LENGTH);
@@ -71,17 +57,15 @@ export function avatarValidations(fieldName: string, avatar: unknown) {
       stringValidations(`${fieldName}.label`, avatarInfo.label, LONG_NAME_LENGTH);
     });
   });
-} 
+}
 
 export function moneyValidations(fieldName: string, money: unknown) {
   omitWhen(!money, () => {
-    // test whether it is of type MoneyModel
-    test(fieldName, 'isMoneyModel', () => {
+    test(fieldName, 'moneyFormat', () => {
       enforce(isMoney(money)).isTruthy();
     });
 
-    // test each field of MoneyModel
-    test(fieldName, '@validation.moneyFormat', () => {
+    test(fieldName, 'moneyFormat', () => {
       const moneyModel = money as MoneyModel;
       numberValidations(`${fieldName}.amount`, moneyModel.amount, true, 0);
       stringValidations(`${fieldName}.currency`, moneyModel.currency, 3, 3, true);
@@ -90,12 +74,6 @@ export function moneyValidations(fieldName: string, money: unknown) {
   });
 }
 
-/**
- * Validates a boolean field
- * @param fieldName the name of the field that is validated (just for logging purposes)
- * @param value the value of the field
- * @param shouldBe an optional value to check against
- */
 export function booleanValidations(fieldName: string, value: unknown, shouldBe?: boolean) {
   test(fieldName, 'notNull', () => {
     enforce(value).isNotNull();
@@ -103,45 +81,31 @@ export function booleanValidations(fieldName: string, value: unknown, shouldBe?:
   test(fieldName, 'notUndefined', () => {
     enforce(value).isNotUndefined();
   });
-  test(fieldName, 'booleanMandatory', () => {
+  test(fieldName, 'notBoolean', () => {
     enforce(value).isBoolean();
   });
   omitWhen(shouldBe === undefined, () => {
-    test(fieldName, `${fieldName} should be ${shouldBe}`, () => {
+    test(fieldName, 'invalidValue', () => {
       enforce(value).equals(shouldBe);
     });
   });
 }
 
-/**
- * Validates a category field.
- * @param fieldName the name of the field that is validated (just for logging purposes)
- * @param category the category value
- * @param categoryEnum the value needs to be a value of this enum
- */
-export function categoryValidations(fieldName: string, category: unknown, categoryEnum: object ) 
-
-  {
+export function categoryValidations(fieldName: string, category: unknown, categoryEnum: object) {
   test(fieldName, 'notNull', () => {
     enforce(category).isNotNull();
   });
   test(fieldName, 'notUndefined', () => {
     enforce(category).isNotUndefined();
   });
-  test(fieldName, 'numberMandatory', () => {
+  test(fieldName, 'notNumber', () => {
     enforce(category).isNumber();
   });
-  test(fieldName, 'enumValue', () => {
+  test(fieldName, 'invalidEnum', () => {
     enforce(category).inside(Object.values(categoryEnum));
   });
 }
 
-/**
- * Validates a given string against a list of valid values.
- * @param fieldName 
- * @param value 
- * @param validValues 
- */
 export function stringsValidations(fieldName: string, value: unknown, validValues: string[]) {
   test(fieldName, 'notNull', () => {
     enforce(value).isNotNull();
@@ -149,20 +113,14 @@ export function stringsValidations(fieldName: string, value: unknown, validValue
   test(fieldName, 'notUndefined', () => {
     enforce(value).isNotUndefined();
   });
-  test(fieldName, 'stringMandatory', () => {
+  test(fieldName, 'notString', () => {
     enforce(value).isString();
   });
-  test(fieldName, 'validValue', () => {
+  test(fieldName, 'invalidValue', () => {
     enforce(value).inside(validValues);
   });
 }
 
-/**
- * Tests an array of strings against a list of valid values. e.g. sections, roles, tags
- * @param fieldName 
- * @param values  // array of strings, e.g. ['tag1', 'tag2']
- * @param validValues // array of valid strings, e.g. ['tag1', 'tag2', 'tag3'] -> 'tag1' and 'tag2' are valid, 'tag4' is not valid
- */
 export function stringArrayValidations(fieldName: string, values: unknown, validValues: string[]) {
   test(fieldName, 'notNull', () => {
     enforce(values).isNotNull();
@@ -170,56 +128,47 @@ export function stringArrayValidations(fieldName: string, values: unknown, valid
   test(fieldName, 'notUndefined', () => {
     enforce(values).isNotUndefined();
   });
-  test(fieldName, 'arrayMandatory', () => {
+  test(fieldName, 'notArray', () => {
     enforce(Array.isArray(values)).isTruthy();
   });
   omitWhen(!Array.isArray(values), () => {
     (values as unknown[]).forEach(values => {
-      test(fieldName, 'stringMandatory', () => {
+      test(fieldName, 'notString', () => {
         enforce(values).isString();
       });
     });
     (values as string[]).forEach((value, index) => {
-      test(`${fieldName}[${index}]`, 'validValue', () => {
+      test(`${fieldName}[${index}]`, 'invalidValue', () => {
         enforce(value).inside(validValues);
       });
     });
   });
 }
 
-/**
- * Tests if an array of strings contains at least one of the required values.
- * This is the opposite of stringArrayValidations.
- * It is usable for tenants.
- * @param fieldName 
- * @param values e.g. tenants ['a', 'b', 'c']
- * @param requiredValues e.g. required tenants ['b', 'd'] -> valid because 'b' is contained in values
- * @param isMandatory if true, the array must contain at least one of the required values
- */
 export function stringArrayContainsValidation(
-  fieldName: string, 
-  values: unknown, 
+  fieldName: string,
+  values: unknown,
   requiredValues: string[],
   isMandatory = true
 ) {
-  test(fieldName, 'arrayMandatory', () => {
+  test(fieldName, 'notArray', () => {
     enforce(Array.isArray(values)).isTruthy();
   });
 
   omitWhen(!isMandatory, () => {
-    test(fieldName, '@validation.tenantsLength', () => {
+    test(fieldName, 'tenantsLength', () => {
       enforce((values as unknown[]).length).greaterThan(0);
     });
   });
-  
+
   omitWhen(!Array.isArray(values), () => {
     (values as unknown[]).forEach(values => {
-      test(fieldName, 'stringMandatory', () => {
+      test(fieldName, 'notString', () => {
         enforce(values).isString();
       });
     });
-    test(fieldName, 'containsRequiredValue', () => {
-      const hasRequired = requiredValues.some(required => 
+    test(fieldName, 'missingRequiredValue', () => {
+      const hasRequired = requiredValues.some(required =>
         (values as string[]).includes(required)
       );
       enforce(hasRequired).isTruthy();
@@ -227,33 +176,23 @@ export function stringArrayContainsValidation(
   });
 }
 
-/**
- * Validate a date field. This must be in STOREDATE format: YYYYMMDD
- * @param fieldName the name of the field (just for logging purposes)
- * @param date the value of the field
- */
 export function dateValidations(fieldName: string, date: unknown) {
 
   stringValidations(fieldName, date, STORE_DATE_LENGTH, STORE_DATE_LENGTH);
 
   omitWhen(date === '', () => {
-    test(fieldName, 'validDate', () => {
+    test(fieldName, 'invalidDate', () => {
       enforce(checkDate(fieldName, date as string, DateFormat.StoreDate, 1850, 2100, false)).isTruthy();
     });
   });
 }
 
-/**
- * Validate a time field. This must be in format Time = 'HH:mm',
- * @param fieldName the name of the field (just for logging purposes)
- * @param timeValue the value of the field
- */
 export function timeValidations(fieldName: string, timeValue: unknown) {
 
   stringValidations(fieldName, timeValue, 5, TIME_LENGTH);
 
   omitWhen(timeValue === '', () => {
-    test(fieldName, 'validTime', () => {
+    test(fieldName, 'invalidTime', () => {
       enforce(checkTime(timeValue as string)).isTruthy();
     });
   });
@@ -282,30 +221,17 @@ export function checkTime(timeValue: string): boolean {
   return true;
 }
 
-/**
- * Validate a time field. This must be in STOREDATE format: YYYYMMDDHHMMSS
- * @param fieldName the name of the field (just for logging purposes)
- * @param date the value of the field
- */
 export function dateTimeValidations(fieldName: string, date: unknown) {
 
   stringValidations(fieldName, date, STORE_DATETIME_LENGTH, STORE_DATETIME_LENGTH);
 
   omitWhen(date === '', () => {
-    test(fieldName, 'validDateTime', () => {
+    test(fieldName, 'invalidDateTime', () => {
       enforce(checkDate(fieldName, date as string, DateFormat.StoreDateTime, 1850, 2100, false)).isTruthy();
     });
   });
 }
 
-/**
- * Validates a number field.
- * @param fieldName the name of the field that is validated (just for logging purposes)
- * @param value the value of the field
- * @param isInteger if true, the value must be an integer, default is true
- * @param min the value must not be smaller than this, default is 0
- * @param max the value must not be bigger than this, default is undefined
- */
 export function numberValidations(fieldName: string, value: unknown, isInteger = true, min = 0, max?: number) {
   test(fieldName, 'notNull', () => {
     enforce(value).isNotNull();
@@ -313,54 +239,46 @@ export function numberValidations(fieldName: string, value: unknown, isInteger =
   test(fieldName, 'notUndefined', () => {
     enforce(value).isNotUndefined();
   });
-  test(fieldName, 'numberMandatory', () => {
+  test(fieldName, 'notNumber', () => {
     enforce(value).isNumber();
   });
   omitWhen(isInteger === false, () => {
-    test(fieldName, 'integerMandatory', () => {
+    test(fieldName, 'notInteger', () => {
       enforce(Number.isInteger(Number(value))).isTruthy();
     });
   });
-  test(fieldName, 'minWrong', () => {
+  test(fieldName, 'tooSmall', () => {
     enforce(value).greaterThanOrEquals(min);
   });
   omitWhen(max === undefined, () => {
-    test(fieldName, 'maxWrong', () => {
+    test(fieldName, 'tooLarge', () => {
       enforce(value).lessThanOrEquals(max);
     });
   });
 }
 
-/**
- * Validates a string field
- * @param fieldName the name of the field that is validated (just for logging purposes)
- * @param value the value of the field
- * @param maxLength the value must not be longer than this, typically this is set to a constant in constants.ts
- * @param minLength the value must not be shorter than this, default is 0
- * @param isMandatory true if the field must not be empty, default is false
- */
 export function stringValidations(fieldName: string, value: unknown, maxLength?: number, minLength = 0, isMandatory = false): void {
-  test(fieldName, `@validation.${fieldName}NotNull`, () => {
+  test(fieldName, 'notNull', () => {
     enforce(value).isNotNull();
   });
-  test(fieldName, `@validation.${fieldName}NotUndefined`, () => {
+  test(fieldName, 'notUndefined', () => {
     enforce(value).isNotUndefined();
   });
-  test(fieldName, `@validation.${fieldName}TypeString`, () => {
+  test(fieldName, 'notString', () => {
     enforce(value).isString();
   });
   omitWhen(isMandatory === false, () => {
-    test(fieldName, `@validation.${fieldName}Required`, () => {
+    test(fieldName, 'required', () => {
       enforce(value as string).isNotBlank();
     });
   });
   omitWhen(maxLength === undefined || isMandatory === false, () => {
-    test(fieldName, `Die Eingabe darf nicht aus mehr als ${maxLength} Zeichen bestehen`, () => {
+    test(fieldName, 'tooLong', () => {
       enforce(value as string).shorterThanOrEquals(maxLength);
     });
   });
   omitWhen(minLength === undefined || isMandatory === false, () => {
-    test(fieldName, `Die Eingabe muss aus mind. ${minLength} Zeichen bestehen.`, () => {
+    test(fieldName, 'tooShort', () => {
       enforce(value as string).longerThanOrEquals(minLength);
     });
   });
@@ -369,72 +287,36 @@ export function stringValidations(fieldName: string, value: unknown, maxLength?:
 export function tenantValidations(tenants: unknown, givenTenants: string) {
   stringArrayContainsValidation('tenants', tenants, givenTenants.split(','));
   stringArrayValidations('tenants', tenants, givenTenants.split(','));
-  test('tenants', '@validation.tenantsType', () => {
+  test('tenants', 'tenantsType', () => {
     enforce(isArrayOfStrings(tenants)).isTruthy();
   });
 
-  test('tenants', '@validation.tenantsLength', () => {
+  test('tenants', 'tenantsLength', () => {
     enforce((tenants as string[]).length).greaterThan(0);
   });
 
-  // test for valid tenant ids (givenTenants are defined in database collection tags)
   const _tenants = tenants as string[];
   const _givenTenants = givenTenants.split(',');
   _tenants.forEach((tenant) => {
-    test('tenants', '@validation.tenantValid', () => {
+    test('tenants', 'tenantValid', () => {
       enforce(tenant).inside(_givenTenants);
     });
   });
 }
 
-export function tagValidations(fieldName: string, tags: unknown, givenTags: string, ) {
-  // there is no min length as tags are optional
+export function tagValidations(fieldName: string, tags: unknown, givenTags: string) {
   stringValidations(fieldName, tags, LONG_NAME_LENGTH);
-  // tags is a comma-separated string, split it to validate as array
   const tagsArray = typeof tags === 'string' ? tags.split(',').filter(t => t.length > 0) : [];
   stringArrayValidations(fieldName, tagsArray, givenTags.split(','));
 }
 
-export function urlValidations(fieldName: string, url: unknown ) {
+export function urlValidations(fieldName: string, url: unknown) {
   stringValidations(fieldName, url, URL_LENGTH);
 
   omitWhen(url === '', () => {
-    test(fieldName, '@validation.urlStart', () => {
+    test(fieldName, 'urlStart', () => {
       const _url = url as string;
-      // https: absolute, external url
-      // assets: relative url to assets directory
-      // tenant: relative url to storage directory (storagePath)
-      // /: relative url to root
       enforce(_url.startsWith('https://') || _url.startsWith('assets') || _url.startsWith('tenant') || _url.startsWith('/')).isTruthy();
     });
   });
-
-  // test the components of an absolute url only
-  // tbd: this is not working correctly.
-/*   omitWhen((url + '').startsWith('http') === false, () => {
-    test(fieldName, '@validation.urlValidProtocol', () => {
-      enforce(url)['isURL']({
-        protocols: ['https'],
-        require_protocol: true,
-      });
-    });
-    test(fieldName, '@validation.urlHost', () => {
-      enforce(url)['isURL']({
-        require_host: true,
-        require_port: false,
-      });
-    });
-    test(fieldName, '@validation.urlParts', () => {
-      enforce(url)['isURL']({
-        allow_underscores: false,
-        allow_trailing_dot: false,
-        allow_protocol_relative_urls: false,
-        allow_fragments: true,
-        allow_query_components: true,
-        validate_length: true,
-      });
-    });
-  }); */
 }
-
-
