@@ -32,37 +32,37 @@ export const addressValidations = staticSuite((model: AddressModel, tenants: str
 
   // cross validations
   omitWhen(model.addressChannel !== 'custom', () => {
-    test('addressChannelLabel', 'addressCustomChannelLabelMandatory', () => {
+    test('addressChannelLabel', '@address.customChannelLabelMandatory', () => {
       enforce(model.addressChannelLabel).isNotEmpty();
     })
   });
   omitWhen(model.addressUsage !== 'custom', () => {
-    test('addressUsageLabel', 'addressCustomUsageLabelMandatory', () => {
+    test('addressUsageLabel', '@address.customUsageLabelMandatory', () => {
       enforce(model.addressUsageLabel).isNotEmpty();
     })
   });
 
   omitWhen(model.addressChannel !== 'postal', () => {
-    test('zipCode', 'addressZipCodeMandatory', () => {
+    test('zipCode', '@address.zipCodeMandatory', () => {
       enforce(model.zipCode).isNotEmpty();
     });
-    test('city', 'addressCityMandatory', () => {
+    test('city', '@address.cityMandatory', () => {
       enforce(model.city).isNotEmpty();
     });
-    test('countryCode', 'addressCountryMandatory', () => {
+    test('countryCode', '@address.countryMandatory', () => {
       enforce(model.countryCode).isNotEmpty();
     });
-    test('countryCode', 'addressCountryUppercase', () => {
+    test('countryCode', '@address.countryUppercase', () => {
       enforce(model.countryCode).equals(model.countryCode.toUpperCase());
     });
-    test('countryCode', 'addressCountryLength', () => {
+    test('countryCode', '@address.countryLength', () => {
       enforce(model.countryCode.length).equals(2);
     });
     omitWhen(model.countryCode !== 'CH', () => {
-      test('zipCode', 'addressSwissZipCodeNumeric', () => {
+      test('zipCode', '@address.swissZipCodeNumeric', () => {
         enforce(model.zipCode).isNumeric();
       });
-      test('zipCode', 'addressSwissZipCodeLength', () => {
+      test('zipCode', '@address.swissZipCodeLength', () => {
         enforce(model.zipCode.length).equals(4);
       })
     });

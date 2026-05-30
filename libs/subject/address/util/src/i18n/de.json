@@ -4,5 +4,16 @@
   },
   "validation": {
     "validIban": "Die IBAN muss ein gültiges Format haben."
+  },
+  "address": {
+    "customChannelLabelMandatory": "Kanalbezeichnung ist ein Pflichtfeld.",
+    "customUsageLabelMandatory": "Verwendungsbezeichnung ist ein Pflichtfeld.",
+    "zipCodeMandatory": "PLZ ist ein Pflichtfeld.",
+    "cityMandatory": "Ort ist ein Pflichtfeld.",
+    "countryMandatory": "Land ist ein Pflichtfeld.",
+    "countryUppercase": "Ländercode muss in Grossbuchstaben sein.",
+    "countryLength": "Ländercode muss genau 2 Zeichen lang sein.",
+    "swissZipCodeNumeric": "Schweizer PLZ muss numerisch sein.",
+    "swissZipCodeLength": "Schweizer PLZ muss 4 Stellen haben."
   }
 }
