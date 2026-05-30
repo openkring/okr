@@ -328,6 +328,18 @@ export function jsonPrettyPrint(value: unknown): string {
 }
 
 /*-------------------------------------------- PLACEHOLDER ----------------------------------------------------- */
+export interface PlaceholderContext {
+  tenantId: string;
+  appDomain: string;
+  appVersion: string;
+  appName: string;
+}
+
+export interface PlaceholderHelpEntry {
+  placeholder: string;
+  description: string;
+}
+
 function formatDate(date: Date): string {
   return `${pad(date.getDate(), 2)}.${pad(date.getMonth() + 1, 2)}.${date.getFullYear()}`;
 }
@@ -338,15 +350,18 @@ function formatDateTime(date: Date): string {
 
 /**
  * Replaces known placeholders in a string with their runtime values.
- * //now      → current datetime as dd.mm.yyyy hh:mm
- * //today    → current date as dd.mm.yyyy
- * //tomorrow → tomorrow's date as dd.mm.yyyy
- * //yesterday→ yesterday's date as dd.mm.yyyy
- * @TID@      → tenantId
- * @DOMAIN@   → appDomain
+ * //now       → current datetime as dd.mm.yyyy hh:mm
+ * //today     → current date as dd.mm.yyyy
+ * //tomorrow  → tomorrow's date as dd.mm.yyyy
+ * //yesterday → yesterday's date as dd.mm.yyyy
+ * //year      → current year as yyyy
+ * @TID@       → tenantId
+ * @DOMAIN@    → appDomain
+ * @VERSION@   → appVersion
+ * @APPNAME@   → appName
  * @param now optional Date for testing; defaults to new Date()
  */
-export function replacePlaceholders(text: string, tenantId: string, appDomain: string, now = new Date()): string {
+export function replacePlaceholders(text: string, ctx: PlaceholderContext, now = new Date()): string {
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   const tomorrow = new Date(now);
@@ -357,8 +372,29 @@ export function replacePlaceholders(text: string, tenantId: string, appDomain: s
     .replace(/\/\/today/g, formatDate(now))
     .replace(/\/\/tomorrow/g, formatDate(tomorrow))
     .replace(/\/\/yesterday/g, formatDate(yesterday))
-    .replace(/@TID@/g, tenantId)
-    .replace(/@DOMAIN@/g, appDomain);
+    .replace(/\/\/year/g, String(now.getFullYear()))
+    .replace(/@TID@/g, ctx.tenantId)
+    .replace(/@DOMAIN@/g, ctx.appDomain)
+    .replace(/@VERSION@/g, ctx.appVersion)
+    .replace(/@APPNAME@/g, ctx.appName);
+}
+
+/**
+ * Returns a human-readable explanation of all supported placeholders,
+ * suitable for display in a help modal.
+ */
+export function getPlaceholderHelp(): PlaceholderHelpEntry[] {
+  return [
+    { placeholder: '//now',       description: 'Aktuelles Datum und Uhrzeit (dd.mm.yyyy hh:mm)' },
+    { placeholder: '//today',     description: 'Heutiges Datum (dd.mm.yyyy)' },
+    { placeholder: '//tomorrow',  description: 'Morgiges Datum (dd.mm.yyyy)' },
+    { placeholder: '//yesterday', description: 'Gestriges Datum (dd.mm.yyyy)' },
+    { placeholder: '//year',      description: 'Aktuelles Jahr (yyyy)' },
+    { placeholder: '@TID@',       description: 'Mandant-ID' },
+    { placeholder: '@DOMAIN@',    description: 'App-Domain' },
+    { placeholder: '@VERSION@',   description: 'App-Version' },
+    { placeholder: '@APPNAME@',   description: 'App-Name' },
+  ];
 }
 
 /*-------------------------------------------- HTML ----------------------------------------------------- */

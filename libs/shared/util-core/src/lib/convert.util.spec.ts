@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { replacePlaceholders, safeConvertBoolean, safeConvertNumber, safeConvertString, string2boolean, string2numberArray, stringArray2ObjectArray, stripHtml } from './convert.util';
+import { PlaceholderContext, getPlaceholderHelp, replacePlaceholders, safeConvertBoolean, safeConvertNumber, safeConvertString, string2boolean, string2numberArray, stringArray2ObjectArray, stripHtml } from './convert.util';
 
 describe('convert.util', () => {
 
@@ -226,58 +226,103 @@ describe('convert.util', () => {
 
     describe('replacePlaceholders', () => {
         const fixedDate = new Date(2026, 4, 30, 14, 5); // 2026-05-30 14:05
-        const tenantId = 'test-tenant';
-        const appDomain = 'example.com';
+        const ctx: PlaceholderContext = {
+            tenantId: 'test-tenant',
+            appDomain: 'example.com',
+            appVersion: '1.2.3',
+            appName: 'TestApp',
+        };
 
         it('replaces //now with datetime in dd.mm.yyyy hh:mm format', () => {
-            expect(replacePlaceholders('Event at //now', tenantId, appDomain, fixedDate))
+            expect(replacePlaceholders('Event at //now', ctx, fixedDate))
                 .toBe('Event at 30.05.2026 14:05');
         });
 
         it('replaces //today with date in dd.mm.yyyy format', () => {
-            expect(replacePlaceholders('Date: //today', tenantId, appDomain, fixedDate))
+            expect(replacePlaceholders('Date: //today', ctx, fixedDate))
                 .toBe('Date: 30.05.2026');
         });
 
         it('replaces //tomorrow with next day in dd.mm.yyyy format', () => {
-            expect(replacePlaceholders('Due: //tomorrow', tenantId, appDomain, fixedDate))
+            expect(replacePlaceholders('Due: //tomorrow', ctx, fixedDate))
                 .toBe('Due: 31.05.2026');
         });
 
         it('replaces //yesterday with previous day in dd.mm.yyyy format', () => {
-            expect(replacePlaceholders('Since: //yesterday', tenantId, appDomain, fixedDate))
+            expect(replacePlaceholders('Since: //yesterday', ctx, fixedDate))
                 .toBe('Since: 29.05.2026');
         });
 
+        it('replaces //year with current year in yyyy format', () => {
+            expect(replacePlaceholders('Year: //year', ctx, fixedDate))
+                .toBe('Year: 2026');
+        });
+
         it('replaces @TID@ with tenantId', () => {
-            expect(replacePlaceholders('Tenant: @TID@', tenantId, appDomain, fixedDate))
+            expect(replacePlaceholders('Tenant: @TID@', ctx, fixedDate))
                 .toBe('Tenant: test-tenant');
         });
 
         it('replaces @DOMAIN@ with appDomain', () => {
-            expect(replacePlaceholders('Domain: @DOMAIN@', tenantId, appDomain, fixedDate))
+            expect(replacePlaceholders('Domain: @DOMAIN@', ctx, fixedDate))
                 .toBe('Domain: example.com');
         });
 
+        it('replaces @VERSION@ with appVersion', () => {
+            expect(replacePlaceholders('v@VERSION@', ctx, fixedDate))
+                .toBe('v1.2.3');
+        });
+
+        it('replaces @APPNAME@ with appName', () => {
+            expect(replacePlaceholders('@APPNAME@', ctx, fixedDate))
+                .toBe('TestApp');
+        });
+
         it('replaces multiple occurrences of the same placeholder', () => {
-            expect(replacePlaceholders('@TID@ and @TID@', tenantId, appDomain, fixedDate))
+            expect(replacePlaceholders('@TID@ and @TID@', ctx, fixedDate))
                 .toBe('test-tenant and test-tenant');
         });
 
         it('replaces multiple different placeholders in one string', () => {
-            expect(replacePlaceholders('@TID@-@DOMAIN@-//today', tenantId, appDomain, fixedDate))
+            expect(replacePlaceholders('@TID@-@DOMAIN@-//today', ctx, fixedDate))
                 .toBe('test-tenant-example.com-30.05.2026');
         });
 
         it('pads single-digit day and month with leading zero', () => {
             const jan1 = new Date(2026, 0, 1, 9, 5); // 2026-01-01 09:05
-            expect(replacePlaceholders('//today //now', tenantId, appDomain, jan1))
+            expect(replacePlaceholders('//today //now', ctx, jan1))
                 .toBe('01.01.2026 01.01.2026 09:05');
         });
 
         it('leaves string unchanged when no placeholders present', () => {
-            expect(replacePlaceholders('no placeholders here', tenantId, appDomain, fixedDate))
+            expect(replacePlaceholders('no placeholders here', ctx, fixedDate))
                 .toBe('no placeholders here');
+        });
+    });
+
+    describe('getPlaceholderHelp', () => {
+        it('returns one entry per supported placeholder', () => {
+            const help = getPlaceholderHelp();
+            expect(help.length).toBe(9);
+        });
+
+        it('covers all supported placeholder tokens', () => {
+            const tokens = getPlaceholderHelp().map(e => e.placeholder);
+            expect(tokens).toContain('//now');
+            expect(tokens).toContain('//today');
+            expect(tokens).toContain('//tomorrow');
+            expect(tokens).toContain('//yesterday');
+            expect(tokens).toContain('//year');
+            expect(tokens).toContain('@TID@');
+            expect(tokens).toContain('@DOMAIN@');
+            expect(tokens).toContain('@VERSION@');
+            expect(tokens).toContain('@APPNAME@');
+        });
+
+        it('each entry has a non-empty description', () => {
+            for (const entry of getPlaceholderHelp()) {
+                expect(entry.description.length).toBeGreaterThan(0);
+            }
         });
     });
 });
