@@ -7,10 +7,11 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification } from '@bk2/shared-models';
+import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@bk2/shared-models';
 import { AppStore } from '@bk2/shared-feature';
 import { debugData, debugMessage } from '@bk2/shared-util-core';
 import { convertHeicToJpeg } from '@bk2/chat-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 export interface MatrixPollData {
   question: string;
@@ -25,6 +26,7 @@ export class MatrixChatService {
   private appStore = inject(AppStore);
   
   private client: MatrixClient | null = null;
+  private readonly activityService = inject(ActivityService);
   private syncState$ = new BehaviorSubject<string>('STOPPED');
   private rooms$ = new BehaviorSubject<MatrixRoom[]>([]);
   private messages$ = new Map<string, BehaviorSubject<MatrixMessage[] | null>>();
@@ -1627,13 +1629,17 @@ private async updateRoomsList(): Promise<void> {
 
   // ─── WebRTC calls ──────────────────────────────────────────────────────────
 
-  async startVideoCall(roomId: string): Promise<void> {
+  async startVideoCall(roomId: string, currentUser: UserModel | undefined): Promise<void> {
     if (!this.client) throw new Error('Matrix not initialized');
     const call = createNewMatrixCall(this.client, roomId);
-    if (!call) throw new Error('WebRTC not supported or room not found');
+    if (!call) {
+      void this.activityService.log('chat', 'startvideo', currentUser, `${roomId}: ERROR WebRTC not supported`);
+      throw new Error('WebRTC not supported or room not found');
+    } 
     this.setupCallListeners(call);
     this.activeCall$.next(call);
     await call.placeVideoCall();
+    void this.activityService.log('chat', 'startvideo', currentUser, `${roomId}: SUCCESS`);
     this.sendNotice(roomId, '📹 Video-Anruf gestartet');
     // Notify other room members via FCM (non-blocking — failure must not abort the call)
     this.notifyCallees(roomId).catch(err =>

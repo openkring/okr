@@ -9,7 +9,6 @@ import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
 import { AuthService } from '@bk2/auth-data-access';
-import { ActivityService } from '@bk2/activity-data-access';
 import { LoginForm } from '@bk2/auth-ui';
 
 import { AuthStore } from './auth.store';
@@ -73,7 +72,6 @@ export class LoginPage {
   private readonly router = inject(Router);
   protected readonly appStore = inject(AppStore);
   protected readonly authService = inject(AuthService);
-  private readonly activityService = inject(ActivityService);
   protected readonly store = inject(AuthStore);
 
   // inputs
@@ -108,7 +106,6 @@ export class LoginPage {
   public async login(): Promise<void> {
     const email = this.currentCredentials().loginEmail;
     await this.authService.login(this.currentCredentials(), this.appStore.appConfig().rootUrl, this.appStore.appConfig().loginUrl);
-    void this.activityService.logAuth('login', email);
   }
 
   public async gotoHome(): Promise<void> {

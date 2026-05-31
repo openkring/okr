@@ -58,14 +58,14 @@ export class ActivityService {
    * Log an auth event (login/logout) where currentUser (UserModel) is not yet available.
    * Uses the email address as author identifier.
    */
-  public async logAuth(action: 'login' | 'logout', email: string): Promise<void> {
+  public async logAuth(action: 'login' | 'logout', payload: string): Promise<void> {
     try {
       const activity = new ActivityModel(this.env.tenantId);
       activity.timestamp = getTodayStr(DateFormat.StoreDateTime);
       activity.scope = 'auth';
       activity.action = action;
-      activity.payload = email;
-      activity.author = { ...AVATAR_INFO_SHAPE, key: '', name1: email, name2: '', modelType: 'user' };
+      activity.payload = payload;
+      activity.author = { ...AVATAR_INFO_SHAPE, key: '', name1: '', name2: '', modelType: 'user' };
       activity.roleNeeded = 'admin';
       activity.index = getActivityIndex(activity);
       await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, undefined);

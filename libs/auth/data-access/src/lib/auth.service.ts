@@ -5,10 +5,11 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AUTH, ENV } from '@bk2/shared-config';
-import { AuthCredentials } from '@bk2/shared-models';
+import { AuthCredentials, UserModel } from '@bk2/shared-models';
 import { AlertService, navigateByUrl } from '@bk2/shared-util-angular';
 import { die, warn } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
+import { ActivityService } from '@bk2/activity-data-access';
 
 import { PFX } from './scope';
 
@@ -34,6 +35,7 @@ export class AuthService {
   private readonly env = inject(ENV);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
+  private readonly activityService = inject(ActivityService);
   private readonly i18n = inject(I18nService).translateAll({
     login_conf:     PFX + 'login.conf',
     login_error:    PFX + 'login.error',
@@ -63,9 +65,11 @@ export class AuthService {
       */
       await setPersistence(this.auth, browserLocalPersistence);
       await signInWithEmailAndPassword(this.auth, credentials.loginEmail, credentials.loginPassword);
+      void this.activityService.logAuth('login', `${credentials.loginEmail}: SUCCESS`);
       await this.alertService.showToast(this.i18n.login_conf());
       await navigateByUrl(this.router, rootUrl);
     } catch (ex) {
+      void this.activityService.logAuth('login', `${credentials.loginEmail}: ERROR: ${ex}`);
       console.error('AuthService.login: error: ', ex);
       await this.alertService.showToast(this.i18n.login_error());
       await navigateByUrl(this.router, loginUrl);
@@ -76,8 +80,10 @@ export class AuthService {
     try {
       await signInWithCustomToken(this.auth, token);
       await this.alertService.showToast(this.i18n.login_conf());
+      void this.activityService.logAuth('login', 'LoginWithToken: SUCCESS');
       await navigateByUrl(this.router, url);
     } catch (ex) {
+      void this.activityService.logAuth('login', `LoginWithToken: ERROR: ${ex}`);
       console.error('AuthService.loginWithToken: error: ', ex);
       await this.alertService.showToast(this.i18n.login_error());
       await navigateByUrl(this.router, url);
@@ -94,9 +100,11 @@ export class AuthService {
       if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
       const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
       await fn({ to: [loginEmail], appId: this.env.appId, provider: 'mailtrap_api', template: 'scs_password_reset' });
+      void this.activityService.log('auth', 'pwdreset', undefined, `${loginEmail}: SUCCESS`);
       await this.alertService.showToast(this.i18n.pwdreset_conf() + loginEmail);
       await navigateByUrl(this.router, loginUrl);
     } catch (ex) {
+      void this.activityService.log('auth', 'pwdreset', undefined, `${loginEmail}: ERROR: ${ex}`);
       console.error('AuthService.resetPassword: error: ', ex);
       await this.alertService.showToast(this.i18n.pwdreset_error());
       await navigateByUrl(this.router, loginUrl);
@@ -114,21 +122,26 @@ export class AuthService {
     try {
       const email = await verifyPasswordResetCode(this.auth, oobCode);
       await confirmPasswordReset(this.auth, oobCode, newPassword);
+      void this.activityService.log('auth', 'pwdresetConf', undefined, `${email}: SUCCESS`);
       return email;
     } catch (ex) {
+      void this.activityService.log('auth', 'pwdresetConf', undefined, `ERROR: ${ex}`);
       console.error('AuthService.confirmPasswordReset: error: ', ex);
       return undefined;
     }
   }
 
-  public async logout(): Promise<boolean> {
+  public async logout(currentUser: UserModel | undefined): Promise<boolean> {
+    const msg = currentUser ? currentUser.bkey + ': ' + currentUser.firstName + ' ' + currentUser.lastName : 'undefined';
     const result = await this.alertService.confirm(this.i18n.logout_confirm(), true);
     if (result === true) {
       try {
         await signOut(this.auth);
+        void this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`);
         await this.alertService.showToast(this.i18n.logout_conf());
         return true;
       } catch (ex) {
+        void this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`);
         console.error('AuthService.logout: error: ', ex);
         await this.alertService.showToast(this.i18n.logout_error());
       }
