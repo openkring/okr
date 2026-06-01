@@ -350,11 +350,11 @@ function formatDateTime(date: Date): string {
 
 /**
  * Replaces known placeholders in a string with their runtime values.
- * //now       → current datetime as dd.mm.yyyy hh:mm
- * //today     → current date as dd.mm.yyyy
- * //tomorrow  → tomorrow's date as dd.mm.yyyy
- * //yesterday → yesterday's date as dd.mm.yyyy
- * //year      → current year as yyyy
+ * @NOW@       → current datetime as dd.mm.yyyy hh:mm
+ * @TODAY@     → current date as dd.mm.yyyy
+ * @TOMORROW@  → tomorrow's date as dd.mm.yyyy
+ * @YESTERDAY@ → yesterday's date as dd.mm.yyyy
+ * @YEAR@      → current year as yyyy
  * @TID@       → tenantId
  * @DOMAIN@    → appDomain
  * @VERSION@   → appVersion
@@ -368,11 +368,11 @@ export function replacePlaceholders(text: string, ctx: PlaceholderContext, now =
   tomorrow.setDate(now.getDate() + 1);
 
   return text
-    .replace(/\/\/now/g, formatDateTime(now))
-    .replace(/\/\/today/g, formatDate(now))
-    .replace(/\/\/tomorrow/g, formatDate(tomorrow))
-    .replace(/\/\/yesterday/g, formatDate(yesterday))
-    .replace(/\/\/year/g, String(now.getFullYear()))
+    .replace(/@NOW@/g, formatDateTime(now))
+    .replace(/@TODAY@/g, formatDate(now))
+    .replace(/@TOMORROW@/g, formatDate(tomorrow))
+    .replace(/@YESTERDAY@/g, formatDate(yesterday))
+    .replace(/@YEAR@/g, String(now.getFullYear()))
     .replace(/@TID@/g, ctx.tenantId)
     .replace(/@DOMAIN@/g, ctx.appDomain)
     .replace(/@VERSION@/g, ctx.appVersion)
@@ -385,11 +385,11 @@ export function replacePlaceholders(text: string, ctx: PlaceholderContext, now =
  */
 export function getPlaceholderHelp(): PlaceholderHelpEntry[] {
   return [
-    { placeholder: '//now',       description: 'Aktuelles Datum und Uhrzeit (dd.mm.yyyy hh:mm)' },
-    { placeholder: '//today',     description: 'Heutiges Datum (dd.mm.yyyy)' },
-    { placeholder: '//tomorrow',  description: 'Morgiges Datum (dd.mm.yyyy)' },
-    { placeholder: '//yesterday', description: 'Gestriges Datum (dd.mm.yyyy)' },
-    { placeholder: '//year',      description: 'Aktuelles Jahr (yyyy)' },
+    { placeholder: '@NOW@',       description: 'Aktuelles Datum und Uhrzeit (dd.mm.yyyy hh:mm)' },
+    { placeholder: '@TODAY@',     description: 'Heutiges Datum (dd.mm.yyyy)' },
+    { placeholder: '@TOMORROW@',  description: 'Morgiges Datum (dd.mm.yyyy)' },
+    { placeholder: '@YESTERDAY@', description: 'Gestriges Datum (dd.mm.yyyy)' },
+    { placeholder: '@YEAR@',      description: 'Aktuelles Jahr (yyyy)' },
     { placeholder: '@TID@',       description: 'Mandant-ID' },
     { placeholder: '@DOMAIN@',    description: 'App-Domain' },
     { placeholder: '@VERSION@',   description: 'App-Version' },

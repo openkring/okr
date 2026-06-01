@@ -8,8 +8,8 @@ import { App } from '@capacitor/app';
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
 import { AppConfigService, FirestoreService } from '@bk2/shared-data-access';
 import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
-import { die, getSystemQuery } from '@bk2/shared-util-core';
-import { AppNavigationService, isBrowser } from '@bk2/shared-util-angular';
+import { die, getSystemQuery, replacePlaceholders } from '@bk2/shared-util-core';
+import { AppNavigationService, isBrowser, VersionCheckService } from '@bk2/shared-util-angular';
 
 import { SessionService} from '@bk2/session-data-access';
 
@@ -62,6 +62,7 @@ export const AppStore = signalStore(
     appConfigService: inject(AppConfigService),
     firestoreService: inject(FirestoreService),
     firestore: inject(FIRESTORE),
+    appVersionService: inject(VersionCheckService),
     auth: inject(AUTH),
     env: inject(ENV),
     fbUser: toSignal(authState(inject(AUTH))),
@@ -274,6 +275,16 @@ export const AppStore = signalStore(
       getResource(key: string) {
         if (!key) return undefined;
         return store.allResources()?.find(p => p.bkey === key);
+      },
+
+      replacePlaceholders(text: string): string {
+        const context = {
+          tenantId: store.tenantId(),
+          appDomain: store.appConfig().appDomain,
+          appVersion: store.appVersionService.getCurrentVersion(),
+          appName: store.appConfig().appName
+        }
+        return replacePlaceholders(text, context);
       },
 
       /**
