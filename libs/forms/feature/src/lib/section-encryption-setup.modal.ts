@@ -1,9 +1,6 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  IonButton, IonCheckbox, IonContent, IonInput, IonItem,
-  IonLabel, IonNote, IonText, ModalController,
-} from '@ionic/angular/standalone';
+import { IonButton, IonCheckbox, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular/standalone';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Header } from '@bk2/shared-ui';
 import { FormDefinitionModel } from '@bk2/shared-models';
@@ -16,7 +13,7 @@ import { AppStore } from '@bk2/shared-feature';
   standalone: true,
   imports: [
     FormsModule, Header, SvgIconPipe,
-    IonContent, IonItem, IonLabel, IonNote, IonText,
+    IonContent, IonItem, IonLabel, IonNote, IonIcon,
     IonInput, IonCheckbox, IonButton,
   ],
   template: `

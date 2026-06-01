@@ -30,6 +30,7 @@ import { MemberNewModal } from './member-new.modal';
 import { CategoryChangeModal } from './membership-category-change.modal';
 import { MembershipEditModal } from './membership-edit.modal';
 import { PFX } from './scope';
+import { ActivityService } from '@bk2/activity-data-access';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -292,6 +293,7 @@ export const _MembershipStore = signalStore(
     taskService: inject(TaskService),
     ownershipService: inject(OwnershipService),
     matrixService: inject(MatrixChatService),
+    activityService: inject(ActivityService),
     personEditModalClass: inject(PERSON_EDIT_MODAL, { optional: true }),
     i18nService: inject(I18nService)
   })),
@@ -819,8 +821,11 @@ export const _MembershipStore = signalStore(
           // remove the member from the group's Matrix chat room
           try {
             await store.matrixService.kickFromGroupRoom(membership.orgKey, membership.memberKey);
+            void store.activityService.log('chat', 'kickfromgroup', store.currentUser(), `SUCCESS: ${membership.memberKey} from ${membership.orgKey}`);
+
           } catch (err) {
             console.warn('MembershipStore.end: Could not kick from group chat:', err);
+            void store.activityService.log('chat', 'kickfromgroup', store.currentUser(), `ERROR: ${membership.memberKey} from ${membership.orgKey}`);
           }
         }
         const memberName = getFullName(membership.memberName1, membership.memberName2);
@@ -857,9 +862,11 @@ export const _MembershipStore = signalStore(
       async chat(membership: MembershipModel): Promise<void> {
         try {
           const room = await store.matrixService.createDirectRoom(membership.memberKey);
+          void store.activityService.log('chat', 'createdirect', store.currentUser(), `SUCCESS: ${membership.memberKey}`);
           await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
         } catch (error) {
           const msg = error instanceof Error ? error.message : 'Could not start chat';
+          void store.activityService.log('chat', 'createdirect', store.currentUser(), `ERROR: ${membership.memberKey} ${msg}`);
           await showToast(store.toastController, msg);
         }
       },
