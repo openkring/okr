@@ -110,6 +110,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /sessions/{sessionId} {
+      // Anonymous sessions are created before auth; constrain to single-tenant, inactive userKey
+      allow create: if request.resource.data.isActive == true
+                   && request.resource.data.userKey == ''
+                   && request.resource.data.tenants.size() == 1;
+      // Heartbeat, upgrade, and end-session writes must not change the tenant
+      allow update: if resource.data.tenants == request.resource.data.tenants;
+      allow delete: if false;
+      allow read:   if request.auth != null;
+    }
+
   	match /{document=**} {
     	allow read, write: if request.auth != null;
   	}
