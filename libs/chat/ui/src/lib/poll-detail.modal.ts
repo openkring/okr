@@ -1,9 +1,14 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, Signal } from '@angular/core';
 import { IonAvatar, IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { MatrixReadReceipt } from '@bk2/shared-models';
 import { Header } from '@bk2/shared-ui';
 import { hashUserIdToColor } from '@bk2/chat-util';
+
+interface PollDetailModalI18n {
+  survey_title: Signal<string>;
+  survey_empty: Signal<string>
+}
 
 @Component({
   selector: 'bk-poll-detail-modal',
@@ -52,12 +57,12 @@ import { hashUserIdToColor } from '@bk2/chat-util';
     }
   `],
   template: `
-    <bk-header [i18n]="{ title: '@chat.survey.viewVotes.title' }" [isModal]="true" />
+    <bk-header [i18n]="{ title: i18n().survey_title() }" [isModal]="true" />
     <ion-content>
       @for(answer of pollAnswers(); track answer.id) {
         <div class="answer-header">{{ answer.body }} ({{ voteCount(answer.id) }})</div>
         @if(voters(answer.id).length === 0) {
-          <p class="no-votes">{{ '@chat.survey.viewVotes.noVotes' }}</p>
+          <p class="no-votes">{{ i18n().survey_empty() }}</p>
         } @else {
           <ion-list lines="none">
             @for(voter of voters(answer.id); track voter.userId) {
@@ -84,6 +89,7 @@ export class PollDetailModal {
   public pollAnswers = input.required<Array<{ id: string; body: string }>>();
   public pollVotes = input<Record<string, number>>({});
   public pollVoters = input<Record<string, MatrixReadReceipt[]>>({});
+  public readonly i18n = input.required<PollDetailModalI18n>();
 
   protected voters(answerId: string): MatrixReadReceipt[] {
     return this.pollVoters()[answerId] ?? [];

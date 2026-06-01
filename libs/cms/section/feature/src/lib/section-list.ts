@@ -89,7 +89,7 @@ import { SectionStore } from './section.store';
   </ion-content>
   `
 })
-export class SectionAllListComponent {
+export class SectionAllList {
   protected sectionStore = inject(SectionStore);
   private actionSheetController = inject(ActionSheetController);
 

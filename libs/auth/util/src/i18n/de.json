@@ -1,8 +1,0 @@
-{
-  "validation": {
-    "loginEmailRequired": "Die E-Mail Adresse ist obligatorisch.",
-    "emailMustContainAt": "Die E-Mail Adresse muss ein @ enthalten.",
-    "emailMustContainDot": "Die E-Mail Adresse muss einen Punkt enthalten.",
-    "loginPasswordRequired": "Das Passwort ist obligatorisch."
-  }
-}

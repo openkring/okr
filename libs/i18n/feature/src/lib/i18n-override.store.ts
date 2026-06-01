@@ -7,33 +7,39 @@ import { of } from 'rxjs';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
-import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@bk2/shared-models';
+import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@bk2/shared-models'
 import { bkPrompt } from '@bk2/shared-util-angular';
 
 import { PFX } from './scope';
 
 const I18N_OVERRIDE_I18N_KEYS = {
-  create_conf:        PFX + 'override.create.conf',
-  create_error:       PFX + 'override.create.error',
-  update_conf:        PFX + 'override.update.conf',
-  update_error:       PFX + 'override.update.error',
-  delete_conf:        PFX + 'override.delete.conf',
-  delete_confirm:     PFX + 'override.delete.confirm',
-  delete_error:       PFX + 'override.delete.error',
-  module_prompt:      PFX + 'override.module.prompt',
-  key_prompt:         PFX + 'override.key.prompt',
+  module:             PFX + 'module.label',
+  module_prompt:      PFX + 'module.prompt',
+  key:                PFX + 'key.label',
+  key_prompt:         PFX + 'key.prompt',
+  is_html:            PFX + 'isHtml.label',
+  create:             PFX + 'create.label',
+  create_conf:        PFX + 'create.conf',
+  create_error:       PFX + 'create.error',
+  update:             PFX + 'update.label',
+  update_conf:        PFX + 'update.conf',
+  update_error:       PFX + 'update.error',
+  delete:             PFX + 'delete.label',
+  delete_conf:        PFX + 'delete.conf',
+  delete_confirm:     PFX + 'delete.confirm',
+  delete_error:       PFX + 'delete.error',
+
+  override_title:      PFX + 'override.title',
+  override_edit_title: PFX + 'override.edit.title',
+  override_list_title: PFX + 'override.list.title',
+
   ok:                 '@ok',
   cancel:             '@cancel',
-  as_edit:            '@actionsheet.edit',
-  as_delete:          '@actionsheet.delete',
-  search_placeholder: '@general.operation.search.placeholder',
-  list_title:         '@i18n.override.list.title',
-  loading:            '@general.operation.loading',
-  module_label:       '@i18n.override.module.label',
-  key_label:          '@i18n.override.key.label',
-  is_html_label:      '@i18n.override.isHtml.label',
-  btn_cancel:         '@general.operation.cancel',
-  btn_save:           '@general.operation.save',
+  as_title:           '@actionsheet.title',
+  save:               '@save.label',
+  search_placeholder: '@search.placeholder',
+  loading:            '@loading'
+
 } satisfies Record<string, string>;
 
 export type I18nOverrideI18n = { [K in keyof typeof I18N_OVERRIDE_I18N_KEYS]: Signal<string> };

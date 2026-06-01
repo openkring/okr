@@ -11,7 +11,7 @@ export interface PollCreateFormI18n {
   allowMultipleAnswers_helper: Signal<string>;
   question_label: Signal<string>;
   question_placeholder: Signal<string>;
-  answers_title: Signal<string>;
+  answer_create: Signal<string>;
   answer_add: Signal<string>;
 }
 
@@ -42,7 +42,7 @@ export interface PollCreateFormI18n {
       <!-- Answers via bk-strings -->
       <bk-strings
         [(strings)]="answers"
-        [title]="i18n().answers_title()"
+        [title]="i18n().answer_create()"
         [add]="i18n().answer_add()"
         [readOnly]="false"
         [mask]="anyCharMask"

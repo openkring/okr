@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map } from 'rxjs';
@@ -6,6 +6,14 @@ import { map } from 'rxjs';
 import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, PeopleSection } from '@bk2/shared-models';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
+import { I18nService } from '@bk2/shared-i18n';
+import { PFX } from './scope';
+
+const PEOPLE_SECTION_I18N_KEYS = {
+  people_empty:           PFX + 'people.empty',
+}
+
+export type PeopleSectionI18n = { [K in keyof typeof PEOPLE_SECTION_I18N_KEYS]: Signal<string> };
 
 export type PeopleSectionState = {
   section: PeopleSection | undefined;
@@ -20,8 +28,11 @@ export const PeopleSectionStore = signalStore(
   withProps(() => ({
     membershipService: inject(MembershipService),
     responsibilityService: inject(ResponsibilityService),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll(PEOPLE_SECTION_I18N_KEYS),
+
     groupMembersResource: rxResource({
       params: () => ({ groupId: store.section()?.properties.groupId ?? '' }),
       stream: ({ params }) => store.membershipService.listMembersOfOrg(params.groupId),

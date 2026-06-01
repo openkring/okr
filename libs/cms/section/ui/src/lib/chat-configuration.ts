@@ -1,12 +1,29 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ChatConfig } from '@bk2/shared-models';
 import { Checkbox, CheckboxI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_URL } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface ChatConfigI18n {
+  chat_title:      Signal<string>;
+  chat_subtitle:   Signal<string>;
+  id_label:          Signal<string>;
+  id_placeholder:    Signal<string>;
+  id_helper:         Signal<string>;
+  name_label:        Signal<string>;
+  name_placeholder:  Signal<string>;
+  name_helper:       Signal<string>;
+  url_label:         Signal<string>;
+  url_placeholder:   Signal<string>;
+  url_helper:        Signal<string>;
+  description_label:       Signal<string>;
+  description_placeholder: Signal<string>;
+  description_helper:      Signal<string>;
+  type_label:              Signal<string>;
+  showChannelList_label:   Signal<string>;
+  showChannelList_helper:  Signal<string>;
+}
 
 @Component({
   selector: 'bk-chat-config',
@@ -20,8 +37,8 @@ import { PFX } from './scope';
 
     <ion-card>
       <ion-card-header>
-          <ion-card-title>{{ title() }}</ion-card-title>
-          <ion-card-subtitle>{{ subTitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().chat_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().chat_subtitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -60,14 +77,11 @@ import { PFX } from './scope';
   `
 })
 export class ChatConfiguration {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public formData = model.required<ChatConfig>();
-  public title = input('@content.section.type.chat.title');
-  public subTitle = input('@content.section.type.chat.subtitle');
   public intro = input<string>();
   public readonly readOnly = input(true);
+  public readonly i18n = input.required<ChatConfigI18n>();
 
   // fields
   protected id = linkedSignal(() => this.formData().id ?? DEFAULT_ID);
@@ -77,57 +91,39 @@ export class ChatConfiguration {
   protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
   protected showChannelList = linkedSignal(() => this.formData().showChannelList ?? true);
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    id_label:          PFX + 'id.label',
-    id_placeholder:    PFX + 'id.placeholder',
-    id_helper:         PFX + 'id.helper',
-    name_label:        PFX + 'name.label',
-    name_placeholder:  PFX + 'name.placeholder',
-    name_helper:       PFX + 'name.helper',
-    url_label:         PFX + 'url.label',
-    url_placeholder:   PFX + 'url.placeholder',
-    url_helper:        PFX + 'url.helper',
-    description_label:       PFX + 'description.label',
-    description_placeholder: PFX + 'description.placeholder',
-    description_helper:      PFX + 'description.helper',
-    type_label:              PFX + 'chatType.label',
-    showChannelList_label:   PFX + 'showChannelList.label',
-    showChannelList_helper:  PFX + 'showChannelList.helper',
-  });
-
   protected idI18n = computed(() => ({
     name: 'id',
-    label: this.fieldI18n.id_label(),
-    placeholder: this.fieldI18n.id_placeholder(),
-    helper: this.fieldI18n.id_helper(),
+    label: this.i18n().id_label(),
+    placeholder: this.i18n().id_placeholder(),
+    helper: this.i18n().id_helper(),
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({
     name: 'name',
-    label: this.fieldI18n.name_label(),
-    placeholder: this.fieldI18n.name_placeholder(),
-    helper: this.fieldI18n.name_helper(),
+    label: this.i18n().name_label(),
+    placeholder: this.i18n().name_placeholder(),
+    helper: this.i18n().name_helper(),
   } as TextInputI18n));
 
   protected urlI18n = computed(() => ({
     name: 'url',
-    label: this.fieldI18n.url_label(),
-    placeholder: this.fieldI18n.url_placeholder(),
-    helper: this.fieldI18n.url_helper(),
+    label: this.i18n().url_label(),
+    placeholder: this.i18n().url_placeholder(),
+    helper: this.i18n().url_helper(),
   } as TextInputI18n));
 
   protected descriptionI18n = computed(() => ({
     name: 'description',
-    label: this.fieldI18n.description_label(),
-    placeholder: this.fieldI18n.description_placeholder(),
-    helper: this.fieldI18n.description_helper(),
+    label: this.i18n().description_label(),
+    placeholder: this.i18n().description_placeholder(),
+    helper: this.i18n().description_helper(),
   } as TextInputI18n));
-  protected typeI18n = computed(() => ({ name: 'type', label: this.fieldI18n.type_label() } as StringSelectI18n));
+  protected typeI18n = computed(() => ({ name: 'type', label: this.i18n().type_label() } as StringSelectI18n));
 
   protected showChannelListI18n = computed(() => ({
     name: 'showChannelList',
-    label: this.fieldI18n.showChannelList_label(),
-    helper: this.fieldI18n.showChannelList_helper(),
+    label: this.i18n().showChannelList_label(),
+    helper: this.i18n().showChannelList_helper(),
   } as CheckboxI18n));
 
   protected typeDescription = `

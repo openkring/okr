@@ -1,10 +1,6 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  IonButton, IonContent, IonInput, IonItem, IonLabel,
-  IonList, IonNote, IonRadio, IonRadioGroup, IonSelect, IonSelectOption, IonTextarea,
-  ModalController,
-} from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, IonSelect, IonSelectOption, IonTextarea, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { Header } from '@bk2/shared-ui';
@@ -18,7 +14,7 @@ import { FORM_MAPPINGS } from '@bk2/forms-util';
   standalone: true,
   imports: [
     FormsModule, Header,
-    IonContent, IonList, IonItem, IonLabel, IonNote,
+    IonContent, IonList, IonItem, IonLabel,
     IonInput, IonTextarea, IonRadioGroup, IonRadio,
     IonSelect, IonSelectOption, IonButton,
   ],

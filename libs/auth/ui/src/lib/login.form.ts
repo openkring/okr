@@ -11,8 +11,10 @@ import { authCredentialsValidations, emailValidations, loginValidations, passwor
 export interface LoginFormI18n {
   email_label: Signal<string>;
   email_placeholder: Signal<string>;
+  email_helper: Signal<string>;
   password_label: Signal<string>;
   password_placeholder: Signal<string>;
+  password_helper: Signal<string>;
 }
 
 /**
@@ -75,20 +77,18 @@ export class LoginForm {
   public readonly i18n = input.required<LoginFormI18n>();
   public readonly vm = model.required<AuthCredentials>(); // vm always contains the current values of the form
   public readonly context = input<'login' | 'email' | 'password'>('login');
-  public readonly emailHelper = input.required<string>();
-  public readonly pwdHelper = input.required<string>();
 
   protected loginEmailI18n = computed(() => ({
     name: 'loginEmail',
     label: this.i18n().email_label(),
     placeholder: this.i18n().email_placeholder(),
-    helper: this.emailHelper()
+    helper: this.i18n().email_helper()
   } as EmailInputI18n));
   protected loginPasswordI18n = computed(() => ({
     name: 'loginPassword',
     label: this.i18n().password_label(),
     placeholder: this.i18n().password_placeholder(),
-    helper: this.pwdHelper()
+    helper: this.i18n().password_helper()
   } as PasswordInputI18n));
 
   protected get suite() {

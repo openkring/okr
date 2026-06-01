@@ -40,8 +40,16 @@
   "selectRoom": "Wähle einen Chat-Raum, um den Chat zu starten",
   "noRoomsError": "Keine Chat-Räume vorhanden. Erstelle einen Raum oder nimm in einem Raum teil um zu starten.",
   "createTestRoom": "Test Raum erstellen",
+  "typeMessage": "Schreibe eine Nachricht...",
+  "recordAudio": "Sprachnachricht aufnehmen",
+  "videoCall": "Video-Chat starten",
+  "recording": "Aufnahme läuft...",
+  "addAttachment": "Anhang hinzufügen",
+  "noMessagesStartConversation": "Es gibt noch keine Nachrichten. Starte die Konversation.",
 
   "room": {
+    "rooms": "Chat-Räume",
+    "empty": "Leerer Raum",
     "none": "Keine Chat-Räume gefunden.",
     "create": {
       "header": "Neuen Chat-Raum erstellen",
@@ -112,15 +120,30 @@
       "helper": "Es können mehrere Antworten auf die gleiche Frage gegeben werden (Multiple Choice)."
     },
     "question": {
-      "label": "Frage",
-      "placeholder": "Die Frage, welche dem Anwender gezeigt wird."
+      "label": "Frage oder Thema",
+      "placeholder": "Schreibe etwas..."
     },
     "answer": {
       "create": "Neue Antwort",
       "add": "Antwort hinzufügen"
+    },
+    "results": {
+      "show": "Abstimmungsergebnisse anzeigen",
+      "title": "Abstimmungsergebnis"
+    },  
+    "empty": "Noch keine Stimmen",
+    "total": "Total Stimmen",
+    "done": "Du hast abgestimmt",
+    "end": "Umfrage beenden",
+    "ended": "Umfrage beendet",
+    "voted": "Du hast abgestimmt",
+    "choose": {
+      "multiple": "Wähle mindestens eine Option aus",
+      "one": "Wähle eine Option aus"
     }
   },
   "attach": {
+    "title": "Anhang hinzufügen",
     "image": "Bild anhängen",
     "file": "Datei anhängen",
     "position": "Position senden",
@@ -130,5 +153,9 @@
   "and": "und",
   "areTypeing": "tippen...",
   "othersTypeing": "andere tippen...",
-  "severalTypeing": "Mehrere Personen tippen..."
+  "severalTypeing": "Mehrere Personen tippen...",
+
+  "validation": {
+    "nameRequired": "Der Name ist obligatorisch."
+  }
 }

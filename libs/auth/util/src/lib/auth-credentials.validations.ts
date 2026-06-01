@@ -6,7 +6,7 @@ import { enforce, only, staticSuite, test } from 'vest';
 export type AuthCredentialsContext = 'login' | 'email' | 'password';
 
 const emailTests = (model: AuthCredentials) => {
-  test('loginEmail', '@validation.loginEmailRequired', () => {
+  test('loginEmail', '@validation.emailRequired', () => {
     enforce(model.loginEmail).isNotBlank();
   });
   stringValidations('loginEmail', model.loginEmail, EMAIL_LENGTH, 9, true);
@@ -19,7 +19,7 @@ const emailTests = (model: AuthCredentials) => {
 };
 
 const passwordTests = (model: AuthCredentials) => {
-  test('loginPassword', '@validation.loginPasswordRequired', () => {
+  test('loginPassword', '@validation.passwordRequired', () => {
     enforce(model.loginPassword).isNotBlank();
   });
   stringValidations('loginPassword', model.loginPassword, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, true);

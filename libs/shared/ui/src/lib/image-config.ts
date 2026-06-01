@@ -1,19 +1,32 @@
-import { Component, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ImageConfig, ImageType } from '@bk2/shared-models';
 import { ImageTypes } from '@bk2/shared-categories';
 
-import { CategoryOld, CategoryOldI18n } from './category-old';
+import { CategoryOld } from './category-old';
 import { TextInput, TextInputI18n } from './text-input';
 
 export interface ImageConfigI18n {
-  label: TextInputI18n;
-  type: CategoryOldI18n;
-  url: TextInputI18n;
-  actionUrl: TextInputI18n;
-  altText: TextInputI18n;
-  overlay: TextInputI18n;
+  image_edit:         Signal<string>;
+  image_type_name:    Signal<string>;
+  image_type_label:   Signal<string>;
+  image_type_helper:  Signal<string>;
+  label_label:       Signal<string>;
+  label_placeholder: Signal<string>;
+  label_helper:      Signal<string>;
+  url_label:         Signal<string>;
+  url_placeholder:   Signal<string>;
+  url_helper:        Signal<string>;
+  actionUrl_label:       Signal<string>;
+  actionUrl_placeholder: Signal<string>;
+  actionUrl_helper:      Signal<string>;
+  altText_label:         Signal<string>;
+  altText_placeholder:   Signal<string>;
+  altText_helper:        Signal<string>;
+  overlay_label:          Signal<string>;
+  overlay_placeholder:    Signal<string>;
+  overlay_helper:         Signal<string>;
 }
 
 @Component({
@@ -28,7 +41,7 @@ export interface ImageConfigI18n {
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() }}</ion-card-title>
+        <ion-card-title>{{ i18n().image_edit() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -39,22 +52,22 @@ export interface ImageConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input [i18n]="i18n().label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="readOnly()" [showHelper]=true />
+              <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="readOnly()" [showHelper]=true />
             </ion-col>
             <ion-col size="12">
-                <bk-category-old [i18n]="i18n().type" [value]="type()" (valueChange)="onFieldChange('type', $event)" [readOnly]="readOnly()" [categories]="imageTypes" />
+                <bk-category-old [i18n]="typeI18n()" [value]="type()" (valueChange)="onFieldChange('type', $event)" [readOnly]="readOnly()" [categories]="imageTypes" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="i18n().url" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
+              <bk-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="i18n().actionUrl" [value]="actionUrl()" (valueChange)="onFieldChange('actionUrl', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
+              <bk-text-input [i18n]="actionUrlI18n()" [value]="actionUrl()" (valueChange)="onFieldChange('actionUrl', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="i18n().altText" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
+              <bk-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="i18n().overlay" [value]="overlay()" (valueChange)="onFieldChange('overlay', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="100" />
+              <bk-text-input [i18n]="overlayI18n()" [value]="overlay()" (valueChange)="onFieldChange('overlay', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="100" />
             </ion-col>  
           </ion-row>
         </ion-grid>
@@ -66,8 +79,6 @@ export class ImageConfigEdit {
   // inputs
   public formData = model.required<ImageConfig>();
   public i18n = input.required<ImageConfigI18n>();
-  public title = input('@content.section.forms.imageConfig.title');
-  public subTitle = input('@content.section.forms.imageConfig.subtitle');
   public intro = input<string>();
   public readonly readOnly = input(true);
 
@@ -78,6 +89,14 @@ export class ImageConfigEdit {
   protected actionUrl = linkedSignal(() => this.formData().actionUrl ?? '');
   protected altText = linkedSignal(() => this.formData().altText ?? '');
   protected overlay = linkedSignal(() => this.formData().overlay ?? '');
+
+  // derived
+  protected labelI18n = computed(() => ({ name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper()} as TextInputI18n));
+  protected typeI18n = computed(() => ({ name: 'type', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper()} as TextInputI18n));
+  protected urlI18n = computed(() => ({ name: 'url', label: this.i18n().url_label(), placeholder: this.i18n().url_placeholder(), helper: this.i18n().url_helper()} as TextInputI18n));
+  protected actionUrlI18n = computed(() => ({ name: 'actionUrl', label: this.i18n().actionUrl_label(), placeholder: this.i18n().actionUrl_placeholder(), helper: this.i18n().actionUrl_helper()} as TextInputI18n));
+  protected altTextI18n = computed(() => ({ name: 'altText', label: this.i18n().altText_label(), placeholder: this.i18n().altText_placeholder(), helper: this.i18n().altText_helper()} as TextInputI18n));
+  protected overlayI18n = computed(() => ({ name: 'overlay', label: this.i18n().overlay_label(), placeholder: this.i18n().overlay_placeholder(), helper: this.i18n().overlay_helper()} as TextInputI18n));
 
   // passing constants to the template
   protected imageTypes = ImageTypes;

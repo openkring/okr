@@ -1,0 +1,18 @@
+{
+    "list": {
+        "title": "Buchungen"
+    },
+    "empty": "Keine Buchungen gefunden.",
+    "view": {
+        "label": "Buchungsdetails anzeigen"
+    },
+    "edit": {
+        "label": "Buchung ändern"
+    },
+    "create": {
+        "label": "Buchung erstellen"
+    },
+    "delete": {
+        "label": "Buchung löschen"
+    }
+}

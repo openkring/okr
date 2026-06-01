@@ -1,9 +1,11 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, input } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ViewPosition } from '@bk2/shared-models';
 
 import { Img, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { replacePlaceholders } from '@bk2/shared-util-core';
+import { AppStore } from '@bk2/shared-feature';
 
 @Component({
   selector: 'bk-article-section',
@@ -182,6 +184,8 @@ import { Img, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
   `
 })
 export class ArticleSectionComponent {
+  private appStore = inject(AppStore);
+
   // inputs
   public section = input<ArticleSection>();
   public editMode = input<boolean>(false);
@@ -214,7 +218,7 @@ export class ArticleSectionComponent {
   protected colSizeImage = computed(() => this.section()?.content?.colSize ?? 6);
   protected colSizeText = computed(() => 12 - this.colSizeImage());
   protected title = computed(() => this.section()?.title);
-  protected subTitle = computed(() => this.section()?.subTitle);
+  protected subTitle = computed(() => this.appStore.replacePlaceholders(this.section()?.subTitle ?? ''));
 
   public VP = ViewPosition;
 }

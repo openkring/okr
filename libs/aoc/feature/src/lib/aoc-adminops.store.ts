@@ -12,20 +12,38 @@ import { getMembershipCategoryChanges } from '@bk2/relationship-membership-util'
 import { PFX } from './scope';
 
 const AOC_ADMINOPS_I18N_KEYS = {
-  oldjuniors_title:    PFX + 'adminops.oldJuniors.title',
-  oldjuniors_nodob:    PFX + 'adminops.oldJuniors.nodob',
   title:               PFX + 'title',
-  mcatchange_title:    PFX + 'adminops.mcatchange.title',
   result_title:        PFX + 'result.title',
   adminops_title:      PFX + 'adminops.title',
   debug_tools:         PFX + 'adminops.debug.tools',
   focus_event_logging: PFX + 'adminops.debug.focus_event_logging',
+  iban_title:          PFX + 'adminops.iban.title',
   iban_label:          PFX + 'adminops.iban.label',
   iban_button:         PFX + 'adminops.iban.button',
+  mcatchange_title:    PFX + 'adminops.mcatchange.title',
+  doubleMembers_title: PFX + 'adminops.doubleMembers.title',
+  doubleMembers_label: PFX + 'adminops.doubleMembers.label',
+  doubleMembers_button: PFX + 'adminops.doubleMembers.button',
+  oldjuniors_title:    PFX + 'adminops.oldJuniors.title',
   oldJuniors_label:    PFX + 'adminops.oldJuniors.label',
   oldJuniors_button:   PFX + 'adminops.oldJuniors.button',
+  oldjuniors_nodob:    PFX + 'adminops.oldJuniors.nodob',
+  oldjuniors_description:    PFX + 'adminops.oldJuniors.description',
   club_label:          PFX + 'adminops.club.label',
   year_label:          PFX + 'adminops.year.label',
+  membership_prices_title:        PFX + 'adminops.membership.prices.title',
+  membership_prices_label:        PFX + 'adminops.membership.prices.label',
+  membership_prices_button:       PFX + 'adminops.membership.prices.button',
+  membership_prices_description:  PFX + 'adminops.membership.prices.description',
+  membership_attributes_title:    PFX + 'adminops.membership.attributes.title',
+  membership_attributes_label:    PFX + 'adminops.membership.attributes.label',
+  membership_attributes_button:   PFX + 'adminops.membership.attributes.button',
+  membership_attributes_description:  PFX + 'adminops.membership.attributes.description',
+  checkJuniorEntry_title:         PFX + 'checkJuniorEntry.title',
+  checkJuniorEntry_label:         PFX + 'checkJuniorEntry.label',
+  checkJuniorEntry_button:        PFX + 'checkJuniorEntry.button',
+  checkJuniorEntry_description:   PFX + 'checkJuniorEntry.description',
+
 } satisfies Record<string, string>;
 
 export type AocAdminopsI18n = { [K in keyof typeof AOC_ADMINOPS_I18N_KEYS]: Signal<string> };

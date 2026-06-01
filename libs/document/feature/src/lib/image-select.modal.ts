@@ -4,7 +4,7 @@ import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ioni
 import { ENV } from '@bk2/shared-config';
 import { IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header, ImageConfigEdit, ImageConfigI18n } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header, ImageConfigEdit } from '@bk2/shared-ui';
 import { coerceBoolean, getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
 import { UploadService } from '@bk2/avatar-data-access';
@@ -35,7 +35,11 @@ import { DocumentStore } from './document.store';
           <ion-icon slot="start" src="{{'camera' | svgIcon }}" />
           {{ store.i18n.upload_single() }}
         </ion-button>
-        <bk-image-config [formData]="formData()" [i18n]="imageConfigI18n()" (formDataChange)="onFormDataChange($event)" [readOnly]="isReadOnly()" />
+        <bk-image-config
+          [formData]="formData()" (formDataChange)="onFormDataChange($event)"
+           [i18n]="store.i18n"
+          [readOnly]="isReadOnly()"
+        />
       </ion-content>
   `
 })
@@ -59,14 +63,6 @@ export class ImageSelectModal {
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
   public formData = signal<ImageConfig>(IMAGE_CONFIG_SHAPE);
-
-  protected imageConfigI18n = computed(() => ({
-    label:     { name: 'label',     label: this.store.i18n.label_label(),     placeholder: this.store.i18n.label_placeholder(),     helper: this.store.i18n.label_helper()     },
-    url:       { name: 'url',       label: this.store.i18n.url_label(),       placeholder: this.store.i18n.url_placeholder(),       helper: this.store.i18n.url_helper()       },
-    actionUrl: { name: 'actionUrl', label: this.store.i18n.actionUrl_label(), placeholder: this.store.i18n.actionUrl_placeholder(), helper: this.store.i18n.actionUrl_helper() },
-    altText:   { name: 'altText',   label: this.store.i18n.altText_label(),   placeholder: this.store.i18n.altText_placeholder(),   helper: this.store.i18n.altText_helper()   },
-    overlay:   { name: 'overlay',   label: this.store.i18n.overlay_label(),   placeholder: this.store.i18n.overlay_placeholder(),   helper: this.store.i18n.overlay_helper()   },
-  } as ImageConfigI18n));
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {

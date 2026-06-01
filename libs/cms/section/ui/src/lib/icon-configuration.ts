@@ -1,12 +1,19 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { IconConfig, Slot } from '@bk2/shared-models';
 import { NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_NAME } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface IconConfigI18n {
+  icon_label:             Signal<string>;
+  icon_placeholder:       Signal<string>;
+  icon_helper:            Signal<string>;
+  iconSize_label:         Signal<string>;
+  iconSize_placeholder:   Signal<string>;
+  iconSize_helper:        Signal<string>;
+  iconSlot_label:         Signal<string>;
+}
 
 @Component({
   selector: 'bk-icon-config',
@@ -42,39 +49,28 @@ import { PFX } from './scope';
   `
 })
 export class IconConfiguration {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public formData = model.required<IconConfig>();
   public title = input('@content.section.type.button.icon.title');
   public subTitle = input('@content.section.type.button.icon.subtitle');
   public intro = input<string>();
   public readonly readOnly = input(true);
+  public readonly i18n = input.required<IconConfigI18n>();
 
   // fields
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected size = linkedSignal(() => this.formData().size ?? 'default');
   protected slot = linkedSignal(() => this.formData().slot ?? 'start');
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    icon_label:             PFX + 'icon.label',
-    icon_placeholder:       PFX + 'icon.placeholder',
-    icon_helper:            PFX + 'icon.helper',
-    iconSize_label:         PFX + 'iconSize.label',
-    iconSize_placeholder:   PFX + 'iconSize.placeholder',
-    iconSize_helper:        PFX + 'iconSize.helper',
-    iconSlot_label:         PFX + 'iconSlot.label',
-  });
-
-  protected iconSizeI18n = computed(() => ({ name: 'iconSize', label: this.fieldI18n.iconSize_label(), placeholder: this.fieldI18n.iconSize_placeholder(), helper: this.fieldI18n.iconSize_helper() } as NumberInputI18n));
+  protected iconSizeI18n = computed(() => ({ name: 'iconSize', label: this.i18n().iconSize_label(), placeholder: this.i18n().iconSize_placeholder(), helper: this.i18n().iconSize_helper() } as NumberInputI18n));
 
   protected iconNameI18n = computed(() => ({
     name: 'iconName',
-    label: this.fieldI18n.icon_label(),
-    placeholder: this.fieldI18n.icon_placeholder(),
-    helper: this.fieldI18n.icon_helper(),
+    label: this.i18n().icon_label(),
+    placeholder: this.i18n().icon_placeholder(),
+    helper: this.i18n().icon_helper(),
   } as TextInputI18n));
-  protected iconSlotI18n = computed(() => ({ name: 'iconSlot', label: this.fieldI18n.iconSlot_label() } as StringSelectI18n));
+  protected iconSlotI18n = computed(() => ({ name: 'iconSlot', label: this.i18n().iconSlot_label() } as StringSelectI18n));
 
   protected onFieldChange(fieldName: string, $event: string | Slot | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));

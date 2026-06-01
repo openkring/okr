@@ -1,11 +1,23 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { InvitationsConfig } from '@bk2/shared-models';
 import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface InvitationsConfigI18n {
+    invitations_title:        Signal<string>;
+    invitations_subtitle:     Signal<string>;
+    moreUrl_label:            Signal<string>;
+    moreUrl_placeholder:      Signal<string>;
+    moreUrl_helper:           Signal<string>;
+    maxItems_label:           Signal<string>;
+    maxItems_placeholder:     Signal<string>;
+    maxItems_helper:          Signal<string>;
+    showPastItems_label:      Signal<string>;
+    showPastItems_helper:     Signal<string>;
+    showUpcomingItems_label:  Signal<string>;
+    showUpcomingItems_helper: Signal<string>;
+}
 
 @Component({
   selector: 'bk-invitations-config',
@@ -19,8 +31,8 @@ import { PFX } from './scope';
 
     <ion-card>
       <ion-card-header>
-          <ion-card-title>{{ title() }}</ion-card-title>
-          <ion-card-subtitle>{{ subTitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().invitations_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().invitations_subtitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -50,14 +62,11 @@ import { PFX } from './scope';
   `
 })
 export class InvitationsConfiguration {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public formData = model.required<InvitationsConfig>();
-  public title = input('@content.section.type.invitations.title');
-  public subTitle = input('@content.section.type.invitations.subtitle');
   public intro = input<string>();
   public readonly readOnly = input(true);
+  public readonly i18n = input.required<InvitationsConfigI18n>();
 
   // fields
   protected moreUrl = linkedSignal(() => this.formData().moreUrl ?? '');
@@ -65,38 +74,25 @@ export class InvitationsConfiguration {
   protected showPastItems = linkedSignal(() => this.formData().showPastItems ?? false);
   protected showUpcomingItems = linkedSignal(() => this.formData().showUpcomingItems ?? true);
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    moreUrl_label:         PFX + 'moreUrl.label',
-    moreUrl_placeholder:   PFX + 'moreUrl.placeholder',
-    moreUrl_helper:        PFX + 'moreUrl.helper',
-    maxItems_label:           PFX + 'maxItems.label',
-    maxItems_placeholder:     PFX + 'maxItems.placeholder',
-    maxItems_helper:          PFX + 'maxItems.helper',
-    showPastItems_label:      PFX + 'showPastItems.label',
-    showPastItems_helper:     PFX + 'showPastItems.helper',
-    showUpcomingItems_label:  PFX + 'showUpcomingItems.label',
-    showUpcomingItems_helper: PFX + 'showUpcomingItems.helper',
-  });
-
-  protected maxItemsI18n = computed(() => ({ name: 'maxItems', label: this.fieldI18n.maxItems_label(), placeholder: this.fieldI18n.maxItems_placeholder(), helper: this.fieldI18n.maxItems_helper() } as NumberInputI18n));
+  protected maxItemsI18n = computed(() => ({ name: 'maxItems', label: this.i18n().maxItems_label(), placeholder: this.i18n().maxItems_placeholder(), helper: this.i18n().maxItems_helper() } as NumberInputI18n));
 
   protected moreUrlI18n = computed(() => ({
     name: 'moreUrl',
-    label: this.fieldI18n.moreUrl_label(),
-    placeholder: this.fieldI18n.moreUrl_placeholder(),
-    helper: this.fieldI18n.moreUrl_helper(),
+    label: this.i18n().moreUrl_label(),
+    placeholder: this.i18n().moreUrl_placeholder(),
+    helper: this.i18n().moreUrl_helper(),
   } as TextInputI18n));
 
   protected showPastItemsI18n = computed(() => ({
     name: 'showPastItems',
-    label: this.fieldI18n.showPastItems_label(),
-    helper: this.fieldI18n.showPastItems_helper(),
+    label: this.i18n().showPastItems_label(),
+    helper: this.i18n().showPastItems_helper(),
   } as CheckboxI18n));
 
   protected showUpcomingItemsI18n = computed(() => ({
     name: 'showUpcomingItems',
-    label: this.fieldI18n.showUpcomingItems_label(),
-    helper: this.fieldI18n.showUpcomingItems_helper(),
+    label: this.i18n().showUpcomingItems_label(),
+    helper: this.i18n().showUpcomingItems_helper(),
   } as CheckboxI18n));
 
   protected onFieldChange(fieldName: string, $event: string | boolean | number): void {

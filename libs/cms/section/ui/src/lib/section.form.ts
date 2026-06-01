@@ -1,29 +1,288 @@
 import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
 
 import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
-import { Chips, ImageConfigEdit, ImageConfigI18n, NotesInput, NotesInputI18n } from '@bk2/shared-ui';
+import { Chips, ImageConfigEdit, NotesInput, NotesInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { ModelSelectService } from '@bk2/shared-feature';
 
 export interface SectionFormI18n {
-  imgLabel_label: Signal<string>;
-  imgLabel_placeholder: Signal<string>;
-  imgLabel_helper: Signal<string>;
-  imgUrl_label: Signal<string>;
-  imgUrl_placeholder: Signal<string>;
-  imgUrl_helper: Signal<string>;
-  imgActionUrl_label: Signal<string>;
-  imgActionUrl_placeholder: Signal<string>;
-  imgActionUrl_helper: Signal<string>;
-  imgAltText_label: Signal<string>;
-  imgAltText_placeholder: Signal<string>;
-  imgAltText_helper: Signal<string>;
-  imgOverlay_label: Signal<string>;
-  imgOverlay_placeholder: Signal<string>;
-  imgOverlay_helper: Signal<string>;
+  image_edit: Signal<string>;
+  image_delete: Signal<string>;
+  image_upload: Signal<string>;
+  image_label_label: Signal<string>;
+  image_label_placeholder: Signal<string>;
+  image_label_helper: Signal<string>;
+  image_url_label: Signal<string>;
+  image_url_placeholder: Signal<string>;
+  image_url_helper: Signal<string>;
+  image_action_label: Signal<string>;
+  image_action_placeholder: Signal<string>;
+  image_action_helper: Signal<string>;
+  image_alt_label: Signal<string>;
+  image_alt_placeholder: Signal<string>;
+  image_alt_helper: Signal<string>;
+  image_overlay_label: Signal<string>;
+  image_overlay_placeholder: Signal<string>;
+  image_overlay_helper: Signal<string>;
+  image_type_name: Signal<string>;
+  image_type_label: Signal<string>;
+  image_type_helper: Signal<string>;
+
   notes_label: Signal<string>;
   notes_placeholder: Signal<string>;
+
+  // album config
+  album_title:                  Signal<string>;
+  directory_label:              Signal<string>;
+  directory_placeholder:        Signal<string>;
+  directory_helper:             Signal<string>;
+  albumStyle_label:             Signal<string>;
+  effect_label:                 Signal<string>;
+  recursive_label:              Signal<string>;
+  recursive_helper:             Signal<string>;
+  showVideos_label:             Signal<string>;
+  showVideos_helper:            Signal<string>;
+  showStreamingVideos_label:    Signal<string>;
+  showStreamingVideos_helper:   Signal<string>;
+  showDocs_label:               Signal<string>;
+  showDocs_helper:              Signal<string>;
+  showPdfs_label:               Signal<string>;
+  showPdfs_helper:              Signal<string>;
+
+  // button action
+  actionUrl_label:       Signal<string>;
+  actionUrl_placeholder: Signal<string>;
+  actionUrl_helper:      Signal<string>;
+  altText_label:         Signal<string>;
+  altText_placeholder:   Signal<string>;
+  altText_helper:        Signal<string>;
+  buttonAction_label:    Signal<string>;
+
+  // button style  
+  button_style_title: Signal<string>;
+  button_style_subtitle: Signal<string>;
+  label_label:       Signal<string>;
+  label_placeholder: Signal<string>;
+  label_helper:      Signal<string>;
+  shape_label:       Signal<string>;
+
+  // chat config
+  chat_title:      Signal<string>;
+  chat_subtitle:   Signal<string>;
+  id_label:          Signal<string>;
+  id_placeholder:    Signal<string>;
+  id_helper:         Signal<string>;
+  name_label:        Signal<string>;
+  name_placeholder:  Signal<string>;
+  name_helper:       Signal<string>;
+  url_label:         Signal<string>;
+  url_placeholder:   Signal<string>;
+  url_helper:        Signal<string>;
+  description_label:       Signal<string>;
+  description_placeholder: Signal<string>;
+  description_helper:      Signal<string>;
+  type_label:              Signal<string>;
+  showChannelList_label:   Signal<string>;
+  showChannelList_helper:  Signal<string>;
+
+  // editor config
+  colSize_label:       Signal<string>;
+  colSize_placeholder: Signal<string>;
+  colSize_helper:      Signal<string>;
+  position_label:      Signal<string>;
+
+  // events config
+  events_title:               Signal<string>;
+  events_subtitle:            Signal<string>;
+  moreUrl_label:              Signal<string>;
+  moreUrl_placeholder:        Signal<string>;
+  moreUrl_helper:             Signal<string>;
+  maxEvents_label:            Signal<string>;
+  maxEvents_placeholder:      Signal<string>;
+  maxEvents_helper:           Signal<string>;
+  showPastEvents_label:       Signal<string>;
+  showPastEvents_helper:      Signal<string>;
+  showUpcomingEvents_label:   Signal<string>;
+  showUpcomingEvents_helper:  Signal<string>;
+  showEventTime_label:        Signal<string>;
+  showEventTime_helper:       Signal<string>;
+  showEventLocation_label:    Signal<string>;
+  showEventLocation_helper:   Signal<string>;
+
+  // icon config
+  icon_label:             Signal<string>;
+  icon_placeholder:       Signal<string>;
+  icon_helper:            Signal<string>;
+  iconSize_label:         Signal<string>;
+  iconSize_placeholder:   Signal<string>;
+  iconSize_helper:        Signal<string>;
+  iconSlot_label:         Signal<string>;
+
+  // iframe config
+  iframe_title:      Signal<string>;
+  style_label:       Signal<string>;
+  style_placeholder: Signal<string>;
+  style_helper:      Signal<string>;
+
+  // image edit
+  overlay_label:          Signal<string>;
+  overlay_placeholder:    Signal<string>;
+  overlay_helper:         Signal<string>;
+
+  // images style
+  image_style_title:        Signal<string>;
+  imgIxParams_label:       Signal<string>;
+  imgIxParams_placeholder: Signal<string>;
+  imgIxParams_helper:      Signal<string>;
+  sizes_label:             Signal<string>;
+  sizes_placeholder:       Signal<string>;
+  sizes_helper:            Signal<string>;
+  borderRadius_label:       Signal<string>;
+  borderRadius_placeholder: Signal<string>;
+  borderRadius_helper:      Signal<string>;
+  slot_label:               Signal<string>;
+  imageAction_label:        Signal<string>;
+  isThumbnail_label:        Signal<string>;
+  isThumbnail_helper:       Signal<string>;
+  fill_label:               Signal<string>;
+  fill_helper:              Signal<string>;
+  hasPriority_label:        Signal<string>;
+  hasPriority_helper:       Signal<string>;
+
+  // images
+  empty: Signal<string>;
+  as_title: Signal<string>;
+  cancel: Signal<string>;
+  copy_conf: Signal<string>;
+
+  // invitations config
+  invitations_title:        Signal<string>;
+  invitations_subtitle:     Signal<string>;
+  maxItems_label:           Signal<string>;
+  maxItems_placeholder:     Signal<string>;
+  maxItems_helper:          Signal<string>;
+  showPastItems_label:      Signal<string>;
+  showPastItems_helper:     Signal<string>;
+  showUpcomingItems_label:  Signal<string>;
+  showUpcomingItems_helper: Signal<string>;
+
+  // map config
+  latitude_label:                       Signal<string>;
+  latitude_placeholder:                 Signal<string>;
+  latitude_helper:                      Signal<string>;
+  longitude_label:                      Signal<string>;
+  longitude_placeholder:                Signal<string>;
+  longitude_helper:                     Signal<string>;
+  zoomFactor_label:                     Signal<string>;
+  zoomFactor_placeholder:               Signal<string>;
+  zoomFactor_helper:                    Signal<string>;
+  useCurrentLocationAsCenter_label:     Signal<string>;
+  useCurrentLocationAsCenter_helper:    Signal<string>;
+
+  // people-config
+  people_edit:                Signal<string>;
+  title_label:                Signal<string>,
+  title_placeholder:          Signal<string>,
+  title_helper:               Signal<string>,
+  linkedSection_label:        Signal<string>,
+  linkedSection_placeholder:  Signal<string>,
+  linkedSection_helper:       Signal<string>,
+  peopleType_label:           Signal<string>,
+  color_label:                Signal<string>,
+  nameDisplay_label:          Signal<string>,
+  showName_label:             Signal<string>,
+  showName_helper:            Signal<string>,
+  showLabel_label:            Signal<string>,
+  showLabel_helper:           Signal<string>,
+
+  // persons-widget
+  people_empty:  Signal<string>;
+
+  // responsibility-config
+  bkey_label:              Signal<string>;
+  bkey_placeholder:        Signal<string>;
+  bkey_helper:             Signal<string>;
+  showAvatar_label:        Signal<string>;
+  showAvatar_helper:       Signal<string>;
+  showDescription_label:   Signal<string>;
+  showDescription_helper:  Signal<string>;
+
+  // section-config
+  subTitle_label:       Signal<string>;
+  subTitle_placeholder: Signal<string>;
+  subTitle_helper:      Signal<string>;
+
+  // table-grid
+  template_label:               Signal<string>,
+  template_placeholder:         Signal<string>,
+  template_helper:              Signal<string>,
+  gap_label:                    Signal<string>,
+  gap_placeholder:              Signal<string>,
+  gap_helper:                   Signal<string>,
+  backgroundColor_label:        Signal<string>,
+  backgroundColor_placeholder:  Signal<string>,
+  backgroundColor_helper:       Signal<string>,
+  padding_label:                Signal<string>,
+  padding_placeholder:          Signal<string>,
+  padding_helper:               Signal<string>,
+  showTitleAs_label:            Signal<string>,
+
+  // table-body / table-header
+  title: Signal<string>;
+  description: Signal<string>;
+  add: Signal<string>;
+
+  // table-style
+  textAlign_label:         Signal<string>,
+  textAlign_placeholder:   Signal<string>,
+  textAlign_helper:        Signal<string>,
+  fontSize_label:          Signal<string>,
+  fontSize_placeholder:    Signal<string>,
+  fontSize_helper:         Signal<string>,
+  textColor_label:         Signal<string>,
+  textColor_placeholder:   Signal<string>,
+  textColor_helper:        Signal<string>,
+  border_label:            Signal<string>,
+  border_placeholder:      Signal<string>,
+  border_helper:           Signal<string>,
+  fontWeight_label:        Signal<string>,
+
+  // tracker-config
+  tracker_title:                 Signal<string>;
+  intervalInSeconds_label:       Signal<string>,
+  intervalInSeconds_placeholder: Signal<string>,
+  intervalInSeconds_helper:      Signal<string>,
+  maximumAge_label:              Signal<string>,
+  maximumAge_placeholder:        Signal<string>,
+  maximumAge_helper:             Signal<string>,
+  exportFormat_label:            Signal<string>,
+  autostart_label:               Signal<string>,
+  autostart_helper:              Signal<string>,
+  enableHighAccuracy_label:      Signal<string>,
+  enableHighAccuracy_helper:     Signal<string>,
+
+  // trip-stats-config
+  trip_stats_title:   Signal<string>,
+  viewType_label:     Signal<string>,
+  contentType_label:  Signal<string>
+
+  // video-config
+  youtubeId_label:       Signal<string>,
+  youtubeId_placeholder: Signal<string>,
+  youtubeId_helper:      Signal<string>,
+  width_label:           Signal<string>,
+  width_placeholder:     Signal<string>,
+  width_helper:          Signal<string>,
+  height_label:          Signal<string>,
+  height_placeholder:    Signal<string>,
+  height_helper:         Signal<string>,
+  frameborder_label:     Signal<string>,
+  frameborder_placeholder: Signal<string>,
+  frameborder_helper:    Signal<string>,
+  baseUrl_label:         Signal<string>,
+  baseUrl_placeholder:   Signal<string>,
+  baseUrl_helper:        Signal<string>
 }
 
 import { SectionConfiguration } from './section-configuration';
@@ -62,40 +321,85 @@ import { TrackerConfiguration } from './tracker-configuration';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      <bk-section-config [(formData)]="formData" [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [readOnly]="isReadOnly()" />
+      <bk-section-config
+        [(formData)]="formData"
+        [currentUser]="currentUser()"
+        [roles]="roles()"
+        [states]="states()"
+        [readOnly]="isReadOnly()"
+        [i18n]="i18n()"
+      />
 
       @switch (formData().type) {
         @case('album') {
           @if(albumConfig(); as albumConfig) {
-            <bk-album-config [formData]="albumConfig" (formDataChange)="onAlbumConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-album-config
+              [formData]="albumConfig" (formDataChange)="onAlbumConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
         }
 
         @case('article') {
           @if(content(); as content) {
-            <bk-editor-config [formData]="content" (formDataChange)="onContentChange($event)" [readOnly]="isReadOnly()" />
+            <bk-editor-config
+              [formData]="content" (formDataChange)="onContentChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
-          <bk-images-config [images]="images()" (imagesChange)="onImagesChange($event)" [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="isReadOnly()" />
+          <bk-images-config
+            [images]="images()" (imagesChange)="onImagesChange($event)"
+            [storagePath]="storagePath()"
+            [currentUser]="currentUser()"
+            [readOnly]="isReadOnly()"
+            [i18n]="i18n()"
+          />
           @if(imageStyle(); as imageStyle) {
-            <bk-image-style [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)" [readOnly]="isReadOnly()" />
+            <bk-image-style
+              [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
         }
 
         @case('button') {
           @if(content(); as content) {
-            <bk-editor-config [formData]="content" (formDataChange)="onContentChange($event)" [readOnly]="isReadOnly()" />
+            <bk-editor-config
+              [formData]="content" (formDataChange)="onContentChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           } 
           @if(buttonActionConfig(); as buttonActionConfig) {
-            <bk-button-action [formData]="buttonActionConfig" (formDataChange)="onButtonActionChange($event)" [readOnly]="isReadOnly()" />
+            <bk-button-action
+              [formData]="buttonActionConfig" (formDataChange)="onButtonActionChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
           @if(iconConfig(); as iconConfig) {
-            <bk-icon-config [formData]="iconConfig" (formDataChange)="onIconConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-icon-config
+              [formData]="iconConfig" (formDataChange)="onIconConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
           @if(buttonStyle(); as buttonStyle) {
-            <bk-button-style [formData]="buttonStyle" (formDataChange)="onButtonStyleChange($event)" [readOnly]="isReadOnly()" />
+            <bk-button-style
+              [formData]="buttonStyle" (formDataChange)="onButtonStyleChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
           @if(imageStyle(); as imageStyle) {
-            <bk-image-style [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)" [readOnly]="isReadOnly()" />
+            <bk-image-style
+              [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
         }
         @case('cal') {
@@ -106,93 +410,162 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('chat') {
           @if(chatConfig(); as chatConfig) {
-            <bk-chat-config [formData]="chatConfig" (formDataChange)="onChatConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-chat-config
+              [formData]="chatConfig" (formDataChange)="onChatConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
         }
         @case('events') {
           @if(eventsConfig(); as eventsConfig) {
-            <bk-events-config [formData]="eventsConfig" (formDataChange)="onEventsConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-events-config
+              [formData]="eventsConfig" (formDataChange)="onEventsConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
         }
         @case('invitations') {
           @if(invitationsConfig(); as invitationsConfig) {
-            <bk-invitations-config [formData]="invitationsConfig" (formDataChange)="onInvitationsConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-invitations-config
+              [formData]="invitationsConfig" (formDataChange)="onInvitationsConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
         }
         @case('hero') {
           @if(logoConfig(); as logoConfig) {
-            <bk-image-config [formData]="logoConfig" [i18n]="imageConfigI18n()" (formDataChange)="onImageConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-image-config
+              [formData]="logoConfig" (formDataChange)="onImageConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
           @if(heroConfig(); as heroConfig) {
-            <bk-image-config [formData]="heroConfig" [i18n]="imageConfigI18n()" (formDataChange)="onImageConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-image-config
+              [formData]="heroConfig" (formDataChange)="onImageConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
           @if(imageStyle(); as imageStyle) {
-            <bk-image-style [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)" [readOnly]="isReadOnly()" />
+            <bk-image-style
+              [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
 
         }
         @case('iframe') {
           @if(iframeConfig(); as iframeConfig) {
-            <bk-iframe-config [formData]="iframeConfig" (formDataChange)="onIframeConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-iframe-config
+              [formData]="iframeConfig" (formDataChange)="onIframeConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
         }
         @case('map') {
           @if(mapConfig(); as mapConfig) {
-            <bk-map-config [formData]="mapConfig" (formDataChange)="onMapConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-map-config
+              [formData]="mapConfig" (formDataChange)="onMapConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
           }
         }
         @case('people') {
           @if(peopleConfig(); as peopleConfig) {
               <bk-people-config
-                [formData]="peopleConfig"
-                (formDataChange)="onPeopleConfigChange($event)"
+                [formData]="peopleConfig" (formDataChange)="onPeopleConfigChange($event)"
+                [currentUser]="currentUser()"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
                 (selectClicked)="selectPerson()"
                 (groupSelectClicked)="selectGroup()"
                 (responsibilitySelectClicked)="selectResponsibility()"
-                [currentUser]="currentUser()"
-                [readOnly]="isReadOnly()"
               />
           }
         }
         @case('responsibility') {
           @if(responsibilityConfig(); as responsibilityConfig) {
             <bk-responsibility-config
-              [formData]="responsibilityConfig"
-              (formDataChange)="onResponsibilityConfigChange($event)"
+              [formData]="responsibilityConfig" (formDataChange)="onResponsibilityConfigChange($event)"
               [currentUser]="currentUser()"
+              [i18n]="i18n()"
               [readOnly]="isReadOnly()"
             />
           }
         }
         @case('slider') {
           @if(images(); as images) {
-            <bk-images-config [images]="images" (imagesChange)="onImagesChange($event)" [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="isReadOnly()" />
+            <bk-images-config
+              [images]="images" (imagesChange)="onImagesChange($event)"
+              [storagePath]="storagePath()"
+              [currentUser]="currentUser()"
+              [i18n]="i18n()"
+              [readOnly]="isReadOnly()" />
           }
           @if(imageStyle(); as imageStyle) {
-            <bk-image-style [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)" [readOnly]="isReadOnly()" />
+            <bk-image-style
+              [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+              [i18n]="i18n()"
+              [readOnly]="isReadOnly()"
+            />
           }
         }
         @case('table') {
           @if(tableGrid(); as tableGrid) {
-            <bk-table-grid [formData]="tableGrid" (formDataChange)="onTableGridChange($event)" [readOnly]="isReadOnly()" />
+            <bk-table-grid
+              [formData]="tableGrid" (formDataChange)="onTableGridChange($event)"
+              [i18n]="i18n()"
+              [readOnly]="isReadOnly()"
+            />
           }
           @if(headerStyle(); as headerStyle) {
-            <bk-table-style name="header" [formData]="headerStyle" (formDataChange)="onHeaderStyleChange($event)" [readOnly]="isReadOnly()" />
+            <bk-table-style name="header"
+              [formData]="headerStyle" (formDataChange)="onHeaderStyleChange($event)"
+              [i18n]="i18n()"
+              [readOnly]="isReadOnly()"
+            />
           }
           @if(bodyStyle(); as bodyStyle) {
-            <bk-table-style name="body" [formData]="bodyStyle" (formDataChange)="onBodyStyleChange($event)" [readOnly]="isReadOnly()" />
+            <bk-table-style name="body"
+              [formData]="bodyStyle" (formDataChange)="onBodyStyleChange($event)"
+              [i18n]="i18n()"
+              [readOnly]="isReadOnly()"
+            />
           }
-          <bk-table-header [formData]="headerData()" (formDataChange)="onTableHeaderChange($event)" [readOnly]="isReadOnly()" />
-          <bk-table-body [formData]="bodyData()" (formDataChange)="onTableBodyChange($event)" [readOnly]="isReadOnly()" />
+          <bk-table-header
+            [formData]="headerData()" (formDataChange)="onTableHeaderChange($event)"
+            [i18n]="i18n()"
+            [readOnly]="isReadOnly()"
+          />
+          <bk-table-body
+            [formData]="bodyData()" (formDataChange)="onTableBodyChange($event)"
+            [i18n]="i18n()"
+            [readOnly]="isReadOnly()"
+          />
         }
         @case('tracker') {
           @if(trackerConfig(); as trackerConfig) {
-            <bk-tracker-config [formData]="trackerConfig" (formDataChange)="onTrackerConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-tracker-config
+              [formData]="trackerConfig" (formDataChange)="onTrackerConfigChange($event)"
+              [i18n]="i18n()"
+              [readOnly]="isReadOnly()"
+            />
           }
         }
         @case('video') {
           @if(videoConfig(); as videoConfig) {
-            <bk-video-config [formData]="videoConfig" (formDataChange)="onVideoConfigChange($event)" [readOnly]="isReadOnly()" />
+            <bk-video-config
+              [formData]="videoConfig" (formDataChange)="onVideoConfigChange($event)"
+              [i18n]="i18n()"
+              [readOnly]="isReadOnly()"
+            />
           }
         }
       }
@@ -214,14 +587,6 @@ export class SectionForm {
 
   // i18n
   public readonly i18n = input.required<SectionFormI18n>();
-
-  protected imageConfigI18n = computed(() => ({
-    label:     { name: 'label',     label: this.i18n().imgLabel_label(),     placeholder: this.i18n().imgLabel_placeholder(),     helper: this.i18n().imgLabel_helper()     },
-    url:       { name: 'url',       label: this.i18n().imgUrl_label(),       placeholder: this.i18n().imgUrl_placeholder(),       helper: this.i18n().imgUrl_helper()       },
-    actionUrl: { name: 'actionUrl', label: this.i18n().imgActionUrl_label(), placeholder: this.i18n().imgActionUrl_placeholder(), helper: this.i18n().imgActionUrl_helper() },
-    altText:   { name: 'altText',   label: this.i18n().imgAltText_label(),   placeholder: this.i18n().imgAltText_placeholder(),   helper: this.i18n().imgAltText_helper()   },
-    overlay:   { name: 'overlay',   label: this.i18n().imgOverlay_label(),   placeholder: this.i18n().imgOverlay_placeholder(),   helper: this.i18n().imgOverlay_helper()   },
-  } as ImageConfigI18n));
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
 
   // inputs

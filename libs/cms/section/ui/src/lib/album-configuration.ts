@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, Signal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -6,10 +6,27 @@ import { vestForms } from 'ngx-vest-forms';
 import { AlbumConfig } from '@bk2/shared-models';
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { GalleryEffects } from '@bk2/shared-categories';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { AlbumStyles } from '@bk2/cms-section-util';
-import { PFX } from './scope';
+
+interface AlbumI18n {
+  album_title:                  Signal<string>;
+  directory_label:              Signal<string>;
+  directory_placeholder:        Signal<string>;
+  directory_helper:             Signal<string>;
+  albumStyle_label:             Signal<string>;
+  effect_label:                 Signal<string>;
+  recursive_label:              Signal<string>;
+  recursive_helper:             Signal<string>;
+  showVideos_label:             Signal<string>;
+  showVideos_helper:            Signal<string>;
+  showStreamingVideos_label:    Signal<string>;
+  showStreamingVideos_helper:   Signal<string>;
+  showDocs_label:               Signal<string>;
+  showDocs_helper:              Signal<string>;
+  showPdfs_label:               Signal<string>;
+  showPdfs_helper:              Signal<string>;
+  };
 
 @Component({
   selector: 'bk-album-config',
@@ -64,13 +81,12 @@ import { PFX } from './scope';
   `
 })
 export class AlbumConfiguration {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public formData = model.required<AlbumConfig>();
   public title = input('@content.section.type.album.edit');
   public intro = input<string>();
   public readonly readOnly = input(true);
+  public readonly i18n = input.required<AlbumI18n>();
 
   // linked signals (fields)
   protected directory = linkedSignal(() => this.formData().directory);
@@ -87,61 +103,43 @@ export class AlbumConfiguration {
   protected albumStyles = AlbumStyles;
   protected galleryEffects = GalleryEffects;
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    directory_label:       PFX + 'directory.label',
-    directory_placeholder: PFX + 'directory.placeholder',
-    directory_helper:      PFX + 'directory.helper',
-    albumStyle_label:             PFX + 'albumStyle.label',
-    effect_label:                 PFX + 'effect.label',
-    recursive_label:              PFX + 'recursive.label',
-    recursive_helper:             PFX + 'recursive.helper',
-    showVideos_label:             PFX + 'showVideos.label',
-    showVideos_helper:            PFX + 'showVideos.helper',
-    showStreamingVideos_label:    PFX + 'showStreamingVideos.label',
-    showStreamingVideos_helper:   PFX + 'showStreamingVideos.helper',
-    showDocs_label:               PFX + 'showDocs.label',
-    showDocs_helper:              PFX + 'showDocs.helper',
-    showPdfs_label:               PFX + 'showPdfs.label',
-    showPdfs_helper:              PFX + 'showPdfs.helper',
-  });
-
   protected directoryI18n = computed(() => ({
     name: 'directory',
-    label: this.fieldI18n.directory_label(),
-    placeholder: this.fieldI18n.directory_placeholder(),
-    helper: this.fieldI18n.directory_helper(),
+    label: this.i18n().directory_label(),
+    placeholder: this.i18n().directory_placeholder(),
+    helper: this.i18n().directory_helper(),
   } as TextInputI18n));
-  protected albumStyleI18n = computed(() => ({ name: 'albumStyle', label: this.fieldI18n.albumStyle_label() } as CategoryOldI18n));
-  protected effectI18n     = computed(() => ({ name: 'effect',     label: this.fieldI18n.effect_label()     } as CategoryOldI18n));
+  protected albumStyleI18n = computed(() => ({ name: 'albumStyle', label: this.i18n().albumStyle_label() } as CategoryOldI18n));
+  protected effectI18n     = computed(() => ({ name: 'effect',     label: this.i18n().effect_label()     } as CategoryOldI18n));
 
   protected recursiveI18n = computed(() => ({
     name: 'recursive',
-    label: this.fieldI18n.recursive_label(),
-    helper: this.fieldI18n.recursive_helper(),
+    label: this.i18n().recursive_label(),
+    helper: this.i18n().recursive_helper(),
   } as CheckboxI18n));
 
   protected showVideosI18n = computed(() => ({
     name: 'showVideos',
-    label: this.fieldI18n.showVideos_label(),
-    helper: this.fieldI18n.showVideos_helper(),
+    label: this.i18n().showVideos_label(),
+    helper: this.i18n().showVideos_helper(),
   } as CheckboxI18n));
 
   protected showStreamingVideosI18n = computed(() => ({
     name: 'showStreamingVideos',
-    label: this.fieldI18n.showStreamingVideos_label(),
-    helper: this.fieldI18n.showStreamingVideos_helper(),
+    label: this.i18n().showStreamingVideos_label(),
+    helper: this.i18n().showStreamingVideos_helper(),
   } as CheckboxI18n));
 
   protected showDocsI18n = computed(() => ({
     name: 'showDocs',
-    label: this.fieldI18n.showDocs_label(),
-    helper: this.fieldI18n.showDocs_helper(),
+    label: this.i18n().showDocs_label(),
+    helper: this.i18n().showDocs_helper(),
   } as CheckboxI18n));
 
   protected showPdfsI18n = computed(() => ({
     name: 'showPdfs',
-    label: this.fieldI18n.showPdfs_label(),
-    helper: this.fieldI18n.showPdfs_helper(),
+    label: this.i18n().showPdfs_label(),
+    helper: this.i18n().showPdfs_helper(),
   } as CheckboxI18n));
 
   /******************************* actions *************************************** */

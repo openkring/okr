@@ -1,14 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
 import { Header } from '@bk2/shared-ui';
-import { AlertService, navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 import { AuthCredentials } from '@bk2/shared-models';
 
-import { AuthService } from '@bk2/auth-data-access';
 import { LoginForm } from '@bk2/auth-ui';
 
 import { AuthStore } from './auth.store';
@@ -41,7 +38,7 @@ import { AuthStore } from './auth.store';
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />
         <div class="login-form">
-          <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
+          <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="store.gotoHome()" />
           <ion-label class="title"><strong>{{ store.i18n.newpwd() }}</strong></ion-label>
 
           @if (invalidCode()) {
@@ -56,8 +53,6 @@ import { AuthStore } from './auth.store';
             <bk-login-form context="password"
               [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
               [i18n]="store.i18n"
-              [emailHelper]="emailHelper()"
-              [pwdHelper]="pwdHelper()"
             />
             <div class="button-container">
               <ion-grid>
@@ -78,10 +73,6 @@ import { AuthStore } from './auth.store';
 })
 export class ConfirmPasswordResetPage {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly authService = inject(AuthService);
-  private readonly appStore = inject(AppStore);
-  private readonly alertService = inject(AlertService);
   protected readonly store = inject(AuthStore);
 
   // inputs
@@ -89,12 +80,8 @@ export class ConfirmPasswordResetPage {
   private readonly continueUrl = this.route.snapshot.queryParamMap.get('continueUrl') ?? '/auth/login';
 
   // computed
-  public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
-  public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
-  protected emailHelper = computed(() => '');
-  protected pwdHelper = computed(() => '');
-  //protected emailHelper = computed(() => this.context() === 'email' ? '@input.emailEmail.helper' : '@input.loginEmail.helper');
-  //protected pwdHelper = computed(() => this.context() === 'password' ? '@input.passwordPassword.helper' : '@input.loginPassword.helper');
+  public logoUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().logoUrl)}`);
+  public backgroundImageUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().welcomeBannerUrl)}`);
 
   // signals
   protected formIsValid = signal(false);
@@ -107,18 +94,12 @@ export class ConfirmPasswordResetPage {
 
   // methods
   public async confirm(): Promise<void> {
-    const email = await this.authService.confirmPasswordReset(this.oobCode, this.currentCredentials().loginPassword);
-    if (email) {
+    const result = await this.store.confirmPasswordReset(this.oobCode, this.continueUrl, this.currentCredentials().loginPassword);
+    if (result === true) {
       this.success.set(true);
-      await this.alertService.showToast(`Passwort für ${email} wurde geändert.`);
-      navigateByUrl(this.router, this.continueUrl);
     } else {
       this.invalidCode.set(true);
     }
-  }
-
-  public async gotoHome(): Promise<void> {
-    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
   }
 
   protected onValidChange(isValid: boolean): void {

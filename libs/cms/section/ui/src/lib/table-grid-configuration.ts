@@ -1,12 +1,25 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { TableGrid } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface TableGridConfigI18n {
+  template_label:               Signal<string>,
+  template_placeholder:         Signal<string>,
+  template_helper:              Signal<string>,
+  gap_label:                    Signal<string>,
+  gap_placeholder:              Signal<string>,
+  gap_helper:                   Signal<string>,
+  backgroundColor_label:        Signal<string>,
+  backgroundColor_placeholder:  Signal<string>,
+  backgroundColor_helper:       Signal<string>,
+  padding_label:                Signal<string>,
+  padding_placeholder:          Signal<string>,
+  padding_helper:               Signal<string>,
+  showTitleAs_label:            Signal<string>,
+}
 
 @Component({
   selector: 'bk-table-grid',
@@ -46,13 +59,12 @@ import { PFX } from './scope';
     `
 })
 export class TableGridConfiguration {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public formData = model.required<TableGrid>();
   public title = input('@content.section.type.table.grid.title');
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  public readonly i18n = input.required<TableGridConfigI18n>();
 
   // linked signals (fields)
   protected template = linkedSignal(() => this.formData().template ?? 'auto auto');
@@ -61,50 +73,34 @@ export class TableGridConfiguration {
   protected padding = linkedSignal(() => this.formData().padding ?? '1px');
   protected showTitleAs = linkedSignal(() => this.formData().showTitleAs ?? 'title');
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    template_label:         PFX + 'template.label',
-    template_placeholder:   PFX + 'template.placeholder',
-    template_helper:        PFX + 'template.helper',
-    gap_label:              PFX + 'gap.label',
-    gap_placeholder:        PFX + 'gap.placeholder',
-    gap_helper:             PFX + 'gap.helper',
-    backgroundColor_label:       PFX + 'backgroundColor.label',
-    backgroundColor_placeholder: PFX + 'backgroundColor.placeholder',
-    backgroundColor_helper:      PFX + 'backgroundColor.helper',
-    padding_label:          PFX + 'padding.label',
-    padding_placeholder:    PFX + 'padding.placeholder',
-    padding_helper:         PFX + 'padding.helper',
-    showTitleAs_label:      PFX + 'showTitleAs.label',
-  });
-
   protected templateI18n = computed(() => ({
     name: 'template',
-    label: this.fieldI18n.template_label(),
-    placeholder: this.fieldI18n.template_placeholder(),
-    helper: this.fieldI18n.template_helper(),
+    label: this.i18n().template_label(),
+    placeholder: this.i18n().template_placeholder(),
+    helper: this.i18n().template_helper(),
   } as TextInputI18n));
 
   protected gapI18n = computed(() => ({
     name: 'gap',
-    label: this.fieldI18n.gap_label(),
-    placeholder: this.fieldI18n.gap_placeholder(),
-    helper: this.fieldI18n.gap_helper(),
+    label: this.i18n().gap_label(),
+    placeholder: this.i18n().gap_placeholder(),
+    helper: this.i18n().gap_helper(),
   } as TextInputI18n));
 
   protected backgroundColorI18n = computed(() => ({
     name: 'backgroundColor',
-    label: this.fieldI18n.backgroundColor_label(),
-    placeholder: this.fieldI18n.backgroundColor_placeholder(),
-    helper: this.fieldI18n.backgroundColor_helper(),
+    label: this.i18n().backgroundColor_label(),
+    placeholder: this.i18n().backgroundColor_placeholder(),
+    helper: this.i18n().backgroundColor_helper(),
   } as TextInputI18n));
 
   protected paddingI18n = computed(() => ({
     name: 'padding',
-    label: this.fieldI18n.padding_label(),
-    placeholder: this.fieldI18n.padding_placeholder(),
-    helper: this.fieldI18n.padding_helper(),
+    label: this.i18n().padding_label(),
+    placeholder: this.i18n().padding_placeholder(),
+    helper: this.i18n().padding_helper(),
   } as TextInputI18n));
-  protected showTitleAsI18n = computed(() => ({ name: 'showTitleAs', label: this.fieldI18n.showTitleAs_label() } as StringSelectI18n));
+  protected showTitleAsI18n = computed(() => ({ name: 'showTitleAs', label: this.i18n().showTitleAs_label() } as StringSelectI18n));
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

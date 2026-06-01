@@ -1,7 +1,6 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { IonButton, IonContent, IonItem, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
 import { AuthCredentials } from '@bk2/shared-models';
 import { Header } from '@bk2/shared-ui';
 
@@ -24,8 +23,6 @@ import { AuthStore } from './auth.store';
       <bk-login-form context="login"
         [(vm)]="currentCredentials" (validChange)="formIsValid = $event"
         [i18n]="store.i18n"
-        [emailHelper]="emailHelper()"
-        [pwdHelper]="pwdHelper()"
       />
       <ion-item lines="none">
         <ion-button slot="start" fill="clear" (click)="cancel()">{{ store.i18n.cancel() }}</ion-button>
@@ -36,7 +33,6 @@ import { AuthStore } from './auth.store';
 })
 export class LoginModal {
   private readonly modalController = inject(ModalController);
-  protected readonly appStore = inject(AppStore);
   protected readonly authService = inject(AuthService);
   protected readonly store = inject(AuthStore);
 
@@ -46,23 +42,9 @@ export class LoginModal {
     loginPassword: '',
   });
 
-  protected emailHelper = computed(() => '');
-  protected pwdHelper = computed(() => '');
-  // default context is login
-// protected emailHelper = computed(() => this.context() === 'email' ? '@input.emailEmail.helper' : '@input.loginEmail.helper');/
-// protected pwdHelper = computed(() => this.context() === 'password' ? '@input.passwordPassword.helper' : '@input.loginPassword.helper');
-
-
-  constructor() {
-    effect(() => {
-      console.log('formIsValid=', this.formIsValid);
-      console.log('currentCredentials', this.currentCredentials());
-    });
-  }
-
   public async login(): Promise<void> {
     await this.modalController.dismiss(this.currentCredentials, 'cancel');
-    this.authService.login(this.currentCredentials(), this.appStore.appConfig().rootUrl, this.appStore.appConfig().loginUrl);
+    this.authService.login(this.currentCredentials(), this.store.config().rootUrl, this.store.config().loginUrl);
   }
 
   public async cancel(): Promise<void> {

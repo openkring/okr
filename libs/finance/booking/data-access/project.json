@@ -13,7 +13,10 @@
         "outputPath": "dist/libs/finance/booking/data-access",
         "main": "libs/finance/booking/data-access/src/index.ts",
         "tsConfig": "libs/finance/booking/data-access/tsconfig.lib.json",
-        "assets": ["libs/finance/booking/data-access/*.md"],
+        "assets": [
+          "libs/finance/booking/data-access/*.md",
+          { "glob": "**/*.json", "input": "libs/finance/booking/data-access/src/i18n", "output": "i18n/finance/booking/data-access" }
+        ],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },

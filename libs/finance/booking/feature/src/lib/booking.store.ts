@@ -16,10 +16,10 @@ import { PFX } from './scope';
 const BOOKING_I18N_KEYS = {
   list_title: PFX + 'list.title',
   empty:      PFX + 'empty',
-  as_view:    PFX + 'actionsheet.view',
-  as_edit:    PFX + 'actionsheet.edit',
-  as_create:  PFX + 'actionsheet.create',
-  as_delete:  PFX + 'actionsheet.delete',
+  view:       PFX + 'view.label',
+  edit:       PFX + 'edit.label',
+  create:     PFX + 'create.label',
+  delete:     PFX + 'delete.label',
 } satisfies Record<string, string>;
 
 export type BookingI18n = { [K in keyof typeof BOOKING_I18N_KEYS]: Signal<string> };

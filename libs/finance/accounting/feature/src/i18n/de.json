@@ -1,0 +1,9 @@
+{
+    "readonly": {
+        "title": "Achtung",
+        "msg": "Diese Buchhaltung ist read-only. Die Buchungen werden in Bexio gemacht."
+    },
+    "select": {
+        "tenant": "Buchhaltung wählen"
+    }
+}

@@ -294,7 +294,7 @@ import { PollCreateModal } from './poll-create.modal';
                       <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
                     </ion-button>
                   </ion-buttons>
-                  <ion-title>Chat-Räume</ion-title>
+                  <ion-title>{{ store.i18n.rooms() }}</ion-title>
                   @if(hasRole('admin')) {
                     <ion-buttons slot="end">
                       <ion-button (click)="onCreateRoom()">
@@ -362,6 +362,7 @@ import { PollCreateModal } from './poll-create.modal';
                     [typingUsers]="typingUsers()"
                     [threadReplyCounts]="threadReplyCounts()"
                     [receiptsByEventId]="receiptsByEventId()"
+                    [i18n]="store.i18n"
                     (messageClicked)="onMessageClicked($event)"
                     (imageClicked)="onImageClicked($event)"
                     (fileClicked)="onFileClicked($event)"
@@ -374,7 +375,7 @@ import { PollCreateModal } from './poll-create.modal';
 
                 <!-- Message Input -->
                 <bk-matrix-message-input
-                  [i18n]="messageInputI18n()"
+                  [i18n]="store.i18n"
                   [roomId]="currentRoomId()"
                   [typingUsers]="typingUsers()"
                   [replyToMessage]="replyToMessage()"
@@ -443,6 +444,7 @@ import { PollCreateModal } from './poll-create.modal';
                     [currentUserId]="matrixUserId()"
                     [homeserverUrl]="homeserverUrl()"
                     [typingUsers]="[]"
+                    [i18n]="store.i18n"
                     (messageClicked)="onMessageClicked($event)"
                     (imageClicked)="onImageClicked($event)"
                     (fileClicked)="onFileClicked($event)"
@@ -454,7 +456,7 @@ import { PollCreateModal } from './poll-create.modal';
                 }
 
                 <bk-matrix-message-input
-                  [i18n]="messageInputI18n()"
+                  [i18n]="store.i18n"
                   [typingUsers]="[]"
                   (messageSent)="onThreadMessageSent($event)"
                   (fileSent)="onThreadFileSent($event)"
@@ -540,19 +542,6 @@ export class MatrixChat implements OnDestroy {
   protected readonly isMessagesLoading = computed(() => this.store.isMessagesLoading());
   protected readonly typingUsers = computed(() => this.store.typingUsers());
   protected readonly receiptsByEventId = computed(() => this.store.receiptsByEventId());
-
-  protected readonly messageInputI18n = computed(() => ({
-    isTypeing:              this.store.i18n.isTypeing(),
-    and:                    this.store.i18n.and(),
-    areTypeing:             this.store.i18n.areTypeing(),
-    othersTypeing:          this.store.i18n.othersTypeing(),
-    copy_conf:              this.store.i18n.copy_conf(),
-    attach_image:           this.store.i18n.attach_image(),
-    attach_file:            this.store.i18n.attach_file(),
-    attach_position:        this.store.i18n.attach_position(),
-    attach_survey:          this.store.i18n.attach_survey(),
-    cancel:                 this.store.i18n.cancel(),
-  }));
 
   // Thread signals
   protected readonly selectedThreadId = computed(() => this.store.selectedThreadId());

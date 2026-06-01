@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Buchung hinzufügen",
+    "error": "Die Buchung konnte nicht erstellt werden.",
+    "conf": "Die Buchung wurde erstellt."
+  },
+  "update": {
+    "label": "Buchung ändern",
+    "error": "Die Aenderungen konnten nicht gespeichert werden",
+    "conf": "Die Aenderungen wurden gespeichert."
+  },
+  "delete": {
+    "label": "Buchung löschen",
+    "error": "Die Buchung konnte nicht gelöscht werden",
+    "conf": "Die Buchung wurde gelöscht"
+  }
+}

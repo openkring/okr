@@ -2,7 +2,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
 import { DOCUMENT_DIR, DocumentModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, checkUrlType, die, getFileHash, getFullName, getTodayStr, warn } from '@bk2/shared-util-core';
+import { addIndexElement, checkUrlType, getFileHash, getFullName, getTodayStr, warn } from '@bk2/shared-util-core';
 
 import { readAsFile } from '@bk2/avatar-util';
 
@@ -23,14 +23,6 @@ export async function pickPhoto(platform: Platform): Promise<File | undefined> {
 }
 
 /* ---------------------- Helpers -------------------------*/
-/**
- * Determine the title of a document based on a given operation.
- * @param operation
- * @returns
- */
-export function getDocumentTitle(operation: string): string {
-  return `document.operation.${operation}.label`;
-}
 
 export function checkMimeType(mimeType: string, imagesOnly = false): boolean {
   // images are always accepted

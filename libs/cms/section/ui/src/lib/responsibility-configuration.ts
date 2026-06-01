@@ -1,12 +1,21 @@
-import { Component, computed, inject, input, model } from '@angular/core';
+import { Component, computed, input, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ResponsibilityConfig, UserModel } from '@bk2/shared-models';
 import { Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface ResponsibilityConfigI18n {
+  bkey_label:              Signal<string>;
+  bkey_placeholder:        Signal<string>;
+  bkey_helper:             Signal<string>;
+  showAvatar_label:        Signal<string>;
+  showAvatar_helper:       Signal<string>;
+  showName_label:          Signal<string>;
+  showName_helper:         Signal<string>;
+  showDescription_label:   Signal<string>;
+  showDescription_helper:  Signal<string>;
+}
 
 @Component({
   selector: 'bk-responsibility-config',
@@ -43,53 +52,41 @@ import { PFX } from './scope';
   `,
 })
 export class ResponsibilityConfiguration {
-  private readonly i18nService = inject(I18nService);
-
+  // inputs
   public formData = model.required<ResponsibilityConfig>();
   public currentUser = input.required<UserModel | undefined>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  public readonly i18n = input.required<ResponsibilityConfigI18n>();
 
   protected bkey = computed(() => this.formData().bkey ?? '');
   protected showAvatar = computed(() => this.formData().showAvatar ?? true);
   protected showName = computed(() => this.formData().showName ?? true);
   protected showDescription = computed(() => this.formData().showDescription ?? true);
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    bkey_label:              PFX + 'bkey.label',
-    bkey_placeholder:        PFX + 'bkey.placeholder',
-    bkey_helper:             PFX + 'bkey.helper',
-    showAvatar_label:        PFX + 'showAvatar.label',
-    showAvatar_helper:       PFX + 'showAvatar.helper',
-    showName_label:          PFX + 'showName.label',
-    showName_helper:         PFX + 'showName.helper',
-    showDescription_label:   PFX + 'showDescription.label',
-    showDescription_helper:  PFX + 'showDescription.helper',
-  });
-
   protected bkeyI18n = computed(() => ({
     name: 'bkey',
-    label: this.fieldI18n.bkey_label(),
-    placeholder: this.fieldI18n.bkey_placeholder(),
-    helper: this.fieldI18n.bkey_helper(),
+    label: this.i18n().bkey_label(),
+    placeholder: this.i18n().bkey_placeholder(),
+    helper: this.i18n().bkey_helper(),
   } as TextInputI18n));
 
   protected showAvatarI18n = computed(() => ({
     name: 'showAvatar',
-    label: this.fieldI18n.showAvatar_label(),
-    helper: this.fieldI18n.showAvatar_helper(),
+    label: this.i18n().showAvatar_label(),
+    helper: this.i18n().showAvatar_helper(),
   } as CheckboxI18n));
 
   protected showNameI18n = computed(() => ({
     name: 'showName',
-    label: this.fieldI18n.showName_label(),
-    helper: this.fieldI18n.showName_helper(),
+    label: this.i18n().showName_label(),
+    helper: this.i18n().showName_helper(),
   } as CheckboxI18n));
 
   protected showDescriptionI18n = computed(() => ({
     name: 'showDescription',
-    label: this.fieldI18n.showDescription_label(),
-    helper: this.fieldI18n.showDescription_helper(),
+    label: this.i18n().showDescription_label(),
+    helper: this.i18n().showDescription_helper(),
   } as CheckboxI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | boolean): void {

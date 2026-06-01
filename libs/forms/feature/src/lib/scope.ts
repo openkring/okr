@@ -1,1 +1,2 @@
-export const PFX = '@forms.';
+export const PFX = '@forms/feature.';
+

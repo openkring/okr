@@ -71,7 +71,7 @@ export class I18nService {
        title:            PFX + 'chat.title',
        rooms:            PFX + 'chat.rooms',
        norooms:          PFX + 'chat.norooms',
-       cancel:  '@operation.cancel'
+       cancel:  '@cancel'
       });
     the translated values can then be used with e.g. i18n.title()
    * @param keys 

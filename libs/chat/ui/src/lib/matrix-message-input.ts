@@ -1,4 +1,4 @@
-import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA, Signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
@@ -12,16 +12,16 @@ import { isSupportedImageFile } from '@bk2/chat-util';
 import 'emoji-picker-element';
 
 export type MatrixMessageInputI18n = {
-  isTypeing: string;
-  and: string;
-  areTypeing: string;
-  othersTypeing: string;
-  copy_conf: string;
-  attach_image: string;
-  attach_file: string;
-  attach_position: string;
-  attach_survey: string;
-  cancel: string;
+  isTypeing: Signal<string>;
+  and: Signal<string>;
+  areTypeing: Signal<string>;
+  othersTypeing: Signal<string>;
+  copy_conf: Signal<string>;
+  attach_image: Signal<string>;
+  attach_file: Signal<string>;
+  attach_position: Signal<string>;
+  attach_survey: Signal<string>;
+  cancel: Signal<string>;
 };
 
 @Component({
@@ -333,15 +333,16 @@ export class MatrixMessageInput {
   private actionSheetController = inject(ActionSheetController);
   private appStore = inject(AppStore);
 
+  // inputs
   public i18n = input.required<MatrixMessageInputI18n>();
+  public disabled = input<boolean>(false);
+  public roomId = input<string | undefined>(undefined);
+  public typingUsers = input<string[]>([]);
+  public replyToMessage = input<any>();
+  public fileAccept = input<string>('*/*');
+  public pendingImages = input<File[]>([]);
 
-  disabled = input<boolean>(false);
-  roomId = input<string | undefined>(undefined);
-  typingUsers = input<string[]>([]);
-  replyToMessage = input<any>();
-  fileAccept = input<string>('*/*');
-  pendingImages = input<File[]>([]);
-
+  // outputs
   messageSent = output<string>();
   fileSent = output<File>();
   locationSent = output<void>();
@@ -353,12 +354,14 @@ export class MatrixMessageInput {
   removeImage = output<number>();
   filesSent = output<File[]>();
 
+  // signals
   protected messageText = signal<string>('');
   showEmojiPicker = signal<boolean>(false);
   private typingTimeout: any;
 
+  // derived
   private draftKey = computed(() => this.roomId() ? `chat-draft:${this.roomId()}` : undefined);
-  protected buttonCopyI18n = computed(() => { return { copy_conf: this.i18n().copy_conf } });
+  protected buttonCopyI18n = computed(() => { return { copy_conf: this.i18n().copy_conf() } });
 
   constructor() {
     // Restore draft when roomId changes
@@ -571,11 +574,11 @@ export class MatrixMessageInput {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.image', this.i18n().attach_image, this.imgixBaseUrl, 'image'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.file', this.i18n().attach_file, this.imgixBaseUrl, 'document'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.position', this.i18n().attach_position, this.imgixBaseUrl, 'location'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.survey', this.i18n().attach_survey, this.imgixBaseUrl, 'help-circle'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.i18n().cancel, this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.image', this.i18n().attach_image(), this.imgixBaseUrl, 'image'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.file', this.i18n().attach_file(), this.imgixBaseUrl, 'document'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.position', this.i18n().attach_position(), this.imgixBaseUrl, 'location'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.survey', this.i18n().attach_survey(), this.imgixBaseUrl, 'help-circle'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.i18n().cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

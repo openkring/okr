@@ -1,13 +1,28 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
-import {
-  IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow, ModalController
-} from '@ionic/angular/standalone';
+import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { ImageConfig, ImageType } from '@bk2/shared-models';
 import { StringSelect, StringSelectI18n, TextInput, TextInputI18n, Header } from '@bk2/shared-ui';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface ImageEditI18n {
+  label_label:            Signal<string>;
+  label_placeholder:      Signal<string>;
+  label_helper:           Signal<string>;
+  url_label:              Signal<string>;
+  url_placeholder:        Signal<string>;
+  url_helper:             Signal<string>;
+  actionUrl_label:        Signal<string>;
+  actionUrl_placeholder:  Signal<string>;
+  actionUrl_helper:       Signal<string>;
+  altText_label:          Signal<string>;
+  altText_placeholder:    Signal<string>;
+  altText_helper:         Signal<string>;
+  overlay_label:          Signal<string>;
+  overlay_placeholder:    Signal<string>;
+  overlay_helper:         Signal<string>;
+  imageType_label:        Signal<string>;
+  imageedit_title:        Signal<string>;
+}
 
 const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
 
@@ -20,7 +35,7 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol,
   ],
   template: `
-    <bk-header [i18n]="{ title: title() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
+    <bk-header [i18n]="{ title: i18n().imageedit_title() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
     <ion-card>
       <ion-card-header>
         <ion-card-title>{{ '@content.section.image.edit.title' }}</ion-card-title>
@@ -54,12 +69,11 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
 })
 export class ImageEditModal {
   private readonly modalController = inject(ModalController);
-  private readonly i18nService = inject(I18nService);
 
   // inputs
   public formData = model.required<ImageConfig>();
-  public title = input('@content.section.image.edit.header');
   public readOnly = input<boolean>(true);
+  public readonly i18n = input.required<ImageEditI18n>();
 
   // linked signals for fields
   protected label = linkedSignal(() => this.formData().label ?? '');
@@ -71,60 +85,41 @@ export class ImageEditModal {
 
   protected imageTypeNames = IMAGE_TYPE_NAMES;
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    label_label:       PFX + 'label.label',
-    label_placeholder: PFX + 'label.placeholder',
-    label_helper:      PFX + 'label.helper',
-    url_label:         PFX + 'url.label',
-    url_placeholder:   PFX + 'url.placeholder',
-    url_helper:        PFX + 'url.helper',
-    actionUrl_label:       PFX + 'actionUrl.label',
-    actionUrl_placeholder: PFX + 'actionUrl.placeholder',
-    actionUrl_helper:      PFX + 'actionUrl.helper',
-    altText_label:         PFX + 'altText.label',
-    altText_placeholder:   PFX + 'altText.placeholder',
-    altText_helper:        PFX + 'altText.helper',
-    overlay_label:         PFX + 'overlay.label',
-    overlay_placeholder:   PFX + 'overlay.placeholder',
-    overlay_helper:        PFX + 'overlay.helper',
-    imageType_label:       PFX + 'imageType.label',
-  });
-
   protected labelI18n = computed(() => ({
     name: 'imageLabel',
-    label: this.fieldI18n.label_label(),
-    placeholder: this.fieldI18n.label_placeholder(),
-    helper: this.fieldI18n.label_helper(),
+    label: this.i18n().label_label(),
+    placeholder: this.i18n().label_placeholder(),
+    helper: this.i18n().label_helper(),
   } as TextInputI18n));
 
   protected urlI18n = computed(() => ({
     name: 'imageUrl',
-    label: this.fieldI18n.url_label(),
-    placeholder: this.fieldI18n.url_placeholder(),
-    helper: this.fieldI18n.url_helper(),
+    label: this.i18n().url_label(),
+    placeholder: this.i18n().url_placeholder(),
+    helper: this.i18n().url_helper(),
   } as TextInputI18n));
 
   protected actionUrlI18n = computed(() => ({
     name: 'imageActionUrl',
-    label: this.fieldI18n.actionUrl_label(),
-    placeholder: this.fieldI18n.actionUrl_placeholder(),
-    helper: this.fieldI18n.actionUrl_helper(),
+    label: this.i18n().actionUrl_label(),
+    placeholder: this.i18n().actionUrl_placeholder(),
+    helper: this.i18n().actionUrl_helper(),
   } as TextInputI18n));
 
   protected altTextI18n = computed(() => ({
     name: 'imageAltText',
-    label: this.fieldI18n.altText_label(),
-    placeholder: this.fieldI18n.altText_placeholder(),
-    helper: this.fieldI18n.altText_helper(),
+    label: this.i18n().altText_label(),
+    placeholder: this.i18n().altText_placeholder(),
+    helper: this.i18n().altText_helper(),
   } as TextInputI18n));
 
   protected overlayI18n = computed(() => ({
     name: 'imageOverlay',
-    label: this.fieldI18n.overlay_label(),
-    placeholder: this.fieldI18n.overlay_placeholder(),
-    helper: this.fieldI18n.overlay_helper(),
+    label: this.i18n().overlay_label(),
+    placeholder: this.i18n().overlay_placeholder(),
+    helper: this.i18n().overlay_helper(),
   } as TextInputI18n));
-  protected imageTypeI18n = computed(() => ({ name: 'imageType', label: this.fieldI18n.imageType_label() } as StringSelectI18n));
+  protected imageTypeI18n = computed(() => ({ name: 'imageType', label: this.i18n().imageType_label() } as StringSelectI18n));
 
   protected onFieldChange(field: keyof ImageConfig, value: string): void {
     this.formData.update(vm => ({ ...vm, [field]: value }));

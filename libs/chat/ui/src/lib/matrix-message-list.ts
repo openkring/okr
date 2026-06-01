@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, output, viewChild, ElementRef } from '@angular/core';
+import { Component, computed, effect, input, output, viewChild, ElementRef, Signal } from '@angular/core';
 
 import { IonIcon, IonChip, IonAvatar } from '@ionic/angular/standalone';
 
@@ -7,6 +7,19 @@ import { MatrixMessage, MatrixReadReceipt } from '@bk2/shared-models';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
 import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
+
+interface MessageListI18n {
+  no_messages_start_conversation: Signal<string>;
+  as_title: Signal<string>;
+  results_title: Signal<string>;
+  survey_total: Signal<string>;
+  choose_multiple: Signal<string>;
+  choose_one: Signal<string>;
+  survey_end: Signal<string>;
+  cancel: Signal<string>;
+  survey_title: Signal<string>;
+  survey_empty: Signal<string>
+}
 
 @Component({
   selector: 'bk-matrix-message-list',
@@ -307,7 +320,7 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
     <div class="messages-container" #messagesContainer>
       @if (messages().length === 0 && typingUsers().length === 0) {
         <div class="empty-state">
-          <p>{{'@chat.fields.noMessagesStartConversation' }}</p>
+          <p>{{ i18n().no_messages_start_conversation() }}</p>
         </div>
       } @else {
         @for (dayGroup of groupedMessages(); track dayGroup.date) {
@@ -425,6 +438,7 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
                               [currentUserId]="currentUserId() ?? ''"
                               (voteClicked)="pollVoteClicked.emit($event)"
                               (endPollClicked)="pollEndClicked.emit($event)"
+                              [i18n]="i18n()"
                             />
                           }
                           @default {
@@ -472,12 +486,15 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
   `
 })
 export class MatrixMessageList {
+  // inputs
   messages = input.required<MatrixMessage[]>();
   currentUserId = input<string>();
   homeserverUrl = input<string>('https://bkchat.etke.host');
   typingUsers = input<string[]>([]);
   threadReplyCounts = input<Map<string, number>>(new Map());
   receiptsByEventId = input<Map<string, MatrixReadReceipt[]>>(new Map());
+  public readonly i18n = input.required<MessageListI18n>();
+
 
   messageClicked = output<MatrixMessage>();
   imageClicked = output<{ message: MatrixMessage; group: MatrixMessage[] }>();

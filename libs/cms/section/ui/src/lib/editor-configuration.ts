@@ -1,11 +1,17 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { ViewPositions } from '@bk2/shared-categories';
 import { EditorConfig, ViewPosition } from '@bk2/shared-models';
 import { BkEditor, ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@bk2/shared-ui';
-import { I18nService } from '@bk2/shared-i18n';
-import { PFX } from './scope';
+
+interface EditorConfigI18n {
+  colSize_label:       Signal<string>;
+  colSize_placeholder: Signal<string>;
+  colSize_helper:      Signal<string>;
+  position_label:      Signal<string>;
+  copy_conf:           Signal<string>;
+}
 
 @Component({
   selector: 'bk-editor-config',
@@ -45,23 +51,17 @@ import { PFX } from './scope';
   `
 })
 export class EditorConfiguration {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    colSize_label:       PFX + 'colSize.label',
-    colSize_placeholder: PFX + 'colSize.placeholder',
-    colSize_helper:      PFX + 'colSize.helper',
-    position_label:      PFX + 'position.label',
-    copy_conf:           '@shared/ui.copy.conf',
-  });
-  protected buttonCopyI18n = computed(() => ({ copy_conf: this.fieldI18n.copy_conf() } as ButtonCopyI18n));
-  protected colSizeI18n = computed(() => ({ name: 'colSize', label: this.fieldI18n.colSize_label(), placeholder: this.fieldI18n.colSize_placeholder(), helper: this.fieldI18n.colSize_helper() } as NumberInputI18n));
-  protected positionI18n = computed(() => ({ name: 'position', label: this.fieldI18n.position_label() } as CategoryOldI18n));
-
   // inputs
   public formData = model.required<EditorConfig>();
   public title = input('@content.section.forms.content.title');
   public intro = input<string>();
   public readonly readOnly = input(true);
+  public readonly i18n = input.required<EditorConfigI18n>();
+
+  // derived
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
+  protected colSizeI18n = computed(() => ({ name: 'colSize', label: this.i18n().colSize_label(), placeholder: this.i18n().colSize_placeholder(), helper: this.i18n().colSize_helper() } as NumberInputI18n));
+  protected positionI18n = computed(() => ({ name: 'position', label: this.i18n().position_label() } as CategoryOldI18n));
 
   // fields
   protected htmlContent = linkedSignal(() => this.formData().htmlContent ?? '<p></p>');

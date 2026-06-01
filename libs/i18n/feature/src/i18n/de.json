@@ -1,73 +1,47 @@
 {
+  "module": {
+    "label": "Modul",
+    "prompt": "Modul (z.B. chat/feature)"
+  },
+  "key": {
+    "label": "Schlüssel",
+    "prompt": "Schlüssel (z.B. fields.reconnecting)"
+  },
+  "isHtml": {
+    "label": "HTML-Inhalt"
+  },
+  "create": {
+    "label": "Übersetzunge erstellen",
+    "conf": "Übersetzung erstellt",
+    "error": "Übersetzung konnte nicht erstellt werden."
+  },
+  "update": {
+    "label": "Übersetzung ändern",
+    "conf": "Übersetzung gespeichert",
+    "error": "Übersetzung konnte nicht gespeichert werden."
+  },
+  "delete": {
+    "label": "Übersetzung löschen",
+    "conf": "Übersetzung gelöscht",
+    "confirm": "Soll diese Übersetzung wirklich gelöscht werden ?",
+    "error": "Die Übersetzung konnte nicht gelöscht werden."
+  },
   "default": {
+    "title": "Übersetzungen",
     "edit": {
       "title": "Übersetzung bearbeiten"
     },
-    "module": {
-      "label": "Modul",
-      "prompt": "Modul (z.B. chat/feature)"
-    },
-    "key": {
-      "label": "Schlüssel",
-      "prompt": "Schlüssel (z.B. fields.reconnecting)"
-    },
-    "isHtml": {
-      "label": "HTML-Inhalt"
-    },
-    "title": "Übersetzungen",
     "list": {
       "title": "Alle Standardübersetzungen"
-    },
-    "create": {
-      "conf": "Übersetzung erstellt",
-      "error": "Übersetzung konnte nicht erstellt werden."
-    },
-    "update": {
-      "conf": "Übersetzung gespeichert",
-      "error": "Übersetzung konnte nicht gespeichert werden."
-    },
-    "delete": {
-      "conf": "Übersetzung gelöscht",
-      "confirm": "Soll diese Übersetzung wirklich gelöscht werden ?",
-      "error": "Die Übersetzung konnte nicht gelöscht werden."
     }
   },
   "override": {
+    "title": "Überschreibungen",
     "edit": {
       "title": "Überschreibung bearbeiten"
     },
-    "module": {
-      "label": "Modul",
-      "prompt": "Modul (z.B. chat/feature)"
-    },
-    "key": {
-      "label": "Schlüssel",
-      "prompt": "Schlüssel"
-    },
-    "isHtml": {
-      "label": "HTML-Inhalt"
-    },
-    "title": "Überschreibungen",
     "list": {
       "title": "Alle Überschreibungen"
-    },
-    "create": {
-      "conf": "Übersetzung erstellt",
-      "error": "Übersetzung konnte nicht erstellt werden."
-    },
-    "update": {
-      "conf": "Übersetzung gespeichert",
-      "error": "Übersetzung konnte nicht gespeichert werden."
-    },
-    "delete": {
-      "conf": "Übersetzung gelöscht",
-      "confirm": "Soll diese Übersetzung wirklich gelöscht werden ?",
-      "error": "Die Übersetzung konnte nicht gelöscht werden."
     }
-  },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "edit": "Eintrag ändern",
-    "delete": "Eintrag löschen"
   }
 }

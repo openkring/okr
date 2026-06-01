@@ -1,11 +1,30 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { TableStyle } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface TableStyleConfigI18n {
+  textAlign_label:         Signal<string>,
+  textAlign_placeholder:   Signal<string>,
+  textAlign_helper:        Signal<string>,
+  backgroundColor_label:       Signal<string>,
+  backgroundColor_placeholder: Signal<string>,
+  backgroundColor_helper:      Signal<string>,
+  fontSize_label:          Signal<string>,
+  fontSize_placeholder:    Signal<string>,
+  fontSize_helper:         Signal<string>,
+  padding_label:           Signal<string>,
+  padding_placeholder:     Signal<string>,
+  padding_helper:          Signal<string>,
+  textColor_label:         Signal<string>,
+  textColor_placeholder:   Signal<string>,
+  textColor_helper:        Signal<string>,
+  border_label:            Signal<string>,
+  border_placeholder:      Signal<string>,
+  border_helper:           Signal<string>,
+  fontWeight_label:        Signal<string>,
+}
 
 @Component({
   selector: 'bk-table-style',
@@ -51,12 +70,11 @@ import { PFX } from './scope';
     `
 })
 export class TableStyleConfiguration {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public formData = model.required<TableStyle>();
   public name = input.required<'header' | 'body'>();
   public readonly readOnly = input(true);
+  public readonly i18n = input.required<TableStyleConfigI18n>();
 
   // linked signals (fields)
   protected cardTitle = computed(() => `@content.section.type.table.${this.name()}.title`);
@@ -68,70 +86,48 @@ export class TableStyleConfiguration {
   protected textColor = linkedSignal(() => this.formData().textColor ?? 'var(--ion-text-color)');
   protected border = linkedSignal(() => this.formData().border ?? '0.5px solid var(--ion-color-medium)');
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    textAlign_label:         PFX + 'textAlign.label',
-    textAlign_placeholder:   PFX + 'textAlign.placeholder',
-    textAlign_helper:        PFX + 'textAlign.helper',
-    backgroundColor_label:       PFX + 'backgroundColor.label',
-    backgroundColor_placeholder: PFX + 'backgroundColor.placeholder',
-    backgroundColor_helper:      PFX + 'backgroundColor.helper',
-    fontSize_label:          PFX + 'fontSize.label',
-    fontSize_placeholder:    PFX + 'fontSize.placeholder',
-    fontSize_helper:         PFX + 'fontSize.helper',
-    padding_label:           PFX + 'padding.label',
-    padding_placeholder:     PFX + 'padding.placeholder',
-    padding_helper:          PFX + 'padding.helper',
-    textColor_label:         PFX + 'textColor.label',
-    textColor_placeholder:   PFX + 'textColor.placeholder',
-    textColor_helper:        PFX + 'textColor.helper',
-    border_label:            PFX + 'border.label',
-    border_placeholder:      PFX + 'border.placeholder',
-    border_helper:           PFX + 'border.helper',
-    fontWeight_label:        PFX + 'fontWeight.label',
-  });
-
   protected textAlignI18n = computed(() => ({
     name: 'textAlign',
-    label: this.fieldI18n.textAlign_label(),
-    placeholder: this.fieldI18n.textAlign_placeholder(),
-    helper: this.fieldI18n.textAlign_helper(),
+    label: this.i18n().textAlign_label(),
+    placeholder: this.i18n().textAlign_placeholder(),
+    helper: this.i18n().textAlign_helper(),
   } as TextInputI18n));
 
   protected backgroundColorI18n = computed(() => ({
     name: 'backgroundColor',
-    label: this.fieldI18n.backgroundColor_label(),
-    placeholder: this.fieldI18n.backgroundColor_placeholder(),
-    helper: this.fieldI18n.backgroundColor_helper(),
+    label: this.i18n().backgroundColor_label(),
+    placeholder: this.i18n().backgroundColor_placeholder(),
+    helper: this.i18n().backgroundColor_helper(),
   } as TextInputI18n));
 
   protected fontSizeI18n = computed(() => ({
     name: 'fontSize',
-    label: this.fieldI18n.fontSize_label(),
-    placeholder: this.fieldI18n.fontSize_placeholder(),
-    helper: this.fieldI18n.fontSize_helper(),
+    label: this.i18n().fontSize_label(),
+    placeholder: this.i18n().fontSize_placeholder(),
+    helper: this.i18n().fontSize_helper(),
   } as TextInputI18n));
 
   protected paddingI18n = computed(() => ({
     name: 'padding',
-    label: this.fieldI18n.padding_label(),
-    placeholder: this.fieldI18n.padding_placeholder(),
-    helper: this.fieldI18n.padding_helper(),
+    label: this.i18n().padding_label(),
+    placeholder: this.i18n().padding_placeholder(),
+    helper: this.i18n().padding_helper(),
   } as TextInputI18n));
 
   protected textColorI18n = computed(() => ({
     name: 'textColor',
-    label: this.fieldI18n.textColor_label(),
-    placeholder: this.fieldI18n.textColor_placeholder(),
-    helper: this.fieldI18n.textColor_helper(),
+    label: this.i18n().textColor_label(),
+    placeholder: this.i18n().textColor_placeholder(),
+    helper: this.i18n().textColor_helper(),
   } as TextInputI18n));
 
   protected borderI18n = computed(() => ({
     name: 'border',
-    label: this.fieldI18n.border_label(),
-    placeholder: this.fieldI18n.border_placeholder(),
-    helper: this.fieldI18n.border_helper(),
+    label: this.i18n().border_label(),
+    placeholder: this.i18n().border_placeholder(),
+    helper: this.i18n().border_helper(),
   } as TextInputI18n));
-  protected fontWeightI18n = computed(() => ({ name: 'fontWeight', label: this.fieldI18n.fontWeight_label() } as StringSelectI18n));
+  protected fontWeightI18n = computed(() => ({ name: 'fontWeight', label: this.i18n().fontWeight_label() } as StringSelectI18n));
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

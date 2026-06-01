@@ -1,11 +1,23 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n } from '@bk2/shared-ui';
-import { I18nService } from '@bk2/shared-i18n';
-import { PFX } from './scope';
 import { MapConfig } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
+
+interface MapConfigI18n {
+    latitude_label:                       Signal<string>;
+    latitude_placeholder:                 Signal<string>;
+    latitude_helper:                      Signal<string>;
+    longitude_label:                      Signal<string>;
+    longitude_placeholder:                Signal<string>;
+    longitude_helper:                     Signal<string>;
+    zoomFactor_label:                     Signal<string>;
+    zoomFactor_placeholder:               Signal<string>;
+    zoomFactor_helper:                    Signal<string>;
+    useCurrentLocationAsCenter_label:     Signal<string>;
+    useCurrentLocationAsCenter_helper:    Signal<string>;
+};
 
 @Component({
   selector: 'bk-map-config',
@@ -52,28 +64,18 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   `
 })
 export class MapConfiguration {
-  private readonly i18nService = inject(I18nService);
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    latitude_label:      PFX + 'latitude.label',
-    latitude_placeholder: PFX + 'latitude.placeholder',
-    latitude_helper:     PFX + 'latitude.helper',
-    longitude_label:     PFX + 'longitude.label',
-    longitude_placeholder: PFX + 'longitude.placeholder',
-    longitude_helper:    PFX + 'longitude.helper',
-    zoomFactor_label:                    PFX + 'zoomFactor.label',
-    zoomFactor_placeholder:              PFX + 'zoomFactor.placeholder',
-    zoomFactor_helper:                   PFX + 'zoomFactor.helper',
-    useCurrentLocationAsCenter_label:    PFX + 'useCurrentLocationAsCenter.label',
-    useCurrentLocationAsCenter_helper:   PFX + 'useCurrentLocationAsCenter.helper',
-  });
-  protected latitudeI18n = computed(() => ({ name: 'latitude', label: this.fieldI18n.latitude_label(), placeholder: this.fieldI18n.latitude_placeholder(), helper: this.fieldI18n.latitude_helper() } as NumberInputI18n));
-  protected longitudeI18n = computed(() => ({ name: 'longitude', label: this.fieldI18n.longitude_label(), placeholder: this.fieldI18n.longitude_placeholder(), helper: this.fieldI18n.longitude_helper() } as NumberInputI18n));
-  protected zoomFactorI18n = computed(() => ({ name: 'zoomFactor', label: this.fieldI18n.zoomFactor_label(), placeholder: this.fieldI18n.zoomFactor_placeholder(), helper: this.fieldI18n.zoomFactor_helper() } as NumberInputI18n));
+  // inputs
+  public i18n = input.required<MapConfigI18n>();
+
+  // derived
+  protected latitudeI18n = computed(() => ({ name: 'latitude', label: this.i18n().latitude_label(), placeholder: this.i18n().latitude_placeholder(), helper: this.i18n().latitude_helper() } as NumberInputI18n));
+  protected longitudeI18n = computed(() => ({ name: 'longitude', label: this.i18n().longitude_label(), placeholder: this.i18n().longitude_placeholder(), helper: this.i18n().longitude_helper() } as NumberInputI18n));
+  protected zoomFactorI18n = computed(() => ({ name: 'zoomFactor', label: this.i18n().zoomFactor_label(), placeholder: this.i18n().zoomFactor_placeholder(), helper: this.i18n().zoomFactor_helper() } as NumberInputI18n));
 
   protected useCurrentLocationAsCenterI18n = computed(() => ({
     name: 'useCurrentLocationAsCenter',
-    label: this.fieldI18n.useCurrentLocationAsCenter_label(),
-    helper: this.fieldI18n.useCurrentLocationAsCenter_helper(),
+    label: this.i18n().useCurrentLocationAsCenter_label(),
+    helper: this.i18n().useCurrentLocationAsCenter_helper(),
   } as CheckboxI18n));
 
   // inputs

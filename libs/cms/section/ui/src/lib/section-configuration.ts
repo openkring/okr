@@ -1,13 +1,26 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, RoleName, SectionModel, UserModel } from '@bk2/shared-models';
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface SectionConfigI18n {
+    name_label:           Signal<string>;
+    name_placeholder:     Signal<string>;
+    name_helper:          Signal<string>;
+    title_label:          Signal<string>;
+    title_placeholder:    Signal<string>;
+    title_helper:         Signal<string>;
+    subTitle_label:       Signal<string>;
+    subTitle_placeholder: Signal<string>;
+    subTitle_helper:      Signal<string>;
+    colSize_label:        Signal<string>;
+    colSize_placeholder:  Signal<string>;
+    colSize_helper:       Signal<string>;
+    copy_conf:            Signal<string>;
+}
 
 @Component({
   selector: 'bk-section-config',
@@ -76,8 +89,6 @@ import { PFX } from './scope';
   `
 })
 export class SectionConfiguration {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public formData = model.required<SectionModel>();
   public currentUser = input<UserModel | undefined>();
@@ -86,6 +97,7 @@ export class SectionConfiguration {
   public readonly headerTitle = input('@content.section.forms.title');
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  public readonly i18n = input.required<SectionConfigI18n>();
 
   // fields
   protected bkey = computed(() => this.formData().bkey ?? '');
@@ -98,50 +110,34 @@ export class SectionConfiguration {
   protected colSize = linkedSignal(() => this.formData().colSize ?? '12');
 
   protected maxLength = LONG_NAME_LENGTH;
-
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    name_label:           PFX + 'name.label',
-    name_placeholder:     PFX + 'name.placeholder',
-    name_helper:          PFX + 'name.helper',
-    title_label:          PFX + 'title.label',
-    title_placeholder:    PFX + 'title.placeholder',
-    title_helper:         PFX + 'title.helper',
-    subTitle_label:       PFX + 'subTitle.label',
-    subTitle_placeholder: PFX + 'subTitle.placeholder',
-    subTitle_helper:      PFX + 'subTitle.helper',
-    colSize_label:        PFX + 'colSize.label',
-    colSize_placeholder:  PFX + 'colSize.placeholder',
-    colSize_helper:       PFX + 'colSize.helper',
-    copy_conf:            '@shared/ui.copy.conf',
-  });
-  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.fieldI18n.copy_conf() } as ButtonCopyI18n));
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
 
   protected nameI18n = computed(() => ({
     name: 'name',
-    label: this.fieldI18n.name_label(),
-    placeholder: this.fieldI18n.name_placeholder(),
-    helper: this.fieldI18n.name_helper(),
+    label: this.i18n().name_label(),
+    placeholder: this.i18n().name_placeholder(),
+    helper: this.i18n().name_helper(),
   } as TextInputI18n));
 
   protected titleI18n = computed(() => ({
     name: 'title',
-    label: this.fieldI18n.title_label(),
-    placeholder: this.fieldI18n.title_placeholder(),
-    helper: this.fieldI18n.title_helper(),
+    label: this.i18n().title_label(),
+    placeholder: this.i18n().title_placeholder(),
+    helper: this.i18n().title_helper(),
   } as TextInputI18n));
 
   protected subTitleI18n = computed(() => ({
     name: 'subTitle',
-    label: this.fieldI18n.subTitle_label(),
-    placeholder: this.fieldI18n.subTitle_placeholder(),
-    helper: this.fieldI18n.subTitle_helper(),
+    label: this.i18n().subTitle_label(),
+    placeholder: this.i18n().subTitle_placeholder(),
+    helper: this.i18n().subTitle_helper(),
   } as TextInputI18n));
 
   protected colSizeI18n = computed(() => ({
     name: 'colSize',
-    label: this.fieldI18n.colSize_label(),
-    placeholder: this.fieldI18n.colSize_placeholder(),
-    helper: this.fieldI18n.colSize_helper(),
+    label: this.i18n().colSize_label(),
+    placeholder: this.i18n().colSize_placeholder(),
+    helper: this.i18n().colSize_helper(),
   } as TextInputI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | RoleName): void {

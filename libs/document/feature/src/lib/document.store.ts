@@ -49,6 +49,10 @@ const DOCUMENT_I18N_KEYS = {
   image_add:        PFX + 'image.add',
   image_select:     PFX + 'image.select',
   image_upload:     PFX + 'image.upload',
+  image_edit:       PFX + 'image.edit',
+  image_type_name:  PFX + 'image.type.name',
+  image_type_label: PFX + 'image.type.label',
+  image_type_helper: PFX + 'image.type.helper',
 
   bkey_label:                    PFX + 'bkey.label',
   bkey_placeholder:              PFX + 'bkey.placeholder',

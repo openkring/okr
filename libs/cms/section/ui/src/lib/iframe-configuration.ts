@@ -1,11 +1,18 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@bk2/shared-ui';
 import { IframeConfig } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface IframeConfigI18n {
+  style_label:       Signal<string>;
+  style_placeholder: Signal<string>;
+  style_helper:      Signal<string>;
+  url_label:         Signal<string>;
+  url_placeholder:   Signal<string>;
+  url_helper:        Signal<string>;
+  iframe_title:      Signal<string>;
+}
 
 @Component({
   selector: 'bk-iframe-config',
@@ -18,7 +25,7 @@ import { PFX } from './scope';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() }}</ion-card-title>
+        <ion-card-title>{{ i18n().iframe_title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -41,39 +48,27 @@ import { PFX } from './scope';
   `
 })
 export class IframeConfiguration {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public formData = model.required<IframeConfig>();
-  public title = input('@content.section.type.iframe.edit');
-  public subTitle = input('@content.section.type.iframe.subtitle');
   public intro = input<string>();
   public readonly readOnly = input(true);
+  public readonly i18n = input.required<IframeConfigI18n>();
 
   // fields
   protected style = linkedSignal(() => this.formData().style ?? 'width: 100%; min-height:400px; border: none;');
   protected url = linkedSignal(() => this.formData().url ?? '');
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    style_label:       PFX + 'style.label',
-    style_placeholder: PFX + 'style.placeholder',
-    style_helper:      PFX + 'style.helper',
-    url_label:         PFX + 'url.label',
-    url_placeholder:   PFX + 'url.placeholder',
-    url_helper:        PFX + 'url.helper',
-  });
-
   protected styleI18n = computed(() => ({
     name: 'style',
-    label: this.fieldI18n.style_label(),
-    placeholder: this.fieldI18n.style_placeholder(),
-    helper: this.fieldI18n.style_helper(),
+    label: this.i18n().style_label(),
+    placeholder: this.i18n().style_placeholder(),
+    helper: this.i18n().style_helper(),
   } as TextInputI18n));
   protected urlI18n = computed(() => ({
     name: 'url',
-    label: this.fieldI18n.url_label(),
-    placeholder: this.fieldI18n.url_placeholder(),
-    helper: this.fieldI18n.url_helper(),
+    label: this.i18n().url_label(),
+    placeholder: this.i18n().url_placeholder(),
+    helper: this.i18n().url_helper(),
   } as UrlInputI18n));
 
   protected onFieldChange(fieldName: string, $event: string): void {

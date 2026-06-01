@@ -46,8 +46,6 @@ import { AuthStore } from './auth.store';
           <bk-login-form context="login"
             [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
             [i18n]="store.i18n"
-            [emailHelper]="emailHelper()"
-            [pwdHelper]="pwdHelper()"
           />
           <div class="button-container">
             <ion-grid>
@@ -70,19 +68,14 @@ import { AuthStore } from './auth.store';
 })
 export class LoginPage {
   private readonly router = inject(Router);
-  protected readonly appStore = inject(AppStore);
   protected readonly authService = inject(AuthService);
   protected readonly store = inject(AuthStore);
 
   // inputs
 
   // computed
-  public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
-  public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
-  protected emailHelper = computed(() => '');
-  protected pwdHelper = computed(() => '');
-  //protected emailHelper = computed(() => this.context() === 'email' ? '@input.emailEmail.helper' : '@input.loginEmail.helper');
-  //protected pwdHelper = computed(() => this.context() === 'password' ? '@input.passwordPassword.helper' : '@input.loginPassword.helper');
+  public logoUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().logoUrl)}`);
+  public backgroundImageUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().welcomeBannerUrl)}`);
 
   // signals
   protected formIsValid = signal(false);
@@ -95,8 +88,8 @@ export class LoginPage {
   public async resetPassword(): Promise<void> {
     const email = this.currentCredentials().loginEmail;
     const url = email
-      ? `${this.appStore.appConfig().passwordResetUrl}?email=${encodeURIComponent(email)}`
-      : this.appStore.appConfig().passwordResetUrl;
+      ? `${this.store.config().passwordResetUrl}?email=${encodeURIComponent(email)}`
+      : this.store.config().passwordResetUrl;
     await navigateByUrl(this.router, url);
   }
 
@@ -104,12 +97,12 @@ export class LoginPage {
    * Login a returning user with already existing credentials.
    */
   public async login(): Promise<void> {
-    const email = this.currentCredentials().loginEmail;
-    await this.authService.login(this.currentCredentials(), this.appStore.appConfig().rootUrl, this.appStore.appConfig().loginUrl);
+    this.currentCredentials().loginEmail;
+    await this.authService.login(this.currentCredentials(), this.store.config().rootUrl, this.store.config().loginUrl);
   }
 
   public async gotoHome(): Promise<void> {
-    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
+    await navigateByUrl(this.router, this.store.config().rootUrl);
   }
 
   protected onValidChange(isValid: boolean): void {

@@ -13,20 +13,26 @@ export interface RoomEditFormI18n {
   roomId_label: Signal<string>;
   roomId_placeholder: Signal<string>;
   roomId_helper: Signal<string>;
+
   name_label: Signal<string>;
   name_placeholder: Signal<string>;
   name_helper: Signal<string>;
+
   invite_label: Signal<string>;
   invite_placeholder: Signal<string>;
   invite_helper: Signal<string>;
+
   unreadCount_label: Signal<string>;
   unreadCount_placeholder: Signal<string>;
   unreadCount_helper: Signal<string>;
+
   topic_label: Signal<string>;
   topic_placeholder: Signal<string>;
+
   avatar_label: Signal<string>;
   avatar_placeholder: Signal<string>;
   avatar_helper: Signal<string>;
+  
   isDirect_label: Signal<string>;
   isDirect_helper: Signal<string>;
 }

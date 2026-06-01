@@ -1,10 +1,9 @@
 import { Component, inject } from '@angular/core';
-import {
-  IonBadge, IonButton, IonButtons, IonChip, IonContent, IonFab, IonFabButton,
-  IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonTitle, IonToolbar,
-} from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter } from '@bk2/shared-ui';
+
 import { FormDefinitionStore } from './form-definition.store';
 
 @Component({
@@ -13,8 +12,7 @@ import { FormDefinitionStore } from './form-definition.store';
   imports: [
     SvgIconPipe, EmptyList, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton,
-    IonContent, IonList, IonItem, IonLabel, IonChip, IonBadge,
-    IonIcon, IonFab, IonFabButton,
+    IonContent, IonList, IonItem, IonLabel, IonChip, IonIcon,
   ],
   providers: [FormDefinitionStore],
   template: `

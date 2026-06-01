@@ -119,9 +119,9 @@ export class NotesInput {
     pwd_header:      PFX + 'notes.pwd.header',
     pwd_message:     PFX + 'notes.pwd.message',
     pwd_placeholder: PFX + 'notes.pwd.placeholder',
-    cancel:          '@operation.cancel',
-    ok:              '@operation.ok',
-    copy_conf:       PFX + 'copy.conf',
+    cancel:          '@cancel',
+    ok:              '@ok',
+    copy_conf:       '@copy.conf',
   });
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.alertI18n.copy_conf() } as ButtonCopyI18n));
 

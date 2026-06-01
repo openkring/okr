@@ -279,7 +279,7 @@ export const _MenuStore = signalStore(
       async logout(): Promise<void> {
         const email = store.appStore.loginEmail() ?? '';
         await store.activityService.logAuth('logout', email); // user still authenticated here; errors are swallowed
-        const loggedOut = await store.authService.logout();
+        const loggedOut = await store.authService.logout(store.currentUser());
         if (loggedOut) await navigateByUrl(store.router, '/auth/login', store.menu()?.data);
       },
 

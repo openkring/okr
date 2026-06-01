@@ -31,17 +31,19 @@
     },
     "club": { "label": "Verein" },
     "year": { "label": "Jahr" },
-    "membershipPrices": {
-      "title": "Jahresbeiträge aktualisieren",
-      "label": "Jahresbeiträge aktualisieren",
-      "button": "Aktualisieren",
-      "description": "Die Jahresbeiträge werden aus den Mitgliedschafts-Kategorien berechnet. Der Standard-Jahresbeitrag wird auf jeder Mitgliedschaft im Feld price gespeichert."
-    },
-    "membershipAttributes": {
-      "title": "Mitglieder Attribute aktualisieren",
-      "label": "Mitglieder Attribute aktualisieren",
-      "button": "Aktualisieren",
-      "description": "Für jede Person weden die Attribute priority, relIsLast und relLog neu berechnet und in Membership gespeichert. Dies ist die Voraussetzung, dass Auswertungen wie z.B. Exit/Entry/Alumni/OldJuniors etc. korrekt funktionieren."
+    "membership": {
+      "prices": {
+        "title": "Jahresbeiträge aktualisieren",
+        "label": "Jahresbeiträge aktualisieren",
+        "button": "Aktualisieren",
+        "description": "Die Jahresbeiträge werden aus den Mitgliedschafts-Kategorien berechnet. Der Standard-Jahresbeitrag wird auf jeder Mitgliedschaft im Feld price gespeichert."
+      },
+      "attributes": {
+        "title": "Mitglieder Attribute aktualisieren",
+        "label": "Mitglieder Attribute aktualisieren",
+        "button": "Aktualisieren",
+        "description": "Für jede Person weden die Attribute priority, relIsLast und relLog neu berechnet und in Membership gespeichert. Dies ist die Voraussetzung, dass Auswertungen wie z.B. Exit/Entry/Alumni/OldJuniors etc. korrekt funktionieren."
+      }
     },
     "checkJuniorEntry": {
       "title": "Junioren-Eintritte prüfen",

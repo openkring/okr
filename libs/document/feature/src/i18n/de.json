@@ -44,7 +44,13 @@
   "image": {
     "add": "Bild hinzufügen",
     "select": "Bild wählen",
-    "upload": "Bild hochladen"
+    "upload": "Bild hochladen",
+    "edit": "Bild konfigurieren",
+    "type": {
+      "name": "Bild-Typ",
+      "label": "Bild-Typ",
+      "helper": "Die Art des Bildes"
+    }
   },
 
   "bkey": {
@@ -135,5 +141,10 @@
     "label": "Letzte Aktualisierung",
     "placeholder": "TT.MM.JJJJ",
     "helper": "Das Dokument wurde an diesem Datum letztmals aktualisiert."
+  },
+  "tag": {
+    "logo": "Logo",
+    "marketing": "Marketing",
+    "avatar": "Avatar"
   }
 }

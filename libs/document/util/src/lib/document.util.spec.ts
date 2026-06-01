@@ -3,7 +3,7 @@ import { Camera, CameraSource, Photo } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 import { checkUrlType, warn } from '@bk2/shared-util-core';
 import { readAsFile } from '@bk2/avatar-util';
-import { pickPhoto, getDocumentTitle, checkMimeType, getDocumentStoragePath, getStoragePath } from './document.util';
+import { pickPhoto, checkMimeType, getDocumentStoragePath, getStoragePath } from './document.util';
 
 // Mock all external dependencies
 // Replace the simple mock with a factory to define the Camera object structure
@@ -65,13 +65,6 @@ describe('Document Utils', () => {
 
       expect(mockReadAsFile).toHaveBeenCalledWith(mockPhoto, mockPlatform);
       expect(result).toBe(mockFile);
-    });
-  });
-
-  describe('getDocumentTitle', () => {
-    it('should return the correct translation key for an operation', () => {
-      const title = getDocumentTitle('upload');
-      expect(title).toBe('document.operation.upload.label');
     });
   });
 

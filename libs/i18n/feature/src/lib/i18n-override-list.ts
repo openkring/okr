@@ -28,7 +28,7 @@ import { I18nOverrideEditModal } from './i18n-override-edit.modal';
   ],
   providers: [I18nOverrideStore],
   template: `
-    <bk-header [i18n]="{ title: '@i18n.override.title' }" />
+    <bk-header [i18n]="{ title: store.i18n.override_title() }" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar
@@ -46,7 +46,7 @@ import { I18nOverrideEditModal } from './i18n-override-edit.modal';
       <ion-card>
         <ion-card-header>
           <ion-card-title>
-            {{ store.i18n.list_title() }}
+            {{ store.i18n.override_list_title() }}
             <ion-badge color="medium">{{ store.filteredItems().length }}</ion-badge>
           </ion-card-title>
         </ion-card-header>
@@ -86,10 +86,10 @@ export class I18nOverrideList {
 
   protected async showActions(item: I18nTenantOverrideModel): Promise<void> {
     const base = this.store.appStore.env.services.imgixBaseUrl;
-    const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    options.buttons.push(createActionSheetButton(this.store.i18n.as_edit(), base, 'edit'));
-    options.buttons.push(createActionSheetButton(this.store.i18n.as_delete(), base, 'trash'));
-    options.buttons.push(createActionSheetButton(this.store.i18n.cancel(), base, 'cancel'));
+    const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    options.buttons.push(createActionSheetButton('update', this.store.i18n.update(), base, 'edit'));
+    options.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), base, 'trash'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), base, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
@@ -97,10 +97,10 @@ export class I18nOverrideList {
     if (!data) return;
 
     switch (data.action) {
-      case 'i18n.override.edit':
+      case 'update':
         await this.openEditModal(item);
         break;
-      case 'i18n.override.delete':
+      case 'delete':
         await this.store.deleteItem(item);
         break;
     }

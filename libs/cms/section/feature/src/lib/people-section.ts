@@ -37,11 +37,23 @@ import { PeopleSectionStore } from './people-section.store';
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="9">
-                  <bk-persons-widget [persons]="store.persons()" [avatarConfig]="store.avatarConfig()" [editMode]="editMode()" (personClicked)="showPerson($event)" />
+                  <bk-persons-widget 
+                    [persons]="store.persons()"
+                    [avatarConfig]="store.avatarConfig()"
+                    [editMode]="editMode()"
+                    [i18n]="store.i18n"
+                    (personClicked)="showPerson($event)"
+                  />
                 </ion-col>
               } @else {
                 <ion-col size="12">
-                  <bk-persons-widget [persons]="store.persons()" [avatarConfig]="store.avatarConfig()" [editMode]="editMode()" (personClicked)="showPerson($event)" />
+                  <bk-persons-widget
+                    [persons]="store.persons()"
+                    [avatarConfig]="store.avatarConfig()"
+                    [editMode]="editMode()"
+                    [i18n]="store.i18n"
+                    (personClicked)="showPerson($event)"
+                  />
                 </ion-col>
               }
             </ion-row>

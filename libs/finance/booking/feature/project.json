@@ -13,7 +13,10 @@
         "outputPath": "dist/libs/finance/booking/feature",
         "main": "libs/finance/booking/feature/src/index.ts",
         "tsConfig": "libs/finance/booking/feature/tsconfig.lib.json",
-        "assets": ["libs/finance/booking/feature/*.md"],
+        "assets": [
+          "libs/finance/booking/feature/*.md",
+          { "glob": "**/*.json", "input": "libs/finance/booking/feature/src/i18n", "output": "i18n/finance/booking/feature" }
+        ],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },

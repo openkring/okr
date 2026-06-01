@@ -1,11 +1,14 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { TripStatsConfig } from '@bk2/shared-models';
 import { StringSelect, StringSelectI18n } from '@bk2/shared-ui';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface TripStatsConfigI18n {
+  trip_stats_title:   Signal<string>,
+  viewType_label:     Signal<string>,
+  contentType_label:  Signal<string>
+}
 
 @Component({
   selector: 'bk-trip-stats-config',
@@ -18,7 +21,7 @@ import { PFX } from './scope';
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ headerTitle() }}</ion-card-title>
+        <ion-card-title>{{ i18n().trip_stats_title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
@@ -48,21 +51,15 @@ import { PFX } from './scope';
   `,
 })
 export class TripStatsConfiguration {
-  private readonly i18nService = inject(I18nService);
-
+  // inputs
   public formData = model.required<TripStatsConfig>();
-  public headerTitle = input('@content.section.type.tripStats.edit');
+  public readonly i18n = input.required<TripStatsConfigI18n>();
 
   protected viewType    = linkedSignal(() => this.formData().viewType    ?? 'list');
   protected contentType = linkedSignal(() => this.formData().contentType ?? 'boat');
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    viewType_label:    PFX + 'tripStats.viewType_label',
-    contentType_label: PFX + 'tripStats.contentType_label',
-  });
-
-  protected viewTypeI18n    = computed(() => ({ name: 'viewType',    label: this.fieldI18n.viewType_label()    } as StringSelectI18n));
-  protected contentTypeI18n = computed(() => ({ name: 'contentType', label: this.fieldI18n.contentType_label() } as StringSelectI18n));
+  protected viewTypeI18n    = computed(() => ({ name: 'viewType',    label: this.i18n().viewType_label()    } as StringSelectI18n));
+  protected contentTypeI18n = computed(() => ({ name: 'contentType', label: this.i18n().contentType_label() } as StringSelectI18n));
 
   protected onViewTypeChange(viewType: string): void {
     this.formData.update(vm => ({ ...vm, viewType: viewType as TripStatsConfig['viewType'] }));

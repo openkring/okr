@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
@@ -6,9 +6,23 @@ import { ButtonStyle, ColorIonic } from '@bk2/shared-models';
 import { CategoryOld, CategoryOldI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_LABEL, ICON_SIZE } from '@bk2/shared-constants';
 import { ColorsIonic } from '@bk2/shared-categories';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface ButtonStyleI18n {
+  button_style_title: Signal<string>;
+  button_style_subtitle: Signal<string>;
+  label_label:       Signal<string>;
+  label_placeholder: Signal<string>;
+  label_helper:      Signal<string>;
+  width_label:       Signal<string>;
+  width_placeholder: Signal<string>;
+  width_helper:      Signal<string>;
+  height_label:      Signal<string>;
+  height_placeholder: Signal<string>;
+  height_helper:     Signal<string>;
+  shape_label:       Signal<string>;
+  fill_label:        Signal<string>;
+  color_label:       Signal<string>;
+}
 
 @Component({
   selector: 'bk-button-style',
@@ -23,8 +37,8 @@ import { PFX } from './scope';
   template: `
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ title() }}</ion-card-title>
-          <ion-card-subtitle>{{ subTitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().button_style_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().button_style_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -59,14 +73,11 @@ import { PFX } from './scope';
   `
 })
 export class ButtonStyleConfiguration {
-  private readonly i18nService = inject(I18nService);
-
   // inputs
   public formData = model.required<ButtonStyle>();
-  public title = input('@content.section.type.button.style.title');
-  public subTitle = input('@content.section.type.button.style.subtitle');
   public intro = input<string>();
   public readonly readOnly = input(true);
+  public i18n = input.required<ButtonStyleI18n>();
 
   // fields
   protected label = linkedSignal(() => this.formData().label ?? DEFAULT_LABEL);
@@ -79,44 +90,29 @@ export class ButtonStyleConfiguration {
   // passing constants to template
   protected colors = ColorsIonic;
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    label_label:       PFX + 'label.label',
-    label_placeholder: PFX + 'label.placeholder',
-    label_helper:      PFX + 'label.helper',
-    width_label:       PFX + 'width.label',
-    width_placeholder: PFX + 'width.placeholder',
-    width_helper:      PFX + 'width.helper',
-    height_label:      PFX + 'height.label',
-    height_placeholder: PFX + 'height.placeholder',
-    height_helper:     PFX + 'height.helper',
-    shape_label:       PFX + 'shape.label',
-    fill_label:        PFX + 'fill.label',
-    color_label:       PFX + 'color.label',
-  });
-
   protected labelI18n = computed(() => ({
     name: 'label',
-    label: this.fieldI18n.label_label(),
-    placeholder: this.fieldI18n.label_placeholder(),
-    helper: this.fieldI18n.label_helper(),
+    label: this.i18n().label_label(),
+    placeholder: this.i18n().label_placeholder(),
+    helper: this.i18n().label_helper(),
   } as TextInputI18n));
 
   protected widthI18n = computed(() => ({
     name: 'width',
-    label: this.fieldI18n.width_label(),
-    placeholder: this.fieldI18n.width_placeholder(),
-    helper: this.fieldI18n.width_helper(),
+    label: this.i18n().width_label(),
+    placeholder: this.i18n().width_placeholder(),
+    helper: this.i18n().width_helper(),
   } as TextInputI18n));
 
   protected heightI18n = computed(() => ({
     name: 'height',
-    label: this.fieldI18n.height_label(),
-    placeholder: this.fieldI18n.height_placeholder(),
-    helper: this.fieldI18n.height_helper(),
+    label: this.i18n().height_label(),
+    placeholder: this.i18n().height_placeholder(),
+    helper: this.i18n().height_helper(),
   } as TextInputI18n));
-  protected shapeI18n = computed(() => ({ name: 'shape', label: this.fieldI18n.shape_label() } as StringSelectI18n));
-  protected fillI18n  = computed(() => ({ name: 'fill',  label: this.fieldI18n.fill_label()  } as StringSelectI18n));
-  protected colorI18n = computed(() => ({ name: 'color', label: this.fieldI18n.color_label() } as CategoryOldI18n));
+  protected shapeI18n = computed(() => ({ name: 'shape', label: this.i18n().shape_label() } as StringSelectI18n));
+  protected fillI18n  = computed(() => ({ name: 'fill',  label: this.i18n().fill_label()  } as StringSelectI18n));
+  protected colorI18n = computed(() => ({ name: 'color', label: this.i18n().color_label() } as CategoryOldI18n));
 
   protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));

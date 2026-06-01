@@ -1,18 +1,18 @@
 import { Component, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-  IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonNote,
-  ModalController,
-} from '@ionic/angular/standalone';
+import { DecimalPipe } from '@angular/common';
+import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular/standalone';
 import { inject } from '@angular/core';
+
 import { Header } from '@bk2/shared-ui';
+
 import { EncryptedFileMetadata, decryptFile } from '@bk2/forms-util';
 
 @Component({
   selector: 'bk-decrypt-files-modal',
   standalone: true,
   imports: [
-    FormsModule, Header,
+    FormsModule, Header, DecimalPipe,
     IonContent, IonList, IonItem, IonLabel, IonInput, IonNote, IonButton,
   ],
   template: `

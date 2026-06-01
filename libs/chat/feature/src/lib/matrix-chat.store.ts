@@ -54,19 +54,28 @@ const MATRIX_CHAT_I18N_KEYS = {
   selectRoom:                PFX + 'selectRoom',
   noRoomsError:              PFX + 'noRoomsError',
   createTestRoom:            PFX + 'createTestRoom',
+  type_essage:               PFX + 'typeMessage',
+  record_audio:              PFX + 'recordAudio',
+  video_call:                PFX + 'videoCall',
+  recording:                 PFX + 'recording',
+  add_attachment:            PFX + 'addAttachment',
+  no_messages_start_conversation: PFX + 'noMessagesStartConversation',
 
-  room_none:                PFX + 'room.none',
+  rooms:                     PFX + 'room.rooms',
+  room_empty:                PFX + 'room.empty',
+  room_none:                 PFX + 'room.none',
+  room_create_header:        PFX + 'room.create.header',
   room_create_conf:          PFX + 'room.create.conf',
   room_create_error:         PFX + 'room.create.error',
   room_update_conf:          PFX + 'room.update.conf',
   room_update_error:         PFX + 'room.update.error',
 
-  msg_edit:              PFX + 'message.edit',
-  msg_reply:             PFX + 'message.reply',
-  msg_copy:              PFX + 'message.copy',
-  msg_raw:               PFX + 'message.raw',
-  msg_react_header:              PFX + 'message.react.header',
-  msg_react_cancel:              PFX + 'message.react.cancel',
+  msg_edit:                  PFX + 'message.edit',
+  msg_reply:                 PFX + 'message.reply',
+  msg_copy:                  PFX + 'message.copy',
+  msg_raw:                   PFX + 'message.raw',
+  msg_react_header:          PFX + 'message.react.header',
+  msg_react_cancel:          PFX + 'message.react.cancel',
 
   msg_report_header:         PFX + 'message.report.header',
   msg_report_placeholder:    PFX + 'message.report.placeholder',
@@ -97,30 +106,44 @@ const MATRIX_CHAT_I18N_KEYS = {
   video_incoming:            PFX + 'video.incoming',
   video_connecting:          PFX + 'video.connecting',
 
-  survey_title:             PFX + 'survey.title',
-  survey_create:            PFX + 'survey.create',
+  survey_title:              PFX + 'survey.title',
+  survey_create:             PFX + 'survey.create',
   allowMultipleAnswers_label:  PFX + 'survey.allowMultipleAnswers.label',
   allowMultipleAnswers_helper: PFX + 'survey.allowMultipleAnswers.helper',
-  question_label:           PFX + 'survey.question.label',
-  question_placeholder:     PFX + 'survey.question.placeholder',
-  answers_title:            PFX + 'survey.answer.create',
-  answer_add:               PFX + 'survey.answer.add',
+  question_label:            PFX + 'survey.question.label',
+  question_placeholder:      PFX + 'survey.question.placeholder',
+  answer_create:             PFX + 'survey.answer.create',
+  answer_add:                PFX + 'survey.answer.add',
+  results_show:              PFX + 'survey.results.show',
+  results_title:             PFX + 'survey.results.title',
+  survey_empty:              PFX + 'survey.empty',
+  survey_total:              PFX + 'survey.total',
+  survey_done:               PFX + 'survey.done',
+  survey_end:                PFX + 'survey.end',
+  survey_ended:              PFX + 'survey.ended',
+  survey_voted:              PFX + 'survey.voted',
+  choose_multiple:           PFX + 'survey.choose.multiple',
+  choose_one:                PFX + 'survey.choose.one',
 
-  attach_image:      PFX + 'attach.image',
-  attach_file:       PFX + 'attach.file',
-  attach_position:   PFX + 'attach.position',
-  attach_survey:     PFX + 'attach.survey',
+  attach_title:              PFX + 'attach.title',
+  attach_image:              PFX + 'attach.image',
+  attach_file:               PFX + 'attach.file',
+  attach_position:           PFX + 'attach.position',
+  attach_survey:             PFX + 'attach.survey',
 
-  isTypeing:                PFX + 'isTypeing',
-  and:                      PFX + 'and',
-  areTypeing:               PFX + 'areTypeing',
-  othersTypeing:            PFX + 'othersTypeing',
-  severalTypeing:           PFX + 'severalTypeing',
+  isTypeing:                 PFX + 'isTypeing',
+  and:                       PFX + 'and',
+  areTypeing:                PFX + 'areTypeing',
+  othersTypeing:             PFX + 'othersTypeing',
+  severalTypeing:            PFX + 'severalTypeing',
 
-  copy_conf:                '@copy.conf',
-  cancel:                   '@cancel',
-  ok:                       '@ok',
-  save:                     '@save.label'
+  as_title:                  '@actionsheet.title',
+  copy_conf:                 '@copy.conf',
+  cancel:                    '@cancel',
+  ok:                        '@ok',
+  save:                      '@save.label',
+
+  validation_name_required:  PFX + 'validation.nameRequired'
 } satisfies Record<string, string>;
 
 export type MatrixChatI18n = { [K in keyof typeof MATRIX_CHAT_I18N_KEYS]: Signal<string> };
@@ -433,7 +456,7 @@ export const _MatrixChatStore = signalStore(
         //   PFX renders the room without waiting for the next sync cycle.
         store.matrixService.registerPendingRoom(roomId, groupId);
         const payload = 'rid:' + roomId + ', gid:' + groupId;
-        void store.activityService.log('chat', 'join', store.currentUser() ?? undefined, payload);
+        void store.activityService.log('chat', 'join', store.currentUser(), payload);
         return { roomId, joined };
       },
 
@@ -503,7 +526,7 @@ export const _MatrixChatStore = signalStore(
           componentProps: {
             room,
             currentUser: store.currentUser(),
-            header: 'room.create.header'
+            header: store.i18n.room_create_header()
           }
         });
         await modal.present();
@@ -942,9 +965,10 @@ export const _MatrixChatStore = signalStore(
 
         try {
           await store.matrixService.leaveRoom(roomId);
-          void store.activityService.log('chat', 'leave', store.currentUser() ?? undefined, 'rid:' + roomId);
+          void store.activityService.log('chat', 'leave', store.currentUser(), 'SUCCESS rid:' + roomId);
           patchState(store, { currentRoomId: undefined });
         } catch (error) {
+          void store.activityService.log('chat', 'leave', store.currentUser(), 'ERROR rid:' + roomId);
           console.error('MatrixChatStore.leaveRoom: Failed to leave:', error);
         }
       },
@@ -954,7 +978,7 @@ export const _MatrixChatStore = signalStore(
       async startVideoCall(): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) return;
-        await store.matrixService.startVideoCall(roomId);
+        await store.matrixService.startVideoCall(roomId, store.currentUser());
       },
 
       hangupCall(): void {

@@ -1,33 +1,30 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, Signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, ModalController } from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
 
 import { MatrixMessage } from '@bk2/shared-models';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
-import { I18nService } from '@bk2/shared-i18n';
 import { hashUserIdToColor } from '@bk2/chat-util';
 
 import { PollDetailModal } from './poll-detail.modal';
-import { PFX } from './scope';
 
-const PollMessageStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      as_viewVotes: PFX + 'poll.actionsheet.viewVotes',
-      as_end:       PFX + 'poll.actionsheet.end',
-      cancel:       '@cancel',
-    }),
-  })),
-);
+interface PollMessageI18n {
+  as_title: Signal<string>;
+  results_title: Signal<string>;
+  survey_total: Signal<string>;
+  choose_multiple: Signal<string>;
+  choose_one: Signal<string>;
+  survey_end: Signal<string>;
+  cancel: Signal<string>;
+  survey_title: Signal<string>;
+  survey_empty: Signal<string>
+}
 
 @Component({
   selector: 'bk-poll-message',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [],
-  providers: [PollMessageStore],
   styles: [`
     .poll-question {
       font-weight: 600;
@@ -165,7 +162,7 @@ const PollMessageStore = signalStore(
       @if (message().pollEnded) {
         {{ '@chat.survey.ended' }}
       } @else {
-        {{ totalVotes() }} {{ '@chat.survey.totalVotes' }}
+        {{ totalVotes() }} {{ i18n().survey_total() }}
         @if (myVoteAnswerIds().length > 0) {
           · {{ '@chat.survey.voted' }}
         }
@@ -177,14 +174,17 @@ export class PollMessage {
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
   private readonly env = inject(ENV);
-  private readonly pollStore = inject(PollMessageStore);
 
+  // inputs
   public message = input.required<MatrixMessage>();
   public currentUserId = input.required<string>();
+  public readonly i18n = input.required<PollMessageI18n>();
 
+  // outputs
   public voteClicked = output<{ pollEventId: string; answerIds: string[] }>();
   public endPollClicked = output<{ pollEventId: string }>();
 
+  // computed
   protected readonly question = computed(() => {
     const content = this.message().content;
     return content?.['org.matrix.msc3381.poll']?.question?.body
@@ -195,7 +195,7 @@ export class PollMessage {
   protected readonly isMultiSelect = computed(() => (this.message().maxSelections ?? 1) > 1);
 
   protected readonly hint = computed(() =>
-    this.isMultiSelect() ? '@chat.survey.chooseMultiple' : '@chat.survey.chooseOne'
+    this.isMultiSelect() ? this.i18n().choose_multiple() : this.i18n().choose_one()
   );
 
   protected readonly myVoteAnswerIds = computed(() => this.message().myVoteAnswerIds ?? []);
@@ -211,6 +211,7 @@ export class PollMessage {
     return typeof kind === 'string' && kind.endsWith('.undisclosed');
   });
 
+  // methods
   protected isVoted(answerId: string): boolean {
     return this.myVoteAnswerIds().includes(answerId);
   }
@@ -255,12 +256,12 @@ export class PollMessage {
 
   protected async onHeaderClick(): Promise<void> {
     const url = this.env.services.imgixBaseUrl;
-    const opts: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    opts.buttons.push(createActionSheetButton('poll.viewVotes', this.pollStore.i18n.as_viewVotes(), url, 'chart'));
+    const opts: ActionSheetOptions = createActionSheetOptions(this.i18n().as_title());
+    opts.buttons.push(createActionSheetButton('poll.viewVotes', this.i18n().results_title(), url, 'chart'));
     if (!this.message().pollEnded && this.message().sender === this.currentUserId()) {
-      opts.buttons.push(createActionSheetButton('poll.end', this.pollStore.i18n.as_end(), url, 'cancel-circle'));
+      opts.buttons.push(createActionSheetButton('poll.end', this.i18n().survey_end(), url, 'cancel-circle'));
     }
-    opts.buttons.push(createActionSheetButton('cancel', this.pollStore.i18n.cancel(), url, 'cancel'));
+    opts.buttons.push(createActionSheetButton('cancel', this.i18n().cancel(), url, 'cancel'));
 
     const sheet = await this.actionSheetController.create(opts);
     await sheet.present();
@@ -284,6 +285,7 @@ export class PollMessage {
         pollAnswers: this.message().pollAnswers ?? [],
         pollVotes: this.message().pollVotes ?? {},
         pollVoters: this.message().pollVoters ?? {},
+        i18n: this.i18n()
       }
     });
     await modal.present();

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
@@ -6,9 +6,16 @@ import { ButtonAction, ButtonActionConfig } from '@bk2/shared-models';
 import { CategoryOld, CategoryOldI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_LABEL, DEFAULT_URL } from '@bk2/shared-constants';
 import { ButtonActions } from '@bk2/shared-categories';
-import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
+interface ButtonActionI18n {
+  actionUrl_label:       Signal<string>;
+  actionUrl_placeholder: Signal<string>;
+  actionUrl_helper:      Signal<string>;
+  altText_label:         Signal<string>;
+  altText_placeholder:   Signal<string>;
+  altText_helper:        Signal<string>;
+  buttonAction_label:    Signal<string>;
+}
 
 @Component({
   selector: 'bk-button-action',
@@ -52,12 +59,12 @@ import { PFX } from './scope';
   `
 })
 export class ButtonActionConfiguration {
-  private readonly i18nService = inject(I18nService);
 
   // inputs
   public formData = model.required<ButtonActionConfig>();
   public title = input('@content.section.type.button.action.title');
   public subTitle = input('@content.section.type.button.action.subtitle');
+  public readonly i18n = input.required<ButtonActionI18n>();
   public intro = input<string>(`
   <ul>
   <li><strong>Download:</strong> Der Button startet einen Download der mittels URL referenzierten Datei. Die URL muss auf eine Datei im Firebase Storage zeigen.</li>
@@ -79,30 +86,22 @@ export class ButtonActionConfiguration {
   protected BA = ButtonAction;
   protected buttonActions = ButtonActions;
 
-  protected readonly fieldI18n = this.i18nService.translateAll({
-    actionUrl_label:       PFX + 'actionUrl.label',
-    actionUrl_placeholder: PFX + 'actionUrl.placeholder',
-    actionUrl_helper:      PFX + 'actionUrl.helper',
-    altText_label:         PFX + 'altText.label',
-    altText_placeholder:   PFX + 'altText.placeholder',
-    altText_helper:        PFX + 'altText.helper',
-    buttonAction_label:    PFX + 'buttonAction.label',
-  });
+
 
   protected actionUrlI18n = computed(() => ({
     name: 'actionUrl',
-    label: this.fieldI18n.actionUrl_label(),
-    placeholder: this.fieldI18n.actionUrl_placeholder(),
-    helper: this.fieldI18n.actionUrl_helper(),
+    label: this.i18n().actionUrl_label(),
+    placeholder: this.i18n().actionUrl_placeholder(),
+    helper: this.i18n().actionUrl_helper(),
   } as TextInputI18n));
 
   protected altTextI18n = computed(() => ({
     name: 'altText',
-    label: this.fieldI18n.altText_label(),
-    placeholder: this.fieldI18n.altText_placeholder(),
-    helper: this.fieldI18n.altText_helper(),
+    label: this.i18n().altText_label(),
+    placeholder: this.i18n().altText_placeholder(),
+    helper: this.i18n().altText_helper(),
   } as TextInputI18n));
-  protected buttonActionI18n = computed(() => ({ name: 'buttonAction', label: this.fieldI18n.buttonAction_label() } as CategoryOldI18n));
+  protected buttonActionI18n = computed(() => ({ name: 'buttonAction', label: this.i18n().buttonAction_label() } as CategoryOldI18n));
 
   protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));

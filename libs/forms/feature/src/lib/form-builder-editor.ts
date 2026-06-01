@@ -1,18 +1,16 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { CdkDragDrop, CdkDropList, CdkDrag, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import {
-  IonButton, IonButtons, IonContent, IonHeader, IonIcon,
-  IonItem, IonLabel, IonList, IonTitle, IonToolbar,
-  ModalController,
-} from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonIcon, IonItem, IonLabel, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { Header } from '@bk2/shared-ui';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { safeStructuredClone } from '@bk2/shared-util-core';
 import { Field, FieldType, FormDefinitionModel } from '@bk2/shared-models';
+
 import { FormDefinitionService } from '@bk2/forms-data-access';
 import { FIELD_TYPE_DEFS, FieldTypeDef, FieldTypeLibrary } from '@bk2/forms-ui';
+
 import { FieldConfigModal } from './field-config.modal';
 
 function newField(type: FieldType, order: number): Field {
@@ -36,10 +34,9 @@ function newField(type: FieldType, order: number): Field {
   selector: 'bk-form-builder-editor',
   standalone: true,
   imports: [
-    SvgIconPipe, Header, FieldTypeLibrary,
-    CdkDropList, CdkDrag,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-    IonContent, IonList, IonItem, IonLabel, IonIcon,
+    SvgIconPipe, Header,
+    CdkDropList, CdkDrag, FieldTypeLibrary,
+    IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonItem, IonLabel, IonIcon,
   ],
   styles: [`
     .editor-layout { display: flex; height: 100%; overflow: hidden; }

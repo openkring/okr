@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { IonButton, IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
-  IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 

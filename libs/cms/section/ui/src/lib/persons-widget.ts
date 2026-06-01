@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, Signal } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, ColorIonic, NameDisplay } from '@bk2/shared-models';
@@ -6,6 +6,10 @@ import { getFullName } from '@bk2/shared-util-core';
 
 import { AvatarLabel } from '@bk2/avatar-ui';
 import { calculateCols } from '@bk2/cms-section-util';
+
+interface PersonsWidgetI18n {
+  people_empty:  Signal<string>
+}
 
 @Component({
   selector: 'bk-persons-widget',
@@ -18,7 +22,7 @@ import { calculateCols } from '@bk2/cms-section-util';
     <ion-grid>
       <ion-row>
         @if(count() === 0) {
-          <ion-col>{{ '@content.section.error.noPeople' }}</ion-col>
+          <ion-col>{{ i18n().people_empty() }}</ion-col>
         } @else {
           @for(person of persons(); track person.key) {
             <ion-col size="12" [sizeMd]="cols()" (click)="showPerson(person)">
@@ -39,6 +43,7 @@ export class PersonsWidget {
   public persons = input.required<AvatarInfo[]>();
   public avatarConfig = input<AvatarConfig>(AVATAR_CONFIG_SHAPE);
   public editMode = input(false);
+  public readonly i18n = input.required<PersonsWidgetI18n>();
 
   protected count = computed(() => this.persons().length);
   protected cols = computed(() => calculateCols(this.count(), this.avatarConfig().title));
