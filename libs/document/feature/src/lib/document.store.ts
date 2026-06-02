@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -13,127 +13,12 @@ import { confirm, AppNavigationService } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { DocumentService } from '@bk2/document-data-access';
+import { DOCUMENT_I18N_KEYS } from '@bk2/document-util';
 import { FolderService } from '@bk2/folder-data-access';
 import { newFolderModel } from '@bk2/folder-util';
 import { UploadService } from '@bk2/avatar-data-access';
 
-import { PFX } from './scope';
 import { DocumentEditModal } from './document-edit.modal';
-
-const DOCUMENT_I18N_KEYS = {
-  documents:        PFX + 'documents',
-  revisions:        PFX + 'revisions',
-  empty:            PFX + 'empty',
-  name:             PFX + 'name',
-  size:             PFX + 'size',
-  lastUpdate:       PFX + 'lastUpdate',
-  revision_list:    PFX + 'revision.list.title',
-
-  upload_new:       PFX + 'upload.new',
-  upload_single:    PFX + 'upload.single.title',
-  upload_multiple:  PFX + 'upload.multiple.title',
-  delete:           PFX + 'delete.label',
-  delete_conf:      PFX + 'delete.conf',
-  delete_confirm:   PFX + 'delete.confirm',
-  delete_error:     PFX + 'delete.error',
-  view:             PFX + 'view.label',
-  view_revisions:   PFX + 'view.revisions',
-  update:           PFX + 'update.label',
-  update_conf:      PFX + 'update.conf',
-  update_error:     PFX + 'update.error',
-  create:           PFX + 'create.label',
-  create_conf:      PFX + 'create.conf',
-  create_error:     PFX + 'create.error',
-  download:         PFX + 'download',
-
-  image_add:        PFX + 'image.add',
-  image_select:     PFX + 'image.select',
-  image_upload:     PFX + 'image.upload',
-  image_edit:       PFX + 'image.edit',
-  image_type_name:  PFX + 'image.type.name',
-  image_type_label: PFX + 'image.type.label',
-  image_type_helper: PFX + 'image.type.helper',
-
-  bkey_label:                    PFX + 'bkey.label',
-  bkey_placeholder:              PFX + 'bkey.placeholder',
-  bkey_helper:                   PFX + 'bkey.helper',
-
-  label_label:                   PFX + 'label.label',
-  label_placeholder:             PFX + 'label.placeholder',
-  label_helper:                  PFX + 'label.helper',
-
-  url_label:                     PFX + 'url.label',
-  url_placeholder:               PFX + 'url.placeholder',
-  url_helper:                    PFX + 'url.helper',
-
-  actionUrl_helper:              PFX + 'actionUrl.helper',
-  actionUrl_label:               PFX + 'actionUrl.label',
-  actionUrl_placeholder:         PFX + 'actionUrl.placeholder',
-
-  altText_label:                 PFX + 'altText.label',
-  altText_placeholder:           PFX + 'altText.placeholder',
-  altText_helper:                PFX + 'altText.helper',
-
-  overlay_label:                 PFX + 'overlay.label',
-  overlay_placeholder:           PFX + 'overlay.placeholder',
-  overlay_helper:                PFX + 'overlay.helper',
-
-  fullPath_label:                PFX + 'fullPath.label',
-  fullPath_placeholder:          PFX + 'fullPath.placeholder',
-  fullPath_helper:               PFX + 'fullPath.helper',
-
-  title_label:                   PFX + 'title.label',
-  title_placeholder:             PFX + 'title.placeholder',
-  title_helper:                  PFX + 'title.helper',
-
-  mimeType_label:                PFX + 'mimeType.label',
-  mimeType_placeholder:          PFX + 'mimeType.placeholder',
-  mimeType_helper:               PFX + 'mimeType.helper',
-
-  authorKey_label:               PFX + 'authorKey.label',
-  authorKey_placeholder:         PFX + 'authorKey.placeholder',
-  authorKey_helper:              PFX + 'authorKey.helper',
-
-  authorName_label:              PFX + 'authorName.label',
-  authorName_placeholder:        PFX + 'authorName.placeholder',
-  authorName_helper:             PFX + 'authorName.helper',
-
-  locationKey_label:             PFX + 'locationKey.label',
-  locationKey_placeholder:       PFX + 'locationKey.placeholder',
-  locationKey_helper:            PFX + 'locationKey.helper',
-
-  hash_label:                    PFX + 'hash.label',
-  hash_placeholder:              PFX + 'hash.placeholder',
-  hash_helper:                   PFX + 'hash.helper',
-
-  priorVersionKey_label:         PFX + 'priorVersionKey.label',
-  priorVersionKey_placeholder:   PFX + 'priorVersionKey.placeholder',
-  priorVersionKey_helper:        PFX + 'priorVersionKey.helper',
-
-  version_label:                 PFX + 'version.label',
-  version_placeholder:           PFX + 'version.placeholder',
-  version_helper:                PFX + 'version.helper',
-
-  description_label:             PFX + 'description.label',
-  description_placeholder:       PFX + 'description.placeholder',
-
-  dateOfDocCreation_label:       PFX + 'dateOfDocCreation.label',
-  dateOfDocCreation_placeholder: PFX + 'dateOfDocCreation.placeholder',
-  dateOfDocCreation_helper:      PFX + 'dateOfDocCreation.helper',
-
-  dateOfDocLastUpdate_label:     PFX + 'dateOfDocLastUpdate.label',
-  dateOfDocLastUpdate_placeholder: PFX + 'dateOfDocLastUpdate.placeholder',
-  dateOfDocLastUpdate_helper:    PFX + 'dateOfDocLastUpdate.helper',
-  
-  description:                  '@description',
-  as_title:                     '@actionsheet.title',
-  copy_conf:                    '@copy.conf',
-  ok:                           '@ok',
-  cancel:                       '@cancel',
-  save:                         '@save.label',
-} satisfies Record<string, string>;
-
-export type DocumentI18n = { [K in keyof typeof DOCUMENT_I18N_KEYS]: Signal<string> };
 
 export type DocumentState = {
   documentKey: string;

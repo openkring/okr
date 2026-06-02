@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, ToastController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -11,68 +11,7 @@ import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
 
-import { documentValidations } from '@bk2/document-util';
-
-export interface DocumentFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-
-  fullPath_label: Signal<string>;
-  fullPath_placeholder: Signal<string>;
-  fullPath_helper: Signal<string>;
-
-  title_label: Signal<string>;
-  title_placeholder: Signal<string>;
-  title_helper: Signal<string>;
-
-  altText_label: Signal<string>;
-  altText_placeholder: Signal<string>;
-  altText_helper: Signal<string>;
-
-  url_label: Signal<string>;
-  url_placeholder: Signal<string>;
-  url_helper: Signal<string>;
-
-  mimeType_label: Signal<string>;
-  mimeType_placeholder: Signal<string>;
-  mimeType_helper: Signal<string>;
-
-  authorKey_label: Signal<string>;
-  authorKey_placeholder: Signal<string>;
-  authorKey_helper: Signal<string>;
-
-  authorName_label: Signal<string>;
-  authorName_placeholder: Signal<string>;
-  authorName_helper: Signal<string>;
-
-  locationKey_label: Signal<string>;
-  locationKey_placeholder: Signal<string>;
-  locationKey_helper: Signal<string>;
-
-  hash_label: Signal<string>;
-  hash_placeholder: Signal<string>;
-  hash_helper: Signal<string>;
-
-  priorVersionKey_label: Signal<string>;
-  priorVersionKey_placeholder: Signal<string>;
-  priorVersionKey_helper: Signal<string>;
-
-  version_label: Signal<string>;
-  version_placeholder: Signal<string>;
-  version_helper: Signal<string>;
-
-  description_label: Signal<string>;
-  description_placeholder: Signal<string>;
-  
-  dateOfDocCreation_label: Signal<string>;
-  dateOfDocCreation_placeholder: Signal<string>;
-  dateOfDocCreation_helper: Signal<string>;
-
-  dateOfDocLastUpdate_label: Signal<string>;
-  dateOfDocLastUpdate_placeholder: Signal<string>;
-  dateOfDocLastUpdate_helper: Signal<string>;
-}
+import { DocumentI18n, documentValidations } from '@bk2/document-util';
 
 @Component({
   selector: 'bk-document-form',
@@ -206,7 +145,7 @@ export class DocumentForm {
   private env = inject(ENV);
 
   // inputs
-  public readonly i18n = input.required<DocumentFormI18n>();
+  public readonly i18n = input.required<DocumentI18n>();
   public readonly formData = model.required<DocumentModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
