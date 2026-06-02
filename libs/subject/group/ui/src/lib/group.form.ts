@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -9,47 +9,7 @@ import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, NotesInput, 
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { Avatars } from '@bk2/avatar-ui';
-import { groupValidations } from '@bk2/subject-group-util';
-
-export interface GroupFormI18n {
-  attributes: Signal<string>;
-  groupId: Signal<string>;
-  display: Signal<string>;
-  access: Signal<string>;
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  groupId_label: Signal<string>;
-  groupId_placeholder: Signal<string>;
-  groupId_helper: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  icon_label: Signal<string>;
-  icon_placeholder: Signal<string>;
-  icon_helper: Signal<string>;
-  visibility_label: Signal<string>;
-  visibility_placeholder: Signal<string>;
-  visibility_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  notifyType_label: Signal<string>;
-  hasContent_label: Signal<string>;
-  hasContent_helper: Signal<string>;
-  hasChat_label: Signal<string>;
-  hasChat_helper: Signal<string>;
-  hasCalendar_label: Signal<string>;
-  hasCalendar_helper: Signal<string>;
-  hasTasks_label: Signal<string>;
-  hasTasks_helper: Signal<string>;
-  hasFiles_label: Signal<string>;
-  hasFiles_helper: Signal<string>;
-  hasAlbum_label: Signal<string>;
-  hasAlbum_helper: Signal<string>;
-  hasMembers_label: Signal<string>;
-  hasMembers_helper: Signal<string>;
-  copy_conf: Signal<string>;
-}
+import { groupValidations, GroupI18n } from '@bk2/subject-group-util';
 
 @Component({
   selector: 'bk-group-form',
@@ -267,7 +227,7 @@ export class GroupForm {
   protected hasMembersI18n  = computed(() => ({ name: 'hasMembers',   label: this.i18n().hasMembers_label(),   helper: this.i18n().hasMembers_helper()   } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input.required<GroupFormI18n>();
+  public readonly i18n = input.required<GroupI18n>();
   public formData = model.required<GroupModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
