@@ -1,4 +1,4 @@
-import { Component, Signal, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,51 +7,8 @@ import { CategoryListModel, ReservationModel, RoleName, UserModel } from '@bk2/s
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
-import { reservationValidations } from '@bk2/relationship-reservation-util';
+import { reservationValidations, ReservationI18n } from '@bk2/relationship-reservation-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
-
-export interface ReservationFormI18n {
-  selectLabel: Signal<string>;
-  newDesc: Signal<string>;
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  participants_label: Signal<string>;
-  participants_placeholder: Signal<string>;
-  participants_helper: Signal<string>;
-  area_label: Signal<string>;
-  area_placeholder: Signal<string>;
-  area_helper: Signal<string>;
-  resref_label: Signal<string>;
-  resref_placeholder: Signal<string>;
-  resref_helper: Signal<string>;
-  currency_label: Signal<string>;
-  currency_placeholder: Signal<string>;
-  currency_helper: Signal<string>;
-  durationMinutes_label: Signal<string>;
-  durationMinutes_placeholder: Signal<string>;
-  durationMinutes_helper: Signal<string>;
-  price_label: Signal<string>;
-  price_placeholder: Signal<string>;
-  price_helper: Signal<string>;
-  description_label: Signal<string>;
-  description_placeholder: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  startDate_label: Signal<string>;
-  startDate_placeholder: Signal<string>;
-  startDate_helper: Signal<string>;
-  endDate_label: Signal<string>;
-  endDate_placeholder: Signal<string>;
-  endDate_helper: Signal<string>;
-  startTime_label: Signal<string>;
-  startTime_placeholder: Signal<string>;
-  fullDay_label: Signal<string>;
-  fullDay_helper: Signal<string>;
-}
 
 @Component({
   selector: 'bk-reservation-form',
@@ -234,7 +191,7 @@ export interface ReservationFormI18n {
 })
 export class ReservationForm {
   // inputs
-  public readonly i18n = input.required<ReservationFormI18n>();
+  public readonly i18n = input.required<ReservationI18n>();
   public formData = model.required<ReservationModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

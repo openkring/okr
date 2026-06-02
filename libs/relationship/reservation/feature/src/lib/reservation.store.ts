@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -14,10 +14,9 @@ import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, de
 import { I18nService } from '@bk2/shared-i18n';
 
 import { ReservationService } from '@bk2/relationship-reservation-data-access';
-import { isReservation } from '@bk2/relationship-reservation-util';
+import { isReservation, RESERVATION_I18N_KEYS, ReservationI18n } from '@bk2/relationship-reservation-util';
 
 import { ReservationEditModal } from './reservation-edit.modal';
-import { PFX } from './scope';
 import { CalEventEditModal } from '@bk2/calevent-feature';
 import { isCalEvent } from '@bk2/calevent-util';
 
@@ -52,80 +51,6 @@ const initialState: ReservationState = {
   selectedYear: getYear(), // initialize to current year to match ListFilter default
   selectedState: 'all'
 };
-
-const RESERVATION_I18N_KEYS = {
-  reservations:                    PFX + 'reservations',
-  empty:                           PFX + 'empty',
-  reldesc1:                        PFX + 'reldesc1',
-  reldesc2:                        PFX + 'reldesc2',
-  resource:                        PFX + 'resource',
-  name:                            PFX + 'name',
-  valid_from:                      PFX + 'validFrom',
-  state:                           PFX + 'state',
-  reserver:                        PFX + 'reserver',
-  delete_confirm:                  PFX + 'delete.confirm',
-  as_title:                        PFX + 'actionsheet.title',
-  as_view:                         PFX + 'actionsheet.view',
-  as_edit:                         PFX + 'actionsheet.edit',
-  as_end:                          PFX + 'actionsheet.end',
-  as_endres:                       PFX + 'actionsheet.endres',
-  as_delete:                       PFX + 'actionsheet.delete',
-  as_create:                       PFX + 'actionsheet.create',
-  ok:                              '@ok',
-  cancel:                          '@cancel',
-  save:                            '@save.label',
-
-  selectLabel:                     PFX + 'select.label',
-  newDesc:                         PFX + 'newDesc',
-  bkey_label:                      PFX + 'bkey.label',
-  bkey_placeholder:                PFX + 'bkey.placeholder',
-  bkey_helper:                     PFX + 'bkey.helper',
-  name_label:                      PFX + 'name.label',
-  name_placeholder:                PFX + 'name.placeholder',
-  name_helper:                     PFX + 'name.helper',
-  participants_label:              PFX + 'participants.label',
-  participants_placeholder:        PFX + 'participants.placeholder',
-  participants_helper:             PFX + 'participants.helper',
-  area_label:                      PFX + 'area.label',
-  area_placeholder:                PFX + 'area.placeholder',
-  area_helper:                     PFX + 'area.helper',
-  resref_label:                    PFX + 'resref.label',
-  resref_placeholder:              PFX + 'resref.placeholder',
-  resref_helper:                   PFX + 'resref.helper',
-  currency_label:                  PFX + 'currency.label',
-  currency_placeholder:            PFX + 'currency.placeholder',
-  currency_helper:                 PFX + 'currency.helper',
-  durationMinutes_label:           PFX + 'durationMinutes.label',
-  durationMinutes_placeholder:     PFX + 'durationMinutes.placeholder',
-  durationMinutes_helper:          PFX + 'durationMinutes.helper',
-  price_label:                     PFX + 'price.label',
-  price_placeholder:               PFX + 'price.placeholder',
-  price_helper:                    PFX + 'price.helper',
-  description_label:               PFX + 'description.label',
-  description_placeholder:         PFX + 'description.placeholder',
-  notes_label:                     PFX + 'notes.label',
-  notes_placeholder:               PFX + 'notes.placeholder',
-  startDate_label:                 PFX + 'startDate.label',
-  startDate_placeholder:           PFX + 'startDate.placeholder',
-  startDate_helper:                PFX + 'startDate.helper',
-  endDate_label:                   PFX + 'endDate.label',
-  endDate_placeholder:             PFX + 'endDate.placeholder',
-  endDate_helper:                  PFX + 'endDate.helper',
-  startTime_label:                 PFX + 'startTime.label',
-  startTime_placeholder:           PFX + 'startTime.placeholder',
-  fullDay_label:                   PFX + 'fullDay.label',
-  fullDay_helper:                  PFX + 'fullDay.helper',
-
-  bhcomp_label:                    PFX + 'bhcomp.label',
-  bhcomp_placeholder:              PFX + 'bhcomp.placeholder',
-  bhcomp_helper:                   PFX + 'bhcomp.helper',
-  usesTent_label:                  PFX + 'usesTent.label',
-  usesTent_helper:                 PFX + 'usesTent.helper',
-  isConfirmed_label:               PFX + 'isConfirmed.label',
-  isConfirmed_helper:              PFX + 'isConfirmed.helper',
-} satisfies Record<string, string>;
-
-export type ReservationI18n = { [K in keyof typeof RESERVATION_I18N_KEYS]: Signal<string> };
 
 export const ReservationStore = signalStore(
   withState(initialState),

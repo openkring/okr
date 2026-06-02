@@ -1,4 +1,4 @@
-import { Component, Signal, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,41 +7,7 @@ import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@
 import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
 import { debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
-import { reservationApplyValidations } from '@bk2/relationship-reservation-util';
-
-export interface ReservationApplyFormI18n {
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  participants_label: Signal<string>;
-  participants_placeholder: Signal<string>;
-  participants_helper: Signal<string>;
-  area_label: Signal<string>;
-  area_placeholder: Signal<string>;
-  area_helper: Signal<string>;
-  bhcomp_label: Signal<string>;
-  bhcomp_placeholder: Signal<string>;
-  bhcomp_helper: Signal<string>;
-  durationMinutes_label: Signal<string>;
-  durationMinutes_placeholder: Signal<string>;
-  durationMinutes_helper: Signal<string>;
-  description_label: Signal<string>;
-  description_placeholder: Signal<string>;
-  startDate_label: Signal<string>;
-  startDate_placeholder: Signal<string>;
-  startDate_helper: Signal<string>;
-  endDate_label: Signal<string>;
-  endDate_placeholder: Signal<string>;
-  endDate_helper: Signal<string>;
-  startTime_label: Signal<string>;
-  startTime_placeholder: Signal<string>;
-  fullDay_label: Signal<string>;
-  fullDay_helper: Signal<string>;
-  usesTent_label: Signal<string>;
-  usesTent_helper: Signal<string>;
-  isConfirmed_label: Signal<string>;
-  isConfirmed_helper: Signal<string>;
-}
+import { reservationApplyValidations, ReservationI18n } from '@bk2/relationship-reservation-util';
 
 @Component({
   selector: 'bk-reservation-apply-form',
@@ -218,7 +184,7 @@ zukünftige Veranstaltungen zu sperren.
 })
 export class ReservationApplyForm {
   // inputs
-  public readonly i18n = input.required<ReservationApplyFormI18n>();
+  public readonly i18n = input.required<ReservationI18n>();
   public formData = model.required<ReservationApplyModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly tenantId = input.required<string>();
