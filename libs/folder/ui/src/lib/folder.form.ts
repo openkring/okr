@@ -1,4 +1,4 @@
-import { Component, computed, input, output, Signal } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -8,18 +8,7 @@ import { Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
-import { folderValidations } from '@bk2/folder-util';
-
-export interface FolderFormI18n {
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  title_label: Signal<string>;
-  title_placeholder: Signal<string>;
-  title_helper: Signal<string>;
-  description_label: Signal<string>;
-  description_placeholder: Signal<string>;
-}
+import { FolderI18n, folderValidations } from '@bk2/folder-util';
 
 @Component({
   selector: 'bk-folder-form',
@@ -75,7 +64,7 @@ export interface FolderFormI18n {
 })
 export class FolderForm {
   // inputs
-  public readonly i18n = input.required<FolderFormI18n>();
+  public readonly i18n = input.required<FolderI18n>();
   public readonly formData = input.required<FolderModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly allTags = input(DEFAULT_TAGS);
