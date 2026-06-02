@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
@@ -17,30 +17,11 @@ import { AccountingConfigService } from '@bk2/finance-accounting-data-access';
 import { BookingService } from '@bk2/finance-booking-data-access';
 
 import { ExpenseDocumentService, ExpenseService } from '@bk2/finance-expense-data-access';
-import { chfToCents, ExpenseFormValue, newExpenseDocumentModel, newExpenseModel, normalizeIban } from '@bk2/finance-expense-util';
-
-import { PFX } from './scope';
+import { chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, newExpenseDocumentModel, newExpenseModel, normalizeIban } from '@bk2/finance-expense-util';
 
 export type SubmitStep = 'idle' | 'iban' | 'upload' | 'saving' | 'booking' | 'done' | 'error';
 
-const EXPENSE_I18N_KEYS = {
-  list_title:         PFX + 'list.title',
-  new_title:          PFX + 'new.title',
-  detail_title:       PFX + 'detail.title',
-  submit_iban:        PFX + 'submit.iban',
-  submit_upload:      PFX + 'submit.upload',
-  submit_saving:      PFX + 'submit.saving',
-  submit_booking:     PFX + 'submit.booking',
-  submit_done:        PFX + 'submit.done',
-  submit_error:       PFX + 'submit.error',
-  status_draft:       PFX + 'status.draft',
-  status_processing:  PFX + 'status.processing',
-  status_validated:   PFX + 'status.validated',
-  status_error:       PFX + 'status.error',
-  status_posted:      PFX + 'status.posted',
-} satisfies Record<string, string>;
-
-export type ExpenseI18n = { [K in keyof typeof EXPENSE_I18N_KEYS]: Signal<string> };
+export type { ExpenseI18n };
 
 export interface ExpenseState {
   submitStep: SubmitStep;
