@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -9,25 +9,9 @@ import { VatCodeModel } from '@bk2/shared-models';
 
 import { AccountingStore } from '@bk2/finance-accounting-feature';
 import { VatCodeService } from '@bk2/finance-vat-code-data-access';
+import { VAT_CODE_I18N_KEYS, VatCodeI18n } from '@bk2/finance-vat-code-util';
 
 import { VatCodeEditModal } from './vat-code-edit.modal';
-import { PFX } from './scope';
-
-const VAT_CODE_I18N_KEYS = {
-  list_title: PFX + 'list.title',
-  empty:      PFX + 'empty',
-  code_label: PFX + 'code.label',
-  rate_label: PFX + 'rate.label',
-  as_view:    PFX + 'actionsheet.view',
-  as_edit:    PFX + 'actionsheet.edit',
-  as_create:  PFX + 'actionsheet.create',
-  as_delete:  PFX + 'actionsheet.delete',
-  save:       '@save.label',
-  cancel:     '@cancel',
-  seed_label: PFX + 'seed.label',
-} satisfies Record<string, string>;
-
-export type VatCodeI18n = { [K in keyof typeof VAT_CODE_I18N_KEYS]: Signal<string> };
 
 export const VatCodeStore = signalStore(
   withState({}),
