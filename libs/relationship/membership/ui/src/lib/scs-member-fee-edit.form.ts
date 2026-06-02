@@ -1,5 +1,5 @@
 import { FormsModule } from '@angular/forms';
-import { ChangeDetectionStrategy, Component, computed, input, output, Signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,47 +7,7 @@ import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, ScsMembe
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@bk2/shared-ui';
 import { getAge } from '@bk2/shared-util-core';
 
-import { scsMemberFeeValidations } from '@bk2/relationship-membership-util';
-
-export interface ScsMemberFeeEditFormI18n {
-  jb: Signal<string>;
-  jb_placeholder: Signal<string>;
-  jb_helper: Signal<string>;
-
-  jbp: Signal<string>;
-  jbp_placeholder: Signal<string>;
-  jbp_helper: Signal<string>;
-
-  bev: Signal<string>;
-  bev_placeholder: Signal<string>;
-  bev_helper: Signal<string>;
-
-  entryFee: Signal<string>;
-  entryFee_placeholder: Signal<string>;
-  entryFee_helper: Signal<string>;
-
-  locker: Signal<string>;
-  locker_placeholder: Signal<string>;
-  locker_helper: Signal<string>;
-
-  skiff: Signal<string>;
-  skiff_placeholder: Signal<string>;
-  skiff_helper: Signal<string>;
-
-  skiffInsurance: Signal<string>;
-  skiffInsurance_placeholder: Signal<string>;
-  skiffInsurance_helper: Signal<string>;
-
-  rebate_label: Signal<string>;
-  rebate_placeholder: Signal<string>;
-  rebate_helper: Signal<string>;
-  rebate_reason: Signal<string>;
-
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-
-  invoice_state: Signal<string>;
-}
+import { scsMemberFeeValidations, ScsMemberFeesI18n } from '@bk2/relationship-membership-util';
 
 @Component({
   selector: 'bk-scs-member-fee-edit-form',
@@ -157,7 +117,7 @@ export class ScsMemberFeeEditForm {
   protected invoiceStateI18n   = computed(() => ({ name: 'invoiceState',   label: this.i18n().invoice_state()                                                                                                        } as StringSelectI18n));
 
   // inputs
-  public readonly i18n = input.required<ScsMemberFeeEditFormI18n>();
+  public readonly i18n = input.required<ScsMemberFeesI18n>();
   public formData = input<ScsMemberFeesModel | undefined>(undefined);
   public currentUser = input<UserModel | undefined>(undefined);
   public showForm = input(true);
