@@ -76,6 +76,7 @@
       "@bk2/finance-account-util": ["libs/finance/account/util/src/index.ts"],
       "@bk2/finance-accounting-data-access": ["libs/finance/accounting/data-access/src/index.ts"],
       "@bk2/finance-accounting-feature": ["libs/finance/accounting/feature/src/index.ts"],
+      "@bk2/finance-accounting-util": ["libs/finance/accounting/util/src/index.ts"],
       "@bk2/finance-booking-data-access": ["libs/finance/booking/data-access/src/index.ts"],
       "@bk2/finance-booking-feature": ["libs/finance/booking/feature/src/index.ts"],
       "@bk2/finance-booking-ui": ["libs/finance/booking/ui/src/index.ts"],

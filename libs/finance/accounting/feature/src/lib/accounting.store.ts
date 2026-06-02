@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -8,16 +8,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { AccountingConfigModel } from '@bk2/shared-models';
 
 import { AccountingConfigService } from '@bk2/finance-accounting-data-access';
-
-import { PFX } from './scope';
-
-const ACCOUNTING_I18N_KEYS = {
-  read_only_title: PFX + 'readonly.title',
-  read_only_msg:   PFX + 'readonly.msg',
-  select_tenant:   PFX + 'select.tenant',
-} satisfies Record<string, string>;
-
-export type AccountingI18n = { [K in keyof typeof ACCOUNTING_I18N_KEYS]: Signal<string> };
+import { ACCOUNTING_I18N_KEYS } from '@bk2/finance-accounting-util';
 
 export type AccountingState = { accountingTenantId: string };
 
