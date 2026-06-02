@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -19,126 +19,8 @@ import { I18nService } from '@bk2/shared-i18n';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 
 import { CalEventService } from '@bk2/calevent-data-access';
-import { getCaleventIndex, isCalEvent } from '@bk2/calevent-util';
+import { CALEVENT_I18N_KEYS, CaleventI18n, getCaleventIndex, isCalEvent } from '@bk2/calevent-util';
 import { RegressionSelectionModal } from '@bk2/calevent-ui';
-
-import { PFX } from './scope';
-
-const CALEVENT_I18N_KEYS = {
-  calevents:                  PFX + 'calevents',
-  empty:                      PFX + 'empty',
-  description:                '@description',
-  duration:                   PFX + 'duration',
-  event:                      '@event',
-  year:                       '@year',
-  responsible:                PFX + 'responsible',
-  location:                   '@location',
-  topic:                      '@topic',
-  date:                       '@date',
-  url:                        '@url',
-
-  attendees_accepted:         PFX + 'attendance.accepted',
-  attendees_plural:           PFX + 'attendance.plural',
-  attendees_exists:           PFX + 'attendance.exists',
-  attendees_empty:            PFX + 'attendance.empty',
-
-  update_conf:                PFX + 'update.conf',
-  update_error:               PFX + 'update.error',
-  delete_confirm:             PFX + 'delete.confirm',
-  download_ics:               PFX + 'download.ics',
-
-  quick_entry_label:          PFX + 'quickEntry.label',
-  quick_entry_placeholder:    PFX + 'quickEntry.placeholder',
-
-  schedule_title:             PFX + 'schedule.title',
-  schedule_find:              PFX + 'schedule.find',
-  schedule_close_label:       PFX + 'schedule.close.label',
-  schedule_close_message:     PFX + 'schedule.close.message',
-  schedule_optional_message:  PFX + 'schedule.optionalMessage',
-  schedule_date_proposals:    PFX + 'schedule.date.proposals',
-  schedule_date_add:          PFX + 'schedule.date.add',
-  schedule_confirm:           PFX + 'schedule.date.confirm',
-  schedule_member_invite:     PFX + 'invite.members',
-  schedule_member_pending:    PFX + 'invitation.pending',
-  schedule_view:              PFX + 'schedule.view',
-
-  invite_conf:                PFX + 'invite.conf',
-  invite_error:               PFX + 'invite.error',
-  invite_group:               PFX + 'invite.group',
-  invite_person:              PFX + 'invite.person',
-  invite_members:             PFX + 'invite.members',
-
-  invitation_update_conf:     PFX + 'invitation.update.conf',
-  invitation_update_error:    PFX + 'invite.update.error',
-
-  wd_monday:                  PFX + 'weekDayAbbreviation.monday',
-  wd_tuesday:                 PFX + 'weekDayAbbreviation.tuesday',
-  wd_wednesday:               PFX + 'weekDayAbbreviation.wednesday',
-  wd_thursday:                PFX + 'weekDayAbbreviation.thursday',
-  wd_friday:                  PFX + 'weekDayAbbreviation.friday',
-  wd_saturday:                PFX + 'weekDayAbbreviation.saturday',
-  wd_sunday:                  PFX + 'weekDayAbbreviation.sunday',
-
-  periodicity_label:          PFX + 'periodicity.label',
-  periodicity_once:           PFX + 'periodicity.once',
-  periodicity_daily:          PFX + 'periodicity.daily',
-  periodicity_workday:        PFX + 'periodicity.workday',
-  periodicity_weekly:         PFX + 'periodicity.weekly',
-  periodicity_biweekly:       PFX + 'periodicity.biweekly',
-  periodicity_monthly:        PFX + 'periodicity.monthly',
-  periodicity_quarterly:      PFX + 'periodicity.quarterly',
-  periodicity_yearly:         PFX + 'periodicity.yearly',
-
-  as_title:                   '@actionsheet.title',
-  as_view:                    PFX + 'actionsheet.view',
-  as_edit:                    PFX + 'actionsheet.edit',
-  as_create:                  PFX + 'actionsheet.create',
-  as_delete:                  PFX + 'actionsheet.delete',
-  as_subscribe:               PFX + 'invitation.subscribe',
-  as_unsubscribe:             PFX + 'invitation.unsubscribe',
-  as_albums:                  PFX + 'actionsheet.albums',
-  ok:                         '@ok',
-  cancel:                     '@cancel',
-  save:                       '@save.label',
-
-  bkey_label:                 PFX + 'bkey.label',
-  bkey_placeholder:           PFX + 'bkey.placeholder',
-  bkey_helper:                PFX + 'bkey.helper',
-  seriesId_label:             PFX + 'seriesId.label',
-  seriesId_placeholder:       PFX + 'seriesId.placeholder',
-  seriesId_helper:            PFX + 'seriesId.helper',
-  name_label:                 PFX + 'name.label',
-  name_placeholder:           PFX + 'name.placeholder',
-  name_helper:                PFX + 'name.helper',
-  locationKey_label:          PFX + 'locationKey.label',
-  locationKey_placeholder:    PFX + 'locationKey.placeholder',
-  locationKey_helper:         PFX + 'locationKey.helper',
-  durationMinutes_label:      PFX + 'durationMinutes.label',
-  durationMinutes_placeholder: PFX + 'durationMinutes.placeholder',
-  durationMinutes_helper:     PFX + 'durationMinutes.helper',
-  description_label:          PFX + 'description.label',
-  description_placeholder:    PFX + 'description.placeholder',
-  startDate_label:            PFX + 'startDate.label',
-  startDate_placeholder:      PFX + 'startDate.placeholder',
-  startDate_helper:           PFX + 'startDate.helper',
-  endDate_label:              PFX + 'endDate.label',
-  endDate_placeholder:        PFX + 'endDate.placeholder',
-  endDate_helper:             PFX + 'endDate.helper',
-  repeatUntilDate_label:      PFX + 'repeatUntilDate.label',
-  repeatUntilDate_placeholder: PFX + 'repeatUntilDate.placeholder',
-  repeatUntilDate_helper:     PFX + 'repeatUntilDate.helper',
-  startTime_label:            PFX + 'startTime.label',
-  startTime_placeholder:      PFX + 'startTime.placeholder',
-  fullDay_label:              PFX + 'fullDay.label',
-  fullDay_helper:             PFX + 'fullDay.helper',
-  responsible_title:          PFX + 'responsible.label',
-  responsible_description:    PFX + 'responsible.description',
-  calendar_title:             PFX + 'calendar',
-  calendar_add:               PFX + 'add',
-  calendar_selectLabel:       PFX + 'select',
-} satisfies Record<string, string>;
-
-export type CaleventI18n = { [K in keyof typeof CALEVENT_I18N_KEYS]: Signal<string> };
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
 

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -10,45 +10,7 @@ import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/sh
 import { ModelSelectService } from '@bk2/shared-feature';
 
 import { Avatars } from '@bk2/avatar-ui';
-import { calEventValidations } from '@bk2/calevent-util';
-
-export interface CaleventFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  seriesId_label: Signal<string>;
-  seriesId_placeholder: Signal<string>;
-  seriesId_helper: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  locationKey_label: Signal<string>;
-  locationKey_placeholder: Signal<string>;
-  locationKey_helper: Signal<string>;
-  durationMinutes_label: Signal<string>;
-  durationMinutes_placeholder: Signal<string>;
-  durationMinutes_helper: Signal<string>;
-  description_label: Signal<string>;
-  description_placeholder: Signal<string>;
-  startDate_label: Signal<string>;
-  startDate_placeholder: Signal<string>;
-  startDate_helper: Signal<string>;
-  endDate_label: Signal<string>;
-  endDate_placeholder: Signal<string>;
-  endDate_helper: Signal<string>;
-  repeatUntilDate_label: Signal<string>;
-  repeatUntilDate_placeholder: Signal<string>;
-  repeatUntilDate_helper: Signal<string>;
-  startTime_label: Signal<string>;
-  startTime_placeholder: Signal<string>;
-  fullDay_label: Signal<string>;
-  fullDay_helper: Signal<string>;
-  responsible_title: Signal<string>;
-  responsible_description: Signal<string>;
-  calendar_title: Signal<string>;
-  calendar_add: Signal<string>;
-  calendar_selectLabel: Signal<string>;
-}
+import { CaleventI18n, calEventValidations } from '@bk2/calevent-util';
 
 @Component({
   selector: 'bk-calevent-form',
@@ -184,7 +146,7 @@ export class CalEventForm {
   private readonly modelSelectService = inject(ModelSelectService);
 
   // inputs
-  public readonly i18n = input.required<CaleventFormI18n>();
+  public readonly i18n = input.required<CaleventI18n>();
   public formData = model.required<CalEventModel>();
   public readonly currentUser = input.required<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
