@@ -1,1 +1,2 @@
 export * from './lib/pdf-template.util';
+export * from './lib/pdf-template-i18n';

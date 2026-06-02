@@ -8,26 +8,8 @@ import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { EsignDocumentStatus, EsignRecord } from '@bk2/shared-models';
 import { EsignService } from '@bk2/esign-data-access';
-
-import { PFX } from './scope';
-
-const ESIGN_I18N_KEYS = {
-  list_title:      PFX + 'list.title',
-  empty:           PFX + 'empty',
-  ok:              '@ok',
-  cancel:          '@cancel',
-  delete_error:    PFX + 'delete.error',
-  send_error:      PFX + 'send.error',
-  upload_error:    PFX + 'upload.error',
-  scan_no_fields:  PFX + 'scan.no_fields',
-  as_view:         PFX + 'actionsheet.view',
-  as_doc_view:     PFX + 'actionsheet.doc_view',
-  as_doc_share:    PFX + 'actionsheet.doc_share',
-  as_doc_send:     PFX + 'actionsheet.doc_send',
-  as_delete:       PFX + 'actionsheet.delete',
-} satisfies Record<string, string>;
-
-export type EsignI18n = { [K in keyof typeof ESIGN_I18N_KEYS]: import('@angular/core').Signal<string> };
+import { ESIGN_I18N_KEYS, EsignI18n } from '@bk2/esign-util';
+export type { EsignI18n };
 
 type StatusFilter = EsignDocumentStatus | 'all';
 

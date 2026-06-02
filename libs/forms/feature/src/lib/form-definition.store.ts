@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -9,18 +9,11 @@ import { FormDefinitionModel } from '@bk2/shared-models';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { FormDefinitionService } from '@bk2/forms-data-access';
-import { FORM_MAPPINGS } from '@bk2/forms-util';
+import { FORM_I18N_KEYS, FormI18n, FORM_MAPPINGS } from '@bk2/forms-util';
+export type { FormI18n };
+
 import { FormDefinitionEditModal } from './form-definition-edit.modal';
 import { FormBuilderEditor } from './form-builder-editor';
-import { PFX } from './scope';
-
-const FORM_I18N_KEYS = {
-  list_title:   PFX + 'list.title',
-  list_empty:   PFX + 'list.empty',
-  archive_conf: PFX + 'delete.conf',
-} satisfies Record<string, string>;
-
-export type FormI18n = { [K in keyof typeof FORM_I18N_KEYS]: Signal<string> };
 
 export type FormDefinitionState = {
   searchTerm: string;

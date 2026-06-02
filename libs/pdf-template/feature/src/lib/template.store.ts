@@ -8,41 +8,10 @@ import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { TemplateModel, TemplateVersionModel } from '@bk2/shared-models';
 import { DocGenerationService, GenerateDocumentResponse, TemplateService } from '@bk2/pdf-template-data-access';
-import { newTemplate, newTemplateVersion } from '@bk2/pdf-template-util';
+import { newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n } from '@bk2/pdf-template-util';
+export type { TemplateI18n };
+
 import { nameMatches } from '@bk2/shared-util-core';
-
-import { PFX } from './scope';
-
-const TEMPLATE_I18N_KEYS = {
-  list_title:       PFX + 'list.title',
-  empty:            PFX + 'empty',
-  ok:               '@ok',
-  cancel:           '@cancel',
-  save:             '@save.label',
-  delete_confirm:   PFX + 'delete.confirm',
-  as_edit:          PFX + 'actionsheet.edit',
-  as_delete:        PFX + 'actionsheet.delete',
-  as_duplicate:     PFX + 'actionsheet.duplicate',
-  as_archive:       PFX + 'actionsheet.archive',
-  as_preview:       PFX + 'actionsheet.preview',
-  save_draft_conf:  PFX + 'save.draft.conf',
-  save_draft_error: PFX + 'save.draft.error',
-  publish_conf:     PFX + 'publish.conf',
-  publish_error:    PFX + 'publish.error',
-  delete_conf:      PFX + 'delete.conf',
-  delete_error:     PFX + 'delete.error',
-  preview_error:    PFX + 'preview.error',
-  name_label:       PFX + 'name.label',
-  category_label:   PFX + 'category.label',
-  language_label:   PFX + 'language.label',
-  status_label:     PFX + 'status.label',
-  version_label:    PFX + 'version.label',
-  html_label:       PFX + 'html.label',
-  css_label:        PFX + 'css.label',
-  preview_label:    PFX + 'preview.label',
-} satisfies Record<string, string>;
-
-export type TemplateI18n = { [K in keyof typeof TEMPLATE_I18N_KEYS]: import('@angular/core').Signal<string> };
 
 interface TemplateState {
   searchTerm: string;

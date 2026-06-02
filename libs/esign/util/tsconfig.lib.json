@@ -1,0 +1,21 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/libs/esign/util",
+    "declaration": true,
+    "composite": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "target": "es2020",
+    "types": [],
+    "tsBuildInfoFile": "../../../dist/out-tsc/esign-util.tsbuildinfo",
+    "lib": ["dom", "es2022"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.spec2.ts",
+    "**/test-setup.ts",
+    "vite.config.ts"
+  ]
+}

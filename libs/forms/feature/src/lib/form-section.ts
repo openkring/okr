@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, Signal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { signalStore, withMethods, withProps } from '@ngrx/signals';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonNote } from '@ionic/angular/standalone';
@@ -8,19 +8,10 @@ import { I18nService } from '@bk2/shared-i18n';
 import { Spinner } from '@bk2/shared-ui';
 import { FormDefinitionModel, FormSection as FormSectionModel } from '@bk2/shared-models';
 import { FormDefinitionService } from '@bk2/forms-data-access';
+import { FORM_SECTION_I18N_KEYS, FormSectionI18n } from '@bk2/forms-util';
+export type { FormSectionI18n };
+
 import { FormRenderer } from '@bk2/forms-ui';
-import { PFX } from './scope';
-
-const FORM_SECTION_I18N_KEYS = {
-  submit:       PFX + 'section.submit',
-  submit_conf:  PFX + 'section.submit_conf',
-  submit_error: PFX + 'section.submit_error',
-  loading:      PFX + 'section.loading',
-  not_found:    PFX + 'section.not_found',
-  archived:     PFX + 'section.archived',
-} satisfies Record<string, string>;
-
-export type FormSectionI18n = { [K in keyof typeof FORM_SECTION_I18N_KEYS]: Signal<string> };
 
 const FormSectionStore = signalStore(
   withProps(() => ({
