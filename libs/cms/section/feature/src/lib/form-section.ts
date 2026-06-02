@@ -10,6 +10,9 @@ import { FormSection } from '@bk2/shared-models';
 import { FormDefinitionService } from '@bk2/forms-data-access';
 import { FormRenderer } from '@bk2/forms-ui';
 
+import { FORMS_SECTION_I18N_KEYS, FormsSectionI18n } from '@bk2/cms-section-util';
+export type { FormsSectionI18n };
+
 const FormSectionStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
@@ -17,13 +20,7 @@ const FormSectionStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      submit:       '@forms.section.submit',
-      submit_conf:  '@forms.section.submit_conf',
-      submit_error: '@forms.section.submit_error',
-      not_found:    '@forms.section.not_found',
-      archived:     '@forms.section.archived',
-    }),
+    i18n: store.i18nService.translateAll(FORMS_SECTION_I18N_KEYS),
   })),
   withMethods(store => ({
     async fetchJsToken(formKey: string): Promise<string> {

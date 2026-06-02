@@ -14,24 +14,9 @@ import { CalEventEditModal, CalEventViewModal } from '@bk2/calevent-feature';
 import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { PFX } from './scope';
 
-const CALENDAR_SECTION_I18N_KEYS = {
-  update_calevent_conf:       PFX + 'calevent.update.conf',
-  update_calevent_error:      PFX + 'calevent.update.error',
-  update_invitation_conf:     PFX + 'invitation.update.conf',
-  update_invitation_error:    PFX + 'invitation.update.error',
-  calevents:                  PFX + 'calevent.calevents',
-  more:                       '@more',
-  subscribe:                  PFX + 'calevent.subscribe',
-  unsubscribe:                PFX + 'calevent.unsubscribe',
-  edit:                       PFX + 'calevent.edit',
-  view:                       PFX + 'calevent.view',
-  download:                   PFX + 'calevent.download',
-  cancel:                     '@cancel',
-} satisfies Record<string, string>;
-
-export type CalendarSectionI18n = { [K in keyof typeof CALENDAR_SECTION_I18N_KEYS]: Signal<string> };
+import { CALENDAR_SECTION_I18N_KEYS, CalendarSectionI18n } from '@bk2/cms-section-util';
+export type { CalendarSectionI18n };
 
 export type CalendarState = {
   calendarName: string | undefined; // all, my, or specific calendar name

@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
@@ -14,14 +14,9 @@ import { UploadService } from '@bk2/avatar-data-access';
 import { DocumentService } from '@bk2/document-data-access';
 import { buildDocumentModel } from '@bk2/document-util';
 import { FolderService } from '@bk2/folder-data-access';
-import { PFX } from './scope';
 
-const RAG_SECTION_I18N_KEYS = {
-  upload:      PFX + 'rag.upload',
-  placeholder: PFX + 'rag.placeholder',
-} satisfies Record<string, string>;
-
-export type RagSectionI18n = { [K in keyof typeof RAG_SECTION_I18N_KEYS]: Signal<string> };
+import { RAG_SECTION_I18N_KEYS, RagSectionI18n } from '@bk2/cms-section-util';
+export type { RagSectionI18n };
 
 const RAG_FOLDER_KEY = 'rag';
 

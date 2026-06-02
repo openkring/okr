@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { combineLatest, map, of } from 'rxjs';
@@ -9,16 +9,8 @@ import { I18nService } from '@bk2/shared-i18n';
 import { PersonModel, ResourceModel, TripStatsConfig } from '@bk2/shared-models';
 import { TripStatsService, YearStats } from '@bk2/trip-data-access';
 
-import { PFX } from './scope';
-
-const TRIP_STATS_I18N_KEYS = {
-  empty:    PFX + 'tripStats.empty',
-  colName:  PFX + 'tripStats.colName',
-  colKm:    PFX + 'tripStats.colKm',
-  colTrips: PFX + 'tripStats.colTrips',
-} satisfies Record<string, string>;
-
-export type TripStatsI18n = { [K in keyof typeof TRIP_STATS_I18N_KEYS]: Signal<string> };
+import { TRIP_STATS_I18N_KEYS, TripStatsI18n } from '@bk2/cms-section-util';
+export type { TripStatsI18n };
 
 export interface StatsRow {
   key: string;

@@ -13,14 +13,8 @@ import { ActivityService } from '@bk2/activity-data-access';
 import { ActivityViewModal } from '@bk2/activity-feature';
 import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
-
-const ACTIVITIES_SECTION_I18N_KEYS = {
-  empty: PFX + 'activity.empty',
-  more:  '@more',
-} satisfies Record<string, string>;
-
-export type ActivitiesSectionI18n = { [K in keyof typeof ACTIVITIES_SECTION_I18N_KEYS]: Signal<string> };
+import { ACTIVITIES_SECTION_I18N_KEYS, ActivitiesSectionI18n } from '@bk2/cms-section-util';
+export type { ActivitiesSectionI18n };
 
 export type ActivitiesSectionState = {
   maxItems: number | undefined;

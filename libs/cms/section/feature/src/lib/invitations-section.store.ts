@@ -12,7 +12,9 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { InvitationService } from '@bk2/relationship-invitation-data-access';
 
-import { PFX } from './scope';
+import { INVITATION_STORE_I18N_KEYS, InvitationStoreI18n } from '@bk2/cms-section-util';
+export type { InvitationStoreI18n };
+
 
 export type InvitationSectionState = {
   showOnlyCurrent: boolean;  // whether to show only current memberships or all memberships that ever existed
@@ -58,11 +60,7 @@ export const InvitationSectionStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      as_subscribe:   PFX + 'invitation.actionsheet.subscribe',
-      as_unsubscribe: PFX + 'invitation.actionsheet.unsubscribe',
-      cancel:         '@cancel',
-    }),
+    i18n: store.i18nService.translateAll(INVITATION_STORE_I18N_KEYS),
   })),
   withProps((store) => ({
     invitationsResource: rxResource({

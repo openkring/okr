@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map } from 'rxjs';
@@ -7,13 +7,9 @@ import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, PeopleSection } from '@b
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
 import { I18nService } from '@bk2/shared-i18n';
-import { PFX } from './scope';
 
-const PEOPLE_SECTION_I18N_KEYS = {
-  people_empty:           PFX + 'people.empty',
-}
-
-export type PeopleSectionI18n = { [K in keyof typeof PEOPLE_SECTION_I18N_KEYS]: Signal<string> };
+import { PEOPLE_SECTION_I18N_KEYS, PeopleSectionI18n } from '@bk2/cms-section-util';
+export type { PeopleSectionI18n };
 
 export type PeopleSectionState = {
   section: PeopleSection | undefined;

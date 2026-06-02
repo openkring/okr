@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { combineLatest, of, switchMap } from 'rxjs';
@@ -9,17 +9,8 @@ import { AppStore } from '@bk2/shared-feature';
 import { ArticleSection, PageCollection, PageModel, SectionCollection, SectionModel } from '@bk2/shared-models';
 import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
-
-const NEWS_SECTION_I18N_KEYS = {
-  empty:    PFX + 'news.empty',
-  more:     '@more',
-  view:     PFX + 'news.view',
-  edit:     PFX + 'news.edit',
-  cancel:   '@cancel',
-} satisfies Record<string, string>;
-
-export type NewsSectionI18n = { [K in keyof typeof NEWS_SECTION_I18N_KEYS]: Signal<string> };
+import { NEWS_SECTION_I18N_KEYS, NewsSectionI18n } from '@bk2/cms-section-util';
+export type { NewsSectionI18n };
 
 export type NewsState = {
   blogPageKey: string | undefined;

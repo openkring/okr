@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
@@ -13,18 +13,8 @@ import { TaskService } from '@bk2/task-data-access';
 import { TaskEditModal } from '@bk2/task-feature';
 import { isTask } from '@bk2/task-util';
 
-import { PFX } from './scope';
-
-const TASKS_SECTION_I18N_KEYS = {
-  empty:        PFX + 'task.empty',
-  more:        '@more',
-  complete:     PFX + 'task.complete',
-  view:         PFX + 'task.view',
-  edit:         PFX + 'task.edit',
-  cancel:      '@cancel',
-} satisfies Record<string, string>;
-
-export type TasksSectionI18n = { [K in keyof typeof TASKS_SECTION_I18N_KEYS]: Signal<string> };
+import { TASKS_SECTION_I18N_KEYS, TasksSectionI18n } from '@bk2/cms-section-util';
+export type { TasksSectionI18n };
 
 export type TasksState = {
   maxItems: number | undefined; // max items to show, undefined means all

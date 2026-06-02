@@ -8,18 +8,10 @@ import { I18nService } from '@bk2/shared-i18n';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, AlbumStyle, ImageConfig, ImageType } from '@bk2/shared-models';
 import { debugMessage, die } from '@bk2/shared-util-core';
 
-import { getImageMetaData, listAllFilesFromDirectory } from '@bk2/cms-section-util';
+import { ALBUM_SECTION_I18N_KEYS, AlbumSectionI18n, getImageMetaData, listAllFilesFromDirectory } from '@bk2/cms-section-util';
+export type { AlbumSectionI18n };
 
 import { HttpClient } from '@angular/common/http';
-import { PFX } from './scope';
-
-const ALBUM_SECTION_I18N_KEYS = {
-  no_images:         PFX + 'noImages',
-  zoomed:            PFX + 'album.zoomed',
-  albumStyle_label:  PFX + 'albumStyle.label',
-} satisfies Record<string, string>;
-
-export type AlbumSectionI18n = { [K in keyof typeof ALBUM_SECTION_I18N_KEYS]: Signal<string> };
 
 export interface AlbumState {
   config: AlbumConfig;

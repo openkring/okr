@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
@@ -7,17 +7,8 @@ import { MemberAgeConfig } from '@bk2/shared-models';
 import { I18nService } from '@bk2/shared-i18n';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 
-import { PFX } from './scope';
-
-const MEMBER_AGE_SECTION_I18N_KEYS = {
-  ageGroup: PFX + 'memberAge.ageGroup',
-  male:     PFX + 'memberAge.male',
-  female:   PFX + 'memberAge.female',
-  total:    PFX + 'memberAge.total',
-  empty:    PFX + 'memberAge.empty',
-} satisfies Record<string, string>;
-
-export type MemberAgeSectionI18n = { [K in keyof typeof MEMBER_AGE_SECTION_I18N_KEYS]: Signal<string> };
+import { MEMBER_AGE_SECTION_I18N_KEYS, MemberAgeSectionI18n } from '@bk2/cms-section-util';
+export type { MemberAgeSectionI18n };
 
 export type AgeRow = { label: string; male: number; female: number; total: number };
 
