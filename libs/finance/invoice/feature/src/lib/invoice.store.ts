@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -14,81 +14,10 @@ import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-c
 import { I18nService } from '@bk2/shared-i18n';
 
 import { InvoiceService } from '@bk2/finance-invoice-data-access';
-import { getInvoiceExportData, newInvoice } from '@bk2/finance-invoice-util';
+import { getInvoiceExportData, INVOICE_I18N_KEYS, InvoiceI18n, newInvoice } from '@bk2/finance-invoice-util';
 
 import { InvoiceEditModal } from './invoice-edit.modal';
 import { InvoiceViewModal } from './invoice-view.modal';
-
-import { PFX } from './scope';
-
-const INVOICE_I18N_KEYS = {
-  delete_confirm: PFX + 'delete.confirm',
-  ok: '@ok',
-  cancel: '@cancel',
-  save: '@save.label',
-  list_title:      PFX + 'list.title',
-  accordion_title: PFX + 'accordion.title',
-  empty:     PFX + 'empty',
-  as_view:    PFX + 'actionsheet.view',
-  as_showpdf: PFX + 'actionsheet.showpdf',
-  as_edit:    PFX + 'actionsheet.edit',
-  as_delete:  PFX + 'actionsheet.delete',
-
-  invoiceId_label:          PFX + 'invoiceId.label',
-  invoiceId_placeholder:    PFX + 'invoiceId.placeholder',
-  invoiceId_helper:         PFX + 'invoiceId.helper',
-  title_label:              PFX + 'title.label',
-  title_placeholder:        PFX + 'title.placeholder',
-  title_helper:             PFX + 'title.helper',
-  amount_label:             PFX + 'amount.label',
-  amount_placeholder:       PFX + 'amount.placeholder',
-  amount_helper:            PFX + 'amount.helper',
-  notes_label:              PFX + 'notes.label',
-  notes_placeholder:        PFX + 'notes.placeholder',
-  invoiceDate_label:        PFX + 'invoiceDate.label',
-  invoiceDate_placeholder:  PFX + 'invoiceDate.placeholder',
-  invoiceDate_helper:       PFX + 'invoiceDate.helper',
-  dueDate_label:            PFX + 'dueDate.label',
-  dueDate_placeholder:      PFX + 'dueDate.placeholder',
-  dueDate_helper:           PFX + 'dueDate.helper',
-  paymentDate_label:        PFX + 'paymentDate.label',
-  paymentDate_placeholder:  PFX + 'paymentDate.placeholder',
-  paymentDate_helper:       PFX + 'paymentDate.helper',
-  vatType_label:            PFX + 'vatType.label',
-  state_label:              PFX + 'state.label',
-  // BexioInvoiceNewFormI18n keys
-  bexioId_label:            PFX + 'bexioId.label',
-  bexioId_placeholder:      PFX + 'bexioId.placeholder',
-  bexioId_helper:           PFX + 'bexioId.helper',
-  posText_label:            PFX + 'position.text.label',
-  posText_placeholder:      PFX + 'position.text.placeholder',
-  posText_helper:           PFX + 'position.text.helper',
-  unitPrice_label:          PFX + 'position.unitPrice.label',
-  unitPrice_placeholder:    PFX + 'position.unitPrice.placeholder',
-  unitPrice_helper:         PFX + 'position.unitPrice.helper',
-  posAmount_label:          PFX + 'position.amount.label',
-  posAmount_placeholder:    PFX + 'position.amount.placeholder',
-  posAmount_helper:         PFX + 'position.amount.helper',
-  accountId_label:          PFX + 'position.accountId.label',
-  accountId_placeholder:    PFX + 'position.accountId.placeholder',
-  accountId_helper:         PFX + 'position.accountId.helper',
-  header_label:             PFX + 'header.label',
-  header_placeholder:       PFX + 'header.placeholder',
-  header_title:             PFX + 'field.header.label',
-  footer_label:             PFX + 'footer.label',
-  footer_placeholder:       PFX + 'footer.placeholder',
-  footer_title:             PFX + 'field.footer.label',
-  validFrom_label:          PFX + 'validFrom.label',
-  validFrom_placeholder:    PFX + 'validFrom.placeholder',
-  validFrom_helper:         PFX + 'validFrom.helper',
-  validTo_label:            PFX + 'validTo.label',
-  validTo_placeholder:      PFX + 'validTo.placeholder',
-  validTo_helper:           PFX + 'validTo.helper',
-  template_label:           PFX + 'template.label',
-  defaultPosition_label:    PFX + 'defaultPosition.label',
-} satisfies Record<string, string>;
-
-export type InvoiceI18n = { [K in keyof typeof INVOICE_I18N_KEYS]: Signal<string> };
 
 export type InvoiceState = {
   listId: string;         // 'all' | 'my' | personKey

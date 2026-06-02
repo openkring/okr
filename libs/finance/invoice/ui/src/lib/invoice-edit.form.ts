@@ -1,4 +1,4 @@
-import { Component, computed, input, output, Signal } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -8,35 +8,10 @@ import { InvoiceModel, UserModel } from '@bk2/shared-models';
 import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
-import { invoiceValidations } from '@bk2/finance-invoice-util';
+import { InvoiceI18n, invoiceValidations } from '@bk2/finance-invoice-util';
 
 const INVOICE_STATES = ['draft', 'pending', 'paid', 'cancelled'];
 const VAT_TYPES = ['included', 'excluded', 'exempt'];
-
-export interface InvoiceEditFormI18n {
-  invoiceId_label:          Signal<string>;
-  invoiceId_placeholder:    Signal<string>;
-  invoiceId_helper:         Signal<string>;
-  title_label:              Signal<string>;
-  title_placeholder:        Signal<string>;
-  title_helper:             Signal<string>;
-  amount_label:             Signal<string>;
-  amount_placeholder:       Signal<string>;
-  amount_helper:            Signal<string>;
-  notes_label:              Signal<string>;
-  notes_placeholder:        Signal<string>;
-  invoiceDate_label:        Signal<string>;
-  invoiceDate_placeholder:  Signal<string>;
-  invoiceDate_helper:       Signal<string>;
-  dueDate_label:            Signal<string>;
-  dueDate_placeholder:      Signal<string>;
-  dueDate_helper:           Signal<string>;
-  paymentDate_label:        Signal<string>;
-  paymentDate_placeholder:  Signal<string>;
-  paymentDate_helper:       Signal<string>;
-  vatType_label:            Signal<string>;
-  state_label:              Signal<string>;
-}
 
 @Component({
   selector: 'bk-invoice-edit-form',
@@ -122,7 +97,7 @@ export class InvoiceEditForm {
   public readonly readOnly = input(true);
   public readonly isNew = input(false);
   public readonly showForm = input(true);
-  public readonly i18n = input.required<InvoiceEditFormI18n>();
+  public readonly i18n = input.required<InvoiceI18n>();
 
   protected invoiceIdI18n = computed(() => ({
     name: 'invoiceId', label: this.i18n().invoiceId_label(), placeholder: this.i18n().invoiceId_placeholder(), helper: this.i18n().invoiceId_helper()

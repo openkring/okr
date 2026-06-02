@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, output, signal, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -7,42 +7,7 @@ import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, Numb
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
-import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInvoicePositions, bexioInvoiceValidations, defaultInvoicePositionToBexio } from '@bk2/finance-invoice-util';
-
-export interface BexioInvoiceNewFormI18n {
-  title_label:           Signal<string>;
-  title_placeholder:     Signal<string>;
-  title_helper:          Signal<string>;
-  bexioId_label:         Signal<string>;
-  bexioId_placeholder:   Signal<string>;
-  bexioId_helper:        Signal<string>;
-  posText_label:         Signal<string>;
-  posText_placeholder:   Signal<string>;
-  posText_helper:        Signal<string>;
-  unitPrice_label:       Signal<string>;
-  unitPrice_placeholder: Signal<string>;
-  unitPrice_helper:      Signal<string>;
-  posAmount_label:       Signal<string>;
-  posAmount_placeholder: Signal<string>;
-  posAmount_helper:      Signal<string>;
-  accountId_label:       Signal<string>;
-  accountId_placeholder: Signal<string>;
-  accountId_helper:      Signal<string>;
-  header_label:          Signal<string>;
-  header_placeholder:    Signal<string>;
-  header_title:          Signal<string>;
-  footer_label:          Signal<string>;
-  footer_placeholder:    Signal<string>;
-  footer_title:          Signal<string>;
-  validFrom_label:        Signal<string>;
-  validFrom_placeholder:  Signal<string>;
-  validFrom_helper:       Signal<string>;
-  validTo_label:          Signal<string>;
-  validTo_placeholder:    Signal<string>;
-  validTo_helper:         Signal<string>;
-  template_label:         Signal<string>;
-  defaultPosition_label:  Signal<string>;
-}
+import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInvoicePositions, bexioInvoiceValidations, defaultInvoicePositionToBexio, InvoiceI18n } from '@bk2/finance-invoice-util';
 
 @Component({
   selector: 'bk-bexio-invoice-new-form',
@@ -188,7 +153,7 @@ export class BexioInvoiceNewForm {
   public readonly formData = input.required<BexioInvoiceFormModel>();
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
-  public readonly i18n = input.required<BexioInvoiceNewFormI18n>();
+  public readonly i18n = input.required<InvoiceI18n>();
 
   protected titleI18n = computed(() => ({
     name: 'title', label: this.i18n().title_label(), placeholder: this.i18n().title_placeholder(), helper: this.i18n().title_helper()
