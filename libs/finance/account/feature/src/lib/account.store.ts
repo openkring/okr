@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -8,46 +8,11 @@ import { I18nService } from '@bk2/shared-i18n';
 import { AccountModel } from '@bk2/shared-models';
 
 import { AccountService } from '@bk2/finance-account-data-access';
-import { flattenAccountTree, isAccount } from '@bk2/finance-account-util';
+import { ACCOUNT_I18N_KEYS, AccountI18n, flattenAccountTree, isAccount } from '@bk2/finance-account-util';
 
 import { AccountEditModal } from './account-edit.modal';
-import { PFX } from './scope';
 
-const ACCOUNT_I18N_KEYS = {
-  accounts:         PFX + 'accounts',
-  empty:            PFX + 'empty',
-  id:               PFX + 'id',
-  name:             PFX + 'name',
-  select_root:      PFX + 'select.root',
-  select_hint:      PFX + 'select.hint',
-  as_title:         PFX + 'actionsheet.title',
-  as_view:          PFX + 'actionsheet.view',
-  as_edit:          PFX + 'actionsheet.edit',
-  as_create:        PFX + 'actionsheet.create',
-  as_delete:        PFX + 'actionsheet.delete',
-  save:           '@save.label',
-  cancel:           '@cancel',
-  ok:               '@ok',
-  bkey_label:           PFX + 'bkey.label',
-  bkey_placeholder:     PFX + 'bkey.placeholder',
-  bkey_helper:          PFX + 'bkey.helper',
-  id_label:             PFX + 'id.label',
-  id_placeholder:       PFX + 'id.placeholder',
-  id_helper:            PFX + 'id.helper',
-  name_label:           PFX + 'name.label',
-  name_placeholder:     PFX + 'name.placeholder',
-  name_helper:          PFX + 'name.helper',
-  label_label:          PFX + 'label.label',
-  label_placeholder:    PFX + 'label.placeholder',
-  label_helper:         PFX + 'label.helper',
-  parentId_label:       PFX + 'parentId.label',
-  parentId_placeholder: PFX + 'parentId.placeholder',
-  parentId_helper:      PFX + 'parentId.helper',
-  notes_label:          PFX + 'notes.label',
-  notes_placeholder:    PFX + 'notes.placeholder',
-} satisfies Record<string, string>;
-
-export type AccountI18n = { [K in keyof typeof ACCOUNT_I18N_KEYS]: Signal<string> };
+export type { AccountI18n };
 
 export type AccountListState = {
   selectedRootKey: string;

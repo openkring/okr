@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -6,27 +6,9 @@ import { CategoryListModel, AccountModel, RoleName, UserModel } from '@bk2/share
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
-import { accountValidations } from '@bk2/finance-account-util';
+import { AccountI18n, accountValidations } from '@bk2/finance-account-util';
 
-export interface AccountFormI18n {
-  bkey_label:           Signal<string>;
-  bkey_placeholder:     Signal<string>;
-  bkey_helper:          Signal<string>;
-  id_label:             Signal<string>;
-  id_placeholder:       Signal<string>;
-  id_helper:            Signal<string>;
-  name_label:           Signal<string>;
-  name_placeholder:     Signal<string>;
-  name_helper:          Signal<string>;
-  label_label:          Signal<string>;
-  label_placeholder:    Signal<string>;
-  label_helper:         Signal<string>;
-  parentId_label:       Signal<string>;
-  parentId_placeholder: Signal<string>;
-  parentId_helper:      Signal<string>;
-  notes_label:          Signal<string>;
-  notes_placeholder:    Signal<string>;
-}
+export type { AccountI18n };
 
 @Component({
   selector: 'bk-account-form',
@@ -93,7 +75,7 @@ export class AccountForm {
   public readonly types = input.required<CategoryListModel>();
   public readonly tenantId = input.required<string>();
   public readonly readOnly = input(true);
-  public readonly i18n = input.required<AccountFormI18n>();
+  public readonly i18n = input.required<AccountI18n>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   protected bkeyI18n = computed(() => ({
