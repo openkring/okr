@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -8,14 +8,8 @@ import { chipMatches, nameMatches } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { AppStore } from './app.store';
-import { PFX } from './scope';
-
-const ORG_SELECT_I18N_KEYS = {
-  org_select:                 PFX + 'org.select',
-  org_empty:                  PFX + 'org.empty',
-}
-
-export type OrgSelectI18n = { [K in keyof typeof ORG_SELECT_I18N_KEYS]: Signal<string> };
+import { ORG_SELECT_I18N_KEYS, OrgSelectI18n } from './select-i18n';
+export type { OrgSelectI18n };
 
 export type OrgSelectState = {
   searchTerm: string;

@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -8,14 +8,9 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
 import { AppStore } from './app.store';
-import { PFX } from './scope';
-
-const RESPONSIBILITY_SELECT_I18N_KEYS = {
-  responsibility_select:      PFX + 'responsibility.select',
-  responsibility_empty:       PFX + 'responsibility.empty',
-}
-
-export type PersonSelectI18n = { [K in keyof typeof RESPONSIBILITY_SELECT_I18N_KEYS]: Signal<string> };
+import { RESPONSIBILITY_SELECT_I18N_KEYS, ResponsibilitySelectI18n } from './select-i18n';
+// kept for backward compatibility
+export type { ResponsibilitySelectI18n as PersonSelectI18n };
 
 export type ResponsibilitySelectState = {
   searchTerm: string;

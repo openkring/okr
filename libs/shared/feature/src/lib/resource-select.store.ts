@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -9,14 +9,8 @@ import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/
 import { I18nService } from '@bk2/shared-i18n';
 
 import { AppStore } from './app.store';
-import { PFX } from './scope';
-
-const RESOURCE_SELECT_I18N_KEYS = {
-  resource_select:            PFX + 'resource.select',
-  resource_empty:             PFX + 'resource.empty',
-}
-
-export type ResourceSelectI18n = { [K in keyof typeof RESOURCE_SELECT_I18N_KEYS]: Signal<string> };
+import { RESOURCE_SELECT_I18N_KEYS, ResourceSelectI18n } from './select-i18n';
+export type { ResourceSelectI18n };
 
 export type ResourceSelectState = {
   searchTerm: string;

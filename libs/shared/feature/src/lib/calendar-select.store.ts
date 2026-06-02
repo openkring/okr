@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -8,15 +8,8 @@ import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-c
 import { I18nService } from '@bk2/shared-i18n';
 
 import { AppStore } from './app.store';
-import { PFX } from './scope';
-
-
-const CALENDAR_SELECT_I18N_KEYS = {
-  calendar_select:            PFX + 'calendar.select',
-  calendar_empty:            PFX + 'calendar.empty'
-}
-
-export type CalendarSelectI18n = { [K in keyof typeof CALENDAR_SELECT_I18N_KEYS]: Signal<string> };
+import { CALENDAR_SELECT_I18N_KEYS, CalendarSelectI18n } from './select-i18n';
+export type { CalendarSelectI18n };
 
 export type CalendarSelectState = {
   searchTerm: string;
