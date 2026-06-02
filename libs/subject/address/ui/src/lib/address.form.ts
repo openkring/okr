@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -8,53 +8,7 @@ import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/sh
 import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
-import { addressValidations } from '@bk2/subject-address-util';
-
-export interface AddressFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  addressChannelLabel_label: Signal<string>;
-  addressChannelLabel_placeholder: Signal<string>;
-  addressChannelLabel_helper: Signal<string>;
-  addressUsageLabel_label: Signal<string>;
-  addressUsageLabel_placeholder: Signal<string>;
-  addressUsageLabel_helper: Signal<string>;
-  streetName_label: Signal<string>;
-  streetName_placeholder: Signal<string>;
-  streetName_helper: Signal<string>;
-  streetNumber_label: Signal<string>;
-  streetNumber_placeholder: Signal<string>;
-  streetNumber_helper: Signal<string>;
-  addressValue2_label: Signal<string>;
-  addressValue2_placeholder: Signal<string>;
-  addressValue2_helper: Signal<string>;
-  countryCode_label: Signal<string>;
-  countryCode_placeholder: Signal<string>;
-  countryCode_helper: Signal<string>;
-  zipCode_label: Signal<string>;
-  zipCode_placeholder: Signal<string>;
-  zipCode_helper: Signal<string>;
-  city_label: Signal<string>;
-  city_placeholder: Signal<string>;
-  city_helper: Signal<string>;
-  url_label: Signal<string>;
-  url_placeholder: Signal<string>;
-  url_helper: Signal<string>;
-  iban_label: Signal<string>;
-  iban_placeholder: Signal<string>;
-  iban_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  email_label: Signal<string>;
-  email_placeholder: Signal<string>;
-  phone_label: Signal<string>;
-  phone_placeholder: Signal<string>;
-  isFavorite_label: Signal<string>;
-  isFavorite_helper: Signal<string>;
-  isCc_label: Signal<string>;
-  isCc_helper: Signal<string>;
-}
+import { addressValidations, AddressesI18n } from '@bk2/subject-address-util';
 
 @Component({
   selector: 'bk-address-form',
@@ -242,7 +196,7 @@ export class AddressForm {
   protected isCcI18n              = computed(() => ({ name: 'isCc',       label: this.i18n().isCc_label(),       helper: this.i18n().isCc_helper()       } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input.required<AddressFormI18n>();
+  public readonly i18n = input.required<AddressesI18n>();
   public readonly formData = model.required<AddressModel>();  
   public readonly currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
