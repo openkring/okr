@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -8,34 +8,7 @@ import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/sh
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
 import { FullNamePipe } from '@bk2/shared-pipes';
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { workrelValidations } from '@bk2/relationship-workrel-util';
-
-export interface WorkrelFormI18n {
-  selectLabel: Signal<string>;
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  label_label: Signal<string>;
-  label_placeholder: Signal<string>;
-  label_helper: Signal<string>;
-  currency_label: Signal<string>;
-  currency_placeholder: Signal<string>;
-  currency_helper: Signal<string>;
-  order_label: Signal<string>;
-  order_placeholder: Signal<string>;
-  order_helper: Signal<string>;
-  price_label: Signal<string>;
-  price_placeholder: Signal<string>;
-  price_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  validFrom_label: Signal<string>;
-  validFrom_placeholder: Signal<string>;
-  validFrom_helper: Signal<string>;
-  validTo_label: Signal<string>;
-  validTo_placeholder: Signal<string>;
-  validTo_helper: Signal<string>;
-}
+import { workrelValidations, WorkrelI18n } from '@bk2/relationship-workrel-util';
 
 @Component({
   selector: 'bk-workrel-form',
@@ -173,7 +146,7 @@ export interface WorkrelFormI18n {
 })
 export class WorkrelForm {
   // inputs
-  public readonly i18n = input.required<WorkrelFormI18n>();
+  public readonly i18n = input.required<WorkrelI18n>();
   public formData = model.required<WorkrelModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
