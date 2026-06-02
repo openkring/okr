@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -7,35 +7,9 @@ import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
 import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { areNotesVisible, areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
-import { personValidations } from '@bk2/subject-person-util';
+import { personValidations, PersonI18n } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
-
-export interface PersonFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  firstName_label: Signal<string>;
-  firstName_placeholder: Signal<string>;
-  firstName_helper: Signal<string>;
-  lastName_label: Signal<string>;
-  lastName_placeholder: Signal<string>;
-  lastName_helper: Signal<string>;
-  ssnId_label: Signal<string>;
-  ssnId_placeholder: Signal<string>;
-  ssnId_helper: Signal<string>;
-  bexioId_label: Signal<string>;
-  bexioId_placeholder: Signal<string>;
-  bexioId_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  dateOfBirth_label: Signal<string>;
-  dateOfBirth_placeholder: Signal<string>;
-  dateOfBirth_helper: Signal<string>;
-  dateOfDeath_label: Signal<string>;
-  dateOfDeath_placeholder: Signal<string>;
-  dateOfDeath_helper: Signal<string>;
-}
 
 @Component({
   selector: 'bk-person-form',
@@ -126,7 +100,7 @@ export interface PersonFormI18n {
   `
 })
 export class PersonForm {
-  public readonly i18n = input.required<PersonFormI18n>();
+  public readonly i18n = input.required<PersonI18n>();
   protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
   protected firstNameI18n = computed(() => ({ name: 'firstName', label: this.i18n().firstName_label(), placeholder: this.i18n().firstName_placeholder(), helper: this.i18n().firstName_helper() } as TextInputI18n));
   protected lastNameI18n = computed(() => ({ name: 'lastName', label: this.i18n().lastName_label(), placeholder: this.i18n().lastName_placeholder(), helper: this.i18n().lastName_helper() } as TextInputI18n));

@@ -5,3 +5,4 @@ export * from './lib/person.util';
 export * from './lib/person.validations';
 export * from './lib/person-label.pipe';
 export * from './lib/ssn.validations';
+export * from './lib/person-i18n';

@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
@@ -17,14 +17,12 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject-person-util';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n } from '@bk2/subject-person-util';
 import { browseUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
 
 import { MatrixChatService } from '@bk2/chat-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
-
-import { PFX } from './scope';
 
 
 export type PersonState = {
@@ -45,102 +43,6 @@ export const initialState: PersonState = {
   selectedTag: '',
   selectedGender: 'all',
 };
-
-const PERSON_I18N_KEYS = {
-    persons:                    PFX + 'persons',
-    empty:                      PFX + 'empty',
-    details:                    PFX + 'details',
-    addresses:                  PFX + 'addresses',
-    misc:                       PFX + 'misc',
-
-    // person form field keys (from @subject/person/ui)
-    bkey_label:                 PFX + 'bkey.label',
-    bkey_placeholder:           PFX + 'bkey.placeholder',
-    bkey_helper:                PFX + 'bkey.helper',
-    firstName_label:            PFX + 'firstName.label',
-    firstName_placeholder:      PFX + 'firstName.placeholder',
-    firstName_helper:           PFX + 'firstName.helper',
-    lastName_label:             PFX + 'lastName.label',
-    lastName_placeholder:       PFX + 'lastName.placeholder',
-    lastName_helper:            PFX + 'lastName.helper',
-    ssnId_label:                PFX + 'ssnId.label',
-    ssnId_placeholder:          PFX + 'ssnId.placeholder',
-    ssnId_helper:               PFX + 'ssnId.helper',
-    bexioId_label:              PFX + 'bexioId.label',
-    bexioId_placeholder:        PFX + 'bexioId.placeholder',
-    bexioId_helper:             PFX + 'bexioId.helper',
-    email_label:                PFX + 'email.label',
-    email_placeholder:          PFX + 'email.placeholder',
-    phone_label:                PFX + 'phone.label',
-    phone_placeholder:          PFX + 'phone.placeholder',
-    notes_label:                PFX + 'notes.label',
-    notes_placeholder:          PFX + 'notes.placeholder',
-    dateOfBirth_label:          PFX + 'dateOfBirth.label',
-    dateOfBirth_placeholder:    PFX + 'dateOfBirth.placeholder',
-    dateOfBirth_helper:         PFX + 'dateOfBirth.helper',
-    dateOfDeath_label:          PFX + 'dateOfDeath.label',
-    dateOfDeath_placeholder:    PFX + 'dateOfDeath.placeholder',
-    dateOfDeath_helper:         PFX + 'dateOfDeath.helper',
-    dateOfEntry_label:          PFX + 'dateOfEntry.label',
-    dateOfEntry_placeholder:    PFX + 'dateOfEntry.placeholder',
-    dateOfEntry_helper:         PFX + 'dateOfEntry.helper',
-    streetName_label:           PFX + 'streetName.label',
-    streetName_placeholder:     PFX + 'streetName.placeholder',
-    streetName_helper:          PFX + 'streetName.helper',
-    streetNumber_label:         PFX + 'streetNumber.label',
-    streetNumber_placeholder:   PFX + 'streetNumber.placeholder',
-    streetNumber_helper:        PFX + 'streetNumber.helper',
-    countryCode_label:          PFX + 'countryCode.label',
-    countryCode_placeholder:    PFX + 'countryCode.placeholder',
-    countryCode_helper:         PFX + 'countryCode.helper',
-    zipCode_label:              PFX + 'zipCode.label',
-    zipCode_placeholder:        PFX + 'zipCode.placeholder',
-    zipCode_helper:             PFX + 'zipCode.helper',
-    city_label:                 PFX + 'city.label',
-    city_placeholder:           PFX + 'city.placeholder',
-    city_helper:                PFX + 'city.helper',
-    web_label:                  PFX + 'web.label',
-    web_placeholder:            PFX + 'web.placeholder',
-    web_helper:                 PFX + 'web.helper',
-
-    call_phone:                 PFX + 'call.phone',
-    copy_email_label:           PFX + 'copy.email.label',
-    copy_email_conf:            PFX + 'copy.email.conf',
-    copy_email_error:           PFX + 'copy.email.error',
-    copy_phone_label:           PFX + 'copy.phone.label',
-    copy_phone_conf:            PFX + 'copy.phone.conf',
-    copy_phone_error:           PFX + 'copy.phone.error',
-    create_label:               PFX + 'create.label',
-    create_conf:                PFX + 'create.conf',
-    create_error:               PFX + 'create.error',
-    edit_label:                 PFX + 'edit.label',
-    edit_conf:                  PFX + 'edit.conf',
-    edit_error:                 PFX + 'edit.error',
-    send_message:               PFX + 'send.message',
-    send_email:                 PFX + 'send.email',
-    show_postal:                PFX + 'show.postal',
-    view_label:                 PFX + 'view.label',
-    delete_label:               PFX + 'delete.label',
-    delete_conf:                PFX + 'delete.conf',
-    delete_confirm:             PFX + 'delete.confirm',
-    delete_error:               PFX + 'delete.error',
-    add_membership_label:       PFX + 'add_membership.label',
-    add_membership_confirm:     PFX + 'add_membership.confirm',
-    add_membership_conf:        PFX + 'add_membership.conf',
-    add_membership_error:       PFX + 'add_membership.error',
-    add_membership_helper:      PFX + 'add_membership.helper',
-    add_membership_exists:      PFX + 'add_membership.exists',
-    validation_lastNameRequired: PFX + 'validation.lastNameRequired',
-
-    as_title:                   '@actionsheet.title',
-    name:                       '@name',
-    select:                     '@select.label',
-    ok:                         '@ok',
-    cancel:                     '@cancel',
-    save:                       '@save.label',
-} satisfies Record<string, string>;
-
-export type PersonI18n = { [K in keyof typeof PERSON_I18N_KEYS]: Signal<string> };
 
 export const PersonStore = signalStore(
   withState(initialState),

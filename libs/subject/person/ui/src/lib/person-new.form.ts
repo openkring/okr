@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -13,65 +13,7 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
 
-import { PersonNewFormModel, personNewFormValidations } from '@bk2/subject-person-util';
-
-export interface PersonNewFormI18n {
-  details: Signal<string>;
-  addresses: Signal<string>;
-  misc: Signal<string>;
-  select: Signal<string>;
-  firstName_label: Signal<string>;
-  firstName_placeholder: Signal<string>;
-  firstName_helper: Signal<string>;
-  lastName_label: Signal<string>;
-  lastName_placeholder: Signal<string>;
-  lastName_helper: Signal<string>;
-  streetName_label: Signal<string>;
-  streetName_placeholder: Signal<string>;
-  streetName_helper: Signal<string>;
-  streetNumber_label: Signal<string>;
-  streetNumber_placeholder: Signal<string>;
-  streetNumber_helper: Signal<string>;
-  countryCode_label: Signal<string>;
-  countryCode_placeholder: Signal<string>;
-  countryCode_helper: Signal<string>;
-  zipCode_label: Signal<string>;
-  zipCode_placeholder: Signal<string>;
-  zipCode_helper: Signal<string>;
-  city_label: Signal<string>;
-  city_placeholder: Signal<string>;
-  city_helper: Signal<string>;
-  web_label: Signal<string>;
-  web_placeholder: Signal<string>;
-  web_helper: Signal<string>;
-  ssnId_label: Signal<string>;
-  ssnId_placeholder: Signal<string>;
-  ssnId_helper: Signal<string>;
-  bexioId_label: Signal<string>;
-  bexioId_placeholder: Signal<string>;
-  bexioId_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  email_label: Signal<string>;
-  email_placeholder: Signal<string>;
-  phone_label: Signal<string>;
-  phone_placeholder: Signal<string>;
-  dateOfBirth_label: Signal<string>;
-  dateOfBirth_placeholder: Signal<string>;
-  dateOfBirth_helper: Signal<string>;
-  dateOfDeath_label: Signal<string>;
-  dateOfDeath_placeholder: Signal<string>;
-  dateOfDeath_helper: Signal<string>;
-  dateOfEntry_label: Signal<string>;
-  dateOfEntry_placeholder: Signal<string>;
-  dateOfEntry_helper: Signal<string>;
-  add_membership_label: Signal<string>;
-  add_membership_confirm: Signal<string>;
-  add_membership_conf: Signal<string>;
-  add_membership_error: Signal<string>;
-  add_membership_helper: Signal<string>;
-  add_membership_exists: Signal<string>;
-}
+import { PersonNewFormModel, personNewFormValidations, PersonI18n } from '@bk2/subject-person-util';
 
 @Component({
   selector: 'bk-person-new-form',
@@ -324,7 +266,7 @@ export interface PersonNewFormI18n {
 })
 export class PersonNewForm {
   // inputs
-  public readonly i18n = input.required<PersonNewFormI18n>();
+  public readonly i18n = input.required<PersonI18n>();
   public readonly formData = model.required<PersonNewFormModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly showAddressInputs = input(true);
