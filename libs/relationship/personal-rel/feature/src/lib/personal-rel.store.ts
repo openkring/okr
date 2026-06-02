@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -12,9 +12,9 @@ import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
+import { PERSONAL_REL_I18N_KEYS, PersonalRelI18n } from '@bk2/relationship-personal-rel-util';
 
 import { PersonalRelEditModal } from './personal-rel-edit.modal';
-import { PFX } from './scope';
 
 export type PersonalRelState = {
   person: PersonModel | undefined;
@@ -33,41 +33,6 @@ const initialState: PersonalRelState = {
   person: undefined,
   showOnlyCurrent: true,
 };
-
-const PERSONAL_REL_I18N_KEYS = {
-  title:                           PFX + 'title',
-  person1:                         PFX + 'person1',
-  type:                            PFX + 'type',
-  person2:                         PFX + 'person2',
-  delete_confirm:                  PFX + 'delete.confirm',
-  as_title:                        PFX + 'actionsheet.title',
-  as_view:                         PFX + 'actionsheet.view',
-  as_edit:                         PFX + 'actionsheet.edit',
-  as_end:                          PFX + 'actionsheet.end',
-  as_delete:                       PFX + 'actionsheet.delete',
-  as_create:                       PFX + 'actionsheet.create',
-  ok:                              '@ok',
-  cancel:                          '@cancel',
-  save:                            '@save.label',
-
-  selectLabel:                     PFX + 'select.label',
-  bkey_label:                      PFX + 'bkey.label',
-  bkey_placeholder:                PFX + 'bkey.placeholder',
-  bkey_helper:                     PFX + 'bkey.helper',
-  label_label:                     PFX + 'label.label',
-  label_placeholder:               PFX + 'label.placeholder',
-  label_helper:                    PFX + 'label.helper',
-  notes_label:                     PFX + 'notes.label',
-  notes_placeholder:               PFX + 'notes.placeholder',
-  validFrom_label:                 PFX + 'validFrom.label',
-  validFrom_placeholder:           PFX + 'validFrom.placeholder',
-  validFrom_helper:                PFX + 'validFrom.helper',
-  validTo_label:                   PFX + 'validTo.label',
-  validTo_placeholder:             PFX + 'validTo.placeholder',
-  validTo_helper:                  PFX + 'validTo.helper',
-} satisfies Record<string, string>;
-
-export type PersonalRelI18n = { [K in keyof typeof PERSONAL_REL_I18N_KEYS]: Signal<string> };
 
 export const PersonalRelStore = signalStore(
   withState(initialState),

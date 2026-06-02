@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -9,25 +9,7 @@ import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/sh
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
-
-export interface PersonalRelFormI18n {
-  selectLabel: Signal<string>;
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  label_label: Signal<string>;
-  label_placeholder: Signal<string>;
-  label_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  validFrom_label: Signal<string>;
-  validFrom_placeholder: Signal<string>;
-  validFrom_helper: Signal<string>;
-  validTo_label: Signal<string>;
-  validTo_placeholder: Signal<string>;
-  validTo_helper: Signal<string>;
-}
+import { personalRelValidations, PersonalRelI18n } from '@bk2/relationship-personal-rel-util';
 
 @Component({
   selector: 'bk-personal-rel-form',
@@ -144,7 +126,7 @@ export class PersonalRelForm {
   protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));
 
   // inputs
-  public readonly i18n = input.required<PersonalRelFormI18n>();
+  public readonly i18n = input.required<PersonalRelI18n>();
   public formData = model.required<PersonalRelModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
