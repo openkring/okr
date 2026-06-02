@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -9,20 +9,11 @@ import { BookingLineModel, BookingModel } from '@bk2/shared-models';
 
 import { AccountingStore } from '@bk2/finance-accounting-feature';
 import { BookingLineService, BookingService } from '@bk2/finance-booking-data-access';
+import { BOOKING_I18N_KEYS, BookingI18n } from '@bk2/finance-booking-util';
 
 import { BookingEditModal } from './booking-edit.modal';
-import { PFX } from './scope';
 
-const BOOKING_I18N_KEYS = {
-  list_title: PFX + 'list.title',
-  empty:      PFX + 'empty',
-  view:       PFX + 'view.label',
-  edit:       PFX + 'edit.label',
-  create:     PFX + 'create.label',
-  delete:     PFX + 'delete.label',
-} satisfies Record<string, string>;
-
-export type BookingI18n = { [K in keyof typeof BOOKING_I18N_KEYS]: Signal<string> };
+export type { BookingI18n };
 
 export const BookingStore = signalStore(
   withState({ filter: '' }),
