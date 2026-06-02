@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -8,17 +8,7 @@ import { PeriodModel } from '@bk2/shared-models';
 
 import { AccountingStore } from '@bk2/finance-accounting-feature';
 import { PeriodService } from '@bk2/finance-period-data-access';
-import { PFX } from './scope';
-
-const PERIOD_I18N_KEYS = {
-  list_title:    PFX + 'list.title',
-  empty:         PFX + 'empty',
-  locked_label:  PFX + 'locked.label',
-  lock_action:   PFX + 'lock.action',
-  unlock_action: PFX + 'unlock.action',
-} satisfies Record<string, string>;
-
-export type PeriodI18n = { [K in keyof typeof PERIOD_I18N_KEYS]: Signal<string> };
+import { PERIOD_I18N_KEYS } from '@bk2/finance-period-util';
 
 export const PeriodStore = signalStore(
   withState({}),

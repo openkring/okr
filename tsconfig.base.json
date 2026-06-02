@@ -97,6 +97,7 @@
       "@bk2/finance-payment-util": ["libs/finance/payment/util/src/index.ts"],
       "@bk2/finance-period-data-access": ["libs/finance/period/data-access/src/index.ts"],
       "@bk2/finance-period-feature": ["libs/finance/period/feature/src/index.ts"],
+      "@bk2/finance-period-util": ["libs/finance/period/util/src/index.ts"],
       "@bk2/finance-exchange-rate-data-access": ["libs/finance/exchange-rate/data-access/src/index.ts"],
       "@bk2/finance-exchange-rate-util": ["libs/finance/exchange-rate/util/src/index.ts"],
       "@bk2/finance-expense-data-access": ["libs/finance/expense/data-access/src/index.ts"],
