@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -13,19 +13,11 @@ import { BillCollection, BillModel } from '@bk2/shared-models';
 import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
 import { BillService } from '@bk2/finance-bill-data-access';
+import { BILL_I18N_KEYS, BillI18n } from '@bk2/finance-bill-util';
 
 import { BillViewModal } from './bill-view.modal';
 
-const BILL_I18N_KEYS = {
-  list_title:      '@finance.bill.list.title',
-  accordion_title: '@finance.bill.accordion.title',
-  field_empty:     '@finance.bill.field.empty',
-  as_view:         '@finance/bill/feature.actionsheet.view',
-  as_download:     '@finance/bill/feature.actionsheet.download',
-  cancel:          '@cancel',
-} satisfies Record<string, string>;
-
-export type BillI18n = { [K in keyof typeof BILL_I18N_KEYS]: Signal<string> };
+export type { BillI18n };
 
 export type BillState = {
   listId: string;    // 'all' | 'my' | vendorKey
