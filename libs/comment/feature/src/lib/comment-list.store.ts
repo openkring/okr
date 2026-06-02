@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { AppStore } from '@bk2/shared-feature';
@@ -6,17 +6,8 @@ import { I18nService } from '@bk2/shared-i18n';
 import { debugListLoaded } from '@bk2/shared-util-core';
 
 import { CommentService } from '@bk2/comment-data-access';
+import { COMMENT_LIST_I18N_KEYS } from '@bk2/comment-util';
 import { AlertService } from '@bk2/shared-util-angular';
-import { PFX } from './scope';
-
-const COMMENT_LIST_I18N_KEYS = {
-  comments:             PFX + 'comments',
-  empty:                PFX + 'empty',
-  add_title:            PFX + 'add.title',
-  add_placeholder:      PFX + 'add.placeholder',
-} satisfies Record<string, string>;
-
-export type CommentListI18n = { [K in keyof typeof COMMENT_LIST_I18N_KEYS]: Signal<string> };
 
 export type CommentListState = {
   parentKey: string; // modelType.key of the parent model
