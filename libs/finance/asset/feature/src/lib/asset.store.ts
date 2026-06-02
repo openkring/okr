@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -9,20 +9,11 @@ import { AssetModel } from '@bk2/shared-models';
 
 import { AccountingStore } from '@bk2/finance-accounting-feature';
 import { AssetCategoryService, AssetService } from '@bk2/finance-asset-data-access';
+import { ASSET_I18N_KEYS, AssetI18n } from '@bk2/finance-asset-util';
 
 import { AssetEditModal } from './asset-edit.modal';
-import { PFX } from './scope';
 
-const ASSET_I18N_KEYS = {
-  list_title: PFX + 'list.title',
-  empty:      PFX + 'empty',
-  as_view:    PFX + 'actionsheet.view',
-  as_edit:    PFX + 'actionsheet.edit',
-  as_create:  PFX + 'actionsheet.create',
-  as_delete:  PFX + 'actionsheet.delete',
-} satisfies Record<string, string>;
-
-export type AssetI18n = { [K in keyof typeof ASSET_I18N_KEYS]: Signal<string> };
+export type { AssetI18n };
 
 export const AssetStore = signalStore(
   withState({}),
