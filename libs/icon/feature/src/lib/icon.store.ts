@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController } from '@ionic/angular/standalone';
@@ -13,9 +13,11 @@ import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, na
 import { UploadService } from '@bk2/avatar-data-access';
 
 import { IconService } from '@bk2/icon-data-access';
-import { buildIconModel, buildIconModelFromStorage, getIconStoragePath } from '@bk2/icon-util';
+import { buildIconModel, buildIconModelFromStorage, getIconStoragePath, ICON_I18N_KEYS, IconI18n } from '@bk2/icon-util';
 
 import { IconEditModal } from './icon-edit.modal';
+
+export type { IconI18n };
 
 export const ICON_SETS = ['filetypes', 'general', 'icons', 'models', 'section'];
 
@@ -30,48 +32,6 @@ const initialState: IconState = {
   searchTerm: '',
   selectedTag: ''
 };
-
-const PFX = '@icon.';
-
-const ICON_I18N_KEYS = {
-  icons:            PFX + 'icons',
-  empty:            PFX + 'empty',
-  name:             PFX + 'name',
-  type:             PFX + 'type',
-  size:             PFX + 'size',
-  updated:          PFX + 'updated',
-  create_label:     PFX + 'create.label',
-  exportRaw_label:  PFX + 'exportRaw.label',
-  sync_label:       PFX + 'sync.label',
-  as_title:         PFX + 'actionsheet.title',
-  as_view:          PFX + 'actionsheet.view',
-  as_edit:          PFX + 'actionsheet.edit',
-  as_create:        PFX + 'actionsheet.create',
-  as_delete:        PFX + 'actionsheet.delete',
-  as_copy:          PFX + 'actionsheet.copy',
-  save:             '@save.label',
-  cancel:           '@cancel',
-  ok:               '@ok',
-  bkey_label:        PFX + 'bkey.label',
-  bkey_placeholder:  PFX + 'bkey.placeholder',
-  bkey_helper:       PFX + 'bkey.helper',
-  name_label:        PFX + 'name.label',
-  name_placeholder:  PFX + 'name.placeholder',
-  name_helper:       PFX + 'name.helper',
-  type_label:        PFX + 'type.label',
-  type_placeholder:  PFX + 'type.placeholder',
-  type_helper:       PFX + 'type.helper',
-  fullPath_label:    PFX + 'fullPath.label',
-  fullPath_placeholder: PFX + 'fullPath.placeholder',
-  fullPath_helper:   PFX + 'fullPath.helper',
-  index_label:       PFX + 'index.label',
-  index_placeholder: PFX + 'index.placeholder',
-  index_helper:      PFX + 'index.helper',
-  notes_label:       PFX + 'notes.label',
-  notes_placeholder: PFX + 'notes.placeholder',
-} satisfies Record<string, string>;
-
-export type IconI18n = { [K in keyof typeof ICON_I18N_KEYS]: Signal<string> };
 
 export const IconStore = signalStore(
   withState(initialState),
