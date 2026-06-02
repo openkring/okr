@@ -1,10 +1,11 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
 import { AccountService } from '@bk2/finance-account-data-access';
+import { JOURNAL_I18N_KEYS } from '@bk2/finance-journal-util';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
@@ -12,18 +13,6 @@ import { AccountModel, BookingJournalModel, JournalCollection } from '@bk2/share
 import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@bk2/shared-util-core';
 
 import { JournalViewModal } from './journal-view.modal';
-
-const PFX = '@finance.journal.';
-
-const JOURNAL_I18N_KEYS = {
-  list_title:           PFX + 'list.title',
-  as_view:              PFX + 'actionsheet.view',
-  as_showDebitAccount:  PFX + 'actionsheet.showDebitAccount',
-  as_showCreditAccount: PFX + 'actionsheet.showCreditAccount',
-  cancel:               '@cancel',
-} satisfies Record<string, string>;
-
-export type JournalI18n = { [K in keyof typeof JOURNAL_I18N_KEYS]: Signal<string> };
 
 export type JournalState = {
   searchTerm: string;
