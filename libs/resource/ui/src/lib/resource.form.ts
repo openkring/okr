@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { vestForms } from 'ngx-vest-forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
@@ -7,33 +7,7 @@ import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, Nu
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
-import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
-
-
-export interface ResourceFormI18n {
-  form_card_title: Signal<string>;
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  load_label: Signal<string>;
-  load_placeholder: Signal<string>;
-  load_helper: Signal<string>;
-  keyNr_label: Signal<string>;
-  keyNr_placeholder: Signal<string>;
-  keyNr_helper: Signal<string>;
-  currentValue_label: Signal<string>;
-  currentValue_placeholder: Signal<string>;
-  currentValue_helper: Signal<string>;
-  lockerNr_label: Signal<string>;
-  lockerNr_placeholder: Signal<string>;
-  lockerNr_helper: Signal<string>;
-  description_label: Signal<string>;
-  description_placeholder: Signal<string>;
-  color_label: Signal<string>;
-}
+import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
 
 @Component({
   selector: 'bk-resource-form',
@@ -361,7 +335,7 @@ export interface ResourceFormI18n {
 })
 export class ResourceForm {
   // inputs
-  public readonly i18n = input.required<ResourceFormI18n>();
+  public readonly i18n = input.required<ResourceI18n>();
   public formData = model.required<ResourceModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -10,82 +10,9 @@ import { chipMatches, debugItemLoaded, getSystemQuery, isResource, nameMatches }
 import { FirestoreService } from '@bk2/shared-data-access';
 
 import { ResourceService } from '@bk2/resource-data-access';
+import { RESOURCE_I18N_KEYS } from '@bk2/resource-util';
 
 import { ResourceEditModal } from './resource-edit.modal';
-import { PFX } from './scope';
-
-const RESOURCE_I18N_KEYS = {
-  // store keys
-  resources:            PFX + 'resources',
-  empty:                PFX + 'empty',
-  description:          '@description',
-  name:                 '@name',
-  value:                '@value',
-  load:                 PFX + 'load',
-  create_label:         PFX + 'create.label',
-  view_label:           PFX + 'view.label',
-  edit_label:           PFX + 'edit.label',
-  delete_label:         PFX + 'delete.label',
-  key_plural:           PFX + 'key.plural',
-  key_empty:            PFX + 'key.empty',
-  key_name:             PFX + 'key.name',
-  key_nr:               PFX + 'key.nr',
-  key_view:             PFX + 'key.view',
-  key_edit:             PFX + 'key.edit',
-  key_delete:           PFX + 'key.delete',
-  key_create:           PFX + 'key.create',
-  locker_plural:        PFX + 'locker.plural',
-  locker_empty:         PFX + 'locker.empty',
-  locker_nr:            PFX + 'locker.nr',
-  locker_view:          PFX + 'locker.view',
-  locker_edit:          PFX + 'locker.edit',
-  locker_delete:        PFX + 'locker.delete',
-  locker_create:        PFX + 'locker.create',
-  boat_plural:          PFX + 'boat.plural',
-  boat_empty:           PFX + 'boat.empty',
-  boat_name:            PFX + 'boat.name',
-  boat_type:            PFX + 'boat.type',
-  boat_view:            PFX + 'boat.view',
-  boat_edit:            PFX + 'boat.edit',
-  boat_delete:          PFX + 'boat.delete',
-  boat_create:          PFX + 'boat.create',
-  rboat_plural:         PFX + 'rboat.plural',
-  rboat_empty:          PFX + 'rboat.empty',
-  rboat_name:           PFX + 'rboat.name',
-  rboat_type:           PFX + 'rboat.type',
-  rboat_view:           PFX + 'rboat.view',
-  rboat_edit:           PFX + 'rboat.edit',
-  rboat_delete:         PFX + 'rboat.delete',
-  rboat_create:         PFX + 'rboat.create',
-  as_title:                 PFX + 'actionsheet.title',
-  cancel:                   '@cancel',
-  ok:                       '@ok',
-  save:                     '@save.label',
-  form_card_title:          PFX + 'form.card.title',
-  bkey_label:               PFX + 'bkey.label',
-  bkey_placeholder:         PFX + 'bkey.placeholder',
-  bkey_helper:              PFX + 'bkey.helper',
-  name_label:               PFX + 'name.label',
-  name_placeholder:         PFX + 'name.placeholder',
-  name_helper:              PFX + 'name.helper',
-  load_label:               PFX + 'load.label',
-  load_placeholder:         PFX + 'load.placeholder',
-  load_helper:              PFX + 'load.helper',
-  keyNr_label:              PFX + 'keyNr.label',
-  keyNr_placeholder:        PFX + 'keyNr.placeholder',
-  keyNr_helper:             PFX + 'keyNr.helper',
-  currentValue_label:       PFX + 'currentValue.label',
-  currentValue_placeholder: PFX + 'currentValue.placeholder',
-  currentValue_helper:      PFX + 'currentValue.helper',
-  lockerNr_label:           PFX + 'lockerNr.label',
-  lockerNr_placeholder:     PFX + 'lockerNr.placeholder',
-  lockerNr_helper:          PFX + 'lockerNr.helper',
-  description_label:        PFX + 'description.label',
-  description_placeholder:  PFX + 'description.placeholder',
-  color_label:              PFX + 'color.label',
-} satisfies Record<string, string>;
-
-export type ResourceI18n = { [K in keyof typeof RESOURCE_I18N_KEYS]: Signal<string> };
 
 export type ResourceState = {
   searchTerm: string;
