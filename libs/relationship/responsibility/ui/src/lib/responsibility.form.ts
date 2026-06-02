@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,30 +7,8 @@ import { ResponsibilityModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ButtonCopy, ButtonCopyI18n, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
-import { isDelegateActive, responsibilityValidations } from '@bk2/relationship-responsibility-util';
+import { isDelegateActive, responsibilityValidations, ResponsibilityI18n } from '@bk2/relationship-responsibility-util';
 import { LowercaseWordMask } from '@bk2/shared-config';
-
-export interface ResponsibilityFormI18n {
-  respId_label: Signal<string>;
-  respId_placeholder: Signal<string>;
-  respId_helper: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  validFrom_label: Signal<string>;
-  validFrom_placeholder: Signal<string>;
-  validFrom_helper: Signal<string>;
-  validTo_label: Signal<string>;
-  validTo_placeholder: Signal<string>;
-  validTo_helper: Signal<string>;
-  delegateValidFrom_label: Signal<string>;
-  delegateValidFrom_placeholder: Signal<string>;
-  delegateValidFrom_helper: Signal<string>;
-  delegateValidTo_label: Signal<string>;
-  delegateValidTo_placeholder: Signal<string>;
-  delegateValidTo_helper: Signal<string>;
-  copy_conf: Signal<string>;
-}
 
 @Component({
   selector: 'bk-responsibility-form',
@@ -152,7 +130,7 @@ export interface ResponsibilityFormI18n {
 })
 export class ResponsibilityForm {
   // i18n
-  public readonly i18n = input.required<ResponsibilityFormI18n>();
+  public readonly i18n = input.required<ResponsibilityI18n>();
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
   protected respIdI18n = computed(() => ({ name: 'respId', label: this.i18n().respId_label(), placeholder: this.i18n().respId_placeholder(), helper: this.i18n().respId_helper() } as TextInputI18n));
   protected nameI18n = computed(() => ({ name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper() } as TextInputI18n));
