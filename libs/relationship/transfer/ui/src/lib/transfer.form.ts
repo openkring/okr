@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -8,29 +8,7 @@ import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInput
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
 
 import { Avatars } from '@bk2/avatar-ui';
-import { transferValidations } from '@bk2/relationship-transfer-util';
-
-export interface TransferFormI18n {
-  resourceNameLabel: Signal<string>;
-  selectResource: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  label_label: Signal<string>;
-  label_placeholder: Signal<string>;
-  label_helper: Signal<string>;
-  currency_label: Signal<string>;
-  currency_placeholder: Signal<string>;
-  currency_helper: Signal<string>;
-  price_label: Signal<string>;
-  price_placeholder: Signal<string>;
-  price_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  dateOfTransfer_label: Signal<string>;
-  dateOfTransfer_placeholder: Signal<string>;
-  dateOfTransfer_helper: Signal<string>;
-}
+import { transferValidations, TransferI18n } from '@bk2/relationship-transfer-util';
 
 @Component({
   selector: 'bk-transfer-form',
@@ -157,7 +135,7 @@ export interface TransferFormI18n {
 })
 export class TransferForm {
   // inputs
-  public readonly i18n = input.required<TransferFormI18n>();
+  public readonly i18n = input.required<TransferI18n>();
   public readonly formData = model.required<TransferModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
