@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -9,8 +9,11 @@ import { CategoryListModel } from '@bk2/shared-models';
 import { chipMatches, debugListLoaded, isCategoryList, nameMatches } from '@bk2/shared-util-core';
 
 import { CategoryService } from '@bk2/category-data-access';
+import { CATEGORY_I18N_KEYS, CategoryI18n } from '@bk2/category-util';
 
 import { CategoryEditModal } from './category-edit.modal';
+
+export type { CategoryI18n };
 
 export type CategoryState = {
   searchTerm: string;
@@ -21,36 +24,6 @@ export const initialState: CategoryState = {
   searchTerm: '',
   selectedTag: '',
 };
-
-const PFX = '@category.';
-
-const CATEGORY_I18N_KEYS = {
-  categories:               PFX + 'categories',
-  empty:                    PFX + 'empty',
-  view:                     PFX + 'view',
-  edit:                     PFX + 'edit',
-  create:                   PFX + 'create',
-  delete:                   PFX + 'delete',
-  as_title:                 '@actionsheet.title',
-  ok:                       '@ok',
-  cancel:                   '@cancel',
-  save:                     '@save.label',
-  bkey_label:               PFX + 'bkey.label',
-  bkey_placeholder:         PFX + 'bkey.placeholder',
-  bkey_helper:              PFX + 'bkey.helper',
-  name_label:               PFX + 'name.label',
-  name_placeholder:         PFX + 'name.placeholder',
-  name_helper:              PFX + 'name.helper',
-  i18nBase_label:           PFX + 'i18nBase.label',
-  i18nBase_placeholder:     PFX + 'i18nBase.placeholder',
-  i18nBase_helper:          PFX + 'i18nBase.helper',
-  notes_label:              PFX + 'notes.label',
-  notes_placeholder:        PFX + 'notes.placeholder',
-  translateItems_label:     PFX + 'translateItems.label',
-  translateItems_helper:    PFX + 'translateItems.helper',
-} satisfies Record<string, string>;
-
-export type CategoryI18n = { [K in keyof typeof CATEGORY_I18N_KEYS]: Signal<string> };
 
 export const CategoryStore = signalStore(
   withState(initialState),
