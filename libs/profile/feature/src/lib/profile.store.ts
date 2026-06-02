@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
@@ -14,72 +14,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 
 import { PersonService } from '@bk2/subject-person-data-access';
-import { PFX } from './scope';
-
-const PROFILE_I18N_KEYS = {
-  profile:                         PFX + 'profile',
-  intro:                           PFX + 'intro',
-  personal_title:                  PFX + 'personal.title',
-  personal_description:            PFX + 'personal.description',
-  personal_dob_label:              PFX + 'personal.dateOfBirth.label',
-  personal_dob_placeholder:        PFX + 'personal.dateOfBirth.placeholder',
-  personal_dob_helper:             PFX + 'personal.dateOfBirth.helper',
-  personal_ssn_label:              PFX + 'personal.ssn.label',
-  personal_ssn_placeholder:        PFX + 'personal.ssn.placeholder',
-  personal_ssn_helper:             PFX + 'personal.ssn.helper',
-  privacy_title:                   PFX + 'privacy.title',
-  privacy_description:             PFX + 'privacy.description',
-  settings_title:                  PFX + 'settings.title',
-  settings_description:            PFX + 'settings.description',
-  addresses_description:           PFX + 'addresses.description',
-  gravatar_label:                  PFX + 'gravatar.label',
-  gravatar_placeholder:            PFX + 'gravatar.placeholder',
-  gravatar_helper:                 PFX + 'gravatar.helper',
-  usage_images:                    PFX + 'usage.images',
-  usage_dob:                       PFX + 'usage.dob',
-  usage_postal:                    PFX + 'usage.postal',
-  usage_email:                     PFX + 'usage.email',
-  usage_phone:                     PFX + 'usage.phone',
-  usage_name:                      PFX + 'usage.name',
-  avatar_usage:                    PFX + 'usage.avatar',
-  usage_srv_info:                  PFX + 'usage.srv.info',
-  usage_srv_label:                 PFX + 'usage.srv.label',
-  usage_srv_helper:                PFX + 'usage.srv.helper',
-  language_label:                  PFX + 'language',
-  update:                          PFX + 'update.label',
-  update_conf:                     PFX + 'update.conf',
-  update_error:                    PFX + 'update.error',
-  view:                            PFX + 'view',
-  edit:                            PFX + 'edit',
-  create:                          PFX + 'create',
-  name_display_label:              PFX + 'display.name.label',
-  name_display_helper:             PFX + 'display.name.helper',
-  sort_person_label:               PFX + 'sort.person.label',
-  sort_person_helper:              PFX + 'sort.person.helper',
-  deliver_news_label:              PFX + 'deliver.news.label',
-  deliver_news_helper:             PFX + 'deliver.news.helper',
-  deliver_invoice_label:           PFX + 'deliver.invoice.label',
-  deliver_invoice_helper:          PFX + 'deliver.invoice.helper',
-  deliver_messages_label:          PFX + 'deliver.messages.label',
-  deliver_messages_button:         PFX + 'deliver.messages.button',
-  show_debug_label:                PFX + 'show.debug.label',
-  show_debug_helper:               PFX + 'show.debug.helper',
-  show_archived_label:             PFX + 'show.archived.label',
-  show_archived_helper:            PFX + 'show.archived.helper',
-  show_helpers_label:              PFX + 'show.helpers.label',
-  show_helpers_helper:             PFX + 'show.helpers.helper',
-  use_touchid_label:               PFX + 'use.touchid.label',
-  use_touchid_helper:              PFX + 'use.touchid.helper',
-  use_faceid_label:                PFX + 'use.faceid.label',
-  use_faceid_helper:               PFX + 'use.faceid.helper',
-  search_placeholder:              '@search.label',
-  as_title:                        '@actionsheet.title',
-  save:                          '@save.label',
-  cancel:                          '@cancel',
-  ok:                              '@ok',
-} satisfies Record<string, string>;
-
-export type ProfileI18n = { [K in keyof typeof PROFILE_I18N_KEYS]: Signal<string> };
+import { PROFILE_I18N_KEYS, ProfileI18n } from '@bk2/profile-util';
 
 /**
  * the personEditPage is setting the personKey.

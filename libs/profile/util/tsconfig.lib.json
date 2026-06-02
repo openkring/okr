@@ -1,0 +1,22 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/libs/profile/util",
+    "declaration": true,
+    "composite": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "target": "es2020",
+    "types": [],
+    "tsBuildInfoFile": "../../../dist/out-tsc/profile-util.tsbuildinfo"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.spec2.ts",
+    "**/test-setup.ts",
+    "vite.config.ts"
+  ]
+}

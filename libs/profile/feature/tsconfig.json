@@ -51,6 +51,9 @@
     },
     {
       "path": "../../profile/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../profile/util/tsconfig.lib.json"
     }
   ]
 }
