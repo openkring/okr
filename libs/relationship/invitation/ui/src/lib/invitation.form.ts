@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -8,23 +8,7 @@ import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, StringSele
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
 import { PrettyDatePipe } from '@bk2/shared-pipes';
 import { AvatarDisplay, AvatarInput } from '@bk2/avatar-ui';
-import { invitationValidations, createPersonAvatar } from '@bk2/relationship-invitation-util';
-
-export interface InvitationFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  sentAt_label: Signal<string>;
-  sentAt_placeholder: Signal<string>;
-  sentAt_helper: Signal<string>;
-  respondedAt_label: Signal<string>;
-  respondedAt_placeholder: Signal<string>;
-  respondedAt_helper: Signal<string>;
-  state_label: Signal<string>;
-  role_label: Signal<string>;
-}
+import { invitationValidations, createPersonAvatar, InvitationI18n } from '@bk2/relationship-invitation-util';
 
 @Component({
   selector: 'bk-invitation-form',
@@ -133,7 +117,7 @@ export interface InvitationFormI18n {
   `,
 })
 export class InvitationForm {
-  public readonly i18n = input.required<InvitationFormI18n>();
+  public readonly i18n = input.required<InvitationI18n>();
   protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
   protected sentAtI18n = computed(() => ({ name: 'sentAt', label: this.i18n().sentAt_label(), placeholder: this.i18n().sentAt_placeholder(), helper: this.i18n().sentAt_helper() } as DateInputI18n));
