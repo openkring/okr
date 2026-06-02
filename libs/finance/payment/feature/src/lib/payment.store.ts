@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -9,20 +9,9 @@ import { PaymentOrderModel } from '@bk2/shared-models';
 
 import { AccountingStore } from '@bk2/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@bk2/finance-payment-data-access';
+import { PAYMENT_I18N_KEYS, PaymentI18n } from '@bk2/finance-payment-util';
 
 import { PaymentOrderEditModal } from './payment-order-edit.modal';
-import { PFX } from './scope';
-
-const PAYMENT_I18N_KEYS = {
-  list_title:    PFX + 'list.title',
-  empty:         PFX + 'empty',
-  approve_label: PFX + 'approve.label',
-  as_view:       PFX + 'actionsheet.view',
-  as_edit:       PFX + 'actionsheet.edit',
-  as_create:     PFX + 'actionsheet.create',
-} satisfies Record<string, string>;
-
-export type PaymentI18n = { [K in keyof typeof PAYMENT_I18N_KEYS]: Signal<string> };
 
 export const PaymentStore = signalStore(
   withState({}),
