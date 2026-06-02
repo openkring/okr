@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
@@ -11,49 +11,10 @@ import { CategoryListModel, PersonModel, TaskCollection, TaskModel } from '@bk2/
 import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, isPerson, nameMatches } from '@bk2/shared-util-core';
 
 import { TaskService } from '@bk2/task-data-access';
-import { isTask } from '@bk2/task-util';
+import { isTask, TASK_I18N_KEYS, TaskI18n } from '@bk2/task-util';
 import { AvatarService } from '@bk2/avatar-data-access';
 
 import { TaskEditModal } from './task-edit.modal';
-import { PFX } from './scope';
-
-const TASK_I18N_KEYS = {
-  tasks:                          PFX + 'tasks',
-  empty:                          PFX + 'empty',
-  quick_entry_label:              PFX + 'taskQuickEntry.label',
-  quick_entry_placeholder:        PFX + 'taskQuickEntry.placeholder',
-  as_title:                       PFX + 'actionsheet.title',
-  as_view:                        PFX + 'actionsheet.view',
-  as_edit:                        PFX + 'actionsheet.edit',
-  as_create:                      PFX + 'actionsheet.create',
-  as_delete:                      PFX + 'actionsheet.delete',
-  as_done:                        PFX + 'actionsheet.done',
-  cancel:                         '@cancel',
-  ok:                             '@ok',
-  save:                           '@save.label',
-  calendarName_label:              PFX + 'calendarName.label',
-  calendarName_description:        PFX + 'calendarName.description',
-  calendarName_addLabel:           PFX + 'calendarName.addLabel',
-  bkey_label:                      PFX + 'bkey.label',
-  bkey_placeholder:                PFX + 'bkey.placeholder',
-  bkey_helper:                     PFX + 'bkey.helper',
-  name_label:                      PFX + 'name.label',
-  name_placeholder:                PFX + 'name.placeholder',
-  name_helper:                     PFX + 'name.helper',
-  notes_label:                     PFX + 'notes.label',
-  notes_placeholder:               PFX + 'notes.placeholder',
-  dueDate_label:                   PFX + 'dueDate.label',
-  dueDate_placeholder:             PFX + 'dueDate.placeholder',
-  dueDate_helper:                  PFX + 'dueDate.helper',
-  completionDate_label:            PFX + 'completionDate.label',
-  completionDate_placeholder:      PFX + 'completionDate.placeholder',
-  completionDate_helper:           PFX + 'completionDate.helper',
-  stateLabel:                      PFX + 'input.state.label',
-  priorityLabel:                   PFX + 'input.priority.label',
-  importanceLabel:                 PFX + 'input.importance.label',
-} satisfies Record<string, string>;
-
-export type TaskI18n = { [K in keyof typeof TASK_I18N_KEYS]: Signal<string> };
 
 export type TaskState = {
   calendarName: string;

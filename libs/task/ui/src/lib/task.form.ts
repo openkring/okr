@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -6,27 +6,7 @@ import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@bk2/shared-const
 import { CategoryListModel, RoleName, TaskModel, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { taskValidations } from '@bk2/task-util';
-
-export interface TaskFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  dueDate_label: Signal<string>;
-  dueDate_placeholder: Signal<string>;
-  dueDate_helper: Signal<string>;
-  completionDate_label: Signal<string>;
-  completionDate_placeholder: Signal<string>;
-  completionDate_helper: Signal<string>;
-  stateLabel: Signal<string>;
-  priorityLabel: Signal<string>;
-  importanceLabel: Signal<string>;
-}
+import { TaskI18n, taskValidations } from '@bk2/task-util';
 
 @Component({
   selector: 'bk-task-form',
@@ -108,7 +88,7 @@ export interface TaskFormI18n {
 })
 export class TaskForm {
   // inputs
-  public readonly i18n = input.required<TaskFormI18n>();
+  public readonly i18n = input.required<TaskI18n>();
   public readonly formData = model.required<TaskModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly showForm = input(true);   // used for initializing the form and resetting vest validations
