@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController } from '@ionic/angular/standalone';
@@ -10,22 +10,11 @@ import { getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { ActivityService } from '@bk2/activity-data-access';
+import { ACTIVITY_I18N_KEYS, ActivityI18n } from '@bk2/activity-util';
 
 import { ActivityViewModal } from './activity-view.modal';
-import { PFX } from './scope';
 
-const ACTIVITY_I18N_KEYS = {
-  title:      PFX + 'title',
-  empty:      PFX + 'empty',
-  timestamp:  PFX + 'timestamp',
-  scope:      PFX + 'scope',
-  action:     PFX + 'action',
-  author:     PFX + 'author',
-  payload:    PFX + 'payload',
-  view_title: PFX + 'view.title'
-} satisfies Record<string, string>;
-
-export type ActivityI18n = { [K in keyof typeof ACTIVITY_I18N_KEYS]: Signal<string> };
+export type { ActivityI18n };
 
 export type ActivityState = {
   searchTerm: string;
