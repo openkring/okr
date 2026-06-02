@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -9,52 +9,10 @@ import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/sh
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
 
 import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
-import { OrgNewFormModel, orgNewFormValidations } from '@bk2/subject-org-util';
+import { OrgI18n, OrgNewFormModel, orgNewFormValidations } from '@bk2/subject-org-util';
 import { ZefixCompanyDetails } from '@bk2/subject-org-data-access';
 
 import { ZefixLookup } from './zefix-lookup';
-
-export interface OrgNewFormI18n {
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  streetName_label: Signal<string>;
-  streetName_placeholder: Signal<string>;
-  streetName_helper: Signal<string>;
-  streetNumber_label: Signal<string>;
-  streetNumber_placeholder: Signal<string>;
-  streetNumber_helper: Signal<string>;
-  countryCode_label: Signal<string>;
-  countryCode_placeholder: Signal<string>;
-  countryCode_helper: Signal<string>;
-  zipCode_label: Signal<string>;
-  zipCode_placeholder: Signal<string>;
-  zipCode_helper: Signal<string>;
-  city_label: Signal<string>;
-  city_placeholder: Signal<string>;
-  city_helper: Signal<string>;
-  url_label: Signal<string>;
-  url_placeholder: Signal<string>;
-  url_helper: Signal<string>;
-  taxId_label: Signal<string>;
-  taxId_placeholder: Signal<string>;
-  taxId_helper: Signal<string>;
-  bexioId_label: Signal<string>;
-  bexioId_placeholder: Signal<string>;
-  bexioId_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  email_label: Signal<string>;
-  email_placeholder: Signal<string>;
-  phone_label: Signal<string>;
-  phone_placeholder: Signal<string>;
-  dateOfFoundation_label: Signal<string>;
-  dateOfFoundation_placeholder: Signal<string>;
-  dateOfFoundation_helper: Signal<string>;
-  dateOfLiquidation_label: Signal<string>;
-  dateOfLiquidation_placeholder: Signal<string>;
-  dateOfLiquidation_helper: Signal<string>;
-}
 
 @Component({
   selector: 'bk-org-new-form',
@@ -185,7 +143,7 @@ export interface OrgNewFormI18n {
   `
 })
 export class OrgNewForm {
-  public readonly i18n = input.required<OrgNewFormI18n>();
+  public readonly i18n = input.required<OrgI18n>();
   protected nameI18n        = computed(() => ({ name: 'name',        label: this.i18n().name_label(),        placeholder: this.i18n().name_placeholder(),        helper: this.i18n().name_helper()        } as TextInputI18n));
   protected streetNameI18n  = computed(() => ({ name: 'streetName',  label: this.i18n().streetName_label(),  placeholder: this.i18n().streetName_placeholder(),  helper: this.i18n().streetName_helper()  } as TextInputI18n));
   protected streetNumberI18n = computed(() => ({ name: 'streetNumber', label: this.i18n().streetNumber_label(), placeholder: this.i18n().streetNumber_placeholder(), helper: this.i18n().streetNumber_helper() } as TextInputI18n));

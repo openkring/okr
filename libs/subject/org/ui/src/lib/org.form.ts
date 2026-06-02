@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,30 +7,7 @@ import { CategoryListModel, OrgModel, RoleName, UserModel } from '@bk2/shared-mo
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
-import { orgValidations } from '@bk2/subject-org-util';
-
-export interface OrgFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  taxId_label: Signal<string>;
-  taxId_placeholder: Signal<string>;
-  taxId_helper: Signal<string>;
-  bexioId_label: Signal<string>;
-  bexioId_placeholder: Signal<string>;
-  bexioId_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  dateOfFoundation_label: Signal<string>;
-  dateOfFoundation_placeholder: Signal<string>;
-  dateOfFoundation_helper: Signal<string>;
-  dateOfLiquidation_label: Signal<string>;
-  dateOfLiquidation_placeholder: Signal<string>;
-  dateOfLiquidation_helper: Signal<string>;
-}
+import { OrgI18n, orgValidations } from '@bk2/subject-org-util';
 
 @Component({
   selector: 'bk-org-form',
@@ -107,7 +84,7 @@ export interface OrgFormI18n {
   `
 })
 export class OrgForm {
-  public readonly i18n = input.required<OrgFormI18n>();
+  public readonly i18n = input.required<OrgI18n>();
   protected bkeyI18n   = computed(() => ({ name: 'bkey',   label: this.i18n().bkey_label(),   placeholder: this.i18n().bkey_placeholder(),   helper: this.i18n().bkey_helper()   } as TextInputI18n));
   protected nameI18n   = computed(() => ({ name: 'name',   label: this.i18n().name_label(),   placeholder: this.i18n().name_placeholder(),   helper: this.i18n().name_helper()   } as TextInputI18n));
   protected taxIdI18n  = computed(() => ({ name: 'taxId',  label: this.i18n().taxId_label(),  placeholder: this.i18n().taxId_placeholder(),  helper: this.i18n().taxId_helper()  } as TextInputI18n));
