@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, input, linkedSignal, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   IonCard, IonCardContent, IonCardHeader, IonCardTitle,
@@ -10,37 +10,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { ApplicationKind, ApplicationModel } from '@bk2/shared-models';
 import { APPLICATION_KIND_VALUES } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
-import { needsSsn } from '@bk2/application-util';
-
-export interface ApplicationFormI18n {
-  field_first_name: Signal<string>;
-  field_last_name: Signal<string>;
-  field_gender: Signal<string>;
-  field_date_of_birth: Signal<string>;
-  field_ssn: Signal<string>;
-  field_email: Signal<string>;
-  field_phone: Signal<string>;
-  field_street_name: Signal<string>;
-  field_street_number: Signal<string>;
-  field_zip_code: Signal<string>;
-  field_city: Signal<string>;
-  field_country_code: Signal<string>;
-  field_parent_first_name: Signal<string>;
-  field_parent_last_name: Signal<string>;
-  field_parent_email: Signal<string>;
-  field_parent_phone: Signal<string>;
-  field_application_as: Signal<string>;
-  field_state: Signal<string>;
-  field_submitted_at: Signal<string>;
-  field_reviewed_at: Signal<string>;
-  field_reviewer: Signal<string>;
-  field_close_reason: Signal<string>;
-  section_person: Signal<string>;
-  section_contact: Signal<string>;
-  section_address: Signal<string>;
-  section_parent: Signal<string>;
-  section_application: Signal<string>;
-}
+import { ApplicationI18n, needsSsn } from '@bk2/application-util';
 
 @Component({
   selector: 'bk-application-form',
@@ -189,7 +159,7 @@ export interface ApplicationFormI18n {
 export class ApplicationForm {
   public readonly application = input.required<ApplicationModel>();
   public readonly readonly    = input<boolean>(false);
-  public readonly i18n        = input.required<ApplicationFormI18n>();
+  public readonly i18n        = input.required<ApplicationI18n>();
 
   public readonly applicationChange = output<ApplicationModel>();
 

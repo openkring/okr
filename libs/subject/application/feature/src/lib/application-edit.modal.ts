@@ -5,8 +5,8 @@ import { ApplicationModel, UserModel } from '@bk2/shared-models';
 import { AlertService } from '@bk2/shared-util-angular';
 
 import { ApplicationService } from '@bk2/application-data-access';
-import { ApplicationForm, ApplicationFormI18n } from '@bk2/application-ui';
-import { ApplicationI18n } from './application.store';
+import { ApplicationI18n } from '@bk2/application-util';
+import { ApplicationForm } from '@bk2/application-ui';
 
 @Component({
   selector: 'bk-application-edit-modal',
@@ -33,7 +33,7 @@ import { ApplicationI18n } from './application.store';
     <bk-application-form
       [application]="currentApp()"
       [readonly]="isTerminal()"
-      [i18n]="formI18n()"
+      [i18n]="i18n()"
       (applicationChange)="currentApp.set($event)"
     />
   </ion-content>
@@ -51,36 +51,6 @@ export class ApplicationEditModal {
 
   protected currentApp = linkedSignal(() => this.application());
   protected isTerminal = computed(() => this.currentApp().state.startsWith('closed.'));
-
-  protected formI18n = computed((): ApplicationFormI18n => ({
-    field_first_name:        this.i18n().field_first_name,
-    field_last_name:         this.i18n().field_last_name,
-    field_gender:            this.i18n().field_gender,
-    field_date_of_birth:     this.i18n().field_date_of_birth,
-    field_ssn:               this.i18n().field_ssn,
-    field_email:             this.i18n().field_email,
-    field_phone:             this.i18n().field_phone,
-    field_street_name:       this.i18n().field_street_name,
-    field_street_number:     this.i18n().field_street_number,
-    field_zip_code:          this.i18n().field_zip_code,
-    field_city:              this.i18n().field_city,
-    field_country_code:      this.i18n().field_country_code,
-    field_parent_first_name: this.i18n().field_parent_first_name,
-    field_parent_last_name:  this.i18n().field_parent_last_name,
-    field_parent_email:      this.i18n().field_parent_email,
-    field_parent_phone:      this.i18n().field_parent_phone,
-    field_application_as:    this.i18n().field_application_as,
-    field_state:             this.i18n().field_state,
-    field_submitted_at:      this.i18n().field_submitted_at,
-    field_reviewed_at:       this.i18n().field_reviewed_at,
-    field_reviewer:          this.i18n().field_reviewer,
-    field_close_reason:      this.i18n().field_close_reason,
-    section_person:          this.i18n().section_person,
-    section_contact:         this.i18n().section_contact,
-    section_address:         this.i18n().section_address,
-    section_parent:          this.i18n().section_parent,
-    section_application:     this.i18n().section_application,
-  }));
 
   protected async save(): Promise<void> {
     await this.applicationService.update(this.currentApp(), this.currentUser());
