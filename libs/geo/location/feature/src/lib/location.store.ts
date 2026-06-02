@@ -13,64 +13,10 @@ import { MapViewModal } from '@bk2/shared-ui';
 import { LocationConversionService, LocationService } from '@bk2/location-data-access';
 import { isLocation } from '@bk2/location-util';
 
+import { LOCATION_I18N_KEYS, LocationI18n } from '@bk2/location-util';
+export type { LocationI18n };
+
 import { LocationEditModal } from './location-edit.modal';
-import { PFX } from './scope';
-
-const LOCATION_I18N_KEYS = {
-  locations:            PFX + 'locations',
-  copy_conf:            PFX + 'copy.conf',
-  description:          PFX + 'description',
-  name:                 '@name',
-  type:                 '@type',
-  empty:                PFX + 'empty',
-  as_title:             '@actionsheet.title',
-  view:                 PFX + 'view',
-  edit:                 PFX + 'edit',
-  create:               PFX + 'create',
-  delete:               PFX + 'delete',
-  convert:              PFX + 'convert',
-  show:                 PFX + 'show',
-  copy_coord:           PFX + 'copy.coord',
-  copy_w3w:             PFX + 'copy.w3w',
-  ok:                   '@ok',
-  cancel:               '@cancel',
-  save:               '@save.label',
-
-  bkey_label:           PFX + 'bkey.label',
-  bkey_placeholder:     PFX + 'bkey.placeholder',
-  bkey_helper:          PFX + 'bkey.helper',
-  name_label:           PFX + 'name.label',
-  name_placeholder:     PFX + 'name.placeholder',
-  name_helper:          PFX + 'name.helper',
-  latitude_label:       PFX + 'latitude.label',
-  latitude_placeholder: PFX + 'latitude.placeholder',
-  latitude_helper:      PFX + 'latitude.helper',
-  longitude_label:       PFX + 'longitude.label',
-  longitude_placeholder: PFX + 'longitude.placeholder',
-  longitude_helper:      PFX + 'longitude.helper',
-  placeId_label:        PFX + 'placeId.label',
-  placeId_placeholder:  PFX + 'placeId.placeholder',
-  placeId_helper:       PFX + 'placeId.helper',
-  what3words_label:       PFX + 'what3words.label',
-  what3words_placeholder: PFX + 'what3words.placeholder',
-  what3words_helper:      PFX + 'what3words.helper',
-  seaLevel_label:         PFX + 'seaLevel.label',
-  seaLevel_placeholder:   PFX + 'seaLevel.placeholder',
-  seaLevel_helper:        PFX + 'seaLevel.helper',
-  speed_label:            PFX + 'speed.label',
-  speed_placeholder:      PFX + 'speed.placeholder',
-  speed_helper:           PFX + 'speed.helper',
-  direction_label:        PFX + 'direction.label',
-  direction_placeholder:  PFX + 'direction.placeholder',
-  direction_helper:       PFX + 'direction.helper',
-  distance_label:         PFX + 'distance.label',
-  distance_placeholder:   PFX + 'distance.placeholder',
-  distance_helper:        PFX + 'distance.helper',
-  notes_label:            PFX + 'notes.label',
-  notes_placeholder:      PFX + 'notes.placeholder',
-} satisfies Record<string, string>;
-
-export type LocationI18n = { [K in keyof typeof LOCATION_I18N_KEYS]: Signal<string> };
 
 function zoomForBounds(latSpan: number, lngSpan: number): number {
   const span = Math.max(latSpan, lngSpan);

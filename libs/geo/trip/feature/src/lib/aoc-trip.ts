@@ -1,4 +1,4 @@
-import { Component, computed, inject, Signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -16,25 +16,10 @@ import { AlertService } from '@bk2/shared-util-angular';
 import { TripModel } from '@bk2/shared-models';
 
 import { TripService } from '@bk2/trip-data-access';
-import { formatTripTime } from '@bk2/trip-util';
+import { AOC_I18N_KEYS, AocI18n, formatTripTime } from '@bk2/trip-util';
+export type { AocI18n };
+
 import { TripEditModal } from './trip-edit.modal';
-import { PFX } from './scope';
-
-const AOC_I18N_KEYS = {
-  title:                PFX + 'aoc.title',
-  trash:                PFX + 'aoc.trash',
-  notes:                PFX + 'aoc.notes',
-  zero_km:              PFX + 'aoc.zero_km',
-  flagged:              PFX + 'aoc.flagged',
-  restore:              PFX + 'aoc.restore',
-  clear_flag:           PFX + 'aoc.clear_flag',
-  hard_delete_confirm:  PFX + 'aoc.hard_delete_confirm',
-  restore_conf:         PFX + 'aoc.restore_conf',
-  restore_error:        PFX + 'aoc.restore_error',
-  cancel:               PFX + 'cancel',
-} satisfies Record<string, string>;
-
-export type AocI18n = { [K in keyof typeof AOC_I18N_KEYS]: Signal<string> };
 
 const AocTripStore = signalStore(
   withState({ _dummy: 0 }),

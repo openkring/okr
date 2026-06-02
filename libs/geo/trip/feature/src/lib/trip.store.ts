@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ActionSheetController, ModalController, Platform } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -18,49 +18,10 @@ import { UploadService } from '@bk2/avatar-data-access';
 import { readAsFile } from '@bk2/avatar-util';
 
 import { TripService } from '@bk2/trip-data-access';
-import { compareTripDate, groupTripsByDay, matchesStateFilter, newTrip } from '@bk2/trip-util';
+import { compareTripDate, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripI18n } from '@bk2/trip-util';
+export type { TripI18n };
 
 import { TripEditModal } from './trip-edit.modal';
-import { PFX } from './scope';
-
-const TRIP_I18N_KEYS = {
-  list_title:         PFX + 'list.title',
-  empty:              PFX + 'empty',
-  cancel:             PFX + 'cancel',
-  delete_confirm:     PFX + 'delete.confirm',
-  delete_reason:      PFX + 'delete.reason',
-  delete_conf:        PFX + 'delete.conf',
-  delete_error:       PFX + 'delete.error',
-  add_title:          PFX + 'add.title',
-  edit_title:         PFX + 'edit.title',
-  end_title:          PFX + 'end.title',
-  as_add:             PFX + 'actionsheet.add',
-  as_edit:            PFX + 'actionsheet.edit',
-  as_end:             PFX + 'actionsheet.end',
-  as_delete:          PFX + 'actionsheet.delete',
-  as_report_damage:   PFX + 'actionsheet.report_damage',
-  as_report_bug:      PFX + 'actionsheet.report_bug',
-  as_add_guest:       PFX + 'actionsheet.add_guest',
-  as_show_images:     PFX + 'actionsheet.show_images',
-  warning_suspicious:       PFX + 'warning.suspicious',
-  field_boat:               PFX + 'field.boat',
-  field_location:           PFX + 'field.location',
-  field_custom_location:    PFX + 'field.custom_location',
-  field_distance:           PFX + 'field.distance',
-  field_participants:       PFX + 'field.participants',
-  field_notes:              PFX + 'field.notes',
-  field_start_date:         PFX + 'field.start_date',
-  field_start_time:         PFX + 'field.start_time',
-  field_end_date:           PFX + 'field.end_date',
-  field_end_time:           PFX + 'field.end_time',
-  warning_distance_zero:    PFX + 'warning.distance_zero',
-  warning_distance_high:    PFX + 'warning.distance_high',
-  warning_seats_mismatch:   PFX + 'warning.seats_mismatch',
-  location_list_view:       PFX + 'location_select.list_view',
-  location_map_view:        PFX + 'location_select.map_view',
-  location_search:          PFX + 'location_select.search',
-  location_none:            PFX + 'location_select.none',
-} satisfies Record<string, string>;
 
 const SUSPICIOUS_WINDOW_MS = 15 * 60 * 1000;
 const SUSPICIOUS_TRIP_COUNT = 3;
@@ -68,8 +29,6 @@ const SUSPICIOUS_DISTANCE_KM = 100;
 const SUSPICIOUS_SEAT_DIFF = 2;
 const SUSPICIOUS_HOUR_EARLY = 5;
 const SUSPICIOUS_HOUR_LATE = 23;
-
-export type TripI18n = { [K in keyof typeof TRIP_I18N_KEYS]: Signal<string> };
 
 export type TripState = {
   searchTerm: string;
