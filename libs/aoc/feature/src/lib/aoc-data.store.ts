@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, Observable, of, take } from 'rxjs';
@@ -16,6 +16,7 @@ import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventM
 import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
 import { confirm } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
+import { AOC_DATA_I18N_KEYS } from '@bk2/aoc-util';
 
 import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@bk2/subject-address-util';
 import { commentValidations, getCommentIndex } from '@bk2/comment-util';
@@ -39,35 +40,6 @@ import { categoryListValidations } from '@bk2/category-util';
 import { getGroupIndex, groupValidations, isAdminMember } from '@bk2/subject-group-util';
 import { getResponsibilityIndex } from '@bk2/relationship-responsibility-util';
 
-import { PFX } from './scope';
-
-const AOC_DATA_I18N_KEYS = {
-  check_console:    PFX + 'data.check.console',
-  ok:               '@ok',
-  cancel:           '@cancel',
-  title:            PFX + 'data.title',
-  content:          PFX + 'data.content',
-  fix_title:        PFX + 'data.fix.title',
-  fix_content:      PFX + 'data.fix.content',
-  fix_button:       PFX + 'data.fix.button',
-  validate_title:   PFX + 'data.validate.title',
-  validate_content: PFX + 'data.validate.content',
-  validate_button:  PFX + 'data.validate.button',
-  index_title:      PFX + 'data.index.title',
-  index_content:    PFX + 'data.index.content',
-  index_button:     PFX + 'data.index.button',
-  fav_title:        PFX + 'data.fav.title',
-  fav_description:  PFX + 'data.fav.description',
-  fav_hide:         PFX + 'data.fav.hide',
-  fav_validate:     PFX + 'data.fav.validate',
-  fav_person:       PFX + 'data.fav.person',
-  fav_field:        PFX + 'data.fav.field',
-  fav_favperson:    PFX + 'data.fav.favperson',
-  fav_address:      PFX + 'data.fav.address',
-  fav_nomismatches: PFX + 'data.fav.nomismatches',
-} satisfies Record<string, string>;
-
-export type AocDataI18n = { [K in keyof typeof AOC_DATA_I18N_KEYS]: Signal<string> };
 
 export interface FavMismatch {
   personKey: string;

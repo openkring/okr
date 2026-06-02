@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, from, of } from 'rxjs';
@@ -10,7 +10,7 @@ import { AlertController, ToastController } from '@ionic/angular/standalone';
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { showToast } from '@bk2/shared-util-angular';
-import { PFX } from './scope';
+import { AOC_CHAT_I18N_KEYS } from '@bk2/aoc-util';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
 export interface AdminRoom {
@@ -73,37 +73,6 @@ const initialState: AocChatState = {
 function getFn() {
   return getFunctions(getApp(), 'europe-west6');
 }
-
-const AOC_CHAT_I18N_KEYS = {
-  cancel:                       '@cancel',
-  error:                        '@error',
-  room_rename_header:           PFX + 'chat.room.rename.header',
-  room_rename_newname:          PFX + 'chat.room.rename.newname',
-  room_rename_action:           PFX + 'chat.room.rename.action',
-  room_rename_conf:             PFX + 'chat.room.rename.conf',
-  room_delete_header:           PFX + 'chat.room.delete.header',
-  room_delete_action:           PFX + 'chat.room.delete.action',
-  room_delete_conf:             PFX + 'chat.room.delete.conf',
-  alias_add_header:             PFX + 'chat.alias.add.header',
-  alias_add_placeholder:        PFX + 'chat.alias.add.placeholder',
-  alias_add_action:             PFX + 'chat.alias.add.action',
-  alias_add_conf:               PFX + 'chat.alias.add.conf',
-  room_invite_header:           PFX + 'chat.room.invite.header',
-  room_invite_action:           PFX + 'chat.room.invite.action',
-  room_invite_conf:             PFX + 'chat.room.invite.conf',
-  user_provision_header:        PFX + 'chat.user.provision.header',
-  user_provision_action:        PFX + 'chat.user.provision.action',
-  user_provision_conf:          PFX + 'chat.user.provision.conf',
-  member_kick_header:           PFX + 'chat.member.kick.header',
-  member_kick_action:           PFX + 'chat.member.kick.action',
-  member_kick_conf:             PFX + 'chat.member.kick.conf',
-  user_deactivate_header:       PFX + 'chat.user.deactivate.header',
-  user_deactivate_action:       PFX + 'chat.user.deactivate.action',
-  user_deactivate_conf:         PFX + 'chat.user.deactivate.conf',
-  user_deactivate_notfound:     PFX + 'chat.user.deactivate.notfound',
-} satisfies Record<string, string>;
-
-export type AocChatI18n = { [K in keyof typeof AOC_CHAT_I18N_KEYS]: Signal<string> };
 
 export const AocChatStore = signalStore(
   withState(initialState),
@@ -254,7 +223,7 @@ export const AocChatStore = signalStore(
     },
 
     async deleteRoom(roomId: string): Promise<void> {
-      const message = await firstValueFrom(store.i18nService.translate(PFX + 'chat.room.delete.askconf', { roomId }));
+      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.room.delete.askconf', { roomId }));
       const alert = await store.alertController.create({
         header: store.i18n.room_delete_header(),
         message,
@@ -360,7 +329,7 @@ export const AocChatStore = signalStore(
     // ─── member actions ────────────────────────────────────────────────────────
 
     async kickMember(userId: string, roomId: string): Promise<void> {
-      const message = await firstValueFrom(store.i18nService.translate(PFX + 'chat.member.kick.askconf', { userId }));
+      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.member.kick.askconf', { userId }));
       const alert = await store.alertController.create({
         header: store.i18n.member_kick_header(),
         message,
@@ -388,7 +357,7 @@ export const AocChatStore = signalStore(
     },
 
     async deactivateUser(userId: string): Promise<void> {
-      const message = await firstValueFrom(store.i18nService.translate(PFX + 'chat.user.deactivate.askconf', { userId }));
+      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.user.deactivate.askconf', { userId }));
       const alert = await store.alertController.create({
         header: store.i18n.user_deactivate_header(),
         message,

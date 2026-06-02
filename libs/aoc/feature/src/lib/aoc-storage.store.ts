@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -7,19 +7,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { LogInfo } from '@bk2/shared-models';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 import { warn } from '@bk2/shared-util-core';
-import { PFX } from './scope';
-
-const AOC_STORAGE_I18N_KEYS = {
-  title:              PFX + 'storage.title',
-  info_title:         PFX + 'storage.info.title',
-  info_content:       PFX + 'storage.info.content',
-  info_button_label:  PFX + 'storage.info.buttonLabel',
-  sizes_title:        PFX + 'storage.sizes.title',
-  sizes_content:      PFX + 'storage.sizes.content',
-  sizes_button_label: PFX + 'storage.sizes.buttonLabel',
-} satisfies Record<string, string>;
-
-export type AocStorageI18n = { [K in keyof typeof AOC_STORAGE_I18N_KEYS]: Signal<string> };
+import { AOC_STORAGE_I18N_KEYS } from '@bk2/aoc-util';
 
 export type AocStorageState = {
   filePath: string;

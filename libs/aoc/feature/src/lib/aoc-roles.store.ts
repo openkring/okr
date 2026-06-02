@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -14,44 +14,10 @@ import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, 
 import { error } from '@bk2/shared-util-angular';
 import { debugListLoaded, debugMessage, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
 
-import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser } from '@bk2/aoc-util';
+import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser, AOC_ROLES_I18N_KEYS } from '@bk2/aoc-util';
 import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { FbuserEditModal } from '@bk2/user-feature';
-import { PFX } from './scope';
-
-const AOC_ROLES_I18N_KEYS = {
-  roles_title:           PFX + 'roles.title',
-  person_select_title:   PFX + 'roles.personSelect.title',
-  person_select_content: PFX + 'roles.personSelect.content',
-
-  account_select:        PFX + 'roles.account.select',
-  account_title:         PFX + 'roles.account.title',
-  account_content:       PFX + 'roles.account.content',
-  account_button:        PFX + 'roles.account.button',
-  account_pwd_set:       PFX + 'roles.account.password-set',
-  account_pwd_reset:     PFX + 'roles.account.password-reset',
-
-  check_title:           PFX + 'roles.check.title',
-  check_content:         PFX + 'roles.check.content',
-  check_button:          PFX + 'roles.check.button',
-
-  fbuser_title:          PFX + 'roles.fbuser.title',
-  fbuser_content:        PFX + 'roles.fbuser.content',
-  fbuser_button:         PFX + 'roles.fbuser.button',
-
-  impersonate_title:     PFX + 'roles.impersonate.title',
-  impersonate_content:   PFX + 'roles.impersonate.content',
-  impersonate_button:    PFX + 'roles.impersonate.button',
-
-  pwd_label:             PFX + 'password.label',
-  pwd_placeholder:       PFX + 'password.placeholder',
-  pwd_helper:            PFX + 'password.helper',
-  pwd_set:               PFX + 'password.set',
-  pwd_reset:             PFX + 'password.reset',
-} satisfies Record<string, string>;
-
-export type AocRolesI18n = { [K in keyof typeof AOC_ROLES_I18N_KEYS]: Signal<string> };
 
 export type AocRolesState = {
   calendarName: string;

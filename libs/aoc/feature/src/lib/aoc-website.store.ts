@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -10,34 +10,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { WebsiteContentCollection, WebsiteContentModel } from '@bk2/shared-models';
 import { bkPrompt } from '@bk2/shared-util-angular';
 import { getSystemQuery } from '@bk2/shared-util-core';
-import { PFX } from './scope';
-
-const AOC_WEBSITE_I18N_KEYS = {
-  title:          PFX + 'website.title',
-  key:            PFX + 'website.key',
-  is_html:        PFX + 'website.isHtml',
-  list_title:     PFX + 'website.list.title',
-  edit:           PFX + 'website.edit',
-  create_label:   PFX + 'website.create.label',
-  create_conf:    PFX + 'website.create.conf',
-  create_error:   PFX + 'website.create.error',
-  update_label:   PFX + 'website.update.label',
-  update_conf:    PFX + 'website.update.conf',
-  update_error:   PFX + 'website.update.error',
-  delete_label:   PFX + 'website.delete.label',
-  delete_conf:    PFX + 'website.delete.conf',
-  delete_error:   PFX + 'website.delete.error',
-  delete_confirm: PFX + 'website.delete.confirm',
-  as_title:       '@actionsheet.title',
-  copy_conf:      '@copy.conf',
-  save:           '@save.label',
-  loading:        '@loading',
-  ok:             '@ok',
-  cancel:         '@cancel',
-  search_placeholder: '@search.label',
-} satisfies Record<string, string>;
-
-export type AocWebsiteI18n = { [K in keyof typeof AOC_WEBSITE_I18N_KEYS]: Signal<string> };
+import { AOC_WEBSITE_I18N_KEYS } from '@bk2/aoc-util';
 
 export type AocWebsiteState = {
   searchTerm: string;

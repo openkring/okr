@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -10,46 +10,7 @@ import { BkModel, TagCollection, TagModel } from '@bk2/shared-models';
 import { bkPrompt, confirm } from '@bk2/shared-util-angular';
 import { getSystemQuery } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
-
-import { PFX } from './scope';
-
-const AOC_TAG_I18N_KEYS = {
-  add_header: PFX + 'tag.add.header',
-  add_placeholder: PFX + 'tag.add.placeholder',
-  add_button: PFX + 'tag.add.button',
-  add_conf: PFX + 'tag.add.conf',
-  add_error: PFX + 'tag.add.error',
-  create_header: PFX + 'tag.create.header',
-  create_placeholder: PFX + 'tag.create.placeholder',
-  create_conf: PFX + 'tag.create.conf',
-  create_error: PFX + 'tag.create.error',
-  delete_conf: PFX + 'tag.delete.conf',
-  delete_confirm: PFX + 'tag.delete.confirm',
-  delete_error: PFX + 'tag.delete.error',
-  edit_header: PFX + 'tag.edit.header',
-  edit_placeholder: PFX + 'tag.edit.placeholder',
-  edit_conf: PFX + 'tag.edit.conf',
-  edit_error: PFX + 'tag.edit.error',
-  remove_conf: PFX + 'tag.remove.conf',
-  remove_error: PFX + 'tag.remove.error',
-  update_conf: PFX + 'tag.update.conf',
-  update_error: PFX + 'tag.update.error',
-  search: PFX + 'tag.search.placeholder',
-  ok: '@ok',
-  cancel: '@cancel',
-  title:             PFX + 'tag.title',
-  list_title:        PFX + 'tag.list.title',
-  loading:           '@general.operation.loading',
-  strings_title:     PFX + 'tag.strings.title',
-  string_add_button: PFX + 'tag.string.add.button',
-  strings_empty:     PFX + 'tag.strings.empty',
-  as_edit:          PFX + 'actionsheet.tag.edit',
-  as_delete:        PFX + 'actionsheet.tag.delete',
-  as_string_edit:   PFX + 'actionsheet.tag.string.edit',
-  as_string_remove: PFX + 'actionsheet.tag.string.remove',
-} satisfies Record<string, string>;
-
-export type AocTagI18n = { [K in keyof typeof AOC_TAG_I18N_KEYS]: Signal<string> };
+import { AOC_TAG_I18N_KEYS } from '@bk2/aoc-util';
 
 /**
  * TagModel as it arrives from Firestore.

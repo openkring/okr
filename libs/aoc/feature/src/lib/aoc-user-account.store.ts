@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -19,28 +19,7 @@ import { confirm, error, navigateByUrl } from '@bk2/shared-util-angular';
 import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
-import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail } from '@bk2/aoc-util';
-
-import { PFX } from './scope';
-
-const AOC_USER_ACCOUNT_I18N_KEYS = {
-  user_delete_confirm: PFX + 'account.user.delete.confirm',
-  fbuser_delete_confirm: PFX + 'account.fbuser.delete.confirm',
-  ok: '@ok',
-  cancel: '@cancel',
-  account_plural:  '@account.plural',
-  login_email:     '@user.field.loginEmail',
-  name:            '@user.field.name',
-  as_fbuser_delete:     PFX + 'actionsheet.fbuser.delete',
-  as_user_edit:         PFX + 'actionsheet.user.edit',
-  as_user_delete:       PFX + 'actionsheet.user.delete',
-  as_membership_edit:   PFX + 'actionsheet.membership.edit',
-  as_account_copyemail: PFX + 'actionsheet.account.copyemail',
-  as_account_copyuid:   PFX + 'actionsheet.account.copyuid',
-  as_account_copypkey:  PFX + 'actionsheet.account.copypkey',
-} satisfies Record<string, string>;
-
-export type AocUserAccountI18n = { [K in keyof typeof AOC_USER_ACCOUNT_I18N_KEYS]: Signal<string> };
+import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail, AOC_USER_ACCOUNT_I18N_KEYS } from '@bk2/aoc-util';
 
 export type FirebaseAuthUser = {
   uid: string;
