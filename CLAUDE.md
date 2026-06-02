@@ -127,65 +127,86 @@ Matrix chat authentication is done via a Firebase Cloud Function (`getMatrixCred
 
 All static i18n strings must go through the store — never use `TranslatePipe` or `AsyncPipe` in components for static keys.
 
-**Store side** — resolve strings in `withProps` using `I18nService.translateAll`:
+#### Key mapping lives in `util`, not in `feature`
+
+Each feature domain's i18n keys and type are defined in `util` so both the `feature` store and `ui` components can import them without upward dependencies:
+
 ```ts
-withProps(() => ({ i18nService: inject(I18nService) })),
-withProps(store => ({
-  i18n: store.i18nService.translateAll({
-    list_title: '@feature.list.title',
-    field_empty: '@feature.field.empty',
-  }),
-})),
+// libs/<domain>/util/src/lib/<domain>-i18n.ts
+import { Signal } from '@angular/core';
+
+const PFX = '@<domain>/<feature>.';   // matches the Transloco scope
+
+export const FEATURE_I18N_KEYS = {
+  list_title:  PFX + 'list.title',
+  field_empty: PFX + 'field.empty',
+} satisfies Record<string, string>;
+
+export type FeatureI18n = { [K in keyof typeof FEATURE_I18N_KEYS]: Signal<string> };
 ```
 
-**Component side** — read resolved signals directly:
-```html
-<ion-title>{{ store.i18n.list_title() }}</ion-title>
+Export from the util barrel (`index.ts`):
+```ts
+export * from './lib/<domain>-i18n';
 ```
 
-**Components without an existing store** — define an inline `signalStore` in the same file, above `@Component`:
+#### Store translates the keys
+
+The feature store imports from util and resolves all strings once:
+
+```ts
+import { FEATURE_I18N_KEYS, FeatureI18n } from '@bk2/<domain>-util';
+
+// in store withProps:
+i18n: store.i18nService.translateAll(FEATURE_I18N_KEYS),
+```
+
+#### i18n flows top-down without duck typing (within a feature domain)
+
+`FeatureI18n` is passed as-is all the way down the component tree within the same domain. No subset interfaces, no key renaming, no `computed()` wrappers at domain boundaries:
+
+```text
+store.i18n (FeatureI18n)
+  → page / modal  →  [i18n]="store.i18n"
+  → form          →  input.required<FeatureI18n>()  →  [i18n]="i18n()"
+  → domain ui     →  input.required<FeatureI18n>()  →  reads i18n().key_name() directly
+```
+
+**Exception — duck typing only at the `shared/ui` boundary.** `shared/ui` components (`TextInput`, `Checkbox`, `ButtonCopy`, etc.) are domain-agnostic; they define their own minimal interface. Domain sub-components create a `computed()` to satisfy it:
+
+```ts
+// in AlbumConfiguration (domain ui):
+public readonly i18n = input.required<SectionI18n>();   // full domain type
+
+protected directoryI18n = computed(() => ({
+  label:       this.i18n().album_directory_label(),
+  placeholder: this.i18n().album_directory_placeholder(),
+  helper:      this.i18n().album_directory_helper(),
+} as TextInputI18n));
+```
+
+#### Components without an existing store
+
+Define an inline `signalStore` in the same file, above `@Component`:
+
 ```ts
 const FeatureStore = signalStore(
   withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps(store => ({ i18n: store.i18nService.translateAll({ ... }) })),
+  withProps(store => ({ i18n: store.i18nService.translateAll(FEATURE_I18N_KEYS) })),
 );
 // then in @Component: providers: [FeatureStore]
 // and in class: protected readonly store = inject(FeatureStore);
 ```
 
-**Typed i18n objects** — when a store has many keys, extract the `translateAll` argument to a named const and derive a `type` from it so callers have a stable, named type:
-```ts
-const FEATURE_I18N_KEYS = {
-  list_title: '@feature.list.title',
-  field_empty: '@feature.field.empty',
-} satisfies Record<string, string>;
+#### Translation files
 
-export type FeatureI18n = { [K in keyof typeof FEATURE_I18N_KEYS]: Signal<string> };
+Each feature keeps its Transloco JSON file in `feature/src/i18n/de.json`. The build copies it into the app's assets. The JSON keys are relative to the scope — no prefix in the file itself:
 
-// in store:
-i18n: store.i18nService.translateAll(FEATURE_I18N_KEYS),
+```json
+{ "list": { "title": "Meine Liste" }, "field": { "empty": "Leer" } }
 ```
 
-**Passing i18n subsets to child components** — use TypeScript's structural subtyping ("duck typing") instead of unwrapping signals. Define the child component's i18n interface with only the keys it needs, all typed as `Signal<string>`, using the same key names as the parent store. Pass the full store `i18n` object directly — TypeScript accepts it because the store type satisfies the narrower interface:
-```ts
-// in profile-ui (child):
-export interface ProfileDataFormI18n {
-  personal_title: Signal<string>;
-  personal_dob_label: Signal<string>;
-  // ... only the keys this component uses
-}
-// input in child component:
-public readonly i18n = input.required<ProfileDataFormI18n>();
-// template reads signals directly:
-// {{ i18n().personal_title() }}
-
-// in profile-feature (parent) — pass the full store i18n, no mapping needed:
-// [i18n]="store.i18n"
-```
-
-No `computed()` wrapper, no signal unwrapping, no key renaming — full reactivity preserved.
-
-**Exception — keep `TranslatePipe` only when the key is data-driven at runtime** (comes from a DB field, an `input()`, or a dynamically constructed string like `` `@prefix.${variable}.label` ``). Do NOT keep it for hardcoded string literals that happen to live in the component body.
+**Exception — keep `TranslatePipe` only when the key is data-driven at runtime** (comes from a DB field, an `input()`, or a dynamically constructed string like `` `@prefix.${variable}.label` ``). Do NOT keep it for hardcoded string literals.
 
 ### Naming conventions
 
