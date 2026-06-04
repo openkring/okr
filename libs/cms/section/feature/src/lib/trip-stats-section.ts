@@ -91,9 +91,11 @@ import { TripStatsSectionStore } from './trip-stats-section.store';
 export class TripStatsSectionComponent {
   protected readonly store = inject(TripStatsSectionStore);
 
+  // inputs
   public section  = input<TripStatsSection>();
   public editMode = input<boolean>(false);
 
+  // derived
   protected readonly title    = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
 

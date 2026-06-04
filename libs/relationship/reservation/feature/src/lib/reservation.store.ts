@@ -16,7 +16,6 @@ import { I18nService } from '@bk2/shared-i18n';
 import { ReservationService } from '@bk2/relationship-reservation-data-access';
 import { isReservation, RESERVATION_I18N_KEYS, ReservationI18n } from '@bk2/relationship-reservation-util';
 
-import { ReservationEditModal } from './reservation-edit.modal';
 import { CalEventEditModal } from '@bk2/calevent-feature';
 import { isCalEvent } from '@bk2/calevent-util';
 
@@ -309,6 +308,7 @@ export const ReservationStore = signalStore(
       },
 
       async edit(reservation: ReservationModel, readOnly = true, isSelectable = false): Promise<void> {
+        const { ReservationEditModal } = await import('./reservation-edit.modal');
         const modal = await store.modalController.create({
           component: ReservationEditModal,
           componentProps: {

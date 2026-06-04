@@ -28,7 +28,7 @@ import { DocumentStore } from './document.store';
   template: `
       <bk-header [i18n]="{ title: store.i18n.image_select() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
       <ion-content class="ion-no-padding">
         <ion-button (click)="pickImage()">
@@ -61,7 +61,7 @@ export class ImageSelectModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   public formData = signal<ImageConfig>(IMAGE_CONFIG_SHAPE);
 
  /******************************* actions *************************************** */

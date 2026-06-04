@@ -217,7 +217,7 @@ export class ArticleSectionComponent {
   protected content = computed(() => this.section()?.content?.htmlContent ?? '<p></p>');
   protected colSizeImage = computed(() => this.section()?.content?.colSize ?? 6);
   protected colSizeText = computed(() => 12 - this.colSizeImage());
-  protected title = computed(() => this.section()?.title);
+  protected title = computed(() => this.appStore.replacePlaceholders(this.section()?.title ?? ''));
   protected subTitle = computed(() => this.appStore.replacePlaceholders(this.section()?.subTitle ?? ''));
 
   public VP = ViewPosition;

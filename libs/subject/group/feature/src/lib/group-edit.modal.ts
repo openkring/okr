@@ -5,10 +5,10 @@ import { AVATAR_INFO_SHAPE, GroupModel, PersonModel, PersonModelName, UserModel 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 import { PersonSelectModal } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { GroupForm } from '@bk2/subject-group-ui';
-
-import { GroupStore } from './group.store';
+import { GROUP_I18N_KEYS, GroupI18n } from '@bk2/subject-group-util';
 
 @Component({
   selector: 'bk-group-edit-modal',
@@ -17,17 +17,16 @@ import { GroupStore } from './group.store';
     Header, ChangeConfirmation, GroupForm,
     IonContent
   ],
-  providers: [GroupStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
           <bk-group-form
-              [i18n]="store.i18n"
+              [i18n]="i18n"
               [formData]="formData"
               (formDataChange)="onFormDataChange($event)"
               [currentUser]="currentUser"
@@ -47,7 +46,7 @@ import { GroupStore } from './group.store';
 })
 export class GroupEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(GroupStore);
+  protected readonly i18n = inject(I18nService).translateAll(GROUP_I18N_KEYS) as GroupI18n;
 
   // inputs
   public group = input.required<GroupModel>();
@@ -67,7 +66,7 @@ export class GroupEditModal {
   // derived
   protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.group().bkey));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -89,7 +88,7 @@ export class GroupEditModal {
   protected async selectPerson(): Promise<void> {
     const person = await this.selectPersonModal();
     if (!person) return;
-    
+
     const personAvatar = AVATAR_INFO_SHAPE;
     personAvatar.name1 = person.firstName ?? '';
     personAvatar.name2 = person.lastName ?? '';
@@ -119,7 +118,7 @@ export class GroupEditModal {
     modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm' && data) {
-      if (isPerson(data, this.store.tenantId())) {
+      if (isPerson(data, this.tenantId())) {
         return data;
       }
     }
@@ -128,12 +127,12 @@ export class GroupEditModal {
 
   protected getTitleLabel(readOnly: boolean, key: string): string {
     if (this.readOnly()) {
-      return this.store.i18n.group_view_label();
+      return this.i18n.view();
     }
     if (key.length > 0) {
-      return this.store.i18n.group_edit_label();
+      return this.i18n.update();
     } else {
-      return this.store.i18n.group_create_label();
+      return this.i18n.create();
     }
   }
 }

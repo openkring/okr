@@ -1,6 +1,6 @@
 import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME } from '@bk2/shared-constants';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { AvatarInfo } from 'libs/shared/models/src/lib/avatar-info';
+import { AvatarInfo } from './avatar-info';
 
 export class TripModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   public bkey = DEFAULT_KEY;

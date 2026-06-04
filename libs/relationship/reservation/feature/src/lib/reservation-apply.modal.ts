@@ -25,7 +25,7 @@ import { ReservationStore } from './reservation.store';
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" [showCloseButton]="false" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
@@ -79,7 +79,7 @@ export class ReservationApplyModal {
   // derived signals
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(false, undefined));
   protected showConfirmation = computed(() => this.formData()?.isConfirmed === true && this.formValid());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected readonly toolbarTitle = computed(() => this.store.i18n.reldesc1() + this.resourceName + this.store.i18n.reldesc1() + this.reserverName());
   protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.reserver);
   protected readonly reserverName = computed(() => this.reserverAvatar() ? getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay) : '');

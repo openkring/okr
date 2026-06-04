@@ -5,12 +5,13 @@ import { of } from 'rxjs';
 
 import { MemberCatConfig } from '@bk2/shared-models';
 import { I18nService } from '@bk2/shared-i18n';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { AppStore } from '@bk2/shared-feature';
 
+import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { MEMBER_CAT_SECTION_I18N_KEYS, MemberCatSectionI18n } from '@bk2/cms-section-util';
-export type { MemberCatSectionI18n };
 import { buildCatRows, CatRow } from './member-cat-section.util';
 
+export type { MemberCatSectionI18n };
 export { buildCatRows, CatRow };
 
 type MemberCatSectionState = { orgId: string };
@@ -19,6 +20,7 @@ const initialState: MemberCatSectionState = { orgId: '' };
 export const MemberCatSectionStore = signalStore(
   withState(initialState),
   withProps(() => ({
+    appStore: inject(AppStore),
     membershipService: inject(MembershipService),
     i18nService: inject(I18nService),
   })),

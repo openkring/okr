@@ -57,8 +57,8 @@ export class MemberCatSectionComponent {
   public editMode = input<boolean>(false);
 
   // derived
-  protected readonly title = computed(() => this.section()?.title);
-  protected readonly subTitle = computed(() => this.section()?.subTitle);
+  protected title = computed(() => this.store.appStore.replacePlaceholders(this.section()?.title ?? ''));
+  protected subTitle = computed(() => this.store.appStore.replacePlaceholders(this.section()?.subTitle ?? ''));
 
   protected readonly isEmpty = computed(() => {
     const rows = this.store.rows();

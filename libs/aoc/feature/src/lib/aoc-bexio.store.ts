@@ -13,7 +13,7 @@ import { AppStore } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, AvatarInfo, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { getCatAbbreviation, getFullName, getSystemQuery } from '@bk2/shared-util-core';
 import { ModalController } from '@ionic/angular/standalone';
-import { AocBexioContactEditModal } from 'libs/aoc/feature/src/lib/aoc-bexio-contact-edit.modal';
+import { AocBexioContactEditModal } from './aoc-bexio-contact-edit.modal';
 import { createFavoriteAddress } from '@bk2/subject-address-util';
 
 export interface BexioIndex {

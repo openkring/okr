@@ -1,16 +1,17 @@
 import { Component, computed, input, output, linkedSignal } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonGrid, IonIcon, IonRow, IonToolbar } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
+
 import { CategoryListModel } from '@bk2/shared-models';
 import { coerceBoolean, getYear, getYearList } from '@bk2/shared-util-core';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { StringSelect } from 'libs/shared/ui/src/lib/string-select';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { CategorySelect } from './category-select';
 import { Searchbar } from './searchbar';
 import { SingleTag } from './single-tag';
 import { YearSelect } from './year-select';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { AsyncPipe } from '@angular/common';
+import { StringSelect } from './string-select';
 
 /**
  * This component shows a list of filters in a toolbar at the top of a list.

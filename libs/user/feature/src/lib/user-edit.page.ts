@@ -28,7 +28,7 @@ import { UserStore } from './user.store';
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [showCloseButton]="false" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
     <ion-content>
       <bk-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
@@ -78,7 +78,7 @@ export class UserEditPage{
   protected readonly allRoles = computed(() => this.store.appStore.getCategory('roles'));
   protected tags = linkedSignal(() => this.user().tags);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   constructor() {
     effect(() => { this.store.setUserKey(this.userKey()); });
@@ -119,7 +119,7 @@ export class UserEditPage{
     if (!user) return;
     const file = await readAsFile(photo, this.platform);
     const avatar = newAvatarModel([this.env.tenantId], 'user', user.bkey, file.name);
-    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, this.store.i18n.avatar_upload())
+    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, this.store.i18n.upload_avatar())
 
     if (downloadUrl) {
       await this.avatarService.updateOrCreate(avatar);

@@ -5,7 +5,7 @@ const PFX = '@relationship/invitation/feature.';
 export const INVITATION_I18N_KEYS = {
   invitations:                     PFX + 'invitations',
   date:                            '@date',
-  name:                            '@name',
+  name:                            '@name.label',
   invitee:                         PFX + 'invitee',
   inviter:                         PFX + 'inviter',
   state:                           PFX + 'state.label',

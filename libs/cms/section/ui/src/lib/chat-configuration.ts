@@ -8,21 +8,21 @@ import { DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_URL } from '@bk2/share
 interface ChatConfigI18n {
   chat_title:      Signal<string>;
   chat_subtitle:   Signal<string>;
-  id_label:          Signal<string>;
-  id_placeholder:    Signal<string>;
-  id_helper:         Signal<string>;
-  name_label:        Signal<string>;
-  name_placeholder:  Signal<string>;
-  name_helper:       Signal<string>;
-  url_label:         Signal<string>;
-  url_placeholder:   Signal<string>;
-  url_helper:        Signal<string>;
-  description_label:       Signal<string>;
-  description_placeholder: Signal<string>;
-  description_helper:      Signal<string>;
-  type_label:              Signal<string>;
-  showChannelList_label:   Signal<string>;
-  showChannelList_helper:  Signal<string>;
+  chat_id_label:          Signal<string>;
+  chat_id_placeholder:    Signal<string>;
+  chat_id_helper:         Signal<string>;
+  chat_name_label:        Signal<string>;
+  chat_name_placeholder:  Signal<string>;
+  chat_name_helper:       Signal<string>;
+  chat_url_label:         Signal<string>;
+  chat_url_placeholder:   Signal<string>;
+  chat_url_helper:        Signal<string>;
+  chat_description_label:       Signal<string>;
+  chat_description_placeholder: Signal<string>;
+  chat_description_helper:      Signal<string>;
+  chat_type_label:              Signal<string>;
+  chat_showChannelList_label:   Signal<string>;
+  chat_showChannelList_helper:  Signal<string>;
 }
 
 @Component({
@@ -93,37 +93,37 @@ export class ChatConfiguration {
 
   protected idI18n = computed(() => ({
     name: 'id',
-    label: this.i18n().id_label(),
-    placeholder: this.i18n().id_placeholder(),
-    helper: this.i18n().id_helper(),
+    label: this.i18n().chat_id_label(),
+    placeholder: this.i18n().chat_id_placeholder(),
+    helper: this.i18n().chat_id_helper(),
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({
     name: 'name',
-    label: this.i18n().name_label(),
-    placeholder: this.i18n().name_placeholder(),
-    helper: this.i18n().name_helper(),
+    label: this.i18n().chat_name_label(),
+    placeholder: this.i18n().chat_name_placeholder(),
+    helper: this.i18n().chat_name_helper(),
   } as TextInputI18n));
 
   protected urlI18n = computed(() => ({
     name: 'url',
-    label: this.i18n().url_label(),
-    placeholder: this.i18n().url_placeholder(),
-    helper: this.i18n().url_helper(),
+    label: this.i18n().chat_url_label(),
+    placeholder: this.i18n().chat_url_placeholder(),
+    helper: this.i18n().chat_url_helper(),
   } as TextInputI18n));
 
   protected descriptionI18n = computed(() => ({
     name: 'description',
-    label: this.i18n().description_label(),
-    placeholder: this.i18n().description_placeholder(),
-    helper: this.i18n().description_helper(),
+    label: this.i18n().chat_description_label(),
+    placeholder: this.i18n().chat_description_placeholder(),
+    helper: this.i18n().chat_description_helper(),
   } as TextInputI18n));
-  protected typeI18n = computed(() => ({ name: 'type', label: this.i18n().type_label() } as StringSelectI18n));
+  protected typeI18n = computed(() => ({ name: 'type', label: this.i18n().chat_type_label() } as StringSelectI18n));
 
   protected showChannelListI18n = computed(() => ({
     name: 'showChannelList',
-    label: this.i18n().showChannelList_label(),
-    helper: this.i18n().showChannelList_helper(),
+    label: this.i18n().chat_showChannelList_label(),
+    helper: this.i18n().chat_showChannelList_helper(),
   } as CheckboxI18n));
 
   protected typeDescription = `

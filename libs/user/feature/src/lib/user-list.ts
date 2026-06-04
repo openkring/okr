@@ -51,7 +51,7 @@ import { UserStore } from './user.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ store.i18n.login_email() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.loginEmail_label() }}</strong></ion-label>
         <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
@@ -139,12 +139,12 @@ export class UserList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, user: UserModel): void {
     if (hasRole('privileged', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (hasRole('admin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];

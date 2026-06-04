@@ -226,7 +226,7 @@ export class AlbumSectionComponent {
   protected isTopDirectory = computed(() => this.store.currentDirLength() === this.store.initialDirLength());
 
   // i18n
-  protected albumStyleI18n = computed(() => ({ name: 'albumStyle', label: this.store.i18n.albumStyle_label() } as CategoryOldI18n));
+  protected albumStyleI18n = computed(() => ({ name: 'albumStyle', label: this.store.i18n.album_style_label() } as CategoryOldI18n));
 
   // passing constants to template
   protected IT = ImageType;

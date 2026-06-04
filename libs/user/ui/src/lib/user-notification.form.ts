@@ -7,14 +7,7 @@ import { DeliveryType, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
-import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificationFormValidations } from "@bk2/user-util";
-
-export interface UserNotificationFormI18n {
-  notification_title: Signal<string>;
-  notification_description: Signal<string>;
-  newsDelivery_label: Signal<string>;
-  invoiceDelivery_label: Signal<string>;
-}
+import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, userNotificationFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-notification-form',
@@ -59,7 +52,7 @@ export class UserNotificationForm {
   protected newsDeliveryI18n    = computed(() => ({ name: 'newsDelivery',    label: this.i18n().newsDelivery_label()    } as CategoryOldI18n));
   protected invoiceDeliveryI18n = computed(() => ({ name: 'invoiceDelivery', label: this.i18n().invoiceDelivery_label() } as CategoryOldI18n));
 
-  public readonly i18n = input.required<UserNotificationFormI18n>();
+  public readonly i18n = input.required<UserI18n>();
   public formData = model.required<UserNotificationFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

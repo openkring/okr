@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 import { FormsModule } from '@angular/forms';
@@ -8,28 +8,27 @@ import { AvatarInfo, ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@b
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { Avatars } from '@bk2/avatar-ui';
 
 interface PeopleConfigI18n {
-  people_edit:                Signal<string>;
-  title_label:                Signal<string>,
-  title_placeholder:          Signal<string>,
-  title_helper:               Signal<string>,
-  altText_label:              Signal<string>,
-  altText_placeholder:        Signal<string>,
-  altText_helper:             Signal<string>,
-  linkedSection_label:        Signal<string>,
-  linkedSection_placeholder:  Signal<string>,
-  linkedSection_helper:       Signal<string>,
-  peopleType_label:           Signal<string>,
-  color_label:                Signal<string>,
-  nameDisplay_label:          Signal<string>,
-  showName_label:             Signal<string>,
-  showName_helper:            Signal<string>,
-  showLabel_label:            Signal<string>,
-  showLabel_helper:           Signal<string>,
+  people_edit:                        Signal<string>;
+  people_type:                        Signal<string>,
+  people_title_label:                 Signal<string>,
+  people_title_placeholder:           Signal<string>,
+  people_title_helper:                Signal<string>,
+  altText_label:                      Signal<string>,
+  altText_placeholder:                Signal<string>,
+  altText_helper:                     Signal<string>,
+  people_linkedSection_label:         Signal<string>,
+  people_linkedSection_placeholder:   Signal<string>,
+  people_linkedSection_helper:        Signal<string>,
+  people_color_label:                 Signal<string>,
+  people_nameDisplay_label:           Signal<string>,
+  people_show_name_label:             Signal<string>,
+  people_show_name_helper:            Signal<string>,
+  people_show_label_label:            Signal<string>,
+  people_show_label_helper:           Signal<string>,
 }
 
 @Component({
@@ -137,9 +136,9 @@ export class PeopleConfiguration {
 
   protected titleI18n = computed(() => ({
     name: 'title',
-    label: this.i18n().title_label(),
-    placeholder: this.i18n().title_placeholder(),
-    helper: this.i18n().title_helper(),
+    label: this.i18n().people_title_label(),
+    placeholder: this.i18n().people_title_placeholder(),
+    helper: this.i18n().people_title_helper(),
   } as TextInputI18n));
 
   protected altTextI18n = computed(() => ({
@@ -151,24 +150,24 @@ export class PeopleConfiguration {
 
   protected linkedSectionI18n = computed(() => ({
     name: 'linkedSection',
-    label: this.i18n().linkedSection_label(),
-    placeholder: this.i18n().linkedSection_placeholder(),
-    helper: this.i18n().linkedSection_helper(),
+    label: this.i18n().people_linkedSection_label(),
+    placeholder: this.i18n().people_linkedSection_placeholder(),
+    helper: this.i18n().people_linkedSection_helper(),
   } as TextInputI18n));
-  protected peopleTypeI18n  = computed(() => ({ name: 'peopleType',  label: this.i18n().peopleType_label()  } as StringSelectI18n));
-  protected colorI18n       = computed(() => ({ name: 'color',       label: this.i18n().color_label()       } as CategoryOldI18n));
-  protected nameDisplayI18n = computed(() => ({ name: 'nameDisplay', label: this.i18n().nameDisplay_label() } as CategoryOldI18n));
+  protected peopleTypeI18n  = computed(() => ({ name: 'peopleType',  label: this.i18n().people_type()  } as StringSelectI18n));
+  protected colorI18n       = computed(() => ({ name: 'color',       label: this.i18n().people_color_label()       } as CategoryOldI18n));
+  protected nameDisplayI18n = computed(() => ({ name: 'nameDisplay', label: this.i18n().people_nameDisplay_label() } as CategoryOldI18n));
 
   protected showNameI18n = computed(() => ({
     name: 'showName',
-    label: this.i18n().showName_label(),
-    helper: this.i18n().showName_helper(),
+    label: this.i18n().people_show_name_label(),
+    helper: this.i18n().people_show_name_helper(),
   } as CheckboxI18n));
 
   protected showLabelI18n = computed(() => ({
     name: 'showLabel',
-    label: this.i18n().showLabel_label(),
-    helper: this.i18n().showLabel_helper(),
+    label: this.i18n().people_show_label_label(),
+    helper: this.i18n().people_show_label_helper(),
   } as CheckboxI18n));
 
   /************************************** actions *********************************************** */

@@ -6,11 +6,12 @@ import { EditorConfig, ViewPosition } from '@bk2/shared-models';
 import { BkEditor, ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@bk2/shared-ui';
 
 interface EditorConfigI18n {
-  colSize_label:       Signal<string>;
-  colSize_placeholder: Signal<string>;
-  colSize_helper:      Signal<string>;
-  position_label:      Signal<string>;
-  copy_conf:           Signal<string>;
+  editor_title:               Signal<string>;
+  editor_colSize_label:       Signal<string>;
+  editor_colSize_placeholder: Signal<string>;
+  editor_colSize_helper:      Signal<string>;
+  editor_position_label:      Signal<string>;
+  copy_conf:                  Signal<string>;
 }
 
 @Component({
@@ -23,7 +24,7 @@ interface EditorConfigI18n {
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() }}</ion-card-title>
+        <ion-card-title>{{ i18n().editor_title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -53,15 +54,14 @@ interface EditorConfigI18n {
 export class EditorConfiguration {
   // inputs
   public formData = model.required<EditorConfig>();
-  public title = input('@content.section.forms.content.title');
   public intro = input<string>();
   public readonly readOnly = input(true);
   public readonly i18n = input.required<EditorConfigI18n>();
 
   // derived
   protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
-  protected colSizeI18n = computed(() => ({ name: 'colSize', label: this.i18n().colSize_label(), placeholder: this.i18n().colSize_placeholder(), helper: this.i18n().colSize_helper() } as NumberInputI18n));
-  protected positionI18n = computed(() => ({ name: 'position', label: this.i18n().position_label() } as CategoryOldI18n));
+  protected colSizeI18n = computed(() => ({ name: 'colSize', label: this.i18n().editor_colSize_label(), placeholder: this.i18n().editor_colSize_placeholder(), helper: this.i18n().editor_colSize_helper() } as NumberInputI18n));
+  protected positionI18n = computed(() => ({ name: 'position', label: this.i18n().editor_position_label() } as CategoryOldI18n));
 
   // fields
   protected htmlContent = linkedSignal(() => this.formData().htmlContent ?? '<p></p>');

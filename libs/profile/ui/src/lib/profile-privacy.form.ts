@@ -8,20 +8,7 @@ import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/share
 import { coerceBoolean, debugFormErrors, debugFormModel } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
-
-export interface ProfilePrivacyFormI18n {
-  privacy_title: Signal<string>;
-  privacy_description: Signal<string>;
-  usage_images: Signal<string>;
-  usage_dob: Signal<string>;
-  usage_postal: Signal<string>;
-  usage_email: Signal<string>;
-  usage_phone: Signal<string>;
-  usage_name: Signal<string>;
-  usage_srv_info: Signal<string>;
-  usage_srv_label: Signal<string>;
-  usage_srv_helper: Signal<string>;
-}
+import { ProfileI18n } from "@bk2/profile-util";
 
 @Component({
   selector: 'bk-profile-privacy-accordion',
@@ -109,7 +96,7 @@ export class ProfilePrivacyAccordion {
   protected srvEmailI18n           = computed(() => ({ name: 'srvEmail', label: this.i18n().usage_srv_label(), helper: this.i18n().usage_srv_helper() } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input.required<ProfilePrivacyFormI18n>();
+  public readonly i18n = input.required<ProfileI18n>();
   public formData = model.required<UserModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations

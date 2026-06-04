@@ -6,33 +6,7 @@ import { RoleName, UserModel } from "@bk2/shared-models";
 import { EmailInput, EmailInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, hasRole } from "@bk2/shared-util-core";
 
-import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@bk2/user-util";
-
-export interface UserModelFormI18n {
-  model_title: Signal<string>;
-  model_description: Signal<string>;
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  personKey_label: Signal<string>;
-  personKey_placeholder: Signal<string>;
-  personKey_helper: Signal<string>;
-  firstName_label: Signal<string>;
-  firstName_placeholder: Signal<string>;
-  firstName_helper: Signal<string>;
-  lastName_label: Signal<string>;
-  lastName_placeholder: Signal<string>;
-  lastName_helper: Signal<string>;
-  tenants_label: Signal<string>;
-  tenants_placeholder: Signal<string>;
-  tenants_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  loginEmail_label: Signal<string>;
-  loginEmail_placeholder: Signal<string>;
-  gravatarEmail_label: Signal<string>;
-  gravatarEmail_placeholder: Signal<string>;
-}
+import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-model-form',
@@ -92,7 +66,7 @@ export interface UserModelFormI18n {
 })
 export class UserModelForm {
   // inputs
-  public readonly i18n = input.required<UserModelFormI18n>();
+  public readonly i18n = input.required<UserI18n>();
   public formData = model.required<UserModelFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

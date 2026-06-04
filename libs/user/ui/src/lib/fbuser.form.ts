@@ -6,29 +6,7 @@ import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
 import { Checkbox, CheckboxI18n, EmailInput, EmailInputI18n, ErrorNote, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
-import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util";
-
-export interface FbUserFormI18n {
-  fbuser_auth_title: Signal<string>;
-  fbuser_auth_description: Signal<string>;
-  uid_label: Signal<string>;
-  uid_placeholder: Signal<string>;
-  uid_helper: Signal<string>;
-  displayName_label: Signal<string>;
-  displayName_placeholder: Signal<string>;
-  displayName_helper: Signal<string>;
-  photoUrl_label: Signal<string>;
-  photoUrl_placeholder: Signal<string>;
-  photoUrl_helper: Signal<string>;
-  email_label: Signal<string>;
-  email_placeholder: Signal<string>;
-  phone_label: Signal<string>;
-  phone_placeholder: Signal<string>;
-  emailVerified_label: Signal<string>;
-  emailVerified_helper: Signal<string>;
-  disabled_label: Signal<string>;
-  disabled_helper: Signal<string>;
-}
+import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-fbuser-form',
@@ -100,7 +78,7 @@ export interface FbUserFormI18n {
 })
 export class FbuserForm {
   // inputs
-  public readonly i18n = input.required<FbUserFormI18n>();
+  public readonly i18n = input.required<UserI18n>();
   public formData = model.required<FirebaseUserModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

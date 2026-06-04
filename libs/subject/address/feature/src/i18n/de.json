@@ -4,17 +4,34 @@
   "currency": "CHF",
   "qrinvoice": "QR-Rechnung",
   "description": "Kontaktinformation zu einer Person oder Organisation",
+
+  "browse": {
+    "label": "Ansehen",
+    "description": "Die Adresse als Webpage im Browser in einem externen Tab öffnen."
+  },
+  "call": {
+    "label": "Adresse anrufen",
+    "description": "Die Adresse per Telefon anrufen.",
+    "phone": "Anrufen"
+  },
+  "copy": {
+    "label": "Adresse kopieren",
+    "description": "Diese Adresse kopieren, um sie beispielsweise in einem anderen Programm zu verwenden.",
+    "conf": "Die Adresse wurde kopiert.",
+    "error": "Die Adresse konnte nicht kopiert werden.",
+    "email": {
+      "label": "E-Mail Adresse kopieren",
+      "conf": "E-Mail Adressen wurden kopiert.",
+      "error": "Die E-Mail Adresse(n) konnte(n) nicht kopiert werden."
+    },
+    "url": "URL kopieren",
+    "phone": "Telefonnummer kopieren"
+  },
   "create": {
     "label": "Adresse hinzufügen",
     "description": "Eine neue Adresse erstellen.",
     "conf": "Die Adresse wurde gespeichert.",
     "error": "Die Adresse konnte nicht gespeichert werden."
-  },
-  "update": {
-    "label": "Adresse ändern",
-    "description": "Eine bestehende Adresse ändern.",
-    "conf": "Die Adresse wurde geändert.",
-    "error": "Die Adresse konnte nicht geändert werden"
   },
   "delete": {
     "label": "Adresse löschen",
@@ -22,25 +39,6 @@
     "conf": "Die Adresse wurde gelöscht.",
     "error": "Die Adresse konnte nicht gelöscht werden",
     "confirm": "Soll die Adresse wirklich gelöscht werden ?"
-  },
-  "copy": {
-    "label": "Adresse kopieren",
-    "description": "Diese Adresse kopieren, um sie beispielsweise in einem anderen Programm zu verwenden.",
-    "conf": "Die Adresse wurde kopiert.",
-    "error": "Die Adresse konnte nicht kopiert werden.",
-    "email": "E-Mail Adressen wurden kopiert."
-  },
-  "view": {
-    "label": "Adresse anzeigen",
-    "description": "Die Adresse anzeigen."
-  },
-  "locate": {
-    "label": "Adresse lokalisieren",
-    "description": "Die Adresse auf einer Karte geographisch lokalisieren."
-  },
-  "call": {
-    "label": "Adresse anrufen",
-    "description": "Die Adresse per Telefon anrufen."
   },
   "favorite": {
     "enable": {
@@ -53,6 +51,20 @@
       "description": "Diese Adresse soll keine Hauptadresse mehr sein.",
       "conf": "Die Adresse ist jetzt keine Hauptadresse mehr."
     }
+  },
+  "generate": {
+    "qrezs": "QR EZS generieren"
+  },
+  "hide": "Ausblenden",
+  "locate": {
+    "label": "Adresse lokalisieren",
+    "description": "Die Adresse auf einer Karte geographisch lokalisieren."
+  },
+  "open": {
+    "web": "Webseite öffnen"
+  },
+  "search": {
+    "label": "Ort suchen"
   },
   "send": {
     "mail": {
@@ -70,20 +82,39 @@
       "bodyPlaceholder": "Liebe Grüsse"
     }
   },
-  "browse": {
-    "label": "Ansehen",
-    "description": "Die Adresse als Webpage im Browser in einem externen Tab öffnen."
-  },
-  "search": {
-    "label": "Ort suchen"
-  },
   "share": {
     "label": "Teilen",
     "description": "Die Adresse mit anderen Personen oder Applikationen teilen."
   },
+  "start": {
+    "chat": "Direkt Chat starten"
+  },
+  "update": {
+    "label": "Adresse ändern",
+    "description": "Eine bestehende Adresse ändern.",
+    "conf": "Die Adresse wurde geändert.",
+    "error": "Die Adresse konnte nicht geändert werden",
+    "subject": "Person oder Organisation ändern"
+  },
+  "upload": {
+    "file": "Datei hochladen"
+  },
+  "view": {
+    "label": "Adresse anzeigen",
+    "description": "Die Adresse anzeigen.",
+    "file": "Datei anzeigen",
+    "iban": "QR EZS anzeigen",
+    "postal": "Auf Karte anzeigen"
+  },
+
+
   "usage": {
     "name": "Verwendung",
-    "label": "Bezeichnung",
+    "label": {
+      "label": "Verwendungsbezeichnung",
+      "placeholder": "sssssssss",
+      "helper": "Die Verwendungsart der Adresse."
+    },
     "home": {
       "label": "Privat",
       "description": "Es handelt sich um eine Adresse im privaten Umfeld."
@@ -103,7 +134,11 @@
     }
   },
   "channel": {
-    "label": "Bezeichnung",
+    "label": {
+      "label": "Kanal-Bezeichnung",
+      "placeholder": "ssssssss",
+      "helper": "Das Kommunikatins-Netzwerk oder Produkt."
+    },
     "all": {
       "label": "Alle Arten"
     },
@@ -223,59 +258,11 @@
       "description": "Twint QRCode"
     }
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Adresse anzeigen",
-    "edit": "Adresse bearbeiten",
-    "copy": "Adresse kopieren",
-    "delete": "Adresse löschen",
-    "email": {
-      "send": "E-Mail senden",
-      "copy": "E-Mail Adresse kopieren"
-    },
-    "file": {
-      "upload": "Datei hochladen",
-      "view": "Datei anzeigen"
-    },
-    "phone": {
-      "call": "Anrufen",
-      "copy": "Telefonnummer kopieren",
-      "sms": "SMS senden"
-    },
-    "chat": {
-      "start": "Chat starten"
-    },
-    "postal": {
-      "view": "Auf Karte anzeigen"
-    },
-    "iban": {
-      "view": "QR EZS anzeigen",
-      "generate": "QR EZS generieren"
-    },
-    "web": {
-      "open": "Webseite öffnen",
-      "copy": "URL kopieren"
-    },
-    "subject": {
-      "edit": "Person oder Organisation ändern"
-    },
-    "hide": "Ausblenden"
-  },
 
   "bkey": {
     "label": "ID",
     "placeholder": "ssssssssss",
     "helper": "Eindeutige ID des Adress-Datensatzes in der Datenbank."
-  },
-  "addressChannelLabel": {
-    "label": "Kanal-Bezeichnung",
-    "placeholder": "ssssssss",
-    "helper": "Das Kommunikatins-Netzwerk oder Produkt."
-  },
-  "addressUsageLabel": {
-    "label": "Verwendung",
-    "placeholder": "sssssssss",
-    "helper": "Die Verwendungsart der Adresse."
   },
   "streetName": {
     "label": "Strasse",

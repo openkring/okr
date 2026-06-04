@@ -5,7 +5,7 @@ export const RESOURCE_I18N_KEYS = {
   resources:            '@resource/feature.resources',
   empty:                '@resource/feature.empty',
   description:          '@description',
-  name:                 '@name',
+  name:                 '@name.label',
   value:                '@value',
   load:                 '@resource/feature.load',
   create_label:         '@resource/feature.create.label',

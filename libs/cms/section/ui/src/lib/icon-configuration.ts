@@ -6,13 +6,15 @@ import { NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput
 import { DEFAULT_NAME } from '@bk2/shared-constants';
 
 interface IconConfigI18n {
+  icon_title:             Signal<string>;
+  icon_subtitle:          Signal<string>;
   icon_label:             Signal<string>;
   icon_placeholder:       Signal<string>;
   icon_helper:            Signal<string>;
-  iconSize_label:         Signal<string>;
-  iconSize_placeholder:   Signal<string>;
-  iconSize_helper:        Signal<string>;
-  iconSlot_label:         Signal<string>;
+  icon_size_label:         Signal<string>;
+  icon_size_placeholder:   Signal<string>;
+  icon_size_helper:        Signal<string>;
+  icon_slot_label:         Signal<string>;
 }
 
 @Component({
@@ -27,8 +29,8 @@ interface IconConfigI18n {
 
     <ion-card>
       <ion-card-header>
-          <ion-card-title>{{ title() }}</ion-card-title>
-          <ion-card-subtitle>{{ subTitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().icon_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().icon_subtitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
@@ -51,8 +53,6 @@ interface IconConfigI18n {
 export class IconConfiguration {
   // inputs
   public formData = model.required<IconConfig>();
-  public title = input('@content.section.type.button.icon.title');
-  public subTitle = input('@content.section.type.button.icon.subtitle');
   public intro = input<string>();
   public readonly readOnly = input(true);
   public readonly i18n = input.required<IconConfigI18n>();
@@ -62,7 +62,7 @@ export class IconConfiguration {
   protected size = linkedSignal(() => this.formData().size ?? 'default');
   protected slot = linkedSignal(() => this.formData().slot ?? 'start');
 
-  protected iconSizeI18n = computed(() => ({ name: 'iconSize', label: this.i18n().iconSize_label(), placeholder: this.i18n().iconSize_placeholder(), helper: this.i18n().iconSize_helper() } as NumberInputI18n));
+  protected iconSizeI18n = computed(() => ({ name: 'iconSize', label: this.i18n().icon_size_label(), placeholder: this.i18n().icon_size_placeholder(), helper: this.i18n().icon_size_helper() } as NumberInputI18n));
 
   protected iconNameI18n = computed(() => ({
     name: 'iconName',
@@ -70,7 +70,7 @@ export class IconConfiguration {
     placeholder: this.i18n().icon_placeholder(),
     helper: this.i18n().icon_helper(),
   } as TextInputI18n));
-  protected iconSlotI18n = computed(() => ({ name: 'iconSlot', label: this.i18n().iconSlot_label() } as StringSelectI18n));
+  protected iconSlotI18n = computed(() => ({ name: 'iconSlot', label: this.i18n().icon_slot_label() } as StringSelectI18n));
 
   protected onFieldChange(fieldName: string, $event: string | Slot | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));

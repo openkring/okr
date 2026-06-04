@@ -5,25 +5,25 @@ import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/s
 import { TableStyle } from '@bk2/shared-models';
 
 interface TableStyleConfigI18n {
-  textAlign_label:         Signal<string>,
-  textAlign_placeholder:   Signal<string>,
-  textAlign_helper:        Signal<string>,
-  backgroundColor_label:       Signal<string>,
-  backgroundColor_placeholder: Signal<string>,
-  backgroundColor_helper:      Signal<string>,
-  fontSize_label:          Signal<string>,
-  fontSize_placeholder:    Signal<string>,
-  fontSize_helper:         Signal<string>,
-  padding_label:           Signal<string>,
-  padding_placeholder:     Signal<string>,
-  padding_helper:          Signal<string>,
-  textColor_label:         Signal<string>,
-  textColor_placeholder:   Signal<string>,
-  textColor_helper:        Signal<string>,
-  border_label:            Signal<string>,
-  border_placeholder:      Signal<string>,
-  border_helper:           Signal<string>,
-  fontWeight_label:        Signal<string>,
+  table_style_textAlign_label:         Signal<string>,
+  table_style_textAlign_placeholder:   Signal<string>,
+  table_style_textAlign_helper:        Signal<string>,
+  table_style_backgroundColor_label:       Signal<string>,
+  table_style_backgroundColor_placeholder: Signal<string>,
+  table_style_backgroundColor_helper:      Signal<string>,
+  table_style_fontSize_label:          Signal<string>,
+  table_style_fontSize_placeholder:    Signal<string>,
+  table_style_fontSize_helper:         Signal<string>,
+  table_style_padding_label:           Signal<string>,
+  table_style_padding_placeholder:     Signal<string>,
+  table_style_padding_helper:          Signal<string>,
+  table_style_textColor_label:         Signal<string>,
+  table_style_textColor_placeholder:   Signal<string>,
+  table_style_textColor_helper:        Signal<string>,
+  table_style_border_label:            Signal<string>,
+  table_style_border_placeholder:      Signal<string>,
+  table_style_border_helper:           Signal<string>,
+  table_style_fontWeight_label:        Signal<string>,
 }
 
 @Component({
@@ -88,46 +88,46 @@ export class TableStyleConfiguration {
 
   protected textAlignI18n = computed(() => ({
     name: 'textAlign',
-    label: this.i18n().textAlign_label(),
-    placeholder: this.i18n().textAlign_placeholder(),
-    helper: this.i18n().textAlign_helper(),
+    label: this.i18n().table_style_textAlign_label(),
+    placeholder: this.i18n().table_style_textAlign_placeholder(),
+    helper: this.i18n().table_style_textAlign_helper(),
   } as TextInputI18n));
 
   protected backgroundColorI18n = computed(() => ({
     name: 'backgroundColor',
-    label: this.i18n().backgroundColor_label(),
-    placeholder: this.i18n().backgroundColor_placeholder(),
-    helper: this.i18n().backgroundColor_helper(),
+    label: this.i18n().table_style_backgroundColor_label(),
+    placeholder: this.i18n().table_style_backgroundColor_placeholder(),
+    helper: this.i18n().table_style_backgroundColor_helper(),
   } as TextInputI18n));
 
   protected fontSizeI18n = computed(() => ({
     name: 'fontSize',
-    label: this.i18n().fontSize_label(),
-    placeholder: this.i18n().fontSize_placeholder(),
-    helper: this.i18n().fontSize_helper(),
+    label: this.i18n().table_style_fontSize_label(),
+    placeholder: this.i18n().table_style_fontSize_placeholder(),
+    helper: this.i18n().table_style_fontSize_helper(),
   } as TextInputI18n));
 
   protected paddingI18n = computed(() => ({
     name: 'padding',
-    label: this.i18n().padding_label(),
-    placeholder: this.i18n().padding_placeholder(),
-    helper: this.i18n().padding_helper(),
+    label: this.i18n().table_style_padding_label(),
+    placeholder: this.i18n().table_style_padding_placeholder(),
+    helper: this.i18n().table_style_padding_helper(),
   } as TextInputI18n));
 
   protected textColorI18n = computed(() => ({
     name: 'textColor',
-    label: this.i18n().textColor_label(),
-    placeholder: this.i18n().textColor_placeholder(),
-    helper: this.i18n().textColor_helper(),
+    label: this.i18n().table_style_textColor_label(),
+    placeholder: this.i18n().table_style_textColor_placeholder(),
+    helper: this.i18n().table_style_textColor_helper(),
   } as TextInputI18n));
 
   protected borderI18n = computed(() => ({
     name: 'border',
-    label: this.i18n().border_label(),
-    placeholder: this.i18n().border_placeholder(),
-    helper: this.i18n().border_helper(),
+    label: this.i18n().table_style_border_label(),
+    placeholder: this.i18n().table_style_border_placeholder(),
+    helper: this.i18n().table_style_border_helper(),
   } as TextInputI18n));
-  protected fontWeightI18n = computed(() => ({ name: 'fontWeight', label: this.i18n().fontWeight_label() } as StringSelectI18n));
+  protected fontWeightI18n = computed(() => ({ name: 'fontWeight', label: this.i18n().table_style_fontWeight_label() } as StringSelectI18n));
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

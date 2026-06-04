@@ -9,30 +9,7 @@ import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextIn
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
-
-export interface ProfileSettingsFormI18n {
-  settings_title: Signal<string>;
-  settings_description: Signal<string>;
-  gravatar_label: Signal<string>;
-  gravatar_placeholder: Signal<string>;
-  gravatar_helper: Signal<string>;
-  language_label: Signal<string>;
-  avatar_usage: Signal<string>;
-  name_display_label: Signal<string>;
-  sort_person_label: Signal<string>;
-  deliver_news_label: Signal<string>;
-  deliver_invoice_label: Signal<string>;
-  show_debug_label: Signal<string>;
-  show_debug_helper: Signal<string>;
-  show_archived_label: Signal<string>;
-  show_archived_helper: Signal<string>;
-  show_helpers_label: Signal<string>;
-  show_helpers_helper: Signal<string>;
-  use_touchid_label: Signal<string>;
-  use_touchid_helper: Signal<string>;
-  use_faceid_label: Signal<string>;
-  use_faceid_helper: Signal<string>;
-}
+import { ProfileI18n } from "@bk2/profile-util";
 
 @Component({
   selector: 'bk-profile-settings-accordion',
@@ -171,7 +148,7 @@ export class ProfileSettingsAccordion {
   );
 
   // inputs
-  public readonly i18n = input.required<ProfileSettingsFormI18n>();
+  public readonly i18n = input.required<ProfileI18n>();
   public formData = model.required<UserModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations

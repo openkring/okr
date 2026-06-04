@@ -1,30 +1,12 @@
 import { Component, computed, inject, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ModalController, IonContent, IonItem, IonLabel, IonToggle, IonButton, IonFooter, IonToolbar } from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
 
 import { ContextDiagramConfig, UserModel } from '@bk2/shared-models';
 import { Header } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
-const ContextDiagramStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      show_avatar:        '@cms.contextDiagram.config.showAvatar',
-      show_name:          '@cms.contextDiagram.config.showName',
-      show_members:       '@cms.contextDiagram.config.showMembers',
-      show_memberships:   '@cms.contextDiagram.config.showMemberships',
-      show_resp:          '@cms.contextDiagram.config.showResponsibilities',
-      show_personal_rels: '@cms.contextDiagram.config.showPersonalRels',
-      show_work_rels:     '@cms.contextDiagram.config.showWorkRels',
-      save_changes:       '@cms.contextDiagram.config.saveChanges',
-      cancel:             '@general.operation.change.cancel',
-      ok:                 '@general.operation.change.ok',
-    }),
-  })),
-);
+import { ContextDiagramStore } from './context-diagram-section.store';
 
 @Component({
   selector: 'bk-context-diagram-config-modal',
@@ -36,7 +18,7 @@ const ContextDiagramStore = signalStore(
   ],
   providers: [ContextDiagramStore],
   template: `
-    <bk-header [i18n]="{ title: '@cms.contextDiagram.config.title' }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showAvatar">
@@ -50,33 +32,33 @@ const ContextDiagramStore = signalStore(
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showMembers">
-          <ion-label>{{ store.i18n.show_members() }}</ion-label>
+          <ion-label>{{ store.i18n.show_member() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showMemberships">
-          <ion-label>{{ store.i18n.show_memberships() }}</ion-label>
+          <ion-label>{{ store.i18n.show_membership() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showResponsibilities">
-          <ion-label>{{ store.i18n.show_resp() }}</ion-label>
+          <ion-label>{{ store.i18n.show_responsibility() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showPersonalRels">
-          <ion-label>{{ store.i18n.show_personal_rels() }}</ion-label>
+          <ion-label>{{ store.i18n.show_personal() }}</ion-label>
         </ion-toggle>
       </ion-item>
       @if (isMemberAdmin()) {
         <ion-item>
           <ion-toggle [(ngModel)]="cfg.showWorkRels">
-            <ion-label>{{ store.i18n.show_work_rels() }}</ion-label>
+            <ion-label>{{ store.i18n.show_workrel() }}</ion-label>
           </ion-toggle>
         </ion-item>
         <ion-item>
           <ion-toggle [(ngModel)]="saveChanges">
-            <ion-label>{{ store.i18n.save_changes() }}</ion-label>
+            <ion-label>{{ store.i18n.save() }}</ion-label>
           </ion-toggle>
         </ion-item>
       }

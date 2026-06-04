@@ -1,7 +1,7 @@
 import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { Header, Spinner } from '@bk2/shared-ui';
+import { Header, HeaderI18n, Spinner } from '@bk2/shared-ui';
 
 import { SectionStore } from './section.store';
 
@@ -18,9 +18,9 @@ import { SectionStore } from './section.store';
   template: `
     <bk-header
       [searchTerm]="searchTerm()"
-      (searchTermChange)="sectionStore.setSelSearchTerm($event)"
+      (searchTermChange)="store.setSelSearchTerm($event)"
       [isSearchable]="true"
-      [i18n]="{ title: '@content.section.operation.select.label' }"
+      [i18n]="{ title: store.i18n.select_label() }"
       [isModal]="true"
     />
     <ion-content>
@@ -41,14 +41,14 @@ import { SectionStore } from './section.store';
   `
 })
 export class SectionSelectModal {
-  protected sectionStore = inject(SectionStore);
+  protected store = inject(SectionStore);
 
-  protected searchTerm = linkedSignal(() => this.sectionStore.selSearchTerm());
-  protected filteredSections = computed(() => this.sectionStore.selFilteredSections() ?? []);
-  protected isLoading = computed(() => this.sectionStore.isLoading());
+  protected searchTerm = linkedSignal(() => this.store.selSearchTerm());
+  protected filteredSections = computed(() => this.store.selFilteredSections() ?? []);
+  protected isLoading = computed(() => this.store.isLoading());  
   
   protected select(sectionKey: string): Promise<boolean> {
-    return this.sectionStore.modalController.dismiss(sectionKey, 'confirm');
+    return this.store.modalController.dismiss(sectionKey, 'confirm');
   }
 }
 

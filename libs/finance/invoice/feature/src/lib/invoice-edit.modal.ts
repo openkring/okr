@@ -5,14 +5,14 @@ import { ModalController } from '@ionic/angular/standalone';
 import { InvoiceModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { InvoiceEditForm } from '@bk2/finance-invoice-ui';
-import { InvoiceStore } from './invoice.store';
+import { INVOICE_I18N_KEYS, InvoiceI18n } from '@bk2/finance-invoice-util';
 
 @Component({
   selector: 'bk-invoice-edit-modal',
   standalone: true,
-  providers: [InvoiceStore],
   imports: [
     Header, ChangeConfirmation, InvoiceEditForm,
     IonContent,
@@ -21,7 +21,7 @@ import { InvoiceStore } from './invoice.store';
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
@@ -31,7 +31,7 @@ import { InvoiceStore } from './invoice.store';
           [currentUser]="currentUser()"
           [readOnly]="isReadOnly()"
           [isNew]="isNew()"
-          [i18n]="store.i18n"
+          [i18n]="i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -41,7 +41,7 @@ import { InvoiceStore } from './invoice.store';
 })
 export class InvoiceEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(InvoiceStore);
+  protected readonly i18n = inject(I18nService).translateAll(INVOICE_I18N_KEYS) as InvoiceI18n;
 
   // inputs
   public readonly invoice = input.required<InvoiceModel>();
@@ -57,7 +57,7 @@ export class InvoiceEditModal {
 
   // computed
   protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty() && !this.isReadOnly());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   // actions
   protected readonly headerTitle = computed(() =>

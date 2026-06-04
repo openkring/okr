@@ -5,7 +5,7 @@ import { IonButton, IonButtons, IonContent, IonInput, IonItem, IonLabel, IonText
 import { Header } from '@bk2/shared-ui';
 import { I18nDefaultModel } from '@bk2/shared-models';
 import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
-import { I18nDefaultStore } from 'libs/i18n/feature/src/lib/i18n-default.store';
+import { I18nDefaultStore } from './i18n-default.store';
 
 @Component({
   selector: 'bk-i18n-default-edit-modal',

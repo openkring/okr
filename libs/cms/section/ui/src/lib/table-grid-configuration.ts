@@ -6,19 +6,19 @@ import { TableGrid } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 interface TableGridConfigI18n {
-  template_label:               Signal<string>,
-  template_placeholder:         Signal<string>,
-  template_helper:              Signal<string>,
-  gap_label:                    Signal<string>,
-  gap_placeholder:              Signal<string>,
-  gap_helper:                   Signal<string>,
-  backgroundColor_label:        Signal<string>,
-  backgroundColor_placeholder:  Signal<string>,
-  backgroundColor_helper:       Signal<string>,
-  padding_label:                Signal<string>,
-  padding_placeholder:          Signal<string>,
-  padding_helper:               Signal<string>,
-  showTitleAs_label:            Signal<string>,
+  table_grid_template_label:               Signal<string>,
+  table_grid_template_placeholder:         Signal<string>,
+  table_grid_template_helper:              Signal<string>,
+  table_grid_gap_label:                    Signal<string>,
+  table_grid_gap_placeholder:              Signal<string>,
+  table_grid_gap_helper:                   Signal<string>,
+  table_grid_backgroundColor_label:        Signal<string>,
+  table_grid_backgroundColor_placeholder:  Signal<string>,
+  table_grid_backgroundColor_helper:       Signal<string>,
+  table_grid_padding_label:                Signal<string>,
+  table_grid_padding_placeholder:          Signal<string>,
+  table_grid_padding_helper:               Signal<string>,
+  table_grid_showTitleAs_label:            Signal<string>,
 }
 
 @Component({
@@ -75,32 +75,32 @@ export class TableGridConfiguration {
 
   protected templateI18n = computed(() => ({
     name: 'template',
-    label: this.i18n().template_label(),
-    placeholder: this.i18n().template_placeholder(),
-    helper: this.i18n().template_helper(),
+    label: this.i18n().table_grid_template_label(),
+    placeholder: this.i18n().table_grid_template_placeholder(),
+    helper: this.i18n().table_grid_template_helper(),
   } as TextInputI18n));
 
   protected gapI18n = computed(() => ({
     name: 'gap',
-    label: this.i18n().gap_label(),
-    placeholder: this.i18n().gap_placeholder(),
-    helper: this.i18n().gap_helper(),
+    label: this.i18n().table_grid_gap_label(),
+    placeholder: this.i18n().table_grid_gap_placeholder(),
+    helper: this.i18n().table_grid_gap_helper(),
   } as TextInputI18n));
 
   protected backgroundColorI18n = computed(() => ({
     name: 'backgroundColor',
-    label: this.i18n().backgroundColor_label(),
-    placeholder: this.i18n().backgroundColor_placeholder(),
-    helper: this.i18n().backgroundColor_helper(),
+    label: this.i18n().table_grid_backgroundColor_label(),
+    placeholder: this.i18n().table_grid_backgroundColor_placeholder(),
+    helper: this.i18n().table_grid_backgroundColor_helper(),
   } as TextInputI18n));
 
   protected paddingI18n = computed(() => ({
     name: 'padding',
-    label: this.i18n().padding_label(),
-    placeholder: this.i18n().padding_placeholder(),
-    helper: this.i18n().padding_helper(),
+    label: this.i18n().table_grid_padding_label(),
+    placeholder: this.i18n().table_grid_padding_placeholder(),
+    helper: this.i18n().table_grid_padding_helper(),
   } as TextInputI18n));
-  protected showTitleAsI18n = computed(() => ({ name: 'showTitleAs', label: this.i18n().showTitleAs_label() } as StringSelectI18n));
+  protected showTitleAsI18n = computed(() => ({ name: 'showTitleAs', label: this.i18n().table_grid_showTitleAs_label() } as StringSelectI18n));
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

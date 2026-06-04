@@ -1,6 +1,7 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
+    "noEmit": true,
     "outDir": "../../../dist/out-tsc/libs/shared/util-core/spec",
     "rootDir": "./",
     "types": ["node", "vitest"],

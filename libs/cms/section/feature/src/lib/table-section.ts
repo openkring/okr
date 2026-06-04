@@ -1,21 +1,10 @@
 import { NgStyle } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
 
-import { I18nService } from '@bk2/shared-i18n';
 import { TableSection } from '@bk2/shared-models';
 import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { PFX } from './scope';
-
-const TableSectionStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      empty_table: PFX + 'emptyTable',
-    }),
-  })),
-);
+import { SectionStore } from './section.store';
 
 /**
  * Data grid based on open source (Generic UI Data Grid)[https://generic-ui.com/].
@@ -33,7 +22,7 @@ const TableSectionStore = signalStore(
     NgStyle,
     IonCard, IonCardContent, IonLabel, IonItem
   ],
-  providers: [TableSectionStore],
+  providers: [SectionStore],
   styles: [`
   ion-card-content { padding: 5px; }
   ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
@@ -61,7 +50,7 @@ const TableSectionStore = signalStore(
       <ion-card-content>
         @if(header()?.length === 0 && body()?.length === 0) {
           <ion-item lines="none">
-            <ion-label>{{ store.i18n.empty_table() }}</ion-label>
+            <ion-label>{{ store.i18n.table_empty() }}</ion-label>
           </ion-item>
         } @else {
           <div [ngStyle]="gridStyle()">
@@ -91,7 +80,7 @@ const TableSectionStore = signalStore(
 `
 })
 export class TableSectionComponent {
-  protected readonly store = inject(TableSectionStore);
+  protected readonly store = inject(SectionStore);
 
   // inputs
   public section = input<TableSection>();

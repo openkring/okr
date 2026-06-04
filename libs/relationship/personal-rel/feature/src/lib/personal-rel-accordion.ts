@@ -11,7 +11,7 @@ import { coerceBoolean, hasRole, isOngoing } from '@bk2/shared-util-core';
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { PersonalRelNamePipe } from '@bk2/relationship-personal-rel-util';
-import { PersonalRelStore } from 'libs/relationship/personal-rel/feature/src/lib/personal-rel.store';
+import { PersonalRelStore } from './personal-rel.store';
 
 @Component({
   selector: 'bk-personal-rel-accordion',

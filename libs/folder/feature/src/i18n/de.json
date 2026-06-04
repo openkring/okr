@@ -2,6 +2,11 @@
   "folder": {
     "plural": "Ordner"
   },
+  "operation": {
+    "create": { "label": "Ordner erstellen" },
+    "edit": { "label": "Ordner ändern" },
+    "view": { "label": "Ordner anzeigen" }
+  },
   "actionsheet": {
     "label": {
       "choose": "Wähle eine Aktion"

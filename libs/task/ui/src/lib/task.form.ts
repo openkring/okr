@@ -52,7 +52,7 @@ import { TaskI18n, taskValidations } from '@bk2/task-util';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
-                  <ion-label>{{ i18n().stateLabel() }}:</ion-label>
+                  <ion-label>{{ i18n().state() }}:</ion-label>
                   <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>
@@ -60,13 +60,13 @@ import { TaskI18n, taskValidations } from '@bk2/task-util';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
-                  <ion-label>{{ i18n().priorityLabel() }}:</ion-label>
+                  <ion-label>{{ i18n().priority() }}:</ion-label>
                   <bk-cat-select [category]="priorities()!" [selectedItemName]="priority()" (selectedItemNameChange)="onFieldChange('priority', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
-                  <ion-label>{{ i18n().importanceLabel() }}:</ion-label>
+                  <ion-label>{{ i18n().importance() }}:</ion-label>
                   <bk-cat-select [category]="importances()!" [selectedItemName]="importance()" (selectedItemNameChange)="onFieldChange('importance', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>

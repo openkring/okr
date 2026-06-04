@@ -162,14 +162,14 @@ import { TrackerConfiguration } from './tracker-configuration';
             <bk-image-config
               [formData]="logoConfig" (formDataChange)="onImageConfigChange($event)"
               [readOnly]="isReadOnly()"
-              [i18n]="i18n()"
+              [i18n]="imageConfigI18n()"
             />
           }
           @if(heroConfig(); as heroConfig) {
             <bk-image-config
               [formData]="heroConfig" (formDataChange)="onImageConfigChange($event)"
               [readOnly]="isReadOnly()"
-              [i18n]="i18n()"
+              [i18n]="imageConfigI18n()"
             />
           }
           @if(imageStyle(); as imageStyle) {
@@ -310,6 +310,27 @@ export class SectionForm {
   // i18n
   public readonly i18n = input.required<SectionI18n>();
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected imageConfigI18n = computed(() => ({
+    image_edit:               this.i18n().image_edit_title,
+    image_type_name:          this.i18n().image_edit_type_name,
+    image_type_label:         this.i18n().image_edit_type_label,
+    image_type_helper:        this.i18n().image_edit_type_helper,
+    label_label:              this.i18n().image_edit_label_label,
+    label_placeholder:        this.i18n().image_edit_label_placeholder,
+    label_helper:             this.i18n().image_edit_label_helper,
+    url_label:                this.i18n().image_edit_url_label,
+    url_placeholder:          this.i18n().image_edit_url_placeholder,
+    url_helper:               this.i18n().image_edit_url_helper,
+    actionUrl_label:          this.i18n().image_edit_action_label,
+    actionUrl_placeholder:    this.i18n().image_edit_action_placeholder,
+    actionUrl_helper:         this.i18n().image_edit_action_helper,
+    altText_label:            this.i18n().altText_label,
+    altText_placeholder:      this.i18n().altText_placeholder,
+    altText_helper:           this.i18n().altText_helper,
+    overlay_label:            this.i18n().image_edit_overlay_label,
+    overlay_placeholder:      this.i18n().image_edit_overlay_placeholder,
+    overlay_helper:           this.i18n().image_edit_overlay_helper
+  }));
 
   // inputs
   public formData = model.required<SectionModel>();

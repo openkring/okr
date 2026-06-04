@@ -2,27 +2,25 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { OrgSelectModal } from '@bk2/shared-feature';
+import { AppStore, OrgSelectModal } from '@bk2/shared-feature';
 import { getDefaultCategoryName, isOrg } from '@bk2/shared-util-core';
 import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
+import { I18nService } from '@bk2/shared-i18n';
 
-import { createNewMemberFormModel, MemberNewFormModel } from '@bk2/relationship-membership-util';
+import { createNewMemberFormModel, MemberNewFormModel, MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@bk2/relationship-membership-util';
 import { MemberNewForm } from '@bk2/relationship-membership-ui';
-
-import { MembershipStore } from './membership.store';
 
 @Component({
   selector: 'bk-member-new-modal',
   standalone: true,
-  providers: [MembershipStore],
   imports: [
     Header, ChangeConfirmation, MemberNewForm,
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: this.store.i18n.create_member()}" [isModal]="true" />
+    <bk-header [i18n]="{ title: this.i18n.create_member()}" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
@@ -35,7 +33,7 @@ import { MembershipStore } from './membership.store';
           [tenantId]="tenantId()"
           [readOnly]="false"
           [membershipCategories]="selectedMembershipCategory()"
-          [i18n]="store.i18n"
+          [i18n]="i18n"
           (selectClicked)="selectOrg()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -48,7 +46,8 @@ import { MembershipStore } from './membership.store';
 })
 export class MemberNewModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(MembershipStore);
+  protected readonly i18n = inject(I18nService).translateAll(MEMBERSHIP_I18N_KEYS) as MembershipI18n;
+  protected readonly appStore = inject(AppStore);
 
   // inputs
   public currentUser = input.required<UserModel>();
@@ -65,7 +64,7 @@ export class MemberNewModal {
 
   // derived
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   public formData = linkedSignal(() => {
     const org = this.org();
@@ -100,12 +99,12 @@ export class MemberNewModal {
     if (role === 'confirm') {
       if (isOrg(data, this.tenantId())) {
         // Get the full org from AppStore to extract membershipCategoryKey
-        const selectedOrg = this.store.appStore.getOrg(data.bkey);
+        const selectedOrg = this.appStore.getOrg(data.bkey);
         const membershipCategoryKey = selectedOrg?.membershipCategoryKey;
 
         // Get the CategoryListModel using AppStore.getCategory
         if (membershipCategoryKey) {
-          const membershipCategory = this.store.appStore.getCategory(membershipCategoryKey);
+          const membershipCategory = this.appStore.getCategory(membershipCategoryKey);
           this.selectedMembershipCategory.set(membershipCategory);
         }
 

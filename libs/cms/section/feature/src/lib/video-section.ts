@@ -44,8 +44,11 @@ import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
 })
 export class VideoSectionComponent {
   private readonly sanitizer = inject(DomSanitizer);
+
+  // inputs
   public section = input.required<VideoSection>();
 
+  // derived
   protected url = computed(() => this.section().properties?.url ?? '');
   protected width = computed(() => this.section().properties?.width ?? '100%');
   protected height = computed(() => this.section().properties?.height ?? 'auto');

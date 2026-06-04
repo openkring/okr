@@ -136,41 +136,41 @@ export class AddressesAccordion {
     // on address
     actionSheetOptions.buttons.push(createActionSheetDivider());
     if (this.hasRole('memberAdmin') || this.hasRole('admin')) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.update_label(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
     } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
   
     // with address (usage)
-    actionSheetOptions.buttons.push(createActionSheetButton('copy', this.store.i18n.as_copy(), this.imgixBaseUrl, 'copy'));
+    actionSheetOptions.buttons.push(createActionSheetButton('copy', this.store.i18n.copy_label(), this.imgixBaseUrl, 'copy'));
     switch(address.addressChannel) {
       case 'bankaccount':
         if (address.url) {
-          actionSheetOptions.buttons.push(createActionSheetButton('iban.view', this.store.i18n.as_iban_view(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(createActionSheetButton('iban.view', this.store.i18n.view_iban(), this.imgixBaseUrl, 'qrcode'));
         } else if (!this.isReadOnly()) {
-          actionSheetOptions.buttons.push(createActionSheetButton('iban.generateQr', this.store.i18n.as_iban_genqr(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(createActionSheetButton('iban.generateQr', this.store.i18n.generate_qrezs(), this.imgixBaseUrl, 'qrcode'));
         }
         break;
       case 'email':
-        actionSheetOptions.buttons.push(createActionSheetButton('email.send', this.store.i18n.as_email_send(), this.imgixBaseUrl, 'email'));
+        actionSheetOptions.buttons.push(createActionSheetButton('email.send', this.store.i18n.send_email_label(), this.imgixBaseUrl, 'email'));
         break;
       case 'phone':
-        actionSheetOptions.buttons.push(createActionSheetButton('phone.call', this.store.i18n.as_phone_call(), this.imgixBaseUrl, 'tel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('phone.call', this.store.i18n.call_phone(), this.imgixBaseUrl, 'tel'));
         break;
       case 'postal':
-        actionSheetOptions.buttons.push(createActionSheetButton('postal.view', this.store.i18n.as_postal_view(), this.imgixBaseUrl, 'location'));
+        actionSheetOptions.buttons.push(createActionSheetButton('postal.view', this.store.i18n.view_postal(), this.imgixBaseUrl, 'location'));
         break;
      case 'twint':
         if (address.url) {
-          actionSheetOptions.buttons.push(createActionSheetButton('file.view', this.store.i18n.as_file_view(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(createActionSheetButton('file.view', this.store.i18n.view_file(), this.imgixBaseUrl, 'qrcode'));
         } else if (!this.isReadOnly()) {
-          actionSheetOptions.buttons.push(createActionSheetButton('file.upload', this.store.i18n.as_file_upload(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(createActionSheetButton('file.upload', this.store.i18n.upload_file(), this.imgixBaseUrl, 'qrcode'));
         }
         break;
       case 'web':
-        actionSheetOptions.buttons.push(createActionSheetButton('web.open', this.store.i18n.as_web_open(), this.imgixBaseUrl, 'link'));
+        actionSheetOptions.buttons.push(createActionSheetButton('web.open', this.store.i18n.open_web(), this.imgixBaseUrl, 'link'));
         break;
     }
     actionSheetOptions.buttons.push(createActionSheetButton(this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));

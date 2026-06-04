@@ -18,7 +18,7 @@ import { MatrixChatStore } from './matrix-chat.store';
   template: `
     <bk-header [i18n]="{ title: store.i18n.survey_title()}" [isModal]="true" />
     @if (formValid()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       <bk-poll-create-form
@@ -34,7 +34,7 @@ export class PollCreateModal {
   private readonly modalController = inject(ModalController);
   protected readonly store = inject(MatrixChatStore);
 
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   protected formData = signal<MatrixPollData>({ question: '', answers: [] });
   protected formValid = signal(false);

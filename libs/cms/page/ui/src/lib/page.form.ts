@@ -9,22 +9,7 @@ import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, NotesInpu
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@bk2/shared-constants';
 
-import { pageValidations } from '@bk2/cms-page-util';
-
-export interface PageFormI18n {
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  title_label: Signal<string>;
-  title_placeholder: Signal<string>;
-  title_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  blog_type_label: Signal<string>;
-  copy_conf: Signal<string>;
-  section_label: Signal<string>;
-  section_add: Signal<string>;
-}
+import { PageI18n, pageValidations } from '@bk2/cms-page-util';
 
 @Component({
   selector: 'bk-page-form',
@@ -109,7 +94,7 @@ export interface PageFormI18n {
 })
 export class PageForm {
   // inputs
-  public readonly i18n = input.required<PageFormI18n>();
+  public readonly i18n = input.required<PageI18n>();
   public readonly formData = model.required<PageModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

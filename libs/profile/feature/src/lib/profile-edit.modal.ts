@@ -27,7 +27,7 @@ import { ProfileStore } from './profile.store';
   template: `
     <bk-header [i18n]="headerI18n()" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
         <bk-avatar-toolbar
@@ -123,7 +123,7 @@ export class ProfileEditModal {
   protected tags = computed(() => this.store.getTags());
   protected priv = computed(() => this.store.privacySettings());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected readonly headerI18n = computed(() => ({
     title: this.store.getTitleLabel(false, this.currentUser()?.bkey),
     placeholder: this.store.i18n.search_placeholder()

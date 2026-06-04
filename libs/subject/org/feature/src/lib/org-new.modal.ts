@@ -4,9 +4,9 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { OrgNewForm } from '@bk2/subject-org-ui';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
+import { I18nService } from '@bk2/shared-i18n';
 
-import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
-import { OrgStore } from './org.store';
+import { ORG_I18N_KEYS, ORG_NEW_FORM_SHAPE, OrgI18n, OrgNewFormModel } from '@bk2/subject-org-util';
 
 @Component({
   selector: 'bk-org-new-modal',
@@ -15,18 +15,17 @@ import { OrgStore } from './org.store';
     Header, ChangeConfirmation, OrgNewForm,
     IonContent
   ],
-  providers: [OrgStore],
   template: `
     <bk-header [i18n]="{ title: '@subject.org.operation.create.label' }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         <bk-org-new-form
           [formData]="formData()"
           (formDataChange)="onFormDataChange($event)"
-          [i18n]="store.i18n"
+          [i18n]="i18n"
           [currentUser]="currentUser"
           [allTags]="tags()"
           [types]="types()"
@@ -38,7 +37,7 @@ import { OrgStore } from './org.store';
   `
 })
 export class OrgNewModal {
-  protected readonly store = inject(OrgStore);
+  protected readonly i18n = inject(I18nService).translateAll(ORG_I18N_KEYS) as OrgI18n;
   private readonly modalController = inject(ModalController);
 
   // inputs
@@ -54,7 +53,7 @@ export class OrgNewModal {
 
   // derived
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

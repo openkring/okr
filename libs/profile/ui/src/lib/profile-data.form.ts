@@ -10,17 +10,7 @@ import { DEFAULT_GENDER } from "@bk2/shared-constants";
 import { AhvFormat, formatAhv } from "@bk2/shared-util-angular";
 
 import { personValidations } from "@bk2/subject-person-util";
-
-export interface ProfileDataFormI18n {
-  personal_title: Signal<string>;
-  personal_description: Signal<string>;
-  personal_dob_label: Signal<string>;
-  personal_dob_placeholder: Signal<string>;
-  personal_dob_helper: Signal<string>;
-  personal_ssn_label: Signal<string>;
-  personal_ssn_placeholder: Signal<string>;
-  personal_ssn_helper: Signal<string>;
-}
+import { ProfileI18n } from '@bk2/profile-util';
 
 @Component({
   selector: 'bk-profile-data-accordion',
@@ -97,7 +87,7 @@ export interface ProfileDataFormI18n {
 })
 export class ProfileDataAccordion {
   // inputs
-  public readonly i18n = input.required<ProfileDataFormI18n>();
+  public readonly i18n = input.required<ProfileI18n>();
   public formData = model.required<PersonModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations

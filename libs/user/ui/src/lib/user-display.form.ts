@@ -7,22 +7,7 @@ import { AvatarUsage, DeliveryType, Language, NameDisplay, UserModel } from "@bk
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
-import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations } from "@bk2/user-util";
-
-export interface UserDisplayFormI18n {
-  display_title: Signal<string>;
-  display_description: Signal<string>;
-  avatarUsage_label: Signal<string>;
-  personSortCriteria_label: Signal<string>;
-  userLanguage_label: Signal<string>;
-  nameDisplay_label: Signal<string>;
-  showArchivedData_label: Signal<string>;
-  showArchivedData_helper: Signal<string>;
-  showDebugInfo_label: Signal<string>;
-  showDebugInfo_helper: Signal<string>;
-  showHelpers_label: Signal<string>;
-  showHelpers_helper: Signal<string>;
-}
+import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations, UserI18n } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-display-form',
@@ -87,7 +72,7 @@ export class UserDisplayForm {
   protected showHelpersI18n        = computed(() => ({ name: 'showHelpers',      label: this.i18n().showHelpers_label(),      helper: this.i18n().showHelpers_helper()      } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input.required<UserDisplayFormI18n>();
+  public readonly i18n = input.required<UserI18n>();
   public formData = model.required<UserDisplayFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

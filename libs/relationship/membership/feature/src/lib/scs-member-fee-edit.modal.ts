@@ -24,7 +24,7 @@ import { ScsMemberFeesStore } from './scs-member-fees.store';
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if (showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       <bk-avatar-toolbar
@@ -68,7 +68,7 @@ export class ScsMemberFeeEditModal {
   protected memberName = computed(() => getFullName(this.fee()?.member?.name1 ?? '', this.fee()?.member?.name2 ?? '', this.currentUser()?.nameDisplay));
   protected parentKey = computed(() => `person.${this.memberKey()}`);
   protected showConfirmation = computed(() => this.formValid() && this.manualDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   protected headerTitle = computed(() =>
     this.readOnly() ? this.store.i18n.view_label() : this.store.i18n.update_label()

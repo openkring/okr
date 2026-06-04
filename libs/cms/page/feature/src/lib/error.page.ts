@@ -1,11 +1,15 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Header } from '@bk2/shared-ui';
 import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { PageStore } from './page.store';
+import { PFX } from './scope';
 
 /**
  * ErrorPage is a simple component that displays a user-friendly error message.
@@ -107,17 +111,48 @@ import { PageStore } from './page.store';
 })
 export class ErrorPage {
   private readonly store = inject(PageStore);
+  private readonly i18nService = inject(I18nService);
 
   public readonly errorName = input('notfound');
 
+  protected title = toSignal(
+    toObservable(computed(() => this.store.page()?.title)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+    ),
+    { initialValue: '' }
+  );
+
+  protected subTitle = toSignal(
+    toObservable(computed(() => this.store.page()?.subTitle)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+    ),
+    { initialValue: '' }
+  );
+
+  protected abstract = toSignal(
+    toObservable(computed(() => this.store.page()?.abstract)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+    ),
+    { initialValue: '' }
+  );
+
+  protected logoAltText = toSignal(
+    toObservable(computed(() => this.store.page()?.logoAltText)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : `${this.store.tenantId()} Logo`))
+    ),
+    { initialValue: '' }
+  );
+
+  protected bannerAltText = toSignal(
+    toObservable(computed(() => this.store.page()?.bannerAltText)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : `${this.store.tenantId()} Banner`))
+    ),
+    { initialValue: '' }
+  );
+
   protected page = computed(() => this.store.page());
-  protected title = computed(() => this.page()?.title ?? this.store.i18n.not_found());
-  protected subTitle = computed(() => this.page()?.subTitle ?? this.store.i18n.not_exist());
-  protected abstract = computed(() => this.page()?.abstract ?? this.store.i18n.help());
   protected logoUrl = computed(() => this.store.getImgixUrl(this.page()?.logoUrl) ?? '');
-  protected logoAltText = computed(() => this.page()?.logoAltText || `${this.store.tenantId()} Logo`);
   protected bannerUrl = computed(() => this.store.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
-  protected bannerAltText = computed(() => this.page()?.bannerAltText || `${this.store.tenantId()} Banner`);
 
   constructor() {
     effect(() => {

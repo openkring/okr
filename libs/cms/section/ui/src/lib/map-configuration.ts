@@ -6,17 +6,19 @@ import { MapConfig } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 interface MapConfigI18n {
-    latitude_label:                       Signal<string>;
-    latitude_placeholder:                 Signal<string>;
-    latitude_helper:                      Signal<string>;
-    longitude_label:                      Signal<string>;
-    longitude_placeholder:                Signal<string>;
-    longitude_helper:                     Signal<string>;
-    zoomFactor_label:                     Signal<string>;
-    zoomFactor_placeholder:               Signal<string>;
-    zoomFactor_helper:                    Signal<string>;
-    useCurrentLocationAsCenter_label:     Signal<string>;
-    useCurrentLocationAsCenter_helper:    Signal<string>;
+  map_edit:                                 Signal<string>;
+  map_latitude_label:                       Signal<string>;
+  map_latitude_placeholder:                 Signal<string>;
+  map_latitude_helper:                      Signal<string>;
+  map_longitude_label:                      Signal<string>;
+  map_longitude_placeholder:                Signal<string>;
+  map_longitude_helper:                     Signal<string>;
+  map_zoom_label:                           Signal<string>;
+  map_zoom_placeholder:                     Signal<string>;
+  map_zoom_helper:                          Signal<string>;
+  map_center_label:                         Signal<string>;
+  map_center_helper:                        Signal<string>;
+  map_coordinates_label:                    Signal<string>;
 };
 
 @Component({
@@ -30,7 +32,7 @@ interface MapConfigI18n {
   template: `
        <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ title() }}</ion-card-title>
+          <ion-card-title>{{ i18n().map_edit() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           @if(intro(); as intro) {
@@ -41,7 +43,7 @@ interface MapConfigI18n {
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <ion-label>{{ '@input.coordinates.label' }}</ion-label>
+                <ion-label>{{ i18n().map_coordinates_label() }}</ion-label>
               </ion-col>
             </ion-row>
             <ion-row>
@@ -68,19 +70,18 @@ export class MapConfiguration {
   public i18n = input.required<MapConfigI18n>();
 
   // derived
-  protected latitudeI18n = computed(() => ({ name: 'latitude', label: this.i18n().latitude_label(), placeholder: this.i18n().latitude_placeholder(), helper: this.i18n().latitude_helper() } as NumberInputI18n));
-  protected longitudeI18n = computed(() => ({ name: 'longitude', label: this.i18n().longitude_label(), placeholder: this.i18n().longitude_placeholder(), helper: this.i18n().longitude_helper() } as NumberInputI18n));
-  protected zoomFactorI18n = computed(() => ({ name: 'zoomFactor', label: this.i18n().zoomFactor_label(), placeholder: this.i18n().zoomFactor_placeholder(), helper: this.i18n().zoomFactor_helper() } as NumberInputI18n));
+  protected latitudeI18n = computed(() => ({ name: 'latitude', label: this.i18n().map_latitude_label(), placeholder: this.i18n().map_latitude_placeholder(), helper: this.i18n().map_latitude_helper() } as NumberInputI18n));
+  protected longitudeI18n = computed(() => ({ name: 'longitude', label: this.i18n().map_longitude_label(), placeholder: this.i18n().map_longitude_placeholder(), helper: this.i18n().map_longitude_helper() } as NumberInputI18n));
+  protected zoomFactorI18n = computed(() => ({ name: 'zoomFactor', label: this.i18n().map_zoom_label(), placeholder: this.i18n().map_zoom_placeholder(), helper: this.i18n().map_zoom_helper() } as NumberInputI18n));
 
   protected useCurrentLocationAsCenterI18n = computed(() => ({
     name: 'useCurrentLocationAsCenter',
-    label: this.i18n().useCurrentLocationAsCenter_label(),
-    helper: this.i18n().useCurrentLocationAsCenter_helper(),
+    label: this.i18n().map_center_label(),
+    helper: this.i18n().map_center_helper(),
   } as CheckboxI18n));
 
   // inputs
   public formData = model.required<MapConfig>();
-  public title = input('@content.section.type.map.edit');
   public intro = input<string>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

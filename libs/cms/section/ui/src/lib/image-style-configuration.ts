@@ -6,6 +6,7 @@ import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, NumberInput, Numb
 import { ImageActionType, ImageStyle, Slot } from '@bk2/shared-models';
 
 interface ImageStyleConfigI18n {
+  image_style_title:        Signal<string>;
   imgIxParams_label:       Signal<string>;
   imgIxParams_placeholder: Signal<string>;
   imgIxParams_helper:      Signal<string>;
@@ -24,18 +25,17 @@ interface ImageStyleConfigI18n {
   borderRadius_label:       Signal<string>;
   borderRadius_placeholder: Signal<string>;
   borderRadius_helper:      Signal<string>;
-  zoomFactor_label:         Signal<string>;
-  zoomFactor_placeholder:   Signal<string>;
-  zoomFactor_helper:        Signal<string>;
+  zoom_label:               Signal<string>;
+  zoom_placeholder:         Signal<string>;
+  zoom_helper:              Signal<string>;
   slot_label:               Signal<string>;
-  imageAction_label:        Signal<string>;
+  action_label:             Signal<string>;
   isThumbnail_label:        Signal<string>;
   isThumbnail_helper:       Signal<string>;
   fill_label:               Signal<string>;
   fill_helper:              Signal<string>;
   hasPriority_label:        Signal<string>;
   hasPriority_helper:       Signal<string>;
-  image_style_title:        Signal<string>;
 }
 
 @Component({
@@ -180,9 +180,9 @@ export class ImageStyleConfiguration {
   );
 
   protected borderRadiusI18n = computed(() =>({name: 'borderRadius', label: this.i18n().borderRadius_label(), placeholder: this.i18n().borderRadius_placeholder(), helper: this.i18n().borderRadius_helper()} as TextInputI18n));
-  protected zoomFactorI18n = computed(() => ({ name: 'zoomFactor', label: this.i18n().zoomFactor_label(), placeholder: this.i18n().zoomFactor_placeholder(), helper: this.i18n().zoomFactor_helper() } as NumberInputI18n));
+  protected zoomFactorI18n = computed(() => ({ name: 'zoomFactor', label: this.i18n().zoom_label(), placeholder: this.i18n().zoom_placeholder(), helper: this.i18n().zoom_helper() } as NumberInputI18n));
   protected slotI18n = computed(() => ({ name: 'slot', label: this.i18n().slot_label() } as StringSelectI18n));
-  protected imageActionI18n = computed(() => ({ name: 'imageAction', label: this.i18n().imageAction_label() } as CategoryOldI18n));
+  protected imageActionI18n = computed(() => ({ name: 'imageAction', label: this.i18n().action_label() } as CategoryOldI18n));
 
   protected isThumbnailI18n = computed(
     () =>

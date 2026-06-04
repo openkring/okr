@@ -82,11 +82,11 @@ export class ApplicationList {
 
     opts.buttons.push(createActionSheetDivider());
     if (isOpen) {
-      opts.buttons.push(createActionSheetButton('accept',     this.store.i18n.edit_accept(), imgix, 'check'));
-      opts.buttons.push(createActionSheetButton('deny',       this.store.i18n.edit_deny(),   imgix, 'trash'));
+      opts.buttons.push(createActionSheetButton('accept',     this.store.i18n.accept(), imgix, 'check'));
+      opts.buttons.push(createActionSheetButton('deny',       this.store.i18n.deny(),   imgix, 'trash'));
     }
     if (app.personKey) {
-      opts.buttons.push(createActionSheetButton('membership', this.store.i18n.actions_add_membership(), imgix, 'person-add'));
+      opts.buttons.push(createActionSheetButton('membership', this.store.i18n.add_membership(), imgix, 'person-add'));
     }
     opts.buttons.push(createActionSheetDivider());
     opts.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), imgix, 'cancel-circle'));

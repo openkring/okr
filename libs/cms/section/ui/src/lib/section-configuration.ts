@@ -7,19 +7,19 @@ import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
 
 interface SectionConfigI18n {
-    name_label:           Signal<string>;
-    name_placeholder:     Signal<string>;
-    name_helper:          Signal<string>;
-    title_label:          Signal<string>;
-    title_placeholder:    Signal<string>;
-    title_helper:         Signal<string>;
-    subTitle_label:       Signal<string>;
-    subTitle_placeholder: Signal<string>;
-    subTitle_helper:      Signal<string>;
-    colSize_label:        Signal<string>;
-    colSize_placeholder:  Signal<string>;
-    colSize_helper:       Signal<string>;
-    copy_conf:            Signal<string>;
+    section_config_name_label:           Signal<string>;
+    section_config_name_placeholder:     Signal<string>;
+    section_config_name_helper:          Signal<string>;
+    section_config_title_label:          Signal<string>;
+    section_config_title_placeholder:    Signal<string>;
+    section_config_title_helper:         Signal<string>;
+    section_config_subTitle_label:       Signal<string>;
+    section_config_subTitle_placeholder: Signal<string>;
+    section_config_subTitle_helper:      Signal<string>;
+    section_config_colSize_label:        Signal<string>;
+    section_config_colSize_placeholder:  Signal<string>;
+    section_config_colSize_helper:       Signal<string>;
+    copy_conf:                           Signal<string>;
 }
 
 @Component({
@@ -114,30 +114,30 @@ export class SectionConfiguration {
 
   protected nameI18n = computed(() => ({
     name: 'name',
-    label: this.i18n().name_label(),
-    placeholder: this.i18n().name_placeholder(),
-    helper: this.i18n().name_helper(),
+    label: this.i18n().section_config_name_label(),
+    placeholder: this.i18n().section_config_name_placeholder(),
+    helper: this.i18n().section_config_name_helper(),
   } as TextInputI18n));
 
   protected titleI18n = computed(() => ({
     name: 'title',
-    label: this.i18n().title_label(),
-    placeholder: this.i18n().title_placeholder(),
-    helper: this.i18n().title_helper(),
+    label: this.i18n().section_config_title_label(),
+    placeholder: this.i18n().section_config_title_placeholder(),
+    helper: this.i18n().section_config_title_helper(),
   } as TextInputI18n));
 
   protected subTitleI18n = computed(() => ({
     name: 'subTitle',
-    label: this.i18n().subTitle_label(),
-    placeholder: this.i18n().subTitle_placeholder(),
-    helper: this.i18n().subTitle_helper(),
+    label: this.i18n().section_config_subTitle_label(),
+    placeholder: this.i18n().section_config_subTitle_placeholder(),
+    helper: this.i18n().section_config_subTitle_helper(),
   } as TextInputI18n));
 
   protected colSizeI18n = computed(() => ({
     name: 'colSize',
-    label: this.i18n().colSize_label(),
-    placeholder: this.i18n().colSize_placeholder(),
-    helper: this.i18n().colSize_helper(),
+    label: this.i18n().section_config_colSize_label(),
+    placeholder: this.i18n().section_config_colSize_placeholder(),
+    helper: this.i18n().section_config_colSize_helper(),
   } as TextInputI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | RoleName): void {

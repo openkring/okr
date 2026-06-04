@@ -6,14 +6,14 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
-import { ApplicationKind, ApplicationModel, ApplicationState, UserModel } from '@bk2/shared-models';
+import { ApplicationModel, ApplicationState, UserModel } from '@bk2/shared-models';
 import { getAvatarInfoForCurrentUser } from '@bk2/shared-util-core';
 import { AlertService } from '@bk2/shared-util-angular';
 
 import { MemberNewModal } from '@bk2/relationship-membership-feature';
 
 import { ApplicationService } from '@bk2/application-data-access';
-import { APPLICATION_I18N_KEYS, ApplicationI18n, matchesStateFilter, proposeMembershipCategory, stateColor } from '@bk2/application-util';
+import { APPLICATION_I18N_KEYS, matchesStateFilter, stateColor } from '@bk2/application-util';
 import { ApplicationEditModal } from './application-edit.modal';
 
 
@@ -101,7 +101,7 @@ export const ApplicationStore = signalStore(
     },
 
     async acceptApplication(app: ApplicationModel): Promise<void> {
-      const confirmed = await store.alertService.confirm(store.i18n.edit_accept_confirm(), true);
+      const confirmed = await store.alertService.confirm(store.i18n.accept_confirm(), true);
       if (confirmed !== true) return;
       try {
         await store.applicationService.accept(app, store.currentUser());
@@ -113,11 +113,11 @@ export const ApplicationStore = signalStore(
 
     async denyApplication(app: ApplicationModel): Promise<void> {
       const alert = await store.alertController.create({
-        header: store.i18n.edit_deny_reason(),
+        header: store.i18n.deny_reason(),
         inputs: [{ name: 'reason', type: 'text', placeholder: '' }],
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.edit_deny(), role: 'confirm' }
+          { text: store.i18n.deny(), role: 'confirm' }
         ]
       });
       await alert.present();
@@ -129,7 +129,7 @@ export const ApplicationStore = signalStore(
 
     async addMembership(app: ApplicationModel): Promise<void> {
       if (!app.personKey) {
-        console.warn(store.i18n.actions_no_person());
+        console.warn(store.i18n.list_no_person());
         return;
       }
       const mcat = store.appStore.getCategory('membership_category');

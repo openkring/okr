@@ -6,7 +6,7 @@ export const LOCATION_I18N_KEYS = {
   locations:            PFX + 'locations',
   copy_conf:            PFX + 'copy.conf',
   description:          PFX + 'description',
-  name:                 '@name',
+  name:                 '@name.label',
   type:                 '@type',
   empty:                PFX + 'empty',
   as_title:             '@actionsheet.title',

@@ -5,9 +5,9 @@ import { TripStatsConfig } from '@bk2/shared-models';
 import { StringSelect, StringSelectI18n } from '@bk2/shared-ui';
 
 interface TripStatsConfigI18n {
-  trip_stats_title:   Signal<string>,
-  viewType_label:     Signal<string>,
-  contentType_label:  Signal<string>
+  tripstats_title:               Signal<string>,
+  tripstats_type_view_label:     Signal<string>,
+  tripstats_type_content_label:  Signal<string>
 }
 
 @Component({
@@ -21,7 +21,7 @@ interface TripStatsConfigI18n {
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ i18n().trip_stats_title() }}</ion-card-title>
+        <ion-card-title>{{ i18n().tripstats_title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
@@ -58,8 +58,8 @@ export class TripStatsConfiguration {
   protected viewType    = linkedSignal(() => this.formData().viewType    ?? 'list');
   protected contentType = linkedSignal(() => this.formData().contentType ?? 'boat');
 
-  protected viewTypeI18n    = computed(() => ({ name: 'viewType',    label: this.i18n().viewType_label()    } as StringSelectI18n));
-  protected contentTypeI18n = computed(() => ({ name: 'contentType', label: this.i18n().contentType_label() } as StringSelectI18n));
+  protected viewTypeI18n    = computed(() => ({ name: 'viewType',    label: this.i18n().tripstats_type_view_label()    } as StringSelectI18n));
+  protected contentTypeI18n = computed(() => ({ name: 'contentType', label: this.i18n().tripstats_type_content_label() } as StringSelectI18n));
 
   protected onViewTypeChange(viewType: string): void {
     this.formData.update(vm => ({ ...vm, viewType: viewType as TripStatsConfig['viewType'] }));

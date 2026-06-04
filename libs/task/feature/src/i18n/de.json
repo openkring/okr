@@ -1,6 +1,9 @@
 {
+  "task": "Todo",
   "tasks": "Todos",
+  "description": "Aufgaben, die erledigt werden sollen.",
   "empty": "Keine Todos gefunden.",
+  "empty-my": "Gratulation ! - Du hast keine offenen Aufgaben.",
   "calendarName": {
     "label": "Kalender",
     "description": "In diesen Kalendern wird das Ereignis eingetragen.",
@@ -8,19 +11,118 @@
   },
   "taskQuickEntry": {
     "label": "Schnelleingabe",
-    "placeholder": "Text [@Person] [//Datum]"
+    "placeholder": "Text [@Person] [//Datum]",
+    "helper": "Ermöglicht die schnelle Erstellung einer Aufgabe mit Beschreibung, Zuweisung und Fälligkeitsdatum."
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Todo Details ansehen",
-    "edit": "Todo ändern",
-    "create": "Neues Todo erstellen",
-    "delete": "Todo löschen",
-    "done": "Todo auf Erledigt setzen"
+
+  "create": {
+    "label": "Neues Todo erstellen",
+    "conf": "Todo wurde erstellt.",
+    "error": "Todo konnte nicht erstellt werden."
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+  "delete": {
+    "label": "Todo löschen",
+    "confirm": "Soll dieses Todo wirklich gelöscht werden ?",
+    "conf": "Todo wurde gelöscht.",
+    "error": "Todo konnte nicht gelöscht werden."
+  },
+  "update": {
+    "label": "Todo ändern",
+    "conf": "Todo wurde geändert.",
+    "error": "Todo konnte nicht geändert werden."
+  },
+  "view": {
+    "label": "Todo Details ansehen"
+  },
+  "done": "Todo auf Erledigt setzen",
+
+  "list": {
+    "header": {
+      "name": "Name",
+      "dueDate": "Termin",
+      "assignee": "Verantwortlich",
+      "state": "Status"
+    }
+  },
+
+   "bkey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "Der Schlüssel des Tasks in der Datenbank."
+  },
+  "name": {
+    "label": "Name des Tasks",
+    "placeholder": "Beliebiger Name",
+    "helper": "Ein Bezeichner für den Task, damit dieser in einer Liste einfach gefunden werden kann."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Notizen"
+  },
+  "dueDate": {
+    "label": "Fällig am",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "Bis zu diesem Datum muss eine Aufgabe erledigt sein.",
+    "error": "Das Datumsformat ist nicht korrekt."
+  },
+  "completionDate": {
+    "label": "Erledigt am",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "An diesem Datum wurde die Aufgabe erledigt.",
+    "error": "Das Datumsformat ist nicht korrekt."
+  },
+  "state": {
+    "all": "Alle Stati",
+    "label": "Status",
+    "initial": {
+      "label": "Initial",
+      "description": "Die Aufgabe wurde erstellt."
+    },
+    "planned": {
+      "label": "Geplant",
+      "description": "Die Aufgabe ist geplant."
+    },
+    "doing": {
+      "label": "In Arbeit",
+      "description": "Die Aufgabe wird bearbeitet."
+    },
+    "done": {
+      "label": "Erledigt",
+      "description": "Die Aufgabe wurde erledigt."
+    },
+    "waiting": {
+      "label": "Warten",
+      "description": "Die Aufgabe wartet auf eine Aktion."
+    },
+    "cancelled": {
+      "label": "Abgebrochen",
+      "description": "Die Aufgabe wurde abgebrochen."
+    },
+    "later": {
+      "label": "Später",
+      "description": "Die Aufgabe wird später erledigt."
+    }
+  },
+  "priority": {
+    "label": "Priorität"
+  },
+  "importance": {
+    "label": "Wichtigkeit"
+  },
+  "assignee": {
+    "label": "Zuständig",
+    "description": "Person, die für die Erledigung der Aufgabe verantwortlich ist."
+  },
+  "author": {
+    "label": "Autor/-in",
+    "description": "Person, die die Aufgabe erstellt hat."
+  },
+  "scope": {
+    "label": "Kontext",
+    "description": "Die Aufgabe ist normalerweise sichtbar für Autor/in, Zuständige/n und Privilegierte User. Mit dem Kontext kann die Sichtbarkeit auf eine Gruppe erweitert werden."
+  },
+
+  "validations": {
+    "taskModelType": "Der ModelType muss TaskModel sein."
   }
 }

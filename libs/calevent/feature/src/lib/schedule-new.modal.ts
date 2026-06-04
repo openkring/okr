@@ -4,13 +4,12 @@ import { IonButton, IonChip, IonIcon, IonDatetime, IonModal, IonContent, IonItem
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Header } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
-
-import { CalEventStore } from './calevent.store';
+import { I18nService } from '@bk2/shared-i18n';
+import { CALEVENT_I18N_KEYS, CaleventI18n } from '@bk2/calevent-util';
 
 @Component({
   selector: 'bk-schedule-new-modal',
   standalone: true,
-  providers: [CalEventStore],
   imports: [
     IonButton,
     IonChip, IonIcon, IonDatetime, IonModal,
@@ -19,11 +18,11 @@ import { CalEventStore } from './calevent.store';
     Header,
   ],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.schedule_title() }" [isModal]="true" />
+    <bk-header [i18n]="{ title: i18n.schedule_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-input
-          [label]="store.i18n.topic()"
+          [label]="i18n.topic()"
           labelPlacement="stacked"
           [value]="name()"
           (ionInput)="name.set(($any($event.target)).value ?? '')"
@@ -32,7 +31,7 @@ import { CalEventStore } from './calevent.store';
       </ion-item>
       <ion-item>
         <ion-textarea
-          [label]="store.i18n.description()"
+          [label]="i18n.description()"
           labelPlacement="stacked"
           [value]="description()"
           (ionInput)="description.set(($any($event.target)).value ?? '')"
@@ -41,7 +40,7 @@ import { CalEventStore } from './calevent.store';
       </ion-item>
 
       <ion-item lines="none">
-        {{ store.i18n.schedule_date_proposals() }}
+        {{ i18n.schedule_date_proposals() }}
       </ion-item>
 
       <div class="date-chips">
@@ -52,7 +51,7 @@ import { CalEventStore } from './calevent.store';
           </ion-chip>
         }
         <ion-chip color="primary" [outline]="true" (click)="datePickerOpen.set(true)">
-          {{ store.i18n.schedule_date_add() }}
+          {{ i18n.schedule_date_add() }}
         </ion-chip>
       </div>
 
@@ -69,7 +68,7 @@ import { CalEventStore } from './calevent.store';
             (ionChange)="onDatetimeChange($event)"
           />
           <ion-button expand="block" (click)="confirmDates()">
-            {{ store.i18n.schedule_confirm() }}
+            {{ i18n.schedule_confirm() }}
           </ion-button>
         </ng-template>
       </ion-modal>
@@ -80,13 +79,13 @@ import { CalEventStore } from './calevent.store';
         (click)="submit()"
         class="ion-margin-top"
       >
-        {{ store.i18n.invite_members() }}
+        {{ i18n.invite_members() }}
       </ion-button>
     </ion-content>
   `,
 })
 export class ScheduleNewModal {
-  protected readonly store = inject(CalEventStore);
+  protected readonly i18n = inject(I18nService).translateAll(CALEVENT_I18N_KEYS) as CaleventI18n;
   private readonly modalCtrl = inject(ModalController);
 
   protected readonly name = signal('');

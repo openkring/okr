@@ -24,7 +24,7 @@ import { InvoiceStore } from './invoice.store';
   template: `
     <bk-header [i18n]="{ title: '@finance.invoice.operation.create.label' }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       <bk-bexio-invoice-new-form
@@ -55,7 +55,7 @@ export class InvoiceNewModal {
 
   // computed
   protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   // actions
   protected onFormDataChange(data: BexioInvoiceFormModel): void {

@@ -1,5 +1,5 @@
 import { NgStyle } from '@angular/common';
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, Signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 import { IonButton, IonIcon, ModalController } from '@ionic/angular/standalone';
@@ -11,6 +11,10 @@ import { ButtonAction, ButtonSection, ColorIonic } from '@bk2/shared-models';
 import { showZoomedImage } from '@bk2/shared-ui';
 import { downloadToBrowser, navigateByUrl } from '@bk2/shared-util-angular';
 import { IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
+
+interface ButtonWidgetI18n {
+  button_image_zoomed: Signal<string>;
+}
 
 @Component({
   selector: 'bk-button-widget',
@@ -51,6 +55,7 @@ export class ButtonWidget {
   // inputs
   public section = input.required<ButtonSection>();
   public editMode = input<boolean>(false);
+  public readonly i18n = input.required<ButtonWidgetI18n>();
 
   public clicked = output<string>();
 
@@ -123,7 +128,7 @@ export class ButtonWidget {
           await Browser.open({ url: this.url() });
           break;
         case ButtonAction.Zoom:
-          await showZoomedImage(this.modalController, this.url(), '@content.type.article.zoomedImage', this.imageStyle(), this.label(), 'full-modal'); 
+          await showZoomedImage(this.modalController, this.url(), this.i18n().button_image_zoomed(), this.imageStyle(), this.label(), 'full-modal'); 
           break;
         case ButtonAction.None:
           break;

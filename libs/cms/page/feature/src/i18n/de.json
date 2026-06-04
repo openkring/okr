@@ -4,7 +4,6 @@
   "empty": "Es sind noch keine Inhalte erfasst worden.",
   "emptyPage": "Es gibt noch keine Sektionen für diese Seite. Bitte zuerst Sektionen erstellen.",
   "emptyPageReadOnly": "Diese Seite ist noch leer.",
-  "notfound": "Seite nicht gefunden",
   "notexist": "Die aufgerufene Seite existiert nicht.",
   "help": "Bitte überprüfen Sie die URL oder navigieren Sie über das Menü.",
 
@@ -19,14 +18,10 @@
     "placeholder": "String",
     "helper": "Der Titel ist optional und wird dem Betrachter der Webseite gezeigt."
   },
-  "notes": {
-    "label": "Notizen",
-    "placeholder": "Text"
-  },
 
   "view": "Webseiten-Konfiguration anzeigen",
-  "show": "Webseite anzeigen",
   "edit": "Webseite bearbeiten",
+  "show": "Webseite anzeigen",
   "create": "Neue Seite erstellen",
   "add": {
     "label": "Webseite hinzufügen",
@@ -71,6 +66,28 @@
     "send": "Artikel versenden",
     "remove": "Sektion entfernen",
     "label": "Sektion"
+  },
+  "welcome": {
+    "title": "Seeclub Stäfa",
+    "subTitle": "Rudern auf dem Zürichsee",
+    "abstract": "Dies ist die Startseite. Klicke oben links aufs Menü und wähle eine Funktion.",
+    "logoAltText": "Logo des Seeclub Stäfa",
+    "bannerAltText": "Hintergrundbild mit einem Ruderer auf dem Zürichsee."
+  },
+  "notfound": {
+    "error": "Seite nicht gefunden",
+    "title": "404 Not Found",
+    "subTitle": "im Schilf gelandet ?",
+    "abstract": "Die angeforderte HTML Seite konnte nicht gefunden werden. Probiere es erneut mit einer anderen URL, dh. klicke oben links aufs Menü und wähle eine Funktion.",
+    "logoAltText": "Logo des Seeclub Stäfa",
+    "bannerAltText": "Hintergrundbild aus dem Schilf heraus mit Sonnenuntergang auf dem Zürichsee."
+  },
+  "unknownpagetype": {
+    "title": "404 Not Found",
+    "subTitle": "im Schilf gelandet ?",
+    "abstract": "Es wurde eine HTML-Seite mit einem unbekannten Typ aufgerufen. Bitte versuche es erneut mit einer anderen URL, dh. klicke oben links aufs Menü und wähle eine Funktion.",
+    "logoAltText": "Logo des Seeclub Stäfa",
+    "bannerAltText": "Hintergrundbild aus dem Schilf heraus mit Sonnenuntergang auf dem Zürichsee."
   }
 }
 

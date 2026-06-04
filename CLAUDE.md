@@ -187,16 +187,25 @@ protected directoryI18n = computed(() => ({
 
 #### Components without an existing store
 
-Define an inline `signalStore` in the same file, above `@Component`:
+Inject `I18nService` directly — no wrapper store needed:
 
 ```ts
-const FeatureStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps(store => ({ i18n: store.i18nService.translateAll(FEATURE_I18N_KEYS) })),
-);
-// then in @Component: providers: [FeatureStore]
-// and in class: protected readonly store = inject(FeatureStore);
+@Component({ /* no providers needed */ })
+export class XyzEditModal {
+  protected readonly i18n = inject(I18nService).translateAll(XYZ_I18N_KEYS) as XyzI18n;
+}
 ```
+
+If the component also needs `AppStore`, inject it the same way:
+
+```ts
+export class XyzEditModal {
+  protected readonly i18n    = inject(I18nService).translateAll(XYZ_I18N_KEYS) as XyzI18n;
+  protected readonly appStore = inject(AppStore);
+}
+```
+
+**Modals opened by a feature store must never import that store.** When a store opens a modal via `modalController.create({ component: XModal })`, importing the feature store back into the modal creates a circular import — the store file imports the modal, the modal imports the store. At module-init time the store resolves to `undefined`, and Angular crashes with *"Cannot read properties of undefined (reading 'provide')"*. The direct-inject pattern above avoids this entirely since no `providers` array is needed. If the store also statically imports the modal, convert the import to a dynamic `await import('./xyz-edit.modal')` inside the method that opens it.
 
 #### Translation files
 

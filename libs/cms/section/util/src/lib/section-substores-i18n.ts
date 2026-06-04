@@ -20,7 +20,7 @@ export type ActivitiesSectionI18n = { [K in keyof typeof ACTIVITIES_SECTION_I18N
 export const ALBUM_SECTION_I18N_KEYS = {
   no_images:         PFX + 'noImages',
   zoomed:            PFX + 'album.zoomed',
-  albumStyle_label:  PFX + 'albumStyle.label',
+  album_style_label:  PFX + 'album.style.label',
 } satisfies Record<string, string>;
 
 export type AlbumSectionI18n = { [K in keyof typeof ALBUM_SECTION_I18N_KEYS]: Signal<string> };
@@ -30,32 +30,56 @@ export type AlbumSectionI18n = { [K in keyof typeof ALBUM_SECTION_I18N_KEYS]: Si
 // ---------------------------------------------------------------------------
 
 export const CALENDAR_SECTION_I18N_KEYS = {
-  update_calevent_conf:       PFX + 'calevent.update.conf',
-  update_calevent_error:      PFX + 'calevent.update.error',
+  calevents:                  PFX + 'calendar.calevents',
+  update_calevent_conf:       PFX + 'calendar.update.conf',
+  update_calevent_error:      PFX + 'calendar.update.error',
   update_invitation_conf:     PFX + 'invitation.update.conf',
   update_invitation_error:    PFX + 'invitation.update.error',
-  calevents:                  PFX + 'calevent.calevents',
   more:                       '@more',
-  subscribe:                  PFX + 'calevent.subscribe',
-  unsubscribe:                PFX + 'calevent.unsubscribe',
-  edit:                       PFX + 'calevent.edit',
-  view:                       PFX + 'calevent.view',
-  download:                   PFX + 'calevent.download',
+  subscribe:                  PFX + 'calendar.subscribe',
+  unsubscribe:                PFX + 'calendar.unsubscribe',
+  edit:                       PFX + 'calendar.edit',
+  view:                       PFX + 'calendar.view',
+  download:                   PFX + 'calendar.download',
   cancel:                     '@cancel',
 } satisfies Record<string, string>;
 
 export type CalendarSectionI18n = { [K in keyof typeof CALENDAR_SECTION_I18N_KEYS]: Signal<string> };
 
 // ---------------------------------------------------------------------------
+// context-section (FormSectionStore)
+// ---------------------------------------------------------------------------
+
+export const CONTEXT_SECTION_I18N_KEYS = {
+  title:                  PFX + 'context.title',
+  as_title:               '@actionsheet.title',
+  show_avatar:            PFX + 'context.show.avatar',
+  show_name:              PFX + 'context.show.name',
+  show_member:            PFX + 'context.show.member',
+  show_membership:        PFX + 'context.show.membership',
+  show_responsibility:    PFX + 'context.show.responsibility',
+  show_personal:          PFX + 'context.show.personal',
+  show_workrel:           PFX + 'context.show.workrel',
+  save:                   PFX + 'context.save',
+  edit:                   PFX + 'context.edit',
+  center:                 PFX + 'context.center',
+  displayConfig:          PFX + 'context.displayConfig',
+  cancel:                 '@cancel',
+  ok:                     '@ok',
+} satisfies Record<string, string>;
+
+export type ContextSectionI18n = { [K in keyof typeof CONTEXT_SECTION_I18N_KEYS]: Signal<string> };
+
+// ---------------------------------------------------------------------------
 // form-section (FormSectionStore)
 // ---------------------------------------------------------------------------
 
 export const FORMS_SECTION_I18N_KEYS = {
-  submit:       PFX + 'form.section.submit.label',
-  submit_conf:  PFX + 'form.section.submit.conf',
-  submit_error: PFX + 'form.section.submit.error',
-  not_found:    PFX + 'form.section.not_found',
-  archived:     PFX + 'form.section.archived',
+  submit:       PFX + 'form.submit.label',
+  submit_conf:  PFX + 'form.submit.conf',
+  submit_error: PFX + 'form.submit.error',
+  not_found:    PFX + 'form.not_found',
+  archived:     PFX + 'form.archived',
 } satisfies Record<string, string>;
 
 export type FormsSectionI18n = { [K in keyof typeof FORMS_SECTION_I18N_KEYS]: Signal<string> };
@@ -79,11 +103,11 @@ export type InvitationStoreI18n = { [K in keyof typeof INVITATION_STORE_I18N_KEY
 // ---------------------------------------------------------------------------
 
 export const MEMBER_AGE_SECTION_I18N_KEYS = {
-  ageGroup: PFX + 'memberAge.ageGroup',
-  male:     PFX + 'memberAge.male',
-  female:   PFX + 'memberAge.female',
-  total:    PFX + 'memberAge.total',
-  empty:    PFX + 'memberAge.empty',
+  ageGroup: PFX + 'member.age.group',
+  male:     PFX + 'member.age.male',
+  female:   PFX + 'member.age.female',
+  total:    PFX + 'member.age.total',
+  empty:    PFX + 'member.age.empty',
 } satisfies Record<string, string>;
 
 export type MemberAgeSectionI18n = { [K in keyof typeof MEMBER_AGE_SECTION_I18N_KEYS]: Signal<string> };
@@ -93,11 +117,11 @@ export type MemberAgeSectionI18n = { [K in keyof typeof MEMBER_AGE_SECTION_I18N_
 // ---------------------------------------------------------------------------
 
 export const MEMBER_CAT_SECTION_I18N_KEYS = {
-  category: PFX + 'memberCat.category',
-  male:     PFX + 'memberCat.male',
-  female:   PFX + 'memberCat.female',
-  total:    PFX + 'memberCat.total',
-  empty:    PFX + 'memberCat.empty',
+  category: PFX + 'member.cat.category',
+  male:     PFX + 'member.cat.male',
+  female:   PFX + 'member.cat.female',
+  total:    PFX + 'member.cat.total',
+  empty:    PFX + 'member.cat.empty',
 } satisfies Record<string, string>;
 
 export type MemberCatSectionI18n = { [K in keyof typeof MEMBER_CAT_SECTION_I18N_KEYS]: Signal<string> };
@@ -107,7 +131,7 @@ export type MemberCatSectionI18n = { [K in keyof typeof MEMBER_CAT_SECTION_I18N_
 // ---------------------------------------------------------------------------
 
 export const MESSAGES_SECTION_I18N_KEYS = {
-  messages_empty: PFX + 'messages.empty',
+  messages_empty: PFX + 'chat.empty',
   more:           '@more',
 } satisfies Record<string, string>;
 
@@ -132,15 +156,16 @@ export type NewsSectionI18n = { [K in keyof typeof NEWS_SECTION_I18N_KEYS]: Sign
 // ---------------------------------------------------------------------------
 
 export const ORGCHART_SECTION_I18N_KEYS = {
-  group_detach_confirm:    PFX + 'group.detach.confirm',
-  ok:                      '@ok',
-  cancel:                  '@cancel',
-  view_accordion:          '@cms.orgchart.view.accordion',
-  view_chart:              '@cms.orgchart.view.chart',
-  as_addNewGroup:          PFX + 'orgchart.actionsheet.addNewGroup',
-  as_addExistingGroup:     PFX + 'orgchart.actionsheet.addExistingGroup',
-  as_editGroup:            PFX + 'orgchart.actionsheet.editGroup',
-  as_removeGroup:          PFX + 'orgchart.actionsheet.removeGroup',
+  ok:                           '@ok',
+  cancel:                       '@cancel',
+  view_accordion:               PFX + 'orgchart.accordion',
+  view_chart:                   PFX + 'orgchart.chart',
+  group_add_new:                PFX + 'orgchart.group.add.new',
+  group_add_existing:           PFX + 'orgchart.group.add.existing',
+  group_edit:                   PFX + 'orgchart.group.edit',
+  group_remove_label:           PFX + 'orgchart.group.remove.label',
+  group_remove_confirm:         PFX + 'group.detach.confirm',
+
 } satisfies Record<string, string>;
 
 export type OrgchartSectionI18n = { [K in keyof typeof ORGCHART_SECTION_I18N_KEYS]: Signal<string> };

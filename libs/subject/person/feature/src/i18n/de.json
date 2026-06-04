@@ -88,6 +88,16 @@
     "helper": "Eine Web Adresse (URL auf eine Website)"
   },
 
+  "add": {
+    "membership": {
+      "label": "Mitgliedschaft (optional)",
+      "confirm": "Soll eine Mitgliedschaft erstellt werden ?",
+      "conf": "Die Mitgliedschaft wurde gespeichert.",
+      "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
+      "helper": "Du kannst eine Organisation wählen, zu der die neue Person als Mitglied erfasst wird. Zusätzlich musst du das Eintrittsdatum und die Mitglieder-Kategorie festlegen.",
+      "exists": "Dieses Mitglied ist bereits vorhanden."
+    }
+  },
   "call": {
     "phone": "Anrufen"
   },
@@ -108,7 +118,7 @@
     "conf": "Die Person wurde gespeichert",
     "error": "Die Person konnte nicht gespeichert werden."
   },
-  "edit": {
+  "update": {
     "label": "Person ändern",
     "conf": "Die Person wurde gespeichert",
     "error": "Die Person konnte nicht gespeichert werden."
@@ -130,16 +140,8 @@
     "error": "Die Person konnte nicht gelöscht werden."
   },
 
-  "add_membership": {
-    "label": "Mitgliedschaft (optional)",
-    "confirm": "Soll eine Mitgliedschaft erstellt werden ?",
-    "conf": "Die Mitgliedschaft wurde gespeichert.",
-    "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
-    "helper": "Du kannst eine Organisation wählen, zu der die neue Person als Mitglied erfasst wird. Zusätzlich musst du das Eintrittsdatum und die Mitglieder-Kategorie festlegen.",
-    "exists": "Dieses Mitglied ist bereits vorhanden."
-  },
-
   "validation": {
-    "lastNameRequired": "Die Eingabe eines Nachnamens ist obligatorisch."
+    "lastNameRequired": "Die Eingabe eines Nachnamens ist obligatorisch.",
+    "validSSN": "Bitte eine gültige AHV-Nummer eingeben."
   }
 }

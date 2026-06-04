@@ -54,14 +54,13 @@ import { InvitationSectionStore } from './invitations-section.store';
                 <ion-col>
                   <ion-label>{{inv.name}}</ion-label>
                 </ion-col>
-
               </ion-row>
             }
             @if(showMoreButton()) {
               <ion-row>
                 <ion-col size="3">
                   <ion-button expand="block" fill="clear" (click)="openMoreUrl()">
-                    Mehr...
+                    {{ store.i18n.more() }}
                   </ion-button>
                 </ion-col>
               </ion-row>
@@ -73,7 +72,7 @@ import { InvitationSectionStore } from './invitations-section.store';
   `,
 })
 export class InvitationsSectionComponent implements OnInit {
-  protected invitationStore = inject(InvitationSectionStore);
+  protected store = inject(InvitationSectionStore);
   private readonly platformId = inject(PLATFORM_ID);
   private actionSheetController = inject(ActionSheetController);
   private router = inject(Router);
@@ -95,32 +94,32 @@ export class InvitationsSectionComponent implements OnInit {
   protected readonly invitations = computed(() => {
     switch (this.scope()) {
         case 'my': 
-            return this.invitationStore.myInvitations();
+            return this.store.myInvitations();
         case 'all':
-            return this.invitationStore.filteredInvitations();
+            return this.store.filteredInvitations();
         default: // explicit calevent key given
-            return this.invitationStore.invitees();
+            return this.store.invitees();
         }
   });
-  private currentUser = computed(() => this.invitationStore.currentUser());
+  private currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   protected isLoading = computed(() => false);
 
   // passing constants to the template
-  private imgixBaseUrl = this.invitationStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
    constructor() {
     effect(() => {
-      this.invitationStore.setConfig(this.maxItems(), this.showPastItems(), this.showUpcomingItems());
+      this.store.setConfig(this.maxItems(), this.showPastItems(), this.showUpcomingItems());
       switch (this.scope()) {
         case 'my': 
-            this.invitationStore.setScope('', this.currentUser()?.personKey ?? '', true);
+            this.store.setScope('', this.currentUser()?.personKey ?? '', true);
             break;
         case 'all':
-            this.invitationStore.setScope('', '', true);
+            this.store.setScope('', '', true);
             break;
         default: // explicit calevent key given
-            this.invitationStore.setScope(this.scope() ?? '', '', true);
+            this.store.setScope(this.scope() ?? '', '', true);
             break;
         }
     });
@@ -146,7 +145,7 @@ export class InvitationsSectionComponent implements OnInit {
    */
   protected async showActions(inv: InvitationModel): Promise<void> {
     if (this.editMode()) return;
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, inv);
     await this.executeActions(actionSheetOptions, inv);
   }
@@ -158,12 +157,12 @@ export class InvitationsSectionComponent implements OnInit {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, inv: InvitationModel): void {
     if (hasRole('registered', this.currentUser())) {
       if (inv.state !== 'accepted') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.invitationStore.i18n.as_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.store.i18n.subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
       }
       if (inv.state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.invitationStore.i18n.as_unsubscribe(), this.imgixBaseUrl, 'cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.store.i18n.unsubscribe(), this.imgixBaseUrl, 'cancel'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.invitationStore.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       if (actionSheetOptions.buttons.length === 1) { // only cancel button
         actionSheetOptions.buttons = [];
       }
@@ -183,10 +182,10 @@ export class InvitationsSectionComponent implements OnInit {
       if (!data) return;
       switch (data.action) {
         case 'invitation.subscribe':
-          await this.invitationStore.changeState(invitation, 'accepted');          
+          await this.store.changeState(invitation, 'accepted');          
           break;
         case 'invitation.unsubscribe':
-          await this.invitationStore.changeState(invitation, 'declined');
+          await this.store.changeState(invitation, 'declined');
           break;
       }
     }

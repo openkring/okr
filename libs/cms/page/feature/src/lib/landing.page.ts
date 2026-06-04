@@ -1,11 +1,15 @@
 import { Component, computed, inject } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs';
 import { IonButton, IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { Header } from '@bk2/shared-ui';
+import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { PageStore } from './page.store';
-import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
+import { PFX } from './scope';
 
 /**
  * LandingPage is a page that greets users when they visit the application.
@@ -119,15 +123,47 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
 })
 export class LandingPage {
   private readonly store = inject(PageStore);
+  private readonly i18nService = inject(I18nService);
 
   protected page = computed(() => this.store.page());
-  protected title = computed (() => this.page()?.title ?? 'Title missing');
-  protected subTitle = computed (() => this.page()?.subTitle ?? 'Subtitle missing');
-  protected abstract = computed (() => this.page()?.abstract);
+
+  protected title = toSignal(
+    toObservable(computed(() => this.store.page()?.title)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+    ),
+    { initialValue: '' }
+  );
+
+  protected subTitle = toSignal(
+    toObservable(computed(() => this.store.page()?.subTitle)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+    ),
+    { initialValue: '' }
+  );
+
+  protected abstract = toSignal(
+    toObservable(computed(() => this.store.page()?.abstract)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+    ),
+    { initialValue: '' }
+  );
+
+  protected logoAltText = toSignal(
+    toObservable(computed(() => this.store.page()?.logoAltText)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : `${this.store.tenantId()} Logo`))
+    ),
+    { initialValue: '' }
+  );
+
+  protected bannerAltText = toSignal(
+    toObservable(computed(() => this.store.page()?.bannerAltText)).pipe(
+      switchMap(key => this.i18nService.translate(key ? PFX + key : `${this.store.tenantId()} Banner`))
+    ),
+    { initialValue: '' }
+  );
+
   protected logoUrl = computed (() => this.store.getImgixUrl(this.page()?.logoUrl));
-  protected logoAltText = computed(() => this.page()?.logoAltText || `${this.store.tenantId()} Logo`);
   protected bannerUrl = computed(() => this.store.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
-  protected bannerAltText = computed(() => this.page()?.bannerAltText || `${this.store.tenantId()} Banner`);
   protected isAuthenticated = computed(() => this.store.appStore.isAuthenticated());
 
   protected async gotoHome(): Promise<void> {

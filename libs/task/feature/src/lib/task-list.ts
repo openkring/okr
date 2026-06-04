@@ -301,15 +301,15 @@ export class TaskList {
    * @param task 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.as_done(), this.imgixBaseUrl, 'checkbox'));
+    actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.done(), this.imgixBaseUrl, 'checkbox'));
     actionSheetOptions.buttons.push(createActionSheetDivider());
     if (this.canChange(task)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('admin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button

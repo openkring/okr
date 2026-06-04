@@ -18,12 +18,12 @@ import { ApplicationForm } from '@bk2/application-ui';
   template: `
   <ion-header>
     <ion-toolbar color="secondary">
-      <ion-title>{{ i18n().edit_title() }}</ion-title>
+      <ion-title>{{ i18n().update_title() }}</ion-title>
       <ion-buttons slot="end">
         @if(!isTerminal()) {
-          <ion-button (click)="save()">{{ i18n().edit_title() }}</ion-button>
-          <ion-button color="success" (click)="accept()">{{ i18n().edit_accept() }}</ion-button>
-          <ion-button color="danger"  (click)="deny()">{{ i18n().edit_deny() }}</ion-button>
+          <ion-button (click)="save()">{{ i18n().update_title() }}</ion-button>
+          <ion-button color="success" (click)="accept()">{{ i18n().accept() }}</ion-button>
+          <ion-button color="danger"  (click)="deny()">{{ i18n().deny() }}</ion-button>
         }
         <ion-button (click)="dismiss()">{{ i18n().cancel() }}</ion-button>
       </ion-buttons>
@@ -58,7 +58,7 @@ export class ApplicationEditModal {
   }
 
   protected async accept(): Promise<void> {
-    const confirmed = await this.alertService.confirm(this.i18n().edit_accept_confirm(), true);
+    const confirmed = await this.alertService.confirm(this.i18n().accept_confirm(), true);
     if (confirmed !== true) return;
     const personKey = await this.applicationService.accept(this.currentApp(), this.currentUser());
     await this.modalController.dismiss({ accepted: true, personKey }, 'confirm');
@@ -78,11 +78,11 @@ export class ApplicationEditModal {
   private async promptForReason(): Promise<string | undefined> {
     return new Promise(async (resolve) => {
       const alert = await this.alertController.create({
-        header: this.i18n().edit_deny_reason(),
+        header: this.i18n().deny_reason(),
         inputs: [{ name: 'reason', type: 'text' }],
         buttons: [
           { text: this.i18n().cancel(), role: 'cancel', handler: () => resolve(undefined) },
-          { text: this.i18n().edit_deny(), role: 'confirm', handler: (v: Record<string, string>) => resolve(v?.['reason']) }
+          { text: this.i18n().deny(), role: 'confirm', handler: (v: Record<string, string>) => resolve(v?.['reason']) }
         ]
       });
       await alert.present();

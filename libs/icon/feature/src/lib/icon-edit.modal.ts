@@ -1,12 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
+import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { IconModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { IconEditForm } from '@bk2/icon-ui';
-import { IconStore } from './icon.store';
+import { ICON_I18N_KEYS, IconI18n } from '@bk2/icon-util';
 
 @Component({
   selector: 'bk-icon-edit-modal',
@@ -15,11 +17,10 @@ import { IconStore } from './icon.store';
     Header, ChangeConfirmation, IconEditForm,
     IonContent
   ],
-  providers: [IconStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
@@ -32,7 +33,7 @@ import { IconStore } from './icon.store';
             [tenants]="tenantId()"
             [readOnly]="isReadOnly()"
             [showForm]="showForm()"
-            [i18n]="store.i18n"
+            [i18n]="i18n"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
           />
@@ -43,7 +44,8 @@ import { IconStore } from './icon.store';
 })
 export class IconEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(IconStore);
+  protected readonly i18n = inject(I18nService).translateAll(ICON_I18N_KEYS) as IconI18n;
+  protected readonly appStore = inject(AppStore);
 
   // inputs
   public icon = input.required<IconModel>();
@@ -59,10 +61,13 @@ export class IconEditModal {
   public formData = linkedSignal(() => safeStructuredClone(this.icon()));
 
   // derived
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.icon()?.bkey));
-  protected tenantId = computed(() => this.store.tenantId());
+  protected readonly headerTitle = computed(() => {
+    if (this.isReadOnly()) return this.i18n.as_view();
+    return this.icon()?.bkey ? this.i18n.as_edit() : this.i18n.create_label();
+  });
+  protected tenantId = computed(() => this.appStore.tenantId());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

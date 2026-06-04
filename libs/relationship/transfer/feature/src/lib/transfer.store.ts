@@ -13,7 +13,6 @@ import { I18nService } from '@bk2/shared-i18n';
 import { TransferService } from '@bk2/relationship-transfer-data-access';
 import { isTransfer, TRANSFER_I18N_KEYS, TransferI18n } from '@bk2/relationship-transfer-util';
 
-import { TransferEditModal } from './transfer-edit.modal';
 
 export type TransferState = {
   searchTerm: string;
@@ -135,6 +134,7 @@ export const TransferStore = signalStore(
        */
       async edit(transfer?: TransferModel, readOnly = true): Promise<void> {
         if (transfer && !readOnly) {
+        const { TransferEditModal } = await import('./transfer-edit.modal');
         const modal = await store.modalController.create({
           component: TransferEditModal,
           componentProps: {

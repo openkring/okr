@@ -1,5 +1,5 @@
 import { FormsModule } from '@angular/forms';
-import { Component, computed, inject, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -10,56 +10,8 @@ import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserMode
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
 
-import { membershipValidations } from '@bk2/relationship-membership-util';
+import { MembershipI18n, membershipValidations } from '@bk2/relationship-membership-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
-
-export interface MembershipFormI18n {
-  new_desc: Signal<string>;
-  category_label: Signal<string>;
-  category_helper: Signal<string>;
-  category_name: Signal<string>;
-  select: Signal<string>;
-  key: Signal<string>;
-
-  member_state_label: Signal<string>;
-  member_state_helper: Signal<string>;
-
-  memberid_label: Signal<string>;
-  memberid_placeholder: Signal<string>;
-  memberid_helper: Signal<string>;
-
-  bexioid_label: Signal<string>;
-  bexioid_placeholder: Signal<string>;
-  bexioid_helper: Signal<string>;
-
-  abbreviation_label: Signal<string>;
-  abbreviation_placeholder: Signal<string>;
-  abbreviation_helper: Signal<string>;
-
-  nickname_label: Signal<string>;
-  nickname_placeholder: Signal<string>;
-  nickname_helper: Signal<string>;
-
-  org_function_label: Signal<string>;
-  org_function_placeholder: Signal<string>;
-  org_function_helper: Signal<string>;
-
-  rebate_label: Signal<string>;
-  rebate_placeholder: Signal<string>;
-  rebate_helper: Signal<string>;
-  rebate_reason: Signal<string>;
-
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-
-  dateOfEntry_label: Signal<string>;
-  dateOfEntry_placeholder: Signal<string>;
-  dateOfEntry_helper: Signal<string>;
-
-  dateOfExit_label: Signal<string>;
-  dateOfExit_placeholder: Signal<string>;
-  dateOfExit_helper: Signal<string>;
-}
 
 @Component({
   selector: 'bk-membership-form',
@@ -241,7 +193,7 @@ export class MembershipForm {
   protected rebateReasonI18n = computed(() => ({ name: 'rebateReason', label: this.i18n().rebate_reason() } as StringSelectI18n));
 
   // inputs
-  public readonly i18n = input.required<MembershipFormI18n>();
+  public readonly i18n = input.required<MembershipI18n>();
   public readonly formData = model.required<MembershipModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

@@ -5,13 +5,13 @@ import { TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@bk2/shared-ui
 import { IframeConfig } from '@bk2/shared-models';
 
 interface IframeConfigI18n {
-  style_label:       Signal<string>;
-  style_placeholder: Signal<string>;
-  style_helper:      Signal<string>;
-  url_label:         Signal<string>;
-  url_placeholder:   Signal<string>;
-  url_helper:        Signal<string>;
   iframe_title:      Signal<string>;
+  iframe_style_label:       Signal<string>;
+  iframe_style_placeholder: Signal<string>;
+  iframe_style_helper:      Signal<string>;
+  iframe_url_label:         Signal<string>;
+  iframe_url_placeholder:   Signal<string>;
+  iframe_url_helper:        Signal<string>;
 }
 
 @Component({
@@ -60,15 +60,15 @@ export class IframeConfiguration {
 
   protected styleI18n = computed(() => ({
     name: 'style',
-    label: this.i18n().style_label(),
-    placeholder: this.i18n().style_placeholder(),
-    helper: this.i18n().style_helper(),
+    label: this.i18n().iframe_style_label(),
+    placeholder: this.i18n().iframe_style_placeholder(),
+    helper: this.i18n().iframe_style_helper(),
   } as TextInputI18n));
   protected urlI18n = computed(() => ({
     name: 'url',
-    label: this.i18n().url_label(),
-    placeholder: this.i18n().url_placeholder(),
-    helper: this.i18n().url_helper(),
+    label: this.i18n().iframe_url_label(),
+    placeholder: this.i18n().iframe_url_placeholder(),
+    helper: this.i18n().iframe_url_helper(),
   } as UrlInputI18n));
 
   protected onFieldChange(fieldName: string, $event: string): void {

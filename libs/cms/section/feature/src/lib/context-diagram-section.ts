@@ -113,11 +113,11 @@ export class ContextDiagramSectionComponent {
 
   protected async showAdminActions(nodeId: string): Promise<void> {
     const isCurrentCenter = nodeId === this.store.currentCenter();
-    const options = createActionSheetOptions('@actionsheet.label.choose');
+    const options = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons = [
-      createActionSheetButton('contextDiagram.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'),
-      ...(!isCurrentCenter ? [createActionSheetButton('contextDiagram.center', this.store.i18n.as_center(), this.imgixBaseUrl, 'locate')] : []),
-      createActionSheetButton('contextDiagram.displayConfig', this.store.i18n.as_displayConfig(), this.imgixBaseUrl, 'settings'),
+      createActionSheetButton('contextDiagram.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'),
+      ...(!isCurrentCenter ? [createActionSheetButton('contextDiagram.center', this.store.i18n.center(), this.imgixBaseUrl, 'locate')] : []),
+      createActionSheetButton('contextDiagram.displayConfig', this.store.i18n.displayConfig(), this.imgixBaseUrl, 'settings'),
       createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'),
     ];
     const sheet = await this.actionSheetController.create(options);

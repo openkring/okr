@@ -5,22 +5,22 @@ import { EventsConfig } from '@bk2/shared-models';
 import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 
 interface EventsConfigI18n {
-  events_title:               Signal<string>;
-  events_subtitle:            Signal<string>;
-  moreUrl_label:              Signal<string>;
-  moreUrl_placeholder:        Signal<string>;
-  moreUrl_helper:             Signal<string>;
-  maxEvents_label:            Signal<string>;
-  maxEvents_placeholder:      Signal<string>;
-  maxEvents_helper:           Signal<string>;
-  showPastEvents_label:       Signal<string>;
-  showPastEvents_helper:      Signal<string>;
-  showUpcomingEvents_label:   Signal<string>;
-  showUpcomingEvents_helper:  Signal<string>;
-  showEventTime_label:        Signal<string>;
-  showEventTime_helper:       Signal<string>;
-  showEventLocation_label:    Signal<string>;
-  showEventLocation_helper:   Signal<string>;
+  event_title:                  Signal<string>;
+  event_subtitle:               Signal<string>;
+  event_more_label:             Signal<string>;
+  event_more_placeholder:       Signal<string>;
+  event_more_helper:            Signal<string>;
+  event_max_label:              Signal<string>;
+  event_max_placeholder:        Signal<string>;
+  event_max_helper:             Signal<string>;
+  event_show_past_label:        Signal<string>;
+  event_show_past_helper:       Signal<string>;
+  event_show_future_label:      Signal<string>;
+  event_show_future_helper:     Signal<string>;
+  event_show_time_label:        Signal<string>;
+  event_show_time_helper:       Signal<string>;
+  event_show_location_label:    Signal<string>;
+  event_show_location_helper:   Signal<string>;
 }
 
 @Component({
@@ -35,8 +35,8 @@ interface EventsConfigI18n {
 
     <ion-card>
       <ion-card-header>
-          <ion-card-title>{{ i18n().events_title() }}</ion-card-title>
-          <ion-card-subtitle>{{ i18n().events_subtitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().event_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().event_subtitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -86,37 +86,37 @@ export class EventsConfiguration {
   protected showEventTime = linkedSignal(() => this.formData().showEventTime ?? true);
   protected showEventLocation = linkedSignal(() => this.formData().showEventLocation ?? true);
 
-  protected maxEventsI18n = computed(() => ({ name: 'maxEvents', label: this.i18n().maxEvents_label(), placeholder: this.i18n().maxEvents_placeholder(), helper: this.i18n().maxEvents_helper() } as NumberInputI18n));
+  protected maxEventsI18n = computed(() => ({ name: 'maxEvents', label: this.i18n().event_max_label(), placeholder: this.i18n().event_max_placeholder(), helper: this.i18n().event_max_helper() } as NumberInputI18n));
 
   protected moreUrlI18n = computed(() => ({
     name: 'moreUrl',
-    label: this.i18n().moreUrl_label(),
-    placeholder: this.i18n().moreUrl_placeholder(),
-    helper: this.i18n().moreUrl_helper(),
+    label: this.i18n().event_more_label(),
+    placeholder: this.i18n().event_more_placeholder(),
+    helper: this.i18n().event_more_helper(),
   } as TextInputI18n));
 
   protected showPastEventsI18n = computed(() => ({
     name: 'showPastEvents',
-    label: this.i18n().showPastEvents_label(),
-    helper: this.i18n().showPastEvents_helper(),
+    label: this.i18n().event_show_past_label(),
+    helper: this.i18n().event_show_past_helper(),
   } as CheckboxI18n));
 
   protected showUpcomingEventsI18n = computed(() => ({
     name: 'showUpcomingEvents',
-    label: this.i18n().showUpcomingEvents_label(),
-    helper: this.i18n().showUpcomingEvents_helper(),
+    label: this.i18n().event_show_future_label(),
+    helper: this.i18n().event_show_future_helper(),
   } as CheckboxI18n));
 
   protected showEventTimeI18n = computed(() => ({
     name: 'showEventTime',
-    label: this.i18n().showEventTime_label(),
-    helper: this.i18n().showEventTime_helper(),
+    label: this.i18n().event_show_time_label(),
+    helper: this.i18n().event_show_time_helper(),
   } as CheckboxI18n));
 
   protected showEventLocationI18n = computed(() => ({
     name: 'showEventLocation',
-    label: this.i18n().showEventLocation_label(),
-    helper: this.i18n().showEventLocation_helper(),
+    label: this.i18n().event_show_location_label(),
+    helper: this.i18n().event_show_location_helper(),
   } as CheckboxI18n));
 
   protected onFieldChange(fieldName: string, $event: string | boolean | number): void {

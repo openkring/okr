@@ -17,13 +17,13 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ImageEditModal } from './image-edit.modal';
 
 interface ImagesConfigurationI18n {
-  title: Signal<string>;
-  empty: Signal<string>;
-  image_upload: Signal<string>;
-  as_title: Signal<string>;
-  image_edit: Signal<string>;
-  image_delete: Signal<string>;
-  cancel: Signal<string>;
+  image_empty:              Signal<string>;
+  as_title:                 Signal<string>;
+  image_edit_title:         Signal<string>;
+  image_edit_title_modal:   Signal<string>;
+  image_delete:             Signal<string>;
+  image_upload:             Signal<string>;
+  cancel:                   Signal<string>;
 }
 
 @Component({
@@ -46,7 +46,7 @@ interface ImagesConfigurationI18n {
     <ion-card>
       <ion-card-header>
         <div class="image-list-header">
-          <ion-card-title>{{ i18n().title() }}</ion-card-title>
+          <ion-card-title>{{ i18n().image_edit_title_modal() }}</ion-card-title>
           @if(!readOnly()) {
             <ion-buttons>
               <label style="display: flex; align-items: center;">
@@ -64,7 +64,7 @@ interface ImagesConfigurationI18n {
         <ion-list lines="inset">
           @if(images().length === 0) {
             <ion-item>
-              <ion-label color="medium">{{ i18n().empty() }}</ion-label>
+              <ion-label color="medium">{{ i18n().image_empty() }}</ion-label>
             </ion-item>
           } @else {
             <!-- Casting $event to $any is a temporary fix for https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -158,7 +158,7 @@ export class ImagesConfiguration {
     if (this.readOnly()) return;
     const i18n = this.i18n();
     const options: ActionSheetOptions = createActionSheetOptions(i18n.as_title());
-    options.buttons.push(createActionSheetButton('image.edit', i18n.image_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('image.edit', i18n.image_edit_title(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('image.delete', i18n.image_delete(), this.imgixBaseUrl, 'trash'));
     options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
 

@@ -7,17 +7,17 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 
 interface TrackerConfigI18n {
   tracker_title:                 Signal<string>;
-  intervalInSeconds_label:       Signal<string>,
-  intervalInSeconds_placeholder: Signal<string>,
-  intervalInSeconds_helper:      Signal<string>,
-  maximumAge_label:              Signal<string>,
-  maximumAge_placeholder:        Signal<string>,
-  maximumAge_helper:             Signal<string>,
-  exportFormat_label:            Signal<string>,
-  autostart_label:               Signal<string>,
-  autostart_helper:              Signal<string>,
-  enableHighAccuracy_label:      Signal<string>,
-  enableHighAccuracy_helper:     Signal<string>,
+  tracker_intervalInSeconds_label:       Signal<string>,
+  tracker_intervalInSeconds_placeholder: Signal<string>,
+  tracker_intervalInSeconds_helper:      Signal<string>,
+  tracker_maximumAge_label:              Signal<string>,
+  tracker_maximumAge_placeholder:        Signal<string>,
+  tracker_maximumAge_helper:             Signal<string>,
+  tracker_exportFormat_label:            Signal<string>,
+  tracker_autostart_label:               Signal<string>,
+  tracker_autostart_helper:              Signal<string>,
+  tracker_enableHighAccuracy_label:      Signal<string>,
+  tracker_enableHighAccuracy_helper:     Signal<string>,
 }
 
 @Component({
@@ -37,19 +37,19 @@ interface TrackerConfigI18n {
           <ion-grid>
             <ion-row>
                 <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="autostartI18n()" [checked]="autostart()" (checkedChange)="onFieldChange('autostart', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  <bk-checkbox [i18n]="autostartI18n()" [checked]="autostart()" (checkedChange)="onFieldChange('autostart', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                    <bk-number-input [i18n]="intervalInSecondsI18n()" [value]="intervalInSeconds()" (valueChange)="onFieldChange('intervalInSeconds', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <bk-number-input [i18n]="intervalInSecondsI18n()" [value]="intervalInSeconds()" (valueChange)="onFieldChange('intervalInSeconds', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="enableHighAccuracyI18n()" [checked]="enableHighAccuracy()" (checkedChange)="onFieldChange('enableHighAccuracy', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  <bk-checkbox [i18n]="enableHighAccuracyI18n()" [checked]="enableHighAccuracy()" (checkedChange)="onFieldChange('enableHighAccuracy', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                    <bk-number-input [i18n]="maximumAgeI18n()" [value]="maximumAge()" (valueChange)="onFieldChange('maximumAge', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <bk-number-input [i18n]="maximumAgeI18n()" [value]="maximumAge()" (valueChange)="onFieldChange('maximumAge', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                <bk-string-select [i18n]="exportFormatI18n()" [selectedString]="exportFormat()" (selectedStringChange)="onFieldChange('exportFormat', $event)" [readOnly]="readOnly()" [stringList]="['kmz', 'json', 'csv']" />
+                  <bk-string-select [i18n]="exportFormatI18n()" [selectedString]="exportFormat()" (selectedStringChange)="onFieldChange('exportFormat', $event)" [readOnly]="readOnly()" [stringList]="['kmz', 'json', 'csv']" />
                 </ion-col>
             </ion-row>
           </ion-grid>
@@ -73,29 +73,29 @@ export class TrackerConfiguration {
 
   protected intervalInSecondsI18n = computed(() => ({
     name: 'intervalInSeconds',
-    label: this.i18n().intervalInSeconds_label(),
-    placeholder: this.i18n().intervalInSeconds_placeholder(),
-    helper: this.i18n().intervalInSeconds_helper(),
+    label: this.i18n().tracker_intervalInSeconds_label(),
+    placeholder: this.i18n().tracker_intervalInSeconds_placeholder(),
+    helper: this.i18n().tracker_intervalInSeconds_helper(),
   } as NumberInputI18n));
 
   protected maximumAgeI18n = computed(() => ({
     name: 'maximumAge',
-    label: this.i18n().maximumAge_label(),
-    placeholder: this.i18n().maximumAge_placeholder(),
-    helper: this.i18n().maximumAge_helper(),
+    label: this.i18n().tracker_maximumAge_label(),
+    placeholder: this.i18n().tracker_maximumAge_placeholder(),
+    helper: this.i18n().tracker_maximumAge_helper(),
   } as NumberInputI18n));
-  protected exportFormatI18n = computed(() => ({ name: 'exportFormat', label: this.i18n().exportFormat_label() } as StringSelectI18n));
+  protected exportFormatI18n = computed(() => ({ name: 'exportFormat', label: this.i18n().tracker_exportFormat_label() } as StringSelectI18n));
 
   protected autostartI18n = computed(() => ({
     name: 'autostart',
-    label: this.i18n().autostart_label(),
-    helper: this.i18n().autostart_helper(),
+    label: this.i18n().tracker_autostart_label(),
+    helper: this.i18n().tracker_autostart_helper(),
   } as CheckboxI18n));
 
   protected enableHighAccuracyI18n = computed(() => ({
     name: 'enableHighAccuracy',
-    label: this.i18n().enableHighAccuracy_label(),
-    helper: this.i18n().enableHighAccuracy_helper(),
+    label: this.i18n().tracker_enableHighAccuracy_label(),
+    helper: this.i18n().tracker_enableHighAccuracy_helper(),
   } as CheckboxI18n));
 
   /************************************** actions *********************************************** */

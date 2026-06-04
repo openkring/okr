@@ -4,18 +4,19 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
+import { AppStore } from '@bk2/shared-feature';
 
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { DocumentsAccordion } from '@bk2/document-feature';
 
 import { MembershipForm } from '@bk2/relationship-membership-ui';
 import { RelationshipToolbar } from '@bk2/avatar-ui';
-import { MembershipStore } from './membership.store';
+import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@bk2/relationship-membership-util';
 
 @Component({
   selector: 'bk-membership-edit-modal',
   standalone: true,
-  providers: [MembershipStore],
   imports: [
     CommentsAccordion, MembershipForm, RelationshipToolbar, Header,
     ChangeConfirmation, DocumentsAccordion,
@@ -25,7 +26,7 @@ import { MembershipStore } from './membership.store';
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
 
@@ -34,7 +35,7 @@ import { MembershipStore } from './membership.store';
           relType="membership"
           [subjectAvatar]="memberAvatar()"
           [objectAvatar]="orgAvatar()"
-          [relDesc1]="store.i18n.reldesc1()" [relDesc2]="store.i18n.reldesc2()"
+          [relDesc1]="i18n.reldesc1()" [relDesc2]="i18n.reldesc2()"
           [currentUser]="currentUser"
         />
         @if(currentMcat(); as mcat) {
@@ -47,7 +48,7 @@ import { MembershipStore } from './membership.store';
               [allTags]="tags()"
               [readOnly]="isReadOnly()"
               [priv]="priv()"
-              [i18n]="store.i18n"
+              [i18n]="i18n"
               (dirty)="manualDirty.set($event)"
               (valid)="formValid.set($event)"
             />
@@ -70,7 +71,8 @@ import { MembershipStore } from './membership.store';
 })
 export class MembershipEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(MembershipStore);
+  protected readonly i18n = inject(I18nService).translateAll(MEMBERSHIP_I18N_KEYS) as MembershipI18n;
+  protected readonly appStore = inject(AppStore);
 
   // inputs
   public membership = input.required<MembershipModel>();
@@ -93,7 +95,7 @@ export class MembershipEditModal {
   protected manualDirty = signal(false);
 
   // derived signals
-  protected headerTitle = computed(() => this.isReadOnly() ? this.store.i18n.view_label() : this.store.i18n.update_label());
+  protected headerTitle = computed(() => this.isReadOnly() ? this.i18n.view_label() : this.i18n.update_label());
   protected readonly parentKey = computed(() => `${MembershipModelName}.${this.memberKey()}`);
   protected readonly name = computed(() => { const m = this.formData() ?? this.membership(); return getFullName(m.memberName1, m.memberName2, this.currentUser()?.nameDisplay); });
   protected memberAvatar = computed<AvatarInfo>(() => {
@@ -107,11 +109,11 @@ export class MembershipEditModal {
   protected memberKey = computed(() => this.formData()?.memberKey ?? '');
   protected currentMcat = computed<CategoryListModel>(() => {
     const orgKey = (this.formData() ?? this.membership()).orgKey;
-    const org = this.store.appStore.allOrgs().find(o => o.bkey === orgKey);
-    return this.store.appStore.tryGetCategory(org?.membershipCategoryKey ?? 'mcat_default') ?? this.mcat();
+    const org = this.appStore.allOrgs().find(o => o.bkey === orgKey);
+    return this.appStore.tryGetCategory(org?.membershipCategoryKey ?? 'mcat_default') ?? this.mcat();
   });
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<boolean> {

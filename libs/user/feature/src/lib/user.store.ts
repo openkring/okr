@@ -168,12 +168,12 @@ export const UserStore = signalStore(
 
       getTitleLabel(readOnly: boolean, key?: string): string {
         if (readOnly) {
-          return store.i18n.as_view();
+          return store.i18n.view();
         }
         if (key && key.length > 0) {
-          return store.i18n.as_edit();
+          return store.i18n.update();
         } else {
-          return store.i18n.as_create();
+          return store.i18n.create();
         }
       }
     }

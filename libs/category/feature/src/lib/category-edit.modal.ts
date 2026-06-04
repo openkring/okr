@@ -1,12 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
+import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { CategoryListForm } from '@bk2/category-ui';
-import { CategoryStore } from './category.store';
+import { CATEGORY_I18N_KEYS, CategoryI18n } from '@bk2/category-util';
 
 @Component({
   selector: 'bk-category-edit-modal',
@@ -15,11 +17,10 @@ import { CategoryStore } from './category.store';
     Header, ChangeConfirmation, CategoryListForm,
     IonContent
   ],
-  providers: [CategoryStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
@@ -32,7 +33,7 @@ import { CategoryStore } from './category.store';
             [tenants]="tenantId()"
             [hasAbbreviation]="hasAbbreviation()"
             [readOnly]="isReadOnly()"
-            [i18n]="store.i18n"
+            [i18n]="i18n"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
           />
@@ -43,7 +44,8 @@ import { CategoryStore } from './category.store';
 })
 export class CategoryEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(CategoryStore);
+  protected readonly i18n = inject(I18nService).translateAll(CATEGORY_I18N_KEYS) as CategoryI18n;
+  protected readonly appStore = inject(AppStore);
 
   // inputs
   public category = input.required<CategoryListModel>();
@@ -61,9 +63,12 @@ export class CategoryEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.category()?.bkey));
-  protected tenantId = computed(() => this.store.tenantId());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly headerTitle = computed(() => {
+    if (this.isReadOnly()) return this.i18n.view();
+    return this.category()?.bkey ? this.i18n.edit() : this.i18n.create();
+  });
+  protected tenantId = computed(() => this.appStore.tenantId());
+  protected readonly changeConfirmationI18n = computed(() => ({cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

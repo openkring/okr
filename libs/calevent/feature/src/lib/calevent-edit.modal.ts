@@ -5,37 +5,37 @@ import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { CalendarSelectModal } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { CalEventForm } from '@bk2/calevent-ui';
 import { InviteesAccordion } from '@bk2/relationship-invitation-feature';
 import { DocumentsAccordion } from '@bk2/document-feature';
 import { CommentsAccordion } from '@bk2/comment-feature';
+import { CALEVENT_I18N_KEYS, CaleventI18n } from '@bk2/calevent-util';
 
 import { AttendeesAccordion } from './attendees-accordion';
-import { CalEventStore } from './calevent.store';
 
 @Component({
   selector: 'bk-calevent-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation,
-    CalEventForm, InviteesAccordion, DocumentsAccordion, 
+    CalEventForm, InviteesAccordion, DocumentsAccordion,
     CommentsAccordion, AttendeesAccordion,
     IonContent, IonCard, IonCardContent, IonAccordionGroup
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  providers: [CalEventStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-calevent-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
-          [i18n]="store.i18n"
+          [i18n]="i18n"
           [currentUser]="currentUser()"
           [showForm]="showForm()"
           [types]="types()"
@@ -72,7 +72,7 @@ import { CalEventStore } from './calevent.store';
 })
 export class CalEventEditModal {
   private modalController = inject(ModalController);
-  protected readonly store = inject(CalEventStore);
+  protected readonly i18n = inject(I18nService).translateAll(CALEVENT_I18N_KEYS) as CaleventI18n;
 
   // inputs
   public calevent = input.required<CalEventModel>();
@@ -90,12 +90,16 @@ export class CalEventEditModal {
   protected formDirty = linkedSignal(() => this.initialDirty());
   protected formValid = linkedSignal(() => this.initialDirty());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
   protected formData = linkedSignal(() => safeStructuredClone(this.calevent()));
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.calevent().bkey));
+  protected headerTitle = computed(() => {
+    if (this.isReadOnly()) return this.i18n.as_view();
+    const key = this.calevent().bkey;
+    return (key && key.length > 0) ? this.i18n.as_edit() : this.i18n.as_create();
+  });
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().bkey}`);
   protected isNew = computed(() => !this.formData()?.bkey);
 

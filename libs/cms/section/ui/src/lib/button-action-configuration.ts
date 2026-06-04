@@ -8,13 +8,15 @@ import { DEFAULT_LABEL, DEFAULT_URL } from '@bk2/shared-constants';
 import { ButtonActions } from '@bk2/shared-categories';
 
 interface ButtonActionI18n {
-  actionUrl_label:       Signal<string>;
-  actionUrl_placeholder: Signal<string>;
-  actionUrl_helper:      Signal<string>;
-  altText_label:         Signal<string>;
-  altText_placeholder:   Signal<string>;
-  altText_helper:        Signal<string>;
-  buttonAction_label:    Signal<string>;
+  button_action_title:                  Signal<string>;
+  button_action_subtitle:               Signal<string>;
+  url_label:                            Signal<string>;
+  url_placeholder:                      Signal<string>;
+  url_helper:                           Signal<string>;
+  altText_label:                        Signal<string>;
+  altText_placeholder:                  Signal<string>;
+  altText_helper:                       Signal<string>;
+  button_action_label:                  Signal<string>;
 }
 
 @Component({
@@ -29,8 +31,8 @@ interface ButtonActionI18n {
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>Action - Konfiguration</ion-card-title>
-        <ion-card-subtitle>Definiere was bei einem Klick auf den Button passieren soll.</ion-card-subtitle>
+        <ion-card-title>{{ i18n().button_action_title() }}</ion-card-title>
+        <ion-card-subtitle>{{ i18n().button_action_subtitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -62,8 +64,6 @@ export class ButtonActionConfiguration {
 
   // inputs
   public formData = model.required<ButtonActionConfig>();
-  public title = input('@content.section.type.button.action.title');
-  public subTitle = input('@content.section.type.button.action.subtitle');
   public readonly i18n = input.required<ButtonActionI18n>();
   public intro = input<string>(`
   <ul>
@@ -90,9 +90,9 @@ export class ButtonActionConfiguration {
 
   protected actionUrlI18n = computed(() => ({
     name: 'actionUrl',
-    label: this.i18n().actionUrl_label(),
-    placeholder: this.i18n().actionUrl_placeholder(),
-    helper: this.i18n().actionUrl_helper(),
+    label: this.i18n().url_label(),
+    placeholder: this.i18n().url_placeholder(),
+    helper: this.i18n().url_helper(),
   } as TextInputI18n));
 
   protected altTextI18n = computed(() => ({
@@ -101,7 +101,7 @@ export class ButtonActionConfiguration {
     placeholder: this.i18n().altText_placeholder(),
     helper: this.i18n().altText_helper(),
   } as TextInputI18n));
-  protected buttonActionI18n = computed(() => ({ name: 'buttonAction', label: this.i18n().buttonAction_label() } as CategoryOldI18n));
+  protected buttonActionI18n = computed(() => ({ name: 'buttonAction', label: this.i18n().button_action_label() } as CategoryOldI18n));
 
   protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));

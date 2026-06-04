@@ -21,6 +21,7 @@ import { PersonService } from '@bk2/subject-person-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
 import { OrgEditModal } from '@bk2/subject-org-feature';
+import { CONTEXT_SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
 // ---------------------------------------------------------------------------
 // Graph node / edge types
@@ -109,15 +110,7 @@ export const ContextDiagramStore = signalStore(
     groupEditModal: inject(GROUP_EDIT_MODAL),
     personService: inject(PersonService),
     responsibilityService: inject(ResponsibilityService),
-    i18nService: inject(I18nService),
-  })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      as_edit:          PFX + 'contextDiagram.actionsheet.edit',
-      as_center:        PFX + 'contextDiagram.actionsheet.center',
-      as_displayConfig: PFX + 'contextDiagram.actionsheet.displayConfig',
-      cancel:           '@cancel',
-    }),
+    i18n: inject(I18nService).translateAll(CONTEXT_SECTION_I18N_KEYS),
   })),
   withProps((store) => ({
     relationsResource: rxResource<RelationsData, { center: string; config: ContextDiagramConfig }>({

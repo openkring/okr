@@ -61,7 +61,7 @@ import { groupValidations, GroupI18n } from '@bk2/subject-group-util';
                   />
                 } @else {
                   <ion-item lines="none">
-                    <ion-label>{{ i18n().groupId() }}: {{ bkey() }}</ion-label>
+                    <ion-label>{{ i18n().id_label() }}: {{ bkey() }}</ion-label>
                     <bk-button-copy [i18n]="buttonCopyI18n()" [value]="bkey()" />
                   </ion-item>
                 }                                     
@@ -212,7 +212,7 @@ import { groupValidations, GroupI18n } from '@bk2/subject-group-util';
 export class GroupForm {
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
   protected bkeyI18n      = computed(() => ({ name: 'bkey',       label: this.i18n().bkey_label(),       placeholder: this.i18n().bkey_placeholder(),       helper: this.i18n().bkey_helper()       } as TextInputI18n));
-  protected groupIdI18n   = computed(() => ({ name: 'groupId',    label: this.i18n().groupId_label(),    placeholder: this.i18n().groupId_placeholder(),    helper: this.i18n().groupId_helper()    } as TextInputI18n));
+  protected groupIdI18n   = computed(() => ({ name: 'groupId',    label: this.i18n().id_label(),    placeholder: this.i18n().id_placeholder(),    helper: this.i18n().id_helper()    } as TextInputI18n));
   protected nameI18n      = computed(() => ({ name: 'groupName',  label: this.i18n().name_label(),       placeholder: this.i18n().name_placeholder(),       helper: this.i18n().name_helper()       } as TextInputI18n));
   protected iconI18n      = computed(() => ({ name: 'icon',       label: this.i18n().icon_label(),       placeholder: this.i18n().icon_placeholder(),       helper: this.i18n().icon_helper()       } as TextInputI18n));
   protected visibilityI18n = computed(() => ({ name: 'visibility', label: this.i18n().visibility_label(), placeholder: this.i18n().visibility_placeholder(), helper: this.i18n().visibility_helper() } as TextInputI18n));

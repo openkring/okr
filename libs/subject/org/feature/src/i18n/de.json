@@ -1,31 +1,102 @@
 {
   "orgs": "Organisationen",
   "empty": "Keine Organisationen gefunden.",
+
+  "copy": {
+    "email": {
+      "conf": "Die Emails wurden kopiert."
+    }
+  },
   "create": {
     "label": "Neue Organisation"
   },
-  "edit": {
+  "delete": {
+    "label": "Organisation löschen",
+    "confirm": "Soll die Organisation wirklich gelöscht werden ?",
+    "conf": "Die Organisation wurde gelöscht.",
+    "error": "Die Organisation konnte nicht gelöscht werden."
+  },
+  "update": {
     "label": "Organisation ändern"
   },
   "view": {
     "label": "Organisation anzeigen"
   },
-  "delete": {
-    "confirm": "Soll die Organisation wirklich gelöscht werden ?"
+
+  "bkey": {
+    "label": "ID",
+    "placeholder": "ssssssssss",
+    "helper": "Eindeutige ID des Adress-Datensatzes in der Datenbank."
   },
-  "address": {
-    "emailCopy": {
-      "conf": "E-Mail Adressen wurden kopiert."
-    }
+  "name": {
+    "label": "Name der Organisation",
+    "placeholder": "Name der Organisation",
+    "helper": "Name der Organisation"
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "edit": "Organisation ändern",
-    "delete": "Organisation löschen"
+  "taxId": {
+    "label": "MwSt-Nummer",
+    "placeholder": "CHE-123.456.789",
+    "helper": "Mehrwertsteuer ID (oder Unternehmens-ID UID)",
+    "error": "Die MwSt-Nummber besteht aus CHE gefolgt von 9 Ziffern."
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+  "bexioId": {
+    "label": "Bexio ID",
+    "placeholder": "nnnnnn",
+    "helper": "ID zum Synchronisieren mit einem Kontakt in Bexio.",
+    "error": "Bexio ID ist eine sechsstellige Zahl."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Optionale und beliebige Notizen"
+  },
+  "dateOfFoundation": {
+    "label": "Gründungsdatum",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "Datum, an dem die Organisation gegründet wurde.",
+    "error": "Das Datumsformat ist nicht korrekt."
+  },
+  "dateOfLiquidation": {
+    "label": "Liquidationsdatum",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "Datum, an dem die Organisation aufgelöst wurde.",
+    "error": "Das Datumsformat ist nicht korrekt."
+  },
+  "streetName": {
+    "label": "Strasse",
+    "placeholder": "Strasse eingeben",
+    "helper": "Der Name der Strasse"
+  },
+  "streetNumber": {
+    "label": "Nr.",
+    "placeholder": "nnn",
+    "helper": "Die Hausnummer"
+  },
+  "countryCode": {
+    "label": "Land (ISO)",
+    "placeholder": "CH",
+    "helper": "Länderkürzel nach ISO Standard"
+  },
+  "zipCode": {
+    "label": "PLZ",
+    "placeholder": "nnnn",
+    "helper": "Schweizerische Postleitzahl (vierstellige Nummer)"
+  },
+  "city": {
+    "label": "Ort",
+    "placeholder": "Ort eingeben",
+    "helper": "Ortsname"
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "Webadresse"
+  },
+  "email": {
+    "label": "E-Mail",
+    "placeholder": "E-Mail Adresse eingeben"
+  },
+  "phone": {
+    "label": "Telefon",
+    "placeholder": "+41 XX XXX XX XX"
   }
 }

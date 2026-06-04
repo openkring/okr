@@ -4,9 +4,11 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { AccountModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
+import { ACCOUNT_I18N_KEYS, AccountI18n } from '@bk2/finance-account-util';
 
 import { AccountForm } from '@bk2/finance-account-ui';
-import { AccountStore } from './account.store';
 
 @Component({
   selector: 'bk-account-edit-modal',
@@ -15,11 +17,10 @@ import { AccountStore } from './account.store';
     Header, ChangeConfirmation, AccountForm,
     IonContent
   ],
-  providers: [AccountStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(showForm() && formData(); as formData) {
@@ -30,7 +31,7 @@ import { AccountStore } from './account.store';
           [types]="types()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
-          [i18n]="store.i18n"
+          [i18n]="i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -40,7 +41,8 @@ import { AccountStore } from './account.store';
 })
 export class AccountEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(AccountStore);
+  private readonly appStore = inject(AppStore);
+  protected readonly i18n = inject(I18nService).translateAll(ACCOUNT_I18N_KEYS) as AccountI18n;
 
   public account = input.required<AccountModel>();
   public currentUser = input<UserModel | undefined>();
@@ -50,13 +52,17 @@ export class AccountEditModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
   public formData = linkedSignal(() => safeStructuredClone(this.account()));
   protected showForm = signal(true);
 
-  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.account().bkey));
-  protected types = computed(() => this.store.appStore.getCategory('account_type'));
-  protected tenantId = computed(() => this.store.appStore.tenantId());
+  protected headerTitle = computed(() => {
+    if (this.isReadOnly()) return this.i18n.as_view();
+    const key = this.account().bkey;
+    return (key && key.length > 0) ? this.i18n.as_edit() : this.i18n.as_create();
+  });
+  protected types = computed(() => this.appStore.getCategory('account_type'));
+  protected tenantId = computed(() => this.appStore.tenantId());
 
   public async save(): Promise<void> {
     await this.modalController.dismiss(this.formData(), 'confirm');

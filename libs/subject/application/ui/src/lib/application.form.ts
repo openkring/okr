@@ -26,22 +26,22 @@ import { ApplicationI18n, needsSsn } from '@bk2/application-util';
   <form #appForm="ngForm">
     @if(application().submittedAt) {
       <ion-item lines="none">
-        <ion-label>{{ i18n().field_submitted_at() }}: {{ application().submittedAt | date:'dd.MM.yyyy HH:mm' }}</ion-label>
+        <ion-label>{{ i18n().submitted() }}: {{ application().submittedAt | date:'dd.MM.yyyy HH:mm' }}</ion-label>
       </ion-item>
     }
     @if(application().reviewedAt) {
       <ion-item lines="none">
-        <ion-label>{{ i18n().field_reviewed_at() }}: {{ application().reviewedAt | date:'dd.MM.yyyy HH:mm' }}</ion-label>
+        <ion-label>{{ i18n().reviewed() }}: {{ application().reviewedAt | date:'dd.MM.yyyy HH:mm' }}</ion-label>
       </ion-item>
     }
     @if(application().reviewer) {
       <ion-item lines="none">
-        <ion-label>{{ i18n().field_reviewer() }}: {{ application().reviewer!.name1 }} {{ application().reviewer!.name2 }}</ion-label>
+        <ion-label>{{ i18n().reviewer() }}: {{ application().reviewer!.name1 }} {{ application().reviewer!.name2 }}</ion-label>
       </ion-item>
     }
     @if(application().closeReason) {
       <ion-item lines="none">
-        <ion-label>{{ i18n().field_close_reason() }}: {{ application().closeReason }}</ion-label>
+        <ion-label>{{ i18n().reason() }}: {{ application().closeReason }}</ion-label>
       </ion-item>
     }
 
@@ -49,27 +49,27 @@ import { ApplicationI18n, needsSsn } from '@bk2/application-util';
       <ion-card-header><ion-card-title>{{ i18n().section_person() }}</ion-card-title></ion-card-header>
       <ion-card-content>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_first_name() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().firstname() }}</ion-label>
           <ion-input name="firstName" [(ngModel)]="firstName" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
         </ion-item>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_last_name() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().lastname() }}</ion-label>
           <ion-input name="lastName" [(ngModel)]="lastName" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
         </ion-item>
         <ion-item>
-          <ion-label>{{ i18n().field_gender() }}</ion-label>
+          <ion-label>{{ i18n().gender() }}</ion-label>
           <ion-radio-group name="gender" [(ngModel)]="gender" [disabled]="isReadOnly()" (ionChange)="emitChange()">
             <ion-radio value="male">männlich</ion-radio>
             <ion-radio value="female">weiblich</ion-radio>
           </ion-radio-group>
         </ion-item>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_date_of_birth() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().date_of_birth() }}</ion-label>
           <ion-input name="dateOfBirth" type="date" [(ngModel)]="dateOfBirthDisplay" [disabled]="isReadOnly()" (ionChange)="onDobChange($event)" />
         </ion-item>
         @if(showSsn()) {
           <ion-item>
-            <ion-label position="stacked">{{ i18n().field_ssn() }}</ion-label>
+            <ion-label position="stacked">{{ i18n().ssn() }}</ion-label>
             <ion-input name="ssnId" [(ngModel)]="ssnId" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
           </ion-item>
         }
@@ -80,11 +80,11 @@ import { ApplicationI18n, needsSsn } from '@bk2/application-util';
       <ion-card-header><ion-card-title>{{ i18n().section_contact() }}</ion-card-title></ion-card-header>
       <ion-card-content>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_email() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().email() }}</ion-label>
           <ion-input name="email" type="email" [(ngModel)]="email" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
         </ion-item>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_phone() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().phone() }}</ion-label>
           <ion-input name="phone" type="tel" [(ngModel)]="phone" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
         </ion-item>
       </ion-card-content>
@@ -94,23 +94,23 @@ import { ApplicationI18n, needsSsn } from '@bk2/application-util';
       <ion-card-header><ion-card-title>{{ i18n().section_address() }}</ion-card-title></ion-card-header>
       <ion-card-content>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_street_name() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().street_name() }}</ion-label>
           <ion-input name="streetName" [(ngModel)]="streetName" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
         </ion-item>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_street_number() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().street_number() }}</ion-label>
           <ion-input name="streetNumber" [(ngModel)]="streetNumber" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
         </ion-item>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_zip_code() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().zip_code() }}</ion-label>
           <ion-input name="zipCode" [(ngModel)]="zipCode" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
         </ion-item>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_city() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().city() }}</ion-label>
           <ion-input name="city" [(ngModel)]="city" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
         </ion-item>
         <ion-item>
-          <ion-label position="stacked">{{ i18n().field_country_code() }}</ion-label>
+          <ion-label position="stacked">{{ i18n().country_code() }}</ion-label>
           <ion-input name="countryCode" [(ngModel)]="countryCode" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
         </ion-item>
       </ion-card-content>
@@ -121,19 +121,19 @@ import { ApplicationI18n, needsSsn } from '@bk2/application-util';
         <ion-card-header><ion-card-title>{{ i18n().section_parent() }}</ion-card-title></ion-card-header>
         <ion-card-content>
           <ion-item>
-            <ion-label position="stacked">{{ i18n().field_parent_first_name() }}</ion-label>
+            <ion-label position="stacked">{{ i18n().parent_first_name() }}</ion-label>
             <ion-input name="parentFirstName" [(ngModel)]="parentFirstName" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">{{ i18n().field_parent_last_name() }}</ion-label>
+            <ion-label position="stacked">{{ i18n().parent_last_name() }}</ion-label>
             <ion-input name="parentLastName" [(ngModel)]="parentLastName" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">{{ i18n().field_parent_email() }}</ion-label>
+            <ion-label position="stacked">{{ i18n().parent_email() }}</ion-label>
             <ion-input name="parentEmail" type="email" [(ngModel)]="parentEmail" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">{{ i18n().field_parent_phone() }}</ion-label>
+            <ion-label position="stacked">{{ i18n().parent_phone() }}</ion-label>
             <ion-input name="parentPhone" type="tel" [(ngModel)]="parentPhone" [disabled]="isReadOnly()" (ionChange)="emitChange()" />
           </ion-item>
         </ion-card-content>
@@ -144,7 +144,7 @@ import { ApplicationI18n, needsSsn } from '@bk2/application-util';
       <ion-card-header><ion-card-title>{{ i18n().section_application() }}</ion-card-title></ion-card-header>
       <ion-card-content>
         <ion-item>
-          <ion-label>{{ i18n().field_application_as() }}</ion-label>
+          <ion-label>{{ i18n().application() }}</ion-label>
           <ion-select name="applicationAs" [(ngModel)]="applicationAs" [disabled]="isReadOnly()" (ionChange)="emitChange()">
             @for(k of kindValues; track k) {
               <ion-select-option [value]="k">{{ k }}</ion-select-option>

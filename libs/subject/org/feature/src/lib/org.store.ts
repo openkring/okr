@@ -13,10 +13,8 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { AddressService } from '@bk2/subject-address-data-access';
 import { OrgService } from '@bk2/subject-org-data-access';
-import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgI18n, OrgNewFormModel, ORG_I18N_KEYS } from '@bk2/subject-org-util';
+import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel, ORG_I18N_KEYS } from '@bk2/subject-org-util';
 
-import { OrgNewModal } from './org-new.modal';
-import { OrgEditModal } from './org-edit.modal';
 
 export type OrgState = {
   orgKey: string;
@@ -140,6 +138,7 @@ export const OrgStore = signalStore(
 
     async add(readOnly = true): Promise<void> {
       if (readOnly) return;
+      const { OrgNewModal } = await import('./org-new.modal');
       const modal = await store.modalController.create({
         component: OrgNewModal,
         componentProps: {
@@ -175,6 +174,7 @@ export const OrgStore = signalStore(
     },
 
     async edit(org: OrgModel, readOnly = true): Promise<void> {
+      const { OrgEditModal } = await import('./org-edit.modal');
       const modal = await store.modalController.create({
         component: OrgEditModal,
         componentProps: {
@@ -214,7 +214,7 @@ export const OrgStore = signalStore(
       await copyToClipboardWithConfirmation(
         store.toastController,
         emails.toString() ?? '',
-        '@subject.address.operation.emailCopy.conf'
+        store.i18n.copy_email_conf()
       );
     },
   }))

@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,16 +7,8 @@ import { CategorySelect, DateInput, DateInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
 import { coerceBoolean, debugFormErrors, debugFormModel } from '@bk2/shared-util-core';
 
-import {CategoryChangeFormModel, categoryChangeFormValidations } from '@bk2/relationship-membership-util';
+import { CategoryChangeFormModel, categoryChangeFormValidations, MembershipI18n } from '@bk2/relationship-membership-util';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-
-export interface CategoryChangeFormI18n {
-  category_change_helper: Signal<string>;
-  category_change_helper_date: Signal<string>;
-  dateOfChange_label: Signal<string>;
-  dateOfChange_placeholder: Signal<string>;
-  dateOfChange_helper: Signal<string>;
-}
 
 @Component({
   selector: 'bk-category-change-form',
@@ -86,7 +78,7 @@ export class CategoryChangeForm {
   } as DateInputI18n));
 
   // inputs
-  public readonly i18n = input.required<CategoryChangeFormI18n>();
+  public readonly i18n = input.required<MembershipI18n>();
   public formData = model.required<CategoryChangeFormModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

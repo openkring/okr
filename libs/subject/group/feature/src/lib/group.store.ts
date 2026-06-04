@@ -18,7 +18,7 @@ import { AvatarService } from '@bk2/avatar-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { createGroupMembership } from '@bk2/relationship-membership-util';
 import { MatrixChatService } from '@bk2/chat-data-access';
-import { getVisibleGroupKeys, GROUP_I18N_KEYS, GroupI18n } from '@bk2/subject-group-util';
+import { getVisibleGroupKeys, GROUP_I18N_KEYS } from '@bk2/subject-group-util';
 
 import { GroupEditModal } from './group-edit.modal';
 
@@ -207,8 +207,8 @@ export const GroupStore = signalStore(
             const existingGroup = store.groups()?.find((g: GroupModel) => g.bkey === data.bkey);
             if (existingGroup) {
               const alert = await store.alertController.create({
-                header: store.i18n.group_create_duplicate(),
-                message: store.i18n.group_create_exists(),
+                header: store.i18n.create_duplicate(),
+                message: store.i18n.create_exists(),
                 buttons: [store.i18n.ok()]
               });
               await alert.present();
@@ -248,7 +248,7 @@ export const GroupStore = signalStore(
 
     async delete(group?: GroupModel, readOnly = true): Promise<void> {
       if (!group || readOnly) return;
-      const result = await store.alertService.confirm(store.i18n.group_delete_confirm(), true);
+      const result = await store.alertService.confirm(store.i18n.delete_confirm(), true);
       if (result === true) {
         await store.groupService.delete(group, store.currentUser());
         this.reload();

@@ -197,7 +197,7 @@ export const MEMBERSHIP_I18N_KEYS = {
   select:                         '@select.label',
   search:                         '@search.label',
   as_title:                       '@actionsheet.title',
-  name:                           '@name',
+  name:                           '@name.label',
   phone:                          '@phone',
   email:                          '@email',
   ok:                             '@ok',

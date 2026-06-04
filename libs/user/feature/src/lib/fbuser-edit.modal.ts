@@ -6,7 +6,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from "@bk2/shared-
 import { hasRole, removeUndefinedFields } from "@bk2/shared-util-core";
 
 import { FbuserForm } from "@bk2/user-ui";
-import { UserStore } from "libs/user/feature/src/lib/user.store";
+import { UserStore } from "./user.store";
 
 @Component({
   selector: 'bk-fbuser-edit-modal',
@@ -17,9 +17,9 @@ import { UserStore } from "libs/user/feature/src/lib/user.store";
   ],
   providers: [UserStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.fbuser_edit_title() }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.fbuser_title() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       } 
     <ion-content>
       <bk-fbuser-form
@@ -50,7 +50,7 @@ export class FbuserEditModal {
 
   // derived
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

@@ -190,8 +190,8 @@ export class OrgList {
    * @param org 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, org: OrgModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 

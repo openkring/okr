@@ -231,44 +231,44 @@ export class AddressesList {
   private addActionSheetButtons(options: ActionSheetOptions, address: AddressModel): void {
     if (!hasRole('memberAdmin', this.currentUser())) return;
     // on address
-    options.buttons.push(createActionSheetButton('edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('edit', this.store.i18n.update_label(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
     options.buttons.push(createActionSheetDivider());
 
     // with address (usage)
-    options.buttons.push(createActionSheetButton('copy', this.store.i18n.as_copy(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('copy', this.store.i18n.copy_label(), this.imgixBaseUrl, 'copy'));
     switch(address.addressChannel) {
       case 'bankaccount':
         if (address.url) {
-          options.buttons.push(createActionSheetButton('iban.view', this.store.i18n.as_iban_view(), this.imgixBaseUrl, 'qrcode'));
+          options.buttons.push(createActionSheetButton('iban.view', this.store.i18n.view_iban(), this.imgixBaseUrl, 'qrcode'));
         } else {
-          options.buttons.push(createActionSheetButton('iban.generateQr', this.store.i18n.as_iban_genqr(), this.imgixBaseUrl, 'qrcode'));
+          options.buttons.push(createActionSheetButton('iban.generateQr', this.store.i18n.generate_qrezs(), this.imgixBaseUrl, 'qrcode'));
         }
         break;
       case 'email':
-          options.buttons.push(createActionSheetButton('email.send', this.store.i18n.as_email_send(), this.imgixBaseUrl, 'email'));
+          options.buttons.push(createActionSheetButton('email.send', this.store.i18n.send_email_label(), this.imgixBaseUrl, 'email'));
         break;
       case 'phone':
-        options.buttons.push(createActionSheetButton('phone.call', this.store.i18n.as_phone_call(), this.imgixBaseUrl, 'tel'));
+        options.buttons.push(createActionSheetButton('phone.call', this.store.i18n.call_phone(), this.imgixBaseUrl, 'tel'));
         break;
       case 'postal':
-        options.buttons.push(createActionSheetButton('postal.view', this.store.i18n.as_postal_view(), this.imgixBaseUrl, 'location'));
+        options.buttons.push(createActionSheetButton('postal.view', this.store.i18n.view_postal(), this.imgixBaseUrl, 'location'));
         break;
       case 'twint':
         if (address.url) {
-          options.buttons.push(createActionSheetButton('file.view', this.store.i18n.as_file_view(), this.imgixBaseUrl, 'document'));
+          options.buttons.push(createActionSheetButton('file.view', this.store.i18n.view_file(), this.imgixBaseUrl, 'document'));
         } else {
-          options.buttons.push(createActionSheetButton('file.upload', this.store.i18n.as_file_upload(), this.imgixBaseUrl, 'upload'));
+          options.buttons.push(createActionSheetButton('file.upload', this.store.i18n.upload_file(), this.imgixBaseUrl, 'upload'));
         }
         break;
       case 'web':
-          options.buttons.push(createActionSheetButton('web.open', this.store.i18n.as_web_open(), this.imgixBaseUrl, 'link'));
+          options.buttons.push(createActionSheetButton('web.open', this.store.i18n.open_web(), this.imgixBaseUrl, 'link'));
         break;
     }
     options.buttons.push(createActionSheetDivider());
 
     // on subject
-    options.buttons.push(createActionSheetButton('subject.edit', this.store.i18n.as_subject_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('subject.edit', this.store.i18n.update_subject(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
     if (options.buttons.length === 1) { // only cancel button
       options.buttons = [];

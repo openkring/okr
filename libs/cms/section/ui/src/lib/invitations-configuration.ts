@@ -5,18 +5,18 @@ import { InvitationsConfig } from '@bk2/shared-models';
 import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 
 interface InvitationsConfigI18n {
-    invitations_title:        Signal<string>;
-    invitations_subtitle:     Signal<string>;
-    moreUrl_label:            Signal<string>;
-    moreUrl_placeholder:      Signal<string>;
-    moreUrl_helper:           Signal<string>;
-    maxItems_label:           Signal<string>;
-    maxItems_placeholder:     Signal<string>;
-    maxItems_helper:          Signal<string>;
-    showPastItems_label:      Signal<string>;
-    showPastItems_helper:     Signal<string>;
-    showUpcomingItems_label:  Signal<string>;
-    showUpcomingItems_helper: Signal<string>;
+    invitation_title:                     Signal<string>;
+    invitation_subtitle:                  Signal<string>;
+    invitation_more_label:                Signal<string>;
+    invitation_more_placeholder:          Signal<string>;
+    invitation_more_helper:               Signal<string>;
+    invitation_maxItems_label:            Signal<string>;
+    invitation_maxItems_placeholder:      Signal<string>;
+    invitation_maxItems_helper:           Signal<string>;
+    invitation_showPastItems_label:       Signal<string>;
+    invitation_showPastItems_helper:      Signal<string>;
+    invitation_showUpcomingItems_label:   Signal<string>;
+    invitation_showUpcomingItems_helper:  Signal<string>;
 }
 
 @Component({
@@ -31,8 +31,8 @@ interface InvitationsConfigI18n {
 
     <ion-card>
       <ion-card-header>
-          <ion-card-title>{{ i18n().invitations_title() }}</ion-card-title>
-          <ion-card-subtitle>{{ i18n().invitations_subtitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().invitation_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().invitation_subtitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         @if(intro(); as intro) {
@@ -74,25 +74,25 @@ export class InvitationsConfiguration {
   protected showPastItems = linkedSignal(() => this.formData().showPastItems ?? false);
   protected showUpcomingItems = linkedSignal(() => this.formData().showUpcomingItems ?? true);
 
-  protected maxItemsI18n = computed(() => ({ name: 'maxItems', label: this.i18n().maxItems_label(), placeholder: this.i18n().maxItems_placeholder(), helper: this.i18n().maxItems_helper() } as NumberInputI18n));
+  protected maxItemsI18n = computed(() => ({ name: 'maxItems', label: this.i18n().invitation_maxItems_label(), placeholder: this.i18n().invitation_maxItems_placeholder(), helper: this.i18n().invitation_maxItems_helper() } as NumberInputI18n));
 
   protected moreUrlI18n = computed(() => ({
     name: 'moreUrl',
-    label: this.i18n().moreUrl_label(),
-    placeholder: this.i18n().moreUrl_placeholder(),
-    helper: this.i18n().moreUrl_helper(),
+    label: this.i18n().invitation_more_label(),
+    placeholder: this.i18n().invitation_more_placeholder(),
+    helper: this.i18n().invitation_more_helper(),
   } as TextInputI18n));
 
   protected showPastItemsI18n = computed(() => ({
     name: 'showPastItems',
-    label: this.i18n().showPastItems_label(),
-    helper: this.i18n().showPastItems_helper(),
+    label: this.i18n().invitation_showPastItems_label(),
+    helper: this.i18n().invitation_showPastItems_helper(),
   } as CheckboxI18n));
 
   protected showUpcomingItemsI18n = computed(() => ({
     name: 'showUpcomingItems',
-    label: this.i18n().showUpcomingItems_label(),
-    helper: this.i18n().showUpcomingItems_helper(),
+    label: this.i18n().invitation_showUpcomingItems_label(),
+    helper: this.i18n().invitation_showUpcomingItems_helper(),
   } as CheckboxI18n));
 
   protected onFieldChange(fieldName: string, $event: string | boolean | number): void {

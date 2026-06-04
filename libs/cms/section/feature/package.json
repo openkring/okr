@@ -32,6 +32,9 @@
     "@bk2/trip-data-access": "*",
     "@bk2/forms-util": "*",
     "@bk2/forms-data-access": "*",
-    "@bk2/forms-ui": "*"
+    "@bk2/forms-ui": "*",
+    "@bk2/chat-data-access": "*",
+    "@capacitor/core": "*",
+    "@capacitor/geolocation": "*"
   }
 }

@@ -5,9 +5,11 @@ import { of } from 'rxjs';
 
 import { MemberAgeConfig } from '@bk2/shared-models';
 import { I18nService } from '@bk2/shared-i18n';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { AppStore } from '@bk2/shared-feature';
 
+import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { MEMBER_AGE_SECTION_I18N_KEYS, MemberAgeSectionI18n } from '@bk2/cms-section-util';
+
 export type { MemberAgeSectionI18n };
 
 export type AgeRow = { label: string; male: number; female: number; total: number };
@@ -60,6 +62,7 @@ const initialState: MemberAgeSectionState = { orgId: '' };
 export const MemberAgeSectionStore = signalStore(
   withState(initialState),
   withProps(() => ({
+    appStore: inject(AppStore),
     membershipService: inject(MembershipService),
     i18nService: inject(I18nService),
   })),

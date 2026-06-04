@@ -166,12 +166,12 @@ export class PersonList {
    */
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.edit_label(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       if (this.hasRole('admin')) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
+        actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
       }
     } else {  // registered user
-      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
@@ -180,11 +180,11 @@ export class PersonList {
       actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.send_message(), this.imgixBaseUrl, 'chatbubbles'));
     }
     if (person.favEmail) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.store.i18n.copy_email_label(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.store.i18n.copy_email(), this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.store.i18n.send_email(), this.imgixBaseUrl, 'email'));
     }
     if (person.favPhone) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.store.i18n.copy_phone_label(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.store.i18n.copy_phone(), this.imgixBaseUrl, 'copy'));
       //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.store.i18n.call_phone(), this.imgixBaseUrl, 'tel'));
     }

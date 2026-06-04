@@ -226,7 +226,7 @@ export const OrgchartStore = signalStore(
       if (node.modelType !== 'group') return;
       const group = store.allGroups().find(g => g.bkey === node.bkey);
       if (!group) return;
-      const ok = await confirm(store.alertController, store.i18n.group_detach_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      const ok = await confirm(store.alertController, store.i18n.group_remove_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (ok) {
         await store.groupService.update(
           { ...group, parentKey: DEFAULT_KEY, parentName: '' },

@@ -7,21 +7,7 @@ import { PrivacyUsage, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
-import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidations } from "@bk2/user-util";
-
-export interface UserPrivacyFormI18n {
-  privacy_title: Signal<string>;
-  privacy_description: Signal<string>;
-  srv_description: Signal<string>;
-  usageImages_label: Signal<string>;
-  usageDateOfBirth_label: Signal<string>;
-  usagePostalAddress_label: Signal<string>;
-  usageEmail_label: Signal<string>;
-  usagePhone_label: Signal<string>;
-  usageName_label: Signal<string>;
-  srvEmail_label: Signal<string>;
-  srvEmail_helper: Signal<string>;
-}
+import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-privacy-form',
@@ -98,7 +84,7 @@ export class UserPrivacyForm {
   protected srvEmailI18n           = computed(() => ({ name: 'srvEmail', label: this.i18n().srvEmail_label(), helper: this.i18n().srvEmail_helper() } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input.required<UserPrivacyFormI18n>();
+  public readonly i18n = input.required<UserI18n>();
   public formData = model.required<UserPrivacyFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);

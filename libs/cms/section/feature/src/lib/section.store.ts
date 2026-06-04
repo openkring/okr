@@ -4,6 +4,8 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation, Position } from '@capacitor/geolocation';
 
 import { AppStore } from '@bk2/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@bk2/shared-models';
@@ -15,11 +17,17 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { UploadService } from '@bk2/avatar-data-access';
 import { SectionService } from '@bk2/cms-section-data-access';
-import { createSection, narrowSection, SECTION_I18N_KEYS, SectionI18n } from '@bk2/cms-section-util';
+import { createSection, narrowSection, SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
 import { SectionEditModal } from './section-edit.modal';
 import { MessageCenterModal } from './message-center.modal';
 import { CardSelectModal } from './card-select.modal';
+import { MatrixChatService } from '@bk2/chat-data-access';
+
+export type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
 
 export type SectionState = {
   sectionId: string;
@@ -46,6 +54,7 @@ export const _SectionStore = signalStore(
   withProps(() => ({
     sectionService: inject(SectionService),
     uploadService: inject(UploadService),
+    chatService: inject(MatrixChatService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
@@ -348,8 +357,78 @@ export const _SectionStore = signalStore(
           return store.i18n.create();
         }
       },
+
+      async sendEmergencyMessage(): Promise<void> {
+        if (!store.chatService.isInitialized) {
+          console.warn('SectionStore.sendEmergencyMessage: Matrix client not initialized');
+          return;
+        }
+        const currentUser = store.currentUser();
+        const position = await this.getCurrentPosition();
+        if (currentUser) {
+          const name = currentUser.firstName + ' ' + currentUser.lastName + ' ';
+          const roomId = await store.chatService.getRoomByName('Notfall');
+          try {
+            if (position) {
+              await store.chatService.sendLocation(roomId, name + store.i18n.emergency_needs_help(), position.latitude, position.longitude);
+            } else {
+              await store.chatService.sendMessage(roomId, name + store.i18n.emergency_needs_help_unknown_location());
+            }
+          } catch (error) {
+            console.error('SectionStore.sendEmergencyMessage: Failed to send:', error);
+          }
+        }
+      },
+
+      /**
+       * This function asks the user for permission to access to current location (on iOS and Android, but not on web).
+       * It then returns either the current position of the user or the default position if the user did not agree or geolocation is not supported.
+       * @returns the current position of the user the default position
+       */
+      async getCurrentPosition(): Promise<Coordinates | undefined> {
+        if (Capacitor.isNativePlatform()) {
+          const permissionStatus = await Geolocation.requestPermissions();
+          if (permissionStatus.location !== 'granted') {
+            throw new Error('SectionStore.getCurrentPosition: Location permission denied');
+          }
+          const pos: Position =  await Geolocation.getCurrentPosition({
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          });
+          return { 
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude
+          };
+        } else {
+          if (!navigator.geolocation) {
+            throw new Error('SectionStore.getCurrentPosition: Geolocation not supported in this browser');
+          }
+          // Check permission status before requesting
+          try {
+            const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+            if (permissionStatus.state === 'denied') {
+              throw new Error('SectionStore.getCurrentPosition: User denied Geolocation');
+            }
+            debugMessage('SectionStore.getCurrentPosition: geolocation accepted.', store.currentUser());
+          } catch (error) {
+            console.warn('SectionStore: Permission query not supported or failed:', error);
+          }
+          const pos: Position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
+            });
+          });
+          return { 
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude
+          };
+        }
+      },
     }
-  }),
+  })
 );
 
 

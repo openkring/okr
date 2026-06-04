@@ -2,12 +2,13 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { FolderModel, UserModel } from '@bk2/shared-models';
+import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { FolderForm } from '@bk2/folder-ui';
-import { FolderStore } from './folder.store';
+import { FOLDER_I18N_KEYS, FolderI18n } from '@bk2/folder-util';
 
 @Component({
   selector: 'bk-folder-edit-modal',
@@ -16,7 +17,6 @@ import { FolderStore } from './folder.store';
     Header, ChangeConfirmation, FolderForm,
     IonContent
   ],
-  providers: [FolderStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
@@ -30,7 +30,7 @@ import { FolderStore } from './folder.store';
           [currentUser]="currentUser()"
           [showForm]="showForm()"
           [readOnly]="isReadOnly()"
-          [i18n]="store.i18n"
+          [i18n]="i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -40,7 +40,8 @@ import { FolderStore } from './folder.store';
 })
 export class FolderEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(FolderStore);
+  protected readonly i18n = inject(I18nService).translateAll(FOLDER_I18N_KEYS) as FolderI18n;
+  protected readonly appStore = inject(AppStore);
 
   // inputs
   public readonly folder = input.required<FolderModel>();
@@ -55,9 +56,16 @@ export class FolderEditModal {
   protected showForm = signal(true);
 
   // derived
-  protected readonly headerTitle = computed(() => getTitleLabel('folder', this.folder().bkey, this.isReadOnly()));
+  protected readonly headerTitle = computed(() => {
+    if (this.isReadOnly()) return this.i18n.view_label();
+    return this.folder().bkey ? this.i18n.edit_label() : this.i18n.create_label();
+  });
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    ok: this.i18n.changeConfirmation_ok(),
+    cancel: this.i18n.changeConfirmation_cancel(),
+    confirmation: this.i18n.changeConfirmation_confirmation(),
+  } as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

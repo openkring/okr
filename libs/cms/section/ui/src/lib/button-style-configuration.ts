@@ -8,20 +8,20 @@ import { DEFAULT_LABEL, ICON_SIZE } from '@bk2/shared-constants';
 import { ColorsIonic } from '@bk2/shared-categories';
 
 interface ButtonStyleI18n {
-  button_style_title: Signal<string>;
-  button_style_subtitle: Signal<string>;
-  label_label:       Signal<string>;
-  label_placeholder: Signal<string>;
-  label_helper:      Signal<string>;
-  width_label:       Signal<string>;
-  width_placeholder: Signal<string>;
-  width_helper:      Signal<string>;
-  height_label:      Signal<string>;
-  height_placeholder: Signal<string>;
-  height_helper:     Signal<string>;
-  shape_label:       Signal<string>;
-  fill_label:        Signal<string>;
-  color_label:       Signal<string>;
+  button_style_title:             Signal<string>;
+  button_style_subtitle:          Signal<string>;
+  button_label_label:             Signal<string>;
+  button_label_placeholder:       Signal<string>;
+  button_label_helper:            Signal<string>;
+  button_style_width_label:       Signal<string>;
+  button_style_width_placeholder: Signal<string>;
+  button_style_width_helper:      Signal<string>;
+  button_style_height_label:      Signal<string>;
+  button_style_height_placeholder: Signal<string>;
+  button_style_height_helper:     Signal<string>;
+  button_style_shape_label:       Signal<string>;
+  button_style_fill_label:        Signal<string>;
+  button_style_color_label:       Signal<string>;
 }
 
 @Component({
@@ -92,27 +92,27 @@ export class ButtonStyleConfiguration {
 
   protected labelI18n = computed(() => ({
     name: 'label',
-    label: this.i18n().label_label(),
-    placeholder: this.i18n().label_placeholder(),
-    helper: this.i18n().label_helper(),
+    label: this.i18n().button_label_label(),
+    placeholder: this.i18n().button_label_placeholder(),
+    helper: this.i18n().button_label_helper(),
   } as TextInputI18n));
 
   protected widthI18n = computed(() => ({
     name: 'width',
-    label: this.i18n().width_label(),
-    placeholder: this.i18n().width_placeholder(),
-    helper: this.i18n().width_helper(),
+    label: this.i18n().button_style_width_label(),
+    placeholder: this.i18n().button_style_width_placeholder(),
+    helper: this.i18n().button_style_width_helper(),
   } as TextInputI18n));
 
   protected heightI18n = computed(() => ({
     name: 'height',
-    label: this.i18n().height_label(),
-    placeholder: this.i18n().height_placeholder(),
-    helper: this.i18n().height_helper(),
+    label: this.i18n().button_style_height_label(),
+    placeholder: this.i18n().button_style_height_placeholder(),
+    helper: this.i18n().button_style_height_helper(),
   } as TextInputI18n));
-  protected shapeI18n = computed(() => ({ name: 'shape', label: this.i18n().shape_label() } as StringSelectI18n));
-  protected fillI18n  = computed(() => ({ name: 'fill',  label: this.i18n().fill_label()  } as StringSelectI18n));
-  protected colorI18n = computed(() => ({ name: 'color', label: this.i18n().color_label() } as CategoryOldI18n));
+  protected shapeI18n = computed(() => ({ name: 'shape', label: this.i18n().button_style_shape_label() } as StringSelectI18n));
+  protected fillI18n  = computed(() => ({ name: 'fill',  label: this.i18n().button_style_fill_label()  } as StringSelectI18n));
+  protected colorI18n = computed(() => ({ name: 'color', label: this.i18n().button_style_color_label() } as CategoryOldI18n));
 
   protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));

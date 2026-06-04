@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from "@angular/core";
+import { Component, computed, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
@@ -6,16 +6,7 @@ import { CategoryListModel, UserModel } from "@bk2/shared-models";
 import { Checkbox, CheckboxI18n, Chips } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel, getCategoryItemNames } from "@bk2/shared-util-core";
 
-import { flattenRoles, UserAuthFormModel, userAuthFormValidations } from "@bk2/user-util";
-
-export interface UserAuthFormI18n {
-  auth_title: Signal<string>;
-  auth_description: Signal<string>;
-  useTouchId_label: Signal<string>;
-  useTouchId_helper: Signal<string>;
-  useFaceId_label: Signal<string>;
-  useFaceId_helper: Signal<string>;
-}
+import { flattenRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-auth-form',
@@ -67,7 +58,7 @@ export class UserAuthForm {
   protected useFaceIdI18n  = computed(() => ({ name: 'useFaceId',  label: this.i18n().useFaceId_label(),  helper: this.i18n().useFaceId_helper()  } as CheckboxI18n));
 
   // inputs
-  public readonly i18n = input.required<UserAuthFormI18n>();
+  public readonly i18n = input.required<UserI18n>();
   public formData = model.required<UserAuthFormModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations

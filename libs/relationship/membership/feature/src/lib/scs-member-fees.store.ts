@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Signal } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -17,12 +17,14 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { ActivityService } from '@bk2/activity-data-access';
 import { ScsMemberFeeService, convertMembershipToFee, getFeeTotal, getTemplateId } from '@bk2/relationship-membership-data-access';
+import { SCS_MEMBER_FEES_I18N_KEYS, ScsMemberFeesI18n } from '@bk2/relationship-membership-util';
 
 import { MembershipEditModal } from './membership-edit.modal';
 import { ScsMemberFeeInvoiceIdModal } from './scs-member-fee-invoice-id.modal';
 import { ScsMemberFeeUploadModal } from './scs-member-fee-upload.modal';
 import { ScsMemberFeesTotalsModal } from './scs-member-fees-totals.modal';
-import { PFX } from './scope';
+
+export type { ScsMemberFeesI18n };
 
 export type ScsMemberFeesState = {
   searchTerm: string;
@@ -37,83 +39,6 @@ const initialState: ScsMemberFeesState = {
   selectedState: 'all',
   version: 0,
 };
-
-const SCS_MEMBER_FEES_I18N_KEYS = {
-  view_label:                     PFX + 'view.label',
-
-  invoice_edit:                   PFX + 'invoice.edit',
-  invoice_upload:                 PFX + 'invoice.upload',
-  invoice_download:               PFX + 'invoice.download',
-  invoice_paid:                   PFX + 'invoice.paid',
-  invoice_delete:                 PFX + 'invoice.delete',
-  invoice_state:                  PFX + 'invoice.state',
-  person_edit:                    PFX + 'person.edit',
-  member_edit:                    PFX + 'member.edit',
-
-  rebate_label:                   PFX + 'rebate.label',
-  rebate_placeholder:             PFX + 'rebate.placeholder',
-  rebate_helper:                  PFX + 'rebate.helper',
-  rebate_reason:                  PFX + 'rebate.reason',
-
-  notes_label:                    PFX + 'notes.label',
-  notes_placeholder:              PFX + 'notes.placeholder',
-
-  archive_confirm:      PFX + 'scsMemberFee.archive.confirm',
-  archive_conf:         PFX + 'scsMemberFee.archive.conf',
-  delete_label:         PFX + 'scsMemberFee.delete.label',
-  delete_confirm:       PFX + 'scsMemberFee.delete.confirm',
-  delete_error:         PFX + 'scsMemberFee.delete.error',
-  delete_conf:          PFX + 'scsMemberFee.delete.conf',
-  generate_confirm:     PFX + 'scsMemberFee.generate.confirm',
-  generate_conf:        PFX + 'scsMemberFee.generate.conf',
-  update_label:         PFX + 'scsMemberFee.update.label',
-  update_conf:          PFX + 'scsMemberFee.update.conf',
-  download_enterInvoiceId: PFX + 'scsMemberFee.download.enterInvoiceId',
-  upload_label:         PFX + 'scsMemberFee.upload.label',
-  upload_conf:          PFX + 'scsMemberFee.upload.conf',
-  upload_noBexioId:     PFX + 'scsMemberFee.upload.noBexioId',
-  totals_label:         PFX + 'scsMemberFee.totals.label',
-  export_title:         PFX + 'scsMemberFee.export_title',
-  list_title:           PFX + 'scsMemberFee.list.title',
-  list_empty:           PFX + 'scsMemberFee.list.empty',
-
-  jb:                   PFX + 'scsMemberFee.jb.label',
-  jb_placeholder:       PFX + 'scsMemberFee.jb.placeholder',
-  jb_helper:            PFX + 'scsMemberFee.jb.helper',
-
-  jbp:                  PFX + 'scsMemberFee.jbp.label',
-  jbp_placeholder:      PFX + 'scsMemberFee.jbp.placeholder',
-  jbp_helper:           PFX + 'scsMemberFee.jbp.helper',
-
-  entryFee:             PFX + 'scsMemberFee.entryFee.label',
-  entryFee_placeholder: PFX + 'scsMemberFee.entryFee.placeholder',
-  entryFee_helper:      PFX + 'scsMemberFee.entryFee.helper',
-
-  locker:               PFX + 'scsMemberFee.locker.label',
-  locker_placeholder:   PFX + 'scsMemberFee.locker.placeholder',
-  locker_helper:        PFX + 'scsMemberFee.locker.helper',
-
-  skiff:                PFX + 'scsMemberFee.skiff.label',
-  skiff_placeholder:    PFX + 'scsMemberFee.skiff.placeholder',
-  skiff_helper:         PFX + 'scsMemberFee.skiff.helper',
-
-  skiffInsurance:       PFX + 'scsMemberFee.skiffInsurance.label',
-  skiffInsurance_placeholder:   PFX + 'scsMemberFee.skiffInsurance.placeholder',
-  skiffInsurance_helper:PFX + 'scsMemberFee.skiffInsurance.helper',
-
-  bev:                  PFX + 'scsMemberFee.bev.label',
-  bev_placeholder:      PFX + 'scsMemberFee.bev.placeholder',
-  bev_helper:           PFX + 'scsMemberFee.bev.helper',
-
-  total:                PFX + 'scsMemberFee.total',
-  as_title:             '@actionsheet.title',
-  save:                 '@save.label',
-  ok:                   '@ok',
-  cancel:               '@cancel',
-
-  } satisfies Record<string, string>;
-
-export type ScsMemberFeesI18n = { [K in keyof typeof SCS_MEMBER_FEES_I18N_KEYS]: Signal<string> };
 
 export const _ScsMemberFeesStore = signalStore(
   withState(initialState),

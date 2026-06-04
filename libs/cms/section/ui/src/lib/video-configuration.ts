@@ -7,21 +7,21 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 interface VideoConfI18n {
-  youtubeId_label:       Signal<string>,
-  youtubeId_placeholder: Signal<string>,
-  youtubeId_helper:      Signal<string>,
-  width_label:           Signal<string>,
-  width_placeholder:     Signal<string>,
-  width_helper:          Signal<string>,
-  height_label:          Signal<string>,
-  height_placeholder:    Signal<string>,
-  height_helper:         Signal<string>,
-  frameborder_label:     Signal<string>,
-  frameborder_placeholder: Signal<string>,
-  frameborder_helper:    Signal<string>,
-  baseUrl_label:         Signal<string>,
-  baseUrl_placeholder:   Signal<string>,
-  baseUrl_helper:        Signal<string>,
+  video_youtubeId_label:       Signal<string>,
+  video_youtubeId_placeholder: Signal<string>,
+  video_youtubeId_helper:      Signal<string>,
+  video_width_label:           Signal<string>,
+  video_width_placeholder:     Signal<string>,
+  video_width_helper:          Signal<string>,
+  video_height_label:          Signal<string>,
+  video_height_placeholder:    Signal<string>,
+  video_height_helper:         Signal<string>,
+  video_frameborder_label:     Signal<string>,
+  video_frameborder_placeholder: Signal<string>,
+  video_frameborder_helper:    Signal<string>,
+  video_baseUrl_label:         Signal<string>,
+  video_baseUrl_placeholder:   Signal<string>,
+  video_baseUrl_helper:        Signal<string>,
 }
 
 @Component({
@@ -78,37 +78,37 @@ export class VideoConfiguration {
 
   protected youtubeIdI18n = computed(() => ({
     name: 'youtubeId',
-    label: this.i18n().youtubeId_label(),
-    placeholder: this.i18n().youtubeId_placeholder(),
-    helper: this.i18n().youtubeId_helper(),
+    label: this.i18n().video_youtubeId_label(),
+    placeholder: this.i18n().video_youtubeId_placeholder(),
+    helper: this.i18n().video_youtubeId_helper(),
   } as TextInputI18n));
 
   protected widthI18n = computed(() => ({
     name: 'width',
-    label: this.i18n().width_label(),
-    placeholder: this.i18n().width_placeholder(),
-    helper: this.i18n().width_helper(),
+    label: this.i18n().video_width_label(),
+    placeholder: this.i18n().video_width_placeholder(),
+    helper: this.i18n().video_width_helper(),
   } as TextInputI18n));
 
   protected heightI18n = computed(() => ({
     name: 'height',
-    label: this.i18n().height_label(),
-    placeholder: this.i18n().height_placeholder(),
-    helper: this.i18n().height_helper(),
+    label: this.i18n().video_height_label(),
+    placeholder: this.i18n().video_height_placeholder(),
+    helper: this.i18n().video_height_helper(),
   } as TextInputI18n));
 
   protected frameborderI18n = computed(() => ({
     name: 'frameborder',
-    label: this.i18n().frameborder_label(),
-    placeholder: this.i18n().frameborder_placeholder(),
-    helper: this.i18n().frameborder_helper(),
+    label: this.i18n().video_frameborder_label(),
+    placeholder: this.i18n().video_frameborder_placeholder(),
+    helper: this.i18n().video_frameborder_helper(),
   } as TextInputI18n));
 
   protected baseUrlI18n = computed(() => ({
     name: 'baseUrl',
-    label: this.i18n().baseUrl_label(),
-    placeholder: this.i18n().baseUrl_placeholder(),
-    helper: this.i18n().baseUrl_helper(),
+    label: this.i18n().video_baseUrl_label(),
+    placeholder: this.i18n().video_baseUrl_placeholder(),
+    helper: this.i18n().video_baseUrl_helper(),
   } as TextInputI18n));
 
   /************************************** actions *********************************************** */

@@ -4,9 +4,10 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
+import { OWNERSHIP_I18N_KEYS, OwnershipI18n } from '@bk2/relationship-ownership-util';
 
 import { OwnershipNewForm } from './ownership-new.form';
-import { OwnershipStore } from './ownership.store';
 
 @Component({
   selector: 'bk-ownership-new-modal',
@@ -16,11 +17,10 @@ import { OwnershipStore } from './ownership.store';
     ChangeConfirmation,
     IonContent
   ],
-  providers: [OwnershipStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.create() }" [isModal]="true" />
+    <bk-header [i18n]="{ title: i18n.create() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]=true [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(formData(); as formData) {
@@ -38,7 +38,7 @@ import { OwnershipStore } from './ownership.store';
 })
 export class OwnershipNewModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(OwnershipStore);
+  protected readonly i18n = inject(I18nService).translateAll(OWNERSHIP_I18N_KEYS) as OwnershipI18n;
 
   // inputs
   public ownership = input.required<OwnershipModel>();
@@ -53,7 +53,7 @@ export class OwnershipNewModal {
   // derived signals
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {

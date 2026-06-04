@@ -1,4 +1,5 @@
 {
+  "group": "Gruppe",
   "groups": "Gruppen",
   "empty": "Keine Gruppen gefunden.",
   "content": "Inhalt",
@@ -11,30 +12,38 @@
     "album": "Alben",
     "members": "Mitglieder"
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "show": "Gruppe anzeigen",
-    "edit": "Gruppenkonfiguration ändern",
-    "addPage": "Gruppen Page hinzufügen",
-    "delete": "Gruppe löschen"
+
+  "add": {
+    "page": "Gruppen Page hinzufügen"
   },
-  "group": {
-    "create": {
-      "label": "Gruppe erstellen",
-      "conf": "Gruppe wurde erstellt.",
-      "error": "Gruppe konnte nicht erstellt werden.",
-      "duplicate": "Doppelte ID",
-      "exists": "Eine Gruppe mit dieser ID existiert bereits. Bitte benutze eine andere ID."
-    },
-    "edit": {
-      "label": "Gruppe ändern"
-    },
-    "view": {
-      "label": "Gruppe anzeigen"
-    },
-    "delete": {
-      "confirm": "Soll die Gruppe wirklich gelöscht werden ?"
-    }
+  "create": {
+    "label": "Neue Gruppe erstellen",
+    "conf": "Gruppe wurde erstellt.",
+    "error": "Gruppe konnte nicht erstellt werden.",
+    "duplicate": "Doppelte ID",
+    "exists": "Eine Gruppe mit dieser ID existiert bereits. Bitte benutze eine andere ID."
+  },
+  "delete": {
+    "label": "Gruppe löschen",
+    "confirm": "Soll die Gruppe wirklich gelöscht werden ?",
+    "error": "Die Gruppe konnte nicht gelöscht werden.",
+    "conf": "Die Gruppe wurde gelöscht."
+  },
+  "show": "Gruppe anzeigen",
+  "search": {
+    "oneLabel": "Gruppe suchen",
+    "label": "Gruppen suchen"
+  },
+  "select": {
+    "label": "Gruppe wählen"
+  },
+  "update": {
+    "label": "Gruppenkonfiguration ändern",
+    "error": "Die Änderungen konnten nicht gespeichert werden",
+    "conf": "Die Änderungen wurden gespeichert."
+  },
+  "view": {
+    "label": "Gruppe anzeigen"
   },
   "page": {
     "create": {
@@ -79,9 +88,69 @@
       "error": "Der Kalender konnte nicht hinzugefügt werden."
     }
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "attributes": "Gruppen-Eigenschaften",
+  "display": "Darstellung",
+  "access": "Zugang & Benachrichtigungen",
+  "bkey": {
+    "label": "bkey",
+    "placeholder": "sssssssssss",
+    "helper": "Der Schlüssel der Gruppe in der Datenbank, eine eindeutige ID, normalerweise automatisch vergeben."
+  },
+  "id": {
+    "label": "Gruppen ID",
+    "placeholder": "ssssss",
+    "helper": "Ein eindeutiger Identifikator für die Gruppe."
+  },
+  "name": {
+    "label": "Name der Gruppe",
+    "placeholder": "sssssssss",
+    "helper": "Ein lesbarer Name für die Gruppe, so dass sie in Listen einfacher gefunden werden kann."
+  },
+  "icon": {
+    "label": "Icon",
+    "placeholder": "Name",
+    "helper": "Der Name eines grafischen Symbols."
+  },
+  "visibility": {
+    "label": "Sichtbarkeit (Rollen)",
+    "placeholder": "Rolle[,Rolle]",
+    "helper": "Komma-getrennte Rollennamen (z.B. registered,privileged). Nutzer mit einer dieser Rollen sehen Kalender und Chat der Gruppe, auch ohne Mitglied zu sein. Leer = nur Mitglieder."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Beliebige Notizen."
+  },
+  "notifyType": {
+    "label": "Benachrichtigungstyp",
+    "helper": "memberOnly: nur Mitglieder erhalten Benachrichtigungen. membersAndMatchingVisibility: Mitglieder und Nutzer mit passender Sichtbarkeitsrolle."
+  },
+  "hasContent": {
+    "label": "Inhalt anzeigen",
+    "helper": "Der GroupAdmin kann eigene Inhalte erstellen und verwalten."
+  },
+  "hasChat": {
+    "label": "Chat anzeigen",
+    "helper": "Die Gruppenmitglieder können miteinander chatten."
+  },
+  "hasCalendar": {
+    "label": "Kalender anzeigen",
+    "helper": "Die Gruppenmitglieder können Termine in einem eigenen Kalender verwalten."
+  },
+  "hasTasks": {
+    "label": "Aufgaben anzeigen",
+    "helper": "Die Aufgaben der Gruppe können in einer eigenen Todo-liste bearbeitet werden."
+  },
+  "hasFiles": {
+    "label": "Dateien anzeigen",
+    "helper": "Die Gruppe hat einen eigenen Speicherbereich, wo ihre Mitglieder ihre Dateien ablegen können."
+  },
+  "hasAlbum": {
+    "label": "Alben anzeigen",
+    "helper": "Fotos können in einem Album der Gruppe angezeigt werden."
+  },
+  "hasMembers": {
+    "label": "Mitglieder anzeigen",
+    "helper": "Die Mitglieder der Gruppe werden allen Gruppenmitgliedern angezeigt."
   }
 }

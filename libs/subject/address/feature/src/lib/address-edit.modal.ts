@@ -4,9 +4,10 @@ import { IonContent, ModalController } from "@ionic/angular/standalone";
 import { AddressModel, CategoryListModel, UserModel } from "@bk2/shared-models";
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from "@bk2/shared-ui";
 import { coerceBoolean, safeStructuredClone } from "@bk2/shared-util-core";
+import { I18nService } from "@bk2/shared-i18n";
 
 import { AddressForm } from "@bk2/subject-address-ui";
-import { AddressStore } from "./addresses.store";
+import { ADDRESSES_I18N_KEYS, AddressesI18n } from "@bk2/subject-address-util";
 
 @Component({
   selector: 'bk-address-edit-modal',
@@ -14,18 +15,17 @@ import { AddressStore } from "./addresses.store";
   imports: [
     AddressForm, Header, ChangeConfirmation,
     IonContent
-  ],  
-  providers: [AddressStore],
+  ],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
           <bk-address-form
-            [i18n]="store.i18n"
+            [i18n]="i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
@@ -45,7 +45,7 @@ import { AddressStore } from "./addresses.store";
 })
 export class AddressEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(AddressStore);
+  protected readonly i18n = inject(I18nService).translateAll(ADDRESSES_I18N_KEYS) as AddressesI18n;
 
   // inputs
   public address = input.required<AddressModel>();
@@ -56,7 +56,7 @@ export class AddressEditModal {
   public tenantId = input.required<string>();
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  
+
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
@@ -66,7 +66,7 @@ export class AddressEditModal {
   // derived signals
   protected readonly headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.address().bkey));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ok: this.store.i18n.ok(), cancel: this.store.i18n.cancel(), confirmation: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -87,12 +87,12 @@ export class AddressEditModal {
 
   protected getTitleLabel(readOnly: boolean, key: string): string {
     if (this.readOnly()) {
-      return this.store.i18n.view_label();
+      return this.i18n.view_label();
     }
     if (key.length > 0) {
-      return this.store.i18n.update_label();
+      return this.i18n.update_label();
     } else {
-      return this.store.i18n.create_label();
+      return this.i18n.create_label();
     }
   }
 }

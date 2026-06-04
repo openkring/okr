@@ -6,15 +6,16 @@ import { Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@bk2/shared-ui
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 interface ResponsibilityConfigI18n {
-  bkey_label:              Signal<string>;
-  bkey_placeholder:        Signal<string>;
-  bkey_helper:             Signal<string>;
-  showAvatar_label:        Signal<string>;
-  showAvatar_helper:       Signal<string>;
-  showName_label:          Signal<string>;
-  showName_helper:         Signal<string>;
-  showDescription_label:   Signal<string>;
-  showDescription_helper:  Signal<string>;
+  responsibility_edit:                    Signal<string>;
+  responsibility_bkey_label:              Signal<string>;
+  responsibility_bkey_placeholder:        Signal<string>;
+  responsibility_bkey_helper:             Signal<string>;
+  responsibility_show_avatar_label:        Signal<string>;
+  responsibility_show_avatar_helper:       Signal<string>;
+  responsibility_show_name_label:          Signal<string>;
+  responsibility_show_name_helper:         Signal<string>;
+  responsibility_show_description_label:   Signal<string>;
+  responsibility_show_description_helper:  Signal<string>;
 }
 
 @Component({
@@ -66,27 +67,27 @@ export class ResponsibilityConfiguration {
 
   protected bkeyI18n = computed(() => ({
     name: 'bkey',
-    label: this.i18n().bkey_label(),
-    placeholder: this.i18n().bkey_placeholder(),
-    helper: this.i18n().bkey_helper(),
+    label: this.i18n().responsibility_bkey_label(),
+    placeholder: this.i18n().responsibility_bkey_placeholder(),
+    helper: this.i18n().responsibility_bkey_helper(),
   } as TextInputI18n));
 
   protected showAvatarI18n = computed(() => ({
     name: 'showAvatar',
-    label: this.i18n().showAvatar_label(),
-    helper: this.i18n().showAvatar_helper(),
+    label: this.i18n().responsibility_show_avatar_label(),
+    helper: this.i18n().responsibility_show_avatar_helper(),
   } as CheckboxI18n));
 
   protected showNameI18n = computed(() => ({
     name: 'showName',
-    label: this.i18n().showName_label(),
-    helper: this.i18n().showName_helper(),
+    label: this.i18n().responsibility_show_name_label(),
+    helper: this.i18n().responsibility_show_name_helper(),
   } as CheckboxI18n));
 
   protected showDescriptionI18n = computed(() => ({
     name: 'showDescription',
-    label: this.i18n().showDescription_label(),
-    helper: this.i18n().showDescription_helper(),
+    label: this.i18n().responsibility_show_description_label(),
+    helper: this.i18n().responsibility_show_description_helper(),
   } as CheckboxI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | boolean): void {
