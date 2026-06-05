@@ -1,1 +1,1 @@
-export const PFX = '@icon/data-access.';
+export const PFX = '@cms/icon/data-access.';

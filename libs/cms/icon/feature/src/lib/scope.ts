@@ -1,1 +1,1 @@
-export const PFX = '@icon/feature.';
+export const PFX = '@cms/icon/feature.';
