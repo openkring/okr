@@ -1,7 +1,7 @@
 {
-  "name": "icon-data-access",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/icon/data-access/src",
+  "name": "cms-icon-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/cms/icon/data-access/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:data-access", "scope:icon", "platform:mobile", "platform:web"],
@@ -10,10 +10,10 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/icon/data-access",
-        "main": "libs/icon/data-access/src/index.ts",
-        "tsConfig": "libs/icon/data-access/tsconfig.lib.json",
-        "assets": ["libs/icon/data-access/*.md"],
+        "outputPath": "dist/libs/cms/icon/data-access",
+        "main": "libs/cms/icon/data-access/src/index.ts",
+        "tsConfig": "libs/cms/icon/data-access/tsconfig.lib.json",
+        "assets": ["libs/cms/icon/data-access/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },

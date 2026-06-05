@@ -1,7 +1,7 @@
 {
-  "name": "icon-ui",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/icon/ui/src",
+  "name": "cms-icon-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/cms/icon/ui/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:ui", "scope:icon", "platform:mobile", "platform:web"],
@@ -10,10 +10,10 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/icon/ui",
-        "main": "libs/icon/ui/src/index.ts",
-        "tsConfig": "libs/icon/ui/tsconfig.lib.json",
-        "assets": ["libs/icon/ui/*.md"],
+        "outputPath": "dist/libs/cms/icon/ui",
+        "main": "libs/cms/icon/ui/src/index.ts",
+        "tsConfig": "libs/cms/icon/ui/tsconfig.lib.json",
+        "assets": ["libs/cms/icon/ui/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },

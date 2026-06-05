@@ -1,7 +1,7 @@
 {
-  "name": "icon-feature",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/icon/feature/src",
+  "name": "cms-icon-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/cms/icon/feature/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:feature", "scope:icon", "platform:mobile", "platform:web"],
@@ -10,10 +10,10 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/icon/feature",
-        "main": "libs/icon/feature/src/index.ts",
-        "tsConfig": "libs/icon/feature/tsconfig.lib.json",
-        "assets": ["libs/icon/feature/*.md"],
+        "outputPath": "dist/libs/cms/icon/feature",
+        "main": "libs/cms/icon/feature/src/index.ts",
+        "tsConfig": "libs/cms/icon/feature/tsconfig.lib.json",
+        "assets": ["libs/cms/icon/feature/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },

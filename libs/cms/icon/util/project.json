@@ -1,7 +1,7 @@
 {
-  "name": "icon-util",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/icon/util/src",
+  "name": "cms-icon-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/cms/icon/util/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:util", "scope:icon", "platform:mobile", "platform:web"],
@@ -10,10 +10,10 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/icon/util",
-        "main": "libs/icon/util/src/index.ts",
-        "tsConfig": "libs/icon/util/tsconfig.lib.json",
-        "assets": ["libs/icon/util/*.md"],
+        "outputPath": "dist/libs/cms/icon/util",
+        "main": "libs/cms/icon/util/src/index.ts",
+        "tsConfig": "libs/cms/icon/util/tsconfig.lib.json",
+        "assets": ["libs/cms/icon/util/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },
@@ -21,7 +21,7 @@
       "executor": "@nx/vite:test",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "configFile": "libs/icon/util/vite.config.ts"
+        "configFile": "libs/cms/icon/util/vite.config.ts"
       }
     },
     "lint": {
