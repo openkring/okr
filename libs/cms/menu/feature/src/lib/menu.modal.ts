@@ -1,12 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
+import { ENV } from '@bk2/shared-config';
 import { CategoryListModel, MenuItemModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { MenuForm } from '@bk2/cms-menu-ui';
-import { MenuStore } from './menu.store';
+import { MENU_I18N_KEYS, MenuI18n } from '@bk2/cms-menu-util';
 
 @Component({
   selector: 'bk-menu-modal',
@@ -15,7 +17,6 @@ import { MenuStore } from './menu.store';
     Header, ChangeConfirmation, MenuForm,
     IonContent
   ],
-  providers: [MenuStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
@@ -30,10 +31,10 @@ import { MenuStore } from './menu.store';
           [showForm]="showForm()"
           [roles]="roles()"
           [types]="types()"
-          [tenantId]="tenantId()"
+          [tenantId]="tenantId"
           [readOnly]="isReadOnly()"
           [allTags]="tags()"
-          [i18n]="store.i18n"
+          [i18n]="i18n"
           (iconSelectClicked)="selectIcon()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -44,7 +45,8 @@ import { MenuStore } from './menu.store';
 })
 export class MenuModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(MenuStore);
+  protected readonly i18n = inject(I18nService).translateAll(MENU_I18N_KEYS) as MenuI18n;
+  protected readonly tenantId = inject(ENV).tenantId;
 
   // inputs
   public menuItem = input.required<MenuItemModel>();
@@ -63,9 +65,11 @@ export class MenuModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.menuItem().bkey));
-  protected tenantId = computed(() => this.store.tenantId());
-  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected headerTitle = computed(() => {
+    if (this.isReadOnly()) return this.i18n.view();
+    return this.menuItem().bkey?.length > 0 ? this.i18n.edit() : this.i18n.create();
+  });
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save() } as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -85,7 +89,7 @@ export class MenuModal {
   }
 
   protected async selectIcon(): Promise<void> {
-    const { IconSelectModal: IconSelectModal } = await import('@bk2/icon-feature');
+    const { IconSelectModal: IconSelectModal } = await import('@bk2/cms-icon-feature');
     const modal = await this.modalController.create({
       component: IconSelectModal,
       componentProps: {
