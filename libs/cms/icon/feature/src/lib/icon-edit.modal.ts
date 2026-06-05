@@ -7,8 +7,8 @@ import { IconModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 
-import { IconEditForm } from '@bk2/icon-ui';
-import { ICON_I18N_KEYS, IconI18n } from '@bk2/icon-util';
+import { IconEditForm } from '@bk2/cms-icon-ui';
+import { ICON_I18N_KEYS, IconI18n } from '@bk2/cms-icon-util';
 
 @Component({
   selector: 'bk-icon-edit-modal',
@@ -62,8 +62,8 @@ export class IconEditModal {
 
   // derived
   protected readonly headerTitle = computed(() => {
-    if (this.isReadOnly()) return this.i18n.as_view();
-    return this.icon()?.bkey ? this.i18n.as_edit() : this.i18n.create_label();
+    if (this.isReadOnly()) return this.i18n.view();
+    return this.icon()?.bkey ? this.i18n.update() : this.i18n.create();
   });
   protected tenantId = computed(() => this.appStore.tenantId());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());

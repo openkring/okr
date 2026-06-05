@@ -6,7 +6,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { I18nService } from '@bk2/shared-i18n';
 import { IconCollection, IconModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
-import { getIconIndex } from '@bk2/icon-util';
+import { getIconIndex } from '@bk2/cms-icon-util';
 import { PFX } from './scope';
 
 @Injectable({

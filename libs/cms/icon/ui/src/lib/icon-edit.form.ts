@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { iconValidations } from '@bk2/icon-util';
+import { iconValidations } from '@bk2/cms-icon-util';
 import { IconModel, RoleName, UserModel } from '@bk2/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
