@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/icon-feature",
+  "name": "@bk2/cms-icon-feature",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -16,9 +16,9 @@
     "@bk2/shared-ui": "*",
     "@bk2/shared-util-angular": "*",
     "@bk2/shared-util-core": "*",
-    "@bk2/icon-data-access": "*",
-    "@bk2/icon-ui": "*",
-    "@bk2/icon-util": "*"
+    "@bk2/cms-icon-data-access": "*",
+    "@bk2/cms-icon-ui": "*",
+    "@bk2/cms-icon-util": "*"
   },
   "module": "./src/index.js",
   "type": "module"

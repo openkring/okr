@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/icon-ui",
+  "name": "@bk2/cms-icon-ui",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -11,7 +11,7 @@
     "@bk2/shared-models": "*",
     "@bk2/shared-ui": "*",
     "@bk2/shared-util-core": "*",
-    "@bk2/icon-util": "*"
+    "@bk2/cms-icon-util": "*"
   },
   "module": "./src/index.js",
   "type": "module"
