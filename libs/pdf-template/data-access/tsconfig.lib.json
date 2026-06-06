@@ -1,6 +1,7 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
+    "noEmit": false,
     "outDir": "../../../dist/libs/pdf-template/data-access",
     "declaration": true,
     "composite": true,

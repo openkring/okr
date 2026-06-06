@@ -1,6 +1,7 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
+    "noEmit": false,
     "outDir": "../../../../dist/libs/finance/vat-code/feature",
     "declaration": true,
     "composite": true,

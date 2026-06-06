@@ -1,6 +1,7 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
+    "noEmit": false,
     "outDir": "../../../dist/out-tsc/libs/profile-ui",
     "declaration": true,
     "composite": true,

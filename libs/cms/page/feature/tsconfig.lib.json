@@ -1,6 +1,7 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
+    "noEmit": false,
     "outDir": "../../../../dist/libs/cms/page/feature",
     "declaration": true,
     "composite": true,

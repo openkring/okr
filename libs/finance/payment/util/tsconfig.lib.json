@@ -1,6 +1,7 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
+    "noEmit": false,
     "outDir": "../../../../dist/libs/finance/payment/util",
     "declaration": true, "composite": true, "module": "preserve",
     "moduleResolution": "bundler", "target": "es2020", "types": [],

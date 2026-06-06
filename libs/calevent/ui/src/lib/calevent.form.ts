@@ -111,7 +111,7 @@ import { CaleventI18n, calEventValidations } from '@bk2/calevent-util';
         (selectClicked)="selectPerson()"
         [currentUser]="currentUser"
         [readOnly]="isReadOnly()"
-        [title]="i18n().responsible_title()"
+        [title]="i18n().responsible()"
         [description]="i18n().responsible_description()"
       />
     }
@@ -125,7 +125,7 @@ import { CaleventI18n, calEventValidations } from '@bk2/calevent-util';
       inputStyle="select" (selectClicked)="calendarSelectClicked.emit()"
       [title]="i18n().calendar_title()"
       [add]="i18n().calendar_add()"
-      [selectLabel]="i18n().calendar_selectLabel()"
+      [selectLabel]="i18n().calendar_select()"
     />
 
   <!---------------------------------------------------
@@ -232,34 +232,34 @@ export class CalEventForm {
 
   protected durationMinutesI18n = computed(() => ({
     name: 'durationMinutes',
-    label: this.i18n().durationMinutes_label(),
+    label: this.i18n().durationMinutes(),
     placeholder: this.i18n().durationMinutes_placeholder(),
     helper: this.i18n().durationMinutes_helper()
   } as NumberInputI18n));
 
   protected descriptionI18n = computed(() => ({
-    name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
+    name: 'description', label: this.i18n().description(), placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
 
   protected startDateI18n = computed(() => ({
     name: 'startDate',
-    label: this.i18n().startDate_label(),
-    placeholder: this.i18n().startDate_placeholder(),
-    helper: this.i18n().startDate_helper()
+    label: this.i18n().date_start(),
+    placeholder: this.i18n().date_start_placeholder(),
+    helper: this.i18n().date_start_helper()
   } as DateInputI18n));
 
   protected endDateI18n = computed(() => ({
     name: 'endDate',
-    label: this.i18n().endDate_label(),
-    placeholder: this.i18n().endDate_placeholder(),
-    helper: this.i18n().endDate_helper()
+    label: this.i18n().date_end(),
+    placeholder: this.i18n().date_end_placeholder(),
+    helper: this.i18n().date_end_helper()
   } as DateInputI18n));
 
   protected repeatUntilDateI18n = computed(() => ({
     name: 'repeatUntilDate',
-    label: this.i18n().repeatUntilDate_label(),
-    placeholder: this.i18n().repeatUntilDate_placeholder(),
-    helper: this.i18n().repeatUntilDate_helper()
+    label: this.i18n().date_repeatUntil_label(),
+    placeholder: this.i18n().date_repeatUntil_placeholder(),
+    helper: this.i18n().date_repeatUntil_helper()
   } as DateInputI18n));
 
   protected startTimeI18n = computed(() => ({

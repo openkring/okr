@@ -1,6 +1,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "noEmit": true,
     "sourceMap": true,
     "declaration": true,
     "moduleResolution": "node",
