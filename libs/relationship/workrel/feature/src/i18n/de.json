@@ -1,32 +1,169 @@
 {
+  "workrel": "Beschäftigung",
   "workrels": "Beschäftigungen",
+  "desc": "Ein Arbeitsverhältnis zwischen einer Person und einer Organisation.",
+  "reldesc": "arbeitet für",
+  "revreldesc": "beschäftigt",
   "empty": "Keine Arbeits-Beziehungen gefunden.",
+
+  "create": {
+    "label": "Beschäftigung hinzufügen",
+    "conf": "Beschäftigung wurde erstellt.",
+    "error": "Beschäftigung konnte nicht erstellt werden."
+  },
+  "delete": {
+    "label": "Beschäftigung löschen",
+    "confirm": "Soll diese Beschäftigung wirklich gelöscht werden ?",
+    "conf": "Beschäftigung wurde gelöscht.",
+    "error": "Beschäftigung konnte nicht gelöscht werden."
+  },
+  "end": {
+    "label": "Beschäftigung beenden"
+  },
+  "select": {
+    "label": "Auswählen"
+  },
+  "update": {
+    "label": "Beschäftigung ändern",
+    "conf": "Beschäftigung wurde geändert.",
+    "error": "Beschäftigung konnte nicht geändert werden."
+  },
+  "view": {
+    "label": "Beschäftigungs Details anzeigen"
+  },
+
+
+  "list": {
+    "title": "Beschäftigungen",
+    "empty": "Keine Arbeits Beziehungen gefunden.",
+    "header": {
+      "subject": "Person",
+      "object": "Organisation",
+      "type": "Beziehungsart"
+    }
+  },
+
+  "bkey": {
+    "label": "Dok.-Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "Bezeichnung eingeben",
+    "helper": ""
+  },
+  "currency": {
+    "label": "Währung",
+    "placeholder": "CHF",
+    "helper": ""
+  },
+  "order": {
+    "label": "Reihenfolge",
+    "placeholder": "",
+    "helper": ""
+  },
+  "price": {
+    "label": "Preis",
+    "placeholder": "",
+    "helper": ""
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
+  },
+  "validFrom": {
+    "label": "Gültig ab",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
+  },
+  "validTo": {
+    "label": "Gültig bis",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
+  },
   "subject": "Person",
   "type": "Beziehungsart",
   "object": "Organisation",
-  "delete": {
-    "confirm": "Soll diese Beschäftigung wirklich gelöscht werden ?"
+
+  "workrel_type": {
+    "name": "Arbeits-Art",
+    "all": {
+      "label": "Alle"
+    },
+    "employee": {
+      "label": "Angestellte/r",
+      "description": "Angestellter"
+    },
+    "contractor": {
+      "label": "Auftragnehmer/in",
+      "description": "Auftragnehmer"
+    },
+    "volunteer": {
+      "label": "Freiwillige/r",
+      "description": "Freiwilliger"
+    },
+    "intern": {
+      "label": "Praktikant/in",
+      "description": "Praktikant"
+    },
+    "trainee": {
+      "label": "Lehrling",
+      "description": "Lehrling"
+    },
+    "freelancer": {
+      "label": "Freelancer/in",
+      "description": "Freelancer"
+    },
+    "student": {
+      "label": "Student/in",
+      "description": "Student"
+    },
+    "boardMember": {
+      "label": "Vorstand",
+      "description": "Vorstandsmitglied"
+    },
+    "cooperation": {
+      "label": "Kooperation",
+      "description": "Kooperationspartner"
+    },
+    "competition": {
+      "label": "Wettbewerb",
+      "description": "Steht im Wettbewerb mit einer anderen Organisation."
+    },
+    "custom": {
+      "label": "Andere Arbeitsart",
+      "description": "Beziehung, die nicht in die anderen Kategorien passt."
+    }
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Beschäftigungs Details ansehen",
-    "edit": "Beschäftigung ändern",
-    "create": "Neue Beschäftigung erstellen",
-    "delete": "Beschäftigung löschen",
-    "end": "Beschäftigung beenden"
-  },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
-  },
-  "select": { "label": "Auswählen" },
-  "bkey": { "label": "Dok.-Schlüssel", "placeholder": "", "helper": "" },
-  "label": { "label": "Bezeichnung", "placeholder": "Bezeichnung eingeben", "helper": "" },
-  "currency": { "label": "Währung", "placeholder": "CHF", "helper": "" },
-  "order": { "label": "Reihenfolge", "placeholder": "", "helper": "" },
-  "price": { "label": "Preis", "placeholder": "", "helper": "" },
-  "notes": { "label": "Notizen", "placeholder": "" },
-  "validFrom": { "label": "Gültig ab", "placeholder": "TT.MM.JJJJ", "helper": "" },
-  "validTo": { "label": "Gültig bis", "placeholder": "TT.MM.JJJJ", "helper": "" }
+
+  "state": {
+    "all": {
+      "label": "Alle"
+    },
+    "initial": {
+      "label": "Initial",
+      "description": "Intention oder Idee/Plan."
+    },
+    "applied": {
+      "label": "Angemeldet",
+      "description": "Die Person hat sich beworben."
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Die Arbeitsbeziehung ist aktuell gültig."
+    },
+    "passive": {
+      "label": "Passiv",
+      "description": "Die Arbeitsbeziehung ist sistiert/unterbrochen."
+    },
+    "terminated": {
+      "label": "Beendet",
+      "description": "Die Arbeitsbeziehung ist beendet."
+    },
+    "cancelled": {
+      "label": "Abgebrochen",
+      "description": "Die Arbeitsbeziehung wurde abgebrochen."
+    }
+  }
 }

@@ -1,22 +1,129 @@
 {
+  "transfer": "Transfer / Übertrag",
   "transfers": "Transfers",
+  "desc": "Eine Übertragung einer Resource von einem Subjekt (Person oder Organisation) zu einem Objekt (Person oder Organisation).",
   "empty": "Keine Transfers gefunden.",
-  "dateOfTransfer": "Datum",
-  "subject": "von",
-  "object": "an",
+  "reldesc": "überträgt an",
+  "revreldesc": "transferiert von",
+
+
+  "add": {
+    "subject": {
+      "label": "Person oder Organisation hinzufügen",
+      "conf": "Transfer-Subjekt wurde hinzugefügt.",
+      "error": "Transfer-Subjekt konnte nicht hinzugefügt werden."
+    },
+    "object": {
+      "label": "Person oder Organisation hinzufügen",
+      "conf": "Transfer-Objekt wurde hinzugefügt.",
+      "error": "Transfer-Objekt konnte nicht hinzugefügt werden."
+    }
+  },
+  "create": {
+    "label": "Transfer hinzufügen",
+    "conf": "Transfer wurde erstellt.",
+    "error": "Transfer konnte nicht erstellt werden."
+  },
+  "delete": {
+    "label": "Transfer löschen",
+    "conf": "Transfer wurde gelöscht.",
+    "error": "Transfer konnte nicht gelöscht werden."
+  },
+  "select": {
+    "resource": "Resource wählen"
+  },
+  "update": {
+    "label": "Transfer ändern",
+    "conf": "Transfer wurde geändert.",
+    "error": "Transfer konnte nicht geändert werden."
+  },
+  "view": {
+    "label": "Transfer Details anzeigen"
+  },
+
+  "list": {
+    "title": "Transfers",
+    "header": {
+      "type": "Art",
+      "resource": "Resource",
+      "subject": "von",
+      "object": "an",
+      "date": "Datum",
+      "name": "Anlass",
+      "state": "Status"
+    }
+  },
+
+  "subject": "Von",
+  "object": "An",
+  "date": "Datum",
   "resource": "Objekt",
   "name": "Anlass",
   "state": "Status",
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "edit": "Transfer ändern",
-    "view": "Details ansehen",
-    "delete": "Transfer löschen",
-    "create": "Transfer erstellen"
+  "type": "Transfer-Art",
+
+
+  "transfer_type": {
+    "all": {
+      "label": "Alle"
+    },
+    "purchase": {
+      "label": "Kauf",
+      "description": "Transfer durch Kauf"
+    },
+    "gift": {
+      "label": "Geschenk",
+      "description": "Transfer durch Geschenk"
+    },
+    "inheritance": {
+      "label": "Erbschaft",
+      "description": "Transfer durch Erbschaft"
+    },
+    "withdrawal": {
+      "label": "Abhebung",
+      "description": "Transfer durch Abhebung"
+    },
+    "deposit": {
+      "label": "Einzahlung",
+      "description": "Transfer durch Einzahlung"
+    },
+    "loan": {
+      "label": "Darlehen",
+      "description": "Transfer durch Darlehen"
+    },
+    "custom": {
+      "label": "Sonstiges",
+      "description": "Transfer durch sonstige Gründe"
+    },
+    "booking": {
+      "label": "Buchung",
+      "description": "Transfer durch Buchung"
+    }
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "transfer_state": {
+    "all": {
+      "label": "Alle Stati"
+    },
+    "initial": {
+      "label": "Initial",
+      "description": "Transfer-Idee oder -Plan."
+    },
+    "draft": {
+      "label": "Entwurf",
+      "description": "Transfer wird gerade erstellt (z.B. Offerten- oder Vertragsdiskussion)."
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Der Transfer ist aktiv und gültig."
+    },
+    "terminated": {
+      "label": "Abgeschlossen",
+      "description": "Der Transfer ist abgeschlossen."
+    },
+    "cancelled": {
+      "label": "Abgebrochen",
+      "description": "Der Transfer wurde abgebrochen."
+    }
   }
 }

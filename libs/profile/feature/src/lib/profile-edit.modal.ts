@@ -60,7 +60,7 @@ import { ProfileStore } from './profile.store';
                 />
               }
             }
-            <bk-addresses-accordion [parentKey]="parentKey()" description="@profile.addresses.description" [priv]="priv()" [readOnly]="false" />
+            <bk-addresses-accordion [parentKey]="parentKey()" [priv]="priv()" [readOnly]="false" />
             @if(userFormData(); as userFormData) {
               <bk-profile-settings-accordion
                 [formData]="userFormData" (formDataChange)="onUserChange($event)"

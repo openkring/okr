@@ -4,6 +4,12 @@
     "error": "Die neue Organisation konnte nicht gespeichert werden.",
     "conf": "Die neue Organisation wurde gespeichert."
   },
+  "delete": {
+    "label": "Organisation löschen",
+    "confirm": "Soll die Organisation wirklich gelöscht werden ?",
+    "conf": "Die Organisation wurde gelöscht.",
+    "error": "Die Organisation konnte nicht gelöscht werden."
+  },
   "update": {
     "label": "Organisation ändern",
     "error": "Die Aenderungen konnten nicht gespeichert werden",

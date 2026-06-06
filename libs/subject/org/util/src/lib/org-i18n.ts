@@ -67,6 +67,7 @@ export const ORG_I18N_KEYS = {
   phone_placeholder:               PFX + 'phone.placeholder',
 
   // org_type: resolved by cat-select
+  
 } satisfies Record<string, string>;
 
 export type OrgI18n = { [K in keyof typeof ORG_I18N_KEYS]: Signal<string> };

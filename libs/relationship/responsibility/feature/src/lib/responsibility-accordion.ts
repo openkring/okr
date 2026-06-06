@@ -75,12 +75,12 @@ export class ResponsibilityAccordion {
   }
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, r: ResponsibilityModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.store.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }

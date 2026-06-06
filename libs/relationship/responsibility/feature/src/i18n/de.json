@@ -1,27 +1,88 @@
 {
+  "label": "Verantwortung",
   "responsibility": "Verantwortlichkeit",
   "responsibilities": "Verantwortlichkeiten",
   "responsible": "Verantwortlich",
+  "desc": "Eine Zuständigkeit einer Person für gewisse Tätigkeiten.",
   "delegate": "Stellvertretung",
   "empty": "Keine Verantwortungen gefunden.",
+
+  "create": {
+    "label": "Verantwortlichkeit hinzufügen",
+    "conf": "Verantwortlichkeit wurde erstellt.",
+    "error": "Verantwortlichkeit konnte nicht erstellt werden."
+  },
   "delete": {
-    "confirm": "Möchtest du die Verantwortlichkeit wirklich löschen?"
+    "label": "Verantwortlichkeit löschen",
+    "confirm": "Möchtest du die Verantwortlichkeit wirklich löschen?",
+    "conf": "Verantwortlichkeit wurde gelöscht.",
+    "error": "Verantwortlichkeit konnte nicht gelöscht werden."
+  },
+  "export": {
+    "raw": "Rohdaten exportieren"
+  },
+  "select": {
+    "responsible": "Verantwortliche wählen",
+    "delegate": "Stellvertretung wählen"
   },
   "update": {
+    "label": "Verantwortlichkeit ändern",
+    "conf": "Verantwortlichkeit wurde geändert.",
+    "error": "Verantwortlichkeit konnte nicht geändert werden.",
     "header": "Doppelte ID",
     "message1": "Eine Verantwortlichkeit mit ID ",
     "message2": " existiert bereits. Bitte benutze eine andere ID."
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Verantwortlichkeit ansehen",
-    "edit": "Verantwortlichkeit ändern",
-    "create": "Verantwortlichkeit erstellen",
-    "delete": "Verantwortlichkeit löschen"
+  "view": {
+    "label": "Verantwortlichkeitsdetails anzeigen"
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "list": {
+    "title": "Verantwortlichkeiten",
+    "header": {
+      "responsible": "Verantwortliche Person",
+      "delegate": "Stellvertretende Person",
+      "validFrom": "Gültig ab",
+      "validTo": "Gültig bis",
+      "category": "Typ"
+    }
+  },
+
+
+  "bkey": { 
+    "label": "Schlüssel",
+    "placeholder": "",
+    "helper": ""
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Text",
+    "helper": "Beliebiger Text - nur für privilegierte User sichtbar."
+  },
+  "name": {
+    "label": "Bezeichnung",
+    "placeholder": "Bezeichnung eingeben",
+    "helper": ""
+  },
+  "validFrom": {
+    "label": "Gültig ab",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "" 
+  },
+  "validTo": {
+    "label": "Gültig bis",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "" 
+  },
+  "delegateValidFrom": {
+    "label": "Stellvertretung ab",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
+  },
+  "delegateValidTo": {
+    "label": "Stellvertretung bis",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": ""
   }
 }
+

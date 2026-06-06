@@ -37,7 +37,7 @@ import { LowercaseWordMask } from '@bk2/shared-config';
             <ion-row>
              <ion-col size="12" size-md="6">
                 @if(isNew()) {
-                  <bk-text-input [i18n]="respIdI18n()" [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="false" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="false" />
                 } @else {
                   <ion-item lines="none">
                     <ion-label>ID: {{ bkey() }}</ion-label>
@@ -132,7 +132,7 @@ export class ResponsibilityForm {
   // i18n
   public readonly i18n = input.required<ResponsibilityI18n>();
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
-  protected respIdI18n = computed(() => ({ name: 'respId', label: this.i18n().respId_label(), placeholder: this.i18n().respId_placeholder(), helper: this.i18n().respId_helper() } as TextInputI18n));
+  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
   protected nameI18n = computed(() => ({ name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper() } as TextInputI18n));
   protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.i18n().validFrom_label(), placeholder: this.i18n().validFrom_placeholder(), helper: this.i18n().validFrom_helper() } as DateInputI18n));
   protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));

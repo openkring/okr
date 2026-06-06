@@ -119,18 +119,18 @@ export class WorkrelAccordion {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, workRel: WorkrelModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
 
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(workRel.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.store.i18n.as_end(), this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
       }
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];

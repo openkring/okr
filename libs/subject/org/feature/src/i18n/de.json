@@ -101,6 +101,8 @@
   },
 
   "org_type": {
+    "label": "Organisations-Typ",
+    "helper": "Die Art einer Organisation (zB. Firma, Verein/Club, Verwaltung etc.).",
     "legalEntity": {
       "label": "Firmenname",
       "placeholder": "Firmenname",
