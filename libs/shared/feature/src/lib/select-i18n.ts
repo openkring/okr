@@ -1,6 +1,6 @@
 import { Signal } from '@angular/core';
 
-import { PFX } from './scope';
+const PFX = '@shared/feature.';
 
 // ---------------------------------------------------------------------------
 // calendar-select.store
@@ -42,6 +42,7 @@ export type OrgSelectI18n = { [K in keyof typeof ORG_SELECT_I18N_KEYS]: Signal<s
 export const PERSON_SELECT_I18N_KEYS = {
   person_select: PFX + 'person.select',
   person_empty:  PFX + 'person.empty',
+  select_label: '@select.label'
 } satisfies Record<string, string>;
 
 export type PersonSelectI18n = { [K in keyof typeof PERSON_SELECT_I18N_KEYS]: Signal<string> };

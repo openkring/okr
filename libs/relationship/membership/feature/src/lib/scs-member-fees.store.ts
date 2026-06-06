@@ -17,14 +17,12 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { ActivityService } from '@bk2/activity-data-access';
 import { ScsMemberFeeService, convertMembershipToFee, getFeeTotal, getTemplateId } from '@bk2/relationship-membership-data-access';
-import { SCS_MEMBER_FEES_I18N_KEYS, ScsMemberFeesI18n } from '@bk2/relationship-membership-util';
 
 import { MembershipEditModal } from './membership-edit.modal';
 import { ScsMemberFeeInvoiceIdModal } from './scs-member-fee-invoice-id.modal';
 import { ScsMemberFeeUploadModal } from './scs-member-fee-upload.modal';
 import { ScsMemberFeesTotalsModal } from './scs-member-fees-totals.modal';
-
-export type { ScsMemberFeesI18n };
+import { MEMBERSHIP_I18N_KEYS } from '@bk2/relationship-membership-util';
 
 export type ScsMemberFeesState = {
   searchTerm: string;
@@ -62,7 +60,7 @@ export const _ScsMemberFeesStore = signalStore(
   }),
 
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(SCS_MEMBER_FEES_I18N_KEYS),
+    i18n: store.i18nService.translateAll(MEMBERSHIP_I18N_KEYS),
 
     // All memberships of this tenant (active/passive/etc.) — filtered locally
     allMembershipsResource: rxResource({
@@ -242,7 +240,7 @@ export const _ScsMemberFeesStore = signalStore(
      * Generate and persist fee records for all default org members that don't have one yet.
      */
     async generateFees(): Promise<void> {
-      const confirmed = await confirm(store.alertController, store.i18n.generate_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      const confirmed = await confirm(store.alertController, store.i18n.scsMemberFee_generate_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
 
       const tenantId = store.tenantId();
@@ -270,7 +268,7 @@ export const _ScsMemberFeesStore = signalStore(
 
       await Promise.all(saves);
       patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, store.i18n.generate_conf());
+      await showToast(store.toastController, store.i18n.scsMemberFee_generate_conf());
     },
 
     async showTotals(): Promise<void> {
@@ -284,7 +282,7 @@ export const _ScsMemberFeesStore = signalStore(
     },
 
     async archive(): Promise<void> {
-      const confirmed = await confirm(store.alertController, store.i18n.archive_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      const confirmed = await confirm(store.alertController, store.i18n.scsMemberFee_archive_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
 
       const fees = store.filteredFees();
@@ -296,7 +294,7 @@ export const _ScsMemberFeesStore = signalStore(
       }
       await batch.commit();
       patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, store.i18n.archive_conf());
+      await showToast(store.toastController, store.i18n.scsMemberFee_archive_conf());
     },
 
     async export(type: string): Promise<void> {
@@ -311,7 +309,7 @@ export const _ScsMemberFeesStore = signalStore(
         for (const fee of fees) {
           table.push(getDataRow<ScsMemberFeesModel>(fee, keys));
         }
-        exportXlsx(table, fn, store.i18n.export_title());
+        exportXlsx(table, fn, store.i18n.scsMemberFee_export_title());
       }
     },
 
@@ -331,7 +329,7 @@ export const _ScsMemberFeesStore = signalStore(
       const updated: ScsMemberFeesModel = { ...fee, state: status };
       await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
       patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, store.i18n.update_conf());
+      await showToast(store.toastController, store.i18n.scsMemberFee_update_conf());
     },
 
     /**
@@ -339,7 +337,7 @@ export const _ScsMemberFeesStore = signalStore(
      */
     async uploadToBexio(fee: ScsMemberFeesModel): Promise<void> {
       if (!fee.memberBexioId) {
-        await showToast(store.toastController, store.i18n.upload_noBexioId());
+        await showToast(store.toastController, store.i18n.scsMemberFee_upload_noBexioId());
         return;
       }
 
@@ -377,7 +375,7 @@ export const _ScsMemberFeesStore = signalStore(
       const updated: ScsMemberFeesModel = { ...fee, state: 'uploaded', invoiceBexioId: String(result.data.id) };
       await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
       patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, store.i18n.upload_conf());
+      await showToast(store.toastController, store.i18n.scsMemberFee_upload_conf());
     },
 
     /**

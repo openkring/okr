@@ -156,16 +156,16 @@ export class ResourceEditPage {
         case 'locker': return this.store.i18n.locker_view();
         case 'boat': return this.store.i18n.boat_view();
         case 'rboat': return this.store.i18n.rboat_view();
-        default: return this.store.i18n.view_label();
+        default: return this.store.i18n.view();
       }
     }
     if (key.length > 0) {
       switch(type) {
-        case 'key': return this.store.i18n.key_edit();
-        case 'locker': return this.store.i18n.locker_edit();
-        case 'boat': return this.store.i18n.boat_edit();
-        case 'rboat': return this.store.i18n.rboat_edit();
-        default: return this.store.i18n.edit_label();
+        case 'key': return this.store.i18n.key_update();
+        case 'locker': return this.store.i18n.locker_update();
+        case 'boat': return this.store.i18n.boat_update();
+        case 'rboat': return this.store.i18n.rboat_update();
+        default: return this.store.i18n.update();
       }
     } else {
       switch(type) {
@@ -173,7 +173,7 @@ export class ResourceEditPage {
         case 'locker': return this.store.i18n.locker_create();
         case 'boat': return this.store.i18n.boat_create();
         case 'rboat': return this.store.i18n.rboat_create();
-        default: return this.store.i18n.create_label();
+        default: return this.store.i18n.create();
       }
     }
   }

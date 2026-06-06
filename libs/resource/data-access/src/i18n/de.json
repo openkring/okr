@@ -1,0 +1,92 @@
+{
+    "create": {
+        "boat": {
+            "conf": "Das Boot wurde gespeichert.",
+            "error": "Das Boot konnte nicht gespeichert werden."
+        },
+        "rboat": {
+            "conf": "Das Ruderboot wurde gespeichert.",
+            "error": "Das Ruderboot konnte nicht gespeichert werden."
+        },
+        "car": {
+            "conf": "Das Fahrzeug wurde gespeichert.",
+            "error": "Das Fahrzeug konnte nicht gespeichert werden."
+        },
+        "locker": {
+            "conf": "Die Garderobe wurde gespeichert.",
+            "error": "Die Garderobe konnte nicht gespeichert werden."
+        },
+        "key": {
+            "conf": "Der Schlüssel wurde gespeichert.",
+            "error": "Der Schlüssel konnte nicht gespeichert werden."
+        },
+        "realestate": {
+            "conf": "Die Immobilie wurde gespeichert.",
+            "error": "Die Immobilie konnte nicht gespeichert werden."
+        },
+        "pet": {
+            "conf": "Das Haustier wurde gespeichert.",
+            "error": "Das Haustier konnte nicht gespeichert werden."
+        }
+    },
+    "delete": {
+        "boat": {
+            "conf": "Das Boot wurde gelöscht.",
+            "error": "Das Boot konnte nicht gelöscht werden."
+        },
+        "rboat": {
+            "conf": "Das Ruderboot wurde gelöscht.",
+            "error": "Das Ruderboot konnte nicht gelöscht werden."
+        },
+        "car": {
+            "conf": "Das Fahrzeug wurde gelöscht.",
+            "error": "Das Fahrzeug konnte nicht gelöscht werden."
+        },
+        "locker": {
+            "conf": "Die Garderobe wurde gelöscht.",
+            "error": "Die Garderobe konnte nicht gelöscht werden."
+        },
+        "key": {
+            "conf": "Der Schlüssel wurde gelöscht.",
+            "error": "Der Schlüssel konnte nicht gelöscht werden."
+        },
+        "realestate": {
+            "conf": "Die Immobilie wurde gelöscht.",
+            "error": "Die Immobilie konnte nicht gelöscht werden."
+        },
+        "pet": {
+            "conf": "Das Haustier wurde gelöscht.",
+            "error": "Das Haustier konnte nicht gelöscht werden."
+        }    
+    },
+    "update": {
+        "boat": {
+            "conf": "Das Boot wurde gespeichert.",
+            "error": "Das Boot konnte nicht gespeichert werden."
+        },
+        "rboat": {
+            "conf": "Das Ruderboot wurde gespeichert.",
+            "error": "Das Ruderboot konnte nicht gespeichert werden."
+        },
+        "car": {
+            "conf": "Das Fahrzeug wurde gespeichert.",
+            "error": "Das Fahrzeug konnte nicht gespeichert werden."
+        },
+        "locker": {
+            "conf": "Die Garderobe wurde gespeichert.",
+            "error": "Die Garderobe konnte nicht gespeichert werden."
+        },
+        "key": {
+            "conf": "Der Schlüssel wurde gespeichert.",
+            "error": "Der Schlüssel konnte nicht gespeichert werden."
+        },
+        "realestate": {
+            "conf": "Die Immobilie wurde gespeichert.",
+            "error": "Die Immobilie konnte nicht gespeichert werden."
+        },
+        "pet": {
+            "conf": "Das Haustier wurde gespeichert.",
+            "error": "Das Haustier konnte nicht gespeichert werden."
+        }
+    }
+}

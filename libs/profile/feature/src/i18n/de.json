@@ -24,6 +24,7 @@
     "description": "Hier kannst du das Verhalten der App an deine Bedürfnisse anpassen. Die Einstellungen gelten nur für dich und nicht für andere Benutzer."
   },
   "addresses": {
+    "title": "Adressen",
     "description": "Hier kannst du deine Adressen verwalten. Du kannst verschiedene Adressen für unterschiedliche Verwendungszwecke angeben, z.B. Privat, Geschäft, Notfallkontakt, etc. Die Sichtbarkeit dieser Adressen kannst du unten bei den Datenschutz-Einstellungen einstellen. Bank-Konto Informationen (IBAN-Nummer) für Rückerstattungen kannst du als Adressen mit Typ Bank-Konto eingeben. "
   },
   "gravatar": {
@@ -110,6 +111,25 @@
     "faceid": {
       "label": "Face ID verwenden",
       "helper": "Authentisierung mittels Gesichtserkennung (sofern auf deinem Gerät möglich). Noch nicht fertig implementiert."
+    }
+  },
+  "privacyUsage": {
+    "public": {
+      "label": "Öffentlich",
+      "description": "Keine Einschränkung der Verwendung. Diese Daten dürfen auch auf der Website verwendet werden."
+    },
+    "restricted": {
+      "label": "Eingeschränkt",
+      "description": "Nur für Mitglieder des Seeclubs Stäfa innerhalb der App sichtbar (Registrierte User)."
+    },
+    "protected": {
+      "label": "Geschützt",
+      "description": "Nur für autorisierte Benutzer (z.B. Vorstand) im Rahmen der Vereinsaufgaben nutzbar."
+    },
+    "srv": {
+      "label": "Weiterleitung an SRV",
+      "description": "Der Seeclub Stäfa ist Mitglied beim Schweizerischen Ruderverband SRV. Als Mitglied beim SCS bist du automatisch auch Mitglied beim SRV. Der SRV verlangt von uns die Weiterleitung von persönlichen Informationen (Name, Vorname, Post-Adresse, Tel Nr.) von allen unseren Mitgliedern. Mit der Mitgliedschaft beim SCS willigst du implizit ein, dass diese Daten jährlich an SRV weiter gegeben werden.",
+      "email": "Für den Versand der SRV-News (früheres Swissrowing Magazin) benötigt der SRV deine Email Adresse. Hier hast du eine Opt-Out Möglichkeit, falls du diese News nicht erhalten möchtest. In diesem Fall wird deine Email bei der nächsten Synchronisierung nicht an SRV weiter geleitet. Du erhälst dann auch keine News von SRV mehr."
     }
   }
 }

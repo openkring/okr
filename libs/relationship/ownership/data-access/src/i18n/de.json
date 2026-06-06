@@ -21,6 +21,7 @@
     "title": "Listenart für Export wählen"
   },
   "end": {
-    "conf": "Nutzung beendet"
+    "conf": "Nutzung beendet",
+    "error": "Die Nutzung konnte nicht beendet werden."
   }
 }

@@ -1,7 +1,7 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { IonChip, IonContent, IonLabel, ModalController } from '@ionic/angular/standalone';
-import { switchMap } from 'rxjs/operators';
+import { filter, map, switchMap } from 'rxjs/operators';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { Header } from './header';
@@ -13,7 +13,9 @@ const ChipSelectStore = signalStore(
   withProps(() => ({ i18nService: inject(I18nService) })),
   withProps(store => ({
     headerTitle: toSignal(
-      toObservable(computed(() => `@select.${store.chipName()}`)).pipe(
+      toObservable(store.chipName).pipe(
+        filter(name => name.length > 0),
+        map(name => `@select.${name}`),
         switchMap(key => store.i18nService.translate(key))
       ),
       { initialValue: '' }

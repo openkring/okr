@@ -177,17 +177,17 @@ export function getWeekday(date: Date | number): number {
 
 export function getWeekdayI18nKey(storeDate: string, shortWeekday = true): string {
   const date = parseDate(storeDate, DateFormat.StoreDate, false);
-  const key = shortWeekday ? 'weekDayAbbreviation' : 'weekDay';
+  const sub = shortWeekday ? 'weekday.abbreviation' : 'weekday.name';
   if (!date) return '';
   switch(getWeekday(date)) {
-    case 1: return `calevent/feature.${key}.monday`;
-    case 2: return `calevent/feature.${key}.tuesday`;
-    case 3: return `calevent/feature.${key}.wednesday`;
-    case 4: return `calevent/feature.${key}.thursday`;
-    case 5: return `calevent/feature.${key}.friday`;
-    case 6: return `calevent/feature.${key}.saturday`;
-    case 7: return `calevent/feature.${key}.sunday`;
-    default: 
+    case 1: return `@calevent/feature.${sub}.monday`;
+    case 2: return `@calevent/feature.${sub}.tuesday`;
+    case 3: return `@calevent/feature.${sub}.wednesday`;
+    case 4: return `@calevent/feature.${sub}.thursday`;
+    case 5: return `@calevent/feature.${sub}.friday`;
+    case 6: return `@calevent/feature.${sub}.saturday`;
+    case 7: return `@calevent/feature.${sub}.sunday`;
+    default:
       warn('date.util/getWeekdayI18nKey: invalid weekday: ' + storeDate);
       return '';
   }

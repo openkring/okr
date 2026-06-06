@@ -1,12 +1,21 @@
 {
+  "icon": "Icon",
   "icons": "Icons",
-  "name": "Icon Name",
-  "type": "Icon Set",
-  "size": "Grösse in px",
-  "updated": "Letzte Aktualisierung",
   "empty": "Keine Icons gefunden.",
+
+  "copy": {
+    "label": "Icon Name kopieren"
+  },
   "create": {
-    "label": "Icon hinzufügen"
+    "label": "Icon hinzufügen",
+    "conf": "Das Icon wurde hinzugefügt.",
+    "error": "Das Icon konnte nicht hinzugefügt werden."
+  },
+  "delete": {
+    "label": "Icon löschen",
+    "conf": "Das Icon wurde gelöscht.",
+    "error": "Das Icon konnte nicht gelöscht werden.",
+    "confirm": "Soll das Icon wirklich gelöscht werden ?"
   },
   "exportRaw": {
     "label": "Icons exportieren"
@@ -17,17 +26,57 @@
   "select": {
     "label": "Icon auswählen"
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Icon Details ansehen",
-    "edit": "Icon ändern",
-    "create": "Neues Icon erstellen",
-    "delete": "Icon löschen",
-    "copy": "Icon Name kopieren"
+  "update": {
+    "label": "Icon Konfiguration ändern",
+    "conf": "Das Icon wurde gespeichert.",
+    "error": "Das Icon konnte nicht gespeichert werden."
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
-  }
+  "view": {
+    "label": "Icon Details anzeigen"
+  },
+
+  "bkey": {
+    "label": "ID",
+    "placeholder": "ssssss",
+    "helper": "Ein eindeutiger Bezeichner in Form eines Wortes. Es dürfen nur Kleinbuchstaben, Zahlen und _ oder - verwendet werden."
+  },
+  "name": {
+    "label": "Icon Name",
+    "placeholder": "z.B. download",
+    "helper": "Der Name des Icons, z.B. pdf, doc etc. (siehe assets/icons oder ionic).",
+    "button": "Das Icon auf dem Button (ion-icon).",
+    "menu": "Das Icon auf dem Menüeintrag (ion-icon).",
+    "error": "Der Name des Icons ist obligatorisch und muss aus alphanumerischen Zeichen bestehen."
+  },
+  "type": {
+    "label": "Icon Set",
+    "placeholder": "Ordner Name",
+    "helper": "Gruppiert Icons zu einem ähnlichen Thema (z.B. Logos, Filetypes, Sections). Entspricht dem Namen des Unterordners im Logo Verzeichnis im Storage."
+  },
+  "fullPath": {
+    "label": "Storage Path",
+    "placeholder": "/asdf/asf",
+    "helper": "Der Pfad zum Icon im Storage."
+  },
+  "index": {
+    "label": "Index",
+    "placeholder": "sssss sssss",
+    "helper": "Leerzeichen-getrennte Suchbegriffe"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Text"
+  },
+   "size": {
+    "label": "Grösse",
+    "placeholder": "40",
+    "helper": "Die Grösse des Icons in Pixel, z.B. 24, 32, 48 etc.",
+    "error": "Die Grösse des Icons muss eine Ganzzahl aus lauter Ziffern sein."
+  },
+  "slot": {
+    "label": "Icon Position",
+    "placeholder": "start | end | top | bottom",
+    "helper": "Die Position des Icons im Bezug zum Text, z.B. links, rechts, oben, unten. Bei none wird nur das Icon angezeigt."
+  },
+  "updated": "Letzte Aktualisierung"
 }

@@ -56,7 +56,7 @@ function storeToView(d: string): string {
                 <ion-item lines="none">
                 <ion-icon slot="start" src="{{'repeat' | svgIcon}}" />
                 <ion-label>
-                    <p class="view-label">{{ i18n.periodicity_label() }}</p>
+                    <p class="view-label">{{ i18n.periodicity_name() }}</p>
                     <p class="view-value">{{ periodicityLabel() }} {{ until() }}</p>
                 </ion-label>
                 </ion-item>
@@ -146,13 +146,13 @@ export class CalEventViewModal {
 
   private get wdAbbr() {
     return {
-      monday:    this.store.i18n.wd_monday,
-      tuesday:   this.store.i18n.wd_tuesday,
-      wednesday: this.store.i18n.wd_wednesday,
-      thursday:  this.store.i18n.wd_thursday,
-      friday:    this.store.i18n.wd_friday,
-      saturday:  this.store.i18n.wd_saturday,
-      sunday:    this.store.i18n.wd_sunday,
+      monday:    this.store.i18n.wda_monday,
+      tuesday:   this.store.i18n.wda_tuesday,
+      wednesday: this.store.i18n.wda_wednesday,
+      thursday:  this.store.i18n.wda_thursday,
+      friday:    this.store.i18n.wda_friday,
+      saturday:  this.store.i18n.wda_saturday,
+      sunday:    this.store.i18n.wda_sunday,
     };
   }
 

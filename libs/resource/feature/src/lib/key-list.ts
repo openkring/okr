@@ -141,7 +141,7 @@ export class KeyList {
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('key.edit', this.store.i18n.key_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('key.edit', this.store.i18n.key_update(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.store.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('key.delete', this.store.i18n.key_delete(), this.imgixBaseUrl, 'trash'));

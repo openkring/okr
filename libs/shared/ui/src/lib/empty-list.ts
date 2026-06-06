@@ -10,12 +10,12 @@ import { IonItem, IonLabel, IonToolbar } from '@ionic/angular/standalone';
   template: `
     <ion-toolbar>
       <ion-item>
-        <ion-label>{{ message() }}</ion-label>
+        <ion-label>{{ message() ?? 'empty' }}</ion-label>
       </ion-item>
     </ion-toolbar>
   `,
 })
 export class EmptyList {
-  public message = input('');
+  public message = input<string | null>('');
 }
 

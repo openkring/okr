@@ -17,8 +17,9 @@ export async function navigateByUrl(router: Router, url: string | undefined, que
     // Skip navigation if already on the same URL (Ionic outlets throw on re-activation)
     const currentUrl = router.url.split('?')[0];
     if (currentUrl === url) return;
+    const hasParams = queryParams != null && !Array.isArray(queryParams) && Object.keys(queryParams).length > 0;
     try {
-      if (!queryParams) {
+      if (!hasParams) {
         await router.navigateByUrl(url);
       } else {
         await router.navigate([url], { queryParams });

@@ -181,10 +181,10 @@ export class MembershipForm {
 
   // i18n — all field translations come from the i18n input
   protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().key(), placeholder: '', helper: '' }) as TextInputI18n);
-  protected memberIdI18n = computed(() => ({ name: 'memberId', label: this.i18n().memberid_label(), placeholder: this.i18n().memberid_placeholder(), helper: this.i18n().memberid_helper() }) as TextInputI18n);
-  protected memberBexioIdI18n = computed(() => ({ name: 'member_bexioid', label: this.i18n().bexioid_label(), placeholder: this.i18n().bexioid_placeholder(), helper: this.i18n().bexioid_helper() }) as TextInputI18n);
+  protected memberIdI18n = computed(() => ({ name: 'memberId', label: this.i18n().memberId_label(), placeholder: this.i18n().memberId_placeholder(), helper: this.i18n().memberId_helper() }) as TextInputI18n);
+  protected memberBexioIdI18n = computed(() => ({ name: 'member_bexioid', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() }) as TextInputI18n);
   protected memberAbbreviationI18n = computed(() => ({ name: 'memberAbbreviation', label: this.i18n().abbreviation_label(), placeholder: this.i18n().abbreviation_placeholder(), helper: this.i18n().abbreviation_helper() }) as TextInputI18n);
-  protected memberNickNameI18n = computed(() => ({ name: 'memberNickName', label: this.i18n().nickname_label(), placeholder: this.i18n().nickname_placeholder(), helper: this.i18n().nickname_helper() }) as TextInputI18n);
+  protected memberNickNameI18n = computed(() => ({ name: 'memberNickName', label: this.i18n().nickName_label(), placeholder: this.i18n().nickName_placeholder(), helper: this.i18n().nickName_helper() }) as TextInputI18n);
   protected orgFunctionI18n = computed(() => ({ name: 'orgFunction', label: this.i18n().org_function_label(), placeholder: this.i18n().org_function_placeholder(), helper: this.i18n().org_function_helper() }) as TextInputI18n);
   protected rebateI18n = computed(() => ({ name: 'rebate', label: this.i18n().rebate_label(), placeholder: this.i18n().rebate_placeholder(), helper: this.i18n().rebate_helper() } as NumberInputI18n));
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
@@ -242,7 +242,7 @@ export class MembershipForm {
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected membershipState = computed(() => this.formData().category ?? DEFAULT_MSTATE);
-  protected i18nBase = computed(() => this.membershipCategories().i18nBase);
+  protected i18nBase = computed(() => this.membershipCategories().i18n);
   protected name = computed(() => this.membershipCategories().name);
   protected readonly locale = linkedSignal(() => this.appStore.appConfig().locale);
   protected bkey = computed(() => this.formData().bkey ?? '');

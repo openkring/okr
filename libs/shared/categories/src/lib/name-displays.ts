@@ -7,28 +7,28 @@ export const NameDisplays: NameDisplayCategory[] = [
     id: NameDisplay.FirstLast,
     abbreviation: 'FL',
     name: 'firstLast',
-    i18nBase: 'categories.nameDisplay.firstLast',
+    i18nBase: '@shared/categories.nameDisplay.firstLast',
     icon: 'arrow-forward-circle'
   },
   {
     id: NameDisplay.LastFirst,
     abbreviation: 'LF',
     name: 'lastFirst',
-    i18nBase: 'categories.nameDisplay.lastFirst',
+    i18nBase: '@shared/categories.nameDisplay.lastFirst',
     icon: 'arrow-back-circle'
   },
   {
     id: NameDisplay.FirstOnly,
     abbreviation: 'FO',
     name: 'firstOnly',
-    i18nBase: 'categories.nameDisplay.firstOnly',
+    i18nBase: '@shared/categories.nameDisplay.firstOnly',
     icon: 'arrow-up-circle'
   },
   {
     id: NameDisplay.LastOnly,
     abbreviation: 'LO',
     name: 'lastOnly',
-    i18nBase: 'categories.nameDisplay.lastOnly',
+    i18nBase: '@shared/categories.nameDisplay.lastOnly',
     icon: 'arrow-down-circle'
   }
 ]

@@ -134,7 +134,7 @@ export class ScheduleTableModal {
   });
 
   protected readonly pendingCountLabel = computed(() =>
-    this.store.i18n.schedule_member_pending().replace('{{count}}', String(this.pendingCount()))
+    this.store.i18n.invitation_pending().replace('{{count}}', String(this.pendingCount()))
   );
 
   protected formatDayName(storeDate: string): string {

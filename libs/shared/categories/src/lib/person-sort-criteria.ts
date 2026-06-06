@@ -8,35 +8,35 @@ export const PersonSortCriterias: PersonSortCriteriaCategory[] = [
     id: PersonSortCriteria.Firstname,
     abbreviation: 'FN',
     name: 'firstName',
-    i18nBase: 'categories.sortCriteria.firstname',
+    i18nBase: '@shared/categories.sortCriteria.firstname',
     icon: 'arrow-back-circle'
   },
   {
     id: PersonSortCriteria.Lastname,
     abbreviation: 'LN',
     name: 'lastName',
-    i18nBase: 'categories.sortCriteria.lastname',
+    i18nBase: '@shared/categories.sortCriteria.lastname',
     icon: 'arrow-forward-circle'
   },
   {
     id: PersonSortCriteria.Fullname,
     abbreviation: 'FU',
     name: 'name',
-    i18nBase: 'categories.sortCriteria.fullname',
+    i18nBase: '@shared/categories.sortCriteria.fullname',
     icon: 'arrow-up-circle'
   },
   {
     id: PersonSortCriteria.DateOfBirth,
     abbreviation: 'DOB',
     name: 'dateOfBirth',
-    i18nBase: 'categories.sortCriteria.dob',
+    i18nBase: '@shared/categories.sortCriteria.dob',
     icon: 'birthday'
   },
   {
     id: PersonSortCriteria.Key,
     abbreviation: 'KEY',
     name: 'bkey',
-    i18nBase: 'categories.sortCriteria.key',
+    i18nBase: '@shared/categories.sortCriteria.key',
     icon: 'key'
   }
 ]

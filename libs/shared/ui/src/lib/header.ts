@@ -6,6 +6,8 @@ import { AppNavigationService } from '@bk2/shared-util-angular';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { Searchbar } from './searchbar';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AsyncPipe } from '@angular/common';
 
 export interface HeaderI18n {
   title: string;
@@ -16,7 +18,7 @@ export interface HeaderI18n {
   selector: 'bk-header',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonIcon, IonButton,
     Searchbar
   ],
@@ -46,7 +48,7 @@ export interface HeaderI18n {
       </ion-toolbar>
       @if(isSearchablePage()) {
         <ion-toolbar>
-          <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ i18n().placeholder ?? '@general.operation.search.placeholder' }}" />
+          <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ i18n().placeholder ?? ('@search.placeholder' | translate | async) }}" />
         </ion-toolbar>
       }
     </ion-header>

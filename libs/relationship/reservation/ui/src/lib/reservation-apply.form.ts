@@ -90,12 +90,6 @@ import { reservationApplyValidations, ReservationI18n } from '@bk2/relationship-
               <ion-col size="12" size-md="6">
                 <bk-text-input [i18n]="areaI18n()" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]=20 [readOnly]="false" />
               </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="bhcompI18n()" [value]="company()" (valueChange)="onFieldChange('company', $event)" [maxLength]=50 [readOnly]="false" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="usesTentI18n()" [checked]="usesTent()" (checkedChange)="onFieldChange('usesTent', $event)" [showHelper]="true" [readOnly]="false" />
-              </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -199,16 +193,14 @@ export class ReservationApplyForm {
   protected nameI18n = computed(() => ({ name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper() } as TextInputI18n));
   protected participantsI18n = computed(() => ({ name: 'participants', label: this.i18n().participants_label(), placeholder: this.i18n().participants_placeholder(), helper: this.i18n().participants_helper() } as TextInputI18n));
   protected areaI18n = computed(() => ({ name: 'area', label: this.i18n().area_label(), placeholder: this.i18n().area_placeholder(), helper: this.i18n().area_helper() } as TextInputI18n));
-  protected bhcompI18n = computed(() => ({ name: 'bhcomp', label: this.i18n().bhcomp_label(), placeholder: this.i18n().bhcomp_placeholder(), helper: this.i18n().bhcomp_helper() } as TextInputI18n));
   protected durationMinutesI18n = computed(() => ({ name: 'durationMinutes', label: this.i18n().durationMinutes_label(), placeholder: this.i18n().durationMinutes_placeholder(), helper: this.i18n().durationMinutes_helper() } as NumberInputI18n));
   protected descriptionI18n = computed(() => ({ name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder() } as NotesInputI18n));
   protected startDateI18n = computed(() => ({ name: 'startDate', label: this.i18n().startDate_label(), placeholder: this.i18n().startDate_placeholder(), helper: this.i18n().startDate_helper() } as DateInputI18n));
   protected endDateI18n = computed(() => ({ name: 'endDate', label: this.i18n().endDate_label(), placeholder: this.i18n().endDate_placeholder(), helper: this.i18n().endDate_helper() } as DateInputI18n));
   protected startTimeI18n  = computed(() => ({ name: 'startTime',    label: this.i18n().startTime_label(),    placeholder: this.i18n().startTime_placeholder()                                              } as TimeInputI18n));
   protected fullDayI18n    = computed(() => ({ name: 'fullDay',      label: this.i18n().fullDay_label(),      helper: this.i18n().fullDay_helper()      } as CheckboxI18n));
-  protected usesTentI18n   = computed(() => ({ name: 'usesTent',     label: this.i18n().usesTent_label(),     helper: this.i18n().usesTent_helper()     } as CheckboxI18n));
-  protected isConfirmedI18n = computed(() => ({ name: 'bhresconf',   label: this.i18n().isConfirmed_label(),  helper: this.i18n().isConfirmed_helper()  } as CheckboxI18n));
-
+  protected isConfirmedI18n = computed(() => ({ name: 'bhresconf',   label: this.i18n().confirmed_label(),  helper: this.i18n().confirmed_helper()  } as CheckboxI18n));
+  
   // validation and errors
   protected readonly suite = reservationApplyValidations;
   private readonly validationResult = computed(() => reservationApplyValidations(this.formData()));

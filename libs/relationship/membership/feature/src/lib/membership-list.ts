@@ -198,8 +198,9 @@ export class MembershipList {
     }
   });
   protected title = computed(() => {
-    return `@membership.list.${this.listId()}.title`;
+   return `@relationship/membership/feature.list.${this.listId()}.title`;
   });
+  
   protected yearLabel = computed(() => {
     switch (this.listId()) {
       case 'entries': return '@membership.list.entries.yearLabel';
@@ -308,7 +309,7 @@ export class MembershipList {
       if (!this.group()) { // group memberships can not be edited
         actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.update_label(), this.imgixBaseUrl, 'edit'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.person_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.person_update(), this.imgixBaseUrl, 'edit'));
     } else { // registered
       if (!this.group()) { // group memberships can not be viewed
         actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));

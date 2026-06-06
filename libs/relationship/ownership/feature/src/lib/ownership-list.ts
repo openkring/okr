@@ -124,28 +124,28 @@ export class OwnershipList {
 
   protected filteredOwnerships = computed(() => {
     switch (this.listId()) {
-      case 'ownerships': return this.store.filteredOwnerships() ?? [];
-      case 'lockers': return this.store.filteredLockers() ?? [];
-      case 'keys': return this.store.filteredKeys() ?? [];
-      case 'privateBoats': return this.store.filteredPrivateBoats();
-      case 'scsBoats': return this.store.filteredScsBoats();
+      case 'ownerships':    return this.store.filteredOwnerships() ?? [];
+      case 'lockers':       return this.store.filteredLockers() ?? [];
+      case 'keys':          return this.store.filteredKeys() ?? [];
+      case 'privateBoats':  return this.store.filteredPrivateBoats();
+      case 'scsBoats':      return this.store.filteredScsBoats();
       case 'all':
-      default: return this.store.filteredAllOwnerships() ?? [];
+      default:              return this.store.filteredAllOwnerships() ?? [];
     }
   });
   protected ownershipsCount = computed(() => {
     switch (this.listId()) {
-      case 'ownerships': return this.store.ownershipsCount();
-      case 'lockers': return this.store.lockersCount();
-      case 'keys': return this.store.keysCount();
-      case 'privateBoats': return this.store.privateBoatsCount();
-      case 'scsBoats': return this.store.scsBoatsCount();
+      case 'ownerships':    return this.store.ownershipsCount();
+      case 'lockers':       return this.store.lockersCount();
+      case 'keys':          return this.store.keysCount();
+      case 'privateBoats':  return this.store.privateBoatsCount();
+      case 'scsBoats':      return this.store.scsBoatsCount();
       case 'all':
-      default: return this.store.allOwnershipsCount() ?? [];
+      default:              return this.store.allOwnershipsCount() ?? [];
     }
   });
   protected title = computed(() => {
-    return `@ownership.list.${this.listId()}.title`;
+     return `@relationship/ownership/feature.list.${this.listId()}.title`;
   });
 
   protected selectedType = linkedSignal(() => {
@@ -239,7 +239,7 @@ export class OwnershipList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
     if (hasRole('resourceAdmin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(ownership.validTo)) {
         actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
       }

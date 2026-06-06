@@ -340,10 +340,10 @@ export const _SectionStore = signalStore(
         try {
           const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
           await fn({ to, cc, bcc, appId: store.appStore.env.appId, html, from, subject, provider, template });
-          await showToast(store.toastController, '@general.operation.email.conf');
+          await showToast(store.toastController, store.i18n.email_conf());
         } catch (ex) {
           console.error('SectionStore.sendEmail: error: ', ex);
-          await showToast(store.toastController, '@general.operation.email.error');
+          await showToast(store.toastController, store.i18n.email_error());
         }
       },
 

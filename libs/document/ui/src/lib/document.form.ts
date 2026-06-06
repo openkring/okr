@@ -300,7 +300,7 @@ export class DocumentForm {
 
   protected copy(value: string): void {
       copyToClipboard(value);
-      showToast(this.toastController, '@general.operation.copy.conf');
+      showToast(this.toastController, '@copy.conf');
   }
 
   /******************************* helpers *************************************** */

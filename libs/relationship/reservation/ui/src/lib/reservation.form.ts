@@ -52,7 +52,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 </ion-col>
                 <ion-col size="3">
                   <ion-item lines="none">
-                    <ion-button slot="start" fill="clear" (click)="selectReserver.emit(true)">{{ i18n().selectLabel() }}</ion-button>
+                    <ion-button slot="start" fill="clear" (click)="selectReserver.emit(true)">{{ i18n().select() }}</ion-button>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -74,7 +74,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 </ion-col>
                 <ion-col size="3">
                   <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectResource.emit(true)">{{ i18n().selectLabel() }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectResource.emit(true)">{{ i18n().select() }}</ion-button>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -167,10 +167,6 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 <bk-number-input [i18n]="priceI18n()" [value]="amount()" (valueChange)="onFieldChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
               </ion-col>
 
-              <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-              </ion-col>
-
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -216,8 +212,7 @@ export class ReservationForm {
   protected nameI18n = computed(() => ({ name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper() } as TextInputI18n));
   protected participantsI18n = computed(() => ({ name: 'participants', label: this.i18n().participants_label(), placeholder: this.i18n().participants_placeholder(), helper: this.i18n().participants_helper() } as TextInputI18n));
   protected areaI18n = computed(() => ({ name: 'area', label: this.i18n().area_label(), placeholder: this.i18n().area_placeholder(), helper: this.i18n().area_helper() } as TextInputI18n));
-  protected resrefI18n = computed(() => ({ name: 'resref', label: this.i18n().resref_label(), placeholder: this.i18n().resref_placeholder(), helper: this.i18n().resref_helper() } as TextInputI18n));
-  protected currencyI18n = computed(() => ({ name: 'currency', label: this.i18n().currency_label(), placeholder: this.i18n().currency_placeholder(), helper: this.i18n().currency_helper() } as TextInputI18n));
+  protected resrefI18n = computed(() => ({ name: 'resref', label: this.i18n().ref_label(), placeholder: this.i18n().ref_placeholder(), helper: this.i18n().ref_helper() } as TextInputI18n));
   protected durationMinutesI18n = computed(() => ({ name: 'durationMinutes', label: this.i18n().durationMinutes_label(), placeholder: this.i18n().durationMinutes_placeholder(), helper: this.i18n().durationMinutes_helper() } as NumberInputI18n));
   protected priceI18n = computed(() => ({ name: 'price', label: this.i18n().price_label(), placeholder: this.i18n().price_placeholder(), helper: this.i18n().price_helper() } as NumberInputI18n));
   protected descriptionI18n = computed(() => ({ name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder() } as NotesInputI18n));

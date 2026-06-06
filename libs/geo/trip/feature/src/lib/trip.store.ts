@@ -21,7 +21,6 @@ import { TripService } from '@bk2/trip-data-access';
 import { compareTripDate, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripI18n } from '@bk2/trip-util';
 export type { TripI18n };
 
-import { TripEditModal } from './trip-edit.modal';
 
 const SUSPICIOUS_WINDOW_MS = 15 * 60 * 1000;
 const SUSPICIOUS_TRIP_COUNT = 3;
@@ -94,6 +93,7 @@ export const TripStore = signalStore(
 
     async openTripModal(trip: TripModel, mode: 'add' | 'edit' | 'end'): Promise<void> {
       if (!store.canWrite()) return;
+      const { TripEditModal } = await import('./trip-edit.modal');
       const modal = await store.modalController.create({
         component: TripEditModal,
         componentProps: { trip, mode },

@@ -1,9 +1,12 @@
 {
+  "singular": "Mitgliedschaft",
   "memberships": "Mitgliedschaften",
+  "description": "Beschreibt die Mitgliedschaften einer Person.",
   "members": "Mitglieder",
   "reldesc1": "Mitgliedschaft von",
   "reldesc2": "bei",
   "newDesc": "soll Mitglied werden bei",
+  "changeDesc": "Die Mitgliederkategorie soll geändert werden:",
   "titleRel": "in",
   "year": {
     "entry": "Eintrittsjahr",
@@ -18,7 +21,9 @@
     "label": "Mitgliedschaft anzeigen"
   },
   "update": {
-    "label": "Mitgliedschaft ändern"
+    "label": "Mitgliedschaft ändern",
+    "category": "Mitglieder-Kategorie ändern",
+    "chooseNew": "Neue Kategorie wählen"
   },
   "chat": {
     "open": "Chat öffnen"
@@ -43,6 +48,10 @@
   "end": {
     "label": "Mitgliedschaft beenden",
     "select": "Austrittsdatum wählen",
+    "confirm": "Möchtest du die Mitgliedschaft wirklich beenden?",
+    "conf": "Die Mitgliedschaft wurde beendet.",
+    "error": "Die Mitgliedschaft konnte nicht beendet werden.",
+    "comment": "Mitgliedschaft beendet",
     "intro": "<p>Das Austrittsdatum ist der letzte Tag der Mitgliedschaft. Ab dem nächsten Tag ist die Person kein Mitglied mehr.<br /> Meistens ist dies der 31.12. des aktuellen Jahres.</p>"
   },
   "delete": {
@@ -54,6 +63,13 @@
   },
   "call": {
     "phone": "Anrufen"
+  },
+  "select": {
+    "label": "Auswählen",
+    "title": "Listenart für Export wählen",
+    "default": "Rohdaten",
+    "srv": "SRV-Liste",
+    "address": "Adressliste"
   },
 
   "category": {
@@ -77,7 +93,7 @@
       "label": "Rechnung erstellen",
       "conf": "Die Rechnung wurde erstellt."
     },
-    "edit": "Rechnung ändern",
+    "update": "Rechnung ändern",
     "upload": "Rechnung hochladen",
     "download": "Rechnung herunterladen",
     "paid": "Als bezahlt markieren",
@@ -85,7 +101,7 @@
     "state": "Rechnungsstatus"
   },
   "member": {
-    "edit": "Mitglied ändern",
+    "update": "Mitglied ändern",
     "state": {
       "label": "Mitgliederstatus",
       "helper": "Der aktuelle Status dieser Mitgliedschaft."
@@ -129,7 +145,6 @@
       "empty": "Keine Einträge gefunden"
     },
 
-    "total": "Total",
     "jb": {
       "label": "Jahresbeitrag",
       "placeholder": "nnn",
@@ -169,10 +184,56 @@
       "label": "Rabatt",
       "placeholder": "nnn",
       "helper": "Ausbildungs- oder Familienrabatt."
+    },
+    "total": "Total"
+  },
+
+  "list": {
+    "header": {
+      "name": "Name",
+      "entry": "Eintritt",
+      "entryExit": "Ein-/Austritt",
+      "category": "Kat.",
+      "dateOfDeath": "Todesdatum",
+      "exit": "Austritt",
+      "titleRel": "in"
+    },
+    "memberships": {
+      "title": "Mitgliedschaften (Personen und Organisationen)"
+    },
+    "persons": {
+      "title": "Mitglieder"
+    },
+    "orgs": {
+      "title": "Mitglieds-Organisationen"
+    },
+    "applied": {
+      "title": "Anmeldungen"
+    },
+    "active": {
+      "title": "Aktive"
+    },
+    "passive": {
+      "title": "Passive"
+    },
+    "cancelled": {
+      "title": "Alumni"
+    },
+    "deceased": {
+      "title": "Verstorbene Mitglieder"
+    },
+    "entries": {
+      "title": "Eintritte",
+      "yearLabel": "Eintrittsjahr"
+    },
+    "exits": {
+      "title": "Austritte",
+      "yearLabel": "Austrittsjahr"
     }
   },
 
-  "memberid": {
+
+  "memberId": {
     "label": "Mitglieder ID",
     "placeholder": "nnnnn",
     "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden.",
@@ -182,7 +243,13 @@
     "details": "Angaben zur Person",
     "address": "Adressen",
     "misc": "Verschiedenes",
-    "membership": "Mitgliedschaft (optional)"
+    "membership": "Mitgliedschaft (optional)",
+    "update": {
+      "label": "Person ändern"
+    },
+    "view": {
+      "label": "Details der Person anzeigen"
+    }
   },
   "firstname": {
     "label": "Vorname",
@@ -194,13 +261,13 @@
     "placeholder": "ssssssss",
     "helper": "Familienname der Person."
   },
-  "ssnid": {
+  "ssnId": {
     "label": "AHV-Nummer",
     "placeholder": "756.xxxx.xxxx.xc",
     "helper": "Die AHV-Nummer ist eine optionale Eingabe. Sie wird z.B. bei Reinigungspersonal für AHV-Meldungen oder Versicherungen verwendet oder bei Verbänden für den Altersnachweis verlangt.",
     "error": "Die AHV-Nummer besteht aus 13 Nummern in folgendem Format 756.xxxx.xxxx.xc."
   },
-  "bexioid": {
+  "bexioId": {
     "label": "Bexio ID",
     "placeholder": "nnnnnn",
     "helper": "Die ID des gleichen Kontaktes in Bexio zum Synchronisieren von Daten.",
@@ -211,12 +278,12 @@
     "placeholder": "ss",
     "helper": "Abkürzung des Namens, z.B. für Listen, Protokolle."
   },
-  "nickname": {
+  "nickName": {
     "label": "Übername",
     "placeholder": "ssssssss",
     "helper": "Der Übername wird nur im Suchindex verwendet und ist sonst nicht ersichtlich."
   },
-  "orgfunction": {
+  "orgFunction": {
     "label": "Funktion",
     "placeholder": "Funktion in der Organisation",
     "helper": "Die Funktionsbezeichnung einer Person in einer Organisation."
@@ -300,5 +367,145 @@
     "label": "Todesdatum",
     "placeholder": "dd.mm.yyyy",
     "helper": "An diesem Datum ist die Person gestorben."
+  },
+
+  "mcat_scs": {
+    "label": "Mitglieder Kategorie",
+    "helper": "Mitglieder Kategorie",
+    "all": {
+      "label": "Alle Kategorien"
+    },
+    "active": {
+      "label": "Aktive 1",
+      "description": "Aktiv 1 Mitglied"
+    },
+    "active2": {
+      "label": "Aktive 2",
+      "description": "Aktiv 2 Mitgliedschaft stammt noch aus früheren Zeiten."
+    },
+    "active3": {
+      "label": "Aktive 3",
+      "description": "Aktiv 3 Mitgliedschaft stammt noch aus früheren Zeiten"
+    },
+    "junior": {
+      "label": "Junior/in",
+      "description": "Junior oder Junior bis max 18 Jahre."
+    },
+    "free": {
+      "label": "Freimitglieder",
+      "description": "Freies Mitgliedschaft stammt noch aus frühreren Zeiten."
+    },
+    "honorary": {
+      "label": "Ehrenmitglieder",
+      "description": "Von der GV gewählte Ehrenmitglieder."
+    },
+    "candidate": {
+      "label": "Kandidaten",
+      "description": "Neumitglieder in Ausbildung."
+    },
+    "passive": {
+      "label": "Passiv",
+      "description": "Passiv Mitglied"
+    }
+  },
+
+  "mcat_srv": {
+    "label": "Mitglieder Kategorie",
+    "helper": "Mitglieder Kategorie",
+    "all": {
+      "label": "Alle Kategorien"
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Die Person ist ein Aktiv-Mitglied."
+    },
+    "junior": {
+      "label": "Junior/in",
+      "description": "Junior oder Juniorin bis max 18 Jahre."
+    },
+    "double": {
+      "label": "Doppel",
+      "description": "Doppelmitglied, welches über einen anderen Club gemeldet ist."
+    },
+    "honorary": {
+      "label": "Ehrenmitglieder",
+      "description": "Ehrenmitglieder beim SRV"
+    },
+    "passive": {
+      "label": "Passiv",
+      "description": "Passiv Mitglied"
+    }
+  },
+
+  "mcat_default": {
+    "label": "Mitglieder Kategorie",
+    "helper": "Mitglieder Kategorie",
+    "all": {
+      "label": "Alle Kategorien"
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Die Person ist ein Aktiv-Mitglied."
+    },
+    "passive": {
+      "label": "Passiv",
+      "description": "Passiv Mitglied"
+    },
+    "junior": {
+      "label": "Jugendliche",
+      "description": "Junior oder Juniorin bis max 18 Jahre."
+    },
+
+    "mcat_p13": {
+      "all": {
+        "label": "Alle",
+        "description": "Alle P13 Mitglieder"
+      },
+      "active": {
+        "label": "Aktiv",
+        "description": "Die Person will an den Anlässen dabei sein."
+      },
+      "passive": {
+        "label": "Passiv",
+        "description": "Die Person möchte nicht mehr an den Anlässen dabei sein."
+      }
+    },
+    "mcat_test": {
+      "all": {
+        "label": "Alle Kategorien"
+      },
+      "active": {
+        "label": "Aktiv",
+        "description": "Die Person ist ein Aktiv-Mitglied."
+      },
+      "junior": {
+        "label": "Junior/in",
+        "description": "Junior oder Juniorin bis max 18 Jahre."
+      },
+      "passive": {
+        "label": "Passiv",
+        "description": "Passiv Mitglied"
+      }
+    },
+
+    "state": {
+      "helper": "Der Mitgliederstatus kann nicht editiert werden. Er wird automatisch von der Mitgliederkategorie abgeleitet. Der Status kann in der Kategorien-Definition pro Kategorie gesetzt werden.",
+      "applied": {
+        "label": "Angemeldet",
+        "description": "Die Mitgliedschaft wurde beantragt (Warteliste ohne Kandidaten)."
+      },
+      "active": {
+        "label": "Aktiv",
+        "description": "Die Mitgliedschaft ist aktuell aktiv und gültig (inkl. Kandidaten)."
+      },
+      "passive": {
+        "label": "Passiv",
+        "description": "Die Mitgliedschaft ist pausiert oder inaktiv."
+      },
+      "cancelled": {
+        "label": "Beendet",
+        "description": "Die Mitgliedschaft ist beendet, nicht mehr gültig."
+      }
+    }
   }
 }

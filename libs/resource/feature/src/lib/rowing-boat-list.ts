@@ -53,7 +53,7 @@ import { ResourceStore } from './resource.store';
     <ion-item color="primary" lines="none">
       <ion-label><strong>{{ store.i18n.rboat_name() }}</strong></ion-label>
       <ion-label><strong>{{ store.i18n.rboat_type() }}</strong></ion-label>
-      <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.load() }}</strong></ion-label>
+      <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.load_label() }}</strong></ion-label>
     </ion-item>
   </ion-toolbar>
 </ion-header>
@@ -150,7 +150,7 @@ export class RowingBoatList {
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (hasRole('resourceAdmin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('rboat.edit', this.store.i18n.rboat_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('rboat.edit', this.store.i18n.rboat_update(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.store.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('rboat.delete', this.store.i18n.rboat_delete(), this.imgixBaseUrl, 'trash'));

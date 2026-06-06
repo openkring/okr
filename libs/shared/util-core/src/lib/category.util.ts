@@ -10,8 +10,8 @@ import { addIndexElement } from "./base-model.util";
  */
 export function getItemLabel(category: CategoryListModel, itemName?: string): string {
   if (!itemName) return '';
-  if (!category.i18nBase || category.i18nBase.length === 0 || !category.translateItems) return itemName;
-  return `@${category.i18nBase}.${itemName}.label`;
+  if (!category.i18n || category.i18n.length === 0 || !category.translateItems) return itemName;
+  return `${category.i18n}.${category.name}.${itemName}.label`;
 }
 
 /**

@@ -56,7 +56,7 @@ import { personalRelValidations, PersonalRelI18n } from '@bk2/relationship-perso
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit(true)">{{ i18n().selectLabel() }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit(true)">{{ i18n().select() }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -81,7 +81,7 @@ import { personalRelValidations, PersonalRelI18n } from '@bk2/relationship-perso
               </ion-col>
               <ion-col size="3">
                 <ion-item lines="none">
-                <ion-button slot="start" fill="clear" (click)="selectPerson.emit(false)">{{ i18n().selectLabel() }}</ion-button>
+                <ion-button slot="start" fill="clear" (click)="selectPerson.emit(false)">{{ i18n().select() }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>        

@@ -9,7 +9,7 @@ export const ShipmentTypes: ShipmentTypeCategory[] = [
         id: ShipmentType.Letter,
         abbreviation: 'LETTER',
         name: 'letter',
-        i18nBase: 'delivery.shipment.type.letter',
+        i18nBase: '@shared/categories.delivery.shipment.type.letter',
         icon: 'edit',
         xsltTemplateUrl: ''
     },
@@ -17,7 +17,7 @@ export const ShipmentTypes: ShipmentTypeCategory[] = [
         id: ShipmentType.AddressOnly,
         abbreviation: 'ADDR',
         name: 'addressOnly',
-        i18nBase: 'delivery.shipment.type.addressOnly',
+        i18nBase: '@shared/categories.delivery.shipment.type.addressOnly',
         icon: 'address',
         xsltTemplateUrl: ''
     },
@@ -25,7 +25,7 @@ export const ShipmentTypes: ShipmentTypeCategory[] = [
         id: ShipmentType.MembershipFee,
         abbreviation: 'MSHP',
         name: 'membershipFee',
-        i18nBase: 'delivery.shipment.type.membershipFee',
+        i18nBase: '@shared/categories.delivery.shipment.type.membershipFee',
         icon: 'membership',
         xsltTemplateUrl: ''
     },
@@ -33,7 +33,7 @@ export const ShipmentTypes: ShipmentTypeCategory[] = [
         id: ShipmentType.FreeInvoice,
         abbreviation: 'INV',
         name: 'freeInvoice',
-        i18nBase: 'delivery.shipment.type.freeInvoice',
+        i18nBase: '@shared/categories.delivery.shipment.type.freeInvoice',
         icon: 'gifts',
         xsltTemplateUrl: ''
     }

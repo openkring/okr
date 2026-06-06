@@ -71,17 +71,17 @@ import { ReservationStore } from './reservation.store';
           @if(isReservationFromPerson() || isReservationFromOrg()) {
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.resource() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.valid_from() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3" class="ion-hide-md-down">
@@ -92,17 +92,17 @@ import { ReservationStore } from './reservation.store';
           } @else if(isReservationOfResource() || isReservationOfResourceType()) {
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.reserver() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="4" size-md="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.valid_from() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3" class="ion-hide-md-down">
@@ -113,28 +113,28 @@ import { ReservationStore } from './reservation.store';
           } @else { <!-- all -->
             <ion-col size="auto" size-md="2"class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.reserver() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="auto" size-md="2" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.resource() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3" class="ion-hide-md-up">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.reserver() }}</strong></ion-label>
-                <ion-label><strong>{{ store.i18n.resource() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col>
               <ion-item lines="none" color="primary" class="ion-text-wrap">
-                <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="3">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.valid_from() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col class="ion-hide-md-down">
@@ -355,17 +355,17 @@ export class ReservationList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('reservation.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('reservation.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(reservation.endDate)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('reservation.end', this.store.i18n.as_end(), this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('reservation.end', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
       }
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('reservation.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];

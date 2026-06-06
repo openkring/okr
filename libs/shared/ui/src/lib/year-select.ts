@@ -22,7 +22,7 @@ import { coerceBoolean, getYear } from '@bk2/shared-util-core';
       interface="popover"
       [compareWith]="compareWith">
       @if(shouldShowAllYears()) {
-        <ion-select-option value=99>{{ '@general.util.allYears' }}</ion-select-option>
+        <ion-select-option value=99>{{ '@allYears' }}</ion-select-option>
       }
       @for(year of years(); track year) {
         <ion-select-option [value]=year>{{ year }}</ion-select-option>
@@ -34,7 +34,7 @@ import { coerceBoolean, getYear } from '@bk2/shared-util-core';
 export class YearSelect {
   // inputs
   public selectedYear = model<number>(getYear());   // default is current year
-  public label = input('@general.util.year');
+  public label = input('@year');
   public showAllYears = input(false); // if true, all years are shown
   public readOnly = input.required<boolean>();
   public years = input.required<number[]>();    // default are the last 8 years including the current year

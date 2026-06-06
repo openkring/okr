@@ -21,6 +21,6 @@ export class WeekdayPipe implements PipeTransform {
 
   transform(storeDate: string | undefined, shortWeekday = true): string {
     if (!storeDate) return '';
-    return '@' + getWeekdayI18nKey(storeDate, shortWeekday);
+    return getWeekdayI18nKey(storeDate, shortWeekday);
   }
 }

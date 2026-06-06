@@ -68,7 +68,7 @@ import { CALEVENT_I18N_KEYS, CaleventI18n } from '@bk2/calevent-util';
             (ionChange)="onDatetimeChange($event)"
           />
           <ion-button expand="block" (click)="confirmDates()">
-            {{ i18n.schedule_confirm() }}
+            {{ i18n.schedule_date_confirm() }}
           </ion-button>
         </ng-template>
       </ion-modal>

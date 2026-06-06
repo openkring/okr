@@ -100,8 +100,8 @@ export class CategorySelect {
 
   private i18nService = inject(I18nService);
   protected name = computed(() => this.category().name);
-  private labelKey = computed(() => `@${this.name()}.${this.labelName()}`);
-  private helperKey = computed(() => `@${this.name()}.helper`);
+  private labelKey = computed(() => `${this.category().i18n}.${this.name()}.${this.labelName()}`);
+  private helperKey = computed(() => `${this.category().i18n}.${this.name()}.helper`);
   protected label = toSignal(toObservable(this.labelKey).pipe(switchMap(key => this.i18nService.translate(key))), { initialValue: '' });
   protected helper = toSignal(toObservable(this.helperKey).pipe(switchMap(key => this.i18nService.translate(key))), { initialValue: '' });
 
@@ -131,6 +131,6 @@ export class CategorySelect {
   }
 
   protected getItemLabel(item: CategoryItemModel): string {
-    return `@${this.name()}.${item.name}.${this.labelName()}`
+    return `${this.category().i18n}.${this.name()}.${item.name}.${this.labelName()}`;
   }
 }

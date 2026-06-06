@@ -98,5 +98,37 @@
   "phone": {
     "label": "Telefon",
     "placeholder": "+41 XX XXX XX XX"
+  },
+
+  "org_type": {
+    "legalEntity": {
+      "label": "Firmenname",
+      "placeholder": "Firmenname",
+      "error": "Die Eingabe des Firmennamens ist obligatorisch. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+    },
+    "association": {
+      "label": "Vereinsname",
+      "placeholder": "Vereinsname",
+      "helper": "Der offizielle Name des Vereins oder der Organisation.",
+      "error": "Die Eingabe des Vereinsnamens ist obligatorisch. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+    },
+    "authority": {
+      "label": "Name der Behörde",
+      "placeholder": "Name der Behörde",
+      "helper": "Der offizielle Name einer Behörde, Amts, Departements oder einer Verwaltungseinheit.",
+      "error": "Die Eingabe des Namens der Behörde ist obligatorisch. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+    },
+    "group": {
+      "label": "Gruppenname",
+      "placeholder": "Name der Gruppe",
+      "helper": "Der offizielle Name einer Gruppe oder eines Teams.",
+      "error": "Die Eingabe des Gruppennamens ist obligatorisch. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+    },
+    "other": {
+      "label": "Andere"
+    },
+    "all": {
+      "label": "Alle"
+    }
   }
 }

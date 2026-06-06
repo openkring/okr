@@ -44,7 +44,7 @@ import { EditorToolbar } from './editor-toolbar';
             @if (isClearable()) {
               <ion-button fill="clear" (click)="content.set('<p></p>')">
                 <ion-icon slot="start" src="{{'cancel' | svgIcon }}" />
-                {{ '@general.operation.deleteContent' }}
+                {{ '@delete.label' }}
               </ion-button>
             }
             @if (isCopyable()) {

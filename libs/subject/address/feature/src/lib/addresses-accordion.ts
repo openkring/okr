@@ -173,7 +173,7 @@ export class AddressesAccordion {
         actionSheetOptions.buttons.push(createActionSheetButton('web.open', this.store.i18n.open_web(), this.imgixBaseUrl, 'link'));
         break;
     }
-    actionSheetOptions.buttons.push(createActionSheetButton(this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

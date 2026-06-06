@@ -1,28 +1,18 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
 
 import { GroupModelName, OrgModel, OrgModelName, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
 import { FullNamePipe } from '@bk2/shared-pipes';
 
-const MultiSelectStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      org_label:    '@subject.org.operation.select.label',
-      group_label:  '@subject.group.operation.select.label',
-      person_label: '@subject.person.operation.select.label',
-    }),
-  })),
-);
 import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 import { AvatarPipe } from '@bk2/avatar-ui';
 
 import { GroupSelectStore } from './group-select.store';
 import { OrgSelectStore } from './org-select.store';
 import { PersonSelectStore } from './person-select.store';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AsyncPipe } from '@angular/common';
 
 export type MultiSelectSegment = 'org' | 'group' | 'person';
 
@@ -31,11 +21,12 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
   standalone: true,
   imports: [
     FormsModule,
+    TranslatePipe, AsyncPipe,
     Header, Spinner, FullNamePipe, AvatarPipe, EmptyList,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
     IonSegment, IonSegmentButton,
   ],
-  providers: [MultiSelectStore, OrgSelectStore, GroupSelectStore, PersonSelectStore],
+  providers: [OrgSelectStore, GroupSelectStore, PersonSelectStore],
   styles: [`
     .item { padding: 0px; min-height: 40px; }
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
@@ -46,7 +37,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      [i18n]="{ title: '@shared.operation.select.label' }"
+      [i18n]="{ title: ('@sselect.label' | translate | async) ?? 'select' }"
       [isModal]="true"
     />
     <ion-content>
@@ -54,7 +45,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         <ion-segment [(ngModel)]="activeSegment">
           @for(segment of segments(); track segment) {
             <ion-segment-button [value]="segment">
-              <ion-label>{{ getSegmentLabel(segment) }}</ion-label>
+              <ion-label>{{ ('@select.' + segment) | translate | async  }}</ion-label>
             </ion-segment-button>
           }
         </ion-segment>
@@ -64,7 +55,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         @if(orgIsLoading()) {
           <bk-spinner />
         } @else if(filteredOrgs().length === 0) {
-          <bk-empty-list message="@subject.org.field.empty" />
+          <bk-empty-list [message]="'@empty.org' | translate | async" />
         } @else {
           <ion-list lines="none">
             @for(org of filteredOrgs(); track $index) {
@@ -83,7 +74,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         @if(groupIsLoading()) {
           <bk-spinner />
         } @else if(filteredGroups().length === 0) {
-          <bk-empty-list message="@subject.group.field.empty" />
+          <bk-empty-list [message]="'@empty.group' | translate | async" />
         } @else {
           <ion-list lines="none">
             @for(group of filteredGroups(); track $index) {
@@ -102,7 +93,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         @if(personIsLoading()) {
           <bk-spinner />
         } @else if(filteredPersons().length === 0) {
-          <bk-empty-list message="@subject.person.field.empty" />
+          <bk-empty-list [message]="'@empty.person' | translate | async" />
         } @else {
           <ion-list lines="none">
             @for(person of filteredPersons(); track $index) {
@@ -120,7 +111,6 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
   `
 })
 export class MultiSelectModal {
-  protected readonly store = inject(MultiSelectStore);
   protected readonly orgSelectStore = inject(OrgSelectStore);
   protected readonly groupSelectStore = inject(GroupSelectStore);
   protected readonly personSelectStore = inject(PersonSelectStore);
@@ -175,12 +165,6 @@ export class MultiSelectModal {
       this.groupSelectStore.setSearchTerm(term);
       this.personSelectStore.setSearchTerm(term);
     });
-  }
-
-  protected getSegmentLabel(segment: MultiSelectSegment): string {
-    if (segment === 'org') return this.store.i18n.org_label();
-    if (segment === 'group') return this.store.i18n.group_label();
-    return this.store.i18n.person_label();
   }
 
   public select(modelType: MultiSelectSegment, bkey: string): Promise<boolean> {

@@ -7,28 +7,28 @@ export const AvatarUsages: AvatarUsageCategory[] = [
     id: AvatarUsage.None,
     abbreviation: 'NONE',
     name: 'none',
-    i18nBase: 'categories.avatarUsage.none',
+    i18nBase: '@shared/categories.avatarUsage.none',
     icon: 'eye-off'
   },
   {
     id: AvatarUsage.GravatarFirst,
     abbreviation: 'GRAV',
     name: 'gravatarFirst',
-    i18nBase: 'categories.avatarUsage.gravatarFirst',
+    i18nBase: '@shared/categories.avatarUsage.gravatarFirst',
     icon: 'gravatar'
   },
   {
     id: AvatarUsage.NoGravatar,
     abbreviation: 'NOGRAV',
     name: 'noGravatar',
-    i18nBase: 'categories.avatarUsage.noGravatar',
+    i18nBase: '@shared/categories.avatarUsage.noGravatar',
     icon: 'gravatar-no'
   },
   {
     id: AvatarUsage.PhotoFirst,
     abbreviation: 'PHOTO',
     name: 'photoFirst',
-    i18nBase: 'categories.avatarUsage.photoFirst',
+    i18nBase: '@shared/categories.avatarUsage.photoFirst',
     icon: 'camera'
   }
 ]

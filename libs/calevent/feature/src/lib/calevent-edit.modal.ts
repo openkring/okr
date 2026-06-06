@@ -54,7 +54,7 @@ import { AttendeesAccordion } from './attendees-accordion';
             <ion-card-content class="ion-no-padding">
               <ion-accordion-group value="invitees">
                 @if(calevent().isOpen) {
-                  <bk-attendees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
+                  <bk-attendees-accordion [calevent]="formData" [currentUser]="currentUser()" [tenantId]="tenantId()" [readOnly]="isReadOnly()" />
                 } 
                 @else {
                   <bk-invitees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
@@ -96,9 +96,9 @@ export class CalEventEditModal {
 
   // derived signals
   protected headerTitle = computed(() => {
-    if (this.isReadOnly()) return this.i18n.as_view();
+    if (this.isReadOnly()) return this.i18n.view();
     const key = this.calevent().bkey;
-    return (key && key.length > 0) ? this.i18n.as_edit() : this.i18n.as_create();
+    return (key && key.length > 0) ? this.i18n.update() : this.i18n.create();
   });
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().bkey}`);
   protected isNew = computed(() => !this.formData()?.bkey);

@@ -1,5 +1,7 @@
 {
+  "ownership": "Nutzung",
   "ownerships": "Nutzungen",
+  "owner": "Benutzer/in",
   "description": "Person oder Organisation benutzt eine Resource",
   "empty": "Keine Nutzungen gefunden.",
   "duration": "von-bis",
@@ -10,76 +12,176 @@
   "relDesc2": "durch",
   "revreldesc": "wird benutzt von",
 
+
+  "create": {
+    "label": "Nutzung hinzufügen",
+    "conf": "Nutzung wurde erstellt.",
+    "error": "Nutzung konnte nicht erstellt werden."
+  },
+  "delete": {
+    "label": "Nutzung löschen",
+    "confirm": "Normalerweise sollte eine Nutzung beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Nutzung wirklich löschen?",
+    "conf": "Nutzung wurde gelöscht",
+    "error": "Nutzung konnte nicht gelöscht werden"
+  },
+  "end": {
+    "label": "Nutzung beenden"
+  },
+  "reactivate": {
+    "label": "Nutzung reaktivieren",
+    "conf": "Die Nutzung wurde reaktiviert.",
+    "error": "Die Nutzung konnte nicht reaktiviert werden."
+  },
+  "select": {
+    "title": "Listenart für Export wählen",
+    "raw": "Rohdaten",
+    "lockers": "Garderoben-Liste"
+  },
+  "update": {
+    "label": "Nutzung ändern",
+    "conf": "Die Aenderungen wurden gespeichert.",
+    "error": "Die Aenderungen konnten nicht gespeichert werden"
+  },
+  "view": {
+    "label": "Nutzungs Details ansehen"
+  },
+
+  "list": {
+    "empty": "Keine Nutzungen gefunden.",
+    "header": {
+      "ownerName": "Name",
+      "resourceName": "Resource",
+      "duration": "von-bis",
+      "price": "Gebühr",
+      "deposit": "Depot",
+      "validFrom": "Gültig ab",
+      "validTo": "Gültig bis",
+      "year": "Jahr"
+    },
+    "all": {
+      "title": "Nutzungen"
+    },
+    "ownerships": {
+      "title": "Nutzungen"
+    },
+    "lockers": {
+      "title": "Garderoben - Kasten"
+    },
+    "keys": {
+      "title": "Schlüssel"
+    },
+    "privateBoats": {
+      "title": "Privat-Skiffs"
+    },
+    "scsBoats": {
+      "title": "Club-Boote"
+    }
+  },
+
   "bkey": {
     "label": "bkey",
     "placeholder": "bkey",
     "helper": "Der bkey ist der Schlüssel einer Nutzung, eine eindeutige ID in der Datenbank."
   },
-
   "ownerName1": {
     "label": "Vorname",
-    "placeholder": "Name / Firma",
-    "helper": ""
+    "placeholder": "Name",
+    "helper": "Die Vornamen einer Person"
   },
   "ownerName2": {
-    "label": "",
-    "placeholder": "",
-    "helper": ""
+    "label": "Name",
+    "placeholder": "Name",
+    "helper": "Der Familienname einer Person oder der Name der Organisation."
   },
   "currency": {
     "label": "Währung",
     "placeholder": "CHF",
-    "helper": ""
+    "helper": "Das Währungskürzel (dreistelliger Code)"
   },
   "price": {
     "label": "Preis",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "nnnn",
+    "helper": "Eine Preisangabe."
   },
   "notes": {
     "label": "Notizen",
-    "placeholder": ""
+    "placeholder": "Text"
+  },
+  "all": {
+    "title": "Alle Nutzungen",
+    "categoryLabel": "Resource-Typ"
   },
   "boat": {
     "name": "Bootsname",
     "type": "Bootstyp"
   },
-  "validFrom": {
-    "label": "Gültig ab",
-    "placeholder": "TT.MM.JJJJ",
-    "helper": "Die Nutzung startet an diesem Datum."
+  "rboat": {
+    "name": "Bootsname",
+    "type": "Bootstyp",
+    "title": "Ruderboote",
+    "category": "Boots-Kategorie",
+    "club": {
+      "title": "Club-Boote",
+      "categoryLabel": "Boots-Kategorie"
+    },
+    "private": {
+      "title": "Privat-Boote"
+    }
   },
-  "validTo": {
-    "label": "Gültig bis",
-    "placeholder": "TT.MM.JJJJ",
-    "helper": "Die Nutzung endet an diesem Datum."
+  "lockers": {
+    "title": "Garderoben",
+    "male": {
+      "title": "Männer-Garderoben"
+    },
+    "female": {
+      "title": "Frauen-Garderoben"
+    }
   },
-
-  "view": {
-    "label": "Nutzungs Details ansehen"
+  "houseKeys": {
+    "title": "Schlüssel"
   },
-  "edit": {
-        "label": "Nutzung ändern",
-        "error": "Die Aenderungen konnten nicht gespeichert werden",
-        "conf": "Die Aenderungen wurden gespeichert."
+  "valid": {
+    "from": {
+      "label": "Gültig ab",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Die Nutzung startet an diesem Datum."
+    },
+    "to": {
+      "label": "Gültig bis",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Die Nutzung endet an diesem Datum."
+    }
   },
-  "end": {
-    "label": "Nutzung beenden"
+  "ownerType": {
+    "all": {
+      "label": "Alle"
+    },
+    "persons": {
+      "label": "Personen",
+      "description": "Die Nutzung gehört einer Person."
+    },
+    "men": {
+      "label": "Männer",
+      "description": "Die Nutzung gehört einem Mann."
+    },
+    "women": {
+      "label": "Frauen",
+      "description": "Die Nutzung gehört Frau."
+    },
+    "orgs": {
+      "label": "Organisationen",
+      "description": "Die Nutzung gehört einer Organisation."
+    }
   },
-  "create": {
-        "label": "Nutzung hinzufügen",
-        "error": "Nutzung konnte nicht erstellt werden.",
-        "conf": "Nutzung wurde erstellt."
-  },
-  "delete": {
-        "label": "Nutzung löschen",
-        "error": "Nutzung konnte nicht gelöscht werden",
-        "conf": "Nutzung wurde gelöscht",
-        "confirm": "Normalerweise sollte eine Nutzung beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Nutzung wirklich löschen?"
-  },
-  "reactivate": {
-    "label": "Nutzung reaktivieren",
-    "error": "Die Nutzung konnte nicht reaktiviert werden.",
-    "conf": "Die Nutzung wurde reaktiviert."
+  "state": {
+    "applied": {
+      "label": "Beantragt",
+      "description": "Die Person hat einen Antrag gestellt."
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Aktuell gültige Nutzung."
+    }
   }
+
 }

@@ -84,7 +84,7 @@ export const AocStorageStore = signalStore(
       async copyPath(isFilePath: boolean) {
         const _path = isFilePath ? store.filePath() : store.dirPath();
         copyToClipboard(_path);
-        showToast(store.toastController, '@general.operation.copy.conf');
+        showToast(store.toastController, '@copy.conf');
       },
 
       clearPath(isFilePath: boolean): void {

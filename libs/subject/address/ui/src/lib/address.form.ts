@@ -179,7 +179,7 @@ import { addressValidations, AddressesI18n } from '@bk2/subject-address-util';
 })
 export class AddressForm {
   protected bkeyI18n              = computed(() => ({ name: 'bkey',              label: this.i18n().bkey_label(),              placeholder: this.i18n().bkey_placeholder(),              helper: this.i18n().bkey_helper()              } as TextInputI18n));
-  protected addressChannelLabelI18n = computed(() => ({ name: 'addressChannelLabel', label: this.i18n().channel_label(), placeholder: this.i18n().channel_placeholder(), helper: this.i18n().channel_label() } as TextInputI18n));
+  protected addressChannelLabelI18n = computed(() => ({ name: 'addressChannelLabel', label: this.i18n().channel_label(), placeholder: this.i18n().channel_placeholder(), helper: this.i18n().channel_helper() } as TextInputI18n));
   protected addressUsageLabelI18n = computed(() => ({ name: 'addressUsageLabel', label: this.i18n().usage_label(), placeholder: this.i18n().usage_placeholder(), helper: this.i18n().usage_helper() } as TextInputI18n));
   protected streetNameI18n        = computed(() => ({ name: 'streetName',        label: this.i18n().streetName_label(),        placeholder: this.i18n().streetName_placeholder(),        helper: this.i18n().streetName_helper()        } as TextInputI18n));
   protected streetNumberI18n      = computed(() => ({ name: 'streetNumber',      label: this.i18n().streetNumber_label(),      placeholder: this.i18n().streetNumber_placeholder(),      helper: this.i18n().streetNumber_helper()      } as TextInputI18n));

@@ -9,7 +9,7 @@ import { error, showToast } from './alert.util';
  * @param content The content to copy to the clipboard.
  * @param confirmMsg The message to display to the user on successful copy.
  */
-export async function copyToClipboardWithConfirmation(toastController: ToastController, content: string | number, confirmMsg = '@general.operation.copy.conf') {
+export async function copyToClipboardWithConfirmation(toastController: ToastController, content: string | number, confirmMsg = '@copy.conf') {
     try {
         await copyToClipboard(content);
         await showToast(toastController, confirmMsg);

@@ -65,7 +65,7 @@ export class CategoryEditModal {
   // derived signals
   protected readonly headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view();
-    return this.category()?.bkey ? this.i18n.edit() : this.i18n.create();
+    return this.category()?.bkey ? this.i18n.update() : this.i18n.create();
   });
   protected tenantId = computed(() => this.appStore.tenantId());
   protected readonly changeConfirmationI18n = computed(() => ({cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));

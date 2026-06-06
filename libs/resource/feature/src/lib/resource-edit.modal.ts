@@ -147,12 +147,12 @@ export class ResourceEditModal {
 
   protected getTitleLabel(readOnly: boolean, key: string): string {
     if (this.readOnly()) {
-      return this.store.i18n.view_label();
+      return this.store.i18n.view();
     }
     if (key.length > 0) {
-      return this.store.i18n.edit_label();
+      return this.store.i18n.update();
     } else {
-      return this.store.i18n.create_label();
+      return this.store.i18n.create();
     }
   }
 }

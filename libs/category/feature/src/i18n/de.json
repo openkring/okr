@@ -1,13 +1,69 @@
 {
+  "category": "Kategorie",
   "categories": "Kategorien",
+  "description": "Eine Kategorie, die eine Gruppe von Objekten beschreibt.",
   "empty": "Keine Kategorien gefunden.",
-  "view": "Ort-Details ansehen",
-  "edit": "Ort ändern",
-  "create": "Neuen Ort erstellen",
-  "delete": "Ort löschen",
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "all": {
+    "label": "Alle",
+    "description": "Alle Elemente einer Kategorie"
+  },
+  "undefined": {
+    "label": "Nicht definiert",
+    "description": "Die Kategorie wurde entweder noch nicht zugewiesen oder ist nicht bekannt."
+  },
+  "archived": {
+    "label": "Archivierte",
+    "description": "Archivierte Element werden angezeigt."
+  },
+
+  "create": {
+    "label": "Neue Kategorie erstellen",
+    "conf": "Die Kategorie wurde gespeichert.",
+    "error": "Die Kategorie konnte nicht gespeichert werden."
+  },
+  "delete": {
+    "label": "Kategorie löschen",
+    "confirm": "Soll die Kategorie wirklich gelöscht werden ?",
+    "conf": "Die Kategorie wurde gelöscht.",
+    "error": "Die Kategorie konnte nicht gelöscht werden."
+  },
+  "update": {
+    "label": "Kategorie ändern",
+    "conf": "Die Kategorie wurde gespeichert.",
+    "error": "Die Kategorie konnte nicht gespeichert werden"
+  },
+  "select": {
+    "label": "Kategorie wählen"
+  },
+  "view": {
+    "label": "Kategorie anzeigen"
+  },
+
+  "bkey": {
+    "label": "bkey",
+    "placeholder": "bkey",
+    "helper": "Der bkey ist die ID einer Kategorie"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name",
+    "error": "Der Name ist obligatorisch und muss aus alphanumerischen Zeichen bestehen.",
+    "helper": "Ein Name kann aus mehreren Wörtern bestehen. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+  },
+  "i18n": {
+    "label": "I18n Basis",
+    "placeholder": "e.g. @subject/org/feature",
+    "helper": "Die Herkunft der Uebersetzungen für die Kategorien-Bezeichnung. Die Angabe wird für die Anzeige der Kategorie-Bezeichnung und auch der Elemente benutzt (falls übersetzt wird)."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Notizen"
+  },
+  "items": {
+      "label": "Elemente",
+      "description": "Die einzelnen Elemente einer Kategorie. Jedes Element wird in einer eigenen Zeile angezeigt.",
+      "empty": "Es sind noch keine Elemente in dieser Kategorie definiert."
   }
+
 }

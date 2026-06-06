@@ -111,24 +111,24 @@ export class InviteesAccordion {
    * @param invitation 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, invitation: InvitationModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.as_view(), this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     // users can change the invitation state of their own invitations
     if (invitation.inviteeKey === this.currentUser()?.personKey) {
       if (invitation.state !== 'accepted') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.accept', this.store.i18n.as_accept(), this.imgixBaseUrl, 'checkmark'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.accept', this.store.i18n.accept(), this.imgixBaseUrl, 'checkmark'));
       }
       if (invitation.state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.decline', this.store.i18n.as_decline(), this.imgixBaseUrl, 'cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.decline', this.store.i18n.decline(), this.imgixBaseUrl, 'cancel'));
       }
       if (invitation.state !== 'maybe') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.maybe', this.store.i18n.as_maybe(), this.imgixBaseUrl, 'help'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.maybe', this.store.i18n.maybe(), this.imgixBaseUrl, 'help'));
       }
     }
     if (!this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invitation.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.currentUser()) && !this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invitation.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }

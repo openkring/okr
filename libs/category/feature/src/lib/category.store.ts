@@ -130,7 +130,7 @@ export const CategoryStore = signalStore(
           return store.i18n.view();
         }
         if (key && key.length > 0) {
-          return store.i18n.edit();
+          return store.i18n.update();
         } else {
           return store.i18n.create();
         }

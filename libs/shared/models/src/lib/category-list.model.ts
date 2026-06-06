@@ -9,8 +9,8 @@ import { BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } fro
  * This enables to save categories in the database and make them dynamically adjustable by the user.
  * The categories are defined as types/interfaces instead of using enums.
  *
- * If i18nBase is not defined, name is shown as the label.
- * Otherwise, '@${i18nBase}.${name}.label' is translated and shown as the label.
+ * If i18n is not defined, name is shown as the label.
+ * Otherwise, '@${i18n}.${name}.${item.name}.label' is translated and shown as the label.
  */
 export class CategoryListModel implements BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel {
   bkey = DEFAULT_KEY;
@@ -20,7 +20,7 @@ export class CategoryListModel implements BkModel, NamedModel, PersistedModel, S
   tenants: string[] = DEFAULT_TENANTS;
   index = DEFAULT_INDEX;
 
-  i18nBase = '';
+  i18n = '';
   translateItems = false;
   notes = DEFAULT_NOTES;
   items: CategoryItemModel[] = [];

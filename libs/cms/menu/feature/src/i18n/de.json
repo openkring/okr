@@ -11,6 +11,8 @@
     "add": {
       "submenu": "Sub-Menü hinzufügen"
     },
+
+
     "menu": {
       "main": {
         "aoc": {
@@ -165,6 +167,8 @@
         "version": "Version"
       }
     },
+
+
     "description": {
       "menu": "Menu-Einträge verweisen auf interne (Navigation) oder externe (Browse) Webseiten.",
       "label": "Beschreibung",
@@ -174,10 +178,6 @@
       "label": "Icon Name",
       "placeholder": "Name des Icons",
       "helper": "Der Name des Icons ist typischerweise der Dateiname des svg-Bildes."
-    },
-    "name": {
-      "placeholder": "ssss",
-      "helper": "Ein Name für das Menü, so dass es eindeutig gekennzeichnet ist und wieder gefunden werden kann."
     },
     "label": {
       "label": "Bezeichnung",
@@ -200,6 +200,51 @@
     "content": {
       "section": {
         "plural": "Sektionen"
+      }
+    },
+
+    "menu_action": {
+      "label": "Menü Aktion",
+      "helper": "Die Aktion, welche beim Click auf das Menü Item ausgeführt werden soll.",
+      "all": {
+        "label": "Alle Aktionen"
+      },
+      "navigate": {
+        "label": "Navigate",
+        "description": "Navigiere zu einer anderen Seite"
+      },
+      "browse": {
+        "label": "Browse",
+        "description": "Die Seite im Browser in einem externen Tab öffnen."
+      },
+      "logout": {
+        "label": "Logout",
+        "description": "Die aktuelle Sitzung beenden und sich abmelden.",
+        "confirm": "Bist du sicher ? Du musst dann wieder mit Passwort einloggen."
+      },
+      "sub": {
+        "label": "Submenu",
+        "description": "Navigiere zu einem Untermenü"
+      },
+      "context": {
+        "label": "Context Menu",
+        "description": "Kontextmenü, z.B. Export, Add auf Listen"
+      },
+      "divider": {
+        "label": "Divider",
+        "description": "Trennlinie zwischen Menüpunkten"
+      },
+      "main": {
+        "label": "Main Menu",
+        "description": "Das Top-Level Menü"
+      },
+      "login": {
+        "label": "Login",
+        "description": "Zum Login Formular navigieren"
+      },
+      "call": {
+        "label": "Funktionsaufruf",
+        "description": "Ruft eine Methode des Stores auf (z.B. add,export...)"
       }
     }
 }

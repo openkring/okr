@@ -13,7 +13,6 @@ import { ExportFormats } from '@bk2/shared-categories';
 
 import { UserService } from '@bk2/user-data-access';
 import { USER_I18N_KEYS, UserI18n } from '@bk2/user-util';
-import { UserEditModal } from './user-edit.modal';
 
 export type { UserI18n };
 
@@ -112,6 +111,7 @@ export const UserStore = signalStore(
       },
 
       async edit(user: UserModel, readOnly = true): Promise<void> {
+        const { UserEditModal } = await import('./user-edit.modal');
         const modal = await store.modalController.create({
           component: UserEditModal,
           componentProps: {

@@ -131,7 +131,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           <ion-grid>
             <ion-row>
               <ion-col size="6" size-md="3">
-                <ion-label><strong>{{ store.i18n.duration() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.durationMinutes() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4">
                 <ion-label><strong>{{ store.i18n.topic() }}</strong></ion-label>
@@ -550,24 +550,24 @@ export class CalEventList implements OnInit {
     if (calevent.isOpen) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
       if (state !== 'accepted') {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.as_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
       }
       if (state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.as_unsubscribe(), this.imgixBaseUrl, 'cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
       }
     } else {  // invitation
       // get invitation for current user
       const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.bkey);
       if (inv) {
         if (inv.state !== 'accepted') {
-          actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.as_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+          actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
         }
         if (inv.state !== 'declined') {
-          actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.as_unsubscribe(), this.imgixBaseUrl, 'cancel'));
+          actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
         }
       }
       if (this.store.isGroupCalevent(calevent)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.store.i18n.invite_group(), this.imgixBaseUrl, 'add'));
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.store.i18n.invite_members(), this.imgixBaseUrl, 'add'));
       }
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.store.i18n.invite_person(), this.imgixBaseUrl, 'person-add'));
     }
@@ -578,7 +578,7 @@ export class CalEventList implements OnInit {
       );
       if (this.canChange(calevent)) {
         actionSheetOptions.buttons.push(
-          createActionSheetButton('calevent.closeSchedule', this.store.i18n.schedule_close_label(), this.imgixBaseUrl, 'lock-closed')
+          createActionSheetButton('calevent.closeSchedule', this.store.i18n.schedule_close(), this.imgixBaseUrl, 'lock-closed')
         );
       }
     }
@@ -587,8 +587,8 @@ export class CalEventList implements OnInit {
 
     actionSheetOptions.buttons.push(createActionSheetDivider());
     // tbd: not sure who should have permission to change events, we currently leave it open
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
 
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -659,7 +659,7 @@ export class CalEventList implements OnInit {
   private async confirmCloseSchedule(calevent: CalEventModel): Promise<void> {
     const formattedDate = convertDateFormatToString(calevent.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
     const alert = await this.alertController.create({
-      header: this.store.i18n.schedule_close_label(),
+      header: this.store.i18n.schedule_close(),
       message: this.store.i18n.schedule_close_message().replace('{{date}}', formattedDate),
       inputs: [
         {
@@ -671,7 +671,7 @@ export class CalEventList implements OnInit {
       buttons: [
         { text: this.store.i18n.cancel(), role: 'cancel' },
         {
-          text: this.store.i18n.schedule_confirm(),
+          text: this.store.i18n.schedule_date_confirm(),
           handler: (data: { authorMessage?: string }) => {
             this.store.closeSchedule(calevent)
               .then(async () => {

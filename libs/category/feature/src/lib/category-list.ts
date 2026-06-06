@@ -79,7 +79,7 @@ import { CategoryStore } from './category.store';
           @for(cat of filteredCategories(); track cat.bkey) {
             <ion-item (click)="showActions(cat)">
               <ion-label>{{cat.name}}</ion-label>      
-              <ion-label class="ion-hide-lg-down">{{cat.i18nBase}}</ion-label>      
+              <ion-label class="ion-hide-lg-down">{{cat.i18n}}</ion-label>      
               <ion-label>{{ cat.items.length }}</ion-label>
             </ion-item>
           }
@@ -150,7 +150,7 @@ export class CategoryList {
    * @param cat 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, cat: CategoryListModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('category.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }

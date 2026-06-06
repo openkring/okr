@@ -54,7 +54,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
             @for(event of calevents(); track event.bkey) {
               <ion-item (click)="showActions(event)">
                 <ion-icon src="{{ getIcon(event) | svgIcon }}" color="{{ getIconColor(event) }}" slot="start" />
-                <ion-label>{{ (event.startDate | weekday) | translate | async }} {{ event.startDate | prettyDate:false }} {{event.name}}</ion-label>
+                <ion-label>{{ event.startDate | weekday | translate | async }} {{ event.startDate | prettyDate:false }} {{event.name}}</ion-label>
               </ion-item>
             }
           </ion-list>

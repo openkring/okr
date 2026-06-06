@@ -253,8 +253,8 @@ export class MemberNewForm {
   protected zipCodeI18n = computed(() => ({ name: 'zipCode', label: this.i18n().zipcode_label(), placeholder: this.i18n().zipcode_placeholder(), helper: this.i18n().zipcode_helper() }) as TextInputI18n);
   protected cityI18n = computed(() => ({ name: 'city', label: this.i18n().city_label(), placeholder: this.i18n().city_placeholder(), helper: this.i18n().city_helper() }) as TextInputI18n);
   protected webI18n = computed(() => ({ name: 'web', label: this.i18n().web_label(), placeholder: this.i18n().web_placeholder(), helper: this.i18n().web_helper() }) as TextInputI18n);
-  protected ssnIdI18n = computed(() => ({ name: 'ssnId', label: this.i18n().ssnid_label(), placeholder: this.i18n().ssnid_placeholder(), helper: this.i18n().ssnid_helper() }) as TextInputI18n);
-  protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioid_label(), placeholder: this.i18n().bexioid_placeholder(), helper: this.i18n().bexioid_helper() }) as TextInputI18n);
+  protected ssnIdI18n = computed(() => ({ name: 'ssnId', label: this.i18n().ssnId_label(), placeholder: this.i18n().ssnId_placeholder(), helper: this.i18n().ssnId_helper() }) as TextInputI18n);
+  protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() }) as TextInputI18n);
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
   protected emailI18n = computed(() => ({ name: 'email', label: this.i18n().email_label(), placeholder: this.i18n().email_placeholder() } as EmailInputI18n));
   protected phoneI18n = computed(() => ({ name: 'phone', label: this.i18n().phone_label(), placeholder: this.i18n().phone_placeholder() } as PhoneInputI18n));

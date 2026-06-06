@@ -108,11 +108,12 @@
   },
 
 
-  "usage": {
+  "address_usage": {
     "name": "Verwendung",
+    "helper": "Eine Bezeichnung dafür, wie die Adresse verwendet wird, z.B. Privat, Geschäft.",
     "label": {
       "label": "Verwendungsbezeichnung",
-      "placeholder": "sssssssss",
+      "placeholder": "z.B. Privat, Geschäft",
       "helper": "Die Verwendungsart der Adresse."
     },
     "home": {
@@ -133,10 +134,11 @@
       "description": "Diese Adresse wird in einem speziellen Kontext verwendet und mit einem eigenen Namen bezeichnet."
     }
   },
-  "channel": {
+  "address_channel": {
+    "helper": "Art der Adresse, z.B. Telefon oder Email.",
     "label": {
       "label": "Kanal-Bezeichnung",
-      "placeholder": "ssssssss",
+      "placeholder": "z.B. Telefon, Email, Facebook etc.",
       "helper": "Das Kommunikatins-Netzwerk oder Produkt."
     },
     "all": {

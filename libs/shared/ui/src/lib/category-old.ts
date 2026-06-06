@@ -5,6 +5,8 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { compareCategories } from '@bk2/shared-categories';
 import { CategoryModel } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AsyncPipe } from '@angular/common';
 
 export interface CategoryOldI18n {
   name: string;
@@ -22,6 +24,7 @@ export interface CategoryOldI18n {
   selector: 'bk-category-old',
   standalone: true,
   imports: [
+    TranslatePipe, AsyncPipe,
     IonItem, IonSelect, IonSelectOption, IonNote, IonLabel
   ],
   viewProviders: [vestFormsViewProviders],
@@ -29,7 +32,7 @@ export interface CategoryOldI18n {
     @if(selectedCategory(); as selectedCategory) {
       <ion-item lines="none">
         @if(isReadOnly()) {
-          <ion-label>{{ i18n().label }}: {{ '@' + selectedCategory.i18nBase + '.label' }}</ion-label>
+          <ion-label>{{ i18n().label }}: {{ selectedCategory.i18nBase + '.label' | translate | async  }}</ion-label>
         } @else {
           <ion-select [name]="i18n().name" (ionChange)="onCategoryChange($event)"
             [label]="i18n().label"
@@ -43,7 +46,7 @@ export interface CategoryOldI18n {
     <!--
               unfortunately, Ionic is not supporting icons within ion-select-option
     -->
-                {{ '@' + cat.i18nBase + '.label' }}
+                {{ cat.i18nBase + '.label' | translate | async }}
               </ion-select-option>
             }
           </ion-select>

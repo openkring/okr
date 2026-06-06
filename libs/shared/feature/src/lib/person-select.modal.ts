@@ -8,13 +8,15 @@ import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 import { AvatarPipe } from '@bk2/avatar-ui';
 
 import { PersonSelectStore } from './person-select.store';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-person-select-modal',
   standalone: true,
   imports: [
     Header, Spinner,
-    FullNamePipe, AvatarPipe, EmptyList,
+    FullNamePipe, AvatarPipe, EmptyList, TranslatePipe, AsyncPipe,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
   ],
   providers: [PersonSelectStore],
@@ -28,7 +30,7 @@ import { PersonSelectStore } from './person-select.store';
       [searchTerm]="searchTerm()"
       (searchTermChange)="onSearchTermChange($event)"
       [isSearchable]="true"
-      [i18n]="{ title: '@subject.person.operation.select.label' }"
+      [i18n]="{ title: ('@select_person' | translate | async)  ?? 'select'}"
       [isModal]="true"
     />   
     <ion-content>
@@ -36,7 +38,7 @@ import { PersonSelectStore } from './person-select.store';
         <bk-spinner />
       } @else {
         @if(selectedPersonsCount() === 0) {
-          <bk-empty-list message="@subject.person.field.empty" />
+          <bk-empty-list [message]="store.i18n.person_empty()" />
         } @else {
           @for(person of filteredPersons(); track $index) {
             <ion-list lines="none">
@@ -54,31 +56,31 @@ import { PersonSelectStore } from './person-select.store';
   `
 })
 export class PersonSelectModal {
-  protected readonly personSelectStore = inject(PersonSelectStore);
+  protected readonly store = inject(PersonSelectStore);
   private readonly modalController = inject(ModalController);
 
   // inputs
   public selectedTag = input.required<string>();
   public currentUser = input.required<UserModel>();
 
-  protected searchTerm = linkedSignal(() => this.personSelectStore.searchTerm());
-  protected filteredPersons = computed(() => this.personSelectStore.filteredPersons() ?? []);
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected filteredPersons = computed(() => this.store.filteredPersons() ?? []);
   protected selectedPersonsCount = computed(() => this.filteredPersons().length);
-  protected isLoading = computed(() => this.personSelectStore.isLoading());
+  protected isLoading = computed(() => this.store.isLoading());
 
-  protected defaultIcon = this.personSelectStore.appStore.getCategoryIcon('model_type', PersonModelName);
+  protected defaultIcon = this.store.appStore.getCategoryIcon('model_type', PersonModelName);
 
   constructor() {
     effect(() => {
-      this.personSelectStore.setSelectedTag(this.selectedTag());
+      this.store.setSelectedTag(this.selectedTag());
     });
     effect(() => {
-      this.personSelectStore.setCurrentUser(this.currentUser());
+      this.store.setCurrentUser(this.currentUser());
     });
   }
 
   protected onSearchTermChange(searchTerm: string): void {
-    this.personSelectStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   public select(selectedPerson: PersonModel): Promise<boolean> {

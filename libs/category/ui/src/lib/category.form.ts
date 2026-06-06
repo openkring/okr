@@ -2,27 +2,11 @@ import { Component, computed, input, linkedSignal, model, output, Signal } from 
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { categoryListValidations } from '@bk2/category-util';
+import { CategoryI18n, categoryListValidations } from '@bk2/category-util';
 import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-
-export interface CategoryFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  i18nBase_label: Signal<string>;
-  i18nBase_placeholder: Signal<string>;
-  i18nBase_helper: Signal<string>;
-  notes_label: Signal<string>;
-  notes_placeholder: Signal<string>;
-  translateItems_label: Signal<string>;
-  translateItems_helper: Signal<string>;
-}
 
 @Component({
   selector: 'bk-category-list-form',
@@ -88,7 +72,7 @@ export interface CategoryFormI18n {
 })
 export class CategoryListForm {
   // inputs
-  public readonly i18n = input.required<CategoryFormI18n>();
+  public readonly i18n = input.required<CategoryI18n>();
   public formData = model.required<CategoryListModel>();
   public currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -110,7 +94,7 @@ export class CategoryListForm {
 
   // fields
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
-  protected i18nBase = linkedSignal(() => this.formData().i18nBase ?? '');
+  protected i18nBase = linkedSignal(() => this.formData().i18n ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected items = linkedSignal(() => this.formData().items ?? []);
@@ -146,8 +130,8 @@ export class CategoryListForm {
 
   protected translateItemsI18n = computed(() => ({
     name: 'translateItems',
-    label: this.i18n().translateItems_label(),
-    helper: this.i18n().translateItems_helper()
+    label: this.i18n().items_label(),
+    helper: this.i18n().items_description()
   } as CheckboxI18n));
 
   /******************************* actions *************************************** */

@@ -1,21 +1,123 @@
 {
-  "personalrels": "Persönliche Beziehungen",
-  "empty": "Keine persönlichen Beziehungen gefunden.",
-  "title": "Persönliche Beziehungen",
+  "personalrel": "Beziehung",
+  "personalrels": "Beziehungen",
+  "description": "Eine Beziehung zwischen zwei Personen.",
+  "relDesc": "kennt",
+  "revreldesc": "kennt",
+  "empty": "Keine Beziehungen gefunden.",
+  "title": "Beziehungen",
   "person1": "Person1",
   "type": "Beziehungsart",
   "person2": "Person2",
-  "delete": {
-    "confirm": "Soll diese Beziehung wirklich gelöscht werden ?"
+
+  "create": {
+    "label": "Neue Beziehung erstellen",
+    "conf": "Die Beziehung wurde gespeichert.",
+    "error": "Die Beziehung konnte nicht gespeichert werden."
   },
-  "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
+  "delete": {
+    "label": "Beziehung löschen",
+    "confirm": "Soll diese Beziehung wirklich gelöscht werden ?",
+    "conf": "Die Beziehung wurde gelöscht.",
+    "error": "Die Beziehung konnte nicht gelöscht werden."
+  },
+  "end": {
+    "label": "Beziehung beenden",
+    "conf": "Die Beziehung wurde beendet.",
+    "error": "Die Beziehung konnte nicht beendet werden."
+  },
+  "select": {
+    "label": "Auswählen"
+  },
+  "update": {
+    "label": "Beziehung ändern",
+    "conf": "Die Beziehung wurde geändert.",
+    "error": "Die Beziehung konnte nicht geändert werden."
+  },
+  "view": {
+    "label": "Beziehungsdetails anzeigen"
+  },
+
+  "list": {
+    "title": "Persönliche Beziehungen",
+    "empty": "Keine persönlichen Beziehungen gefunden.",
+    "header": {
+      "person1": "Person1",
+      "person2": "Person2",
+      "type": "Beziehungsart"
     }
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "bkey": {
+    "label": "bkey",
+    "placeholder": "bkey",
+    "helper": "Der bkey ist der Schlüssel eines Elements, bestehend aus dem Präfix der Kategorie und einer fortlaufenden Nummer, z.B. boat-001 für das erste Boot."
+  },
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "Bezeichnung",
+    "error": "Die Bezeichnung ist obligatorisch und muss aus alphanumerischen Zeichen bestehen.",
+    "helper": "Dieser Text wird dem User gezeigt."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Notizen"
+  },
+  "valid": {
+    "from": {
+      "label": "Gültig ab",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Die Beziehung startet an diesem Datum."
+    },
+    "to": {
+      "label": "Gültig bis",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Die Beziehung endet an diesem Datum."
+    }
+  },
+
+  "personalrel_type": {
+    "label": "Beziehungs-Art",
+    "helper": "Die Art der Beziehung zwischen zwei Personen.",
+    "name": "Beziehungs-Art",
+    "all": {
+      "label": "Alle"
+    },
+    "partner": {
+      "label": "Partner*in",
+      "description": "Lebens-Partner*in"
+    },
+    "husband": {
+      "label": "verheiratet",
+      "description": "Ehepartner*in"
+    },
+    "friend": {
+      "label": "befreundet",
+      "description": "Freund oder Freundin"
+    },
+    "neighbor": {
+      "label": "benachbart",
+      "description": "Nachbarn"
+    },
+    "incompatible": {
+      "label": "inkompatibel",
+      "description": "Zwei Personen, die nicht miteinander auskommen."
+    },
+    "related": {
+      "label": "verwandt",
+      "description": "z.B. Neffe, Nichten, Onkel, Tanten, Enkel, Cousins, Cousinen"
+    },
+    "parentChild": {
+      "label": "Eltern-Kind",
+      "description": "Tochter oder Sohn"
+    },
+    "sibling": {
+      "label": "Schwester/Bruder",
+      "description": "Geschwister"
+    },
+    "custom": {
+      "label": "Andere Beziehung",
+      "description": "Beziehung, die nicht in die anderen Kategorien passt."
+    }
   }
 }

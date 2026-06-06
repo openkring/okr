@@ -19,7 +19,7 @@ import { Header } from './header';
     IonContent, IonLabel, IonItem
   ],
   template: `
-    <bk-header [i18n]="{ title: '@general.operation.select.category' }" [isModal]="true" />
+    <bk-header [i18n]="{ title: '@select.category' }" [isModal]="true" />
     <ion-content class="ion-padding">
       @for (cat of this.categories(); track cat; let i = $index) {
         <ion-item lines="none" (click)="select(i)">

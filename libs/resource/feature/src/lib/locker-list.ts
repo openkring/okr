@@ -159,7 +159,7 @@ export class LockerList {
         actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       }
       if (hasRole('resourceAdmin', this.store.appStore.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('locker.edit', this.store.i18n.locker_edit(), this.imgixBaseUrl, 'edit'));
+        actionSheetOptions.buttons.push(createActionSheetButton('locker.edit', this.store.i18n.locker_update(), this.imgixBaseUrl, 'edit'));
       }
       if (hasRole('admin', this.store.appStore.currentUser())) {
         actionSheetOptions.buttons.push(createActionSheetButton('locker.delete', this.store.i18n.locker_delete(), this.imgixBaseUrl, 'trash'));

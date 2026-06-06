@@ -1,42 +1,91 @@
 {
+  "invitation": "Einladung",
   "invitations": "Einladungen",
-  "invitee": "Teilnehmer",
-  "inviter": "Organisator",
-  "state": {
-    "label": "Status"
-  },
+  "description": "Eine Einladung zu einem Anlass oder Ereignis.",
   "empty": "Es sind noch keine Einladungen erstellt worden. Erstelle eine mit Klicken des + Buttons.",
-  "create": {
-    "label": "Person einladen",
-    "conf": "Die Einladung wurde hinzugefügt.",
-    "error": "Die Einladung konnte nicht hinzugefügt werden."
-  },
+
   "delete": {
-    "confirm": "Soll die Einladung wirklich gelöscht werden ?"
+    "label": "Einladung löschen",
+    "confirm": "Soll die Einladung wirklich gelöscht werden ?",
+    "conf": "Die Einladung wurde gelöscht.",
+    "error": "Die Einladung konnte nicht gelöscht werden."
   },
   "invite": {
+    "label": "Person einladen",
     "conf": "Die Person wurde eingeladen.",
     "error": "Die Person konnte nicht eingeladen werden."
   },
+  "update": {
+    "label": "Einladung ändern",
+    "conf": "Die Einladung wurde gespeichert",
+    "error": "Die Einladung konnte nicht gespeichert werden."
+  },
+  "view": {
+    "label": "Einladungsdetails anzeigen"
+  },
+  "accept": "Ich bin dabei",
   "accepted": "angenommene Einladungen",
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "accept": "Ich bin dabei",
-    "decline": "Ich kann nicht teilnehmen",
-    "maybe": "Vielleicht",
-    "view": "Einladungsdetails ansehen",
-    "edit": "Einladung ändern",
-    "create": "Neue Einladung erstellen",
-    "delete": "Einladung löschen"
+  "decline": "Ich kann nicht teilnehmen",
+  "maybe": "Vielleicht",
+  "resend": "Einladung erneut senden",
+  "subscribe": "Ich nehme teil",
+  "unsubscribe": "Ich kann nicht teilnehmen",
+
+  "list": {
+    "header": {
+      "date": "Datum",
+      "name": "Name",
+      "invitee": "Teilnehmer",
+      "inviter": "Organisator",
+      "state": "Status"
+    }
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "bkey": { 
+    "label": "ID", 
+    "placeholder": "sssssss", 
+    "helper": "Eine eindeutige ID der Einladung in der Datenbank."
   },
-  "bkey": { "label": "Dok.-Schlüssel", "placeholder": "", "helper": "" },
-  "notes": { "label": "Notizen", "placeholder": "" },
-  "sentAt": { "label": "Gesendet am", "placeholder": "TT.MM.JJJJ", "helper": "" },
-  "respondedAt": { "label": "Beantwortet am", "placeholder": "TT.MM.JJJJ", "helper": "" },
-  "role": { "label": "Rolle" }
+  "invitee": "Teilnehmer",
+  "inviter": "Organisator",
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Freie Notizen."
+  },
+  "sentAt": {
+    "label": "Gesendet am", 
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Die Einladung wurde an diesem Datum versendet."
+  },
+  "respondedAt": {
+    "label": "Beantwortet am",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Die Einladung wurde an diesem Datum beantwortet."
+  },
+  "role": {
+    "label": "Rolle"
+  },
+
+  "state": {
+    "label": "Status",
+    "all": {
+      "label": "Alle Stati"
+    },
+    "pending": {
+      "label": "Ausstehend",
+      "description": "Die Einladung wurde verschickt, aber noch nicht beantwortet."
+    },
+    "accepted": {
+      "label": "Angenommen",
+      "description": "Die Einladung wurde angenommen."
+    },
+    "declined": {
+      "label": "Abgelehnt",
+      "description": "Die Einladung wurde abgelehnt."
+    },
+    "maybe": {
+      "label": "Vielleicht",
+      "description": "Die Einladung wurde mit 'Vielleicht' beantwortet."
+    }
+  }
 }

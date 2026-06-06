@@ -19,5 +19,51 @@
     "success": "Passwort erfolgreich geändert. Du wirst zur Anmeldeseite weitergeleitet.",
     "savepwd": "Passwort speichern"
   },
-  "pwdconfirm": "Passwort setzen"
+  "pwdconfirm": "Passwort setzen",
+  "roles": {
+    "none": {
+      "label": "Keine",
+      "description": "Es ist keine Rolle definiert."
+    },
+    "public": {
+      "label": "Öffentlich",
+      "description": "Sichtbar für nicht-authentisierte Benutzer"
+    },
+    "anonymous": {
+      "label": "anonymous",
+      "description": "Anonymer User ohne Konto"
+    },
+    "registered": {
+      "label": "registered",
+      "description": "Registrierter / authentisierter Benutzer"
+    },
+    "privileged": {
+      "label": "privileged",
+      "description": "Privilegierter User (z.B. Vorstandsmitglied)"
+    },
+    "contentAdmin": {
+      "label": "contentAdmin",
+      "description": "Verwalter von Inhalten (Pages, Menus)"
+    },
+    "resourceAdmin": {
+      "label": "resourceAdmin",
+      "description": "Verwalter von Resourcen (z.B. Fahrzeuge, Boote, Schlüssel)"
+    },
+    "memberAdmin": {
+      "label": "memberAdmin",
+      "description": "Verwalter von Mitgliedern"
+    },
+    "eventAdmin": {
+      "label": "eventAdmin",
+      "description": "Verwalter von Events und Terminen"
+    },
+    "treasurer": {
+      "label": "treasurer",
+      "description": "Verantwortliche für Finanzen"
+    },
+    "admin": {
+      "label": "admin",
+      "description": "Superuser"
+    }
+  }
 }

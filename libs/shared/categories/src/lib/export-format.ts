@@ -12,28 +12,28 @@ export const ExportFormats: ExportFormatCategory[] = [
         id: ExportFormat.JSON,
         abbreviation: 'json',
         name: 'json',
-        i18nBase: 'core.export.json',
+        i18nBase: '@shared/categories.export.json',
         icon: 'barcode'
     },
     {
         id: ExportFormat.XML,
         abbreviation: 'xml',
         name: 'xml',
-        i18nBase: 'core.export.xml',
+        i18nBase: '@shared/categories.export.xml',
         icon: 'code'
     },
     {
         id: ExportFormat.XLSX,
         abbreviation: 'xlsx',
         name: 'xlsx',
-        i18nBase: 'core.export.xlsx',
+        i18nBase: '@shared/categories.export.xlsx',
         icon: 'grid'
     },
     {
         id: ExportFormat.CSV,
         abbreviation: 'csv',
         name: 'csv',
-        i18nBase: 'core.export.csv',
+        i18nBase: '@shared/categories.export.csv',
         icon: 'reorder-four'
     }
 ]

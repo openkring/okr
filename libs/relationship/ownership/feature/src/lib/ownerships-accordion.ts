@@ -105,7 +105,7 @@ export class OwnershipAccordion {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
     actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(ownership.validTo)) {
         actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
       }

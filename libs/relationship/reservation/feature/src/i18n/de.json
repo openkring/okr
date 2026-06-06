@@ -1,28 +1,216 @@
 {
+  "reservation": "Reservation",
   "reservations": "Reservationen",
+  "desc": "Reservation einer Resource, zB Bootshaus oder Boot.",
   "empty": "Keine Reservationen gefunden.",
   "reldesc1": "Reservation von ",
   "reldesc2": "durch",
-  "resource": "Was",
-  "name": "Anlass",
-  "validFrom": "Datum",
-  "state": "Status",
-  "reserver": "Wer",
+  "newDesc": "... möchte die folgende Resource reservieren:",
+
+  "create": {
+    "label": "Neue Reservation erstellen",
+    "conf": "Die Reservation wurde gespeichert.",
+    "error": "Die Reservation konnte nicht gespeichert werden."
+  },
   "delete": {
-    "confirm": "Normalerweise sollte eine Reservation beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Reservation wirklich löschen?"
+    "label": "Reservation löschen",
+    "confirm": "Normalerweise sollte eine Reservation beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Reservation wirklich löschen?",
+    "conf": "Die Reservation wurde gelöscht.",
+    "error": "Die Reservation konnte nicht gelöscht werden."
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Reservations-Details anzeigen",
-    "edit": "Reservation ändern",
-    "end": "Reservation beenden",
-    "endres": "Reservation beenden",
-    "delete": "Reservation löschen",
-    "create": "Neue Reservation erstellen"
+  "end": {
+    "label": "Reservation beenden"
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+  "select": { 
+    "label": "Auswählen" 
+  },
+  "update": {
+    "label": "Reservation ändern",
+    "conf": "Die Reservation wurde geändert.",
+    "error": "Die Reservation konnte nicht geändert werden."
+  },
+  "view": {
+    "label": "Reservation anzeigen"
+  },
+
+  "list": {
+    "title": "Reservationen",
+    "header": {
+      "reserver": "Wer",
+      "name": "Anlass",
+      "state": "Status",
+      "resource": "Was",
+      "date": "Datum",
+      "duration": "von - bis",
+      "category": "Typ"
+    }
+  },
+
+  "bkey": {
+    "label": "bkey",
+    "placeholder": "bkey",
+    "helper": "Die eindeutige ID der Reservatio in der Datenbank."
+  },
+  "name": {
+    "label": "Anlass",
+    "placeholder": "Name der Reservation",
+    "helper": "Eine kurze Beschreibung."
+  },
+  "notes": { 
+    "label": "Notizen", 
+    "placeholder": "Interne Notizen. Benutze Hinweise für öffentliche Informationen." 
+  },
+  "reserver": {
+    "label": "Kontakt",
+    "helper": "Die Person oder Organisation, die für die Reservation zuständig ist."
+  },
+  "resource": {
+    "label": "Was",
+    "placeholder": "was wird reserviert",
+    "helper": "Eine Beschreibung des Reservations-Objekts"
+  },
+  "date": {
+    "start": { 
+      "label": "Startdatum", 
+      "placeholder": "TT.MM.JJJJ", 
+      "helper": "" 
+    },
+    "end": { 
+      "label": "Enddatum", 
+      "placeholder": "TT.MM.JJJJ", 
+      "helper": "" 
+    }
+  },
+  "startTime":    { 
+    "label": "Startzeit", 
+    "placeholder": "HH:MM" 
+  },
+  "fullDay":      { 
+    "label": "Ganztägig", 
+    "helper": "" 
+  },
+  "durationMinutes": {
+    "label": "Dauer (Minuten)",
+    "placeholder": "nnn",
+    "helper": "Die Dauer der Reservation in Minuten."
+  },
+  "participants": {
+    "label": "Teilnehmer",
+    "placeholder": "Teilnehmer",
+    "helper": "Hier kannst du die Teilnehmer etwas beschreiben, wer kommt, wieviele etc."
+  },
+  "area": {
+    "label": "Bereich",
+    "placeholder": "Bereich ",
+    "helper": "Eine genauere Ortsbezeichnung, falls verschiedene Bereiche reserviert werden können (z.B: Sitzungsraum)"
+  },
+  "ref": {
+    "label": "Referenz",
+    "placeholder": "Referenz",
+    "helper": "Eine Beschreibung, wie es zur Reservation kam, z.B. Email vom xx an xxx"
+  },
+  "order": {
+    "label": "Reihenfolge",
+    "placeholder": "nn",
+    "helper": "Sortierkriterium z.B. bei Wartelisten"
+  },
+  "description": { 
+    "label": "Hinweise zur Reservation", 
+    "placeholder": "Diese Hinweise sind für alle Anwender sichtbar. Du kannst beliebige Kontext-Information einfügen, welche für diese Reservation wichtig sind." 
+  },
+  "price": {
+    "label": "Preis",
+    "placeholder": "nn",
+    "helper": "Der abgemachte Preis für die Reservation."
+  },
+  "confirmed": {
+    "label": "Hiermit bestätige ich, die obigen Bestimmungen gelesen zu haben und mich daran zu halten.",
+    "helper": "Die Vermietung der Clubanlagen erfolgt nur, wenn die obigen Bestimmungen eingehalten werden. Der Club behält sich vor, bei Missachtung der Bestimmungen die Veranstaltung abzusagen oder dem Mieter allfällige Schäden oder Mehraufwände zu verrechnen."
+  },
+
+
+  "reservation_reason": {
+    "all": {
+      "label": "Alle Arten"
+    },
+    "social": {
+      "label": "Sozialer Anlass",
+      "description": "Reservation für einen gesellschaftlichen Anlass"
+    },
+    "maintenance": {
+      "label": "Unterhalt / Reparatur",
+      "description": "Reservierung für Reparatur oder Wartung."
+    },
+    "course": {
+      "label": "Kurs",
+      "description": "Reserviert für einen Kurs"
+    },
+    "sport": {
+      "label": "Sportanlass",
+      "description": "Reserviert für einen sportlichen Anlass"
+    },
+    "business": {
+      "label": "Geschäftsanlass",
+      "description": "Reserviert für einen geschäftlichen Anlass"
+    },
+    "private": {
+      "label": "Privatanlass",
+      "description": "Reserviert für einen privaten Anlass"
+    },
+    "public": {
+      "label": "Öffentlicher Anlass",
+      "description": "Reserviert für einen öffentlichen Anlass"
+    },
+    "workshop": {
+      "label": "Workshop",
+      "description": "Reserviert für einen Workshop"
+    },
+    "meeting": {
+      "label": "Besprechung",
+      "description": "Reserviert für eine Besprechung"
+    },
+    "party": {
+      "label": "Party",
+      "description": "Reserviert für eine Party"
+    },
+    "storage": {
+      "label": "Lagerung",
+      "description": "Reservation eines Lagerplatzes"
+    },
+    "club": {
+      "label": "Clubanlass",
+      "description": "Reserviert für einen Clubanlass"
+    }
+  },
+
+  "reservation_state": {
+    "label": "Status",
+    "all": {
+      "label": "Alle Stati"
+    },
+    "initial": {
+      "label": "Initial",
+      "description": "Noch nicht konkrete Reservationsidee."
+    },
+    "applied": {
+      "label": "Angefragt",
+      "description": "Reservationsanfrage ist offen und muss beurteilt werden."
+    },
+    "active": {
+      "label": "Reserviert",
+      "description": "Die Reservation wurde bewilligt."
+    },
+    "completed": {
+      "label": "Abgeschlossen",
+      "description": "Die Reservation ist abgeschlossen (z.B. Event wurde durchgeführt und bezahlt)."
+    },
+    "cancelled": {
+      "label": "Abgesagt",
+      "description": "Die Reservation wurde abgesagt."
+    },
+    "denied": {
+      "label": "Abgelehnt",
+      "description": "Die Reservation wurde abgelehnt."
+    }
   }
 }

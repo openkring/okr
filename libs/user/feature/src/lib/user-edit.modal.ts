@@ -10,10 +10,11 @@ import { AvatarService, UploadService } from '@bk2/avatar-data-access';
 import { AvatarToolbar } from '@bk2/avatar-feature';
 import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
 import { CommentsCard } from '@bk2/comment-feature';
+import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, UserPrivacyForm } from '@bk2/user-ui';
-import { convertFormsToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
-import { UserStore } from './user.store';
+import { convertFormsToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, USER_I18N_KEYS, UserAuthFormModel, UserDisplayFormModel, UserI18n, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
 
 @Component({
   selector: 'bk-user-edit-modal',
@@ -23,7 +24,6 @@ import { UserStore } from './user.store';
     UserModelForm, UserDisplayForm, UserAuthForm, UserPrivacyForm, UserNotificationForm,
     IonContent
   ],
-  providers: [UserStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
@@ -33,17 +33,17 @@ import { UserStore } from './user.store';
       <bk-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
       @if(user(); as user) {
         <bk-user-model-form
-            [i18n]="store.i18n"
+            [i18n]="i18n"
             [formData]="userModelVm()"
             (formDataChange)="onFormDataChange('model', $event)"
             [readOnly]="readOnly()"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
         />
-        <bk-user-auth-form [i18n]="store.i18n" [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('auth', $event)" />
-        <bk-user-display-form [i18n]="store.i18n" [formData]="userDisplayVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('display', $event)" />
-        <bk-user-privacy-form [i18n]="store.i18n" [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (formDataChange)="onFormDataChange('privacy', $event)" />
-        <bk-user-notification-form [i18n]="store.i18n" [formData]="userNotificationVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('notification', $event)" />
+        <bk-user-auth-form [i18n]="i18n" [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('auth', $event)" />
+        <bk-user-display-form [i18n]="i18n" [formData]="userDisplayVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('display', $event)" />
+        <bk-user-privacy-form [i18n]="i18n" [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (formDataChange)="onFormDataChange('privacy', $event)" />
+        <bk-user-notification-form [i18n]="i18n" [formData]="userNotificationVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('notification', $event)" />
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onTagsChanged($event)" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" />
       }
       <bk-comments-card [parentKey]="parentKey()" />
@@ -51,11 +51,12 @@ import { UserStore } from './user.store';
   `
 })
 export class UserEditModal {
-  private modalController = inject(ModalController);
+  private readonly modalController = inject(ModalController);
   private readonly avatarService = inject(AvatarService);
-  protected readonly store = inject(UserStore);
   private readonly uploadService = inject(UploadService);
   private readonly platform = inject(Platform);
+  private readonly appStore = inject(AppStore);
+  protected readonly i18n = inject(I18nService).translateAll(USER_I18N_KEYS) as UserI18n;
 
   // inputs
   protected user = input.required<UserModel>();
@@ -68,22 +69,26 @@ export class UserEditModal {
   protected userPrivacyVm = linkedSignal(() => convertUserToPrivacyForm(this.user()));
   protected userNotificationVm = linkedSignal(() => convertUserToNotificationForm(this.user()));
 
-   // signals
+  // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showForm = signal(true);
 
   // derived
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.user()?.bkey));
+  protected readonly headerTitle = computed(() => {
+    if (this.readOnly()) return this.i18n.view();
+    const key = this.user()?.bkey;
+    return (key && key.length > 0) ? this.i18n.update() : this.i18n.create();
+  });
   protected readonly toolbarTitle = computed(() => getFullName(this.user().firstName, this.user().lastName, this.user().nameDisplay));
   protected readonly parentKey = computed(() => `${UserModelName}.${this.user().bkey}`);
   protected readonly avatarKey = computed(() => `person.${this.user().personKey}`);
-  protected readonly allTags = computed(() => this.store.getTags());
-  protected readonly currentUser = computed(() => this.store.currentUser());
-  protected readonly allRoles = computed(() => this.store.appStore.getCategory('roles'));
+  protected readonly allTags = computed(() => this.appStore.getTags('user'));
+  protected readonly currentUser = computed(() => this.appStore.currentUser());
+  protected readonly allRoles = computed(() => this.appStore.getCategory('roles'));
   protected tags = linkedSignal(() => this.user().tags);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save() } as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   protected async save(): Promise<void> {
@@ -101,16 +106,12 @@ export class UserEditModal {
     this.userAuthVm.set(convertUserToAuthForm(this.user()));
   }
 
- /**
-   * Uploads an image to Firebase storage and saves it as an avatar model in the database.
-   * @param photo the avatar photo that is uploaded to and stored in the firebase storage
-   */
   public async onImageSelected(photo: Photo): Promise<void> {
     const user = this.user();
     if (!user) return;
     const file = await readAsFile(photo, this.platform);
-    const avatar = newAvatarModel([this.store.tenantId()], 'user', user.bkey, file.name);
-    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, this.store.i18n.upload_avatar())
+    const avatar = newAvatarModel([this.appStore.tenantId()], 'user', user.bkey, file.name);
+    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, this.i18n.upload_avatar());
 
     if (downloadUrl) {
       await this.avatarService.updateOrCreate(avatar);

@@ -8,31 +8,40 @@ export const MENU_I18N_KEYS = {
   empty:                          PFX + 'empty',
   link:                           PFX + 'link',
   action:                         PFX + 'action',
-  as_title:                       '@actionsheet.title',
   edit:                           PFX + 'edit',
   view:                           PFX + 'view',
   create:                         PFX + 'create',
   delete:                         PFX + 'delete',
   add_submenu:                    PFX + 'add.submenu',
 
+  // menu entries are directly referenced
   menu_main_aoc_title:            PFX + 'menu.main.aoc.title',
 
   description:                    PFX + 'description.menu',
   description_label:              PFX + 'description.label',
   description_placeholder:        PFX + 'description.placeholder',
+
   icon_label:                     PFX + 'icon.label',
   icon_placeholder:               PFX + 'icon.placeholder',
   icon_helper:                    PFX + 'icon.helper',
+
   label_label:                    PFX + 'label.label',
   label_placeholder:              PFX + 'label.placeholder',
   label_helper:                   PFX + 'label.helper',
+
   url_placeholder:                PFX + 'url.placeholder',
   url_helper:                     PFX + 'url.helper',
   url_label:                      PFX + 'url.label',
+
   category_plural:                PFX + 'category.plural',
   responsibility_export_raw:      PFX + 'responsibility.export.raw',
   content_section_plural:         PFX + 'content.section.plural',
 
+  // menu_action is directly referenced
+  menu_action_label:              PFX + 'menu_action.label',
+  menu_action_helper:             PFX + 'menu_action.helper',
+
+  as_title:                       '@actionsheet.title',
   name_label:                     '@name.label',
   name_placeholder:               '@name.placeholder',
   name_helper:                    '@name.helper',

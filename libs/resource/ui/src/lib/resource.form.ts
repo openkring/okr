@@ -33,7 +33,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/r
           @case('rboat') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
+                <ion-card-title>{{ i18n().rboat_form_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -77,7 +77,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/r
           @case('boat') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
+                <ion-card-title>{{ i18n().boat_form_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -119,7 +119,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/r
           @case('car') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
+                <ion-card-title>{{ i18n().car_form_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -160,7 +160,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/r
           @case('locker') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
+                <ion-card-title>{{ i18n().locker_form_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -194,7 +194,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/r
           @case('key') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
+                <ion-card-title>{{ i18n().key_form_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -220,7 +220,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/r
           @case('pet') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
+                <ion-card-title>{{ i18n().pet_form_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -253,7 +253,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/r
           @case('realestate') {
             <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
+                <ion-card-title>{{ i18n().realEstate_form_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -283,7 +283,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/r
           @default {
           <ion-card>
               <ion-card-header>
-                <ion-card-title>{{ i18n().form_card_title() }}</ion-card-title>
+                <ion-card-title>{{ i18n().other_form_title() }}</ion-card-title>
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>

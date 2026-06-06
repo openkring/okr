@@ -76,7 +76,7 @@ export class CardSelectModal {
   public slug = input.required<string>();
 
   // computed
-  protected i18nBase = computed(() => this.category().i18nBase);
+  protected i18nBase = computed(() => this.category().i18n);
   protected items = computed(() => this.category().items);
   protected path = computed(() => `${this.env.services.imgixBaseUrl}/logo/${this.slug()}/`);
 

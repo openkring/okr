@@ -140,6 +140,38 @@
     "error": "Die Person konnte nicht gelöscht werden."
   },
 
+  "gender": {
+    "label": "Geschlecht",
+    "helper": "Das Geschlecht einer Person",
+    "name": "Geschlecht",
+    "all": {
+      "label": "Alle Geschlechter",
+      "icon": "gender_diverse"
+    },
+    "female": {
+      "label": "weiblich",
+      "description": "Die Person ist eine Frau.",
+      "salutation": "Liebe",
+      "greeting": "Frau",
+      "formal": "Sehr geehrte Frau"
+    },
+    "male": {
+      "label": "männlich",
+      "description": "Die Person ist ein Mann.",
+      "salutation": "Lieber",
+      "greeting": "Herr",
+      "formal": "Sehr geehrter Herr"
+    },
+    "other": {
+      "label": "divers",
+      "description": "Die Person ist Transgender.",
+      "salutation": "Liebe_r",
+      "greeting": "Miko",
+      "formal": "Sehr geehrt* ",
+      "name": "Bezeichnung"
+    }
+  },
+
   "validation": {
     "lastNameRequired": "Die Eingabe eines Nachnamens ist obligatorisch.",
     "validSSN": "Bitte eine gültige AHV-Nummer eingeben."

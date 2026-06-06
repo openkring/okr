@@ -656,7 +656,7 @@ export const CalEventStore = signalStore(
           inv.name = calevent.name;
           inv.date = calevent.startDate;
           inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-          return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, store.i18n.invite_conf(), store.i18n.invite_error(), store.currentUser());
+          return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, store.i18n.invite_person_conf(), store.i18n.invite_person_error(), store.currentUser());
         }
       },
 
@@ -723,12 +723,12 @@ export const CalEventStore = signalStore(
 
       getTitleLabel(readOnly: boolean, key?: string): string {
         if (readOnly) {
-          return store.i18n.as_view();
+          return store.i18n.view();
         }
         if (key && key.length > 0) {
-          return store.i18n.as_edit();
+          return store.i18n.update();
         } else {
-          return store.i18n.as_create();
+          return store.i18n.create();
         }
       },
     }

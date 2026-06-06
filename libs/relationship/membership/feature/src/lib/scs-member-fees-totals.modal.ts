@@ -25,35 +25,35 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
     .divider ion-label { border-top: 2px solid var(--ion-color-medium); padding-top: 4px; }
   `],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.totals_label() }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.scsMemberFee_totals_label() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.jb() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.scsMemberFee_jb() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().jb) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.jbp() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.scsMemberFee_jbp() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().srv) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.entryFee() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.scsMemberFee_entryFee() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().entryFee) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.locker() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.scsMemberFee_locker() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().locker) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.skiff() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.scsMemberFee_skiff() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().skiff) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.skiffInsurance() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.scsMemberFee_skiffInsurance() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().skiffInsurance) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-label>{{ store.i18n.bev() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label>{{ store.i18n.scsMemberFee_bev() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().bev) }}</ion-label></ion-col>
         </ion-row>
         <ion-row>
@@ -63,7 +63,7 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
 
         <!-- total -->
         <ion-row class="divider">
-          <ion-col size="6"><ion-label class="label">{{ store.i18n.total() }}</ion-label></ion-col>
+          <ion-col size="6"><ion-label class="label">{{ store.i18n.scsMemberFee_total() }}</ion-label></ion-col>
           <ion-col size="6"><ion-label class="amount">{{ fmt(totals().total) }}</ion-label></ion-col>
         </ion-row>
 

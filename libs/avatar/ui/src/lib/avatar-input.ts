@@ -32,7 +32,7 @@ import { generateRandomString, newAvatarInfo } from '@bk2/shared-util-core';
             [maxlength]="maxLength()"
             placeholder="ssssss"
             /> -->
-        <ion-button slot="end" fill="clear" (click)="selectClicked.emit()">{{ '@general.operation.select.subject' }}</ion-button>
+        <ion-button slot="end" fill="clear" (click)="selectClicked.emit()">{{ '@select.subject' }}</ion-button>
     </ion-item>
   `
 })

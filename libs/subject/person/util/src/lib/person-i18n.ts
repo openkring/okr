@@ -104,6 +104,10 @@ export const PERSON_I18N_KEYS = {
     delete_confirm:             PFX + 'delete.confirm',
     delete_error:               PFX + 'delete.error',
 
+    // gender (resolved in cat-select)
+    gender_label:               PFX + 'gender.label',
+    gender_helper:              PFX + 'gender.helper',
+
     validation_lastNameRequired: PFX + 'validation.lastNameRequired',
     validation_validSSN:        PFX + 'validation.validSSN',
 
@@ -113,6 +117,8 @@ export const PERSON_I18N_KEYS = {
     ok:                         '@ok',
     cancel:                     '@cancel',
     save:                       '@save.label',
+
+
 } satisfies Record<string, string>;
 
 export type PersonI18n = { [K in keyof typeof PERSON_I18N_KEYS]: Signal<string> };

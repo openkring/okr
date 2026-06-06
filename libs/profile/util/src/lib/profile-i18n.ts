@@ -58,6 +58,7 @@ export const PROFILE_I18N_KEYS = {
   use_touchid_helper:              PFX + 'use.touchid.helper',
   use_faceid_label:                PFX + 'use.faceid.label',
   use_faceid_helper:               PFX + 'use.faceid.helper',
+
   search_placeholder:              '@search.label',
   as_title:                        '@actionsheet.title',
   save:                            '@save.label',

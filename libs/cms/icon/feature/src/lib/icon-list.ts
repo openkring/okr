@@ -72,14 +72,14 @@ import { ICON_SETS, IconStore } from './icon.store';
                   <ion-content>
                     <ion-list>
                       <ion-item button (click)="dismissPopover('add')">
-                        <ion-label>{{ store.i18n.create_label() }}</ion-label>
+                        <ion-label>{{ store.i18n.create() }}</ion-label>
                       </ion-item>
                       <ion-item button (click)="dismissPopover('exportRaw')">
-                        <ion-label>{{ store.i18n.exportRaw_label() }}</ion-label>
+                        <ion-label>{{ store.i18n.exportRaw() }}</ion-label>
                       </ion-item>
                       @if(hasRole('admin')) {
                         <ion-item button (click)="dismissPopover('sync')">
-                          <ion-label>{{ store.i18n.sync_label() }}</ion-label>
+                          <ion-label>{{ store.i18n.sync() }}</ion-label>
                         </ion-item>
                       }
                     </ion-list>
@@ -105,13 +105,13 @@ import { ICON_SETS, IconStore } from './icon.store';
           <ion-grid>
             <ion-row>
               <ion-col size="5" size-md="4">
-                <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-col>
               <ion-col size="3" size-md="3" class="ion-hide-md-down">
-                <ion-label><strong>{{ store.i18n.type() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.type_label() }}</strong></ion-label>
               </ion-col>
               <ion-col size="2">
-                <ion-label><strong>{{ store.i18n.size() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.size_label() }}</strong></ion-label>
               </ion-col>
               <ion-col size="2">
                 <ion-label><strong>{{ store.i18n.updated() }}</strong></ion-label>
@@ -218,10 +218,10 @@ export class IconList {
   }
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('icon.copy', this.store.i18n.as_copy(), this.imgixBaseUrl, 'copy'));
-    actionSheetOptions.buttons.push(createActionSheetButton('icon.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('icon.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy'));
+    actionSheetOptions.buttons.push(createActionSheetButton('icon.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('icon.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('icon.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }

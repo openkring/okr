@@ -38,7 +38,7 @@ import { Menu } from '@bk2/cms-menu-feature';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>
           {{ sortedFees().length }}/{{ allFees().length }}
-          {{ store.i18n.list_title() }}
+          {{ store.i18n.scsMemberFee_list_title() }}
         </ion-title>
         @if(hasRole('treasurer')) {
           <ion-buttons slot="end">
@@ -120,7 +120,7 @@ import { Menu } from '@bk2/cms-menu-feature';
         <bk-spinner />
       } @else {
         @if (sortedFees().length === 0) {
-          <bk-empty-list [message]="store.i18n.list_empty()" />
+          <bk-empty-list [message]="store.i18n.scsMemberFee_list_empty()" />
         } @else {
           <ion-grid>
             @for (fee of sortedFees(); track $index) {
@@ -328,7 +328,7 @@ export class ScsMemberFees {
     const imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
     if (this.canChange()) {
-      opts.buttons.push(createActionSheetButton('invoice.edit', imgixBaseUrl, 'edit', this.store.i18n.invoice_edit()));
+      opts.buttons.push(createActionSheetButton('invoice.edit', imgixBaseUrl, 'edit', this.store.i18n.invoice_update()));
       opts.buttons.push(createActionSheetButton('invoice.upload', imgixBaseUrl, 'upload', this.store.i18n.invoice_upload()));
       opts.buttons.push(createActionSheetButton('invoice.download', imgixBaseUrl, 'download', this.store.i18n.invoice_download()));
       opts.buttons.push(createActionSheetButton('invoice.paid', imgixBaseUrl, 'checkmark', this.store.i18n.invoice_paid()));
@@ -337,8 +337,8 @@ export class ScsMemberFees {
         opts.buttons.push(createActionSheetButton('invoice.delete', imgixBaseUrl, 'trash', this.store.i18n.invoice_delete()));
         opts.buttons.push(createActionSheetDivider());
       }
-      opts.buttons.push(createActionSheetButton('person.edit', imgixBaseUrl, 'edit', this.store.i18n.person_edit()));
-      opts.buttons.push(createActionSheetButton('member.edit', imgixBaseUrl, 'edit', this.store.i18n.member_edit()));
+      opts.buttons.push(createActionSheetButton('person.edit', imgixBaseUrl, 'edit', this.store.i18n.person_update()));
+      opts.buttons.push(createActionSheetButton('member.edit', imgixBaseUrl, 'edit', this.store.i18n.member_update()));
     }
     opts.buttons.push(createActionSheetButton('cancel', imgixBaseUrl, 'cancel', this.store.i18n.cancel()));
   }

@@ -28,8 +28,8 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@bk2
     >
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n().fbuser_auth_title() }}</ion-card-title>
-          <ion-card-subtitle>{{ i18n().fbuser_auth_description() }}</ion-card-subtitle>
+          <ion-card-title>{{ i18n().fbuser_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().fbuser_description() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>

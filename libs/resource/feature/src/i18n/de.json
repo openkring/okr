@@ -1,64 +1,847 @@
 {
+  "resource": "Resource",
   "resources": "Resourcen",
+  "desc": "Etwas, das man benützen, reservieren, besitzen kann (Boot, Auto, Immobilie, Schlüssel, Chäschtli etc.).",
+  "all": "Alle Resourcen",
+
   "empty": "Keine Resourcen gefunden.",
-  "load": "Beladung",
+  "other_attributes": "Sonstige Angaben",
+  
   "create": {
-    "label": "Resource erstellen"
+    "label": "Neue Resource erfassen",
+    "conf": "Die neue Resource wurde gespeichert.",
+    "error": "Die Resource konnte nicht gespeichert werden."
+  },
+  "delete": {
+    "label": "Resource löschen",
+    "conf": "Die Resource wurde gelöscht.",
+    "error": "Die Resource konnte nicht gelöscht werden.",
+    "confirm": "Soll die Resource wirklich gelöscht werden ?"
+  },
+  "update": {
+    "label": "Resource ändern",
+    "conf": "Die Aenderungen wurden gespeichert",
+    "error": "Die Aenderungen konnten nicht gespeichert werden."
   },
   "view": {
     "label": "Resource anzeigen"
   },
-  "edit": {
-    "label": "Resource ändern"
+  "select": {
+    "label": "Resource wählen"
   },
-  "delete": {
-    "label": "Resource löschen"
+
+  "bkey": {
+    "label": "bkey",
+    "placeholder": "bkey",
+    "helper": "Der bkey ist der eindeutige Schlüssel einer Resource in der Datenbank."
   },
-  "key": {
-    "plural": "Schlüssel",
-    "empty": "Keine Schlüssel gefunden.",
-    "name": "Schlüsselname",
-    "nr": "Schlüssel Nr.",
-    "view": "Schlüssel anzeigen",
-    "edit": "Schlüssel ändern",
-    "delete": "Schlüssel löschen",
-    "create": "Schlüssel erstellen"
+  "color": {
+    "label": "Farbe",
+    "ionic": {
+      "primary": {
+        "label": "Primary",
+        "description": "Primary color for the app"
+      },
+      "secondary": {
+        "label": "Secondary",
+        "description": "Secondary color for the app"
+      },
+      "tertiary": {
+        "label": "Tertiary",
+        "description": "Tertiary color for the app"
+      },
+      "success": {
+        "label": "Success",
+        "description": "Success color for the app"
+      },
+      "warning": {
+        "label": "Warning",
+        "description": "Warning color for the app"
+      },
+      "danger": {
+        "label": "Danger",
+        "description": "Danger color for the app"
+      },
+      "light": {
+        "label": "Light",
+        "description": "Light color for the app"
+      },
+      "medium": {
+        "label": "Medium",
+        "description": "Medium color for the app"
+      },
+      "dark": {
+        "label": "Dark",
+        "description": "Dark color for the app"
+      },
+      "white": {
+        "label": "Keine",
+        "description": "Die Standardfarbe wird benutzt, dh. weiss oder schwarz"
+      }
+    }
+  },
+  "currentValue": {
+    "label": "Zeitwert",
+    "placeholder": "Aktueller Wert",
+    "helper": "Der Wert im aktuellen Zustand, z.B. der Zeitwert eines Bootes.",
+    "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden"
+  },
+  "description": {
+    "label": "Beschreibung",
+    "placeholder": "Ein längerer, mehrzeiliger Text."
+  },
+  "keyNr": {
+    "label": "Schlüssel Nr.",
+    "placeholder": "nnnnn",
+    "helper": "Die Schlüsselnummer ist eine fünfstellige Zahl.",
+    "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
+  },
+  "lockerNr": {
+    "label": "Garderobe Nr.",
+    "placeholder": "n[nn]",
+    "helper": "Die Nummer der Garderobe, z.B. 1, 2, 3 etc.",
+    "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
+  },
+  "load": {
+    "label": "Beladung",
+    "placeholder": "Beladung in kg [von-bis]",
+    "helper": "Beladung in kg (von - bis)",
+    "error": "Die Eingabe besteht aus einem optionalen Mindestgewicht (2-stellige Nummer) - Maximalgewicht (2-3 stellige Nummer)"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name",
+    "error": "Der Name ist obligatorisch und muss aus alphanumerischen Zeichen bestehen.",
+    "helper": "Ein Name kann aus mehreren Wörtern bestehen. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+  },
+
+  "resource_type": {
+    "label": "Resource Typ",
+    "helper": "Der Type der Resource.",
+    "all": {
+      "label": "Alle Resourcen"
+    }
+  },
+  "type": {
+    "label": "Resource Typ",
+    "undefined": {
+      "label": "Undefiniert",
+      "description": "Der Resourcentyp ist nicht gesetzt oder unbekannt.",
+      "formTitle": "Angaben zur Resource"
+    },
+
+    "boat": {
+      "label": "Boot",
+      "plural": "Boote",
+      "empty": "Keine Boote gefunden.",
+      "formTitle": "Angaben zum Boot",
+      "name": "Bootsname",
+      "type": "Bootstyp",
+      "description": "Motorboot, Segelboot, etc.",
+      "create": {
+        "label": "Neues Boot erfassen",
+        "conf": "Das neue Boot wurde gespeichert.",
+        "error": "Das Boot konnte nicht gespeichert werden."
+      },
+      "update": {
+        "label": "Boot ändern",
+        "conf": "Die Aenderungen wurden gespeichert",
+        "error": "Die Aenderungen konnten nicht gespeichert werden."
+      },
+      "delete": {
+        "label": "Boot löschen",
+        "conf": "Das Boot wurde gelöscht.",
+        "error": "Das Boot konnte nicht gelöscht werden.",
+        "askConfirmation": "Soll das Boot wirklich gelöscht werden ?"
+      },
+      "view": {
+        "label": "Boot anzeigen"
+      }
+    },
+    "legaldoc": {
+      "label": "Ausweis",
+      "title": "Ausweise",
+      "formTitle": "",
+      "description": "Eine Bestätigung in Form eines offiziellen Dokumentes."
+    },
+
+    "rboat": {
+      "label": "Ruderboot",
+      "plural": "Ruderboote",
+      "empty": "Keine Ruderboote gefunden.",
+      "formTitle": "Angaben zum Ruderboot",
+      "name": "Name des Ruderboots",
+      "type": "Bootstyp",
+      "description": "Ruderboot im Club- oder Privatbesitz",
+      "create": {
+        "label": "Neues Ruderboot erfassen",
+        "conf": "Das neue Ruderboot wurde gespeichert.",
+        "error": "Das Ruderboot konnte nicht gespeichert werden."
+      },
+      "update": {
+        "label": "Ruderboot ändern",
+        "conf": "Die Aenderungen wurden gespeichert",
+        "error": "Die Aenderungen konnten nicht gespeichert werden."
+      },
+      "delete": {
+        "label": "Ruderboot löschen",
+        "conf": "Das Ruderboot wurde gelöscht.",
+        "error": "Das Ruderboot konnte nicht gelöscht werden.",
+        "askConfirmation": "Soll das Ruderboot wirklich gelöscht werden ?"
+      },
+      "view": {
+        "label": "Ruderboot anzeigen"
+      }
+    },
+
+    "car": {
+      "label": "Fahrzeug",
+      "title": "Fahrzeuge",
+      "formTitle": "Angaben zum Fahrzeug",
+      "description": "Auto, Lastwagen, Bus",
+      "create": {
+        "label": "Neues Fahrzeug erfassen",
+        "conf": "Das neue Fahrzeug wurde gespeichert.",
+        "error": "Das Fahrzeug konnte nicht gespeichert werden."
+      },
+      "update": {
+        "label": "Fahrzeug ändern",
+        "conf": "Die Aenderungen wurden gespeichert",
+        "error": "Die Aenderungen konnten nicht gespeichert werden."
+      },
+      "delete": {
+        "label": "Fahrzeug löschen",
+        "conf": "Das Fahrzeug wurde gelöscht.",
+        "error": "Das Fahrzeug konnte nicht gelöscht werden.",
+        "askConfirmation": "Soll das Fahrzeug wirklich gelöscht werden ?"
+      },
+      "view": {
+        "label": "Fahrzeug anzeigen"
+      }
+    },
+
+    "clubBoat": {
+      "label": "Club-Boot",
+      "title": "Club-Boote"
+    },
+    "privateBoat": {
+      "label": "Privat-Boot",
+      "title": "Privat-Boote"
+    },
+
+    "other": {
+      "label": "Andere Resource",
+      "description": "Resource, welche keiner vordefinierten Art zugeordnet werden kann",
+      "formTitle": "Angaben zur Resource",
+      "create": {
+        "label": "Neuen Resource erfassen",
+        "conf": "Die neue Resource wurde gespeichert.",
+        "error": "Die neue Resource konnte nicht gespeichert werden."
+      },
+      "update": {
+        "label": "Resource ändern",
+        "conf": "Die Änderungen wurden gespeichert",
+        "error": "Die Änderungen konnten nicht gespeichert werden."
+      },
+      "delete": {
+        "label": "Resource löschen",
+        "conf": "Die Resource wurde gelöscht.",
+        "error": "Die Resource konnte nicht gelöscht werden.",
+        "askConfirmation": "Soll die Resource wirklich gelöscht werden ?"
+      },
+      "view": {
+        "label": "Resource anzeigen"
+      }
+    },
+
+    "motorBoat": {
+      "label": "Motorboot",
+      "title": "Motorboote",
+      "description": "Boot mit Motor, zB Schlauchboot"
+    },
+    "vehicle": {
+      "label": "Fahrzeug",
+      "title": "Fahrzeuge",
+      "description": "Auto oder Anhänger"
+    },
+    "locker": {
+      "label": "Garderobe",
+      "plural": "Garderoben",
+      "title": "Garderoben - Kasten",
+      "empty": "Keine Garderoben gefunden.",
+      "formTitle": "Angaben zum Garderobenkasten",
+      "description": "Umkleidekasten in der Männer-Garderobe",
+      "create": {
+        "label": "Neuen Garderobenkasten erfassen",
+        "conf": "Der neue Garderobenkasten wurde gespeichert.",
+        "error": "Der Garderobenkasten konnte nicht gespeichert werden."
+      },
+      "update": {
+        "label": "Garderobenkasten ändern",
+        "conf": "Die Änderungen wurden gespeichert",
+        "error": "Die Änderungen konnten nicht gespeichert werden."
+      },
+      "delete": {
+        "label": "Garderobenkasten löschen",
+        "conf": "Der Garderobenkasten wurde gelöscht.",
+        "error": "Der Garderobenkasten konnte nicht gelöscht werden.",
+        "askConfirmation": "Soll der Garderobenkasten wirklich gelöscht werden ?"
+      },
+      "view": {
+        "label": "Garderobenkasten anzeigen"
+      }
+    },
+    "key": {
+      "label": "Schlüssel",
+      "plural": "Schlüssel",
+      "title": "Bootshaus-Schlüssel",
+      "empty": "Keine Schlüssel gefunden.",
+      "name": "Schlüsselname",
+      "nr": "Schlüssel Nr.",
+      "formTitle": "Angaben zum Schlüssel",
+      "description": "Schlüssel, zB für die Haustüre",
+      "create": {
+        "label": "Neuen Schlüssel erfassen",
+        "conf": "Der neue Schlüssel wurde gespeichert.",
+        "error": "Der Schlüssel konnte nicht gespeichert werden."
+      },
+      "update": {
+        "label": "Schlüssel ändern",
+        "conf": "Die Änderungen wurden gespeichert",
+        "error": "Die Änderungen konnten nicht gespeichert werden."
+      },
+      "delete": {
+        "label": "Schlüssel löschen",
+        "conf": "Der Schlüssel wurde gelöscht.",
+        "error": "Der Schlüssel konnte nicht gelöscht werden.",
+        "askConfirmation": "Soll der Schlüssel wirklich gelöscht werden ?"
+      },
+      "view": {
+        "label": "Schlüssel anzeigen"
+      }
+    },
+    "pet": {
+      "label": "Haustier",
+      "title": "Haustiere",
+      "formTitle": "Angaben zum Haustier",
+      "description": "Haustier, zB Hund oder Katze",
+      "create": {
+        "label": "Neues Haustier erfassen",
+        "conf": "Das neue Haustier wurde gespeichert.",
+        "error": "Das Haustier konnte nicht gespeichert werden."
+      },
+      "update": {
+        "label": "Haustier ändern",
+        "conf": "Die Änderungen wurden gespeichert",
+        "error": "Die Änderungen konnten nicht gespeichert werden."
+      },
+      "delete": {
+        "label": "Haustier löschen",
+        "conf": "Das Haustier wurde gelöscht.",
+        "error": "Das Haustier konnte nicht gelöscht werden.",
+        "askConfirmation": "Soll das Haustier wirklich gelöscht werden ?"
+      },
+      "view": {
+        "label": "Haustier anzeigen"
+      }
+    },
+    "license": {
+      "label": "Lizenz",
+      "title": "Lizenz",
+      "description": "Erlaubnis für etwas, z.B. Verbandslizenz"
+    },
+    "contract": {
+      "label": "Vertrag",
+      "title": "Vertragsdokument",
+      "description": "Vertrag, z.B. Mietvertrag, Arbeitsvertrag"
+    },
+    "document": {
+      "label": "Dokument",
+      "title": "Dokument",
+      "description": "Irgendein Dokument, z.B. Vertrag, Zeugnis etc."
+    },
+    "realestate": {
+      "label": "Immobilie",
+      "title": "Immobilie",
+      "formTitle": "Angaben zur Immobilie",
+      "description": "Haus, Wohnung, Grundstück",
+      "create": {
+        "label": "Neue Immobilie erfassen",
+        "conf": "Die neue Immobilie wurde gespeichert.",
+        "error": "Die Immobilie konnte nicht gespeichert werden."
+      },
+      "update": {
+        "label": "Immobilie ändern",
+        "conf": "Die Änderungen wurden gespeichert",
+        "error": "Die Änderungen konnten nicht gespeichert werden."
+      },
+      "delete": {
+        "label": "Immobilie löschen",
+        "conf": "Die Immobilie wurde gelöscht.",
+        "error": "Die Immobilie konnte nicht gelöscht werden.",
+        "askConfirmation": "Soll die Immobilie wirklich gelöscht werden ?"
+      },
+      "view": {
+        "label": "Immobilie anzeigen"
+      }
+    }
+  },
+  "state": {
+    "undefined": {
+      "label": "Undefiniert",
+      "description": "Der Status ist nicht definiert, zB. ist initial noch kein Antrag da oder ein Antrag wurde abgelehnt."
+    },
+    "applied": {
+      "label": "Beantragt",
+      "description": "Ein Antrag wurde gemacht."
+    },
+    "approved": {
+      "label": "Bewilligt",
+      "description": "Der Antrag wurde bewilligt."
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Die Resource ist zur Benutzung durch eine Person vergeben."
+    },
+    "lost": {
+      "label": "Verloren",
+      "description": "Die Resource kann momentan nicht benutzt werden, z.B. wegen Verlusts, Diebstahl, Beschädigung. Der Benutzer muss für Ersatz sorgen oder den Verlust entschädigen."
+    },
+    "cancelled": {
+      "label": "Gekündigt",
+      "description": "Die Nutzung der Resource wurde gekündigt."
+    },
+    "archived": {
+      "label": "Archiviert",
+      "description": "Die Resource ist archiviert, dh. die frühere Benutzung ist nicht mehr aktuell."
+    }
+  },
+
+  "boat": {
+    "singular": "Boot",
+    "plural": "Boote",
+    "field": {
+      "empty": "Keine Boote gefunden."
+    },
+    "create": {
+      "label": "Neues Boot erfassen",
+      "conf": "Das neue Boot wurde gespeichert.",
+      "error": "Das Boot konnte nicht gespeichert werden"
+    },
+    "update": {
+      "label": "Boot ändern",
+      "conf": "Die Aenderungen wurden gespeichert",
+      "error": "Die Aenderungen konnten nicht gespeichert werden."
+    },
+    "delete": {
+      "label": "Boot löschen",
+      "conf": "Das Boot wurde gelöscht.",
+      "error": "Das Boot konnte nicht gelöscht werden.",
+      "askConfirmation": "Soll das Boot wirklich gelöscht werden ?"
+    },
+    "view": {
+      "label": "Bootsdaten anzeigen"
+    },
+    "type": {
+      "all": {
+        "label": "Alle Bootstypen"
+      },
+      "motor": {
+        "label": "Motorboot",
+        "description": "Boot mit einem Motor"
+      },
+      "sail": {
+        "label": "Segelboot",
+        "description": "Boot mit einem Segel"
+      },
+      "pedalo": {
+        "label": "Pedaloboot",
+        "description": "Boot mit Fahrradantrieb"
+      },
+      "row": {
+        "label": "Ruderboot",
+        "description": "Ruderboot"
+      },
+      "inflate": {
+        "label": "Schlauchboot",
+        "description": "Aufblasbares Boot"
+      },
+      "sup": {
+        "label": "Sup / Surfbrett",
+        "description": "Sup oder Surfbrett"
+      }
+    }
+  },
+
+  "rboat": {
+    "singular": "Ruderboot",
+    "plural": "Ruderboote",
+    "field": {
+      "empty": "Keine Ruderboote gefunden."
+    },
+    "create": {
+      "label": "Neues Ruderboot erfassen",
+      "conf": "Das neue Ruderboot wurde gespeichert.",
+      "error": "Das Ruderboot konnte nicht gespeichert werden"
+    },
+    "update": {
+      "label": "Ruderboot ändern",
+      "conf": "Die Aenderungen wurden gespeichert",
+      "error": "Die Aenderungen konnten nicht gespeichert werden."
+    },
+    "delete": {
+      "label": "Ruderboot löschen",
+      "conf": "Das Ruderboot wurde gelöscht.",
+      "error": "Das Ruderboot konnte nicht gelöscht werden.",
+      "askConfirmation": "Soll das Ruderboot wirklich gelöscht werden ?"
+    },
+    "view": {
+      "label": "Daten des Ruderboots anzeigen"
+    },
+    "type": {
+      "all": {
+        "label": "Alle Bootstypen"
+      },
+      "b1x": {
+        "label": "1x",
+        "description": "Skiff"
+      },
+      "b2m": {
+        "label": "2-",
+        "description": "Zweier ohne"
+      },
+      "b2x": {
+        "label": "2x",
+        "description": "Doppelzweier"
+      },
+      "b2p": {
+        "label": "2+",
+        "description": "Zweier mit"
+      },
+      "b2mx": {
+        "label": "2-/2x",
+        "description": "Zweier umrüstbar"
+      },
+      "b3x": {
+        "label": "3x",
+        "description": "Doppeldreier"
+      },
+      "b4m": {
+        "label": "4-",
+        "description": "Vierer ohne"
+      },
+      "b4x": {
+        "label": "4x",
+        "description": "Doppelvierer"
+      },
+      "b5x": {
+        "label": "5x",
+        "description": "Doppelfünfer"
+      },
+      "b8p": {
+        "label": "8+",
+        "description": "Achter mit"
+      }
+    },
+    "usage": {
+      "kandidierende": {
+        "label": "Kandidierende",
+        "description": "Boote für Kandidierende (C-Gigs & Coastal)"
+      },
+      "breitensport": {
+        "label": "Breitensport",
+        "description": "Alle Aktivmitglieder in Abhängigkeit des jeweiligen Leistungsniveaus"
+      },
+      "routinierte": {
+        "label": "Routinierte",
+        "description": "Sehr routinierte Aktivmitglieder, Vorrang für Trainings und Regatten"
+      },
+      "leistungssport": {
+        "label": "Leistungssport",
+        "description": "Regattierende, Masters in Abstimmung mit Head Coach"
+      },
+      "private": {
+        "label": "Privatboot",
+        "description": "Das Boot ist im Privatbesitz eines Clubmitglieds und kann von Club-Mitgliedern nicht verwendet werden."
+      }
+    }
   },
   "locker": {
+    "singular": "Garderobe",
     "plural": "Garderoben",
     "empty": "Keine Garderoben gefunden.",
     "nr": "Garderobe Nr.",
-    "view": "Garderobe anzeigen",
-    "edit": "Garderobe ändern",
-    "delete": "Garderobe löschen",
-    "create": "Garderobe erstellen"
+    "create": {
+      "label": "Neue Garderobe erfassen",
+      "conf": "Die neue Garderobe wurde gespeichert",
+      "error": "Die Garderobe konnte nicht erstellt werden."
+    },
+    "delete": {
+      "label": "Garderobe löschen",
+      "confirm": "Soll die Garderobe wirklich gelöscht werden ?",
+      "conf": "Garderobe wurde gelöscht",
+      "error": "Die Garderobe konnte nicht gelöscht werden."
+    },
+    "update": {
+      "label": "Garderobe ändern",
+      "conf": "Die Garderobe wurde geändert",
+      "error": "Die Garderobe konnte nicht geändert werden"
+    },
+    "view": {
+      "label": "Garderobe anzeigen"
+    }
   },
-  "boat": {
-    "plural": "Boote",
-    "empty": "Keine Boote gefunden.",
-    "name": "Bootsname",
-    "type": "Bootstyp",
-    "view": "Boot anzeigen",
-    "edit": "Boot ändern",
-    "delete": "Boot löschen",
-    "create": "Boot erstellen"
+  "key": {
+    "singular": "Schlüssel",
+    "plural": "Schlüssel",
+    "field": {
+      "empty": "Es sind noch keine Schlüssel erfasst."
+    },
+    "create": {
+      "label": "Neuen Schlüssel erfassen",
+      "conf": "Schlüssel wurde gespeichert",
+      "error": "Schlüssel konnte nicht erstellt werden"
+    },
+    "delete": {
+      "label": "Schlüssel löschen",
+      "confirm": "Soll der Schlüssel wirklich gelöscht werden ?",
+      "conf": "Der Schlüssel wurde gelöscht",
+      "error": "Der Schlüssel konnte nicht gelöscht werden."
+    },
+    "update": {
+      "label": "Bootshausschlüssel ändern",
+      "conf": "Bootshausschlüssel wurde geändert",
+      "error": "Bootshausschlüssel konnte nicht geändert werden"
+    },
+    "view": {
+      "label": "Bootshausschlüssel anzeigen"
+    }
   },
-  "rboat": {
-    "plural": "Ruderboote",
-    "empty": "Keine Ruderboote gefunden.",
-    "name": "Name des Ruderboots",
-    "type": "Bootstyp",
-    "view": "Boot anzeigen",
-    "edit": "Boot ändern",
-    "delete": "Boot löschen",
-    "create": "Ruderboot erstellen"
+  "vehicle": {
+    "singular": "Fahrzeug",
+    "plural": "Fahrzeuge",
+    "create": {
+      "label": "Neues Fahrzeug erfassen",
+      "conf": "Fahrzeug wurde gespeichert",
+      "error": "Fahrzeug konnte nicht erstellt werden"
+    },
+    "update": {
+      "label": "Fahrzeug ändern",
+      "conf": "Fahrzeug wurde geändert",
+      "error": "Fahrzeug konnte nicht geändert werden"
+    },
+    "view": {
+      "label": "Fahrzeug anzeigen"
+    }
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion"
+  "car": {
+    "singular": "Auto",
+    "plural": "Autos",
+    "create": {
+      "label": "Neues Auto erfassen",
+      "conf": "Auto wurde gespeichert",
+      "error": "Auto konnte nicht erstellt werden"
+    },
+    "update": {
+      "label": "Auto ändern",
+      "conf": "Auto wurde geändert",
+      "error": "Auto konnte nicht geändert werden"
+    },
+    "view": {
+      "label": "Auto anzeigen"
+    },
+    "type": {
+      "name": "Fahrzeugtyp",
+      "all": {
+        "label": "Alle"
+      },
+      "convertible": {
+        "label": "Cabrio",
+        "description": "Offenes Fahrzeug mit demontierbarem Dach"
+      },
+      "coupe": {
+        "label": "Coupé",
+        "description": "Zweitüriges Auto mit einem sportlichen Erscheinbungsbild."
+      },
+      "stationWagon": {
+        "label": "Kombi",
+        "description": "Verlängerte Limousine mit einem grösseren Kofferraum und Heckklappe."
+      },
+      "suv": {
+        "label": "Offroader (SUV)",
+        "description": "Sport Utility Vehicle für offroad und onroad"
+      },
+      "sedan": {
+        "label": "Limousine",
+        "description": "Viertüriges Fahrzeug mit einem Kofferraum, der vom Fahrgastraum getrennt ist."
+      },
+      "hatchback": {
+        "label": "Kompakt",
+        "description": "Viertüriges Fahrzeug mit Heckklappe, z.B. VW Golf"
+      },
+      "minivan": {
+        "label": "Minivan",
+        "description": "Viertürer mit mehr Personenladeraum"
+      },
+      "truck": {
+        "label": "Lastwagen",
+        "description": "Auto, Lastwagen, Bus"
+      },
+      "pickupTruck": {
+        "label": "Pickup",
+        "description": "Kleinlastwagen"
+      },
+      "sportsCar": {
+        "label": "Sportwagen",
+        "description": "Typischerweise zweiplätziges Fahrzeug mit einem sportlichen Erscheinungsbild."
+      },
+      "utility": {
+        "label": "Nutzfahrzeug",
+        "description": "Transporter für Gewerbe"
+      },
+      "camper": {
+        "label": "Camper",
+        "description": "Freizeitfahrzeug mit Uebernachtungsmöglichkeit"
+      },
+      "bus": {
+        "label": "Bus",
+        "description": "Gewerblicher Grosstransporter für viele Personen"
+      }
+    }
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+  "realestate": {
+    "singular": "Immobilie",
+    "plural": "Immobilien",
+    "create": {
+      "label": "Neue Immobilie erfassen",
+      "conf": "Immobilie wurde gespeichert",
+      "error": "Immobilie konnte nicht erstellt werden"
+    },
+    "update": {
+      "label": "Immobilie ändern",
+      "conf": "Immobilie wurde geändert",
+      "error": "Immobilie konnte nicht geändert werden"
+    },
+    "view": {
+      "label": "Immobilie anzeigen"
+    }
+  },
+  "legaldoc": {
+    "type": {
+      "license": {
+        "label": "Lizenz",
+        "description": "Ein Nutzungsrecht"
+      },
+      "permit": {
+        "label": "Erlaubnis",
+        "description": "Die Erlaubnis einer autorisierten Partei, dass die betroffene Partei etwas tun darf."
+      },
+      "certification": {
+        "label": "Zertifikat",
+        "description": "Eine schriftliche Bestätigung einer autorisierten Partei."
+      },
+      "passport": {
+        "label": "Pass",
+        "description": "Ausweis in Form eines Reisepasses"
+      },
+      "idcard": {
+        "label": "ID",
+        "description": "Ausweis in Form einer Identitätskarte"
+      },
+      "confirmation": {
+        "label": "Bestätigung",
+        "description": "Ein von einer autorisierten Partei herausgegebenes schriftliches Dokument, das für die Korrektheit und Existenz eines Fakts bürgt."
+      },
+      "diploma": {
+        "label": "Diplom",
+        "description": "Eine Bestätigung für einen Ausbildungs-Abschluss."
+      },
+      "contract": {
+        "label": "Vertrag",
+        "description": "Eine Vereinbarung zwischen mind. 2 Parteien."
+      },
+      "visa": {
+        "label": "Visum",
+        "description": "z.B. ein Reise-Visum für die Einreise in ein bestimmtes Land"
+      },
+      "policy": {
+        "label": "Police",
+        "description": "zB eine Versicherungspolice"
+      },
+      "other": {
+        "label": "Andere",
+        "description": "Eine andere Form eines Rechts-Dokumentes."
+      }
+    }
+  },
+  "pet": {
+    "type": {
+      "cat": {
+        "label": "Katze",
+        "description": "Eine Katze als Haustier"
+      },
+      "dog": {
+        "label": "Hund",
+        "description": "Ein Hund als Haustier"
+      },
+      "bird": {
+        "label": "Vogel",
+        "description": "Ein Vogel als Haustier"
+      },
+      "sheep": {
+        "label": "Schaf",
+        "description": "Ein Schaf als Haustier"
+      },
+      "rabbit": {
+        "label": "Hase",
+        "description": "Ein Hase als Haustier"
+      },
+      "horse": {
+        "label": "Pferd",
+        "description": "Ein Pferd als Haustier"
+      },
+      "fish": {
+        "label": "Fisch",
+        "description": "Ein Fisch als Haustier"
+      }
+    }
+  },
+  "other": {
+    "create": {
+      "label": "Neue Resource hinzufügen",
+      "error": "Die neue Resource konnte nicht erstellt werden.",
+      "conf": "Die neue Resource wurde erstellt."
+    },
+    "update": {
+      "label": "Resource ändern",
+      "error": "Die Aenderungen konnten nicht gespeichert werden.",
+      "conf": "Die Aenderungen wurden gespeichert."
+    },
+    "delete": {
+      "label": "Resource löschen",
+      "error": "Die Resource konnte nicht gelöscht werden.",
+      "conf": "Die Resource wurde gelöscht."
+    },
+    "view": {
+      "label": "Resource-Informationen"
+    },
+    "reactivate": {
+      "label": "Resource reaktivieren",
+      "error": "Die Resource konnte nicht reaktiviert werden.",
+      "conf": "Die Resource wurde reaktiviert."
+    },
+    "search": {
+      "label": "Resource suchen"
+    },
+    "select": {
+      "all": "Resource wählen",
+      "motorBoat": "Motorboot wählen",
+      "vehicle": "Fahrzeug wählen",
+      "locker": "Garderobenkasten wählen",
+      "maleLocker": "Männer Garderobe wählen",
+      "femaleLocker": "Frauen Garderobe wählen",
+      "houseKey": "Schlüssel wählen",
+      "rowingBoat": "Ruderboot wählen"
+    }
   }
 }

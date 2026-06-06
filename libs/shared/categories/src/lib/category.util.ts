@@ -16,7 +16,7 @@ export function newCategoryAll(): CategoryModel {
     id: AllCategories,
     abbreviation: 'ALL',
     name: 'all',
-    i18nBase: 'general.category.all',
+    i18nBase: 'category.all',
     icon: 'radio-button-on',
   };
 }

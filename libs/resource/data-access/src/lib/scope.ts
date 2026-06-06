@@ -1,1 +1,1 @@
-export const PFX = '@resource/data-access.';
+export const PFX = '@resource/feature.';
