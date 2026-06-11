@@ -1,7 +1,5 @@
 import { Component, computed, input, linkedSignal, model, Signal, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { AlbumConfig } from '@bk2/shared-models';
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
@@ -13,7 +11,6 @@ import { AlbumStyles, SectionI18n } from '@bk2/cms-section-util';
   selector: 'bk-album-config',
   standalone: true,
   imports: [
-    vestForms, FormsModule,
     TextInput, CategoryOld, Checkbox,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
   ],

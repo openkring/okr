@@ -1,7 +1,6 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { iconValidations } from '@bk2/cms-icon-util';
 import { IconModel, RoleName, UserModel } from '@bk2/shared-models';
@@ -33,19 +32,14 @@ export interface IconEditFormI18n {
   selector: 'bk-icon-edit-form',
   standalone: true,
   imports: [
-    vestForms, DecimalPipe,
+    DecimalPipe,
     TextInput, NotesInput, Chips, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -119,10 +113,11 @@ export class IconEditForm {
   public valid = output<boolean>();
 
   // validation
-  protected readonly suite = iconValidations;
   private readonly validationResult = computed(() => iconValidations(this.formData(), this.tenants(), this.allTags()));
   protected fullPathErrors = computed(() => this.validationResult().getErrors('fullPath'));
   protected indexErrors = computed(() => this.validationResult().getErrors('index'));
+
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
 
   // fields
   protected bkey = computed(() => this.formData().bkey ?? '');
@@ -180,10 +175,6 @@ export class IconEditForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: IconModel): void {
-    this.formData.update((vm) => ({ ...vm, ...value }));
   }
 
   protected hasRole(role: RoleName): boolean {
