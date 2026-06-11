@@ -79,12 +79,11 @@ export const LocationSelectStore = signalStore(
   })),
 
   withComputed((store) => ({
-    showCustomEntry: computed(() => {
-      const q = normalizeWhitespace(store.searchTerm());
-      return store.allowCustom()
-        && q.length >= MIN_CUSTOM_SEARCH_LENGTH
-        && !store.hasExactMatch();
-    }),
+    showCustomEntry: computed(() =>
+      store.allowCustom()
+      && store.customLabel().length >= MIN_CUSTOM_SEARCH_LENGTH
+      && !store.hasExactMatch()
+    ),
   })),
 
   withMethods((store) => ({
