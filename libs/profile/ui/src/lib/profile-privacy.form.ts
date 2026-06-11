@@ -1,11 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { PrivacyUsages } from "@bk2/shared-categories";
 import { PrivacyUsage, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors, debugFormModel } from "@bk2/shared-util-core";
+import { coerceBoolean } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
 import { ProfileI18n } from "@bk2/profile-util";
@@ -14,7 +13,6 @@ import { ProfileI18n } from "@bk2/profile-util";
   selector: 'bk-profile-privacy-accordion',
   standalone: true,
   imports: [
-    vestForms,
     IonAccordion, IonItem, IonLabel, IonGrid, IonRow, IonCol,
     CategoryOld, Checkbox
   ],
@@ -22,7 +20,6 @@ import { ProfileI18n } from "@bk2/profile-util";
     ion-icon { padding-right: 5px; }
     @media (width <= 600px) { ion-card { margin: 5px;}}
   `],
-  viewProviders: [vestFormsViewProviders],
   template: `
   <ion-accordion toggle-icon-slot="start" value="profile-privacy">
     <ion-item slot="header" [color]="color()">
@@ -30,12 +27,7 @@ import { ProfileI18n } from "@bk2/profile-util";
     </ion-item>
     <div slot="content">
       @if (showForm()) {
-        <form scVestForm
-            [formValue]="formData()"
-            [suite]="suite"
-            (dirtyChange)="dirty.emit($event)"
-            (validChange)="valid.emit($event)"
-            (formValueChange)="onFormChange($event)">
+        <form novalidate>
 
           <ion-grid>
             <ion-row>
@@ -111,7 +103,6 @@ export class ProfilePrivacyAccordion {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = userValidations;
   private readonly validationResult = computed(() => userValidations(this.formData(), this.tenantId(), this.tags()));
 
   // fields
@@ -128,15 +119,13 @@ export class ProfilePrivacyAccordion {
   // passing constants to template
   protected privacyUsages = PrivacyUsages;
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: UserModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('ProfilePrivacy.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('ProfilePrivacy.onFormChange', this.validationResult().errors, this.currentUser());
   }
 }

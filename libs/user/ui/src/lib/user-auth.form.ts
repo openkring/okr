@@ -1,10 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { CategoryListModel, UserModel } from "@bk2/shared-models";
 import { Checkbox, CheckboxI18n, Chips } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors, debugFormModel, getCategoryItemNames } from "@bk2/shared-util-core";
+import { coerceBoolean, getCategoryItemNames } from "@bk2/shared-util-core";
 
 import { flattenRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } from "@bk2/user-util";
 
@@ -12,21 +11,13 @@ import { flattenRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } fr
   selector: 'bk-user-auth-form',
   standalone: true,
   imports: [
-    vestForms,
     Checkbox, Chips,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  viewProviders: [vestFormsViewProviders],
   template: `
     @if (showForm()) {
-      <form scVestForm
-        [formValue]="formData()"
-        (formValueChange)="onFormChange($event)"
-        [suite]="suite" 
-        (dirtyChange)="dirty.emit($event)"
-        (validChange)="valid.emit($event)"
-      >
+      <form novalidate>
 
         <ion-card>
           <ion-card-header>
@@ -71,7 +62,6 @@ export class UserAuthForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = userAuthFormValidations;
   private readonly validationResult = computed(() => userAuthFormValidations(this.formData()));
 
   // fields
@@ -80,15 +70,13 @@ export class UserAuthForm {
   protected roles = linkedSignal(() => flattenRoles(this.formData().roles ?? { 'registered': true }));
   protected allRoleNames = computed(() => getCategoryItemNames(this.allRoles()));
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: UserAuthFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('UserAuthForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('UserAuthForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 }

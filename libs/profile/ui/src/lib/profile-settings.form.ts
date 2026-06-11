@@ -1,12 +1,11 @@
-import { Component, computed, inject, input, linkedSignal, model, output, signal, Signal } from "@angular/core";
+import { Component, computed, effect, inject, input, linkedSignal, model, output, signal, Signal } from "@angular/core";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@bk2/shared-models";
 import { FcmService } from "@bk2/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from "@bk2/shared-util-core";
+import { coerceBoolean, hasRole } from "@bk2/shared-util-core";
 
 import { userValidations } from "@bk2/user-util";
 import { ProfileI18n } from "@bk2/profile-util";
@@ -15,12 +14,10 @@ import { ProfileI18n } from "@bk2/profile-util";
   selector: 'bk-profile-settings-accordion',
   standalone: true,
   imports: [
-    vestForms,
     IonAccordion, IonButton, IonItem, IonLabel, IonGrid, IonRow, IonCol,
     CategoryOld, Checkbox, TextInput, ErrorNote,
   ],
   styles: [`ion-icon { padding-right: 5px; }`],
-  viewProviders: [vestFormsViewProviders],
   template: `
   <ion-accordion toggle-icon-slot="start" value="profile-settings">
     <ion-item slot="header" [color]="color()">
@@ -28,12 +25,7 @@ import { ProfileI18n } from "@bk2/profile-util";
     </ion-item>
     <div slot="content">
       @if (showForm()) {
-        <form scVestForm
-            [formValue]="formData()"
-            [suite]="suite"
-            (dirtyChange)="dirty.emit($event)"
-            (validChange)="valid.emit($event)"
-            (formValueChange)="onFormChange($event)">
+        <form novalidate>
 
           <ion-grid>
             <ion-row>
@@ -163,7 +155,6 @@ export class ProfileSettingsAccordion {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = userValidations;
   private readonly validationResult = computed(() => userValidations(this.formData(), this.tenantId(), this.tags()));
   protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
   protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
@@ -190,6 +181,10 @@ export class ProfileSettingsAccordion {
   protected deliveryTypes = DeliveryTypes;
   protected languages = Languages;
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   protected async enableNotifications(): Promise<void> {
     const uid = this.currentUser()?.bkey;
     if (!uid) return;
@@ -204,12 +199,6 @@ export class ProfileSettingsAccordion {
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, [fieldName]: value }));
     // tbd: if language:   this.i18nService.setActiveLang(language);
-  }
-
-  protected onFormChange(value: UserModel): void {
-    this.formData.update(vm => ({...vm, ...value}));
-    debugFormModel('ProfileSettings.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('ProfileSettings.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 
   /******************************* helpers *************************************** */
