@@ -57,6 +57,7 @@ export const TRIP_I18N_KEYS = {
   warning_distance_zero:    PFX + 'warning.distance_zero',
   warning_distance_high:    PFX + 'warning.distance_high',
   warning_seats_mismatch:   PFX + 'warning.seats_mismatch',
+  warning_note:             PFX + 'warning.note',
 
   boat:                     PFX + 'boat',
   distance_label:           PFX + 'distance.label',

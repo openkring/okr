@@ -1,7 +1,7 @@
 {
   "trip": "Fahrt",
   "trips": "Fahrten",
-  "desc": "Vor der Ausfahrt erfasst du hier im Logbuch deine geplante Fahrt. Du gibst damit an, wohin du rudern möchtest, mit welchem Boot und mit welchen Rudernden. Sicherheitsmässig ist dies wichtig, damit wir dich bei einem allfälligen Notfall schneller finden können. Ausserdem können andere Mitglieder sehen, welche Boote bereits reserviert sind. Nach der Fahrt schliesst du deine Ausfahrt ab. Die entsprechenden Angaben werden dann automatisch in den Bootsstatistiken erfasst.",
+  "desc": "Vor der Ausfahrt erfasst du hier im Logbuch deine geplante Fahrt. Du gibst damit an, wohin du rudern möchtest, mit welchem Boot und mit welchen Rudernden. Sicherheitsmässig ist dies wichtig, damit wir dich bei einem allfälligen Notfall schneller finden können. Ausserdem können andere Mitglieder sehen, welche Boote bereits reserviert sind. Nach der Fahrt schliesst du deine Ausfahrt ab. Deine Ausfahrt wird dann automatisch in den Bootsstatistiken nachgeführt.",
   "empty": "Es wurden keine Fahrten gefunden.",
   
   "create": { 
@@ -71,9 +71,10 @@
 
   "warning": {
     "suspicious": "Verdächtige Aktivität erkannt. Bitte bestätigen.",
-    "distance_zero": "Distanz ist 0 km. Bitte bestätigen.",
-    "distance_high": "Distanz über 50 km. Bitte bestätigen.",
-    "seats_mismatch": "Anzahl Teilnehmende entspricht nicht der Bootskapazität."
+    "distance_zero": "Bitte eine sinnvolle Distanz zwischen 1 und 50 km eingeben.",
+    "distance_high": "Bitte eine sinnvolle Distanz zwischen 1 und 50 km eingeben.",
+    "seats_mismatch": "Anzahl Teilnehmende entspricht nicht der Bootskapazität.",
+    "note": "Um Missbräuche zu vermeiden, finden im Hintergrund verschiedene Checks statt. Sollte ein Missbrauch festgestellt werden, wird ein Bild vom User gemacht und damit der Admin notifiziert."
   },
 
   "boat": "Boot",

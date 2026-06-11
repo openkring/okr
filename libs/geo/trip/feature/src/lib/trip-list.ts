@@ -78,12 +78,19 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
         </ion-toolbar>
       }
 
-      <!-- description -->
-      <ion-toolbar class="ion-hide-md-down">
-        <ion-item lines="none">
-          <ion-label>{{ store.i18n.desc() }}</ion-label>
-        </ion-item>
-      </ion-toolbar>
+      @if(store.canWrite()) {
+        <!-- description -->
+        <ion-toolbar>
+          <ion-item lines="none">
+            <ion-label>{{ store.i18n.desc() }}</ion-label>
+          </ion-item>
+        </ion-toolbar>
+        <ion-toolbar color="light">
+          <ion-item lines="none" color="light">
+            <ion-label>{{ store.i18n.warning_note() }}</ion-label>
+          </ion-item>
+        </ion-toolbar>
+      }
 
       <ion-toolbar>
         <bk-list-filter 
