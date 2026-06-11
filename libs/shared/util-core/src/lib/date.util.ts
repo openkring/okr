@@ -510,6 +510,28 @@ export function getDuration(fromDate: string, toDate: string, toFormat = DateFor
 }
 
 /**
+ * Returns a human-readable duration of a same-day event.
+ * examples:
+ *     20260604 14:00 16:00 ->  04.06.2026 14:00 - 16:00
+ *     20260604 14:00       ->. 04.06.2026 14:00 
+ * @param startDate a startDate in StoreDate format yyyymmdd
+ * @param startTime a startTime in Time format hh:mm
+ * @param endTime an optional end time in Time format hh:mm
+ */
+export function getDurationLabel(startDate: string, startTime: string, endTime?: string): string {
+  if (startDate.length === 0) {
+    return '';
+  }
+  let duration = convertDateFormatToString(startDate, DateFormat.StoreDate, DateFormat.ViewDate);
+  if (startTime.length !== 5) return duration;
+  if (endTime && endTime.length === 5) {
+    return duration + ' ' + startTime + ' - ' + endTime;  
+  } else {
+    return duration + ' ' + startTime;  
+  }
+}
+
+/**
  * This method helps to fill out the validFrom and validTo dates if the user only inserted one.
  * Typically, a reservation is same day and the user inputs the validFrom plus startTime and endTime.
  * In such a case, if the validTo date is not set, we set the date to the same as validFrom.
