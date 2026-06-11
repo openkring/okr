@@ -1,10 +1,17 @@
 import { Inject, InjectionToken } from "@angular/core";
-import { connectFirestoreEmulator, EmulatorMockTokenOptions, initializeFirestore } from "firebase/firestore";
+import {
+  connectFirestoreEmulator,
+  EmulatorMockTokenOptions,
+  Firestore,
+  initializeFirestore,
+  memoryLocalCache,
+  persistentLocalCache,
+  persistentSingleTabManager,
+} from "firebase/firestore";
 import { BkEnvironment, ENV } from "./env";
 import { getApp } from "firebase/app";
 
 export const FIRESTORE_EMULATOR_PORT = 8080;
-// Flag to track initialization
 let isFirestoreInitialized = false;
 
 // Detects Safari (including iOS Safari). Excludes Chrome/Chromium/CriOS/Opera which also include 'safari' in their UA.
@@ -16,49 +23,75 @@ export function isSafari(): boolean {
 }
 
 /**
- * By default, browsers use WebSockets for better performnace. 
- * On Safari, however, WebSockets are not reliable for Firestore and persistency with IndexdDB can interfere and trigger the same errors when reloading a page. 
- * That's why we use long polling to avoid WebChannel CORS issues and we additionally disable persistence for Safari to prevent IndexdDB-related errors on reload.
+ * Firestore initialization.
+ *
+ * Transport: Safari forces long polling (WebChannel/WebSocket reliability issue on Safari/iOS).
+ * Other browsers use auto-detection.
+ *
+ * Cache: persistentLocalCache with persistentSingleTabManager on every browser, including Safari.
+ * The historical "no IndexedDB on Safari" carve-out was needed for firebase-js-sdk < 11.10
+ * (issue #9056, fixed by PR #9162 in Jul 2025); v12.x no longer hits it. Single-tab manager
+ * avoids the open multi-tab leader-election edge cases (#6511, #8314, #6806) which surface
+ * most often on Safari. If init still throws (e.g. open issue #8860), fall back to in-memory
+ * cache so the app continues to work without persistence.
+ *
+ * Eviction: navigator.storage.persist() is requested on first init — harmless in a tab,
+ * materially helps an installed iOS Home Screen PWA stay durable across WebKit storage pressure.
  */
-export const FIRESTORE = new InjectionToken('Firebase Firestore', {
+export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
   providedIn: 'root',
   factory: () => {
     const app = getApp();
     const isSafariBrowser = isSafari();
-    const firestore = initializeFirestore(app, {
-      experimentalForceLongPolling: isSafariBrowser, // Force long polling for Safari
-      experimentalAutoDetectLongPolling: !isSafariBrowser, // Disable auto-detection for non-Safari
-      ignoreUndefinedProperties: true, // Prevent undefined field errors
-    });
+
+    if (typeof navigator !== 'undefined' && navigator.storage?.persist) {
+      navigator.storage.persist()
+        .then(granted => console.log('Firestore storage.persist() granted:', granted))
+        .catch(err => console.warn('Firestore storage.persist() failed:', err));
+    }
+
+    const baseOptions = {
+      experimentalForceLongPolling: isSafariBrowser,
+      experimentalAutoDetectLongPolling: !isSafariBrowser,
+      ignoreUndefinedProperties: true,
+    };
+
+    let firestore: Firestore;
+    let cacheMode: 'persistent-single-tab' | 'memory-fallback';
+    try {
+      firestore = initializeFirestore(app, {
+        ...baseOptions,
+        localCache: persistentLocalCache({
+          tabManager: persistentSingleTabManager({}),
+        }),
+      });
+      cacheMode = 'persistent-single-tab';
+    } catch (e) {
+      console.warn('Firestore persistent cache init failed, falling back to memory cache:', e);
+      firestore = initializeFirestore(app, {
+        ...baseOptions,
+        localCache: memoryLocalCache(),
+      });
+      cacheMode = 'memory-fallback';
+    }
 
     const _env = Inject(ENV) as BkEnvironment;
-  /* 
-    Configure mockUserToken for emulator (optional, set to undefined if no mock token needed)
-    For testing purposes, you can set mockUserToken, e.g.
-    const mockUserToken: EmulatorMockTokenOptions = {
-      user_id: 'test-admin',
-      email: 'admin@bkaiser-org.com',
-      email_verified: true,
-      customClaims: { admin: true },
-    };
-  */
-
-    const mockUserToken: EmulatorMockTokenOptions | undefined = undefined; // Adjust based on your auth needs
+    const mockUserToken: EmulatorMockTokenOptions | undefined = undefined;
 
     if (_env.useEmulators) {
       connectFirestoreEmulator(firestore, 'localhost', FIRESTORE_EMULATOR_PORT, { mockUserToken });
     }
 
-    // Log initialization details for debugging
     console.log('Firestore initialized:', {
       isSafari: isSafariBrowser,
       longPolling: isSafariBrowser,
+      cache: cacheMode,
       emulator: _env.useEmulators,
       mockUserToken: mockUserToken ? 'configured' : 'undefined',
       timestamp: new Date().toISOString(),
     });
 
-    isFirestoreInitialized = true; // Set flag after initialization
+    isFirestoreInitialized = true;
     return firestore;
   },
 });
