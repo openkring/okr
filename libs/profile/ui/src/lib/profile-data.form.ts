@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
 import { ChSsnMask } from "@bk2/shared-config";

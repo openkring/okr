@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output, signal, Signal } from "@angular/core";
+import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from "@angular/core";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
