@@ -103,7 +103,7 @@ export const LocationSelectStore = signalStore(
         .filter(hasValidCoordinates)
         .filter(l => {
           const tag = store.mapTag();
-          return tag == null || (l.tags ?? []).includes(tag);
+          return tag == null || chipMatches(l.tags, tag);
         })
     ),
   })),
