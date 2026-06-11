@@ -1,12 +1,11 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { ChFutureDate, LowercaseWordMask } from '@bk2/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { ModelSelectService } from '@bk2/shared-feature';
 
 import { Avatars } from '@bk2/avatar-ui';
@@ -16,7 +15,6 @@ import { CaleventI18n, calEventValidations } from '@bk2/calevent-util';
   selector: 'bk-calevent-form',
   standalone: true,
   imports: [
-    vestForms,
     CategorySelect, Chips, NotesInput, DateInput, TimeInput, NumberInput,
     TextInput, ErrorNote, StringList, Avatars, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
@@ -24,13 +22,7 @@ import { CaleventI18n, calEventValidations } from '@bk2/calevent-util';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-  <form scVestForm
-    [formValue]="formData()"
-    (formValueChange)="onFormChange($event)"
-    [suite]="suite"
-    (dirtyChange)="dirty.emit($event)"
-    (validChange)="valid.emit($event)"
-  >
+  <form novalidate>
 
     <ion-card>
       <ion-card-content class="ion-no-padding">
@@ -163,8 +155,9 @@ export class CalEventForm {
   public valid = output<boolean>();
   public calendarSelectClicked = output<void>();
 
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validation and errors
-  protected readonly suite = calEventValidations;
   private readonly validationResult = computed(() => calEventValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
@@ -314,13 +307,6 @@ export class CalEventForm {
       default:
         this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
     }
-  }
-
-  protected onFormChange(value: CalEventModel): void {
-    // calendars, responsiblePersons, tags and description are managed via onFieldChange (not vest form controls), so preserve them
-    this.formData.update((vm) => ({...vm, ...value, calendars: vm.calendars, responsiblePersons: vm.responsiblePersons, tags: vm.tags, description: vm.description}));
-    debugFormModel('CalEventForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('CalEventForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

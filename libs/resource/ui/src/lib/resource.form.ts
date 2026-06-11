@@ -1,10 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryListModel, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
@@ -13,20 +12,13 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@bk2/r
   selector: 'bk-resource-form',
   standalone: true,
   imports: [
-    vestForms,
     Chips, NotesInput, PropertyList, TextInput, NumberInput, ErrorNote, CategorySelect, Color,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      <form scVestForm
-        [formValue]="formData()"
-        (formValueChange)="onFormChange($event)"
-        [suite]="suite"
-        (dirtyChange)="dirty.emit($event)"
-        (validChange)="valid.emit($event)"
-      >
+      <form novalidate>
 
         @switch(resourceType()) {
           <!-- ***************************************** ROWING BOAT ***************************************** -->
@@ -350,8 +342,9 @@ export class ResourceForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validation and errors
-  protected readonly suite = resourceValidations;
   private readonly validationResult = computed(() => resourceValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected loadErrors = computed(() => this.validationResult().getErrors('load'));
@@ -446,12 +439,6 @@ export class ResourceForm {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: ResourceModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('ResourceForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('ResourceForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

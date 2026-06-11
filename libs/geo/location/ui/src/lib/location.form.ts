@@ -1,11 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@bk2/shared-config';
 import { CategoryListModel, LocationModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 
 import { locationValidations } from '@bk2/location-util';
 
@@ -48,19 +47,13 @@ export interface LocationFormI18n {
   selector: 'bk-location-form',
   standalone: true,
   imports: [
-    vestForms,
     CategorySelect, TextInput, NumberInput, Chips, NotesInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      <form scVestForm
-        [formValue]="formData()"
-        [suite]="suite"
-        (dirtyChange)="dirty.emit($event)"
-        (validChange)="valid.emit($event)"
-        (formValueChange)="onFormChange($event)">
+      <form novalidate>
 
         <ion-card>
           <ion-card-content class="ion-no-padding">
@@ -142,8 +135,9 @@ export class LocationForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validation and errors
-  protected readonly suite = locationValidations;
   private readonly validationResult = computed(() => locationValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
@@ -255,12 +249,6 @@ export class LocationForm {
       }
     }
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: LocationModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('LocationForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('LocationForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {
