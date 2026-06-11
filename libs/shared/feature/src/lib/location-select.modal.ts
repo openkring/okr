@@ -123,10 +123,14 @@ export class LocationSelectModal implements OnDestroy {
     effect(() => this.store.setShowMap(this.showMap()));
     effect(() => this.store.setMapTag(this.mapTag()));
 
-    // Activate the Leaflet map when switching to map segment
+    // Destroy/create Leaflet map on segment switches so the container is always fresh
     effect(() => {
       if (this.store.viewMode() === 'map') {
         setTimeout(() => this.activateMap(), 0);
+      } else if (this.map) {
+        this.map.remove();
+        this.map = undefined;
+        this.markerLayer = undefined;
       }
     });
 
