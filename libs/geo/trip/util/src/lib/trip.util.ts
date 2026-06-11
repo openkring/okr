@@ -1,12 +1,13 @@
 import { format } from 'date-fns';
 
 import { TripModel } from '@bk2/shared-models';
-import { addIndexElement, DateFormat, getTodayStr } from '@bk2/shared-util-core';
+import { addIndexElement, DateFormat, getCurrentTime, getTodayStr } from '@bk2/shared-util-core';
 
 export function newTrip(tenantId: string): TripModel {
   const trip = new TripModel(tenantId);
   trip.startDate = getTodayStr(DateFormat.StoreDate);
-  trip.startTime = format(new Date(), 'HHmm');
+  
+  trip.startTime = getCurrentTime();
   trip.state = 'draft';
   return trip;
 }

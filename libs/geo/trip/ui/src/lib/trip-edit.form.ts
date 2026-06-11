@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -27,7 +27,6 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
       [formValue]="formData()"
       [suite]="suite" 
       (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
       (formValueChange)="onFormChange($event)">
 
       <ion-card>
@@ -153,6 +152,10 @@ export class TripEditForm {
  // validation and errors
   protected readonly suite = tripValidationSuite;
   private readonly validationResult = computed(() => tripValidationSuite(this.formData()));
+
+  constructor() {
+    effect(() => this.valid.emit(!this.validationResult().hasErrors()));
+  }
 
   // derived
   protected duration = computed(() => 

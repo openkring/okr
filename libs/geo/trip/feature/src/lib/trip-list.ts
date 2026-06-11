@@ -148,7 +148,7 @@ export class TripList {
 
   // derived
   protected currentUser = computed(() => this.store.currentUser());
-  protected states = computed(() => this.store.appStore.getCategory('trip_state'));
+  protected states = computed(() => this.store.appStore.tryGetCategory('trip_state'));
   protected readonly years = computed(() => getYearList(getYear(), 5));
 
   // constants

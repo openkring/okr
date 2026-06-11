@@ -57,7 +57,9 @@ export class TripEditModal {
   // derived
   protected currentUser = computed(() => this.store.currentUser());
   protected tenantId = computed(() => this.store.tenantId());
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected showConfirmation = computed(() => {
+    return this.formValid() && this.formDirty() 
+  });
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected boats = computed(() =>
     (this.store.appStore.allResources() ?? []).filter((r: ResourceModel) => r.type === 'rboat')
