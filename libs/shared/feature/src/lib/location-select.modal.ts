@@ -30,11 +30,6 @@ export type LocationSelectResult =
     ion-avatar { margin-top: 0px; margin-bottom: 0px; }
     ion-list { padding: 0px; }
     #location-map { width: 100%; height: 60vh; }
-    .location-popup { min-width: 180px; }
-    .location-popup strong { display: block; margin-bottom: 4px; }
-    .popup-w3w { display: flex; align-items: center; gap: 4px; font-family: monospace; font-size: 0.85em; margin-bottom: 6px; }
-    .popup-copy-btn { background: none; border: none; cursor: pointer; font-size: 1em; padding: 2px 4px; }
-    .popup-select-btn { width: 100%; padding: 6px; cursor: pointer; background: var(--ion-color-primary); color: #fff; border: none; border-radius: 4px; }
   `],
   template: `
     <bk-header
@@ -178,12 +173,28 @@ export class LocationSelectModal implements OnDestroy {
     return this.leafletModule;
   }
 
+  private injectPopupStyles(): void {
+    if (document.getElementById('bk-location-popup-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'bk-location-popup-styles';
+    style.textContent = [
+      '.location-popup { min-width: 180px; }',
+      '.location-popup strong { display: block; margin-bottom: 4px; }',
+      '.popup-w3w { display: flex; align-items: center; gap: 4px; font-family: monospace; font-size: 0.85em; margin-bottom: 6px; }',
+      '.popup-copy-btn { background: none; border: none; cursor: pointer; font-size: 1em; padding: 2px 4px; }',
+      '.popup-select-btn { width: 100%; padding: 6px; cursor: pointer; background: var(--ion-color-primary); color: #fff; border: none; border-radius: 4px; }',
+      '.location-marker { background: transparent !important; border: none !important; }',
+    ].join('\n');
+    document.head.appendChild(style);
+  }
+
   private async activateMap(): Promise<void> {
     const L = await this.ensureLeaflet();
     const container = this.el.nativeElement.querySelector('#location-map') as HTMLElement | null;
     if (!container) return;
 
     if (!this.map) {
+      this.injectPopupStyles();
       this.map = L.map(container);
       L.tileLayer(
         'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg',
@@ -222,23 +233,36 @@ export class LocationSelectModal implements OnDestroy {
   }
 
   private buildPopupEl(location: LocationModel): HTMLElement {
-    const el = document.createElement('div');
-    el.className = 'location-popup';
-    el.innerHTML = `
-      <strong class="popup-name">${location.name}</strong>
-      ${location.what3words ? `
-        <div class="popup-w3w">
-          <span class="popup-w3w-code">/// ${location.what3words}</span>
-          <button class="popup-copy-btn" aria-label="${this.store.i18n.location_map_copy_w3w()}">⧉</button>
-        </div>
-      ` : ''}
-      <button class="popup-select-btn">${this.store.i18n.location_map_select()}</button>
-    `;
-    el.querySelector('.popup-select-btn')?.addEventListener('click', () => this.select(location));
+    const root = document.createElement('div');
+    root.className = 'location-popup';
+
+    const name = document.createElement('strong');
+    name.className = 'popup-name';
+    name.textContent = location.name;
+    root.appendChild(name);
+
     if (location.what3words) {
-      el.querySelector('.popup-copy-btn')?.addEventListener('click', () => this.copyW3w(location.what3words));
+      const w3wDiv = document.createElement('div');
+      w3wDiv.className = 'popup-w3w';
+      const code = document.createElement('span');
+      code.className = 'popup-w3w-code';
+      code.textContent = `/// ${location.what3words}`;
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'popup-copy-btn';
+      copyBtn.setAttribute('aria-label', this.store.i18n.location_map_copy_w3w());
+      copyBtn.textContent = '⧉';
+      copyBtn.addEventListener('click', () => this.copyW3w(location.what3words));
+      w3wDiv.append(code, copyBtn);
+      root.appendChild(w3wDiv);
     }
-    return el;
+
+    const selectBtn = document.createElement('button');
+    selectBtn.className = 'popup-select-btn';
+    selectBtn.textContent = this.store.i18n.location_map_select();
+    selectBtn.addEventListener('click', () => this.select(location));
+    root.appendChild(selectBtn);
+
+    return root;
   }
 
   private async copyW3w(w3w: string): Promise<void> {
