@@ -25,6 +25,7 @@
   },
   "location": {
     "select": "Ort wählen",
-    "empty": "Keine Orte gefunden."
+    "empty": "Keine Orte gefunden.",
+    "custom_use": "Andere Strecke verwenden"
   }
 }
