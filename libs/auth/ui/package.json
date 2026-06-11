@@ -10,6 +10,7 @@
     "@bk2/shared-models": "*",
     "@bk2/shared-pipes": "*",
     "@bk2/shared-ui": "*",
-    "@bk2/auth-util": "*"
+    "@bk2/auth-util": "*",
+    "@bk2/shared-util-angular": "*"
   }
 }
