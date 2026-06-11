@@ -1,6 +1,6 @@
 import { DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME } from '@bk2/shared-constants';
 
-export type AvatarModelTypes = 'person' | 'org' | 'resource' | 'user' | 'group' | 'account';
+export type AvatarModelTypes = 'person' | 'org' | 'resource' | 'location' | 'user' | 'group' | 'account';
 
 export interface AvatarInfo {
   key: string; // key of the avatar

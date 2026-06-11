@@ -2,9 +2,11 @@ import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { AppStore, GroupSelectModal, OrgSelectModal, PersonSelectModal, ResourceSelectModal, ResponsibilitySelectModal } from "@bk2/shared-feature";
-import { isOrg, isPerson, isResource } from "@bk2/shared-util-core";
-import { AvatarInfo, GroupModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@bk2/shared-models";
+import { isLocation, isOrg, isPerson, isResource } from "@bk2/shared-util-core";
+import { AvatarInfo, GroupModel, LocationModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@bk2/shared-models";
 import { DEFAULT_LABEL, DEFAULT_TAGS } from "@bk2/shared-constants";
+
+import { LocationSelectModal } from "./location-select.modal";
 
 @Injectable({
     providedIn: 'root'
@@ -105,6 +107,59 @@ export class ModelSelectService {
     return undefined;
   }
 
+  public async selectResourceAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL): Promise<AvatarInfo | undefined> {
+    const resource = await this.selectResource(selectedTag);
+    if (resource) {
+      return {
+        key: resource.bkey,
+        name1: '',
+        name2: resource.name,
+        label,
+        modelType: 'resource',
+        type: resource.type,
+        subType: resource.subType,
+      }
+    }
+    return undefined;
+  }
+
+  /***************************  location  *************************** */
+  public async selectLocation(selectedTag = DEFAULT_TAGS): Promise<LocationModel | undefined> {
+    const modal = await this.modalController.create({
+      component: LocationSelectModal,
+      cssClass: 'list-modal',
+      componentProps: {
+        type: selectedTag,
+        currentUser: this.appStore.currentUser(),
+      },
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm') {
+        if (isLocation(data, this.appStore.env.tenantId)) {
+            return data;
+        }
+    }
+    return undefined;
+  }
+
+  public async selectLocationAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL): Promise<AvatarInfo | undefined> {
+    const location = await this.selectLocation(selectedTag);
+    if (location) {
+      return {
+        key: location.bkey,
+        name1: location.distance + '',  
+        name2: location.name,
+        label,
+        modelType: 'location',
+        type: location.type,
+        subType: ''
+      }
+    }
+    return undefined;
+  }
+
+  /***************************  group  *************************** */
   public async selectGroup(selectedTag = DEFAULT_TAGS): Promise<GroupModel | undefined> {
     const modal = await this.modalController.create({
       component: GroupSelectModal,
@@ -122,6 +177,7 @@ export class ModelSelectService {
     return undefined;
   }
 
+  /***************************  responsibility  *************************** */
   public async selectResponsibility(): Promise<ResponsibilityModel | undefined> {
     const currentUser = this.appStore.currentUser();
     if (!currentUser) return undefined;
@@ -134,22 +190,6 @@ export class ModelSelectService {
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       return data as ResponsibilityModel;
-    }
-    return undefined;
-  }
-
-  public async selectResourceAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL): Promise<AvatarInfo | undefined> {
-    const resource = await this.selectResource(selectedTag);
-    if (resource) {
-      return {
-        key: resource.bkey,
-        name1: '',
-        name2: resource.name,
-        label,
-        modelType: 'resource',
-        type: resource.type,
-        subType: resource.subType,
-      }
     }
     return undefined;
   }
