@@ -1,7 +1,5 @@
-import { FormsModule } from '@angular/forms';
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@bk2/shared-ui';
@@ -14,18 +12,13 @@ import { MembershipI18n, scsMemberFeeValidations } from '@bk2/relationship-membe
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    vestForms, FormsModule,
     NumberInput, StringSelect, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm() && formData(); as fd) {
-      <form scVestForm
-        [formValue]="fd"
-        [suite]="suite"
-        (dirtyChange)="dirty.emit($event)"
-        (validChange)="valid.emit($event)">
+      <form novalidate>
 
         <ion-card>
           <ion-card-content class="ion-no-padding">
@@ -138,9 +131,16 @@ export class ScsMemberFeeEditForm {
   protected bexioId = computed(() => this.formData()?.memberBexioId ?? '');
   protected notes = computed(() => this.formData()?.notes ?? '');
 
-  protected readonly suite = scsMemberFeeValidations;
+  private readonly validationResult = computed(() => {
+    const fd = this.formData();
+    return fd ? scsMemberFeeValidations(fd, '', '') : null;
+  });
   protected readonly rebateReasonList = [...REBATE_REASON_VALUES];
   protected readonly invoiceStateList = [...INVOICE_STATE_VALUES];
+
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult()?.isValid() ?? true));
+  }
 
   protected onFieldChange(field: keyof ScsMemberFeesModel, value: unknown, fd: ScsMemberFeesModel): void {
     this.dirty.emit(true);

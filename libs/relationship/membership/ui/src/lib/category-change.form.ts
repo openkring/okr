@@ -1,11 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 import { CategorySelect, DateInput, DateInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
-import { coerceBoolean, debugFormErrors, debugFormModel } from '@bk2/shared-util-core';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { CategoryChangeFormModel, categoryChangeFormValidations, MembershipI18n } from '@bk2/relationship-membership-util';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -14,20 +13,14 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
   selector: 'bk-category-change-form',
   standalone: true,
   imports: [
-    vestForms,
     SvgIconPipe,
     DateInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonIcon, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-  <form scVestForm
-    [formValue]="formData()"
-    [suite]="suite" 
-    (dirtyChange)="dirty.emit($event)"
-    (validChange)="valid.emit($event)"
-    (formValueChange)="onFormChange($event)">
-  
+  <form novalidate>
+
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -91,7 +84,6 @@ export class CategoryChangeForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = categoryChangeFormValidations;
   private readonly validationResult = computed(() => categoryChangeFormValidations(this.formData()));
 
   // fields
@@ -101,15 +93,13 @@ export class CategoryChangeForm {
   protected newCategory = linkedSignal(() => this.formData().membershipCategoryNew ?? '');
   protected dateOfChange = linkedSignal(() => this.formData().dateOfChange ?? DEFAULT_DATE);
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: CategoryChangeFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('CategoryChangeForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('CategoryChangeForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 }

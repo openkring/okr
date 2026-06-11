@@ -1,10 +1,8 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
-
 import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
 import { FullNamePipe } from '@bk2/shared-pipes';
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -14,7 +12,6 @@ import { workrelValidations, WorkrelI18n } from '@bk2/relationship-workrel-util'
   selector: 'bk-workrel-form',
   standalone: true,
   imports: [
-    vestForms,
     AvatarPipe, FullNamePipe,
     DateInput, Chips, NotesInput, CategorySelect, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
@@ -23,13 +20,7 @@ import { workrelValidations, WorkrelI18n } from '@bk2/relationship-workrel-util'
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      (formValueChange)="onFormChange($event)"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-    >
+    <form novalidate>
     
       <ion-card>
         <ion-card-header>
@@ -175,7 +166,6 @@ export class WorkrelForm {
   protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));
 
   // validation and errors
-  protected readonly suite = workrelValidations;
   private readonly validationResult = computed(() => workrelValidations(this.formData(), this.tenantId(), this.allTags()));
 
   // fields
@@ -202,16 +192,14 @@ export class WorkrelForm {
   protected state = linkedSignal(() => this.formData().state ?? DEFAULT_WORKREL_STATE);
   protected bkey = computed(() => this.formData().bkey ?? DEFAULT_KEY);
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: WorkrelModel): void {
-    this.formData.update((vm) => ({ ...vm, ...value }));
-    debugFormModel('WorkrelForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('WorkrelForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

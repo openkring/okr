@@ -1,11 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
-
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME } from '@bk2/shared-constants';
 import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
-import { debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
+import { getAvatarName, hasRole } from '@bk2/shared-util-core';
 
 import { reservationApplyValidations, ReservationI18n } from '@bk2/relationship-reservation-util';
 
@@ -13,7 +11,6 @@ import { reservationApplyValidations, ReservationI18n } from '@bk2/relationship-
   selector: 'bk-reservation-apply-form',
   standalone: true,
   imports: [
-    vestForms,
     TextInput,
     NumberInput, NotesInput, CategorySelect, DateInput, Checkbox, TimeInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem
@@ -23,12 +20,7 @@ import { reservationApplyValidations, ReservationI18n } from '@bk2/relationship-
     ol { padding-bottom: 10px; }
   `],
   template: `
-    <form scVestForm
-      [formValue]="formData()"
-      (formValueChange)="onFormChange($event)"
-      [suite]="suite"
-      (validChange)="valid.emit($event)"
-    >
+    <form novalidate>
 
       <ion-card>
         <ion-card-header>
@@ -202,7 +194,6 @@ export class ReservationApplyForm {
   protected isConfirmedI18n = computed(() => ({ name: 'bhresconf',   label: this.i18n().confirmed_label(),  helper: this.i18n().confirmed_helper()  } as CheckboxI18n));
   
   // validation and errors
-  protected readonly suite = reservationApplyValidations;
   private readonly validationResult = computed(() => reservationApplyValidations(this.formData()));
 
   // fields
@@ -233,15 +224,13 @@ export class ReservationApplyForm {
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected description = linkedSignal(() => this.formData().description ?? '');
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: ReservationApplyModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('ReservationApplyForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('ReservationApplyForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected onFullDayChange(isFullDay: boolean): void {

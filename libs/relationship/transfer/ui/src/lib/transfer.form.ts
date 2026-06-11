@@ -1,11 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
-
 import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, getTodayStr, hasRole } from '@bk2/shared-util-core';
 
 import { Avatars } from '@bk2/avatar-ui';
 import { transferValidations, TransferI18n } from '@bk2/relationship-transfer-util';
@@ -14,19 +12,13 @@ import { transferValidations, TransferI18n } from '@bk2/relationship-transfer-ut
   selector: 'bk-transfer-form',
   standalone: true,
   imports: [
-    vestForms,
     DateInput, TextInput, NotesInput, NumberInput, Avatars, CategorySelect, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonInput, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      <form scVestForm
-        [formValue]="formData()"
-        [suite]="suite"
-        (dirtyChange)="dirty.emit($event)"
-        (formValueChange)="onFormChange($event)"
-      >
+      <form novalidate>
         @if(currentUser(); as currentUser) {
           <!-- subjects -->
           <bk-avatars
@@ -157,7 +149,6 @@ export class TransferForm {
   public showPersonOutput = output<string>();
 
   // validation and errors
-  protected readonly suite = transferValidations;
   private readonly validationResult = computed(() => transferValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
@@ -222,6 +213,10 @@ export class TransferForm {
   // passing constants to template
   protected nameLength = NAME_LENGTH;
   
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   protected onResourceNameChange($event: Event): void {
     const resourceName = ($event.target as HTMLInputElement).value ?? '';
     this.formData.update(vm => ({ ...vm, resource: { ...vm.resource, name2: resourceName } }));
@@ -231,12 +226,6 @@ export class TransferForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | AvatarInfo[] | AvatarInfo): void {
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: TransferModel): void {
-    this.formData.update(vm => ({ ...vm, ...value }));
-    debugFormModel('TransferForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('TransferForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

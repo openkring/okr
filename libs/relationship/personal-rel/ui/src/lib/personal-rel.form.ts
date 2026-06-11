@@ -1,11 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
-
 import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -15,7 +13,6 @@ import { personalRelValidations, PersonalRelI18n } from '@bk2/relationship-perso
   selector: 'bk-personal-rel-form',
   standalone: true,
   imports: [
-    vestForms,
     AvatarPipe, FullNamePipe,
     DateInput, Chips, NotesInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
@@ -24,13 +21,7 @@ import { personalRelValidations, PersonalRelI18n } from '@bk2/relationship-perso
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      (formValueChange)="onFormChange($event)"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-    >
+    <form novalidate>
     
       <ion-card>
         <ion-card-header>
@@ -143,7 +134,6 @@ export class PersonalRelForm {
   public showPersonOutput = output<string>();
 
   // validation and errors
-  protected readonly suite = personalRelValidations;
   private readonly validationResult = computed(() => personalRelValidations(this.formData(), this.tenants(), this.allTags()));
 
   // fields
@@ -167,16 +157,14 @@ export class PersonalRelForm {
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected bkey = computed(() => this.formData().bkey ?? DEFAULT_KEY);
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-  
-  protected onFormChange(value: PersonalRelModel): void {
-    this.formData.update((vm) => ({ ...vm, ...value }));
-    debugFormModel('PersonalRelForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('PersonalRelForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

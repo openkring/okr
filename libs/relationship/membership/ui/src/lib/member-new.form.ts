@@ -1,12 +1,10 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
 import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, getTodayStr, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 
@@ -18,8 +16,6 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@b
   selector: 'bk-member-new-form',
   standalone: true,
   imports: [
-    vestForms,
-    FormsModule,
     AvatarPipe,
     TextInput, DateInput, CategorySelect, Chips, NotesInput,
     ErrorNote, PhoneInput, EmailInput,
@@ -28,12 +24,7 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@b
   ],
   styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
   template: `
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <!-------------------------------------- PERSON ------------------------------------->
       <ion-card>
@@ -207,7 +198,6 @@ export class MemberNewForm {
   public selectClicked = output<void>();
 
  // validation and errors
-  protected readonly suite = memberNewFormValidations;
   private readonly validationResult = computed(() => memberNewFormValidations(this.formData()));
   protected firstNameErrors = computed(() => this.validationResult().getErrors('firstName'));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
@@ -276,16 +266,9 @@ export class MemberNewForm {
     this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: city.zipCode }));
   }
 
-  protected onFormChange(value: MemberNewFormModel): void {
-    this.formData.update((vm) => ({ ...vm, ...value }));
-    debugFormErrors('MemberNewForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
-  }
-
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('MemberNewForm.onFieldChange', this.validationResult().errors, this.currentUser());
-    debugFormModel<MemberNewFormModel>('MemberNewForm', this.formData(), this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {
