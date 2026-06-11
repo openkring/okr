@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnDestroy, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController, ToastController } from '@ionic/angular/standalone';
+import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
 import type * as L from 'leaflet';
 
 import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
@@ -7,7 +7,7 @@ import { LocationModel, LocationModelName, UserModel } from '@bk2/shared-models'
 import { copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe, getSvgIconUrl } from '@bk2/shared-pipes';
 
 import { FIT_PADDING, MAX_FIT_ZOOM, LocationSelectStore } from './location-select.store';
 
@@ -22,14 +22,14 @@ export type LocationSelectResult =
     Header, Spinner,
     AvatarPipe, EmptyList, SvgIconPipe,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList, IonIcon,
-    IonSegment, IonSegmentButton,
+    IonSegment, IonSegmentButton, IonToolbar
   ],
   providers: [LocationSelectStore],
   styles: [`
     .item { padding: 0px; min-height: 40px; }
     ion-avatar { margin-top: 0px; margin-bottom: 0px; }
     ion-list { padding: 0px; }
-    #location-map { width: 100%; height: 60vh; }
+    #location-map { width: 100%; height: 100%; }
   `],
   template: `
     <bk-header
@@ -39,21 +39,22 @@ export type LocationSelectResult =
       [i18n]="{ title: store.i18n.location_select() }"
       [isModal]="true"
     />
-    <ion-content>
+    @if(!isLoading() && store.showMap()) {
+    <ion-toolbar color="light">
+      <ion-segment [value]="store.viewMode()" (ionChange)="onSegmentChange($event)">
+        <ion-segment-button value="list">
+          <ion-label>{{ store.i18n.location_segment_list() }}</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="map">
+          <ion-label>{{ store.i18n.location_segment_map() }}</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </ion-toolbar>
+    }
+    <ion-content [scrollY]="store.viewMode() !== 'map'">
       @if(isLoading()) {
         <bk-spinner />
       } @else {
-        @if(store.showMap()) {
-          <ion-segment [value]="store.viewMode()" (ionChange)="onSegmentChange($event)">
-            <ion-segment-button value="list">
-              <ion-label>{{ store.i18n.location_segment_list() }}</ion-label>
-            </ion-segment-button>
-            <ion-segment-button value="map">
-              <ion-label>{{ store.i18n.location_segment_map() }}</ion-label>
-            </ion-segment-button>
-          </ion-segment>
-        }
-
         @if(store.viewMode() === 'list') {
           @if(store.showCustomEntry()) {
             <ion-list lines="none">
@@ -182,12 +183,18 @@ export class LocationSelectModal implements OnDestroy {
     const style = document.createElement('style');
     style.id = 'bk-location-popup-styles';
     style.textContent = [
+      /* tile layer — muted so markers stand out */
+      '.leaflet-tile-pane { filter: grayscale(30%) brightness(1.08) saturate(0.6); opacity: 0.88; }',
+      /* marker pin — colored circle with white icon */
+      '.location-marker { background: transparent !important; border: none !important; }',
+      '.location-marker-pin { width: 38px; height: 38px; background: var(--ion-color-primary, #3880ff); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,0.45); border: 2.5px solid #fff; }',
+      '.location-marker-pin img { filter: brightness(0) invert(1); width: 20px; height: 20px; }',
+      /* popup */
       '.location-popup { min-width: 180px; }',
       '.location-popup strong { display: block; margin-bottom: 4px; }',
       '.popup-w3w { display: flex; align-items: center; gap: 4px; font-family: monospace; font-size: 0.85em; margin-bottom: 6px; }',
       '.popup-copy-btn { background: none; border: none; cursor: pointer; font-size: 1em; padding: 2px 4px; }',
       '.popup-select-btn { width: 100%; padding: 6px; cursor: pointer; background: var(--ion-color-primary); color: #fff; border: none; border-radius: 4px; }',
-      '.location-marker { background: transparent !important; border: none !important; }',
     ].join('\n');
     document.head.appendChild(style);
   }
@@ -221,12 +228,13 @@ export class LocationSelectModal implements OnDestroy {
     const latLngs: L.LatLngExpression[] = [];
     for (const location of locations) {
       const iconName = this.store.appStore.getCategoryItem('location_type', location.type)?.icon ?? 'location-outline';
+      const svgUrl = getSvgIconUrl(this.store.appStore.env.services.imgixBaseUrl, iconName);
       const icon = L.divIcon({
         className: 'location-marker',
-        html: `<ion-icon name="${iconName}"></ion-icon>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
+        html: `<div class="location-marker-pin"><img src="${svgUrl}" alt="" /></div>`,
+        iconSize: [38, 38],
+        iconAnchor: [19, 19],
+        popupAnchor: [0, -22],
       });
       const marker = L.marker([location.latitude, location.longitude], { icon });
       marker.bindPopup(this.buildPopupEl(location));
