@@ -1,4 +1,4 @@
-import { AVATAR_INFO_SHAPE, AvatarInfo, BaseProperty, BaseType, BkModel, GroupModel, MembershipModel, MetaTag, MoneyModel, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
+import { AVATAR_INFO_SHAPE, AvatarInfo, BaseProperty, BaseType, BkModel, GroupModel, LocationModel, MembershipModel, MetaTag, MoneyModel, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
 import { die, warn } from './log.util';
 import { convertDateFormatToString, DateFormat } from './date.util';
 
@@ -272,6 +272,15 @@ export function isResource(resource: unknown, tenantId: string): resource is Res
   if(isType<ResourceModel>(resource, new ResourceModel(tenantId))) {
     if (resource.tenants) {
       return resource.tenants.includes(tenantId);
+    }
+  }
+  return false;
+}
+
+export function isLocation(location: unknown, tenantId: string): location is LocationModel {
+  if(isType<LocationModel>(location, new LocationModel(tenantId))) {
+    if (location.tenants) {
+      return location.tenants.includes(tenantId);
     }
   }
   return false;
