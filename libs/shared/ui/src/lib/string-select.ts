@@ -1,6 +1,5 @@
 import { Component, computed, input, model } from '@angular/core';
 import { IonItem, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { coerceBoolean } from '@bk2/shared-util-core';
 
@@ -16,7 +15,6 @@ export interface StringSelectI18n {
   imports: [
     IonSelect, IonSelectOption, IonNote, IonItem
   ],
-  viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
       <ion-select [name]="i18n().name"

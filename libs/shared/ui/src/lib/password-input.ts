@@ -4,7 +4,6 @@ import { IonInput, IonInputPasswordToggle, IonItem, IonNote } from '@ionic/angul
 
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { PasswordMask } from '@bk2/shared-config';
 import { InputMode, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
@@ -29,7 +28,6 @@ export interface PasswordInputI18n {
     MaskitoDirective,
     IonItem, IonNote, IonInput, IonInputPasswordToggle
   ],
-  viewProviders: [vestFormsViewProviders],
   styles: [`ion-item.helper { --min-height: 0; }`],
   template: `
     <ion-item lines="none" [button]="false">

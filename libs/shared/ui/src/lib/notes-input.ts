@@ -1,7 +1,6 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { DESCRIPTION_LENGTH } from '@bk2/shared-constants';
 import { I18nService } from '@bk2/shared-i18n';
@@ -32,7 +31,6 @@ export interface NotesInputI18n {
     ButtonCopy
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  viewProviders: [vestFormsViewProviders],
   styles: [`
     ion-item.helper { --min-height: 0; }
     ion-card-content { padding: 0; }

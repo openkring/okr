@@ -1,6 +1,5 @@
 import { Component, computed, input, model } from '@angular/core';
 import { IonItem, IonLabel, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { compareCategories } from '@bk2/shared-categories';
 import { CategoryModel } from '@bk2/shared-models';
@@ -27,7 +26,6 @@ export interface CategoryOldI18n {
     TranslatePipe, AsyncPipe,
     IonItem, IonSelect, IonSelectOption, IonNote, IonLabel
   ],
-  viewProviders: [vestFormsViewProviders],
   template: `
     @if(selectedCategory(); as selectedCategory) {
       <ion-item lines="none">

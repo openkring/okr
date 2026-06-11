@@ -1,6 +1,5 @@
 import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, getNonSelectedChips, string2stringArray } from '@bk2/shared-util-core';
@@ -19,7 +18,6 @@ import { ChipSelectModal } from './chip-select.modal';
     IonItem, IonLabel, IonIcon, IonChip, IonButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
-  viewProviders: [vestFormsViewProviders],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
   `],

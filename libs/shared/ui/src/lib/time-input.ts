@@ -2,7 +2,6 @@ import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon, IonInput, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
 
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { MaskitoElementPredicate } from '@maskito/core';
 import { MaskitoDirective } from '@maskito/angular';
 
@@ -29,7 +28,6 @@ export interface TimeInputI18n {
     IonItem, IonIcon, IonInput, IonNote
   ],
   styles: [`ion-item.helper { --min-height: 0; }`],
-  viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
         <ion-icon src="{{'calendar' | svgIcon }}" slot="start" (click)="selectTime()" />

@@ -2,7 +2,6 @@ import { Component, computed, inject, input, model } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { switchMap } from 'rxjs/operators';
 
 import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
@@ -32,7 +31,6 @@ let id = 0;
     AsyncPipe, TranslatePipe, SvgIconPipe,
     IonItem, IonNote, IonButton, IonPopover, IonContent, IonList, IonIcon, IonLabel
   ],
-  viewProviders: [vestFormsViewProviders],
   styles: [`
     .helper { --color: var(--ion-color-medium);}
     .popover.active { opacity: 1;}

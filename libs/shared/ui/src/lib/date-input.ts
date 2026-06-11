@@ -1,6 +1,5 @@
 import { Component, computed, input, linkedSignal, model, viewChild } from '@angular/core';
 import { IonIcon, IonItem, IonNote } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { MaskitoOptions } from '@maskito/core';
 
 import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
@@ -26,7 +25,6 @@ export interface DateInputI18n {
     ViewDateInput, DatePickerModal,
     IonItem, IonIcon, IonNote
   ],
-  viewProviders: [vestFormsViewProviders],
   styles: [`
     ion-item.helper { --min-height: 0; }
     bk-viewdate-input { width: 100%; }
