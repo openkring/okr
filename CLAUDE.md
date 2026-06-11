@@ -272,7 +272,7 @@ Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, 
 - use ngx-vest-forms with Angular template driven forms and create vest validations in util component of the feature
 - do only create form models if needed
 - a feature typically consists of FEATURE-list.ts (a list view of FEATURE[]), FEATURE-edit.modal.ts (the detail view) using FEATURE.form.ts (in ui component of the feature) as well as FEATURE.store.ts (feature related store).
-- for icons, do not use addIcons. Use SvgIconPipe instead with an svg image like this:
+- for icons, always use `ion-icon` with the `src` attribute and `SvgIconPipe`. Never use the `name` attribute:
     `<ion-icon slot="start" src="{{'menu' | svgIcon }}" />`
 
 ### Hard Rules

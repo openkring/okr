@@ -5,6 +5,7 @@ import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 import { LocationModel, LocationModelName, UserModel } from '@bk2/shared-models';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 import { LocationSelectStore } from './location-select.store';
 
@@ -17,7 +18,7 @@ export type LocationSelectResult =
   standalone: true,
   imports: [
     Header, Spinner,
-    AvatarPipe, EmptyList,
+    AvatarPipe, EmptyList, SvgIconPipe,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList, IonIcon,
   ],
   providers: [LocationSelectStore],
@@ -41,10 +42,10 @@ export type LocationSelectResult =
         @if(store.showCustomEntry()) {
           <ion-list lines="none">
             <ion-item class="item" color="light" (click)="selectCustom()">
-              <ion-icon name="create-outline" slot="start" />
+              <ion-icon src="{{ 'edit' | svgIcon }}" slot="start" />
               <ion-label>
-                <p>{{ store.i18n.location_custom_use() }}</p>
                 <h3>„{{ store.customLabel() }}"</h3>
+                <p>{{ store.i18n.location_custom_use() }}</p>
               </ion-label>
             </ion-item>
           </ion-list>
