@@ -6,7 +6,7 @@ import { isLocation, isOrg, isPerson, isResource } from "@bk2/shared-util-core";
 import { AvatarInfo, GroupModel, LocationModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@bk2/shared-models";
 import { DEFAULT_LABEL, DEFAULT_TAGS } from "@bk2/shared-constants";
 
-import { LocationSelectModal } from "./location-select.modal";
+import { LocationSelectModal, LocationSelectResult } from "./location-select.modal";
 
 @Injectable({
     providedIn: 'root'
@@ -134,11 +134,11 @@ export class ModelSelectService {
       },
     });
     modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') {
-        if (isLocation(data, this.appStore.env.tenantId)) {
-            return data;
-        }
+    const { data, role } = await modal.onWillDismiss<LocationSelectResult>();
+    if (role === 'confirm' && data?.kind === 'predefined') {
+      if (isLocation(data.location, this.appStore.env.tenantId)) {
+        return data.location;
+      }
     }
     return undefined;
   }
@@ -148,13 +148,31 @@ export class ModelSelectService {
     if (location) {
       return {
         key: location.bkey,
-        name1: location.distance + '',  
+        name1: location.distance + '',
         name2: location.name,
         label,
         modelType: 'location',
         type: location.type,
         subType: ''
       }
+    }
+    return undefined;
+  }
+
+  public async selectLocationResult(selectedTag = DEFAULT_TAGS): Promise<LocationSelectResult | undefined> {
+    const modal = await this.modalController.create({
+      component: LocationSelectModal,
+      cssClass: 'list-modal',
+      componentProps: {
+        type: selectedTag,
+        currentUser: this.appStore.currentUser(),
+        allowCustom: true,
+      },
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss<LocationSelectResult>();
+    if (role === 'confirm' && data) {
+      return data;
     }
     return undefined;
   }
