@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 
-import { AppStore, ModelSelectService } from '@bk2/shared-feature';
+import { AppStore, LocationSelectResult, ModelSelectService } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@bk2/shared-models';
 import { AlertService } from '@bk2/shared-util-angular';
@@ -185,6 +185,10 @@ export const TripStore = signalStore(
 
     async selectLocationAvatar(): Promise<AvatarInfo | undefined> {
       return await store.modelSelectService.selectLocationAvatar('logbuch');
+    },
+
+    async selectLocationForTrip(): Promise<LocationSelectResult | undefined> {
+      return await store.modelSelectService.selectLocationResult('logbuch');
     },
 
     /******************************* security *************************************** */

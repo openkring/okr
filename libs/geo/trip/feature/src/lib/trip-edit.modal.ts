@@ -142,13 +142,26 @@ export class TripEditModal {
   }
 
   protected async addLocation(): Promise<void> {
-    const location = await this.store.selectLocationAvatar();
-    if (!location) return;
-    const locations = this.formData()?.locations;
-    if (!locations) return;
-    locations.push(location);
-    this.onFieldChange('locations', locations);
-    this.onFieldChange('distance', parseInt(location.name1));
+    const result = await this.store.selectLocationForTrip();
+    if (!result) return;
+    if (result.kind === 'predefined') {
+      const locations = this.formData()?.locations;
+      if (!locations) return;
+      const locationAvatar: AvatarInfo = {
+        key: result.location.bkey,
+        name1: result.location.distance + '',
+        name2: result.location.name,
+        label: '',
+        modelType: 'location',
+        type: result.location.type,
+        subType: '',
+      };
+      locations.push(locationAvatar);
+      this.onFieldChange('locations', locations);
+      this.onFieldChange('distance', result.location.distance);
+    } else {
+      this.onFieldChange('customLocationLabel', result.label);
+    }
   }
 
   private onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo | AvatarInfo[]): void {
