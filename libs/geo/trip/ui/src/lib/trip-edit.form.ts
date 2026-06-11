@@ -198,7 +198,7 @@ export class TripEditForm {
     return this.getCategoryItem(this.category(), itemName)?.icon ?? '';
   }
 
-  getCategoryItem(cat: CategoryListModel, itemName?: string): CategoryItemModel | undefined {
+  protected getCategoryItem(cat: CategoryListModel, itemName?: string): CategoryItemModel | undefined {
     return cat ? cat.items.find(i => i.name === itemName) : undefined;
   }
 }
