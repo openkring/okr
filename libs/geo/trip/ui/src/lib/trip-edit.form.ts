@@ -79,7 +79,10 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
               <ion-col size="6">
                 <ion-item lines="none">
                   @if(formData().locations.length > 0) {
-                    <ion-label>{{ formData().locations[0]?.name2 ?? 'undefined'}}</ion-label>
+                    <ion-label>{{ formData().locations[0]?.name2 }}</ion-label>
+                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
+                  } @else if(formData().customLocationLabel) {
+                    <ion-label>{{ formData().customLocationLabel }}</ion-label>
                     <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
                   } @else {
                     <ion-button (click)="locationSelectClicked.emit()">
@@ -92,7 +95,7 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
             </ion-row>
 
             <!-- distance -->
-            @if(formData().locations.length > 0) {
+            @if(formData().locations.length > 0 || formData().customLocationLabel) {
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <bk-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [readOnly]="false" />
@@ -189,6 +192,7 @@ export class TripEditForm {
 
   protected clearLocation(): void {
     this.onFieldChange('locations', []);
+    this.onFieldChange('customLocationLabel', '');
   }
 
   protected hasRole(role: RoleName): boolean {
