@@ -27,7 +27,7 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { InvoiceNewModal } from '@bk2/finance-invoice-feature';
 
 import { MemberNewModal } from './member-new.modal';
-import { CategoryChangeModal } from './membership-category-change.modal';
+
 import { MembershipEditModal } from './membership-edit.modal';
 import { ActivityService } from '@bk2/activity-data-access';
 
@@ -673,6 +673,7 @@ export const _MembershipStore = signalStore(
         this.setOrgId(membership.orgKey);
         const membershipCategory = store.membershipCategory();
         if (membershipCategory) {
+          const { CategoryChangeModal } = await import('./membership-category-change.modal');
           const modal = await store.modalController.create({
             component: CategoryChangeModal,
             componentProps: {

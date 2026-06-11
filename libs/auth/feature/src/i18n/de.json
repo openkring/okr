@@ -20,7 +20,10 @@
     "savepwd": "Passwort speichern"
   },
   "pwdconfirm": "Passwort setzen",
+
   "roles": {
+    "label": "Rollen",
+    "helper": "Rollen gruppieren Berechtigungen zu einer bestimmten Funktion.",
     "none": {
       "label": "Keine",
       "description": "Es ist keine Rolle definiert."

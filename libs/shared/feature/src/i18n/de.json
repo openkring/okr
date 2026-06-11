@@ -22,5 +22,10 @@
   "responsibility": {
     "select": "Verantwortliche wählen",
     "empty": "Keine Verantwortungen gefunden."
+  },
+  "location": {
+    "select": "Ort wählen",
+    "empty": "Keine Orte gefunden.",
+    "custom_use": "als Ziel oder Strecke verwenden"
   }
 }

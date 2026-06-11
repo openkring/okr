@@ -1,12 +1,10 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input, output, signal } from '@angular/core';
-import {
-  IonItem, IonLabel, IonList, IonSearchbar,
-  IonSegment, IonSegmentButton,
-} from '@ionic/angular/standalone';
+import { IonItem, IonLabel, IonList, IonSearchbar, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
 import { isBrowser } from '@bk2/shared-util-angular';
 import { LocationModel } from '@bk2/shared-models';
+import { TripI18n } from '@bk2/trip-util';
 
 let GoogleMap: any;
 let MapType: any;
@@ -15,13 +13,6 @@ if (typeof window !== 'undefined') {
     GoogleMap = m.GoogleMap;
     MapType = m.MapType;
   });
-}
-
-export interface LocationSelectI18n {
-  location_list_view: () => string;
-  location_map_view: () => string;
-  location_search: () => string;
-  location_none: () => string;
 }
 
 @Component({
@@ -35,10 +26,10 @@ export interface LocationSelectI18n {
   template: `
     <ion-segment [value]="view()" (ionChange)="onViewChange($event)">
       <ion-segment-button value="list">
-        <ion-label>{{ i18n().location_list_view() }}</ion-label>
+        <ion-label>{{ i18n().location_view_list() }}</ion-label>
       </ion-segment-button>
       <ion-segment-button value="map">
-        <ion-label>{{ i18n().location_map_view() }}</ion-label>
+        <ion-label>{{ i18n().location_view_map() }}</ion-label>
       </ion-segment-button>
     </ion-segment>
 
@@ -61,7 +52,7 @@ export interface LocationSelectI18n {
         }
         @if (selectedKey()) {
           <ion-item button (click)="select('')">
-            <ion-label color="medium">{{ i18n().location_none() }}</ion-label>
+            <ion-label color="medium">{{ i18n().location_empty() }}</ion-label>
           </ion-item>
         }
       </ion-list>
@@ -76,7 +67,7 @@ export class LocationSelect implements OnDestroy {
 
   public readonly locations = input.required<LocationModel[]>();
   public readonly selectedKey = input<string>('');
-  public readonly i18n = input.required<LocationSelectI18n>();
+  public readonly i18n = input.required<TripI18n>();
   public readonly locationChange = output<string>();
 
   protected readonly view = signal<'list' | 'map'>('list');

@@ -1,13 +1,15 @@
 import { Component, computed, input, model } from '@angular/core';
 import { IonLabel, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
 
 import { coerceBoolean, getYear } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-year-select',
   standalone: true,
   imports: [
-    
+    TranslatePipe, AsyncPipe,
     IonSelect, IonSelectOption, IonLabel
   ],
   template: `
@@ -17,12 +19,12 @@ import { coerceBoolean, getYear } from '@bk2/shared-util-core';
     <ion-select
       [value]="selectedYear()"
       (ionChange)="selectedYear.set($event.detail.value)"
-      label="{{ label() }}"
+      label="{{ label() | translate | async }}"
       label-placement="floating"
       interface="popover"
       [compareWith]="compareWith">
       @if(shouldShowAllYears()) {
-        <ion-select-option value=99>{{ '@allYears' }}</ion-select-option>
+        <ion-select-option value=99>{{ '@allYears' | translate | async }}</ion-select-option>
       }
       @for(year of years(); track year) {
         <ion-select-option [value]=year>{{ year }}</ion-select-option>

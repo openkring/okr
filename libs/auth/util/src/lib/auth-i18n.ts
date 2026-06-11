@@ -1,21 +1,29 @@
 import { Signal } from '@angular/core';
 
+const PFX = '@auth/feature.';
+
 export const AUTH_I18N_KEYS = {
-  title:                    '@auth/feature.title',
-  email_label:              '@auth/feature.email.label',
-  email_placeholder:        '@auth/feature.email.placeholder',
-  email_error:              '@auth/feature.email.error',
-  email_helper:             '@auth/feature.email.helper',
-  password_label:           '@auth/feature.password.label',
-  password_placeholder:     '@auth/feature.password.placeholder',
-  password_error:           '@auth/feature.password.error',
-  password_helper:          '@auth/feature.password.helper',
-  pwdreset_title:           '@auth/feature.pwdreset.title',
-  pwdconfirm:               '@auth/feature.pwdconfirm',
-  newpwd:                   '@auth/feature.pwdreset.newpwd',
-  invalid_link:             '@auth/feature.pwdreset.invalidLink',
-  success:                  '@auth/feature.pwdreset.success',
-  savepwd:                  '@auth/feature.pwdreset.savepwd',
+  title:                    PFX + 'title',
+  email_label:              PFX + 'email.label',
+  email_placeholder:        PFX + 'email.placeholder',
+  email_error:              PFX + 'email.error',
+  email_helper:             PFX + 'email.helper',
+
+  password_label:           PFX + 'password.label',
+  password_placeholder:     PFX + 'password.placeholder',
+  password_error:           PFX + 'password.error',
+  password_helper:          PFX + 'password.helper',
+
+  pwdreset_title:           PFX + 'pwdreset.title',
+  newpwd:                   PFX + 'pwdreset.newpwd',
+  invalid_link:             PFX + 'pwdreset.invalidLink',
+  success:                  PFX + 'pwdreset.success',
+  savepwd:                  PFX + 'pwdreset.savepwd',
+  pwdconfirm:               PFX + 'pwdconfirm',
+
+  roles_label:              PFX + 'roles.label',
+  roles_helper:             PFX + 'roles.helper',
+
   cancel:                   '@cancel',
   ok:                       '@ok',
   validation_emailRequired: '@validation.emailRequired',

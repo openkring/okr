@@ -58,22 +58,22 @@ export const IconStore = signalStore(
     }),
   })),
 
-  withComputed((state) => ({
-    icons: computed(() => state.iconsResource.value() ?? []),
-    isLoading: computed(() => state.iconsResource.isLoading()),
-    tags: computed(() => state.appStore.getTags('icon')),
-    currentUser: computed(() => state.appStore.currentUser()),
-    tenantId: computed(() => state.appStore.tenantId())
+  withComputed((store) => ({
+    icons: computed(() => store.iconsResource.value() ?? []),
+    isLoading: computed(() => store.iconsResource.isLoading()),
+    tags: computed(() => store.appStore.getTags('icon')),
+    currentUser: computed(() => store.appStore.currentUser()),
+    tenantId: computed(() => store.appStore.tenantId())
   })),
 
-  withComputed((state) => ({
+  withComputed((store) => ({
     filteredIcons: computed(() => {
-      return state.icons().filter((icon: IconModel) => 
-        nameMatches(icon.index, state.searchTerm()) && 
-        nameMatches(icon.type, state.selectedDir()) &&
-        chipMatches(icon.tags, state.selectedTag()))      
+      return store.icons().filter((icon: IconModel) => 
+        nameMatches(icon.index, store.searchTerm()) && 
+        nameMatches(icon.type, store.selectedDir()) &&
+        chipMatches(icon.tags, store.selectedTag()))      
     }),
-    iconsCount: computed(() => state.iconsResource.value()?.length ?? 0),
+    iconsCount: computed(() => store.iconsResource.value()?.length ?? 0),
   })),
   withMethods((store) => {
     return {

@@ -6,11 +6,11 @@ import { firstValueFrom } from 'rxjs';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 
-import { AppStore } from '@bk2/shared-feature';
+import { AppStore, LocationSelectResult, ModelSelectService } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
-import { TaskModel, TripModel, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@bk2/shared-models';
 import { AlertService } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { getFullName, getYear, hasRole, nameMatches } from '@bk2/shared-util-core';
 
 import { TaskService } from '@bk2/task-data-access';
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
@@ -18,7 +18,9 @@ import { UploadService } from '@bk2/avatar-data-access';
 import { readAsFile } from '@bk2/avatar-util';
 
 import { TripService } from '@bk2/trip-data-access';
-import { compareTripDate, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripI18n } from '@bk2/trip-util';
+import { groupTripsByDay, newTrip, TRIP_I18N_KEYS, TripI18n } from '@bk2/trip-util';
+import { LocationService } from '@bk2/location-data-access';
+import { yearMatches } from '@bk2/shared-categories';
 export type { TripI18n };
 
 
@@ -31,12 +33,16 @@ const SUSPICIOUS_HOUR_LATE = 23;
 
 export type TripState = {
   searchTerm: string;
-  stateFilter: string;
+  selectedState: string;
+  selectedYear: number;
+  locationType: string;
 };
 
 const initialState: TripState = {
   searchTerm: '',
-  stateFilter: 'open',
+  selectedState: 'open',
+  selectedYear: getYear(), // initialize to current year to match ListFilter default
+  locationType: 'logbuch'
 };
 
 export const TripStore = signalStore(
@@ -45,6 +51,8 @@ export const TripStore = signalStore(
     appStore: inject(AppStore),
     tripService: inject(TripService),
     taskService: inject(TaskService),
+    locationService: inject(LocationService),
+    modelSelectService: inject(ModelSelectService),
     responsibilityService: inject(ResponsibilityService),
     uploadService: inject(UploadService),
     modalController: inject(ModalController),
@@ -58,38 +66,60 @@ export const TripStore = signalStore(
   })),
   withProps(store => ({
     tripsResource: rxResource({
-      params: () => ({ tenantId: store.appStore.tenantId() }),
+      params: () => ({ 
+        tenantId: store.appStore.tenantId() 
+      }),
       stream: () => store.tripService.list(),
     }),
+    locationsResource: rxResource({
+      params: () => ({
+        currentUser: store.appStore.currentUser(),
+        type: store.locationType()
+      }),
+      stream: ({params}) => {
+        return store.locationService.list(params.type, 'distance', 'asc');
+      }
+    })
   })),
   withComputed(store => ({
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId: computed(() => store.appStore.tenantId()),
+    imgixBaseUrl: computed(() => store.appStore.env.services.imgixBaseUrl),
     isLoading: computed(() => store.tripsResource.isLoading()),
     canWrite: computed(() =>
       hasRole('kiosk', store.appStore.currentUser()) || hasRole('admin', store.appStore.currentUser())
     ),
+    locations: computed(() => store.locationsResource.value() ?? []),
+    trips: computed(() => store.tripsResource.value() ?? [])
+  })),
+  withComputed(store => ({
     filteredTrips: computed(() => {
-      const all = store.tripsResource.value() ?? [];
-      const term = store.searchTerm().toLowerCase();
-      const stateFilter = store.stateFilter();
-      return all
-        .filter(t => matchesStateFilter(t.state, stateFilter))
-        .filter(t => !term || t.index.toLowerCase().includes(term))
-        .sort(compareTripDate);
+      return store.trips().filter((trip: TripModel) => 
+        nameMatches(trip.index, store.searchTerm()) &&
+        yearMatches(trip.startDate, store.selectedYear()) &&
+        nameMatches(trip.state, store.selectedState())
+      )
     }),
   })),
   withComputed(store => ({
     groupedByDay: computed(() => groupTripsByDay(store.filteredTrips())),
   })),
   withMethods(store => ({
+
+    /******************************** setters (filter) ******************************************* */
     setSearchTerm(searchTerm: string) {
       patchState(store, { searchTerm });
     },
 
-    setStateFilter(stateFilter: string) {
-      patchState(store, { stateFilter });
+    setSelectedState(selectedState: string) {
+      patchState(store, { selectedState });
     },
+
+    setSelectedYear(selectedYear: number) {
+      patchState(store, { selectedYear });
+    },
+
+    /******************************* CRUD on single trip  *************************************** */
 
     async openTripModal(trip: TripModel, mode: 'add' | 'edit' | 'end'): Promise<void> {
       if (!store.canWrite()) return;
@@ -145,14 +175,23 @@ export const TripStore = signalStore(
       store.tripsResource.reload();
     },
 
-    async reportDamage(trip: TripModel): Promise<void> {
-      await this.notifyResponsibility('trip', `Schaden gemeldet: ${trip.name}`, '', undefined, store.currentUser());
+    async selectPersonAvatar(): Promise<AvatarInfo | undefined> {
+      return await store.modelSelectService.selectPersonAvatar();
     },
 
-    async reportBug(trip: TripModel): Promise<void> {
-      await this.notifyResponsibility('dev', `Fehler gemeldet: ${trip.name}`, '', undefined, store.currentUser());
+    async selectResourceAvatar(): Promise<AvatarInfo | undefined> {
+      return await store.modelSelectService.selectResourceAvatar('@tag.okBoat');
     },
 
+    async selectLocationAvatar(): Promise<AvatarInfo | undefined> {
+      return await store.modelSelectService.selectLocationAvatar('logbuch');
+    },
+
+    async selectLocationForTrip(): Promise<LocationSelectResult | undefined> {
+      return await store.modelSelectService.selectLocationResult('logbuch');
+    },
+
+    /******************************* security *************************************** */
     checkSuspiciousActivity(trip: TripModel): string[] {
       const reasons: string[] = [];
       const now = Date.now();
@@ -176,7 +215,7 @@ export const TripStore = signalStore(
       return reasons;
     },
 
-    async recordSuspiciousActivity(trip: TripModel, reasons: string[]): Promise<void> {
+   async recordSuspiciousActivity(trip: TripModel, reasons: string[]): Promise<void> {
       const confirmed = await store.alertService.confirm(store.i18n.warning_suspicious(), true);
       if (!confirmed) return;
 
@@ -209,6 +248,23 @@ export const TripStore = signalStore(
       store.tripsResource.reload();
     },
 
+    /******************************* other actions *************************************** */
+    async reportDamage(currentUser?: UserModel, trip?: TripModel): Promise<void> {
+      const user = currentUser ? getFullName(currentUser.firstName, currentUser.lastName) : 'undefined';
+      const msg = trip ? 
+        `${user} ${store.i18n.report_damage_trip()} ${trip.name}` : 
+        `${user} ${store.i18n.report_damage_plain()}: `;
+      await this.notifyResponsibility('Ressort Boote', msg, '', undefined, store.currentUser());
+    },
+
+    async reportBug(currentUser?: UserModel, trip?: TripModel): Promise<void> {
+        const user = currentUser ? getFullName(currentUser.firstName, currentUser.lastName) : 'undefined';
+      const msg = trip ? 
+        `${user} ${store.i18n.report_bug_trip()} ${trip.name}` : 
+        `${user} ${store.i18n.report_bug_plain()}: `;
+      await this.notifyResponsibility('Logbuch2', msg, '', undefined, store.currentUser());
+    },
+
     async notifyResponsibility(
       responsibilityName: string,
       taskName: string,
@@ -224,8 +280,20 @@ export const TripStore = signalStore(
       task.name = taskName;
       task.assignee = responsibility.responsibleAvatar;
       task.notes = photoUrl ? `${notes}\nFoto: ${photoUrl}` : notes;
-      task.tags = 'trip';
+      task.tags = responsibilityName;
       await store.taskService.create(task, currentUser);
+    },
+
+    async export(type: string): Promise<void> {
+      console.log(`IconStore.export(${type}) is not yet implemented.`);
+    },
+
+    async showBoatStatistics(): Promise<void> {
+      console.log(`IconStore.showBoatStatistics('showBoatStatistics is not yet implemented.`);
+    },
+
+    async showPersonStatistics(): Promise<void> {
+      console.log(`IconStore.showPersonStatistics('showPersonStatistics is not yet implemented.`);
     },
   }))
 );

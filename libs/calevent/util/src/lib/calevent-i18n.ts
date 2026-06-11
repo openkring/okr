@@ -137,7 +137,7 @@ export const CALEVENT_I18N_KEYS = {
   location:                       '@location',
   topic:                          '@topic',
   date:                           '@date',
-  url:                            '@url',
+  url:                            '@url.label',
 
   bkey_label:                     PFX + 'bkey.label',
   bkey_placeholder:               PFX + 'bkey.placeholder',

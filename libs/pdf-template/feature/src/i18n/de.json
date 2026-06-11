@@ -1,13 +1,36 @@
 {
-  "list": { "title": "Dokumentvorlagen" },
+  "template": "PDF Vorlage",
+  "templates": "PDF Vorlagen",
+  "list": { 
+    "title": "Dokumentvorlagen" 
+  },
   "empty": "Keine Vorlagen gefunden.",
-  "delete": { "confirm": "Soll diese Vorlage wirklich gelöscht werden?" },
-  "actionsheet": {
-    "edit": "Vorlage bearbeiten",
-    "delete": "Vorlage löschen",
-    "duplicate": "Vorlage duplizieren",
-    "archive": "Vorlage archivieren",
-    "preview": "Vorschau"
+
+  "archive": {
+    "label": "Vorlage archivieren"
+  },
+  "create": {
+    "label": "PDF Template hinzufügen",
+    "conf": "Das PDF Template wurde erstellt.",
+    "error": "Das PDF Template konnte nicht erstellt werden."
+  },
+  "delete": {
+    "label": "PDF Template löschen",
+    "confirm": "Möchtest du das PDF Template wirklich löschen?",
+    "conf": "Das PDF Template wurde gelöscht",
+    "error": "Das PDF Template konnte nicht gelöscht werden"
+  },
+  "duplicate": {
+    "label": "Vorlage duplizieren"
+  },
+  "preview": {
+    "label": "Vorschau",
+    "error": "Vorschau-Generierung fehlgeschlagen"
+  },
+  "publish": {
+    "label": "Vorlage veröffentlichen",
+    "conf": "Vorlage veröffentlicht.",
+    "error": "Veröffentlichung fehlgeschlagen."
   },
   "save": {
     "draft": {
@@ -15,17 +38,32 @@
       "error": "Entwurf konnte nicht gespeichert werden."
     }
   },
-  "publish": {
-    "conf": "Vorlage veröffentlicht.",
-    "error": "Veröffentlichung fehlgeschlagen."
+  "update": {
+    "label": "PDF Template ändern",
+    "conf": "Die Aenderungen wurden gespeichert.",
+    "error": "Die Aenderungen konnten nicht gespeichert werden"
   },
-  "preview": { "error": "Vorschau-Generierung fehlgeschlagen" },
-  "name": { "label": "Name" },
-  "category": { "label": "Kategorie" },
-  "language": { "label": "Sprache" },
-  "status": { "label": "Status" },
-  "version": { "label": "Version" },
-  "html": { "label": "HTML" },
-  "css": { "label": "CSS" },
-  "cancel": "Abbrechen"
+
+
+  "name": { 
+    "label": "Name" 
+  },
+  "category": { 
+    "label": "Kategorie" 
+  },
+  "language": {
+    "label": "Sprache" 
+  },
+  "status": { 
+    "label": "Status" 
+  },
+  "version": { 
+    "label": "Version" 
+  },
+  "html": { 
+    "label": "HTML" 
+  },
+  "css": { 
+    "label": "CSS" 
+  }
 }

@@ -8,26 +8,7 @@ import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } f
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
-import { menuItemValidations } from '@bk2/cms-menu-util';
-
-export interface MenuFormI18n {
-  submenus: Signal<string>;
-  add_submenu: Signal<string>;
-  name_label: Signal<string>;
-  name_placeholder: Signal<string>;
-  name_helper: Signal<string>;
-  label_label: Signal<string>;
-  label_placeholder: Signal<string>;
-  label_helper: Signal<string>;
-  icon_label: Signal<string>;
-  icon_placeholder: Signal<string>;
-  icon_helper: Signal<string>;
-  description_label: Signal<string>;
-  description_placeholder: Signal<string>;
-  url_label: Signal<string>;
-  url_placeholder: Signal<string>;
-  url_helper: Signal<string>;
-}
+import { MenuI18n, menuItemValidations } from '@bk2/cms-menu-util';
 
 @Component({
   selector: 'bk-menu-item-form',
@@ -143,7 +124,7 @@ export class MenuForm {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // i18n
-  public readonly i18n = input.required<MenuFormI18n>();
+  public readonly i18n = input.required<MenuI18n>();
 
   protected nameI18n = computed(() => ({
     name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper()

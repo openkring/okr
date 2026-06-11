@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { DocumentModel } from '@bk2/shared-models';
 import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, Spinner } from '@bk2/shared-ui';
@@ -15,7 +13,7 @@ import { DocumentStore } from './document.store';
   selector: 'bk-documents-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, FileLogoPipe, PrettyDatePipe, FileSizePipe, SvgIconPipe, FileNamePipe,
+    FileLogoPipe, PrettyDatePipe, FileSizePipe, SvgIconPipe, FileNamePipe,
     Spinner, EmptyList,
     IonItem, IonLabel, IonButton, IonIcon, IonList, IonAccordion
   ],
@@ -27,7 +25,7 @@ import { DocumentStore } from './document.store';
   template: `
   <ion-accordion toggle-icon-slot="start" value="documents">
     <ion-item slot="header" [color]="color()">
-      <ion-label>{{ title() | translate | async }}</ion-label>
+      <ion-label>{{ accordionTitle() }}</ion-label>
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -64,12 +62,13 @@ export class DocumentsAccordion {
 
   public parentKey = input.required<string>();
   public readonly color = input('light');
-  public readonly title = input(this.store.i18n.documents());
+  public readonly title = input<string | undefined>();
   public readonly readOnly = input<boolean>(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly documents = computed(() => this.store.filteredDocuments() ?? []);
+  protected readonly accordionTitle = computed(() => this.title() ?? this.store.i18n.documents());
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

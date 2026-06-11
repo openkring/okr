@@ -8,21 +8,8 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
 import { AppStore } from '@bk2/shared-feature';
 import { ButtonCopy } from '@bk2/shared-ui';
 
-import { isSupportedImageFile } from '@bk2/chat-util';
+import { isSupportedImageFile, MatrixChatI18n } from '@bk2/chat-util';
 import 'emoji-picker-element';
-
-export type MatrixMessageInputI18n = {
-  isTypeing: Signal<string>;
-  and: Signal<string>;
-  areTypeing: Signal<string>;
-  othersTypeing: Signal<string>;
-  copy_conf: Signal<string>;
-  attach_image: Signal<string>;
-  attach_file: Signal<string>;
-  attach_position: Signal<string>;
-  attach_survey: Signal<string>;
-  cancel: Signal<string>;
-};
 
 @Component({
   selector: 'bk-matrix-message-input',
@@ -242,7 +229,7 @@ export type MatrixMessageInputI18n = {
       @if (replyToMessage()) {
         <div class="reply-preview">
           <div class="reply-content">
-            <div class="reply-label">Antwort an {{ replyToMessage()?.senderName }}</div>
+            <div class="reply-label">{{ i18n().msg_reply_to()}} {{ replyToMessage()?.senderName }}</div>
             <div class="reply-text">{{ replyToMessage()?.body }}</div>
           </div>
           <ion-button fill="clear" size="small" (click)="cancelReply()">
@@ -256,7 +243,7 @@ export type MatrixMessageInputI18n = {
         <ion-textarea
           #textInput
           [(ngModel)]="messageText"
-          placeholder="{{ '@chat.fields.typeMessage' }}"
+          placeholder="{{ i18n().thread_reply_placeholder() }}"
           [rows]="1"
           [autoGrow]="true"
           (ionInput)="onTyping()"
@@ -294,12 +281,12 @@ export type MatrixMessageInputI18n = {
         <span class="spacer"></span>
 
         <ion-button fill="clear" class="action-button" (click)="startRecording()"
-          title="{{ '@chat.fields.recordAudio' }}">
+          title="{{ i18n().record_audio() }}">
           <ion-icon slot="icon-only" src="{{'mic' | svgIcon}}"></ion-icon>
         </ion-button>
 
         <ion-button fill="clear" class="action-button" (click)="videoCallStarted.emit()"
-          title="{{ '@chat.fields.videoCall' }}">
+          title="{{ i18n().video_call() }}">
           <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
         </ion-button>
 
@@ -318,7 +305,7 @@ export type MatrixMessageInputI18n = {
         <div class="recording-indicator">
           <span class="recording-dot"></span>
           <span class="recording-duration">{{ formatRecordingDuration(recordingSeconds()) }}</span>
-          <span class="recording-label">{{ '@chat.fields.recording' }}</span>
+          <span class="recording-label">{{ i18n().recording() }}</span>
         </div>
         <ion-button class="send-button" color="danger" (click)="stopRecording()">
           <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
@@ -334,7 +321,7 @@ export class MatrixMessageInput {
   private appStore = inject(AppStore);
 
   // inputs
-  public i18n = input.required<MatrixMessageInputI18n>();
+  public i18n = input.required<MatrixChatI18n>();
   public disabled = input<boolean>(false);
   public roomId = input<string | undefined>(undefined);
   public typingUsers = input<string[]>([]);
@@ -565,7 +552,7 @@ export class MatrixMessageInput {
    * @param attendee
    */
   protected async showActions(): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@chat.fields.addAttachment');
+    const actionSheetOptions = createActionSheetOptions(this.i18n().add_attachment());
     this.addActionSheetButtons(actionSheetOptions);
     await this.executeActions(actionSheetOptions);
   }

@@ -2,18 +2,17 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryChangeForm } from '@bk2/relationship-membership-ui';
-import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm } from '@bk2/relationship-membership-util';
+import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm, MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@bk2/relationship-membership-util';
 import { AvatarInfo, CategoryListModel, MembershipModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { getFullName, newAvatarInfo } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { RelationshipToolbar } from '@bk2/avatar-ui';
-import { MembershipStore } from './membership.store';
 
 @Component({
   selector: 'bk-category-change-modal',
   standalone: true,
-  providers: [MembershipStore],
   imports: [
     Header, ChangeConfirmation, CategoryChangeForm, RelationshipToolbar,
     IonContent
@@ -31,7 +30,7 @@ import { MembershipStore } from './membership.store';
               relType="membership"
               [subjectAvatar]="memberAvatar"
               [objectAvatar]="orgAvatar"
-              [relDesc1]="store.i18n.reldesc1()" [relDesc2]="store.i18n.reldesc2()"
+              [relDesc1]="i18n.reldesc1()" [relDesc2]="i18n.reldesc2()"
               [currentUser]="currentUser"
             />
 
@@ -39,7 +38,7 @@ import { MembershipStore } from './membership.store';
               [formData]="formData()"
               [membershipCategory]="membershipCategory()"
               [readOnly]=false
-              [i18n]="store.i18n"
+              [i18n]="i18n"
               (formDataChange)="onFormDataChange($event)"
               (dirty)="formDirty.set($event)"
               (valid)="formValid.set($event)"
@@ -52,13 +51,13 @@ import { MembershipStore } from './membership.store';
 })
 export class CategoryChangeModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(MembershipStore);
+  protected readonly i18n = inject(I18nService).translateAll(MEMBERSHIP_I18N_KEYS) as MembershipI18n;
 
   // inputs
   public membership = input.required<MembershipModel>();
   public membershipCategory = input.required<CategoryListModel>();
   public currentUser = input<UserModel>();
-  public title = input(this.store.i18n.category_change_label());
+  public title = input(this.i18n.category_change_label());
 
   // signals
   protected formDirty = signal(false);
@@ -76,7 +75,7 @@ export class CategoryChangeModal {
       return newAvatarInfo(m.orgKey, '', m.orgName, m.orgModelType, '', '', m.orgName);
   });
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
 
   /******************************* actions *************************************** */

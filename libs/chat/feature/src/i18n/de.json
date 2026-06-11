@@ -65,7 +65,10 @@
 
   "message": {
     "edit": "Nachricht bearbeiten",
-    "reply": "Antworten",
+    "reply": {
+      "label": "Antworten",
+      "to": "Antwort an"
+    },
     "copy": "Nachricht kopieren",
     "raw": "Rohdaten anzeigen",
     "react": {

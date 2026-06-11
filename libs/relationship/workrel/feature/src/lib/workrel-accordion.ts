@@ -28,7 +28,7 @@ import { WorkrelStore } from './workrel.store';
   template: `
   <ion-accordion toggle-icon-slot="start" value="workrels">
     <ion-item slot="header" [color]="color()">
-      <ion-label>{{ title() }}</ion-label>
+      <ion-label>{{ accordionTitle() }}</ion-label>
       @if(hasRole('memberAdmin') && readOnly() === false) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -79,12 +79,13 @@ export class WorkrelAccordion {
 
   public personKey = input<string>();
   public color = input('light');
-  public title = input(this.store.i18n.workrels());
+  public title = input<string | undefined>();
   public readOnly = input(true);
   protected types = computed(() => this.store.appStore.getCategory('workrel_type'));
   
   protected workRels = computed(() => this.store.allWorkrels());  // tbd: better define: a) all, b) open c) current year ...
   protected currentUser = computed(() => this.store.appStore.currentUser());
+  protected accordionTitle = computed(() => this.title() ?? this.store.i18n.workrels());
   
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

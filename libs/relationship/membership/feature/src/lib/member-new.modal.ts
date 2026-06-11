@@ -25,8 +25,7 @@ import { MemberNewForm } from '@bk2/relationship-membership-ui';
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-member-new-form
-          [formData]="formData"
-          (formDataChange)="onFormDataChange($event)"
+          [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [genders]="genders()"
           [allTags]="tags()"

@@ -4,7 +4,6 @@ export * from './lib/button-copy';
 export * from './lib/button';
 export * from './lib/category-old';
 export * from './lib/category-items';
-export * from './lib/category-select.modal';
 export * from './lib/category-select';
 export * from './lib/change-confirmation';
 export * from './lib/checkbox';

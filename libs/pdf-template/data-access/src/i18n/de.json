@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "PDF Template hinzufügen",
+    "error": "Das PDF Template konnte nicht erstellt werden.",
+    "conf": "Das PDF Template wurde erstellt."
+  },
+  "update": {
+    "label": "PDF Template ändern",
+    "error": "Die Aenderungen konnten nicht gespeichert werden",
+    "conf": "Die Aenderungen wurden gespeichert."
+  },
+  "delete": {
+    "label": "PDF Template löschen",
+    "error": "Das PDF Template konnte nicht gelöscht werden",
+    "conf": "Das PDF Template wurde gelöscht",
+    "confirm": "Möchtest du das PDF Template wirklich löschen?"
+  }
+}

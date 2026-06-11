@@ -44,43 +44,43 @@
   },
 
   "bkey": {
-    "label": "Dok.-Schlüssel",
-    "placeholder": "",
-    "helper": ""
+    "label": "bkey",
+    "placeholder": "bkey",
+    "helper": "Eindeutige ID der Beschäftigung in der Datenbank."
   },
   "label": {
     "label": "Bezeichnung",
     "placeholder": "Bezeichnung eingeben",
-    "helper": ""
+    "helper": "Ein Name für die Beschäftigung, z.B. Anstellung bei xy."
   },
   "currency": {
     "label": "Währung",
     "placeholder": "CHF",
-    "helper": ""
+    "helper": "Der internationale, dreistellige ISO Währungs-Code."
   },
   "order": {
     "label": "Reihenfolge",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "n",
+    "helper": "Durch Eingabe einer Ordnungszahl können die Beschäftigungen geordnet werden."
   },
   "price": {
     "label": "Preis",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "nnnn",
+    "helper": "Die Entschädigung für die Beschäftigung, z.B: Stundenlohn oder Monatslohn."
   },
   "notes": {
     "label": "Notizen",
-    "placeholder": ""
+    "placeholder": "Beliebige Zusatzinformationen zur Beschäftigung."
   },
   "validFrom": {
     "label": "Gültig ab",
     "placeholder": "TT.MM.JJJJ",
-    "helper": ""
+    "helper": "Die Beschäftigung startet an diesem Datum."
   },
   "validTo": {
     "label": "Gültig bis",
     "placeholder": "TT.MM.JJJJ",
-    "helper": ""
+    "helper": "Die Beschäftigung endet an diesem Datum."
   },
   "subject": "Person",
   "type": "Beziehungsart",

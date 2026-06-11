@@ -20,6 +20,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
       <ion-searchbar  #bksearch
         type="search" 
         inputmode="search"
+        show-clear-button="always"
         [disabled]="isDisabled()"
         [debounce]="debounce()"
         [placeholder]="placeholder()"

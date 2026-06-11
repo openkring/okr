@@ -8,3 +8,4 @@ export * from './lib/person-select.modal';
 export * from './lib/resource-select.modal';
 export * from './lib/responsibility-select.modal';
 export * from './lib/model-select.service';
+export * from './lib/location-select.modal';

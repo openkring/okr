@@ -1,206 +1,210 @@
-import { Component, computed, input, output, Signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import {
-  IonChip, IonInput, IonItem, IonLabel, IonNote,
-  IonSelect, IonSelectOption, IonTextarea,
-} from '@ionic/angular/standalone';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { IonButton, IonCard, IonCardContent, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { vestForms } from 'ngx-vest-forms';
 
-import { AvatarInfo, LocationModel, ResourceModel, TripModel } from '@bk2/shared-models';
-import { formatTripTime } from '@bk2/trip-util';
+import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@bk2/shared-models';
+import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n } from '@bk2/shared-ui';
+import { debugFormErrors, debugFormModel, getDurationLabel, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_NOTES } from '@bk2/shared-constants';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
-import { LocationSelect, LocationSelectI18n } from './location-select';
+import { Avatars } from '@bk2/avatar-ui';
+import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
 
-export interface TripFormI18n extends LocationSelectI18n {
-  add_title: Signal<string>;
-  edit_title: Signal<string>;
-  end_title: Signal<string>;
-  field_boat: Signal<string>;
-  field_location: Signal<string>;
-  field_custom_location: Signal<string>;
-  field_distance: Signal<string>;
-  field_participants: Signal<string>;
-  field_notes: Signal<string>;
-  field_start_date: Signal<string>;
-  field_start_time: Signal<string>;
-  field_end_date: Signal<string>;
-  field_end_time: Signal<string>;
-  warning_distance_zero: Signal<string>;
-  warning_distance_high: Signal<string>;
-  warning_seats_mismatch: Signal<string>;
-  location_list_view: Signal<string>;
-  location_map_view: Signal<string>;
-  location_search: Signal<string>;
-  location_none: Signal<string>;
-}
 
 @Component({
   selector: 'bk-trip-edit-form',
   standalone: true,
   imports: [
-    FormsModule,
-    IonItem, IonLabel, IonNote, IonInput, IonTextarea,
-    IonSelect, IonSelectOption, IonChip,
-    LocationSelect,
+    vestForms,
+    SvgIconPipe,
+    IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonCard, IonCardContent, IonButton,
+    NotesInput, Avatars, NumberInput
   ],
+  styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
   template: `
-    <!-- Start date/time (display only) -->
-    <ion-item lines="full">
-      <ion-label position="stacked">{{ i18n().field_start_date() }}</ion-label>
-      <ion-note slot="end">{{ formData().startDate }}</ion-note>
-    </ion-item>
-    <ion-item lines="full">
-      <ion-label position="stacked">{{ i18n().field_start_time() }}</ion-label>
-      <ion-note slot="end">{{ formatTime(formData().startTime) }}</ion-note>
-    </ion-item>
+    <form scVestForm
+      [formValue]="formData()"
+      [suite]="suite" 
+      (dirtyChange)="dirty.emit($event)"
+      (validChange)="valid.emit($event)"
+      (formValueChange)="onFormChange($event)">
 
-    <!-- End date/time (edit/end mode only) -->
-    @if (mode() === 'edit' || mode() === 'end') {
-      <ion-item lines="full">
-        <ion-label position="stacked">{{ i18n().field_end_date() }}</ion-label>
-        <ion-input
-          type="date"
-          [ngModel]="endDateIso()"
-          (ngModelChange)="onEndDateChange($event)"
+      <ion-card>
+        <ion-card-content class="ion-no-padding">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-label>{{ i18n().date() }}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-label>{{ duration() }}</ion-label>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+
+            <!-- boat -->
+            <ion-row>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-label>{{ i18n().boat() }}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  @if(formData().resource; as boat) {
+                    <ion-icon slot="start" src="{{ getIcon(boat) | svgIcon }}" />
+                    <ion-label>{{ boat.name2 }}</ion-label>
+                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearBoat()" />
+                  } @else {
+                    <ion-button (click)="boatSelectClicked.emit()">
+                      <ion-icon slot="start" src="{{'boat' | svgIcon }}" />
+                      {{ i18n().select_boat_add() }}
+                    </ion-button>
+                  }
+                </ion-item>
+              </ion-col>
+            </ion-row>
+
+            <!-- location -->
+            <ion-row>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-label>{{ i18n().location() }}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  @if(formData().locations.length > 0) {
+                    <ion-label>{{ formData().locations[0]?.name2 }}</ion-label>
+                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
+                  } @else if(formData().customLocationLabel) {
+                    <ion-label>{{ formData().customLocationLabel }}</ion-label>
+                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
+                  } @else {
+                    <ion-button (click)="locationSelectClicked.emit()">
+                      <ion-icon slot="start" src="{{'location' | svgIcon }}" />
+                      {{ i18n().select_location_add() }}
+                    </ion-button>
+                  }
+                </ion-item>
+              </ion-col>
+            </ion-row>
+
+            <!-- distance -->
+            @if(formData().locations.length > 0 || formData().customLocationLabel) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [readOnly]="false" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <ion-item lines="none">
+                    @if (formData().distance === 0) {
+                      <ion-chip color="warning">{{ i18n().warning_distance_zero() }}</ion-chip>
+                    }
+                    @if (formData().distance > 50) {
+                      <ion-chip color="warning">{{ i18n().warning_distance_high() }}</ion-chip>
+                    }
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- participants -->
+      @if(currentUser(); as currentUser) {
+        <bk-avatars (selectClicked)="personSelectClicked.emit()"
+          [avatars]="participants()"
+          (avatarsChange)="onFieldChange('participants', $event)"
+          [readOnly]="false"
+          [currentUser]="currentUser"
+          [title]="i18n().select_participant_title()"
         />
-      </ion-item>
-      <ion-item lines="full">
-        <ion-label position="stacked">{{ i18n().field_end_time() }}</ion-label>
-        <ion-input
-          type="time"
-          [ngModel]="endTimeDisplay()"
-          (ngModelChange)="onEndTimeChange($event)"
-        />
-      </ion-item>
+      }
+
+    @if(hasRole('admin')) {
+      <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="false" />
     }
-
-    <!-- Boat select -->
-    <ion-item lines="full">
-      <ion-label position="stacked">{{ i18n().field_boat() }}</ion-label>
-      <ion-select
-        [ngModel]="formData().resource?.key ?? ''"
-        (ngModelChange)="onBoatChange($event)"
-        interface="action-sheet"
-      >
-        @for (boat of boats(); track boat.bkey) {
-          <ion-select-option [value]="boat.bkey">{{ boat.name }}</ion-select-option>
-        }
-      </ion-select>
-    </ion-item>
-
-    <!-- Location select (structured) + custom label fallback -->
-    <ion-item lines="full">
-      <ion-label position="stacked">{{ i18n().field_location() }}</ion-label>
-    </ion-item>
-    <bk-location-select
-      [locations]="locations()"
-      [selectedKey]="selectedLocationKey()"
-      [i18n]="i18n()"
-      (locationChange)="onLocationChange($event)"
-    />
-
-    @if (!selectedLocationKey()) {
-      <ion-item lines="full">
-        <ion-label position="stacked">{{ i18n().field_custom_location() }}</ion-label>
-        <ion-input
-          [ngModel]="formData().customLocationLabel"
-          (ngModelChange)="patch({ customLocationLabel: $event })"
-          [placeholder]="i18n().field_location()"
-        />
-      </ion-item>
-    }
-
-    <!-- Distance -->
-    <ion-item lines="full">
-      <ion-label position="stacked">{{ i18n().field_distance() }}</ion-label>
-      <ion-input
-        type="number"
-        [ngModel]="formData().distance"
-        (ngModelChange)="patch({ distance: +$event })"
-        min="0"
-      />
-    </ion-item>
-    @if (formData().distance === 0) {
-      <ion-chip color="warning">{{ i18n().warning_distance_zero() }}</ion-chip>
-    }
-    @if (formData().distance > 50) {
-      <ion-chip color="warning">{{ i18n().warning_distance_high() }}</ion-chip>
-    }
-
-    <!-- Notes -->
-    <ion-item lines="full">
-      <ion-label position="stacked">{{ i18n().field_notes() }}</ion-label>
-      <ion-textarea
-        [ngModel]="formData().notes"
-        (ngModelChange)="patch({ notes: $event })"
-        [rows]="3"
-      />
-    </ion-item>
   `,
 })
 export class TripEditForm {
-  public readonly trip = input.required<TripModel>();
+  // inputs
+  public readonly i18n = input.required<TripI18n>();
+  public readonly formData = model.required<TripModel>();
+  protected readonly currentUser = input<UserModel | undefined>();
+  public readonly tenantId = input.required<string>();
   public readonly mode = input.required<'add' | 'edit' | 'end'>();
   public readonly boats = input.required<ResourceModel[]>();
   public readonly locations = input.required<LocationModel[]>();
-  public readonly i18n = input.required<TripFormI18n>();
+  public readonly category = input.required<CategoryListModel>(); // resource_type or rboat_type or...
 
-  public readonly tripChange = output<TripModel>();
-  public readonly validityChange = output<boolean>();
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
+  public personSelectClicked = output<void>();
+  public boatSelectClicked = output<void>();
+  public locationSelectClicked = output<void>();
 
-  protected formData = this.trip;
+ // validation and errors
+  protected readonly suite = tripValidationSuite;
+  private readonly validationResult = computed(() => tripValidationSuite(this.formData()));
 
+  // derived
+  protected duration = computed(() => 
+    getDurationLabel(this.formData().startDate, this.formData().startTime, this.formData().endTime)
+  )
+  protected selectedLocationKey = computed(() => this.formData().locations?.[0] ?? '');
+  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected participants = linkedSignal(() => this.formData()?.participants ?? []);
+  protected distance = computed(() => this.formData().distance ?? 0);
+
+  protected distanceI18n = computed(() => ({
+    name: 'distance',
+    label: this.i18n().distance_label(),
+    placeholder: this.i18n().distance_placeholder(),
+    helper: this.i18n().distance_helper()
+  } as NumberInputI18n));
+
+  // constants
   protected formatTime = formatTripTime;
 
-  protected selectedLocationKey = computed(() => this.formData().locations?.[0] ?? '');
-
-  protected endDateIso(): string {
-    const d = this.formData().endDate;
-    if (!d || d.length !== 8) return '';
-    return `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}`;
+  protected onFormChange(value: TripModel): void {
+    this.formData.update((vm) => ({ ...vm, ...value }));
+    debugFormErrors('TripEditForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 
-  protected endTimeDisplay(): string {
-    const t = this.formData().endTime;
-    if (!t || t.length !== 4) return '';
-    return `${t.substring(0, 2)}:${t.substring(2, 4)}`;
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo | AvatarInfo[] | undefined): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('TripEditForm.onFieldChange', this.validationResult().errors, this.currentUser());
+    debugFormModel<TripModel>('TripEditForm', this.formData(), this.currentUser());
   }
 
-  protected patch(partial: Partial<TripModel>): void {
-    const updated = { ...this.formData(), ...partial };
-    this.tripChange.emit(updated as TripModel);
-    this.validityChange.emit(
-      !!(updated.resource?.key) && (updated as TripModel).participants.length > 0
-    );
+  protected clearBoat(): void {
+    this.onFieldChange('resource', undefined);
   }
 
-  protected onBoatChange(boatKey: string): void {
-    const boat = this.boats().find(b => b.bkey === boatKey);
-    if (!boat) return;
-    this.patch({
-      resource: {
-        key: boat.bkey,
-        name1: boat.name,
-        name2: '',
-        modelType: 'resource',
-        type: boat.type,
-        subType: boat.subType,
-        label: boat.name,
-      } as AvatarInfo,
-    });
+  protected clearLocation(): void {
+    this.onFieldChange('locations', []);
+    this.onFieldChange('customLocationLabel', '');
   }
 
-  protected onLocationChange(locationKey: string): void {
-    this.patch({
-      locations: locationKey ? [locationKey] : [],
-      customLocationLabel: locationKey ? '' : this.formData().customLocationLabel,
-    });
+  protected hasRole(role: RoleName): boolean {
+    return hasRole(role, this.currentUser());
   }
 
-  protected onEndDateChange(isoDate: string): void {
-    this.patch({ endDate: isoDate.replace(/-/g, '') });
+  protected getIcon(boat: AvatarInfo): string {
+    const itemName = boat.type === 'rboat' ? boat.subType : boat.type;
+    return this.getCategoryItem(this.category(), itemName)?.icon ?? '';
   }
 
-  protected onEndTimeChange(hhmm: string): void {
-    this.patch({ endTime: hhmm.replace(':', '') });
+  getCategoryItem(cat: CategoryListModel, itemName?: string): CategoryItemModel | undefined {
+    return cat ? cat.items.find(i => i.name === itemName) : undefined;
   }
 }

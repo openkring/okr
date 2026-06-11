@@ -52,7 +52,7 @@ import { TaskI18n, taskValidations } from '@bk2/task-util';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
-                  <ion-label>{{ i18n().state() }}:</ion-label>
+                  <ion-label>{{ i18n().state_label() }}:</ion-label>
                   <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>

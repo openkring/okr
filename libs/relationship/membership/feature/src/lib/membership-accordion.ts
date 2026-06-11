@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
 import { RellogPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList } from '@bk2/shared-ui';
@@ -17,7 +15,7 @@ import { MembershipStore } from './membership.store';
   selector: 'bk-membership-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, RellogPipe, AsyncPipe, SvgIconPipe, AvatarPipe, EmptyList,
+    RellogPipe, SvgIconPipe, AvatarPipe, EmptyList,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonAvatar
   ],
   providers: [MembershipStore],
@@ -27,7 +25,7 @@ import { MembershipStore } from './membership.store';
   template: `
   <ion-accordion toggle-icon-slot="start" value="memberships">
     <ion-item slot="header" [color]="color()">
-      <ion-label>{{ title() | translate | async }}</ion-label>
+      <ion-label>{{ accordionTitle() }}</ion-label>
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -62,7 +60,7 @@ export class MembershipAccordion {
   public member = input.required<PersonModel | OrgModel>();
   public readonly modelType = input<'person' | 'org'>('person');
   public readonly color = input('light');
-  public readonly title = input(this.store.i18n.memberships());
+  public readonly title = input<string | undefined>();
   public readonly readOnly = input<boolean>(true);
 
   // coerced boolean inputs
@@ -73,6 +71,7 @@ export class MembershipAccordion {
   private currentUser = computed(() => this.store.currentUser());
   private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+  protected accordionTitle = computed(() => this.title() ?? this.store.i18n.memberships());
 
   constructor() {
     effect(() => { 

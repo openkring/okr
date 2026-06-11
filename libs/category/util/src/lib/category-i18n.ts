@@ -54,7 +54,18 @@ export const CATEGORY_I18N_KEYS = {
 
   items_label:              PFX + 'items.label',
   items_description:        PFX + 'items.description',
-  items_empty:              PFX + 'items.empty'
+  items_empty:              PFX + 'items.empty',
+
+  priority:                 PFX + 'priority.label',
+  priority_label:           PFX + 'priority.label',
+  priority_helper:          PFX + 'priority.helper',
+  priority_all_label:       PFX + 'priority.all.label',
+  priority_low_label:       PFX + 'priority.low.label',
+  priority_low_description: PFX + 'priority.low.description',
+  priority_medium_label:       PFX + 'priority.medium.label',
+  priority_medium_description: PFX + 'priority.medium.description',
+  priority_high_label:       PFX + 'priority.high.label',
+  priority_high_description: PFX + 'priority.high.description'
 } satisfies Record<string, string>;
 
 export type CategoryI18n = { [K in keyof typeof CATEGORY_I18N_KEYS]: Signal<string> };

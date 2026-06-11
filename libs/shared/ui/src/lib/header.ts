@@ -47,7 +47,7 @@ export interface HeaderI18n {
         }
       </ion-toolbar>
       @if(isSearchablePage()) {
-        <ion-toolbar>
+        <ion-toolbar color="light">
           <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ i18n().placeholder ?? ('@search.placeholder' | translate | async) }}" />
         </ion-toolbar>
       }

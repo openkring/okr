@@ -58,6 +58,10 @@ export const INVITATION_I18N_KEYS = {
 
   // state: explicit
   state:                            PFX + 'state.label',
+  state_pending_label:              PFX + 'state.pending.label',
+  state_accepted_label:             PFX + 'state.accepted.label',
+  state_maybe_label:                PFX + 'state.maybe.label',
+  state_declined_label:             PFX + 'state.declined.label',
 
   date:                            '@date',
   name:                            '@name.label',

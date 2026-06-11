@@ -5,6 +5,8 @@ packages:
 onlyBuiltDependencies:
   - '@firebase/util'
   - '@parcel/watcher'
+  - '@sentry/capacitor'
+  - '@sentry/cli'
   - '@swc/core'
   - cypress
   - esbuild
@@ -13,6 +15,6 @@ onlyBuiltDependencies:
   - msgpackr-extract
   - nx
   - protobufjs
-  - re2
   - puppeteer
+  - re2
   - unrs-resolver

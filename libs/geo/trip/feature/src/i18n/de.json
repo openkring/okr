@@ -1,53 +1,130 @@
 {
-  "list": { "title": "Ausfahrten" },
-  "empty": "Keine Ausfahrten gefunden.",
-  "cancel": "Abbrechen",
-  "add": { "title": "Neue Ausfahrt" },
-  "edit": { "title": "Ausfahrt bearbeiten" },
-  "end": { "title": "Ausfahrt beenden" },
+  "trip": "Fahrt",
+  "trips": "Fahrten",
+  "desc": "Vor der Ausfahrt erfasst du hier im Logbuch deine geplante Fahrt. Du gibst damit an, wohin du rudern möchtest, mit welchem Boot und mit welchen Rudernden. Sicherheitsmässig ist dies wichtig, damit wir dich bei einem allfälligen Notfall schneller finden können. Ausserdem können andere Mitglieder sehen, welche Boote bereits reserviert sind. Nach der Fahrt schliesst du deine Ausfahrt ab. Deine Ausfahrt wird dann automatisch in den Bootsstatistiken nachgeführt.",
+  "empty": "Es wurden keine Fahrten gefunden.",
+  
+  "create": { 
+    "label": "Neue Fahrt erfassen",
+    "conf": "Die Fahrt wurde gespeichert.",
+    "error": "Die Fahrt konnte nicht gespeichert werden.",
+    "guest": "Gast erfassen"
+  },
   "delete": {
-    "confirm": "Soll diese Ausfahrt wirklich gelöscht werden?",
+    "label": "Fahrt löschen",
+    "confirm": "Soll diese Fahrt wirklich gelöscht werden?",
     "reason": "Grund für die Löschung",
-    "conf": "Ausfahrt gelöscht.",
-    "error": "Löschen fehlgeschlagen."
+    "conf": "Die Fahrt wurde gelöscht.",
+    "error": "Die Fahrt konnte nicht gelöscht werden."
   },
-  "actionsheet": {
-    "add": "Ausfahrt erfassen",
-    "edit": "Ausfahrt bearbeiten",
-    "end": "Ausfahrt beenden",
-    "delete": "Ausfahrt löschen",
-    "report_damage": "Schaden melden",
-    "report_bug": "Fehler melden",
-    "add_guest": "Gast hinzufügen",
-    "show_images": "Bilder anzeigen"
+  "end": { 
+    "label": "Fahrt abschliessen" 
   },
+  "export": {
+    "raw": "Rohdaten exportieren"
+  },
+  "report": {
+    "damage": {
+      "label": "Schaden melden",
+      "plain": "meldet Schaden",
+      "trip": "meldet Schaden auf Fahrt"
+    },
+    "bug": {
+      "label": "Fehler melden",
+      "plain": "meldet Fehler",
+      "trip": "meldet Fehler auf Fahrt"
+    }
+  },
+  "search": {
+    "label": "Ort suchen"
+  },
+  "select": {
+    "participant": {
+      "title": "Teilnehmer wählen",
+      "add": "Auswählen"
+    },
+    "boat": {
+      "title": "Boot wählen",
+      "add": "Auswählen"
+    },
+    "location": {
+      "title": "Zielort wählen",
+      "add": "Auswählen"
+    }
+  },
+  "show": {
+    "images": "Bilder anzeigen",
+    "statistics": {
+      "boatkm": "Boots-Statistik anzeigen",
+      "personkm": "Personen-Statistik anzeigen"
+    }
+  },
+  "update": { 
+    "label": "Fahrt ändern",
+    "conf": "Die Fahrt wurde gespeichert.",
+    "error": "Die Fahrt konnte nicht gespeichert werden."
+  },
+
+  "list": { 
+    "title": "Logbuch" 
+  },
+
   "warning": {
     "suspicious": "Verdächtige Aktivität erkannt. Bitte bestätigen.",
-    "distance_zero": "Distanz ist 0 km. Bitte bestätigen.",
-    "distance_high": "Distanz über 50 km. Bitte bestätigen.",
-    "seats_mismatch": "Anzahl Teilnehmende entspricht nicht der Bootskapazität."
+    "distance_zero": "Bitte eine sinnvolle Distanz zwischen 1 und 50 km eingeben.",
+    "distance_high": "Bitte eine sinnvolle Distanz zwischen 1 und 50 km eingeben.",
+    "seats_mismatch": "Anzahl Teilnehmende entspricht nicht der Bootskapazität.",
+    "note": "Um Missbräuche zu vermeiden, finden im Hintergrund verschiedene Checks statt. Sollte ein Missbrauch festgestellt werden, wird ein Bild vom User gemacht und damit der Admin notifiziert."
   },
-  "field": {
-    "boat": "Boot",
-    "location": "Zielort",
-    "custom_location": "Eigener Zielort",
-    "distance": "Distanz (km)",
-    "participants": "Teilnehmende",
-    "notes": "Notizen",
-    "start_date": "Startdatum",
-    "start_time": "Startzeit",
-    "end_date": "Enddatum",
-    "end_time": "Endzeit"
+
+  "boat": "Boot",
+  "distance": {
+    "label": "Distanz (km)",
+    "placeholder": "nn",
+    "helper": "Die Länge der Ausfahrt in Kilometern. Bei Eingabe eines vergegebenen Zielortes wird die Distanz automatisch eingefügt. Sie kann dann manuell angepasst werden."
   },
-  "state": {
-    "draft": "Entwurf",
-    "open": "Offen",
-    "closed": "Abgeschlossen",
-    "deleted": "Gelöscht",
-    "revised": "Überarbeitet",
-    "corrected": "Korrigiert",
-    "all": "Alle"
+  "participants": "Teilnehmende",
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Text"
   },
+  "date": "Datum/Zeit",
+  "location": {
+    "label": "Zielort",
+    "custom": "Eigener Zielort",
+    "view": {
+      "list": "Liste",
+      "map": "Karte"
+    },
+    "search": "Ort suchen",
+    "select": "Ort auswählen",
+    "empty": "Keine Orte gefunden",
+    "none_selected": "Kein Ort ausgewählt"
+  },
+
+  "trip_state": {
+    "label": "Status",
+    "helper": "Status der Ausfahrt",
+    "all": {
+      "label": "Alle Stati"
+    },
+    "draft": {
+      "label": "Entwurf"
+    },
+    "open": {
+      "label": "Offen"
+    },
+    "closed": {
+      "label": "Abgeschlossen"
+    },
+    "cancelled": {
+      "label": "Gelöscht"
+    },
+    "revised": {
+      "label": "Überarbeitet"
+    }
+  },
+
   "aoc": {
     "title": "Ausfahrten Administration",
     "trash": "Papierkorb",
@@ -59,16 +136,5 @@
     "hard_delete_confirm": "Ausfahrt endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
     "restore_conf": "Ausfahrt wiederhergestellt.",
     "restore_error": "Wiederherstellen fehlgeschlagen."
-  },
-  "location_select": {
-    "list_view": "Liste",
-    "map_view": "Karte",
-    "search": "Ort suchen",
-    "none": "Kein Ort ausgewählt"
-  },
-  "save": {
-    "add": { "conf": "Ausfahrt erfasst.", "error": "Speichern fehlgeschlagen." },
-    "edit": { "conf": "Ausfahrt aktualisiert.", "error": "Aktualisierung fehlgeschlagen." },
-    "end": { "conf": "Ausfahrt beendet.", "error": "Beenden fehlgeschlagen." }
   }
 }
