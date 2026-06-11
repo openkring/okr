@@ -1,7 +1,5 @@
-import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, effect, input, linkedSignal, output, signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -14,7 +12,6 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
   standalone: true,
   imports: [
     SvgIconPipe,
-    vestForms, FormsModule,
     TextInput, DateInput, NumberInput, NotesInput, StringSelect,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
     IonList, IonItem, IonButton, IonIcon,
@@ -22,12 +19,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if(showForm()) {
-      <form scVestForm
-        [formValue]="formData()"
-        [suite]="suite"
-        (dirtyChange)="dirty.emit($event)"
-        (validChange)="valid.emit($event)"
-        (formValueChange)="onFormChange($event)">
+      <form novalidate>
 
         <ion-card>
           <ion-card-content class="ion-no-padding">
@@ -197,7 +189,11 @@ export class BexioInvoiceNewForm {
   public readonly valid = output<boolean>();
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  protected readonly suite = bexioInvoiceValidations;
+  private readonly validationResult = computed(() => bexioInvoiceValidations(this.formData()));
+
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
 
   protected readonly title = computed(() => this.formData()?.title ?? '');
   protected readonly bexioId = computed(() => this.formData()?.bexioId ?? '');
@@ -227,11 +223,6 @@ export class BexioInvoiceNewForm {
 
   protected toNumber(value: string): number {
     return parseFloat(value) || 0;
-  }
-
-  protected onFormChange(data: BexioInvoiceFormModel): void {
-    // Merge with current formData so vest's partial emission never overwrites fields it doesn't track
-    this.formDataChange.emit({ ...this.formData(), ...data, positions: this.positions() });
   }
 
   protected onTemplateChange(name: string): void {

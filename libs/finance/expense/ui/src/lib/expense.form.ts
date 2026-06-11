@@ -1,10 +1,8 @@
-import { Component, Signal, computed, input, linkedSignal, model, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, Signal, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import {
   IonButton, IonCol, IonGrid, IonIcon, IonItem, IonLabel,
   IonList, IonRow, IonSelect, IonSelectOption, IonTextarea,
 } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { AddressModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -31,8 +29,6 @@ export interface ExpenseFormI18n {
   selector: 'bk-expense-form',
   standalone: true,
   imports: [
-    FormsModule,
-    vestForms,
     TextInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonItem, IonLabel,
     IonSelect, IonSelectOption, IonTextarea, IonList,
@@ -40,12 +36,7 @@ export interface ExpenseFormI18n {
     SvgIconPipe,
   ],
   template: `
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-grid>
         <ion-row>
@@ -65,7 +56,7 @@ export interface ExpenseFormI18n {
           <ion-col size="4">
             <ion-item>
               <ion-label>{{ i18n().currency_label() }}</ion-label>
-              <ion-select [(ngModel)]="currencyModel" name="currency">
+              <ion-select [value]="currency()" (ionChange)="onFieldChange('currency', $event.detail.value)">
                 @for (c of currencies; track c) {
                   <ion-select-option [value]="c">{{ c }}</ion-select-option>
                 }
@@ -78,7 +69,7 @@ export interface ExpenseFormI18n {
           <ion-col size="12">
             <ion-item>
               <ion-label>{{ i18n().iban_label() }}</ion-label>
-              <ion-select [ngModel]="ibanSelectValue()" (ngModelChange)="setIbanSelect($event)" name="ibanSelect">
+              <ion-select [value]="ibanSelectValue()" (ionChange)="setIbanSelect($event.detail.value)">
                 @for (addr of ibans(); track addr.bkey) {
                   <ion-select-option [value]="addr.iban">
                     {{ addr.isFavorite ? '★ ' : '' }}{{ formatIban(addr.iban) }}
@@ -129,7 +120,7 @@ export interface ExpenseFormI18n {
           <ion-col size="12">
             <ion-item>
               <ion-label>{{ i18n().note_label() }}</ion-label>
-              <ion-textarea [(ngModel)]="noteModel" name="note" [autoGrow]="true" />
+              <ion-textarea [value]="note()" (ionInput)="onFieldChange('note', $event.detail.value)" [autoGrow]="true" />
             </ion-item>
           </ion-col>
         </ion-row>
@@ -148,7 +139,6 @@ export class ExpenseForm {
   public pickFiles = output<void>();
   public takePhoto = output<void>();
 
-  protected readonly suite = expenseValidations;
   protected readonly currencies = ALLOWED_CURRENCIES;
   protected readonly formatIban = (iban: string) => formatIban(iban, IbanFormat.Friendly);
 
@@ -179,11 +169,9 @@ export class ExpenseForm {
     }
   }
 
-  protected get currencyModel(): string { return this.currency(); }
-  protected set currencyModel(v: string) { this.onFieldChange('currency', v); }
-
-  protected get noteModel(): string { return this.note(); }
-  protected set noteModel(v: string) { this.onFieldChange('note', v); }
+  constructor() {
+    effect(() => this.valid.emit(this.result().isValid()));
+  }
 
   protected abstractI18n = computed(() => ({
     name: 'abstract',
@@ -214,10 +202,6 @@ export class ExpenseForm {
   protected onFieldChange(field: string, value: unknown): void {
     this.dirty.emit(true);
     this.formData.update(d => ({ ...d, [field]: value }));
-  }
-
-  protected onFormChange(value: ExpenseFormValue): void {
-    this.formData.update(d => ({ ...d, ...value }));
   }
 
   protected removeFile(index: number): void {

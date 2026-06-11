@@ -1,10 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, AccountModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 
 import { AccountI18n, accountValidations } from '@bk2/finance-account-util';
 
@@ -14,19 +13,13 @@ export type { AccountI18n };
   selector: 'bk-account-form',
   standalone: true,
   imports: [
-    vestForms,
     CategorySelect, TextInput, NotesInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
-      <form scVestForm
-        [formValue]="formData()"
-        [suite]="suite"
-        (dirtyChange)="dirty.emit($event)"
-        (validChange)="valid.emit($event)"
-        (formValueChange)="onFormChange($event)">
+      <form novalidate>
 
         <ion-card>
           <ion-card-content class="ion-no-padding">
@@ -105,7 +98,6 @@ export class AccountForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  protected readonly suite = accountValidations;
   private readonly validationResult = computed(() => accountValidations(this.formData(), this.tenantId(), ''));
   protected idErrors = computed(() => this.validationResult().getErrors('id'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
@@ -118,15 +110,13 @@ export class AccountForm {
   protected notes = linkedSignal(() => this.formData().notes ?? '');
   protected bkey = computed(() => this.formData().bkey ?? '');
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: AccountModel): void {
-    this.formData.update((vm) => ({ ...vm, ...value }));
-    debugFormModel('AccountForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('AccountForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {
