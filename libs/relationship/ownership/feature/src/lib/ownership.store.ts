@@ -14,8 +14,6 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { newOwnership, OWNERSHIP_I18N_KEYS } from '@bk2/relationship-ownership-util';
-import { OwnershipEditModal } from './ownership-edit.modal';
-import { OwnershipNewModal } from './ownership-new.modal';
 
 export type OwnershipState = {
   // accordion state
@@ -311,6 +309,7 @@ export const OwnershipStore = signalStore(
         const resource = givenResource ?? store.appStore.defaultResource();
         if (!owner || !resource) return;
         const ownership = newOwnership(owner, resource, store.tenantId(), ownerModelType);
+        const { OwnershipNewModal } = await import('./ownership-new.modal');
         const modal = await store.modalController.create({
           component: OwnershipNewModal,
           cssClass: 'small-modal',
@@ -335,6 +334,7 @@ export const OwnershipStore = signalStore(
        * @param readOnly 
        */
       async edit(ownership: OwnershipModel, readOnly = true): Promise<void> {
+        const { OwnershipEditModal } = await import('./ownership-edit.modal');
         const modal = await store.modalController.create({
           component: OwnershipEditModal,
           componentProps: {
