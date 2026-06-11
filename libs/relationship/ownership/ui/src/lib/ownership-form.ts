@@ -1,11 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output, Signal, signal } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, Signal, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
 import { DEFAULT_CURRENCY } from '@bk2/shared-constants';
 import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
 
@@ -39,20 +38,13 @@ export interface OwnershipFormI18n {
   selector: 'bk-ownership-form',
   standalone: true,
   imports: [
-    vestForms,
     Chips, NotesInput, DateInput, TextInput, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm 
-      [formValue]="formData()"
-      (formValueChange)="onFormChange($event)"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-    >
+    <form novalidate>
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
@@ -145,7 +137,6 @@ export class OwnershipForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = ownershipValidations;
   private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.tenantId(), this.allTags()));
   protected readonly errors = signal<Record<string, string>>({ });
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
@@ -163,16 +154,14 @@ export class OwnershipForm {
   protected notes = linkedSignal(() => this.formData().notes ?? '');
   protected bkey = computed(() => this.formData().bkey ?? '');
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: OwnershipModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('OwnershipForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('OwnershipForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {
