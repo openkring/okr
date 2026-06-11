@@ -1,12 +1,10 @@
 import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
-import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { CategoryI18n, categoryListValidations } from '@bk2/category-util';
 import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { validateVestTree } from '@bk2/shared-util-angular';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 @Component({
@@ -81,13 +79,8 @@ export class CategoryListForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  // signal form — wraps formData with Vest validation
-  protected readonly categoryForm = form(this.formData, (path) =>
-    validateVestTree(path, categoryListValidations as any),
-  );
-
   constructor() {
-    effect(() => this.valid.emit(this.categoryForm().valid()));
+    effect(() => this.valid.emit(this.validationResult().isValid()));
   }
 
   // validation and errors
