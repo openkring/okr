@@ -68,3 +68,14 @@ export const RESPONSIBILITY_SELECT_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type ResponsibilitySelectI18n = { [K in keyof typeof RESPONSIBILITY_SELECT_I18N_KEYS]: Signal<string> };
+
+// ---------------------------------------------------------------------------
+// location-select.store
+// ---------------------------------------------------------------------------
+
+export const LOCATION_SELECT_I18N_KEYS = {
+  location_select: PFX + 'location.select',
+  location_empty:  PFX + 'location.empty',
+} satisfies Record<string, string>;
+
+export type LocationSelectI18n = { [K in keyof typeof LOCATION_SELECT_I18N_KEYS]: Signal<string> };

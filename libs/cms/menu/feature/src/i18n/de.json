@@ -182,7 +182,7 @@
     "label": {
       "label": "Bezeichnung",
       "placeholder": "Name",
-      "helper": "menu.feature.label.helper"
+      "helper": "Das ist der Name, der auf dem MenuItem für den User sichtbar ist."
     },
     "url": {
       "label": "URL",

@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Fahrt hinzufügen",
+    "conf": "Fahrt wurde hinzugefügt.",
+    "error": "Fahrt konnte nicht hinzugefügt werden."
+  },
+  "update": {
+    "label": "Fahrt ändern",
+    "conf": "Fahrt wurde geändert.",
+    "error": "Fahrt konnte nicht geändert werden."
+  },
+  "delete": {
+    "label": "Fahrt löschen",
+    "conf": "Fahrt wurde gelöscht.",
+    "error": "Fahrt konnte nicht gelöscht werden."
+  }
+}

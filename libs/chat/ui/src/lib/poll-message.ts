@@ -4,21 +4,9 @@ import { ActionSheetController, ActionSheetOptions, ModalController } from '@ion
 import { MatrixMessage } from '@bk2/shared-models';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
-import { hashUserIdToColor } from '@bk2/chat-util';
+import { hashUserIdToColor, MatrixChatI18n } from '@bk2/chat-util';
 
 import { PollDetailModal } from './poll-detail.modal';
-
-interface PollMessageI18n {
-  as_title: Signal<string>;
-  results_title: Signal<string>;
-  survey_total: Signal<string>;
-  choose_multiple: Signal<string>;
-  choose_one: Signal<string>;
-  survey_end: Signal<string>;
-  cancel: Signal<string>;
-  survey_title: Signal<string>;
-  survey_empty: Signal<string>
-}
 
 @Component({
   selector: 'bk-poll-message',
@@ -160,11 +148,11 @@ interface PollMessageI18n {
 
     <div class="poll-footer">
       @if (message().pollEnded) {
-        {{ '@chat.survey.ended' }}
+        {{ i18n().survey_ended() }}
       } @else {
         {{ totalVotes() }} {{ i18n().survey_total() }}
         @if (myVoteAnswerIds().length > 0) {
-          · {{ '@chat.survey.voted' }}
+          · {{ i18n().survey_voted() }}
         }
       }
     </div>
@@ -178,7 +166,7 @@ export class PollMessage {
   // inputs
   public message = input.required<MatrixMessage>();
   public currentUserId = input.required<string>();
-  public readonly i18n = input.required<PollMessageI18n>();
+  public readonly i18n = input.required<MatrixChatI18n>();
 
   // outputs
   public voteClicked = output<{ pollEventId: string; answerIds: string[] }>();

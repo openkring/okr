@@ -2,7 +2,6 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { PersonalRelModel, PersonModel, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList } from '@bk2/shared-ui';
@@ -17,7 +16,7 @@ import { PersonalRelStore } from './personal-rel.store';
   selector: 'bk-personal-rel-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
+    AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
     EmptyList,
     IonAccordion, IonItem, IonLabel, IonIcon, IonList, IonButton,
     IonImg, IonGrid, IonRow, IonCol, IonAvatar
@@ -29,7 +28,7 @@ import { PersonalRelStore } from './personal-rel.store';
   template: `
   <ion-accordion toggle-icon-slot="start" value="personalRels">
     <ion-item slot="header" [color]="color()">
-      <ion-label>{{ title() | translate | async }}</ion-label>
+      <ion-label>{{ accordionTitle() }}</ion-label>
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -38,7 +37,7 @@ import { PersonalRelStore } from './personal-rel.store';
     </ion-item>
     <div slot="content">
         @if(relsCount() === 0) {
-        <bk-empty-list message="@personalRel.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(personalRel of personalRels(); track $index) {
@@ -75,33 +74,34 @@ import { PersonalRelStore } from './personal-rel.store';
   `,
 })
 export class PersonalRelAccordion {
-  protected readonly personalRelStore = inject(PersonalRelStore);
+  protected readonly store = inject(PersonalRelStore);
   private actionSheetController = inject(ActionSheetController);
 
   public person = input.required<PersonModel>();
   public color = input('light');
-  public title = input('@personalRel.plural');
+  public title = input<string | undefined>();
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected personalRels = computed(() => this.personalRelStore.allPersonalRels());  // tbd: better define: a) all, b) open c) current year ...
+  protected personalRels = computed(() => this.store.allPersonalRels());  // tbd: better define: a) all, b) open c) current year ...
   protected relsCount = computed(() => this.personalRels().length);
-  protected types = computed(() => this.personalRelStore.appStore.getCategory('personalrel_type'));
+  protected types = computed(() => this.store.appStore.getCategory('personalrel_type'));
+  protected accordionTitle = computed(() => this.title() ?? this.store.i18n.personalRels());
 
-  private imgixBaseUrl = this.personalRelStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
       if (this.person()) {
-        this.personalRelStore.setPerson(this.person());
+        this.store.setPerson(this.person());
       }
     });
-    effect(() => this.personalRelStore.setShowMode(hasRole('admin')));
+    effect(() => this.store.setShowMode(hasRole('admin')));
   }
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    await this.personalRelStore.add(false);
+    await this.store.add(false);
   }
 
   /**
@@ -111,7 +111,7 @@ export class PersonalRelAccordion {
    */
   protected async showActions(personalRel: PersonalRelModel): Promise<void> {
     if (this.readOnly() === false) {
-      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
       this.addActionSheetButtons(actionSheetOptions, personalRel);
       await this.executeActions(actionSheetOptions, personalRel);
     }
@@ -123,15 +123,15 @@ export class PersonalRelAccordion {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, personalRel: PersonalRelModel): void {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('relationship.edit', this.personalRelStore.i18n.update(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('relationship.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(personalRel.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('relationship.end', this.personalRelStore.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('relationship.end', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('relationship.view', this.personalRelStore.i18n.view(), this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.personalRelStore.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('relationship.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
-    if (hasRole('admin', this.personalRelStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('relationship.delete', this.personalRelStore.i18n.delete(), this.imgixBaseUrl, 'trash'));
+    if (hasRole('admin', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('relationship.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -151,16 +151,16 @@ export class PersonalRelAccordion {
       if (!data) return;
       switch (data.action) {
         case 'relationship.delete':
-          await this.personalRelStore.delete(personalRel, this.readOnly());
+          await this.store.delete(personalRel, this.readOnly());
           break;
         case 'relationship.edit':
-          await this.personalRelStore.edit(personalRel, this.readOnly());
+          await this.store.edit(personalRel, this.readOnly());
           break;
         case 'relationship.view':
-          await this.personalRelStore.edit(personalRel, true);
+          await this.store.edit(personalRel, true);
           break;
         case 'relationship.end':
-          await this.personalRelStore.end(personalRel, this.readOnly());
+          await this.store.end(personalRel, this.readOnly());
           break;
       }
     }
@@ -168,7 +168,7 @@ export class PersonalRelAccordion {
 
   /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.personalRelStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected isOngoing(personalRel: PersonalRelModel): boolean {

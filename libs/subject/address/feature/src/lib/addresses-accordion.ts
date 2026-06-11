@@ -1,8 +1,6 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, effect, inject, input } from "@angular/core";
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
 
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { AddressModel, PrivacySettings, RoleName } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyList } from "@bk2/shared-ui";
@@ -17,7 +15,6 @@ import { AddressStore } from "./addresses.store";
   selector: 'bk-addresses-accordion',
   standalone: true,
   imports: [ 
-    TranslatePipe, AsyncPipe,
     FavoriteColorPipe, FormatAddressPipe, SvgIconPipe,
     EmptyList,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList
@@ -31,7 +28,7 @@ import { AddressStore } from "./addresses.store";
   template: `
   <ion-accordion toggle-icon-slot="start" value="addresses">
     <ion-item slot="header" [color]="color()">
-        <ion-label>{{ label() | translate | async }}</ion-label>
+        <ion-label>{{ title() }}</ion-label>
         @if(!isReadOnly()) {
           <ion-button fill="clear" (click)="add()" size="default">
             <ion-icon color="secondary" slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
@@ -84,7 +81,7 @@ export class AddressesAccordion {
   public intro = input<string>(); // description shown in the accordion header
   public readOnly = input<boolean>(true);
   public color = input('light'); // color of the accordion
-  public label = input(this.store.i18n.addresses()); // label of the accordion
+  public label = input<string | undefined>(); // label of the accordion
   public readonly priv = input.required<PrivacySettings>();
 
   // coerced boolean inputs
@@ -93,6 +90,9 @@ export class AddressesAccordion {
   // signals
   protected addresses = computed(() => this.store.addresses() ?? []);
   private currentUser = computed(() => this.store.currentUser());
+
+  // derived
+  protected title = computed(() => this.label() ?? this.store.i18n.addresses());
 
   // passing constants
   private imgixBaseUrl = this.store.imgixBaseUrl();

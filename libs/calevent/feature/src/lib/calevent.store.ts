@@ -19,7 +19,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 
 import { CalEventService } from '@bk2/calevent-data-access';
-import { CALEVENT_I18N_KEYS, CaleventI18n, getCaleventIndex, isCalEvent } from '@bk2/calevent-util';
+import { CALEVENT_I18N_KEYS, getCaleventIndex, isCalEvent } from '@bk2/calevent-util';
 import { RegressionSelectionModal } from '@bk2/calevent-ui';
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';

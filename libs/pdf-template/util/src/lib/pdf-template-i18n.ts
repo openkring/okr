@@ -3,24 +3,39 @@ import { Signal } from '@angular/core';
 const PFX = '@pdf-template/feature.';
 
 export const TEMPLATE_I18N_KEYS = {
+  template:         PFX + 'template',
+  templates:        PFX + 'templates',
   list_title:       PFX + 'list.title',
   empty:            PFX + 'empty',
-  ok:               '@ok',
-  cancel:           '@cancel',
-  save:             '@save.label',
+
+  archive:          PFX + 'archive.label',
+
+  create:           PFX + 'create.label',
+  create_conf:      PFX + 'create.conf',
+  create_error:     PFX + 'create.error',
+
+  delete:           PFX + 'delete.label',
   delete_confirm:   PFX + 'delete.confirm',
-  as_edit:          PFX + 'actionsheet.edit',
-  as_delete:        PFX + 'actionsheet.delete',
-  as_duplicate:     PFX + 'actionsheet.duplicate',
-  as_archive:       PFX + 'actionsheet.archive',
-  as_preview:       PFX + 'actionsheet.preview',
-  save_draft_conf:  PFX + 'save.draft.conf',
-  save_draft_error: PFX + 'save.draft.error',
-  publish_conf:     PFX + 'publish.conf',
-  publish_error:    PFX + 'publish.error',
   delete_conf:      PFX + 'delete.conf',
   delete_error:     PFX + 'delete.error',
+
+  duplicate:        PFX + 'duplicate.label',
+
+  preview:          PFX + 'preview.label',
   preview_error:    PFX + 'preview.error',
+
+  publish:          PFX + 'publish.label',
+  publish_conf:     PFX + 'publish.conf',
+  publish_error:    PFX + 'publish.error',
+
+  save:             '@save.label',
+  save_draft_conf:  PFX + 'save.draft.conf',
+  save_draft_error: PFX + 'save.draft.error',
+
+  update:           PFX + 'update.label',
+  update_conf:      PFX + 'update.conf',
+  update_error:     PFX + 'update.error',
+
   name_label:       PFX + 'name.label',
   category_label:   PFX + 'category.label',
   language_label:   PFX + 'language.label',
@@ -28,7 +43,11 @@ export const TEMPLATE_I18N_KEYS = {
   version_label:    PFX + 'version.label',
   html_label:       PFX + 'html.label',
   css_label:        PFX + 'css.label',
-  preview_label:    PFX + 'preview.label',
+  
+  as_title:         '@actionsheet.title',
+  ok:               '@ok',
+  cancel:           '@cancel',
+
 } satisfies Record<string, string>;
 
 export type TemplateI18n = { [K in keyof typeof TEMPLATE_I18N_KEYS]: Signal<string> };

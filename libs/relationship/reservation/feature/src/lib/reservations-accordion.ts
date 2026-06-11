@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ReservationModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, getSvgIconUrl, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList } from '@bk2/shared-ui';
@@ -15,7 +13,7 @@ import { ReservationStore } from './reservation.store';
   selector: 'bk-reservations-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe,
+    SvgIconPipe, DurationPipe,
     EmptyList,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonAvatar, IonImg, IonList
   ],
@@ -24,7 +22,7 @@ import { ReservationStore } from './reservation.store';
   template: `
   <ion-accordion toggle-icon-slot="start" value="reservations">
     <ion-item slot="header" [color]="color()">
-      <ion-label>{{ title() | translate | async }}</ion-label>
+      <ion-label>{{ accordionTitle() }}</ion-label>
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -33,7 +31,7 @@ import { ReservationStore } from './reservation.store';
     </ion-item>
     <div slot="content">
       @if(reservations().length === 0) {
-        <bk-empty-list message="@reservation.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(reservation of reservations(); track $index) {
@@ -53,13 +51,13 @@ import { ReservationStore } from './reservation.store';
   `,
 })
 export class ReservationsAccordion {
-  private readonly store = inject(ReservationStore);
+  protected readonly store = inject(ReservationStore);
   private actionSheetController = inject(ActionSheetController);
   
   // inputs
   public listId = input.required<string>();
   public color = input('light');
-  public title = input('@reservation.plural');
+  public title = input<string | undefined>();
   public readOnly = input(true); 
 
   // coerced boolean inputs
@@ -68,6 +66,7 @@ export class ReservationsAccordion {
   // derived fields
   protected reservations = computed(() => this.store.filteredReservations());
   private currentUser = computed(() => this.store.currentUser());
+  protected accordionTitle = computed(() => this.title() ?? this.store.i18n.reservations());
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
   protected readonly resourceTypes = computed(() => this.store.getResourceTypes());
@@ -101,17 +100,17 @@ export class ReservationsAccordion {
    */
    private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {
       if (hasRole('registered', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on', this.store.i18n.view()));
-        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel', this.store.i18n.cancel()));
+        actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       }
       if (!this.isReadOnly()) {
-        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'edit', this.store.i18n.update()));
+        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
         if (isOngoing(reservation.endDate)) {
-          actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl, 'stop-circle', this.store.i18n.end()));
+          actionSheetOptions.buttons.push(createActionSheetButton('endres', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
         }
       }
       if (hasRole('admin', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash', this.store.i18n.delete()));
+        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
       }
       if (actionSheetOptions.buttons.length === 1) { // only cancel button
         actionSheetOptions.buttons = [];

@@ -13,5 +13,10 @@
     "label": "Beschäftigung löschen",
     "conf": "Beschäftigung wurde gelöscht.",
     "error": "Beschäftigung konnte nicht gelöscht werden."
+  },
+  "end": {
+    "label": "Beschäftigung beenden",
+    "conf": "Die Beschäftigung wurde beendet.",
+    "error": "Die Beschäftigung konnte nicht beendet werden."
   }
 }

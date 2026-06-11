@@ -22,21 +22,21 @@ import { MenuStore } from './menu.store';
     <ion-header>
       <!-- page header -->
       <ion-toolbar color="secondary">
-        <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
-        <ion-title>{{ selectedMenuItemsCount() }}/{{ menuItemsCount() }} {{ menuStore.i18n.menus() }}</ion-title>
-        <ion-buttons slot="end">
-          @if(hasRole('privileged') || !readOnly()) {
-            <ion-button (click)="add()">
-              <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
-            </ion-button>
-          }
-        </ion-buttons>
+        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+        <ion-title>{{ selectedMenuItemsCount() }}/{{ menuItemsCount() }} {{ store.i18n.menus() }}</ion-title>
+        @if(hasRole('privileged') || !readOnly()) {
+          <ion-buttons slot="end">
+              <ion-button (click)="add()">
+                <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+              </ion-button>
+          </ion-buttons>
+        }
       </ion-toolbar>
 
       <!-- description -->
       <ion-toolbar class="ion-hide-md-down">
         <ion-item lines="none">
-          <ion-label>{{ menuStore.i18n.description() }}</ion-label>
+          <ion-label>{{ store.i18n.description() }}</ion-label>
         </ion-item>
       </ion-toolbar>
 
@@ -52,13 +52,13 @@ import { MenuStore } from './menu.store';
           <ion-grid>
             <ion-row>
               <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ menuStore.i18n.name_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4" class="ion-hide-md-down">
-                  <ion-label><strong>{{ menuStore.i18n.link() }}</strong></ion-label>
+                  <ion-label><strong>{{ store.i18n.link() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4">
-                  <ion-label><strong>{{ menuStore.i18n.action() }}</strong></ion-label>
+                  <ion-label><strong>{{ store.i18n.action() }}</strong></ion-label>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -72,7 +72,7 @@ import { MenuStore } from './menu.store';
         <bk-spinner />
       } @else {
         @if (filteredMenuItems().length === 0) {
-          <bk-empty-list [message]="menuStore.i18n.empty()" />
+          <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
             @for(menuItem of filteredMenuItems(); track menuItem.bkey) {
@@ -94,32 +94,32 @@ import { MenuStore } from './menu.store';
   `
 })
 export class MenuList {
-  protected readonly menuStore = inject(MenuStore);
+  protected readonly store = inject(MenuStore);
   private actionSheetController = inject(ActionSheetController);
 
   // filters
-  protected searchTerm = linkedSignal(() => this.menuStore.searchTerm());
-  protected selectedCategory = linkedSignal(() => this.menuStore.selectedCategory());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedCategory = linkedSignal(() => this.store.selectedCategory());
 
   // computed
-  protected filteredMenuItems = computed(() => this.menuStore.filteredMenuItems() ?? []);
-  protected menuItemsCount = computed(() => this.menuStore.menuItemsCount());
+  protected filteredMenuItems = computed(() => this.store.filteredMenuItems() ?? []);
+  protected menuItemsCount = computed(() => this.store.menuItemsCount());
   protected selectedMenuItemsCount = computed(() => this.filteredMenuItems().length);
-  protected isLoading = computed(() => this.menuStore.isLoading());
-  protected menuActions = computed(() => this.menuStore.appStore.getCategory('menu_action'));
-  protected readOnly = computed(() => !hasRole('contentAdmin', this.menuStore.currentUser()));
+  protected isLoading = computed(() => this.store.isLoading());
+  protected menuActions = computed(() => this.store.appStore.getCategory('menu_action'));
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.store.currentUser()));
 
-  private imgixBaseUrl = this.menuStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   protected async showActions(menuItem: MenuItemModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions(this.menuStore.i18n.as_title());
-    if (hasRole('admin', this.menuStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.menuStore.i18n.edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.menuStore.i18n.delete(), this.imgixBaseUrl, 'trash'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.menuStore.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    if (hasRole('admin', this.store.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, menuItem);
     } else {
-      await this.menuStore.edit(menuItem, this.readOnly());
+      await this.store.edit(menuItem, this.readOnly());
     }
   }
 
@@ -131,28 +131,28 @@ export class MenuList {
       if (!data) return;
       switch (data.action) {
         case 'menu.delete':
-          await this.menuStore.delete(menuItem, this.readOnly());
+          await this.store.delete(menuItem, this.readOnly());
           break;
         case 'menu.edit':
-          await this.menuStore.edit(menuItem, this.readOnly());
+          await this.store.edit(menuItem, this.readOnly());
           break;
       }
     }
   }
 
   protected async add(): Promise<void> {
-    await this.menuStore.edit(undefined, this.readOnly());
+    await this.store.edit(undefined, this.readOnly());
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.menuStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected onSearchTermChange(searchTerm: string): void {
-    this.menuStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTypeSelected(type: string): void {
-    this.menuStore.setSelectedCategory(type);
+    this.store.setSelectedCategory(type);
   }
 }

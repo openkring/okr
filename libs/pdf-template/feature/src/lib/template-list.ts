@@ -97,12 +97,12 @@ export class TemplateList {
   }
 
   protected async showActions(tmpl: TemplateModel): Promise<void> {
-    const actionSheetOptions: ActionSheetOptions = createActionSheetOptions(tmpl.name);
+    const actionSheetOptions: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     actionSheetOptions.buttons.push(
-      createActionSheetButton('template.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit')
+      createActionSheetButton('template.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit')
     );
     actionSheetOptions.buttons.push(
-      createActionSheetButton('template.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash')
+      createActionSheetButton('template.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash')
     );
     actionSheetOptions.buttons.push(
       createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel')

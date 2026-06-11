@@ -1,7 +1,7 @@
 {
   "task": "Todo",
   "tasks": "Todos",
-  "description": "Aufgaben, die erledigt werden sollen.",
+  "desc": "Aufgaben, die erledigt werden sollen.",
   "empty": "Keine Todos gefunden.",
   "empty-my": "Gratulation ! - Du hast keine offenen Aufgaben.",
   "calendarName": {
@@ -71,9 +71,12 @@
     "helper": "An diesem Datum wurde die Aufgabe erledigt.",
     "error": "Das Datumsformat ist nicht korrekt."
   },
-  "state": {
-    "all": "Alle Stati",
+  "task_state": {
+    "all": {
+      "label": "Alle Stati"
+    },
     "label": "Status",
+    "helper": "Die Aufgabe ist in einem bestimmten Zustand, z.B. initial, geplant, in Arbeit, erledigt.",
     "initial": {
       "label": "Initial",
       "description": "Die Aufgabe wurde erstellt."

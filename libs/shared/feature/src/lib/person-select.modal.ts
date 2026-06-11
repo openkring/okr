@@ -8,15 +8,13 @@ import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
 import { AvatarPipe } from '@bk2/avatar-ui';
 
 import { PersonSelectStore } from './person-select.store';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-person-select-modal',
   standalone: true,
   imports: [
     Header, Spinner,
-    FullNamePipe, AvatarPipe, EmptyList, TranslatePipe, AsyncPipe,
+    FullNamePipe, AvatarPipe, EmptyList,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
   ],
   providers: [PersonSelectStore],
@@ -30,7 +28,7 @@ import { AsyncPipe } from '@angular/common';
       [searchTerm]="searchTerm()"
       (searchTermChange)="onSearchTermChange($event)"
       [isSearchable]="true"
-      [i18n]="{ title: ('@select_person' | translate | async)  ?? 'select'}"
+      [i18n]="{ title: store.i18n.person_select() }"
       [isModal]="true"
     />   
     <ion-content>

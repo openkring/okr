@@ -23,7 +23,7 @@ import { OwnershipStore } from './ownership.store';
   template: `
     <ion-accordion toggle-icon-slot="start" value="ownerships">
       <ion-item slot="header" [color]="color()">
-        <ion-label>{{ title() }}</ion-label>
+        <ion-label>{{ accordionTitle() }}</ion-label>
         @if(!readOnly()) {
           <ion-button fill="clear" (click)="add()" size="default">
             <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -59,13 +59,14 @@ export class OwnershipAccordion {
   public readonly ownerModelType = input<'person' | 'org'>('person');
   public readonly defaultResource = input<ResourceModel>();
   public readonly color = input('light');
-  public readonly title = input(this.store.i18n.ownerships);
+  public readonly title = input<string | undefined>();
   public readonly readOnly = input(true);
 
   // derived fields
   protected ownerships = computed(() => this.store.ownerships());
   private readonly currentUser = computed(() => this.store.currentUser());
   protected readonly resourceTypes = this.store.appStore.getCategory('resource_type');
+  protected accordionTitle = computed(() => this.title() ?? this.store.i18n.ownerships());
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

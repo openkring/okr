@@ -64,6 +64,26 @@
       "label": "Elemente",
       "description": "Die einzelnen Elemente einer Kategorie. Jedes Element wird in einer eigenen Zeile angezeigt.",
       "empty": "Es sind noch keine Elemente in dieser Kategorie definiert."
+  },
+
+  "priority": {
+    "label": "Priorität",
+    "helper": "Die Priorität einer Aufgabe, dh. wie schnell muss sie gemacht werden.",
+    "all": {
+      "label": "Alle Prioritäten"
+    },
+    "low": {
+      "label": "Niedrig",
+      "description": "Niedrige Priorität"
+    },
+    "medium": {
+      "label": "Normal",
+      "description": "Normale Priorität"
+    },
+    "high": {
+      "label": "Hoch",
+      "description": "Hohe Priorität"
+    }
   }
 
 }

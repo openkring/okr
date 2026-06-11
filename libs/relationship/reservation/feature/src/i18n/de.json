@@ -73,12 +73,12 @@
     "start": { 
       "label": "Startdatum", 
       "placeholder": "TT.MM.JJJJ", 
-      "helper": "" 
+      "helper": "Die Reservation ist ab diesem Datum gültig." 
     },
     "end": { 
       "label": "Enddatum", 
       "placeholder": "TT.MM.JJJJ", 
-      "helper": "" 
+      "helper": "Die Reservation endet an diesem Datum." 
     }
   },
   "startTime":    { 
@@ -87,7 +87,7 @@
   },
   "fullDay":      { 
     "label": "Ganztägig", 
-    "helper": "" 
+    "helper": "Die Reservation gilt während des ganzen Tages." 
   },
   "durationMinutes": {
     "label": "Dauer (Minuten)",

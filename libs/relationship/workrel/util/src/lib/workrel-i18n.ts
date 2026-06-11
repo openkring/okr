@@ -8,8 +8,7 @@ export const WORKREL_I18N_KEYS = {
   desc:                             PFX + 'desc',
   reldesc:                          PFX + 'reldesc',
   revreldesc:                       PFX + 'revreldesc',
-  empty:                           PFX + 'empty',
-
+  empty:                            PFX + 'empty',
 
   create:                           PFX + 'create.label',
   create_conf:                      PFX + 'create.conf',

@@ -1,9 +1,7 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { CalEventModel, InvitationModel, MembershipModel } from '@bk2/shared-models';
+import { CalEventModel, InvitationModel, InvitationState, MembershipModel } from '@bk2/shared-models';
 import { FullNamePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -22,7 +20,7 @@ import { InvitationStore } from './invitation.store';
   selector: 'bk-invitees-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, PrettyDatePipe, FullNamePipe,
+    SvgIconPipe, AvatarPipe, PrettyDatePipe, FullNamePipe,
     EmptyList,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonAvatar
   ],
@@ -33,7 +31,7 @@ import { InvitationStore } from './invitation.store';
   template: `
   <ion-accordion toggle-icon-slot="start" value="invitees">
     <ion-item slot="header" [color]="color()">
-      <ion-label>{{ title() | translate | async }}</ion-label>
+      <ion-label>{{ accordionTitle() }}</ion-label>
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -51,13 +49,13 @@ import { InvitationStore } from './invitation.store';
                 <ion-img src="{{ 'person.' + invitee.inviteeKey | avatar:'person' }}" alt="invitation avatar" />
               </ion-avatar>
               <ion-label>{{ invitee.inviteeFirstName | fullName: invitee.inviteeLastName }}</ion-label>
-              <ion-label>{{ '@invitation.state.' + invitee.state + '.label' | translate | async }}</ion-label>
+              <ion-label>{{ getStateLabel(invitee.state) }}</ion-label>
               <ion-label>{{ invitee.respondedAt | prettyDate }} </ion-label>
             </ion-item>
           }
         </ion-list>
         <ion-list lines="none">
-          <ion-label>{{ acceptedCount()}}/{{invitees().length }} {{ '@invitation.accepted' | translate | async }}</ion-label>
+          <ion-label>{{ acceptedCount()}}/{{invitees().length }} {{ store.i18n.accepted() }}</ion-label>
         </ion-list>
       } 
     </div>
@@ -71,7 +69,7 @@ export class InviteesAccordion {
   // inputs
   public calevent = input.required<CalEventModel>();
   public readonly color = input('light');
-  public readonly title = input('@invitation.plural');
+  public readonly title = input<string | undefined>();
   public showOnlyCurrent = input<boolean>(true);
   public readonly readOnly = input<boolean>(true);
 
@@ -81,6 +79,7 @@ export class InviteesAccordion {
   // derived fields
   protected invitees = computed(() => this.store.invitees());
   private currentUser = computed(() => this.store.currentUser());
+  protected accordionTitle = computed(() => this.title() ?? this.store.i18n.invitations());
   protected acceptedCount = computed(() => 
     this.invitees().filter(inv => inv.state === 'accepted').length
   );
@@ -93,6 +92,15 @@ export class InviteesAccordion {
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
     await this.store.invitePerson(this.calevent(), this.isReadOnly());
+  }
+
+  protected getStateLabel(state: InvitationState): string {
+    switch(state) {
+      case 'pending':   return this.store.i18n.state_pending_label();
+      case 'accepted':  return this.store.i18n.state_accepted_label();
+      case 'maybe':     return this.store.i18n.state_maybe_label();
+      case 'declined':  return this.store.i18n.state_declined_label();
+    }
   }
 
   /**

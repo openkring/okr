@@ -6,20 +6,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { MatrixMessage, MatrixReadReceipt } from '@bk2/shared-models';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
-
-interface MessageListI18n {
-  no_messages_start_conversation: Signal<string>;
-  as_title: Signal<string>;
-  results_title: Signal<string>;
-  survey_total: Signal<string>;
-  choose_multiple: Signal<string>;
-  choose_one: Signal<string>;
-  survey_end: Signal<string>;
-  cancel: Signal<string>;
-  survey_title: Signal<string>;
-  survey_empty: Signal<string>
-}
+import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '@bk2/chat-util';
 
 @Component({
   selector: 'bk-matrix-message-list',
@@ -493,7 +480,7 @@ export class MatrixMessageList {
   typingUsers = input<string[]>([]);
   threadReplyCounts = input<Map<string, number>>(new Map());
   receiptsByEventId = input<Map<string, MatrixReadReceipt[]>>(new Map());
-  public readonly i18n = input.required<MessageListI18n>();
+  public readonly i18n = input.required<MatrixChatI18n>();
 
 
   messageClicked = output<MatrixMessage>();

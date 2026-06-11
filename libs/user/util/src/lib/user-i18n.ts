@@ -6,6 +6,8 @@ export const USER_I18N_KEYS = {
   user:                            PFX + 'user',
   users:                           PFX + 'users',
   empty:                           PFX + 'empty',
+  unknown:                          PFX + 'unknown',
+  intro:                            PFX + 'intro',
 
   // actions
   create:                           PFX + 'create.label',
@@ -28,7 +30,7 @@ export const USER_I18N_KEYS = {
   // fbuser
   fbuser_title:                     PFX + 'fbuser.title',
   fbuser_description:               PFX + 'fbuser.description',
-  fbuser_delete:                    PFX + 'fbuser.delete',
+  fbuser_delete:                    PFX + 'fbuser.delete.label',
   fbuser_update:                    PFX + 'fbuser.update.label',
 
   // forms
