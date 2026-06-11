@@ -1,11 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
 import { CategoryListModel, OrgModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 
 import { OrgI18n, orgValidations } from '@bk2/subject-org-util';
 
@@ -13,19 +12,13 @@ import { OrgI18n, orgValidations } from '@bk2/subject-org-util';
   selector: 'bk-org-form',
   standalone: true,
   imports: [
-    vestForms,
     CategorySelect, DateInput, TextInput, Chips, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
    styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -109,8 +102,9 @@ export class OrgForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validation and errors
-  protected readonly suite = orgValidations;
   private readonly validationResult = computed(() => orgValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
@@ -133,12 +127,6 @@ export class OrgForm {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: OrgModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('OrgForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('OrgForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

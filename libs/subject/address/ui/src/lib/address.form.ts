@@ -1,10 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { AddressModel, CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
@@ -14,7 +13,6 @@ import { addressValidations, AddressesI18n } from '@bk2/subject-address-util';
   selector: 'bk-address-form',
   standalone: true,
   imports: [
-    vestForms,
     CategorySelect, TextInput, Checkbox, SwissCitySearch, NotesInput,
     EmailInput, PhoneInput, IbanInput, ErrorNote, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
@@ -22,13 +20,7 @@ import { addressValidations, AddressesI18n } from '@bk2/subject-address-util';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-  <form scVestForm
-    [formValue]="formData()"
-    (formValueChange)="onFormChange($event)"
-    [suite]="suite" 
-    (dirtyChange)="dirty.emit($event)"
-    (validChange)="valid.emit($event)"
-  >
+  <form novalidate>
 
     <ion-card>
       <ion-card-content class="ion-no-padding">
@@ -211,8 +203,9 @@ export class AddressForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
   
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validation and errors
-  protected readonly suite = addressValidations;
   private readonly validationResult = computed(() => addressValidations(this.formData(), this.tenantId(), this.allTags()));
   protected channelLabelError = computed(() => this.validationResult().getErrors('addressChannelLabel'));
   protected usageLabelError = computed(() => this.validationResult().getErrors('addressUsageLabel'));
@@ -268,12 +261,6 @@ export class AddressForm {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: AddressModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('AddressForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('AddressForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {
