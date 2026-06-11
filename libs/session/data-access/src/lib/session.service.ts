@@ -108,11 +108,17 @@ export class SessionService {
   }
 
   private sendBeacon(session: SessionModel): void {
-    if (typeof navigator === 'undefined' || !navigator.sendBeacon) return;
+    if (typeof fetch === 'undefined') return;
     const region = 'europe-west6';
     const projectId = this.env.firebase.projectId;
     const url = `https://${region}-${projectId}.cloudfunctions.net/endSession`;
     const payload = JSON.stringify({ sessionKey: session.bkey, tenantId: this.env.tenantId });
-    navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      keepalive: true,
+      credentials: 'omit',
+    }).catch(() => { /* best-effort on unload */ });
   }
 }
