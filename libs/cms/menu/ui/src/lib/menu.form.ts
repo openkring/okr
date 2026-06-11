@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@bk2/shared-constants';
