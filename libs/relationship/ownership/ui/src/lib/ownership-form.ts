@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal, signal } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
@@ -136,10 +136,8 @@ export class OwnershipForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  // validation and errors
+  // validation
   private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.tenantId(), this.allTags()));
-  protected readonly errors = signal<Record<string, string>>({ });
-  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
   protected ownerName1 = linkedSignal(() => this.formData().ownerName1 ?? ''); 
