@@ -159,8 +159,11 @@ export class TripEditModal {
       locations.push(locationAvatar);
       this.onFieldChange('locations', locations);
       this.onFieldChange('distance', result.location.distance);
+      this.onFieldChange('customLocationLabel', '');
     } else {
       this.onFieldChange('customLocationLabel', result.label);
+      this.onFieldChange('locations', []);
+      this.onFieldChange('distance', 0);
     }
   }
 
