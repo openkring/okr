@@ -109,6 +109,7 @@ export const getMatrixCredentials = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<MatrixAuthResponse> => {
@@ -191,7 +192,7 @@ export const getMatrixCredentials = onCall(
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            valid_until_ms: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days
+            valid_until_ms: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 days (refreshed on each app init; H-6)
           }),
         }
       );
@@ -271,6 +272,7 @@ export const getRoomByName = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string }> => {
@@ -299,6 +301,7 @@ export const requestGroupRoomAccess = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string; joined: boolean }> => {
@@ -521,6 +524,7 @@ export const provisionMatrixUser = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ matrixUserId: string }> => {
@@ -602,6 +606,7 @@ export const invitePersonToGroupRoom = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string; joined: boolean }> => {
@@ -739,6 +744,7 @@ export const kickPersonFromGroupRoom = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string; kicked: boolean }> => {
@@ -838,6 +844,7 @@ export const renameMatrixRoom = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string; name: string }> => {
@@ -939,6 +946,7 @@ export const listMatrixRooms = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ rooms: AdminRoom[]; total: number }> => {
@@ -1040,6 +1048,7 @@ export const getRoomDetails = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<RoomDetails> => {
@@ -1105,6 +1114,7 @@ export const getAllMembersFromRoom = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ members: RoomMemberInfo[]; total: number }> => {
@@ -1150,6 +1160,7 @@ export const getMemberDetails = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<MemberDetails> => {
@@ -1210,6 +1221,7 @@ export const deleteMatrixRoom = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ deleteId: string }> => {
@@ -1255,6 +1267,7 @@ export const deactivateMatrixUser = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ matrixUserId: string; deactivated: boolean }> => {
@@ -1305,6 +1318,7 @@ export const addMatrixRoomAlias = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ alias: string }> => {
@@ -1349,6 +1363,7 @@ export const syncFirebaseProfileToMatrix = onCall(
   {
     cors: true,
     region: 'europe-west6',
+    enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ success: boolean }> => {
@@ -1421,7 +1436,7 @@ export const syncFirebaseProfileToMatrix = onCall(
  * then sends a high-priority FCM message to every registered device.
  */
 export const sendCallNotification = onCall(
-  { cors: true, region: 'europe-west6' },
+  { cors: true, region: 'europe-west6', enforceAppCheck: true },
   async (request): Promise<{ sent: number }> => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Must be authenticated');
