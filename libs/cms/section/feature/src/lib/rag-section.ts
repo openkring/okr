@@ -1,6 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { IonButton, IonCard, IonCardContent, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonSpinner, IonText } from '@ionic/angular/standalone';
 
@@ -183,7 +182,6 @@ import { RagStore } from './rag-section.store';
 })
 export class RagSectionComponent {
     protected readonly store = inject(RagStore);
-    private readonly sanitizer = inject(DomSanitizer);
 
     // inputs
     public section = input<SectionModel>();
@@ -216,8 +214,12 @@ export class RagSectionComponent {
     }
 
     // methods
-    protected toHtml(markdown: string): SafeHtml {
-        return this.sanitizer.bypassSecurityTrustHtml(marked.parse(markdown) as string);
+    // Return the parsed markdown as a plain string and bind it via [innerHTML]
+    // WITHOUT bypassing the sanitizer — Angular's DomSanitizer then strips any
+    // scripts/event-handlers/javascript: URLs that could arrive via LLM or
+    // document-injection in a RAG answer, while keeping markdown's safe formatting (M-1).
+    protected toHtml(markdown: string): string {
+        return marked.parse(markdown) as string;
     }
 
     protected async downloadFile(source: { title: string; url?: string }): Promise<void> {
