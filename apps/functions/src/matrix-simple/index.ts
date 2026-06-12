@@ -93,6 +93,157 @@ async function requireProvisionedUser(
   return uid;
 }
 
+/**
+ * Single source of truth for a group's Matrix room alias localpart.
+ * Matrix alias localparts may only contain [a-z0-9._~-]; the group bkey may contain
+ * uppercase/spaces/other characters, so it is lowercased and sanitised. ALL CFs must
+ * derive the alias through this helper — divergent derivation was a cause of S5
+ * duplicate rooms (some CFs used the raw `#group_<bkey>`).
+ */
+function groupRoomAliasLocalpart(groupId: string): string {
+  return `group_${groupId.toLowerCase().replace(/[^a-z0-9._~-]/g, '_')}`;
+}
+
+/**
+ * Ensure a Matrix account exists for `matrixUserId`, provisioning it via the Synapse
+ * admin API if missing. The display name is resolved from `persons/{personKey}` when a
+ * personKey is given, else from the Firebase user record when a firebaseUid is given.
+ */
+async function ensureMatrixUserExists(
+  matrixUserId: string,
+  adminToken: string,
+  opts: { personKey?: string; firebaseUid?: string } = {},
+): Promise<void> {
+  const checkResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (checkResp.ok) return;
+
+  let displayName = opts.personKey ?? matrixUserId.split(':')[0].substring(1);
+  if (opts.personKey) {
+    try {
+      const d = (await getFirestore().collection('persons').doc(opts.personKey).get()).data();
+      const full = [d?.['firstName'], d?.['lastName']].filter(Boolean).join(' ');
+      if (full) displayName = full;
+    } catch { /* fallback to personKey */ }
+  } else if (opts.firebaseUid) {
+    try {
+      const u = await getAuth().getUser(opts.firebaseUid);
+      displayName = u.displayName || u.email?.split('@')[0] || opts.firebaseUid;
+    } catch { /* fallback to localpart */ }
+  }
+
+  const createResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayname: displayName, admin: false, deactivated: false }),
+    }
+  );
+  if (!createResp.ok) {
+    throw new HttpsError('internal', `Failed to provision Matrix user ${matrixUserId}: ${await createResp.text()}`);
+  }
+  console.log(`ensureMatrixUserExists: provisioned ${matrixUserId} (${displayName})`);
+}
+
+/**
+ * Resolve the Matrix room for a group, in order of trust:
+ *   1. `groups/{groupId}.matrixRoomId` (verified to still exist on the homeserver)
+ *   2. canonical alias `#group_<sanitised-id>`
+ *   3. Synapse admin name-search for a room named exactly `groupId`
+ *   4. create a new invite-only room (only when `opts.create` is true)
+ *
+ * On any successful resolve/create the room ID is persisted back to the group doc, so
+ * every CF converges on one room and subsequent lookups are O(1). This is the durable
+ * fix for S5 (duplicate group rooms from divergent alias/name lookups).
+ *
+ * Returns undefined when the room cannot be found and `opts.create` is false.
+ */
+async function resolveGroupRoom(
+  groupId: string,
+  hostname: string,
+  adminToken: string,
+  opts: { create?: boolean } = {},
+): Promise<string | undefined> {
+  const authHeader = { Authorization: `Bearer ${adminToken}` };
+  const groupRef = getFirestore().collection('groups').doc(groupId);
+  const groupSnap = await groupRef.get();
+  if (!groupSnap.exists && opts.create) {
+    throw new HttpsError('not-found', `Group ${groupId} not found`);
+  }
+  const stored = groupSnap.data()?.['matrixRoomId'] as string | undefined;
+
+  // 1. Stored room id — verify it still exists (a purged room must not be returned)
+  if (stored) {
+    const checkResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(stored)}`,
+      { headers: authHeader }
+    );
+    if (checkResp.ok) return stored;
+    console.warn(`resolveGroupRoom: stored matrixRoomId ${stored} for group ${groupId} no longer exists, re-resolving`);
+  }
+
+  let roomId: string | undefined;
+
+  // 2. Canonical alias
+  const alias = `#${groupRoomAliasLocalpart(groupId)}:${hostname}`;
+  try {
+    const aliasResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(alias)}`,
+      { headers: authHeader }
+    );
+    if (aliasResp.ok) roomId = (await aliasResp.json() as { room_id: string }).room_id;
+  } catch { /* fall through to name search */ }
+
+  // 3. Name search by groupId
+  if (!roomId) {
+    const searchResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(groupId)}&limit=20`,
+      { headers: authHeader }
+    );
+    if (searchResp.ok) {
+      const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
+      const match = data.rooms?.find(r => r.name === groupId);
+      if (match) roomId = match.room_id;
+    }
+  }
+
+  // 4. Create
+  if (!roomId && opts.create) {
+    const createResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/createRoom`,
+      {
+        method: 'POST',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: groupId,
+          room_alias_name: groupRoomAliasLocalpart(groupId),
+          // invite-only (SEC-1): admin force-join works without a public join_rule.
+          preset: 'private_chat',
+          visibility: 'private',
+          creation_content: { 'm.federate': false },
+        }),
+      }
+    );
+    if (!createResp.ok) {
+      throw new HttpsError('internal', `Failed to create room for group ${groupId}: ${await createResp.text()}`);
+    }
+    roomId = (await createResp.json() as { room_id: string }).room_id;
+    console.log(`resolveGroupRoom: created room ${roomId} for group ${groupId}`);
+  }
+
+  // Persist back so all CFs agree and future lookups are O(1)
+  if (roomId && roomId !== stored && groupSnap.exists) {
+    await groupRef.update({ matrixRoomId: roomId }).catch(err =>
+      console.warn(`resolveGroupRoom: failed to persist matrixRoomId for group ${groupId}:`, err)
+    );
+  }
+
+  return roomId;
+}
+
 export interface MatrixAuthResponse {
   accessToken: string;
   userId: string;
@@ -317,48 +468,15 @@ export const requestGroupRoomAccess = onCall(
 
     const db = getFirestore();
 
-    // Load user doc once — gives us personKey and roles for both auth checks and Matrix localpart
+    // Authorization: the only requirement for group-chat access is being a provisioned
+    // system user. Group chats legitimately include non-members and past-members (e.g.
+    // training-course participants), so membership is NOT required. SEC-1 (invite-only
+    // rooms) ensures non-system Matrix accounts still cannot reach the room.
     const userDoc = await db.collection('users').doc(firebaseUid).get();
-    const userData = userDoc.data();
-    const personKey = (userData?.personKey as string | undefined) ?? '';
-    const userRoles = (userData?.roles ?? {}) as Record<string, boolean>;
-
-    // Load group to get the visibility setting
-    const groupDoc = await db.collection('groups').doc(groupId).get();
-    if (!groupDoc.exists) {
-      throw new HttpsError('not-found', `Group ${groupId} not found`);
+    if (!userDoc.exists) {
+      throw new HttpsError('permission-denied', 'No user profile.');
     }
-    const groupData = groupDoc.data()!;
-    const visibility = (groupData['visibility'] ?? '') as string;
-
-    // Authorization: member check first, then visibility-role check
-    let isAuthorized = false;
-
-    if (personKey) {
-      const memberSnap = await db.collection('memberships')
-        .where('orgKey', '==', groupId)
-        .where('orgModelType', '==', 'group')
-        .where('memberKey', '==', personKey)
-        .where('relIsLast', '==', true)
-        .limit(1)
-        .get();
-      if (!memberSnap.empty) {
-        isAuthorized = true;
-        console.log(`requestGroupRoomAccess: ${personKey} is a member of group ${groupId}`);
-      }
-    }
-
-    if (!isAuthorized && visibility) {
-      const visibilityRoles = visibility.split(',').map((r: string) => r.trim()).filter((r: string) => r.length > 0);
-      if (visibilityRoles.some((role: string) => userRoles[role] === true)) {
-        isAuthorized = true;
-        console.log(`requestGroupRoomAccess: ${firebaseUid} has visibility-role access to group ${groupId}`);
-      }
-    }
-
-    if (!isAuthorized) {
-      throw new HttpsError('permission-denied', `Access to group ${groupId} chat is not permitted`);
-    }
+    const personKey = (userDoc.data()?.personKey as string | undefined) ?? '';
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
     const localpart = personKey ? personKey.toLowerCase() : firebaseUid.toLowerCase();
@@ -367,92 +485,13 @@ export const requestGroupRoomAccess = onCall(
 
     console.log(`requestGroupRoomAccess: uid=${firebaseUid}, matrixUserId=${matrixUserId}, groupId=${groupId}`);
 
-    // Step 0: Ensure the Matrix user account exists — provision if this is their first chat access
-    const checkUserResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    if (!checkUserResp.ok) {
-      const userRecord = await getAuth().getUser(firebaseUid);
-      const displayName = userRecord.displayName || userRecord.email?.split('@')[0] || firebaseUid;
-      const createUserResp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
-        {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ displayname: displayName, admin: false, deactivated: false }),
-        }
-      );
-      if (!createUserResp.ok) {
-        throw new HttpsError('internal', `Failed to provision Matrix user: ${await createUserResp.text()}`);
-      }
-      console.log(`requestGroupRoomAccess: Provisioned Matrix user ${matrixUserId}`);
-    }
+    // Ensure the Matrix account exists (first chat access provisions it)
+    await ensureMatrixUserExists(matrixUserId, adminToken, { firebaseUid });
 
-    // Matrix room alias localpart may only contain [a-zA-Z0-9._~-].
-    // groupId is the group bkey which may contain spaces or other characters.
-    const roomAliasLocalpart = `group_${groupId.toLowerCase().replace(/[^a-z0-9._~-]/g, '_')}`;
-
-    // Step 1: Find the room — try canonical alias first, then name search
-    let roomId: string | undefined;
-
-    const roomAlias = `#${roomAliasLocalpart}:${hostname}`;
-    try {
-      const aliasResp = await fetch(
-        `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(roomAlias)}`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (aliasResp.ok) {
-        const data = await aliasResp.json() as { room_id: string };
-        roomId = data.room_id;
-        console.log(`requestGroupRoomAccess: Found room by alias: ${roomId}`);
-      }
-    } catch { /* alias not found, fall through to name search */ }
-
-    if (!roomId) {
-      const searchResp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(groupId)}&limit=20`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (searchResp.ok) {
-        const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
-        const match = data.rooms?.find(r => r.name === groupId);
-        if (match) {
-          roomId = match.room_id;
-          console.log(`requestGroupRoomAccess: Found room by name search: ${roomId}`);
-        }
-      }
-    }
-
-    // Step 2: Create room if still not found
-    if (!roomId) {
-      console.log(`requestGroupRoomAccess: Room not found for group ${groupId}, creating`);
-      const createResp = await fetch(
-        `${MATRIX_HOMESERVER}/_matrix/client/v3/createRoom`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: groupId,
-            room_alias_name: roomAliasLocalpart,
-            // invite-only (SEC-1): a public join_rule would let any user on the
-            // homeserver self-join and bypass the membership check above. The admin
-            // token user is the room creator (PL 100), so the invite + force-join
-            // sequence below works without a public join_rule.
-            // m.federate:false keeps the room local to this homeserver only.
-            preset: 'private_chat',
-            visibility: 'private',
-            creation_content: { 'm.federate': false },
-          }),
-        }
-      );
-      if (!createResp.ok) {
-        throw new Error(`Failed to create room for group ${groupId}: ${await createResp.text()}`);
-      }
-      const data = await createResp.json() as { room_id: string };
-      roomId = data.room_id;
-      console.log(`requestGroupRoomAccess: Created new room: ${roomId}`);
-    }
+    // Resolve (or create) the group's room — single source of truth, persisted on the
+    // group doc so every CF agrees on one room (fixes S5 duplicate rooms).
+    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: true });
+    if (!roomId) throw new HttpsError('not-found', `No room for group ${groupId}`);
 
     // Step 3: Get admin user ID (the MATRIX_ADMIN_TOKEN may belong to a regular user, not a
     // dedicated service account — so we need to get the admin into the room before they can
@@ -626,82 +665,11 @@ export const invitePersonToGroupRoom = onCall(
     console.log(`invitePersonToGroupRoom: groupId=${groupId}, personKey=${personKey}, matrixUserId=${matrixUserId}`);
 
     // Step 1: Provision the Matrix user if needed
-    const checkResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    if (!checkResp.ok) {
-      let displayName = personKey;
-      try {
-        const doc = await getFirestore().collection('persons').doc(personKey).get();
-        const d = doc.data();
-        if (d) {
-          const full = [d['firstName'], d['lastName']].filter(Boolean).join(' ');
-          if (full) displayName = full;
-        }
-      } catch { /* fallback */ }
-      const createResp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
-        {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ displayname: displayName, admin: false, deactivated: false }),
-        }
-      );
-      if (!createResp.ok) {
-        throw new Error(`Failed to provision Matrix user ${matrixUserId}: ${await createResp.text()}`);
-      }
-      console.log(`invitePersonToGroupRoom: Provisioned Matrix user ${matrixUserId}`);
-    }
+    await ensureMatrixUserExists(matrixUserId, adminToken, { personKey });
 
-    // Step 2: Find the room by alias, then by name search
-    let roomId: string | undefined;
-    const roomAlias = `#group_${groupId}:${hostname}`;
-    try {
-      const aliasResp = await fetch(
-        `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(roomAlias)}`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (aliasResp.ok) {
-        roomId = (await aliasResp.json() as { room_id: string }).room_id;
-      }
-    } catch { /* fall through */ }
-
-    if (!roomId) {
-      const searchResp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(groupId)}&limit=20`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (searchResp.ok) {
-        const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
-        const match = data.rooms?.find(r => r.name === groupId);
-        if (match) roomId = match.room_id;
-      }
-    }
-
-    if (!roomId) {
-      // Room doesn't exist yet — create it
-      const createResp = await fetch(
-        `${MATRIX_HOMESERVER}/_matrix/client/v3/createRoom`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: groupId,
-            room_alias_name: `group_${groupId}`,
-            // invite-only (SEC-1): see requestGroupRoomAccess for rationale.
-            preset: 'private_chat',
-            visibility: 'private',
-            creation_content: { 'm.federate': false },
-          }),
-        }
-      );
-      if (!createResp.ok) {
-        throw new Error(`Failed to create room for group ${groupId}: ${await createResp.text()}`);
-      }
-      roomId = (await createResp.json() as { room_id: string }).room_id;
-      console.log(`invitePersonToGroupRoom: Created room ${roomId} for group ${groupId}`);
-    }
+    // Step 2: Resolve (or create) the group's room — single source of truth (fixes S5)
+    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: true });
+    if (!roomId) throw new HttpsError('internal', `No room for group ${groupId}`);
 
     // Step 3: Ensure admin is in the room, then force-join the person
     const whoamiResp = await fetch(
@@ -775,31 +743,8 @@ export const kickPersonFromGroupRoom = onCall(
 
     console.log(`kickPersonFromGroupRoom: groupId=${groupId}, personKey=${personKey}, matrixUserId=${matrixUserId}`);
 
-    // Step 1: Find the room by alias, then by name search
-    let roomId: string | undefined;
-    const roomAlias = `#group_${groupId}:${hostname}`;
-    try {
-      const aliasResp = await fetch(
-        `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(roomAlias)}`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (aliasResp.ok) {
-        roomId = (await aliasResp.json() as { room_id: string }).room_id;
-      }
-    } catch { /* fall through */ }
-
-    if (!roomId) {
-      const searchResp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(groupId)}&limit=20`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (searchResp.ok) {
-        const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
-        const match = data.rooms?.find(r => r.name === groupId);
-        if (match) roomId = match.room_id;
-      }
-    }
-
+    // Step 1: Resolve the group's room (do not create — nothing to kick from if absent)
+    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: false });
     if (!roomId) {
       console.warn(`kickPersonFromGroupRoom: No room found for group "${groupId}", nothing to kick from`);
       return { roomId: '', kicked: false };
@@ -871,36 +816,8 @@ export const renameMatrixRoom = onCall(
     const adminToken = matrixAdminToken.value();
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
 
-    // Step 1: Find the room by alias, then fall back to name search
-    let roomId: string | undefined;
-
-    const roomAlias = `#group_${groupId}:${hostname}`;
-    try {
-      const aliasResp = await fetch(
-        `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(roomAlias)}`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (aliasResp.ok) {
-        roomId = (await aliasResp.json() as { room_id: string }).room_id;
-        console.log(`renameMatrixRoom: Found room by alias: ${roomId}`);
-      }
-    } catch { /* fall through to name search */ }
-
-    if (!roomId) {
-      const searchResp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(groupId)}&limit=20`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (searchResp.ok) {
-        const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
-        const match = data.rooms?.find(r => r.name === groupId);
-        if (match) {
-          roomId = match.room_id;
-          console.log(`renameMatrixRoom: Found room by name search: ${roomId}`);
-        }
-      }
-    }
-
+    // Step 1: Resolve the group's room (do not create)
+    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: false });
     if (!roomId) throw new Error(`No room found for group "${groupId}"`);
 
     // Step 2: Ensure the admin is in the room (needed to send state events)
