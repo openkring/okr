@@ -18,16 +18,16 @@ import { AocWebsiteStore } from './aoc-website.store';
     IonItem, IonLabel, IonInput, IonToggle, IonTextarea
   ],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.edit()}" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.website_update_label()}" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
-        <ion-label position="stacked">{{ store.i18n.key() }}</ion-label>
+        <ion-label position="stacked">{{ store.i18n.website_key() }}</ion-label>
         <ion-input [value]="formData().key" [readonly]="true" />
       </ion-item>
 
       <ion-item>
         <ion-toggle [checked]="formData().isHtml" (ionChange)="onToggleHtml($event)" />
-        <ion-label>{{ store.i18n.is_html() }}</ion-label>
+        <ion-label>{{ store.i18n.website_is_html() }}</ion-label>
       </ion-item>
 
 

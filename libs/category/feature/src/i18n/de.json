@@ -84,6 +84,161 @@
       "label": "Hoch",
       "description": "Hohe Priorität"
     }
-  }
-
+  },
+   "model_type": {
+      "name": "ModelType",
+      "all": {
+        "label": "Alle"
+      },
+      "account": {
+        "label": "Konto",
+        "description": "Ein Konto z.B. in der Buchhaltung.",
+        "placeholder": "Name des Kontos"
+      },
+      "address": {
+        "label": "Adresse",
+        "description": "Attribute, welche ein Subjekt erreichbar machen.",
+        "placeholder": "Bezeichnung der Adresse"
+      },
+      "avatar": {
+        "label": "Avatar",
+        "description": "Ein Bild, das eine Person darstellt.",
+        "placeholder": "Name des Avatars"
+      },
+      "bill": {
+        "label": "Lieferanten-Rechnung",
+        "description": "Kreditorenrechnung",
+        "placeholder": "Rechnungsnummer"
+      },
+      "comment": {
+        "label": "Kommentar",
+        "description": "Kommentar zu einem Objekt.",
+        "placeholder": "Titel"
+      },
+      "competitionLevel": {
+        "label": "Wettkampf-Kategorien",
+        "description": "Alterskateogorien der Regattierenden.",
+        "placeholder": "Name der Kategorie"
+      },
+      "document": {
+        "label": "Dokument",
+        "description": "Ein Dokument in elektronischer Form.",
+        "placeholder": "Name des Dokuments"
+      },
+      "expense": {
+        "label": "Spesen",
+        "description": "Ein Aufwand, der in der Buchhaltung erfasst wird.",
+        "placeholder": "Name des Aufwands"
+      },
+      "group": {
+        "label": "Gruppe",
+        "description": "Eine Gruppe von Personen oder Organisationen.",
+        "placeholder": "Name der Gruppe"
+      },
+      "invoice": {
+        "label": "Rechnung",
+        "description": "Debitorenrechnung",
+        "placeholder": "Rechnungsnummer"
+      },
+      "invoicePosition": {
+        "label": "Rechnungsposition",
+        "description": "Ein Teil einer Rechnung.",
+        "placeholder": "Name der Rechnungsposition"
+      },
+      "location": {
+        "label": "Ort",
+        "description": "Ein mittels Koordinaten bestimmbarer Punkt auf der Erde.",
+        "placeholder": "Ortsname"
+      },
+      "membership": {
+        "label": "Mitgliedschaft",
+        "description": "Mitgliedschaft einer Person oder Organisation in einer anderen Organisation.",
+        "placeholder": "Mitgliedsnummer"
+      },
+      "menuitem": {
+        "label": "Menü",
+        "description": "Ein Element in einem Menü.",
+        "placeholder": "Name des Menü-Elements"
+      },
+      "org": {
+        "label": "Organisation",
+        "description": "Eine Organisation, wie z.B. AG, Verein, GmbH...",
+        "placeholder": "Name der Organisation"
+      },
+      "ownership": {
+        "label": "Nutzung",
+        "description": "Eine Person oder Organisation ist Eigentümer einer Resource.",
+        "placeholder": "Name der Nutzung"
+      },
+      "page": {
+        "label": "Webpage",
+        "description": "Beschreibung des Inhalts einer Webpage (= Liste von Sections).",
+        "placeholder": "Titel der Webpage"
+      },
+      "person": {
+        "label": "Person",
+        "description": "Ein Mensch.",
+        "placeholder": "Name einer Person"
+      },
+      "personalRel": {
+        "label": "Beziehung",
+        "description": "Eine Beziehung zwischen zwei Personen.",
+        "placeholder": "Name der Beziehung"
+      },
+      "reservation": {
+        "label": "Reservation",
+        "description": "Eine Reservation für eine Resource.",
+        "placeholder": "Name der Reservation"
+      },
+      "resource": {
+        "label": "Resource",
+        "description": "Etwas, das man benützen, reservieren, besitzen kann (Boot, Auto, Immobilie, Schlüssel, Chäschtli etc.).",
+        "placeholder": "Name oder ID der Resource"
+      },
+      "responsibility": {
+        "label": "Verantwortung",
+        "description": "Eine Zuständigkeit einer Person für etwas.",
+        "placeholder": "ssss"
+      },
+      "section": {
+        "label": "Sektion",
+        "description": "Teil einer Webpage (horizontaler Streifen).",
+        "placeholder": "Sektionsname"
+      },
+      "transfer": {
+        "label": "Transfer",
+        "description": "Ein Transfer einer Resource von einer Person zu einer anderen Person.",
+        "placeholder": "Name des Transfers"
+      },
+      "trip": {
+        "label": "Trip",
+        "description": "Eine Reise/Ausflug/Ausfahrt/Fahrt/Wanderung mit einer oder mehreren Locations.",
+        "placeholder": "Name der Reise"
+      },
+      "user": {
+        "label": "Anwender",
+        "description": "Der authentisierte Nutzer der app.",
+        "placeholder": "user ID"
+      },
+      "workrel": {
+        "label": "Beschäftigung",
+        "description": "Ein Arbeitsverhältnis zwischen einer Person und einer Organisation.",
+        "placeholder": "Name der Arbeitsbeziehung"
+      },
+      "category": {
+        "label": "Kategorie",
+        "description": "Eine Kategorie, die eine Gruppe von Objekten beschreibt.",
+        "placeholder": "Name der Kategorie"
+      },
+      "calevent": {
+        "label": "Ereignis",
+        "description": "Etwas, das an einem bestimmten Datum stattfindet.",
+        "placeholder": "Kurzer Name für das Ereignis"
+      },
+      "task": {
+        "label": "Aufgabe",
+        "description": "Eine Aufgabe / ein Todo, die zu erledigen ist.",
+        "placeholder": "Kurze Beschreibung der Aufgabe"
+      }
+    }
 }

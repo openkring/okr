@@ -40,7 +40,7 @@ export type TripState = {
 
 const initialState: TripState = {
   searchTerm: '',
-  selectedState: 'open',
+  selectedState: 'all',
   selectedYear: getYear(), // initialize to current year to match ListFilter default
   locationType: 'logbuch'
 };

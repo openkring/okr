@@ -16,18 +16,18 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
   ],
   providers: [AocAdminOpsStore],
   template: `
-    <bk-header [i18n]="{ title: '{{ store.i18n.title() }}' }" />
+    <bk-header [i18n]="{ title: adminOpsTitle() }" />
     <ion-content>
       <!-- Debug Card -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.debug_tools() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.adminops_debug_tools() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="8">
-                <ion-label>{{ store.i18n.focus_event_logging() }}</ion-label>
+                <ion-label>{{ store.i18n.adminops_focus_event_logging() }}</ion-label>
               </ion-col>
               <ion-col size="4">
                 <ion-toggle [checked]="enableFocusLogging()" (ionChange)="onToggleChange($event)" />
@@ -45,20 +45,20 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
           <ion-grid>
             <!-- IBAN -->
             <ion-row>
-              <ion-col size="6">{{ store.i18n.iban_label() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.adminops_iban_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ store.i18n.iban_button() }}" iconName="checkbox-circle" (click)="listIban()" />
+                <bk-button label=" {{ store.i18n.adminops_iban_button() }}" iconName="checkbox-circle" (click)="listIban()" />
               </ion-col>
             </ion-row>
             <!-- Old Juniors -->
             <ion-row>
-              <ion-col size="6">{{ store.i18n.oldJuniors_label() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.adminops_oldJuniors_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ store.i18n.oldJuniors_button() }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
+                <bk-button label=" {{ store.i18n.adminops_oldJuniors_button() }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col><ion-label>"{{ store.i18n.mcatchange_title() }}"</ion-label></ion-col>
+              <ion-col><ion-label>"{{ store.i18n.adminops_mcatchange_title() }}"</ion-label></ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
@@ -70,7 +70,7 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
               <ion-col size="6">
               </ion-col>
               <ion-col size="6">
-                <bk-button label="Anzeigen" iconName="checkbox-circle" (click)="showMembershipCategoryChanges()" />
+                <bk-button [label]="store.i18n.adminops_mcatchange_button()" iconName="checkbox-circle" (click)="showMembershipCategoryChanges()" />
               </ion-col>
             </ion-row>
             <!-- Find orphaned sections -->
@@ -85,13 +85,16 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
 export class AocAdminOps {
   protected readonly store = inject(AocAdminOpsStore);
 
+  // derived
   protected readonly logTitle = computed(() => this.store.logTitle());
   protected readonly logInfo = computed(() => this.store.log());
   protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly adminOpsTitle = computed(() => this.store.i18n.adminops_title());
 
-  protected clubI18n = computed(() => ({ name: 'club', label: this.store.i18n.club_label() } as StringSelectI18n));
-  protected yearI18n = computed(() => ({ name: 'year', label: this.store.i18n.year_label() } as StringSelectI18n));
+  protected clubI18n = computed(() => ({ name: 'club', label: this.store.i18n.adminops_club_label() } as StringSelectI18n));
+  protected yearI18n = computed(() => ({ name: 'year', label: this.store.i18n.adminops_year_label() } as StringSelectI18n));
 
+  // signals
   protected club = signal('scs');
   protected year = signal('2025');
   protected enableFocusLogging = signal(false);
@@ -147,8 +150,6 @@ export class AocAdminOps {
   }
 
   protected onToggleChange(event: any): void {
-    const checked = event.detail.checked;
-    console.log('Toggle changed:', checked);
-    this.enableFocusLogging.set(checked);
+    this.enableFocusLogging.set(event.detail.checked);
   }
 }

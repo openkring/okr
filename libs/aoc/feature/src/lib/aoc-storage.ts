@@ -28,12 +28,12 @@ import { AocStorageStore } from './aoc-storage.store';
     <ion-content>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ aocStorageStore.i18n.info_title() }}</ion-card-title>
+          <ion-card-title>{{ aocStorageStore.i18n.storage_info_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ aocStorageStore.i18n.info_content() }}</ion-col>
+              <ion-col>{{ aocStorageStore.i18n.storage_info_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12">
@@ -52,7 +52,7 @@ import { AocStorageStore } from './aoc-storage.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-button [disabled]="isFilePathButtonDisabled()" [label]="aocStorageStore.i18n.info_button_label()" iconName="checkbox-circle" (click)="getRefInfo()" />
+                <bk-button [disabled]="isFilePathButtonDisabled()" [label]="aocStorageStore.i18n.storage_info_button_label()" iconName="checkbox-circle" (click)="getRefInfo()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -61,12 +61,12 @@ import { AocStorageStore } from './aoc-storage.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ aocStorageStore.i18n.sizes_title() }}</ion-card-title>
+          <ion-card-title>{{ aocStorageStore.i18n.storage_sizes_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ aocStorageStore.i18n.sizes_content() }}</ion-col>
+              <ion-col>{{ aocStorageStore.i18n.storage_sizes_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col><ion-checkbox labelPlacement="end" [(ngModel)]="isRecursive">Rekursiv</ion-checkbox></ion-col>
@@ -88,7 +88,7 @@ import { AocStorageStore } from './aoc-storage.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-button [disabled]="isDirPathButtonDisabled()" [label]="aocStorageStore.i18n.sizes_button_label()" iconName="checkbox-circle" (click)="calculateStorageConsumption()" />
+                <bk-button [disabled]="isDirPathButtonDisabled()" [label]="aocStorageStore.i18n.storage_sizes_button_label()" iconName="checkbox-circle" (click)="calculateStorageConsumption()" />
               </ion-col>
             </ion-row>
           </ion-grid>

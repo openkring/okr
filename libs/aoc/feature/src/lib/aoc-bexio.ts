@@ -29,8 +29,8 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
     <ion-content>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.invoices_title() }}</ion-card-title>
-          <ion-card-subtitle>{{ store.i18n.invoices_subtitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.bexio_invoices_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.bexio_invoices_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -39,9 +39,9 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 @if(invoiceCount() < 0) {
                   {{ store.i18n.loading() }}
                 } @else if(invoiceCount() === 0) {
-                  {{ store.i18n.invoices_nodata() }}
+                  {{ store.i18n.bexio_invoices_nodata() }}
                 } @else {
-                  {{ invoiceCount() }} {{ store.i18n.invoices_status() }} {{ lastSyncedAt() || 'unknown' }}.
+                  {{ invoiceCount() }} {{ store.i18n.bexio_invoices_status() }} {{ lastSyncedAt() || 'unknown' }}.
                 }
               </ion-col>
               <ion-col size="3">
@@ -51,7 +51,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ store.i18n.invoices_history() }}
+                  {{ store.i18n.bexio_invoices_history() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -70,8 +70,8 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.bills_title() }}</ion-card-title>
-          <ion-card-subtitle>{{ store.i18n.bills_subtitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.bexio_bills_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.bexio_bills_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -80,8 +80,8 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 @if(billCount() < 0) {
                   {{ store.i18n.loading() }}
                 } @else if(billCount() === 0) {
-                  {{ store.i18n.bills_nodata() }}                } @else {
-                  {{ billCount() }} {{ store.i18n.bills_status() }} {{ lastBillSyncedAt() || 'unknown' }}.
+                  {{ store.i18n.bexio_bills_nodata() }}                } @else {
+                  {{ billCount() }} {{ store.i18n.bexio_bills_status() }} {{ lastBillSyncedAt() || 'unknown' }}.
                 }
               </ion-col>
               <ion-col size="3">
@@ -91,7 +91,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ store.i18n.bills_history() }}
+                  {{ store.i18n.bexio_bills_history() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -110,8 +110,8 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.journal_title() }}</ion-card-title>
-          <ion-card-subtitle>{{ store.i18n.journal_subtitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.bexio_journal_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.bexio_journal_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -120,9 +120,9 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 @if(journalCount() < 0) {
                   {{ store.i18n.loading() }}
                 } @else if(journalCount() === 0) {
-                  {{ store.i18n.journal_nodata() }}
+                  {{ store.i18n.bexio_journal_nodata() }}
                 } @else {
-                  {{ journalCount() }} {{ store.i18n.journal_status() }} {{ lastJournalSyncedAt() || 'unknown' }}.
+                  {{ journalCount() }} {{ store.i18n.bexio_journal_status() }} {{ lastJournalSyncedAt() || 'unknown' }}.
                 }
               </ion-col>
               <ion-col size="3">
@@ -132,7 +132,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ store.i18n.journal_history() }}
+                  {{ store.i18n.bexio_journal_history() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -151,8 +151,8 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.accounts_title() }}</ion-card-title>
-          <ion-card-subtitle>{{ store.i18n.accounts_subtitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.bexio_accounts_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.bexio_accounts_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -161,7 +161,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 @if(accountSyncResult()) {
                   {{ accountSyncResult() }}
                 } @else {
-                  {{ store.i18n.accounts_download() }}
+                  {{ store.i18n.bexio_accounts_download() }}
                 }
               </ion-col>
               <ion-col size="3">
@@ -171,7 +171,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ store.i18n.accounts_history() }}
+                  {{ store.i18n.bexio_accounts_history() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -209,12 +209,12 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.index_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.bexio_index_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="9">{{ store.i18n.index_content() }}</ion-col>
+              <ion-col size="9">{{ store.i18n.bexio_index_content() }}</ion-col>
               <ion-col size="3">
                 <ion-button (click)="buildIndex()" [disabled]="isLoading()">
                   @if(isLoading()) {
@@ -222,7 +222,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
-                  {{ store.i18n.index_button() }}
+                  {{ store.i18n.bexio_index_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -298,22 +298,22 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.vendor_title() }}</ion-card-title>
-          <ion-card-subtitle>{{ store.i18n.vendor_subtitle() }}</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.bexio_vendor_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ store.i18n.bexio_vendor_subtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(vendorPendingCount() < 0) {
-                  {{ store.i18n.vendor_status_initial() }}
+                  {{ store.i18n.bexio_vendor_status_initial() }}
                 } @else if(vendorPendingCount() === 0) {
-                  {{ store.i18n.vendor_status_done() }}
+                  {{ store.i18n.bexio_vendor_status_done() }}
                 } @else {
-                  {{ vendorPendingCount() }} {{ store.i18n.vendor_status_open() }}
+                  {{ vendorPendingCount() }} {{ store.i18n.bexio_vendor_status_open() }}
                 }
                 @if(vendorLinkedCount() >= 0) {
-                  {{ vendorLinkedCount() }} {{ store.i18n.vendor_status_linked() }}
+                  {{ vendorLinkedCount() }} {{ store.i18n.bexio_vendor_status_linked() }}
                 }
               </ion-col>
               <ion-col size="3">
@@ -331,7 +331,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
               <ion-row>
                 <ion-col>
                   <ion-item lines="none">
-                    <ion-label color="warning">{{ store.i18n.vendor_status_unmatched() }}</ion-label>
+                    <ion-label color="warning">{{ store.i18n.bexio_vendor_status_unmatched() }}</ion-label>
                   </ion-item>
                   @for(name of vendorUnmatched(); track name) {
                     <ion-item lines="none">
@@ -347,21 +347,21 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.receiver_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.bexio_receiver_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(receiverPendingCount() < 0) {
-                  {{ store.i18n.receiver_status_initial() }}
+                  {{ store.i18n.bexio_receiver_status_initial() }}
                 } @else if(receiverPendingCount() === 0) {
-                  {{ store.i18n.receiver_status_done() }}
+                  {{ store.i18n.bexio_receiver_status_done() }}
                 } @else {
-                  {{ receiverPendingCount() }} {{ store.i18n.receiver_status_open() }}
+                  {{ receiverPendingCount() }} {{ store.i18n.bexio_receiver_status_open() }}
                 }
                 @if(receiverLinkCount() >= 0) {
-                  {{ receiverLinkCount() }} {{ store.i18n.receiver_status_linked() }}
+                  {{ receiverLinkCount() }} {{ store.i18n.bexio_receiver_status_linked() }}
                 }
               </ion-col>
               <ion-col size="3">
@@ -371,7 +371,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   } @else {
                     <ion-icon src="{{ 'link' | svgIcon }}" slot="start" />
                   }
-                  {{ store.i18n.receiver_link() }}
+                  {{ store.i18n.bexio_receiver_link() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -425,7 +425,7 @@ export class AocBexio implements OnInit {
   protected contactFilter = signal(CONTACT_FILTERS[0]);
   protected readonly contactFilterI18n = computed(() => ({
     name: 'bexioContactFilter',
-    label: this.store.i18n.index_contactFilter_label(),
+    label: this.store.i18n.bexio_index_contactFilter_label(),
   } as StringSelectI18n));
   protected readonly filteredIndex = computed(() => {
     const today = getTodayStr(DateFormat.StoreDate);

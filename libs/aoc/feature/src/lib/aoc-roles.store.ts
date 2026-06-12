@@ -14,7 +14,7 @@ import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, 
 import { error } from '@bk2/shared-util-angular';
 import { debugListLoaded, debugMessage, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
 
-import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser, AOC_ROLES_I18N_KEYS } from '@bk2/aoc-util';
+import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser, AOC_I18N_KEYS } from '@bk2/aoc-util';
 import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { FbuserEditModal } from '@bk2/user-feature';
@@ -50,7 +50,7 @@ export const AocRolesStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_ROLES_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
   withProps(store => ({
     personsResource: rxResource({

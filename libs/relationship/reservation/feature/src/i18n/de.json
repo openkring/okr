@@ -19,7 +19,9 @@
     "error": "Die Reservation konnte nicht gelöscht werden."
   },
   "end": {
-    "label": "Reservation beenden"
+    "label": "Reservation beenden",
+    "conf": "Die Reservation wurde beendet.",
+    "error": "Die Reservation konnte nicht beendet werden."
   },
   "select": { 
     "label": "Auswählen" 

@@ -1,14 +1,14 @@
 {
   "name": "bk2monorepo",
   "version": "6.4.56",
-  "packageManager": "pnpm@10.33.2",
+  "packageManager": "pnpm@11.6.0",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "nx run test-app:build:production",
     "build:affected": "nx affected -t build",
     "build:functions": "nx build functions",
-    "deploy:functions": "pnpm run build:functions && (cd dist/apps/functions && pnpm install --prod) && firebase deploy --only functions",
+    "deploy:functions": "pnpm run build:functions && node -e \"const fs=require('fs'),p='dist/apps/functions/package.json',j=JSON.parse(fs.readFileSync(p));j.packageManager='pnpm@10.33.2';fs.writeFileSync(p,JSON.stringify(j,null,2))\" && (cd dist/apps/functions && pnpm install --prod --ignore-workspace) && firebase deploy --only functions",
     "serve": "nx serve $1",
     "test": "nx test $1",
     "testlibs": "NODE_OPTIONS='--max-old-space-size=8192' pnpm nx run-many --target=test --all",
@@ -167,16 +167,6 @@
     "vite": "^6.4.1",
     "vitest": "3.2.4",
     "webpack-cli": "^5.1.4"
-  },
-  "pnpm": {
-    "overrides": {
-      "protobufjs@<7.5.5": "^7.5.5",
-      "fast-xml-parser@<4.5.4": "^4.5.4",
-      "basic-ftp@<5.2.0": "^5.2.0",
-      "vitest@<3.2.6": "^3.2.6",
-      "@vitest/ui@<3.2.6": "^3.2.6",
-      "@vitest/coverage-v8@<3.2.6": "^3.2.6"
-    }
   },
   "nx": {}
 }

@@ -35,12 +35,12 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
       <!-- Orphaned Sections -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.orphaned_sections_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.content_section_orphaned_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ store.i18n.orphaned_sections_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.content_section_orphaned_content() }}</ion-col>
               <ion-col size="6">
                 <bk-button [label]="orphanedSectionsLabel()" [iconName]="orphanedSectionsIcon()" (click)="toggleOrphanedSections()" />
               </ion-col>
@@ -65,12 +65,12 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
       <!-- Missing Sections -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.missing_sections_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.content_section_missing_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ store.i18n.missing_sections_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.content_section_missing_content() }}</ion-col>
               <ion-col size="6">
                 <bk-button [label]="missingSectionsLabel()" [iconName]="missingSectionsIcon()" (click)="toggleMissingSections()" />
               </ion-col>
@@ -95,12 +95,12 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
       <!-- Orphaned Menus -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.orphaned_menus_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.content_menu_orphaned_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ store.i18n.orphaned_menus_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.content_menu_orphaned_content() }}</ion-col>
               <ion-col size="6">
                 <bk-button [label]="orphanedMenusLabel()" [iconName]="orphanedMenusIcon()" (click)="toggleOrphanedMenus()" />
               </ion-col>
@@ -125,12 +125,12 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
       <!-- Missing Menus -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.missing_menus_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.content_menu_missing_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ store.i18n.missing_menus_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.content_menu_missing_content() }}</ion-col>
               <ion-col size="6">
                 <bk-button [label]="missingMenusLabel()" [iconName]="missingMenusIcon()" (click)="toggleMissingMenus()" />
               </ion-col>
@@ -154,14 +154,14 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.check_links_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.content_link_check_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ store.i18n.check_links_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.content_link_check_content() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ store.i18n.check_links_show() }}" iconName="checkbox-circle" (click)="checkLinks()" />
+                <bk-button label=" {{ store.i18n.content_link_check_show() }}" iconName="checkbox-circle" (click)="checkLinks()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -182,19 +182,19 @@ export class AocContent {
   protected readonly isLoading = computed(() => this.store.isLoading());
 
   protected readonly orphanedSections = computed(() => this.store.orphanedSections());
-  protected readonly orphanedSectionsLabel = computed(() => this.orphanedSections().length > 0 ? this.store.i18n.orphaned_sections_hide() : this.store.i18n.orphaned_sections_show());
+  protected readonly orphanedSectionsLabel = computed(() => this.orphanedSections().length > 0 ? this.store.i18n.content_section_orphaned_hide() : this.store.i18n.content_section_orphaned_show());
   protected readonly orphanedSectionsIcon = computed(() => this.orphanedSections().length > 0 ? 'eye-off' : 'eye-on');
 
   protected readonly orphanedMenus = computed(() => this.store.orphanedMenus());
-  protected readonly orphanedMenusLabel = computed(() => this.orphanedMenus().length > 0 ? this.store.i18n.orphaned_menus_hide() : this.store.i18n.orphaned_menus_show());
+  protected readonly orphanedMenusLabel = computed(() => this.orphanedMenus().length > 0 ? this.store.i18n.content_menu_orphaned_hide() : this.store.i18n.content_menu_orphaned_show());
   protected readonly orphanedMenusIcon = computed(() => this.orphanedMenus().length > 0 ? 'eye-off' : 'eye-on');
 
   protected readonly missingSections = computed(() => this.store.missingSectionRefs());
-  protected readonly missingSectionsLabel = computed(() => this.missingSections().length > 0 ? this.store.i18n.missing_sections_hide() : this.store.i18n.missing_sections_show());
+  protected readonly missingSectionsLabel = computed(() => this.missingSections().length > 0 ? this.store.i18n.content_section_missing_hide() : this.store.i18n.content_section_missing_show());
   protected readonly missingSectionsIcon = computed(() => this.missingSections().length > 0 ? 'eye-off' : 'eye-on');
 
   protected readonly missingMenus = computed(() => this.store.missingMenuRefs());
-  protected readonly missingMenusLabel = computed(() => this.missingMenus().length > 0 ? this.store.i18n.missing_menus_hide() : this.store.i18n.missing_menus_show());
+  protected readonly missingMenusLabel = computed(() => this.missingMenus().length > 0 ? this.store.i18n.content_menu_missing_hide() : this.store.i18n.content_menu_missing_show());
   protected readonly missingMenusIcon = computed(() => this.missingMenus().length > 0 ? 'eye-off' : 'eye-on');
 
   // constants
@@ -238,9 +238,9 @@ export class AocContent {
 
   protected async showSectionActions(section: SectionModel): Promise<void> {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    options.buttons.push(createActionSheetButton('content.actionsheet.section.edit', this.store.i18n.as_section_edit(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.section.delete', this.store.i18n.as_section_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.section.edit', this.store.i18n.content_section_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.section.delete', this.store.i18n.content_section_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
@@ -263,10 +263,10 @@ export class AocContent {
 
   protected async showMissingSectionRefActions(ref: MissingSectionRef): Promise<void> {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    options.buttons.push(createActionSheetButton('content.actionsheet.page.edit', this.store.i18n.as_page_edit(), this.imgixBaseUrl, 'page'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.section.create', this.store.i18n.as_section_create(), this.imgixBaseUrl, 'section'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.section.removeRef', this.store.i18n.as_section_removeref(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.page.edit', this.store.i18n.content_page_edit(), this.imgixBaseUrl, 'page'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.section.create', this.store.i18n.content_section_create(), this.imgixBaseUrl, 'section'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.section.removeRef', this.store.i18n.content_section_removeref(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
 
@@ -293,9 +293,9 @@ export class AocContent {
 
   protected async showMissingMenuRefActions(ref: MissingMenuRef): Promise<void> {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    options.buttons.push(createActionSheetButton('content.actionsheet.menu.create', this.store.i18n.as_menu_create(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.menu.removeRef', this.store.i18n.as_menu_removeref(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.menu.create', this.store.i18n.content_menu_create(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.menu.removeRef', this.store.i18n.content_menu_removeref(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
@@ -318,9 +318,9 @@ export class AocContent {
 
   protected async showMenuActions(menuItem: MenuItemModel): Promise<void> {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    options.buttons.push(createActionSheetButton('content.actionsheet.menu.edit', this.store.i18n.as_menu_edit(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.menu.delete', this.store.i18n.as_menu_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.as_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.menu.edit', this.store.i18n.content_menu_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.menu.delete', this.store.i18n.content_menu_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);

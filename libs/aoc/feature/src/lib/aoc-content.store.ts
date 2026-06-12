@@ -18,7 +18,7 @@ import { PageService } from '@bk2/cms-page-data-access';
 import { SectionService } from '@bk2/cms-section-data-access';
 import { SectionEditModal } from '@bk2/cms-section-feature';
 
-import { AOC_CONTENT_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 export type MissingMenuRef = {
   parent: MenuItemModel;   // menu item that contains the broken reference
@@ -65,7 +65,7 @@ export const AocContentStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_CONTENT_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
 
     dataResource: rxResource({
       params: () => ({
@@ -176,7 +176,7 @@ export const AocContentStore = signalStore(
       },
 
       async removeSection(section: SectionModel): Promise<void> {
-        const ok = await confirm(store.alertController, store.i18n.section_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        const ok = await confirm(store.alertController, store.i18n.content_section_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (ok) {
           await store.sectionService.delete(section, store.currentUser());
           patchState(store, {
@@ -248,7 +248,7 @@ export const AocContentStore = signalStore(
       },
 
       async removeMenu(menuItem: MenuItemModel): Promise<void> {
-        const ok = await confirm(store.alertController, store.i18n.menu_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        const ok = await confirm(store.alertController, store.i18n.content_menu_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (ok) {
           await store.menuService.delete(menuItem, store.currentUser());
           patchState(store, {
@@ -279,7 +279,7 @@ export const AocContentStore = signalStore(
       },
 
       async removeMissingMenuRef(ref: MissingMenuRef): Promise<void> {
-        const ok = await confirm(store.alertController, store.i18n.menu_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        const ok = await confirm(store.alertController, store.i18n.content_menu_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (!ok) return;
         const updated = { ...ref.parent, menuItems: (ref.parent.menuItems ?? []).filter(k => k !== ref.missingKey) };
         await store.menuService.update(updated as MenuItemModel, store.currentUser());
@@ -310,7 +310,7 @@ export const AocContentStore = signalStore(
       },
 
       async removeSectionRefFromPage(ref: MissingSectionRef): Promise<void> {
-        const ok = await confirm(store.alertController, store.i18n.section_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        const ok = await confirm(store.alertController, store.i18n.content_section_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (!ok) return;
         const updatedSections = (ref.page.sections ?? []).filter(k => k !== ref.rawKey);
         await store.pageService.update({ ...ref.page, sections: updatedSections }, store.currentUser());

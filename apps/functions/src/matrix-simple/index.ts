@@ -435,10 +435,12 @@ export const requestGroupRoomAccess = onCall(
           body: JSON.stringify({
             name: groupId,
             room_alias_name: roomAliasLocalpart,
-            // public join_rules so the Synapse admin API can force-join users without
-            // needing the admin to be a room member first (private/invite rooms block this).
+            // invite-only (SEC-1): a public join_rule would let any user on the
+            // homeserver self-join and bypass the membership check above. The admin
+            // token user is the room creator (PL 100), so the invite + force-join
+            // sequence below works without a public join_rule.
             // m.federate:false keeps the room local to this homeserver only.
-            preset: 'public_chat',
+            preset: 'private_chat',
             visibility: 'private',
             creation_content: { 'm.federate': false },
           }),
@@ -687,7 +689,8 @@ export const invitePersonToGroupRoom = onCall(
           body: JSON.stringify({
             name: groupId,
             room_alias_name: `group_${groupId}`,
-            preset: 'public_chat',
+            // invite-only (SEC-1): see requestGroupRoomAccess for rationale.
+            preset: 'private_chat',
             visibility: 'private',
             creation_content: { 'm.federate': false },
           }),
@@ -718,6 +721,17 @@ export const invitePersonToGroupRoom = onCall(
         );
       }
     }
+
+    // Invite first so the force-join below succeeds on invite-only rooms (SEC-1).
+    // Errors are ignored: "already in room" / "already invited" are fine.
+    await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/invite`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: matrixUserId }),
+      }
+    );
 
     const joinResp = await fetch(
       `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,

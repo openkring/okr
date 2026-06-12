@@ -7,7 +7,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { LogInfo } from '@bk2/shared-models';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 import { warn } from '@bk2/shared-util-core';
-import { AOC_STORAGE_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 export type AocStorageState = {
   filePath: string;
@@ -31,7 +31,7 @@ export const AocStorageStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_STORAGE_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
   /*   withProps((store) => ({
     dataResource: rxResource({

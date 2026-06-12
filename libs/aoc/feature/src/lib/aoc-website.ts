@@ -46,7 +46,7 @@ import { AocWebsiteEditModal } from './aoc-website-edit.modal';
       <ion-card>
         <ion-card-header>
           <ion-card-title>
-            {{ store.i18n.list_title() }}
+            {{ store.i18n.website_list_title() }}
             <ion-badge color="medium">{{ store.filteredItems().length }}</ion-badge>
           </ion-card-title>
         </ion-card-header>
@@ -88,8 +88,8 @@ export class AocWebsite {
   protected async showActions(item: WebsiteContentModel): Promise<void> {
     const base = this.store.appStore.env.services.imgixBaseUrl;
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    options.buttons.push(createActionSheetButton('website.edit', this.store.i18n.edit(), base, 'edit'));
-    options.buttons.push(createActionSheetButton('website.delete', this.store.i18n.delete_label(), base, 'trash'));
+    options.buttons.push(createActionSheetButton('website.edit', this.store.i18n.website_update_label(), base, 'edit'));
+    options.buttons.push(createActionSheetButton('website.delete', this.store.i18n.website_delete_label(), base, 'trash'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), base, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);

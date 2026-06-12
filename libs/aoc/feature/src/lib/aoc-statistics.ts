@@ -33,37 +33,37 @@ import { AocStatisticsStore } from './aoc-statistics.store';
           <ion-grid>
             <!-- Update Competition Levels -->
             <ion-row>
-              <ion-col size="6">{{ aocStatisticsStore.i18n.cl_label() }}</ion-col>
+              <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_cl_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.cl_button()" iconName="checkbox-circle" (click)="updateCompetitionLevels()" />
+                <bk-button [label]="aocStatisticsStore.i18n.statistics_cl_button()" iconName="checkbox-circle" (click)="updateCompetitionLevels()" />
               </ion-col>
             </ion-row>
             <!-- Update Competition Levels statistics -->
             <ion-row>
-              <ion-col size="6">{{ aocStatisticsStore.i18n.cl_stats_label() }}</ion-col>
+              <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_cl_stats_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.cl_stats_button()" iconName="checkbox-circle" (click)="updateCLStatistics()" />
+                <bk-button [label]="aocStatisticsStore.i18n.statistics_cl_stats_button()" iconName="checkbox-circle" (click)="updateCLStatistics()" />
               </ion-col>
             </ion-row>
             <!-- Update Age by Gender -->
             <ion-row>
-              <ion-col size="6">{{ aocStatisticsStore.i18n.age_by_gender_label() }}</ion-col>
+              <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_age_by_gender_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.age_by_gender_button()" iconName="checkbox-circle" (click)="updateAgeByGender()" />
+                <bk-button [label]="aocStatisticsStore.i18n.statistics_age_by_gender_button()" iconName="checkbox-circle" (click)="updateAgeByGender()" />
               </ion-col>
             </ion-row>
             <!-- Update Category by Gender -->
             <ion-row>
-              <ion-col size="6">{{ aocStatisticsStore.i18n.cat_by_gender_label() }}</ion-col>
+              <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_cat_by_gender_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.cat_by_gender_button()" iconName="checkbox-circle" (click)="updateCategoryByGender()" />
+                <bk-button [label]="aocStatisticsStore.i18n.statistics_cat_by_gender_button()" iconName="checkbox-circle" (click)="updateCategoryByGender()" />
               </ion-col>
             </ion-row>
             <!-- Update Member Location -->
             <ion-row>
-              <ion-col size="6">{{ aocStatisticsStore.i18n.member_location_label() }}</ion-col>
+              <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_member_location_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.member_location_button()" iconName="checkbox-circle" (click)="updateMemberLocation()" />
+                <bk-button [label]="aocStatisticsStore.i18n.statistics_member_location_button()" iconName="checkbox-circle" (click)="updateMemberLocation()" />
               </ion-col>
             </ion-row>
           </ion-grid>

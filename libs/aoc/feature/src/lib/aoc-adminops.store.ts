@@ -9,7 +9,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { AddressCollection, AddressModel, BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@bk2/shared-util-core';
 import { getMembershipCategoryChanges } from '@bk2/relationship-membership-util';
-import { AOC_ADMINOPS_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 export type AocAdminOpsState = {
   modelType: string | undefined;
@@ -28,10 +28,7 @@ export const AocAdminOpsStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
-    i18nService: inject(I18nService),
-  })),
-  withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_ADMINOPS_I18N_KEYS),
+    i18n: inject(I18nService).translateAll(AOC_I18N_KEYS),
   })),
   withProps(store => ({
     dataResource: rxResource({
@@ -92,7 +89,7 @@ export const AocAdminOpsStore = signalStore(
       },
 
       listJuniorsOlderThan(age = 18, orgKey = 'scs', refYear = getYear()): void {
-        const title = store.i18n.oldjuniors_title();
+        const title = store.i18n.adminops_oldjuniors_title();
         if (store.modelType() === 'membership') {
           const log = store
             .data()
@@ -109,7 +106,7 @@ export const AocAdminOpsStore = signalStore(
               return false;
             })
             .map(model => {
-              const nodob = store.i18n.oldjuniors_nodob();
+              const nodob = store.i18n.adminops_oldjuniors_nodob();
               if (isMembership(model, store.appStore.env.tenantId)) {
                 const m = model as MembershipModel;
                 const name = getFullName(m.memberName1, m.memberName2);
@@ -140,7 +137,7 @@ export const AocAdminOpsStore = signalStore(
           for (const change of changes) {
             log.push({ id: change.memberKey, name: getFullName(change.memberName1, change.memberName2), message: `${change.dateOfChange}: ${change.oldCategory} -> ${change.newCategory}` }); 
           }
-          patchState(store, { log: log, logTitle: store.i18n.mcatchange_title() });
+          patchState(store, { log: log, logTitle: store.i18n.adminops_mcatchange_title() });
         } else {
           console.error('AocAdminOpsStore.showMembershipCategoryChanges: modelType is not membership');
         }
