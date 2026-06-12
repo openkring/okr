@@ -1,5 +1,6 @@
 // apps/functions/src/pdf/template-cache.ts
-import Handlebars, { TemplateDelegate } from 'handlebars';
+// handlebars is imported dynamically so it is not loaded at cold start (see browser-pool.ts).
+import type { TemplateDelegate } from 'handlebars';
 
 type CompiledTemplate = TemplateDelegate;
 
@@ -29,9 +30,10 @@ function injectCss(html: string, css: string): string {
   return `<style>${css}</style>${html}`;
 }
 
-export function compileTemplate(key: string, html: string, css?: string): CompiledTemplate {
+export async function compileTemplate(key: string, html: string, css?: string): Promise<CompiledTemplate> {
   const cached = getCachedTemplate(key);
   if (cached) return cached;
+  const { default: Handlebars } = await import('handlebars');
   // Inject CSS into HTML before compiling so the template renders with styles
   const fullHtml = css ? injectCss(html, css) : html;
   const compiled = Handlebars.compile(fullHtml);

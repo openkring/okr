@@ -1,7 +1,10 @@
 // apps/functions/src/pdf/handlebars-helpers.ts
-import Handlebars from 'handlebars';
+// handlebars is imported dynamically so it is not loaded at cold start (see browser-pool.ts).
+import type { HelperOptions } from 'handlebars';
 
-export function registerHelpers(): void {
+export async function registerHelpers(): Promise<void> {
+  const { default: Handlebars } = await import('handlebars');
+
   Handlebars.registerHelper('formatMoney', (amount: unknown, currency = 'CHF') => {
     const num = typeof amount === 'number' ? amount / 100 : parseFloat(String(amount ?? 0)) / 100;
     return new Intl.NumberFormat('de-CH', { style: 'currency', currency: String(currency) }).format(num);
@@ -28,7 +31,7 @@ export function registerHelpers(): void {
     this: unknown,
     a: unknown,
     b: unknown,
-    options: Handlebars.HelperOptions
+    options: HelperOptions
   ) {
     return a === b ? options.fn(this) : options.inverse(this);
   });

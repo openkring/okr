@@ -7,9 +7,9 @@ import { getStorage } from 'firebase-admin/storage';
 import { getFirestore } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
-import Handlebars from 'handlebars';
-// @ts-expect-error html-to-docx lacks type declarations
-import HtmlToDocx from 'html-to-docx';
+// handlebars and html-to-docx are imported dynamically inside the handler so they
+// are not loaded at cold start (Firebase gen2 loads this shared bundle for every
+// function; top-level heavy imports OOM low-memory functions — see browser-pool.ts).
 
 import {
   TemplateCollection,
@@ -26,8 +26,14 @@ import { resolveAssetUrls } from './asset-resolver';
 import { checkRateLimit } from './rate-limiter';
 import { sanitizeHtml } from './sanitize';
 
-// Register helpers once at cold-start
-registerHelpers();
+// Handlebars helpers are registered lazily on first use (not at cold start) so the
+// shared bundle does not load handlebars for non-pdf functions.
+let helpersRegistered = false;
+async function ensureHelpers(): Promise<void> {
+  if (helpersRegistered) return;
+  await registerHelpers();
+  helpersRegistered = true;
+}
 
 export interface GenerateDocumentRequest {
   templateId?: string;
@@ -144,6 +150,8 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
 
       // Resolve asset signed URLs and register assetUrl helper per-request
       const assetUrls = await resolveAssetUrls(version.assets ?? []);
+      const { default: Handlebars } = await import('handlebars');
+      await ensureHelpers();
       Handlebars.registerHelper('assetUrl', (key: string) => assetUrls[key] ?? '');
 
       // Register partials before compiling (compile may reference them)
@@ -153,7 +161,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
 
       // Compile template (cached)
       const cacheKey = `${templateId}@${resolvedVersion}`;
-      const compiled = compileTemplate(cacheKey, version.html, version.css);
+      const compiled = await compileTemplate(cacheKey, version.html, version.css);
 
       htmlToRender = compiled(payload);
     } else {
@@ -183,6 +191,8 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
           await page.close();
         }
       } else if (outputFormat === 'docx') {
+        // @ts-expect-error html-to-docx lacks type declarations
+        const { default: HtmlToDocx } = await import('html-to-docx');
         const docxBuffer = await HtmlToDocx(htmlToRender, undefined, {
           table: { row: { cantSplit: true } },
           footer: true,

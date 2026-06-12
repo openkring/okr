@@ -44,7 +44,10 @@
           "firebase-functions",
           "@google-cloud/*",
           "pdfkit",
-          "swissqrbill"
+          "swissqrbill",
+          "puppeteer",
+          "handlebars",
+          "html-to-docx"
         ],
         "esbuildOptions": {
           "logLevel": "info",
