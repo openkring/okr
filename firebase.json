@@ -10,6 +10,11 @@
       ],
       "rewrites": [
         {
+          "source": "/_matrix/push/v1/notify",
+          "function": "matrixPushGateway",
+          "region": "europe-west6"
+        },
+        {
           "source": "/web/api/**",
           "function": "publicApi",
           "region": "europe-west6"

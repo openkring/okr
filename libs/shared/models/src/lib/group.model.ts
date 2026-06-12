@@ -25,6 +25,15 @@ export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedM
   public albumFolder = '';
   public hasMembers = true;
 
+  /**
+   * The Matrix room ID (`!opaque:server`) of this group's chat, persisted the first
+   * time the room is resolved or created by a Cloud Function. All Matrix CFs resolve
+   * the room by this field first, so every CF agrees on a single room and duplicate
+   * rooms can no longer be created when the alias/name lookup is ambiguous.
+   * Empty until the group's chat is first accessed.
+   */
+  public matrixRoomId = '';
+
   // first admin is the also the main contact
   public admins: AvatarInfo[] = [];
 

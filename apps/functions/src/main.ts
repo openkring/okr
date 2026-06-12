@@ -99,6 +99,7 @@ export const getAllMembersFromRoom = MatrixSimple.getAllMembersFromRoom;
 export const getMemberDetails = MatrixSimple.getMemberDetails;
 export const addMatrixRoomAlias = MatrixSimple.addMatrixRoomAlias;
 export const sendCallNotification = MatrixSimple.sendCallNotification;
+export const registerMatrixPusher = MatrixSimple.registerMatrixPusher;
 export const matrixPushGateway = MatrixSimple.matrixPushGateway;
 
 // oidc-bridge removed (C-3): unused, insecure OIDC IdP. Matrix auth uses the
