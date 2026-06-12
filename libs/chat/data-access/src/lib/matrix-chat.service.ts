@@ -101,8 +101,13 @@ export class MatrixChatService {
   }
 
   clearStoredCredentials(): void {
-    ['matrix_access_token', 'matrix_user_id', 'matrix_device_id', 'matrix_homeserver']
-      .forEach(key => localStorage.removeItem(key));
+    // Keep in sync with the matrix key list cleared on logout in AuthService (M-2).
+    // matrix_login_token is obsolete (OIDC bridge removed, C-3) but cleared
+    // defensively to purge stale values from older browser sessions.
+    [
+      'matrix_access_token', 'matrix_user_id', 'matrix_device_id', 'matrix_homeserver',
+      'matrix_avatar_firebase_url', 'matrix_avatar_mxc_url', 'matrix_login_token',
+    ].forEach(key => localStorage.removeItem(key));
   }
 
   get typing(): Observable<TypingNotification> {

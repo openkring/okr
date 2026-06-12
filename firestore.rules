@@ -1,128 +1,273 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ============================================================================
+    //  Helpers — authorization is derived from the caller's users/{uid} document,
+    //  NOT from custom claims. Custom claims (token.admin / token.contentAdmin /
+    //  token.tenantId) are never minted anywhere in this project, so claim-based
+    //  checks would always be false. The user doc carries:
+    //    - roles:   map<RoleName, bool>   (e.g. { admin: true, contentAdmin: true })
+    //    - tenants: string[]              (always exactly one tenant per user)
+    //  Every stored model carries tenants: string[]; the 'system' tenant denotes
+    //  shared/global data readable by every tenant.
+    // ============================================================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function userPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+    function userExists() {
+      return signedIn() && exists(userPath());
+    }
+    function userData() {
+      return get(userPath()).data;
+    }
+    function callerTenants() {
+      return userExists() ? userData().tenants : [];
+    }
+    function hasRole(role) {
+      return userExists() && userData().roles.get(role, false) == true;
+    }
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    function isPrivileged() {
+      return hasRole('privileged') || isAdmin();
+    }
+    // A document belongs to the caller's tenant when their tenant is listed on the
+    // document, or when the document is shared via the 'system' tenant.
+    function belongsToTenant(data) {
+      return data.tenants.hasAny(callerTenants()) || data.tenants.hasAny(['system']);
+    }
+    function tenantRead() {
+      return userExists() && belongsToTenant(resource.data);
+    }
+    function tenantCreate() {
+      return userExists() && belongsToTenant(request.resource.data);
+    }
+    function tenantUpdate() {
+      return userExists() && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);
+    }
+    function tenantDelete() {
+      return userExists() && belongsToTenant(resource.data);
+    }
+
+    // ============================================================================
+    //  Public read — CMS / bootstrap content needed before login.
+    //  (Scope unchanged from the previous ruleset, MINUS persons, which is now
+    //  authenticated + tenant-scoped — see C-2. Tightening writes on these to a
+    //  content role is deferred to Phase 2 / M-7.)
+    // ============================================================================
+
     match /app-config/{tenant} {
       allow read: if true;
+      allow write: if isPrivileged();                 // app configuration is admin territory
     }
-    match /app-version/app-version {
+    match /app-version/{doc} {
       allow read: if true;
+      allow write: if false;                          // updated out-of-band / by admin tooling
     }
-    match /categories/{category} {
-      allow get: if true;
-      allow list: if true;
+    match /categories/{id}      { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /menuItems/{id}       { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /pages/{id}           { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /sections/{id}        { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /tags/{id}            { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /orgs/{id}            { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /resources/{id}       { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+
+    // ============================================================================
+    //  Users — own doc, with role/tenant/personKey escalation blocked. (C-1)
+    // ============================================================================
+
+    match /users/{userId} {
+      // Read your own doc; admins/privileged may read others within their tenant.
+      allow read: if signedIn() && (request.auth.uid == userId
+                    || (isPrivileged() && belongsToTenant(resource.data)));
+
+      // Self-service create of your own doc is allowed only without elevated roles;
+      // admins may create within their tenant. (User provisioning normally happens
+      // via the Admin SDK, which bypasses rules.)
+      allow create: if signedIn() && (
+                       (request.auth.uid == userId
+                          && !request.resource.data.roles.get('admin', false)
+                          && !request.resource.data.roles.get('privileged', false))
+                       || (isAdmin() && belongsToTenant(request.resource.data))
+                    );
+
+      // Update your own doc but NOT roles / tenants / personKey; admins may update.
+      allow update: if signedIn() && (
+                       (request.auth.uid == userId
+                          && !request.resource.data.diff(resource.data).affectedKeys()
+                                .hasAny(['roles', 'tenants', 'personKey']))
+                       || isAdmin()
+                    );
+
+      allow delete: if isAdmin();
+
+      // FCM push tokens are owned by the user. (C-1 — previously any authed user
+      // could read/write anyone's tokens via the catch-all.)
+      match /fcmTokens/{tokenId} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
     }
 
-    match /menuItems/{menuItem} {
-      allow get: if true;
-      allow list: if true;
-    }
-    match /pages/{page} {
-      allow get: if true;
-      allow list: if true;
-    }
-    match /sections/{section} {
-      allow get: if true;
-      allow list: if true;
-    }
-    match /users/{userId} {
-      allow read: if (request.auth != null) && (request.auth.uid == userId);
-    }
-    match /tags/{tagid} {
-      allow get: if true;
-      allow list: if true;
-    }
-    match /orgs/{orgid} {
-      allow get: if true;
-      allow list: if true;
-    }
-    match /persons/{pid} {
-      allow get: if true;
-      allow list: if true;
-    }
-    match /resources/{uid} {
-      allow get: if true;
-      allow list: if true;
-    }
+    // ============================================================================
+    //  Tenant-scoped, client-writable collections.
+    //  Phase 1: any authenticated member of the document's tenant. Per-collection
+    //  role tightening (memberAdmin for persons, treasurer for accounting, …) is
+    //  Phase 2.
+    // ============================================================================
+
+    match /accounting-configs/{id} { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /accounts/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /activities/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /addresses/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /avatars/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /comments/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /docs/{id}               { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /folders/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /groups/{id}             { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /i18nTenantOverride/{id} { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /icons/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /invitations/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /locations/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /memberships/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /ownerships/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /personal-rels/{id}      { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /persons/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }  // C-2: no longer public
+    match /reservations/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /scs-memberfees/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /tasks/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /transfers/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /websiteContent/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /workrels/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+
+    // ============================================================================
+    //  Read-only on the client (written by Cloud Functions / bexio sync / seed).
+    //  Tenant-scoped read; writes denied. If an admin UI legitimately writes one
+    //  of these, switch its write to: isPrivileged() && belongsToTenant(request.resource.data)
+    // ============================================================================
+
+    match /asset-movements/{id}    { allow read: if tenantRead(); allow write: if false; }
+    match /bills/{id}              { allow read: if tenantRead(); allow write: if false; }
+    match /booking-lines/{id}      { allow read: if tenantRead(); allow write: if false; }
+    match /bookings/{id}          { allow read: if tenantRead(); allow write: if false; }
+    match /exchange-rates/{id}    { allow read: if tenantRead(); allow write: if false; }
+    match /expense-documents/{id} { allow read: if tenantRead(); allow write: if false; }
+    match /expenses/{id}          { allow read: if tenantRead(); allow write: if false; }
+    match /invoice-positions/{id} { allow read: if tenantRead(); allow write: if false; }
+    match /invoices/{id}          { allow read: if tenantRead(); allow write: if false; }
+    match /journallogs/{id}       { allow read: if tenantRead(); allow write: if false; }
+    match /payment-orders/{id}    { allow read: if tenantRead(); allow write: if false; }
+    match /payments/{id}          { allow read: if tenantRead(); allow write: if false; }
+    match /trips/{id}             { allow read: if tenantRead(); allow write: if false; }
+    match /i18nDefault/{id}       { allow read: if tenantRead(); allow write: if false; }
+    match /swissCities/{id}       { allow read: if tenantRead(); allow write: if false; }
+
+    // Reference data that may have an admin authoring UI — allow privileged writes.
+    match /assets/{id}             { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /asset-categories/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /competition-levels/{id} { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /formDefinitions/{id}    { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /periods/{id}            { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /responsibilities/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /vat-codes/{id}          { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+
+    // ============================================================================
+    //  Templates (PDF) — role-gated; converted from dead claim checks to get()-roles.
+    // ============================================================================
 
     match /templates/{templateId} {
-      allow read: if request.auth != null
-                  && (resource.data.tenants.hasAny([request.auth.token.tenantId])
-                      || resource.data.tenants.hasAny(['system']));
-      allow create, update: if request.auth != null
-                               && (request.auth.token.admin == true
-                                   || request.auth.token.contentAdmin == true);
-      allow delete: if request.auth != null && request.auth.token.admin == true;
+      allow read:          if userExists() && belongsToTenant(resource.data);
+      allow create, update: if isPrivileged() || hasRole('contentAdmin');
+      allow delete:        if isAdmin();
 
       match /versions/{versionId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null
-                         && (request.auth.token.admin == true
-                             || request.auth.token.contentAdmin == true);
-        allow update: if request.auth != null
-                         && (request.auth.token.admin == true
-                             || request.auth.token.contentAdmin == true)
-                         && resource.data.status == 'draft';
+        allow read:   if signedIn();
+        allow create: if isPrivileged() || hasRole('contentAdmin');
+        allow update: if (isPrivileged() || hasRole('contentAdmin')) && resource.data.status == 'draft';
         allow delete: if false;
       }
     }
 
+    // ============================================================================
+    //  Cloud-Function-owned collections (read constrained, writes denied).
+    // ============================================================================
+
     match /docGenerations/{genId} {
-      allow read: if request.auth != null
-                  && (request.auth.uid == resource.data.userId
-                      || request.auth.token.admin == true);
-      allow write: if false; // only writable by Cloud Function
+      allow read:  if signedIn() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow write: if false;
     }
-
     match /_rateLimits/{docId} {
-      allow read, write: if false; // only writable by Cloud Function
+      allow read, write: if false;
     }
-
     match /stats_boats/{boatKey}/years/{year} {
-      allow read: if request.auth != null;
-      allow write: if false; // only writable by Cloud Functions
+      allow read:  if signedIn();
+      allow write: if false;
     }
-
     match /stats_members/{memberKey}/years/{year} {
-      allow read: if request.auth != null;
-      allow write: if false; // only writable by Cloud Functions
+      allow read:  if signedIn();
+      allow write: if false;
     }
-
     match /esignList/{esignId} {
-      allow read: if request.auth != null
-                  && resource.data.tenantId == request.auth.token.tenantId;
-      allow write: if false; // only writable by Cloud Functions
+      // esign records carry a singular tenantId field (not a tenants[] array).
+      allow read:  if userExists() && callerTenants().hasAny([resource.data.tenantId]);
+      allow write: if false;
+    }
+    match /esignAudit/{tenantId}/{subcollection=**} {
+      allow read, write: if false;
     }
 
-    match /esignAudit/{tenantId}/{subcollection=**} {
-      allow read, write: if false; // only accessible by Cloud Functions
-    }
+    // ============================================================================
+    //  Applications — anonymous membership submissions (shape-constrained), with
+    //  privileged review. (C-1 catch-all removal also makes this flow actually
+    //  work — the previous undefined helper functions failed closed. M-11.)
+    // ============================================================================
 
     match /applications/{appId} {
-      allow read:   if isAuthenticated()
-                     && belongsToTenant(resource)
-                     && (isAdmin() || isPrivileged());
-      allow create: if belongsToTenant(request.resource)
-                     && request.resource.data.state == 'applied'
+      allow read:   if isPrivileged() && belongsToTenant(resource.data);
+      allow create: if request.resource.data.state == 'applied'
                      && request.resource.data.taskKey == ''
-                     && request.resource.data.personKey == '';
-      allow update: if (isAdmin() || isPrivileged())
-                     && belongsToTenant(resource);
+                     && request.resource.data.personKey == ''
+                     && request.resource.data.tenants.size() == 1;
+      allow update: if isPrivileged() && belongsToTenant(resource.data);
       allow delete: if false;
     }
+
+    // ============================================================================
+    //  Sessions — anonymous sessions created pre-auth, upgraded after login. (M-8)
+    // ============================================================================
 
     match /sessions/{sessionId} {
-      // Anonymous sessions are created before auth; constrain to single-tenant, inactive userKey
+      allow read:   if signedIn();
+      // Anonymous create: inactive userKey, single tenant.
       allow create: if request.resource.data.isActive == true
-                   && request.resource.data.userKey == ''
-                   && request.resource.data.tenants.size() == 1;
-      // Heartbeat, upgrade, and end-session writes must not change the tenant
-      allow update: if resource.data.tenants == request.resource.data.tenants;
+                     && request.resource.data.userKey == ''
+                     && request.resource.data.tenants.size() == 1;
+      // Update must not change the tenant, and must NOT forge userKey:
+      // either userKey is unchanged (heartbeat / end-session) or it is being set
+      // to the authenticated caller's own uid (login upgrade). (M-8)
+      allow update: if resource.data.tenants == request.resource.data.tenants
+                     && (
+                          request.resource.data.userKey == resource.data.userKey
+                          || (signedIn() && request.resource.data.userKey == request.auth.uid)
+                        );
       allow delete: if false;
-      allow read:   if request.auth != null;
     }
 
-  	match /{document=**} {
-    	allow read, write: if request.auth != null;
-  	}
+    // ============================================================================
+    //  Default deny — no catch-all grant. Any collection not matched above is
+    //  denied. (C-1: the previous `match /{document=**} { allow read, write:
+    //  if request.auth != null }` is removed entirely.)
+    // ============================================================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }

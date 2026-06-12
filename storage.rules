@@ -1,12 +1,115 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
+// Authorization mirrors firestore.rules: derived from the caller's
+// users/{uid} document (roles map + tenants array), NOT from custom claims
+// (which are never minted in this project). Storage rules can read Firestore
+// via firestore.get()/firestore.exists().
+//
+// Tenant is encoded in the object path. Data lives under three prefixes:
+//   tenant/{tenantId}/...           (dominant: avatars, documents, addresses, qr-bills, rag)
+//   tenants/{tenantId}/...          (esign — plural prefix)
+//   {tenantId}/{modelType}/{key}/documents/...  (bare-tenant document path)
+// Tenant-agnostic prefixes: forms/{formKey}/... and logo/... (global assets).
+//
+// Display images are served by imgix (GCS/IAM access, which bypasses these
+// rules), so no public read is required here — only the app's direct
+// getDownloadURL / listAll calls are governed by these rules.
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function userPath() {
+      return /databases/(default)/documents/users/$(request.auth.uid);
+    }
+    function userExists() {
+      return signedIn() && firestore.exists(userPath());
+    }
+    function userData() {
+      return firestore.get(userPath()).data;
+    }
+    // The given tenant id is one of the caller's tenants.
+    function inTenant(tenantId) {
+      return userExists() && (tenantId in userData().tenants);
+    }
+    function hasRole(role) {
+      return userExists() && userData().roles.get(role, false) == true;
+    }
+    function isPrivileged() {
+      return hasRole('admin') || hasRole('privileged');
+    }
+    // Upload constraints (only valid when request.resource is present, i.e. create/update).
+    function sizeOk() {
+      return request.resource.size < 25 * 1024 * 1024;   // 25 MB cap
+    }
+    function docTypeOk() {
+      return request.resource.contentType != null && (
+           request.resource.contentType.matches('image/.*')
+        || request.resource.contentType.matches('application/pdf')
+        || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*')
+        || request.resource.contentType.matches('application/msword')
+        || request.resource.contentType.matches('application/vnd.ms-excel')
+        || request.resource.contentType.matches('text/.*')
+      );
+    }
+
+    // ---- tenant-scoped data (dominant prefix) ----
+    match /tenant/{tenantId}/{path=**} {
+      allow read:           if inTenant(tenantId);
+      allow create, update: if inTenant(tenantId) && sizeOk() && docTypeOk();
+      allow delete:         if inTenant(tenantId);
+    }
+    // DIAGNOSTIC-ONLY temp path to isolate docTypeOk vs inTenant in the emulator
+    match /diag/{tenantId}/{path=**} {
+      allow create, update: if inTenant(tenantId) && sizeOk();
+    }
+
+    // ---- esign (plural prefix) ----
+    match /tenants/{tenantId}/{path=**} {
+      allow read:           if inTenant(tenantId);
+      allow create, update: if inTenant(tenantId) && sizeOk() && docTypeOk();
+      allow delete:         if inTenant(tenantId);
+    }
+
+    // ---- bare-tenant document path: {tenantId}/{modelType}/{key}/documents/... ----
+    // The literal "documents" 4th segment keeps this from matching the tenant/,
+    // tenants/, forms/, logo/ or generated-docs/ prefixes.
+    match /{tenantId}/{modelType}/{key}/documents/{path=**} {
+      allow read:           if inTenant(tenantId);
+      allow create, update: if inTenant(tenantId) && sizeOk() && docTypeOk();
+      allow delete:         if inTenant(tenantId);
+    }
+
+    // ---- form file uploads (not tenant-scoped; keyed by formKey) ----
+    // Authenticated (matches the previous catch-all). Arbitrary content type
+    // (form files may be AES-encrypted octet-stream), still size-capped.
+    // Mutating existing form files / deletion is restricted to privileged users.
+    match /forms/{formKey}/{path=**} {
+      allow read:    if signedIn();
+      allow create:  if signedIn() && sizeOk();
+      allow update, delete: if isPrivileged();
+    }
+
+    // ---- global shared brand assets / icons (public, non-sensitive) ----
+    match /logo/{path=**} {
+      allow read:  if true;
+      allow write: if isPrivileged();
+    }
+
+    // ---- Cloud-Function-written, served via signed URL (functions bypass rules) ----
+    match /generated-docs/{tenantId}/{path=**} {
+      allow read:  if inTenant(tenantId);
+      allow write: if false;
+    }
+    match /generated-docs-ephemeral/{tenantId}/{path=**} {
+      allow read:  if inTenant(tenantId);
+      allow write: if false;
+    }
+
+    // ---- default deny: no catch-all grant (H-1) ----
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }

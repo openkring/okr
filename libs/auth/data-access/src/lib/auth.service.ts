@@ -137,6 +137,7 @@ export class AuthService {
     if (result === true) {
       try {
         await signOut(this.auth);
+        this.clearMatrixCredentials();
         void this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`);
         await this.alertService.showToast(this.i18n.logout_conf());
         return true;
@@ -147,6 +148,23 @@ export class AuthService {
       }
     }
     return false;
+  }
+
+  /**
+   * Clear Matrix chat credentials from localStorage on logout (M-2).
+   * Without this, the Matrix access token survives Firebase signOut, letting the
+   * next user on a shared device resume the chat session (and exposing the token
+   * to any XSS). Done here — rather than via MatrixChatService — to avoid an
+   * auth-data-access → chat-data-access dependency. Keep this list in sync with
+   * MatrixChatService.clearStoredCredentials(). `matrix_login_token` is obsolete
+   * (OIDC bridge removed, C-3) but cleared defensively for older sessions.
+   */
+  private clearMatrixCredentials(): void {
+    if (typeof localStorage === 'undefined') return;
+    [
+      'matrix_access_token', 'matrix_user_id', 'matrix_device_id', 'matrix_homeserver',
+      'matrix_avatar_firebase_url', 'matrix_avatar_mxc_url', 'matrix_login_token',
+    ].forEach(key => localStorage.removeItem(key));
   }
 
   /*-------------------------- helpers --------------------------------*/

@@ -90,3 +90,8 @@ vitest.config.*.timestamp*
 
 /playwright-report
 /test-results.superpowers/
+
+# Playwright saved auth state — contains live Firebase refresh tokens + Matrix access tokens. Never commit.
+e2e/.auth-state.json
+e2e/.env
+**/.auth-state.json

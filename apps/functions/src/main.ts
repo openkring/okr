@@ -9,7 +9,6 @@ import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
 import * as Matrix from './matrix';
-import * as OidcBridge from './oidc-bridge';
 import * as MatrixSimple from './matrix-simple';
 import * as Rag from './rag';
 import * as Email from './email';
@@ -101,13 +100,8 @@ export const addMatrixRoomAlias = MatrixSimple.addMatrixRoomAlias;
 export const sendCallNotification = MatrixSimple.sendCallNotification;
 export const matrixPushGateway = MatrixSimple.matrixPushGateway;
 
-// oidc-bridge (Full OIDC Identity Provider for Matrix - Complex but native Matrix SSO)
-export const oidcDiscovery = OidcBridge.oidcDiscovery;
-export const oidcAuthorize = OidcBridge.oidcAuthorize;
-export const oidcCallback = OidcBridge.oidcCallback;
-export const oidcExchange = OidcBridge.oidcExchange;
-export const oidcToken = OidcBridge.oidcToken;
-export const oidcUserInfo = OidcBridge.oidcUserInfo;
+// oidc-bridge removed (C-3): unused, insecure OIDC IdP. Matrix auth uses the
+// token-exchange approach (getMatrixCredentials in matrix-simple) instead.
 
 // calendar
 export const generateCalendarICS = Calendar.generateCalendarICS;

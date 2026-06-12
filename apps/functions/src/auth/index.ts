@@ -36,7 +36,9 @@ export const createCustomToken = functions.onCall(
     try {
       logger.info(`${CF_NAME}: user ${request.auth?.uid} wants custom token of user ${request.data.uid}`);
       const _customToken = await getAuth().createCustomToken(request.data.uid);
-      logger.info(`${CF_NAME}: custom token created successfully: ${_customToken}`);
+      // Do NOT log the token itself — a custom token can be exchanged for a full
+      // session of the impersonated user (H-4). Log only the target uid.
+      logger.info(`${CF_NAME}: custom token created successfully for uid ${request.data.uid}`);
       return { success: true, token: _customToken };
     } catch (error: any) {
       console.error(`${CF_NAME}: ERROR: `, error);
