@@ -276,7 +276,7 @@ export class MembershipService {
     if (index === 0) {
       await this.exportAddressesFromJoinedList('');
       // tbd: check whether it really is a joined list. Currently, it is only callable from ScsContactsList
-      //await exportXlsx(this.filteredItems(), 'all', 'all');
+      //await exportCsv(this.filteredItems(), 'all', 'all');
     }
     if (index === 1) await this.exportSrvList('srv');
     if (index === 2) await this.exportAddressList('address');
@@ -317,7 +317,7 @@ export class MembershipService {
      for (const exit of exits) {
        this.addExitedMembershipsToTable(table, exit);
      }
-     exportXlsx(table, getExportFileName('scsSrv', EXPORT_FORMATS[ExportFormat.XLSX].abbreviation), tableName);
+     exportCsv(table, getExportFileName('scsSrv', EXPORT_FORMATS[ExportFormat.XLSX].abbreviation), tableName);
    } */
 
   /*   private async addSrvRowToTable(table: string[][], member: BaseModel): Promise<void> {
@@ -408,7 +408,7 @@ export class MembershipService {
           ]);
         }
       }
-      exportXlsx(table, fn, tableName);
+      exportCsv(table, fn, tableName);
     } */
 
   /*  public async exportAddressesFromJoinedList(tableName: string): Promise<void> {
@@ -432,7 +432,7 @@ export class MembershipService {
          getCategoryAbbreviation(ScsMemberTypes, member.subType)
        ]);
      }
-     exportXlsx(table, fn, tableName);
+     exportCsv(table, fn, tableName);
    } */
 
   /*   public async getMembershipByDate(subjectKey: string, evalDate = getTodayStr(DateFormat.StoreDate), orgKey = OrgKey.SCS): Promise<number | undefined> {

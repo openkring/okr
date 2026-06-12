@@ -3,8 +3,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     downloadTextFile,
     downloadToBrowser,
+    exportCsv,
     generateDownloadURI,
-    getExportFileName
+    getExportFileName,
+    rowsToCsv,
+    toCsvFileName
 } from './download.util';
 
 vi.mock('file-saver', () => ({
@@ -55,27 +58,50 @@ describe('download.util', () => {
     });
   });
 
-/*   describe('exportXlsx', () => {
-    it('should export data to XLSX file', async () => {
-      const mockSheet = {};
-      const mockBook = {};
-      const utils = {
-        aoa_to_sheet: vi.fn(() => mockSheet),
-        book_new: vi.fn(() => mockBook),
-        book_append_sheet: vi.fn(),
-      };
-      const writeFile = vi.fn();
-      const XLSX = { utils, writeFile };
-      (globalThis as any).XLSX = XLSX;
-
-      await exportXlsx([['A', 'B'], ['1', '2']], 'test.xlsx', 'Sheet1');
-  await new Promise(setImmediate); // flush all microtasks
-     // expect(utils.aoa_to_sheet).toHaveBeenCalled();
-      expect(utils.book_new).toHaveBeenCalled();
-      expect(utils.book_append_sheet).toHaveBeenCalledWith(mockBook, mockSheet, 'Sheet1');
-      expect(writeFile).toHaveBeenCalledWith(mockBook, 'test.xlsx');
+  describe('rowsToCsv', () => {
+    it('joins cells with semicolon and rows with CRLF', () => {
+      expect(rowsToCsv([['A', 'B'], ['1', '2']])).toBe('A;B\r\n1;2');
     });
-  }); */
+
+    it('quotes cells containing the delimiter, quotes, or newlines (RFC 4180)', () => {
+      expect(rowsToCsv([['a;b', 'c"d', 'e\nf']])).toBe('"a;b";"c""d";"e\nf"');
+    });
+
+    it('leaves umlauts untouched (UTF-8)', () => {
+      expect(rowsToCsv([['Müller', 'Zürich']])).toBe('Müller;Zürich');
+    });
+
+    it('coerces null/undefined cells to empty strings', () => {
+      expect(rowsToCsv([[null as unknown as string, undefined as unknown as string]])).toBe(';');
+    });
+
+    it('supports a custom delimiter', () => {
+      expect(rowsToCsv([['a', 'b']], ',')).toBe('a,b');
+      // a comma no longer forces quoting when the delimiter is a semicolon
+      expect(rowsToCsv([['a,b']], ';')).toBe('a,b');
+    });
+  });
+
+  describe('toCsvFileName', () => {
+    it('normalizes .xlsx / .xls / .csv extensions to .csv', () => {
+      expect(toCsvFileName('members.xlsx')).toBe('members.csv');
+      expect(toCsvFileName('members.xls')).toBe('members.csv');
+      expect(toCsvFileName('members.csv')).toBe('members.csv');
+    });
+    it('appends .csv when there is no recognized extension', () => {
+      expect(toCsvFileName('members')).toBe('members.csv');
+    });
+  });
+
+  describe('exportCsv', () => {
+    it('downloads a .csv file via saveAs', async () => {
+      const saveAs = (await import('file-saver')).saveAs;
+      await exportCsv([['A', 'B'], ['1', '2']], 'test.xlsx', 'Sheet1');
+      expect(saveAs).toHaveBeenCalledTimes(1);
+      const [, name] = (saveAs as unknown as { mock: { calls: unknown[][] } }).mock.calls[0];
+      expect(name).toBe('test.csv');
+    });
+  });
 
 /*   describe('downloadZipFile', () => {
     it('should create and download a zip file', async () => {

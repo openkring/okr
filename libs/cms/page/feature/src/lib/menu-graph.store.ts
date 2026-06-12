@@ -7,7 +7,7 @@ import { MenuService } from '@bk2/cms-menu-data-access';
 import { PageService } from '@bk2/cms-page-data-access';
 import { SectionService } from '@bk2/cms-section-data-access';
 import { CategoryListModel, MenuItemModel, PageModel, SectionModel } from '@bk2/shared-models';
-import { downloadTextFile, exportXlsx, getExportFileName } from '@bk2/shared-util-angular';
+import { downloadTextFile, exportCsv, getExportFileName } from '@bk2/shared-util-angular';
 import { getCategoryIcon } from '@bk2/shared-util-core';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -332,7 +332,7 @@ export const MenuGraphStore = signalStore(
         case 'raw': {
           const rows: string[][] = [['nodeType', 'name', 'state', 'roleNeeded', 'model']];
           flattenTree(tree, rows);
-          await exportXlsx(rows, getExportFileName('dependencies', 'xlsx'), 'Dependencies');
+          await exportCsv(rows, getExportFileName('dependencies', 'xlsx'), 'Dependencies');
           break;
         }
         case 'xml': {

@@ -7,7 +7,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { ExportFormat, UserCollection, UserModel } from '@bk2/shared-models';
-import { AppNavigationService, exportXlsx } from '@bk2/shared-util-angular';
+import { AppNavigationService, exportCsv } from '@bk2/shared-util-angular';
 import { chipMatches, debugItemLoaded, generateRandomString, getDataRow, getSystemQuery, isUser, nameMatches } from '@bk2/shared-util-core';
 import { ExportFormats } from '@bk2/shared-categories';
 
@@ -156,7 +156,7 @@ export const UserStore = signalStore(
         for (const user of store.users() ?? []) {
           table.push(getDataRow<UserModel>(user, keys));
         }
-        exportXlsx(table, fn, tableName);
+        exportCsv(table, fn, tableName);
       },
 
       async save(user: UserModel): Promise<void> {

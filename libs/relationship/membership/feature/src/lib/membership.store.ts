@@ -10,7 +10,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@bk2/shared-util-core';
-import { confirm, copyToClipboardWithConfirmation, exportXlsx, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@bk2/shared-util-angular';
+import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@bk2/shared-util-angular';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { I18nService } from '@bk2/shared-i18n';
 import { EmailAddressesModal, selectDate } from '@bk2/shared-ui';
@@ -729,7 +729,7 @@ export const _MembershipStore = signalStore(
           case 'srv':
             table.push(['Clubname', 'MGRART_Titel', 'Beitrag', 'LastName', 'FirstName', 'SrvId', 'Birthday', 'Street', 'Postcode', 'City', 'Mobile', 'Email', 'Funktion', 'Kommentar']);
             this.exportSrv(table, postalByPersonKey);
-            exportXlsx(table, fn, 'SRV Mitgliedschaften');
+            exportCsv(table, fn, 'SRV Mitgliedschaften');
             return;
           case 'address':
             table.push(['Vorname', 'Name', 'Strasse', 'PLZ', 'Ort', 'Tel', 'E-Mail']);
@@ -738,7 +738,7 @@ export const _MembershipStore = signalStore(
               if (!person) continue;
               table.push(convertToAddressDataRow(person, postalByPersonKey.get(member.memberKey)));
             }
-            exportXlsx(table, fn, 'Adressliste');
+            exportCsv(table, fn, 'Adressliste');
             return;
           case 'clubdesk':
             table.push(['Vorname', 'Nachname', 'Geschlecht', 'Anrede', 'Adresse', 'Ort', 'PLZ', 'Land', 'E-Mail', 'Telefon', 'Geburtsdatum', 'Eintritt', 'BexioId', 'Kategorie', 'Status', 'Funktion', 'RelLog']);
@@ -747,7 +747,7 @@ export const _MembershipStore = signalStore(
               if (!person) continue;
               table.push(convertToClubdeskImportRow(member, person, postalByPersonKey.get(member.memberKey)));
             }
-            exportXlsx(table, fn, 'Clubdesk Import');
+            exportCsv(table, fn, 'Clubdesk Import');
             return;
           case 'member':
             keys = ['memberId', 'memberName1', 'memberName2', 'memberDateOfBirth', 'dateOfEntry', 'memberCategory', 'orgFunction'] as (keyof MembershipModel)[];
@@ -761,7 +761,7 @@ export const _MembershipStore = signalStore(
         for (const member of memberships) {
           table.push(getDataRow<MembershipModel>(member, keys));
         }
-        exportXlsx(table, fn, tableName);
+        exportCsv(table, fn, tableName);
       },
 
       exportSrv(table: string[][], postalByPersonKey: Map<string, AddressModel>): void {

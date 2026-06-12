@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { InvoiceCollection, InvoiceModel } from '@bk2/shared-models';
-import { confirm, exportXlsx } from '@bk2/shared-util-angular';
+import { confirm, exportCsv } from '@bk2/shared-util-angular';
 import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
@@ -174,7 +174,7 @@ export const InvoiceStore = signalStore(
 
     async export(type: string, invoices: InvoiceModel[]): Promise<void> {
       if (type === 'raw') {
-        await exportXlsx(getInvoiceExportData(invoices), 'invoices.xlsx', 'Invoices');
+        await exportCsv(getInvoiceExportData(invoices), 'invoices.xlsx', 'Invoices');
       }
     },
 

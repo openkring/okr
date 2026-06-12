@@ -10,7 +10,7 @@ import { of } from 'rxjs';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { ExportFormat, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, ScsMemberFeesCollection, ScsMemberFeesModel } from '@bk2/shared-models';
-import { confirm, exportXlsx, showToast } from '@bk2/shared-util-angular';
+import { confirm, exportCsv, showToast } from '@bk2/shared-util-angular';
 import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@bk2/shared-util-core';
 import { ExportFormats } from '@bk2/shared-categories';
 import { I18nService } from '@bk2/shared-i18n';
@@ -309,7 +309,7 @@ export const _ScsMemberFeesStore = signalStore(
         for (const fee of fees) {
           table.push(getDataRow<ScsMemberFeesModel>(fee, keys));
         }
-        exportXlsx(table, fn, store.i18n.scsMemberFee_export_title());
+        exportCsv(table, fn, store.i18n.scsMemberFee_export_title());
       }
     },
 

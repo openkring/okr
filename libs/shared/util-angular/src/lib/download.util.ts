@@ -20,29 +20,53 @@ import { error, showToast } from './alert.util';
     return sanitizer.bypassSecurityTrustUrl('data:' + mimeType + ';charset=UTF-8,' + encodeURIComponent(stringifiedObj));
   }
 
-    /*---------------------------------------- Excel / XLSX  -----------------------------------*/
+    /*---------------------------------------- CSV (Excel / Numbers / Google Sheets) -----------*/
     /**
- * Exports data to an XLSX file with a single worksheet.
- * @param data The data to export, as a 2D array of strings.
- * @param fileName The name of the file to save the data to.
- * @param tableName The name of the worksheet to create.
- * @returns A promise that resolves when the file has been saved.
+ * Exports a 2D string array to a CSV file and downloads it.
+ *
+ * Semicolon-delimited with a leading UTF-8 BOM so it opens directly (double-click)
+ * in Excel on de-CH/German locales, while Numbers and Google Sheets auto-detect the
+ * delimiter. Cells are quoted per RFC 4180 (a field containing the delimiter, a
+ * double-quote, or a line break is wrapped in quotes with internal quotes doubled).
+ *
+ * Replaces the former xlsx-based export — the `xlsx` (SheetJS) dependency was removed
+ * because it carried two unfixable High advisories and was overkill for export-only use
+ * (security report H-8). A Blob + saveAs download also works on mobile, unlike
+ * `XLSX.writeFile`.
+ *
+ * @param data The data to export, as a 2D array of string cells.
+ * @param fileName The output file name; any extension is normalized to `.csv`.
+ * @param _sheetName Ignored; kept for signature compatibility with the old export.
+ * @returns A promise that resolves when the download has been triggered.
  */
-    export async function exportXlsx(
+    export async function exportCsv(
         data: string[][],
         fileName: string,
-        tableName: string) {
-      const XLSX = await import('xlsx');
+        _sheetName?: string): Promise<void> {
+      // Leading BOM (U+FEFF) makes Excel read it as UTF-8 (correct umlauts).
+      const bom = String.fromCharCode(0xfeff);
+      const blob = new Blob([bom + rowsToCsv(data)], { type: 'text/csv;charset=utf-8' });
+      saveAs(blob, toCsvFileName(fileName));
+    }
 
-      // generate worksheet
-      const _ws = XLSX.utils.aoa_to_sheet(data);
+    /**
+     * Serialize rows to a CSV string (RFC 4180 quoting, CRLF line breaks). Pure —
+     * no BOM, no I/O — so it is unit-testable; `exportCsv` adds the BOM and downloads.
+     * @param data rows of string cells
+     * @param delimiter field separator (default `;` — opens directly in de-CH Excel)
+     */
+    export function rowsToCsv(data: string[][], delimiter = ';'): string {
+      const special = new RegExp(`["${delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\r\\n]`);
+      const escapeCell = (value: string): string => {
+        const cell = String(value ?? '');
+        return special.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell;
+      };
+      return data.map((row) => row.map(escapeCell).join(delimiter)).join('\r\n');
+    }
 
-      // generate workbook and add the worksheet
-      const _wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(_wb, _ws, tableName);
-
-      // write the workbook to a file (does probably not work on mobile devices)
-      XLSX.writeFile(_wb, fileName);
+    /** Normalize any export file name (e.g. `members.xlsx`) to a `.csv` name. */
+    export function toCsvFileName(fileName: string): string {
+      return fileName.replace(/\.(xlsx?|csv)$/i, '') + '.csv';
     }
 
 /*---------------------------------------- ZIPed TEXT  -----------------------------------*/
