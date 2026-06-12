@@ -93,13 +93,22 @@ def list_query(coll, tenant=None, token=None):
 # ------------------------------------------------------------------- seed ----
 seed("users/uidA", {"tenants": ["t1"], "roles": {}, "firstName": "A"})
 seed("users/uidB", {"tenants": ["t2"], "roles": {"admin": True}, "firstName": "B"})
+seed("users/uidC", {"tenants": ["t1"], "roles": {"contentAdmin": True}, "firstName": "C"})
 seed("persons/pA", {"tenants": ["t1"], "isArchived": False, "lastName": "AA"})
 seed("persons/pB", {"tenants": ["t2"], "isArchived": False, "lastName": "BB"})
 seed("memberships/mA", {"tenants": ["t1"], "isArchived": False, "x": "1"})
 seed("sessions/sX", {"isActive": True, "userKey": "", "tenants": ["t1"]})
 seed("invoices/iA", {"tenants": ["t1"], "isArchived": False, "amount": "100"})
+# M-7: orgs/resources/tags are no longer public — tenant-scoped read.
+seed("orgs/oA",      {"tenants": ["t1"], "isArchived": False, "name": "Org A"})
+seed("orgs/oB",      {"tenants": ["t2"], "isArchived": False, "name": "Org B"})
+seed("resources/rA", {"tenants": ["t1"], "isArchived": False, "name": "Res A"})
+seed("tags/tgA",     {"tenants": ["t1"], "isArchived": False, "tagModel": "x"})
+# CMS content stays public-readable.
+seed("pages/home",   {"tenants": ["t1"], "isArchived": False, "title": "Home"})
+seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"})
 
-A, B = jwt("uidA"), jwt("uidB")
+A, B, C = jwt("uidA"), jwt("uidB"), jwt("uidC")
 GET, PATCH, POST = "GET", "PATCH", "POST"
 
 
@@ -141,6 +150,29 @@ single_cases = [
     # CF-only collection: client write denied
     ("userA write invoices -> DENY", False, PATCH, "invoices/iA", A,
      body({"amount": "999"}), ["amount"]),
+    # M-7: CMS content writes require the content role (contentAdmin/privileged/admin)
+    ("anon GET pages/none (public read) -> ALLOW(404)", True, GET, "pages/none", None, None, None),
+    ("userA(no role) create pages -> DENY", False, POST, "pages?documentId=pg1", A,
+     body({"tenants": ["t1"], "title": "T"}), None),
+    ("userC(contentAdmin) create pages -> ALLOW", True, POST, "pages?documentId=pg2", C,
+     body({"tenants": ["t1"], "title": "T"}), None),
+    ("userA(no role) create categories -> DENY", False, POST, "categories?documentId=c1", A,
+     body({"tenants": ["t1"], "name": "N"}), None),
+    ("userC(contentAdmin) create sections -> ALLOW", True, POST, "sections?documentId=s1", C,
+     body({"tenants": ["t1"], "type": "article"}), None),
+    ("userC(contentAdmin) create pages cross-tenant t2 -> DENY", False, POST, "pages?documentId=pg3", C,
+     body({"tenants": ["t2"], "title": "T"}), None),
+    # M-7: orgs/resources/tags no longer public — anon DENY, tenant member ALLOW, cross-tenant DENY.
+    ("anon GET orgs/oA -> DENY", False, GET, "orgs/oA", None, None, None),
+    ("anon GET resources/rA -> DENY", False, GET, "resources/rA", None, None, None),
+    ("anon GET tags/tgA -> DENY", False, GET, "tags/tgA", None, None, None),
+    ("userA GET orgs/oA (own tenant) -> ALLOW", True, GET, "orgs/oA", A, None, None),
+    ("userA GET orgs/oB (other tenant) -> DENY", False, GET, "orgs/oB", A, None, None),
+    ("userA GET resources/rA (own tenant) -> ALLOW", True, GET, "resources/rA", A, None, None),
+    ("userA GET tags/tgA (own tenant) -> ALLOW", True, GET, "tags/tgA", A, None, None),
+    # CMS content stays public-readable (PWA anonymous landing renders it).
+    ("anon GET pages/home (public) -> ALLOW", True, GET, "pages/home", None, None, None),
+    ("anon GET sections/secA (public) -> ALLOW", True, GET, "sections/secA", None, None, None),
     # default deny for unknown collection
     ("userA read unknown coll -> DENY", False, GET, "totallyUnknownColl/x", A, None, None),
 ]

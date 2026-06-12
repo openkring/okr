@@ -76,6 +76,24 @@
           ]
         },
         {
+          "source": "/@(ngsw-worker.js|ngsw.json|safety-worker.js|firebase-messaging-sw.js|firebase-config.js|manifest.webmanifest)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(jpg|jpeg|png|gif|svg|webp|avif|woff|woff2|ttf|otf|ico)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
           "source": "**",
           "headers": [
             {

@@ -1,6 +1,28 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
+import { defineSecret } from 'firebase-functions/params';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { createHmac, timingSafeEqual } from 'crypto';
+
+// Per-webhook signing secret from the Mailtrap dashboard (webhook details).
+// Set with: firebase functions:secrets:set MAILTRAP_WEBHOOK_SECRET
+const mailtrapWebhookSecret = defineSecret('MAILTRAP_WEBHOOK_SECRET');
+
+/**
+ * Verify Mailtrap's `Mailtrap-Signature` header: HMAC-SHA256 (hex) of the RAW
+ * request body, computed with the webhook's signing secret. Constant-time compare.
+ */
+function verifyMailtrapSignature(rawBody: Buffer | undefined, signature: string | undefined, secret: string): boolean {
+  if (!rawBody || !signature || !secret) return false;
+  const expected = createHmac('sha256', secret).update(rawBody).digest('hex');
+  try {
+    const a = Buffer.from(expected, 'hex');
+    const b = Buffer.from(signature, 'hex');
+    return a.length === b.length && timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
 
 interface MailtrapWebhookEvent {
   event: string;
@@ -23,10 +45,20 @@ interface MailtrapWebhookEvent {
  *   Firestore → Indexes → Single-field TTL → Collection: emailEvents, Field: expiresAt
  */
 export const mailtrapWebhook = onRequest(
-  { region: 'europe-west6' },
+  { region: 'europe-west6', secrets: [mailtrapWebhookSecret] },
   async (req, res) => {
     if (req.method !== 'POST') {
       res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    // Authenticate the sender: reject anything not signed with the webhook secret,
+    // so forged delivery/bounce telemetry cannot be injected into emailEvents (M-5).
+    const signature = req.header('Mailtrap-Signature');
+    const rawBody = (req as unknown as { rawBody?: Buffer }).rawBody;
+    if (!verifyMailtrapSignature(rawBody, signature, mailtrapWebhookSecret.value())) {
+      logger.warn('mailtrapWebhook: invalid or missing Mailtrap-Signature — rejecting');
+      res.status(401).send('Unauthorized');
       return;
     }
 
