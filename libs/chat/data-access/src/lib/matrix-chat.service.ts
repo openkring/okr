@@ -1,6 +1,6 @@
 
 import { effect, inject, Injectable } from '@angular/core';
-import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, createNewMatrixCall, CallEvent, type MatrixCall, type IPusherRequest } from 'matrix-js-sdk';
+import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, createNewMatrixCall, CallEvent, type MatrixCall, type IPusherRequest, type Store } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -160,6 +160,13 @@ export class MatrixChatService {
         hasAccessToken: !!config.accessToken
       }, this.appStore.currentUser());
 
+      // Persist rooms, members and the sync `since` token in IndexedDB so an iOS
+      // reload-on-resume paints the chat list near-instantly and `/sync` resumes
+      // incrementally instead of running a full initial sync. matrix-js-sdk handles
+      // a missing/unavailable store gracefully — we fall back to the default
+      // in-memory store. See docs/16_spec-pwa-caching.md §8.2.
+      const store = await this.createPersistentStore();
+
       this.client = createClient({
         baseUrl: url,
         accessToken: config.accessToken,
@@ -167,6 +174,7 @@ export class MatrixChatService {
         deviceId: config.deviceId,
         timelineSupport: true,
         useAuthorizationHeader: true,
+        ...(store ? { store } : {}),
       });
 
       this.setupEventHandlers();
@@ -198,8 +206,30 @@ export class MatrixChatService {
   }
 
   /**
+   * Create an IndexedDB-backed Matrix store so rooms, members and the sync `since`
+   * token survive page reloads (notably iOS reload-on-resume). Returns undefined if
+   * IndexedDB is unavailable (SSR, private mode, eviction) or startup fails — the
+   * caller then uses the default in-memory store and pays a full initial sync.
+   */
+  private async createPersistentStore(): Promise<Store | undefined> {
+    if (typeof window === 'undefined' || !window.indexedDB) return undefined;
+    try {
+      const store = new IndexedDBStore({
+        indexedDB: window.indexedDB,
+        localStorage: window.localStorage,
+        dbName: 'bk2-matrix',
+      });
+      await store.startup();
+      return store;
+    } catch (e) {
+      console.warn('MatrixChatService: IndexedDB store startup failed, using in-memory store:', e);
+      return undefined;
+    }
+  }
+
+  /**
    * Retrieve a room id by its name.
-   * 
+   *
    */
   public async getRoomByName(name: string): Promise<string> {
     const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'getRoomByName');
