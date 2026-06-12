@@ -404,6 +404,7 @@ import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '
                             <a
                               [href]="item.content.info?.maps_link || getGoogleMapsUrl(item)"
                               target="_blank"
+                              rel="noopener noreferrer"
                               class="message-location-map"
                               (click)="$event.stopPropagation()"
                             >

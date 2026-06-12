@@ -99,7 +99,7 @@ function storeToView(d: string): string {
 
             <!-- URL -->
             @if(calevent().url) {
-                <ion-item lines="none" [href]="calevent().url" target="_blank">
+                <ion-item lines="none" [href]="calevent().url" target="_blank" rel="noopener noreferrer">
                 <ion-icon slot="start" src="{{'link' | svgIcon}}" />
                 <ion-label>
                     <p class="view-label">{{ i18n.url() }}</p>

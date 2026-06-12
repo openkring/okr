@@ -10,7 +10,19 @@ import { contactRouter } from './routes/contact';
 import { coursesRouter, resultsRouter } from './routes/stubs';
 import { pageRouter } from './routes/page';
 
-const cors = corsLib({ origin: true });
+// Restrict cross-origin browser access to known site origins instead of
+// reflecting any origin (L-4). The primary consumer is the bundled /web site,
+// which calls this via the same-origin /web/api/** rewrite (no CORS), and
+// server-side callers send no Origin header — both remain allowed. Add any
+// production custom domain that fetches this API cross-origin from the browser.
+const ALLOWED_ORIGINS = [
+  'https://scs-app-54aef.web.app',
+  'https://scs-app-54aef.firebaseapp.com',
+  // TODO: add production custom domain(s), e.g. 'https://www.seeclub-staefa.ch'
+];
+const cors = corsLib({
+  origin: (origin, cb) => cb(null, !origin || ALLOWED_ORIGINS.includes(origin)),
+});
 
 const app = express();
 app.use((req, res, next) => cors(req, res, next));
