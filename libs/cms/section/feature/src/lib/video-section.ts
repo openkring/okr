@@ -4,6 +4,7 @@ import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { VideoSection } from '@bk2/shared-models';
 import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { getSafeEmbedUrl } from '@bk2/shared-util-core';
 
 /**
  * A section that displays a video using Google's youtube player.
@@ -58,5 +59,10 @@ export class VideoSectionComponent {
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);  
 
-  protected videoUrl = computed(() => this.sanitizer.bypassSecurityTrustResourceUrl(this.baseUrl() + this.url()));
+  // Validate the (editor-supplied) baseUrl + url against the embed host
+  // allowlist before trusting it (H-3). An invalid URL renders an empty iframe.
+  protected videoUrl = computed(() => {
+    const safe = getSafeEmbedUrl(this.baseUrl() + this.url());
+    return safe ? this.sanitizer.bypassSecurityTrustResourceUrl(safe) : '';
+  });
 }
