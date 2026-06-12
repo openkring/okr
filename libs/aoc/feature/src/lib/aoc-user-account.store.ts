@@ -19,7 +19,7 @@ import { confirm, error, navigateByUrl } from '@bk2/shared-util-angular';
 import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
-import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail, AOC_USER_ACCOUNT_I18N_KEYS } from '@bk2/aoc-util';
+import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail, AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 export type FirebaseAuthUser = {
   uid: string;
@@ -67,7 +67,7 @@ export const AocUserAccountStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_USER_ACCOUNT_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
 
     usersResource: rxResource({
       // the resource will reload whenever the fbUser changes (login/logout).
@@ -334,7 +334,7 @@ export const AocUserAccountStore = signalStore(
       },
 
       async deleteUser(account: UserAccount): Promise<void> {
-        const confirmed = await confirm(store.alertController, store.i18n.user_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        const confirmed = await confirm(store.alertController, store.i18n.account_user_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (confirmed === true) {
           const user = store.allUsers().find(u => u.bkey === account.uid);
           if (user) {
@@ -345,7 +345,7 @@ export const AocUserAccountStore = signalStore(
       },
 
       async deleteFirebaseUser(account: UserAccount): Promise<void> {
-        const confirmed = await confirm(store.alertController, store.i18n.fbuser_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        const confirmed = await confirm(store.alertController, store.i18n.account_fbuser_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (confirmed === true) {
           try {
             const fn = httpsCallable<{ uid: string }, void>(getFunctions(getApp(), 'europe-west6'), 'deleteFirebaseAuthUser');

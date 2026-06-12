@@ -10,7 +10,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { WebsiteContentCollection, WebsiteContentModel } from '@bk2/shared-models';
 import { bkPrompt } from '@bk2/shared-util-angular';
 import { getSystemQuery } from '@bk2/shared-util-core';
-import { AOC_WEBSITE_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 export type AocWebsiteState = {
   searchTerm: string;
@@ -30,7 +30,7 @@ export const AocWebsiteStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_WEBSITE_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
   withProps(store => ({
     contentResource: rxResource({
@@ -66,24 +66,24 @@ export const AocWebsiteStore = signalStore(
     },
 
     async createItem(): Promise<void> {
-      const key = await bkPrompt(store.alertController, store.i18n.key(), '', store.i18n.ok(), store.i18n.cancel());
+      const key = await bkPrompt(store.alertController, store.i18n.website_key(), '', store.i18n.ok(), store.i18n.cancel());
       if (!key) return;
       const item = new WebsiteContentModel(store.appStore.env.tenantId);
       item.key = key.trim();
       await store.firestoreService.createModel<WebsiteContentModel>(
-        WebsiteContentCollection, item, store.i18n.create_conf(), store.i18n.create_error(), store.appStore.currentUser(),
+        WebsiteContentCollection, item, store.i18n.website_create_conf(), store.i18n.website_create_error(), store.appStore.currentUser(),
       );
     },
 
     async saveItem(item: WebsiteContentModel): Promise<void> {
       await store.firestoreService.updateModel<WebsiteContentModel>(
-        WebsiteContentCollection, item, false, store.i18n.update_conf(), store.i18n.update_error(), store.appStore.currentUser(),
+        WebsiteContentCollection, item, false, store.i18n.website_update_conf(), store.i18n.website_update_error(), store.appStore.currentUser(),
       );
     },
 
     async deleteItem(item: WebsiteContentModel): Promise<void> {
       await store.firestoreService.deleteModel<WebsiteContentModel>(
-        WebsiteContentCollection, item, store.i18n.delete_conf(), store.i18n.delete_error(), store.appStore.currentUser(),
+        WebsiteContentCollection, item, store.i18n.website_delete_conf(), store.i18n.website_delete_error(), store.appStore.currentUser(),
       );
     },
   })),

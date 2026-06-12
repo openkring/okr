@@ -20,7 +20,7 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { PersonEditModal } from '@bk2/subject-person-feature';
 import { newMembershipForPerson } from '@bk2/relationship-membership-util';
-import { AOC_SRV_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 import { AocSrvMismatchModal } from './aoc-srv-mismatch.modal';
 
@@ -161,7 +161,7 @@ export const AocSrvStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_SRV_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
 
   withComputed(state => ({

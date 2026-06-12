@@ -21,6 +21,9 @@ export const RESERVATION_I18N_KEYS = {
   delete_error:                   PFX + 'delete.error',
 
   end:                            PFX + 'end.label',
+  end_conf:                       PFX + 'end.conf',
+  end_error:                      PFX + 'end.error',
+
   select:                         PFX + 'select.label',
 
   update:                         PFX + 'update.label',

@@ -14,7 +14,7 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { DocumentService } from '@bk2/document-data-access';
 import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@bk2/document-util';
-import { AOC_DOC_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 export type StorageFileInfo = {
   fullPath: string;
@@ -59,7 +59,7 @@ export const AocDocStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(AOC_DOC_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
   withComputed(state => ({
     currentUser: computed(() => state.appStore.currentUser()),
@@ -116,7 +116,7 @@ export const AocDocStore = signalStore(
     },
 
     async deleteDocument(file: StorageFileInfo): Promise<void> {
-      const ok = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      const ok = await confirm(store.alertController, store.i18n.doc_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!ok) return;
       await deleteObject(ref(store.storage, file.fullPath));
       patchState(store, {
@@ -168,7 +168,7 @@ export const AocDocStore = signalStore(
       document.authorName = getFullName(currentUser?.firstName, currentUser?.lastName);
       document.index = getDocumentIndex(document);
       await store.firestoreService.createModel<DocumentModel>(
-        DocumentCollection, document, store.i18n.create_conf(), store.i18n.create_error(), currentUser
+        DocumentCollection, document, store.i18n.doc_create_conf(), store.i18n.doc_create_error(), currentUser
       );
       patchState(store, {
         missingDocs: store.missingDocs().filter(d => d.fullPath !== file.fullPath),

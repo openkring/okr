@@ -10,7 +10,7 @@ import { BkModel, LogInfo, logMessage, MembershipCollection, MembershipModel, Or
 import { error } from '@bk2/shared-util-angular';
 import { DateFormat, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
-import { initializeAgeByGenderStatistics, updateAgeByGenderStats, AOC_STATISTICS_I18N_KEYS } from '@bk2/aoc-util';
+import { initializeAgeByGenderStatistics, updateAgeByGenderStats, AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 export type AocStatisticsState = {
   modelType: string | undefined;
@@ -32,7 +32,7 @@ export const AocStatisticsStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_STATISTICS_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
   withProps(store => ({
     dataResource: rxResource({
@@ -127,9 +127,9 @@ export const AocStatisticsStore = signalStore(
           },
         };
         if (isNew) {
-          store.firestoreService.createModel<SectionModel>(SectionCollection, section!, store.i18n.age_by_gender_conf(), store.i18n.age_by_gender_error(), store.appStore.currentUser())
+          store.firestoreService.createModel<SectionModel>(SectionCollection, section!, store.i18n.statistics_age_by_gender_conf(), store.i18n.statistics_age_by_gender_error(), store.appStore.currentUser())
         } else {
-          store.firestoreService.updateModel<SectionModel>(SectionCollection, section!, false, store.i18n.age_by_gender_conf(), store.i18n.age_by_gender_error(), store.appStore.currentUser());
+          store.firestoreService.updateModel<SectionModel>(SectionCollection, section!, false, store.i18n.statistics_age_by_gender_conf(), store.i18n.statistics_age_by_gender_error(), store.appStore.currentUser());
         }
       },
 

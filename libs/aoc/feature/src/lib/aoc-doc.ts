@@ -8,7 +8,6 @@ import { FileLogoPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
-import { PFX } from './scope';
 
 @Component({
   selector: 'bk-aoc-doc',
@@ -21,13 +20,13 @@ import { PFX } from './scope';
   ],
   providers: [AocDocStore],
   template: `
-    <bk-header [i18n]="{ title: i18n.title() }" />
+    <bk-header [i18n]="{ title: store.i18n.doc_title() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ i18n.content() }}</ion-col>
+              <ion-col>{{ store.i18n.doc_content() }}</ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -36,15 +35,15 @@ import { PFX } from './scope';
       <!-- Check Files in Store -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ i18n.check_files_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.doc_check_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ i18n.check_files_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.doc_check_content() }}</ion-col>
               <ion-col size="6">
                 <bk-button
-                  [label]="missingDocs().length > 0 ? i18n.hide() : i18n.check_files_button()"
+                  [label]="missingDocs().length > 0 ? store.i18n.doc_hide() : store.i18n.doc_check_button()"
                   iconName="checkbox-circle"
                   [disabled]="isChecking()"
                   (click)="toggleCheckFiles()" />
@@ -81,23 +80,6 @@ export class AocDoc {
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly i18nService = inject(I18nService);
 
-  // i18n
-  protected readonly i18n = this.i18nService.translateAll({
-    title: PFX + 'doc.title',
-    content: PFX + 'doc.content',
-    hide: PFX + 'doc.hide',
-    check_files_title: PFX + 'doc.checkFiles.title',
-    check_files_content: PFX + 'doc.checkFiles.content',
-    check_files_button: PFX + 'doc.checkFiles.button',
-    as_title: PFX + 'doc.actionsheet.title',
-    as_doc_download: PFX + 'doc.actionsheet.document.download',
-    as_doc_create: PFX + 'doc.actionsheet.document.create',
-    as_doc_delete: PFX + 'doc.actionsheet.document.delete',
-    as_copy_path: PFX + 'doc.actionsheet.copy.path',
-    as_copy_url: PFX + 'doc.actionsheet.copy.url',
-    cancel: '@cancel'
-  });
-
   // computed
   protected readonly missingDocs = computed(() => this.store.missingDocs());
   protected readonly isChecking = computed(() => this.store.isChecking());
@@ -126,13 +108,13 @@ export class AocDoc {
   }
 
   protected async showFileActions(file: StorageFileInfo): Promise<void> {
-    const options: ActionSheetOptions = createActionSheetOptions(this.i18n.as_title());
-    options.buttons.push(createActionSheetButton('doc.actionsheet.document.download', this.i18n.as_doc_download(), this.imgixBaseUrl, 'download'));
-    options.buttons.push(createActionSheetButton('doc.actionsheet.document.create', this.i18n.as_doc_create(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('doc.actionsheet.copy.path', this.i18n.as_copy_path(), this.imgixBaseUrl, 'copy'));
-    options.buttons.push(createActionSheetButton('doc.actionsheet.copy.url', this.i18n.as_copy_url(), this.imgixBaseUrl, 'copy'));
-    options.buttons.push(createActionSheetButton('doc.actionsheet.document.delete', this.i18n.as_doc_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
+    const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    options.buttons.push(createActionSheetButton('doc.actionsheet.document.download', this.store.i18n.doc_download(), this.imgixBaseUrl, 'download'));
+    options.buttons.push(createActionSheetButton('doc.actionsheet.document.create', this.store.i18n.doc_create(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('doc.actionsheet.copy.path', this.store.i18n.doc_copy_path(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('doc.actionsheet.copy.url', this.store.i18n.doc_copy_url(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('doc.actionsheet.document.delete', this.store.i18n.doc_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();

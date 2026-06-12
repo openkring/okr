@@ -10,7 +10,7 @@ import { AlertController, ToastController } from '@ionic/angular/standalone';
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { showToast } from '@bk2/shared-util-angular';
-import { AOC_CHAT_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
 export interface AdminRoom {
@@ -83,7 +83,7 @@ export const AocChatStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_CHAT_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
 
   // ─── rxResources ────────────────────────────────────────────────────────────
@@ -198,11 +198,11 @@ export const AocChatStore = signalStore(
 
     async renameRoom(roomId: string): Promise<void> {
       const alert = await store.alertController.create({
-        header: store.i18n.room_rename_header(),
-        inputs: [{ name: 'name', type: 'text', placeholder: store.i18n.room_rename_newname() }],
+        header: store.i18n.chat_room_rename(),
+        inputs: [{ name: 'name', type: 'text', placeholder: store.i18n.chat_room_rename_newname() }],
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.room_rename_action(), role: 'confirm' },
+          { text: store.i18n.chat_room_rename_action(), role: 'confirm' },
         ],
       });
       await alert.present();
@@ -216,20 +216,20 @@ export const AocChatStore = signalStore(
         );
         await fn({ roomId, name: newName });
         store.roomsResource.reload();
-        await showToast(store.toastController, `${store.i18n.room_rename_conf()}: ${newName}`);
+        await showToast(store.toastController, `${store.i18n.chat_room_rename_conf()}: ${newName}`);
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
     },
 
     async deleteRoom(roomId: string): Promise<void> {
-      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.room.delete.askconf', { roomId }));
+      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.room.delete.confirm', { roomId }));
       const alert = await store.alertController.create({
-        header: store.i18n.room_delete_header(),
+        header: store.i18n.chat_room_delete(),
         message,
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.room_delete_action(), role: 'confirm', cssClass: 'danger' },
+          { text: store.i18n.chat_room_delete_action(), role: 'confirm', cssClass: 'danger' },
         ],
       });
       await alert.present();
@@ -242,7 +242,7 @@ export const AocChatStore = signalStore(
           patchState(store, { selectedRoomId: undefined, detailsTarget: undefined });
         }
         store.roomsResource.reload();
-        await showToast(store.toastController, store.i18n.room_delete_conf());
+        await showToast(store.toastController, store.i18n.chat_room_delete_conf());
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
@@ -250,11 +250,11 @@ export const AocChatStore = signalStore(
 
     async addAlias(roomId: string): Promise<void> {
       const alert = await store.alertController.create({
-        header: store.i18n.alias_add_header(),
-        inputs: [{ name: 'alias', type: 'text', placeholder: store.i18n.alias_add_placeholder() }],
+        header: store.i18n.chat_alias_add(),
+        inputs: [{ name: 'alias', type: 'text', placeholder: store.i18n.chat_alias_add_placeholder() }],
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.alias_add_action(), role: 'confirm' },
+          { text: store.i18n.chat_alias_add_action(), role: 'confirm' },
         ],
       });
       await alert.present();
@@ -267,7 +267,7 @@ export const AocChatStore = signalStore(
           getFn(), 'addMatrixRoomAlias'
         );
         const result = await fn({ roomId, aliasName });
-        await showToast(store.toastController, `${store.i18n.alias_add_conf()}: ${result.data.alias}`);
+        await showToast(store.toastController, `${store.i18n.chat_alias_add_conf()}: ${result.data.alias}`);
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
@@ -276,11 +276,11 @@ export const AocChatStore = signalStore(
     async inviteToRoom(roomId: string): Promise<void> {
       const defaultPersonKey = store.selectedPersonKey() ?? '';
       const alert = await store.alertController.create({
-        header: store.i18n.room_invite_header(),
+        header: store.i18n.chat_room_invite(),
         inputs: [{ name: 'personKey', type: 'text', value: defaultPersonKey, placeholder: 'personKey' }],
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.room_invite_action(), role: 'confirm' },
+          { text: store.i18n.chat_room_invite_action(), role: 'confirm' },
         ],
       });
       await alert.present();
@@ -294,7 +294,7 @@ export const AocChatStore = signalStore(
         );
         await fn({ roomId, personKey: pk });
         store.membersResource.reload();
-        await showToast(store.toastController, `${pk} ${store.i18n.room_invite_conf()}`);
+        await showToast(store.toastController, `${pk} ${store.i18n.chat_room_invite_conf()}`);
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
@@ -303,11 +303,11 @@ export const AocChatStore = signalStore(
     async provisionUser(personKey?: string): Promise<void> {
       const defaultKey = personKey ?? store.selectedPersonKey() ?? '';
       const alert = await store.alertController.create({
-        header: store.i18n.user_provision_header(),
+        header: store.i18n.chat_user_provision(),
         inputs: [{ name: 'personKey', type: 'text', value: defaultKey, placeholder: 'personKey' }],
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.user_provision_action(), role: 'confirm' },
+          { text: store.i18n.chat_user_provision_action(), role: 'confirm' },
         ],
       });
       await alert.present();
@@ -320,7 +320,7 @@ export const AocChatStore = signalStore(
           getFn(), 'provisionMatrixUser'
         );
         const result = await fn({ personKey: pk });
-        await showToast(store.toastController, `${store.i18n.user_provision_conf()}: ${result.data.matrixUserId}`);
+        await showToast(store.toastController, `${store.i18n.chat_user_provision_conf()}: ${result.data.matrixUserId}`);
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
@@ -329,13 +329,13 @@ export const AocChatStore = signalStore(
     // ─── member actions ────────────────────────────────────────────────────────
 
     async kickMember(userId: string, roomId: string): Promise<void> {
-      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.member.kick.askconf', { userId }));
+      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.member.kick.confirm', { userId }));
       const alert = await store.alertController.create({
-        header: store.i18n.member_kick_header(),
+        header: store.i18n.chat_member_kick(),
         message,
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.member_kick_action(), role: 'confirm', cssClass: 'danger' },
+          { text: store.i18n.chat_member_kick_action(), role: 'confirm', cssClass: 'danger' },
         ],
       });
       await alert.present();
@@ -350,20 +350,20 @@ export const AocChatStore = signalStore(
         );
         await fn({ roomId, personKey });
         store.membersResource.reload();
-        await showToast(store.toastController, `${userId} ${store.i18n.member_kick_conf()}`);
+        await showToast(store.toastController, `${userId} ${store.i18n.chat_member_kick_conf()}`);
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
     },
 
     async deactivateUser(userId: string): Promise<void> {
-      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.user.deactivate.askconf', { userId }));
+      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.user.deactivate.confirm', { userId }));
       const alert = await store.alertController.create({
-        header: store.i18n.user_deactivate_header(),
+        header: store.i18n.chat_user_deactivate(),
         message,
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.user_deactivate_action(), role: 'confirm', cssClass: 'danger' },
+          { text: store.i18n.chat_user_deactivate_action(), role: 'confirm', cssClass: 'danger' },
         ],
       });
       await alert.present();
@@ -378,7 +378,7 @@ export const AocChatStore = signalStore(
         const result = await fn({ personKey });
         store.roomsResource.reload();
         store.membersResource.reload();
-        await showToast(store.toastController, result.data.deactivated ? `${userId} ${store.i18n.user_deactivate_conf()}` : store.i18n.user_deactivate_notfound());
+        await showToast(store.toastController, result.data.deactivated ? `${userId} ${store.i18n.chat_user_deactivate_conf()}` : store.i18n.chat_user_deactivate_notfound());
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }

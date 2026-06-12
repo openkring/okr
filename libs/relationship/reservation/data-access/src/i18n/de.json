@@ -14,5 +14,10 @@
     "conf": "Reservation wurde gelöscht.",
     "error": "Reservation konnte nicht gelöscht werden.",
     "confirm": "Normalerweise sollte eine Reservation beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Reservation wirklich löschen?"
+  },
+  "end": {
+    "label": "Reservation beenden",
+    "conf": "Die Reservation wurde beendet.",
+    "error": "Die Reservaton konnte nicht beendet werden."
   }
 }

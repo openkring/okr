@@ -29,7 +29,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
       <ion-toolbar>
         <ion-searchbar
           [value]="searchTerm()"
-          [placeholder]="aocTagStore.i18n.search()"
+          [placeholder]="aocTagStore.i18n.tag_search()"
           (ionInput)="onSearch($event)"
           debounce="300" />
         <ion-buttons slot="end">
@@ -48,7 +48,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
             <ion-card>
               <ion-card-header>
                 <ion-card-title>
-                  {{ aocTagStore.i18n.list_title() }}
+                  {{ aocTagStore.i18n.tag_list_title() }}
                   <ion-badge color="medium">{{ filteredTags().length }}</ion-badge>
                 </ion-card-title>
               </ion-card-header>
@@ -86,7 +86,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
                     {{ selectedTag()!.tagModel }}
                     <ion-badge color="medium">{{ tagStrings().length }}</ion-badge>
                   } @else {
-                    {{ aocTagStore.i18n.strings_title() }}
+                    {{ aocTagStore.i18n.tag_strings_title() }}
                   }
                 </ion-card-title>
               </ion-card-header>
@@ -95,7 +95,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
                   <ion-list lines="inset">
                     <ion-item lines="none" (click)="addTagString(selectedTag()!)" button>
                       <ion-icon slot="start" src="{{ 'add' | svgIcon }}" color="primary" />
-                      <ion-label color="primary">{{ aocTagStore.i18n.string_add_button() }}</ion-label>
+                      <ion-label color="primary">{{ aocTagStore.i18n.tag_add_button() }}</ion-label>
                     </ion-item>
                     @for(tagStr of tagStrings(); track tagStr) {
                       <ion-item (click)="showTagStringActions(selectedTag()!, tagStr)" button>
@@ -109,7 +109,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
                   </ion-list>
                 } @else {
                   <ion-item lines="none">
-                    <ion-label color="medium">{{ aocTagStore.i18n.strings_empty() }}</ion-label>
+                    <ion-label color="medium">{{ aocTagStore.i18n.tag_strings_empty() }}</ion-label>
                   </ion-item>
                 }
               </ion-card-content>
@@ -154,8 +154,8 @@ export class AocTag {
   protected async showTagActions(tag: TagItem): Promise<void> {
     const base = this.aocTagStore.appStore.env.services.imgixBaseUrl;
     const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    options.buttons.push(createActionSheetButton('tag.edit', base, 'edit', this.aocTagStore.i18n.as_edit()));
-    options.buttons.push(createActionSheetButton('tag.delete', base,'trash', this.aocTagStore.i18n.as_delete()));
+    options.buttons.push(createActionSheetButton('tag.edit', base, 'edit', this.aocTagStore.i18n.tag_update()));
+    options.buttons.push(createActionSheetButton('tag.delete', base,'trash', this.aocTagStore.i18n.tag_delete()));
     options.buttons.push(createActionSheetButton('cancel', base,'cancel', this.aocTagStore.i18n.cancel()));
 
     const sheet = await this.actionSheetController.create(options);
@@ -176,8 +176,8 @@ export class AocTag {
   protected async showTagStringActions(tag: TagItem, tagStr: string): Promise<void> {
     const base = this.aocTagStore.appStore.env.services.imgixBaseUrl;
     const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    options.buttons.push(createActionSheetButton('tag.string.edit', base, 'edit', this.aocTagStore.i18n.as_string_edit()));
-    options.buttons.push(createActionSheetButton('tag.string.remove', base, 'trash', this.aocTagStore.i18n.as_string_remove()));
+    options.buttons.push(createActionSheetButton('tag.string.edit', base, 'edit', this.aocTagStore.i18n.tag_string_update()));
+    options.buttons.push(createActionSheetButton('tag.string.remove', base, 'trash', this.aocTagStore.i18n.tag_string_remove()));
     options.buttons.push(createActionSheetButton('cancel', base, 'cancel', this.aocTagStore.i18n.cancel()));
 
     const sheet = await this.actionSheetController.create(options);

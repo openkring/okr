@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { I18nService } from '@bk2/shared-i18n';
-import { AOC_BEXIO_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@bk2/aoc-util';
 import { getApp } from 'firebase/app';
 import { collection, doc, getCountFromServer, getDocs, getDoc, getFirestore, query, where, writeBatch } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
@@ -101,7 +101,7 @@ export const AocBexioStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_BEXIO_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
   withComputed(state => ({
     currentUser: computed(() => state.appStore.currentUser()),

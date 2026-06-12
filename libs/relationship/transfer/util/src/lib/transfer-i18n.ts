@@ -25,7 +25,7 @@ export const TRANSFER_I18N_KEYS = {
   delete:                           PFX + 'delete.label',
   delete_conf:                      PFX + 'delete.conf',
   delete_error:                     PFX + 'delete.error',
-
+  
   select_resource:                  PFX + 'select.resource',
 
   update:                           PFX + 'update.label',

@@ -16,7 +16,7 @@ import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventM
 import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
 import { confirm } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
-import { AOC_DATA_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@bk2/aoc-util';
 
 import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@bk2/subject-address-util';
 import { commentValidations, getCommentIndex } from '@bk2/comment-util';
@@ -72,7 +72,7 @@ export const AocDataStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_DATA_I18N_KEYS),
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
 
     dataResource: rxResource({
       params: () => ({
@@ -142,7 +142,7 @@ export const AocDataStore = signalStore(
         console.log(`  - fieldsToFixTypes: ${fieldsToFixTypes}`);
         // end of configuration -> you will also need to adapt the applied fixes below
 
-        const ok = await confirm(store.alertController, store.i18n.check_console(), store.i18n.ok(), store.i18n.cancel(), true);
+        const ok = await confirm(store.alertController, store.i18n.data_check_console(), store.i18n.ok(), store.i18n.cancel(), true);
         if (!ok) return;
 
         // reading the collection and iterating over all documents

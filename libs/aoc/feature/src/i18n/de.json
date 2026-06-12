@@ -3,6 +3,47 @@
   "result": {
     "title": "Resultate"
   },
+
+  "account": {
+    "title": "User Accounts",
+    "plural": "Konti",
+    "empty": "Keine User gefunden",
+    "user": {
+      "delete": {
+        "label": "User löschen",
+        "error": "Der User konnte nicht gelöscht werden.",
+        "conf": "Der User wurde gelöscht.",
+        "confirm": "Soll der User wirklich gelöscht werden ?"
+      },
+      "update": {
+        "label": "User ändern",
+        "error": "Die Aenderungen konnten nicht gespeichert werden",
+        "conf": "Die Aenderungen wurden gespeichert."
+      }
+    },
+    "fbuser": {
+      "delete": {
+          "label": "Firebase User löschen",
+          "error": "Der Firebase User konnte nicht gelöscht werden.",
+          "conf": "Der Firebase User wurde gelöscht.",
+          "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
+      }
+    },
+    "email": {
+      "label": "Login E-Mail",
+      "placeholder": "name@domain.com"
+    },
+    
+    "membership": {
+      "edit":  "Mitgliedschaft ändern"
+    },
+    "copy": {
+      "email": "E-Mail kopieren",
+      "uid": "UID kopieren",
+      "pkey": "Person-Key kopieren"
+    }
+  },
+
   "adminops": {
     "title": "Admin Operationen",
     "debug": {
@@ -15,7 +56,8 @@
       "button": "Anzeigen"
     },
     "mcatchange": {
-      "title": "Änderungen der Mitgliederkategorie"
+      "title": "Änderungen der Mitgliederkategorie",
+      "button": "Anzeigen"
     },
     "doubleMembers": {
       "title": "Doppel-Mitglieder",
@@ -124,6 +166,7 @@
     "name": "Name",
     "created_by": "Erstellt von",
     "members": "Mitglieder",
+    "note": "Wenn keine Person ausgewählt ist, werden alle Chat Räume angezeigt. Bei selektierter Person, werden alle Chat Räume angezeigt, wo diese Person Mitglied ist.",
     "invited": "Eingeladen",
     "public": "Öffentlich",
     "topic": "Thema",
@@ -142,26 +185,29 @@
     },
     "room": {
       "rename": {
-        "header": "Raum umbenennen",
+        "label": "Raum umbenennen",
         "newname": "Neuer Name",
         "action": "Umbenennen",
         "conf": "Raum umbenannt"
       },
       "delete": {
-        "header": "Raum löschen",
-        "askconf": "Raum ${roomId} wirklich löschen ? Alle Nachrichten werden entfernt.",
+        "label": "Raum löschen",
+        "confirm": "Raum ${roomId} wirklich löschen ? Alle Nachrichten werden entfernt.",
         "action": "Löschen",
         "conf": "Raum gelöscht."
       },
       "invite": {
-        "header": "Person einladen",
+        "label": "Person einladen",
         "action": "Einladen",
         "conf": "eingeladen"
+      },
+      "view": {
+        "label": "Raum-Details anzeigen"
       }
     },
     "alias": {
       "add": {
-        "header": "Alias hinzufügen",
+        "label": "Alias hinzufügen",
         "placeholder": "alias-name (ohne # und :homeserver)",
         "action": "Hinzufügen",
         "conf": "Alias hinzugefügt"
@@ -169,110 +215,105 @@
     },
     "user": {
       "provision": {
-        "header": "Matrix User anlegen",
+        "label": "Matrix User anlegen",
         "action": "Anlegen",
         "conf": "User angelegt"
       },
       "deactivate": {
-        "header": "Matrix User deaktivieren",
-        "askconf": "${userId} deaktivieren? Der User kann sich danach nicht mehr anmelden.",
+        "label": "Matrix User deaktivieren",
+        "confirm": "${userId} deaktivieren? Der User kann sich danach nicht mehr anmelden.",
         "action": "Deaktivieren",
         "conf": "deaktiviert",
         "notfound": "User nicht gefunden"
       }
     },
     "member": {
+      "deactivate": {
+        "label": "Mitglied deaktivieren"
+      },
       "kick": {
-        "header": "Mitglied entfernen",
-        "askconf": "${userId} aus dem Raum entfernen ?",
+        "label": "Mitglied entfernen",
+        "confirm": "${userId} aus dem Raum entfernen ?",
         "action": "Entfernen",
         "conf": "entfernt."
+      },
+      "view": {
+        "label": "Mitglieder anzeigen"
       }
-    },
-    "actionsheet": {
-      "title": "Wähle eine Aktion",
-      "showMembers": "Mitglieder anzeigen",
-      "showDetails": "Raum-Details anzeigen",
-      "rename": "Raum umbenennen",
-      "addAlias": "Alias hinzufügen",
-      "invite": "Person einladen",
-      "provision": "Matrix-User anlegen",
-      "delete": "Raum löschen",
-      "kick": "Mitglied entfernen",
-      "deactivate": "Mitglied deaktivieren"
     }
   },
 
   "content": {
-    "title": "Content-Management",
     "content": "Inhalte (Pages, Sections, Menus) verwalten.",
-    "orphanedSections": {
-      "title": "Verwaiste Sektionen",
-      "content": "Liste Sektionen, welche von keiner Page verwendet werden.",
-      "hide": "Ausblenden",
-      "show": "Anzeigen"
-    },
-    "missingSections": {
-      "title": "Fehlende Sektionen",
-      "content": "Liste nicht existierende Sektionsnamen, welche von einer Page referenziert werden.",
-      "hide": "Ausblenden",
-      "show": "Anzeigen"
-    },
-    "orphanedMenus": {
-      "title": "Verwaiste Menüs",
-      "content": "Liste Menüs, welche nicht verwendet werden.",
-      "hide": "Ausblenden",
-      "show": "Anzeigen"
-    },
-    "missingMenus": {
-      "title": "Fehlende Menüs",
-      "content": "Liste nicht existierende Menüs, welche von einem anderen Menü referenziert werden.",
-      "hide": "Ausblenden",
-      "show": "Anzeigen"
-    },
-    "checkLinks": {
-      "title": "Links prüfen",
-      "content": "Prüfe alle Links in allen Pages und Sektionen auf Funktionsfähigkeit.",
-      "show": "Anzeigen",
-      "hide": "Ausblenden"
+    "title": "Content-Management",
+    "link": {
+      "check": {
+        "title": "Links prüfen",
+        "content": "Prüfe alle Links in allen Pages und Sektionen auf Funktionsfähigkeit.",
+        "show": "Anzeigen",
+        "hide": "Ausblenden"
+      }
     },
     "section": {
       "delete": {
-        "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
-      }
+        "label": "Sektion löschen",
+        "confirm": "Soll diese Sektion wirklich gelöscht werden ?",
+        "conf": "Die Sektion wurde gelöscht.",
+        "error": "Die Sektion konnte nicht gelöscht werden."
+      },
+      "orphaned": {
+        "title": "Verwaiste Sektionen",
+        "content": "Liste Sektionen, welche von keiner Page verwendet werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "missing": {
+        "title": "Fehlende Sektionen",
+        "content": "Liste nicht existierende Sektionsnamen, welche von einer Page referenziert werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "create": "Sektion erstellen",
+      "edit": "Sektion bearbeiten",
+      "removeRef": "Referenz von Seite entfernen"
     },
     "menu": {
       "delete": {
-        "conf": "Menüeintrag wurde gelöscht.",
-        "confirm": "Soll der Menueintrag wirklich gelöscht werden ?"
-      }
+        "label": "Menü löschen",
+        "confirm": "Soll der Menueintrag wirklich gelöscht werden ?",
+        "conf": "Der Menüeintrag wurde gelöscht.",
+        "error": "Der Menüeintrag konnte nicht gelöscht werden."
+      },
+      "orphaned": {
+        "title": "Verwaiste Menüs",
+        "content": "Liste Menüs, welche nicht verwendet werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "missing": {
+        "title": "Fehlende Menüs",
+        "content": "Liste nicht existierende Menüs, welche von einem anderen Menü referenziert werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "create": "Menü erstellen",
+      "edit": "Menü bearbeiten",
+      "removeRef": "Menü Referenz entfernen"
     },
-    "actionsheet": {
-      "title": "Wähle eine Aktion",
-      "copy": {
-        "bkey": "Key kopieren"
-      },
-      "menu": {
-        "create": "Menü erstellen",
-        "delete": "Menü löschen",
-        "edit": "Menü bearbeiten",
-        "removeRef": "Menü Referenz entfernen"
-      },
-      "page": {
-        "edit": "Website bearbeiten"
-      },
-      "section": {
-        "create": "Sektion erstellen",
-        "delete": "Sektion löschen",
-        "edit": "Sektion bearbeiten",
-        "removeRef": "Referenz von Seite entfernen"
-      }
+    "copy": {
+      "bkey": "Key kopieren"
+    },
+    "page": {
+      "edit": "Website bearbeiten"
     }
   },
 
   "data": {
     "title": "Daten",
     "content": "Daten validieren und korrigieren",
+    "check": {
+      "console": "Bitte Konfiguration in der Browser Console prüfen und bestätigen."
+    },
     "fix": {
       "title": "Daten-Korrektur",
       "content": "Bulk-Operation (adminops/fixModels) mit Korrektur-Operationen auf eine Collection. BITTE AUFPASSEN: Die Korrektur-Operationen können nicht rückgängig gemacht werden. Backup machen, Implementierung in fix-Operation testen und zuerst ein dry run ohne update machen.",
@@ -282,18 +323,13 @@
       "title": "Daten-Validierung",
       "content": "Bulk-Operation (adminops/validateModels) mit Validierungs-Operationen auf eine Collection.",
       "button": "Daten validieren",
-      "validate": "Daten validieren",
       "select": "Collection wählen"
     },
     "index": {
       "title": "Index erstellen",
       "content": "Erstellt einen Index auf einer Collection. Dies ist nützlich, wenn ein Index in der Datenbank fehlt und eine Abfrage nicht ausgeführt werden kann.",
       "button": "Index erstellen",
-      "create": "Index erstellen",
       "select": "Collection wählen"
-    },
-    "check": {
-      "console": "Bitte Konfiguration in der Browser Console prüfen und bestätigen."
     },
     "fav": {
       "title": "Fav-Adressen Konsistenz",
@@ -309,37 +345,35 @@
   },
 
   "doc": {
-    "create": {
-      "conf": "Dokument erstellt.",
-      "error": "Dokument konnte nicht erstellt werden."
-    },
-    "delete": {
-      "confirm": "Soll diese Datei aus dem Firebase Storage gelöscht werden?"
-    },
     "title": "Dokumente prüfen",
     "content": "Prüft ob alle Dateien in Firebase Storage einen entsprechenden Eintrag in der Datenbank haben.",
-    "hide": "Ausblenden",
-    "checkFiles": {
+
+    "copy": {
+      "path": "Speicherpfad kopieren",
+      "url": "Download-URL kopieren"
+    },
+    "create": {
+      "label": "Dokument erstellen (DB-Record)",
+      "conf": "Das Dokument wurde erstellt.",
+      "error": "Das Dokument konnte nicht erstellt werden."
+    },
+    "delete": {
+      "label": "Dokument löschen",
+      "confirm": "Soll diese Datei aus dem Firebase Storage gelöscht werden?",
+      "conf": "Das Dokument wurde gelöscht.",
+      "error": "Das Dokument konnte nicht gelöscht werden."
+    },
+    "download": {
+      "label": "Dokument herunterladen"
+    },
+    "hide": {
+      "label": "Ausblenden"
+    },
+    "check": {
       "title": "Dateien ohne DB-Eintrag",
       "content": "Listet alle Dateien in Firebase Storage auf, für die kein Eintrag in der Firestore docs-Kollektion existiert.",
       "button": "Prüfen"
-    },
-    "actionsheet": {
-      "title": "Wähle eine Aktion",
-      "document": {
-        "download": "Dokument herunterladen",
-        "create": "DB-Eintrag erstellen",
-        "delete": "Dokument löschen"
-      },
-      "copy": {
-        "path": "Speicherpfad kopieren",
-        "url": "Download-URL kopieren"
-      }
     }
-  },
-
-  "email": {
-
   },
 
   "roles": {
@@ -353,8 +387,10 @@
       "title": "User Account erstellen",
       "content": "Eine bestehende Person wird als User in Firebase Auth registriert, dh. das Firebase-Account und der User werden erzeugt. Falls das Firebase-Account bereits existiert, wird nur ein User erstellt, welcher das Firebase Account und die Person verlinkt.",
       "button": "Konto erstellen",
-      "password-set": "Passwort setzen",
-      "password-reset": "Passwort zurücksetzen"
+      "password": {
+        "set": "Passwort setzen",
+        "reset": "Passwort zurücksetzen"
+      }
     },
     "assignment": {
       "title": "Rollen zuweisen",
@@ -385,10 +421,6 @@
     }
   },
 
-  "session": {
-
-  },
-
   "srv": {
     "title": "Verwaltung der SRV / Regasoft Integration",
     "index": {
@@ -396,8 +428,50 @@
       "subtitle": "Vergleicht die aktuellen SRV-Mitgliedschaften (orgKey=srv) mit den Mitgliedern im Regasoft-Portal. Primärer Abgleich via memberId = serviceId, Fallback via Name.",
       "reset": "Index zurücksetzen",
       "button": "Index aufbauen"
+    },
+    "person": {
+      "update": {
+        "label": "Person ändern"
+      }
+    },
+    "membership": {
+      "update": {
+        "label": "Mitgliedschaft ändern"
+      },
+      "parent": {
+        "create": {
+          "label": "Verbands-Mitgliedschaft erstellen"
+        },
+        "update": {
+          "label": "Verbands-Mitgliedschaft ändern"
+        }
+      }
+    },
+    "regasoft": {
+      "copy": {
+        "label": "Regasoft-Daten kopieren"
+      },
+      "view": {
+        "label": "Regasoft-Daten anzeigen"
+      },
+      "add": {
+        "label": "Regasoft-Eintrag erstellen"
+      },
+      "update": {
+        "label": "Regasoft-Eintrag aktualisieren"
+      }
+    },
+    "license": {
+      "create": {
+        "label": "Lizenz erstellen"
+      },
+      "download": {
+        "label": "Lizenz herunterladen"
+      }
     }
   },
+
+
 
   "statistics": {
     "header": "AOC Statistiken",
@@ -406,7 +480,7 @@
     "competitionLevels": {
       "title": "Wettkampf-Kategorien",
       "label": "Wettkampf-Kategorien aktualisieren",
-      "conf": "Wettkampf-Kategorien wurden neu berechnet.",
+      "conf": "Die Wettkampf-Kategorien wurden neu berechnet.",
       "button": "Ausführen",
       "description": "Die Collection competitionLevels cached Daten aus den Collections subjects, memberships, ownerships. Diese Daten werden zur Darstellung der Wettkampf-Kategorien benötigt."
     },
@@ -414,7 +488,7 @@
       "title": "Übersichts-Statistik",
       "subTitle": "Statistik der Wettkampf-Kategorien",
       "label": "Statistik der Wettkampf-Kategorien aktualisieren",
-      "conf": "Statistik wurde neu berechnet.",
+      "conf": "Die Statistik wurde neu berechnet.",
       "button": "Ausführen"
     },
     "ageByGender": {
@@ -422,6 +496,7 @@
       "subTitle": "Mitglieder nach Alter und Geschlecht",
       "label": "Alters-Statistik neu berechnen",
       "conf": "Alters-Statisik wurde neu berechnet.",
+      "error": "Die Alters-Statistik konnte nicht neu berechnet werden.",
       "button": "Ausführen"
     },
     "categoryByGender": {
@@ -458,67 +533,49 @@
   "tag": {
     "title": "Tag-Verwaltung",
     "add": {
-      "header": "Tag hinzufügen",
+      "label": "Tag hinzufügen",
       "placeholder": "@tag.beispiel",
       "button": "Tag hinzufügen",
       "conf": "Der Tag wurde gespeichert.",
       "error": "Der Tag konnte nicht gespeichert werden."
     },
     "create": {
-      "header": "Neue TagList",
+      "label": "Neue TagList",
       "placeholder": "Model-Typ (z.B. person, org, section)",
       "conf": "Der Tag wurde gespeichert",
       "error": "Der Tag konnte nicht gespeichert werden."
     },
     "delete": {
-      "conf": "Der Tag wurde gelöscht",
-      "confirm": "Soll dieses Tag-Dokument wirklich archiviert werden?",
+      "label": "Tag löschen",
+      "confirm": "Soll dieser Tag wirklich gelöscht werden?",
+      "conf": "Der Tag wurde gelöscht.",
       "error": "Der Tag konnte nicht gelöscht werden."
     },
-    "edit": {
-      "header": "Tag bearbeiten",
-      "placeholder": "@tag.beispiel",
-      "conf": "Der Tag wurde gespeichert.",
-      "error": "Der Tag konnte nicht gespeichert werden."
-    },
     "remove": {
+      "label": "Tag entfernen",
       "conf": "Der Tag wurde entfernt.",
       "error": "Der Tag konnte nicht entfernt werden."
     },
     "update": {
+      "label": "Tag bearbeiten",
+      "placeholder": "@tag.beispiel",
       "conf": "Der Tag wurde geändert.",
       "error": "Der Tag konnte nicht geändert werden."
     },
     "search": {
-      "placeholder": "TagList suchen..."
+      "label": "Tags suchen",
+      "placeholder": "TagList Name"
     },
     "list": {
       "title": "TagList"
     },
+    "string": {
+      "update": "Wert ändern",
+      "remove": "Wert entfernen"
+    },
     "strings": {
       "title": "Tag",
       "empty": "Keine TagList ausgewählt"
-    }
-  },
-
-  "account": {
-    "title": "User Accounts",
-    "plural": "Konti",
-    "user": {
-      "delete": {
-        "label": "User löschen",
-        "error": "Der User konnte nicht gelöscht werden.",
-        "conf": "Der User wurde gelöscht.",
-        "confirm": "Soll der User wirklich gelöscht werden ?"
-      }
-    },
-    "fbuser": {
-      "delete": {
-          "label": "Firebase User löschen",
-          "error": "Der Firebase User konnte nicht gelöscht werden.",
-          "conf": "Der Firebase User wurde gelöscht.",
-          "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
-      }
     }
   },
 
@@ -529,104 +586,21 @@
     "list": {
       "title": "Texte"
     },
-    "edit": "Text ändern",
     "create": {
-      "label": "Website erstellen",
-      "conf": "Website wurde erstellt",
-      "error": "Website konnte nicht erstellt werden."
-    },
-    "update": {
-      "label": "Website ändern",
-      "conf": "Website Änderung wurde gespeichert.",
-      "error": "Die Änderung konnte nicht gespeichert werden."
+      "label": "Website Text erstellen",
+      "conf": "Der Website Text wurde erstellt",
+      "error": "Der Website Text konnte nicht erstellt werden."
     },
     "delete": {
-      "label": "Website entfernen",
-      "conf": "Website entfernt",
-      "confirm": "Soll die Website wirklich gelöscht werden ?",
-      "error": "Die Website konnte nicht gelöscht werden."
-    }
-  },
-  "actionsheet": {
-    "label": {
-      "choose": "Wähle eine Aktion"
+      "label": "Website Text entfernen",
+      "confirm": "Soll der Website Text wirklich gelöscht werden ?",
+      "conf": "Der Website Text wurde entfernt.",
+      "error": "Der Website Text konnte nicht gelöscht werden."
     },
-    "tag": {
-      "edit": "Tag ändern",
-      "delete": "Tag löschen",
-      "string": {
-        "edit": "Wert ändern",
-        "remove": "Wert entfernen"
-      }
-    },
-    "website": {
-      "edit": "Website-Text ändern",
-      "delete": "Website-Text löschen"
-    },
-    "fbuser": {
-      "delete": "Firebase-Benutzer löschen"
-    },
-    "user": {
-      "edit": "Benutzer ändern",
-      "delete": "Benutzer löschen"
-    },
-    "person": {
-      "edit": "Person ändern"
-    },
-    "membership": {
-      "edit": "Mitgliedschaft ändern"
-    },
-    "parentMembership": {
-      "edit": "Dachverband-Mitgliedschaft ändern",
-      "create": "Dachverband-Mitgliedschaft erstellen"
-    },
-    "regasoft": {
-      "copy": "Regasoft-Daten kopieren",
-      "view": "Regasoft-Daten anzeigen",
-      "add": "Regasoft-Eintrag erstellen",
-      "update": "Regasoft-Eintrag aktualisieren"
-    },
-    "license": {
-      "create": "Lizenz erstellen",
-      "download": "Lizenz herunterladen"
-    },
-    "account": {
-      "copyemail": "E-Mail kopieren",
-      "copyuid": "UID kopieren",
-      "copypkey": "Person-Key kopieren"
-    }
-  },
-
-  "document": {
-    "create": {
-      "label": "Dokument hinzufügen",
-      "conf": "Das neue Dokument wurde hinzugefügt.",
-      "error": "Das Dokument konnte nicht gespeichert werden."
-    }
-  },
-
-  "user": {
-    "loginEmail": "Login E-Mail",
-    "name": "Name",
-    "empty": "Keine User gefunden",
     "update": {
-      "label": "User ändern",
-      "error": "Die Aenderungen konnten nicht gespeichert werden",
-      "conf": "Die Aenderungen wurden gespeichert."
-    }
-  },
-
-  "input": {
-    "passwordAoc": {
-      "label": "Passwort",
-      "placeholder": "Passwort",
-      "helper": "Du kannst hier ein Passwort für den selektierten User setzen (z.B. für Testzwecke). Ein leeres Passwort-Feld führt zu einem zufälligen Passwort. Der User kann anschliessend mit Passwort Reset sein eigenes Passwort setzen.",
-      "set": "Setze ein neues Passwort für den ausgewählten User, ohne eine Passwort-Reset Email auszulösen. Ein leeres Passwort-Feld führt zu einem zufälligen Passwort.",
-      "reset": "Sende eine Passwort-Reset Email an den ausgewählten User."
-    },
-    "emailAoc": {
-      "label": "Login Email",
-      "placeholder": "Email Adresse"
+      "label": "Website Text ändern",
+      "conf": "Der Website Text wurde geändert.",
+      "error": "Die Änderung konnte nicht gespeichert werden."
     }
   }
 }

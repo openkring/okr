@@ -55,7 +55,7 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
         <ion-label>X X X</ion-label>
-        <ion-label><strong>{{ store.i18n.login_email() }}</strong></ion-label>
+        <ion-label><strong>{{ store.i18n.account_login_email() }}</strong></ion-label>
         <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
@@ -132,7 +132,7 @@ export class AocUserAccounts {
    * @param account 
    */
   protected async showActions(account: UserAccount): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, account);
     await this.executeActions(actionSheetOptions, account);
   }
@@ -143,23 +143,23 @@ export class AocUserAccounts {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, account: UserAccount): void {
     if (account.hasFirebaseAccount) {
-      actionSheetOptions.buttons.push(createActionSheetButton('fbuser.delete', this.store.i18n.as_fbuser_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('fbuser.delete', this.store.i18n.account_fbuser_delete(), this.imgixBaseUrl, 'trash'));
     }
     if (account.hasBkAccount) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.store.i18n.as_user_edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.store.i18n.as_user_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.store.i18n.account_user_update(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.store.i18n.account_user_delete(), this.imgixBaseUrl, 'trash'));
     }
     if (account.hasMembership) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.as_membership_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.account_membership_edit(), this.imgixBaseUrl, 'edit'));
     }
     if (account.loginEmail) {
-      actionSheetOptions.buttons.push(createActionSheetButton('account.copyemail', this.store.i18n.as_account_copyemail(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('account.copyemail', this.store.i18n.account_copy_email(), this.imgixBaseUrl, 'copy'));
     }
     if (account.uid) {
-      actionSheetOptions.buttons.push(createActionSheetButton('account.copyuid', this.store.i18n.as_account_copyuid(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('account.copyuid', this.store.i18n.account_copy_uid(), this.imgixBaseUrl, 'copy'));
     }
     if (account.personKey) {
-      actionSheetOptions.buttons.push(createActionSheetButton('account.copypkey', this.store.i18n.as_account_copypkey(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('account.copypkey', this.store.i18n.account_copy_pkey(), this.imgixBaseUrl, 'copy'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button

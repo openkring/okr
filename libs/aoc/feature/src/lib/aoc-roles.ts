@@ -29,12 +29,12 @@ import { AocRolesStore } from './aoc-roles.store';
     <ion-content>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ aocRolesStore.i18n.person_select_title() }}</ion-card-title>
+          <ion-card-title>{{ aocRolesStore.i18n.roles_person_select_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ aocRolesStore.i18n.person_select_content() }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.roles_person_select_content() }}</ion-col>
             </ion-row>
             <ion-row>
               @if(avatar(); as avatar) {
@@ -45,7 +45,7 @@ import { AocRolesStore } from './aoc-roles.store';
               } @else {
               <ion-button (click)="selectPerson()">
                 <ion-icon src="{{ 'personSearch' | svgIcon }}" slot="start" />
-                {{ aocRolesStore.i18n.account_select() }}
+                {{ aocRolesStore.i18n.roles_account_select() }}
               </ion-button>
               }
             </ion-row>
@@ -85,19 +85,19 @@ import { AocRolesStore } from './aoc-roles.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ aocRolesStore.i18n.check_title() }}</ion-card-title>
+          <ion-card-title>{{ aocRolesStore.i18n.roles_check_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ aocRolesStore.i18n.check_content() }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.roles_check_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="checkAuthorisation()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'shield' | svgIcon }}" slot="start" />
-                  {{ aocRolesStore.i18n.check_button() }}
+                  {{ aocRolesStore.i18n.roles_check_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -111,7 +111,7 @@ import { AocRolesStore } from './aoc-roles.store';
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ aocRolesStore.i18n.account_content() }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.roles_account_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
@@ -121,8 +121,8 @@ import { AocRolesStore } from './aoc-roles.store';
                   name="passwordAoc"
                   [ngModel]="pwdValue()"
                   labelPlacement="floating"
-                  [label]="aocRolesStore.i18n.pwd_label()"
-                  [placeholder]="aocRolesStore.i18n.pwd_placeholder()"
+                  [label]="aocRolesStore.i18n.roles_password_label()"
+                  [placeholder]="aocRolesStore.i18n.roles_password_placeholder()"
                   inputMode="text"
                   [maxlength]="pwdLength"
                   [clearInput]="true"
@@ -132,39 +132,39 @@ import { AocRolesStore } from './aoc-roles.store';
                   <ion-input-password-toggle slot="end"></ion-input-password-toggle>
                 </ion-input>
                 <ion-item lines="none" class="helper">
-                  <ion-note>{{ aocRolesStore.i18n.pwd_helper() }}</ion-note>
+                  <ion-note>{{ aocRolesStore.i18n.roles_password_helper() }}</ion-note>
                 </ion-item>
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="createAccountAndUser()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'edit' | svgIcon }}" slot="start" />
-                  {{ aocRolesStore.i18n.account_button() }}
+                  {{ aocRolesStore.i18n.roles_account_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
                 <ion-item lines="none" class="helper">
-                  <ion-note>{{ aocRolesStore.i18n.pwd_set() }}</ion-note>
+                  <ion-note>{{ aocRolesStore.i18n.roles_password_set() }}</ion-note>
                 </ion-item>
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="setPassword()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'lock-closed' | svgIcon }}" slot="start" />
-                  {{ aocRolesStore.i18n.account_pwd_set() }}
+                  {{ aocRolesStore.i18n.roles_account_pwd_set() }}
                 </ion-button>
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
                 <ion-item lines="none" class="helper">
-                  <ion-note>{{ aocRolesStore.i18n.pwd_reset() }}</ion-note>
+                  <ion-note>{{ aocRolesStore.i18n.roles_password_reset() }}</ion-note>
                 </ion-item>
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="resetPassword()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'email' | svgIcon }}" slot="start" />
-                  {{ aocRolesStore.i18n.account_pwd_reset() }}
+                  {{ aocRolesStore.i18n.roles_account_pwd_reset() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -173,12 +173,12 @@ import { AocRolesStore } from './aoc-roles.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ aocRolesStore.i18n.fbuser_title() }}</ion-card-title>
+          <ion-card-title>{{ aocRolesStore.i18n.roles_fbuser_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ aocRolesStore.i18n.fbuser_content() }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.roles_fbuser_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
@@ -186,7 +186,7 @@ import { AocRolesStore } from './aoc-roles.store';
               <ion-col size="6">
                 <ion-button (click)="updateFbuser()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{ 'edit' | svgIcon }}" slot="start" />
-                  {{ aocRolesStore.i18n.fbuser_button() }}
+                  {{ aocRolesStore.i18n.roles_fbuser_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -195,19 +195,19 @@ import { AocRolesStore } from './aoc-roles.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ aocRolesStore.i18n.impersonate_title() }}</ion-card-title>
+          <ion-card-title>{{ aocRolesStore.i18n.roles_impersonate_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ aocRolesStore.i18n.impersonate_content() }}</ion-col>
+              <ion-col>{{ aocRolesStore.i18n.roles_impersonate_content() }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="impersonateUser()" [disabled]="!selectedUser()">
                   <ion-icon src="{{ 'shield' | svgIcon }}" slot="start" />
-                  {{ aocRolesStore.i18n.impersonate_button() }}
+                  {{ aocRolesStore.i18n.roles_impersonate_button() }}
                 </ion-button>
               </ion-col>
             </ion-row>
