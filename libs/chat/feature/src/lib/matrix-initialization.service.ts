@@ -99,20 +99,16 @@ export class MatrixInitializationService {
         });
 
         // Register an HTTP pusher with Synapse so background messages reach this device
-        // even when the app is not running.
+        // even when the app is not running. Done via a Cloud Function (registerMatrixPusher)
+        // so the push-gateway shared secret and the /_matrix/push/v1/notify URL are built
+        // server-side and never ship in the client bundle (S3 + SEC-2).
         if (fcmToken) {
           try {
-            await this.matrixService.setPusher({
-              kind: 'http',
-              app_id: 'bkaiser.scs.chat',
-              app_display_name: 'BK2 Chat',
-              device_display_name: (navigator.userAgent ?? 'Unknown').substring(0, 100),
+            const registerPusher = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'registerMatrixPusher');
+            await registerPusher({
               pushkey: fcmToken,
+              deviceDisplayName: (navigator.userAgent ?? 'Unknown').substring(0, 100),
               lang: navigator.language || 'de',
-              data: {
-                url: 'https://europe-west6-bkaiser-org.cloudfunctions.net/matrixPushGateway',
-              },
-              append: false,
             });
             console.log('MatrixInitializationService: Matrix HTTP pusher registered');
           } catch (err) {

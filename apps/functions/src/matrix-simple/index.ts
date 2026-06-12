@@ -29,7 +29,22 @@ import { getMessaging } from 'firebase-admin/messaging';
 import { defineSecret } from 'firebase-functions/params';
 
 const matrixAdminToken = defineSecret('MATRIX_ADMIN_TOKEN');
+// Shared secret embedded in the Matrix push-gateway URL (SEC-2). Synapse stores the
+// secret-bearing URL via registerMatrixPusher and POSTs to it; matrixPushGateway rejects
+// any call that does not carry this secret as a path segment. Never sent to the client.
+const pushGatewaySecret = defineSecret('MATRIX_PUSH_GATEWAY_SECRET');
 const MATRIX_HOMESERVER = process.env.MATRIX_HOMESERVER || 'https://matrix.bkchat.etke.host';
+
+/** App id used for the HTTP pusher; must match the value matrixPushGateway accepts. */
+const PUSH_APP_ID = 'bkaiser.scs.chat';
+/**
+ * Origin that serves the push-gateway endpoint. Synapse requires the pusher URL path to be
+ * EXACTLY `/_matrix/push/v1/notify`, which the bare `cloudfunctions.net/matrixPushGateway`
+ * path cannot satisfy — so the gateway is exposed through a Firebase Hosting rewrite
+ * (`/_matrix/push/v1/notify` -> matrixPushGateway) on this origin, and the shared secret
+ * travels as a query parameter (ignored by Synapse's path check).
+ */
+const PUSH_GATEWAY_BASE = process.env.MATRIX_PUSH_GATEWAY_BASE || 'https://scs-app-54aef.web.app';
 
 /**
  * Resolve the Matrix user localpart for a Firebase UID.
@@ -1480,6 +1495,77 @@ export const sendCallNotification = onCall(
  * The FCM token ("pushkey") arrives in the payload from Synapse — no Firestore
  * look-up required.  The client registers this pusher via MatrixChatService.setPusher().
  */
+/**
+ * Register an HTTP pusher with Synapse on behalf of the calling user (S3 + SEC-2).
+ *
+ * Done server-side so the gateway shared secret never ships in the client bundle: the
+ * CF mints a short-lived user token via the admin API and calls /pushers/set with the
+ * secret-bearing gateway URL, which is required to end with /_matrix/push/v1/notify
+ * (Synapse rejects any other URL with 400 — the original S3 bug).
+ *
+ * Input: { pushkey (FCM token), deviceDisplayName?, lang?, appId? }
+ */
+export const registerMatrixPusher = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken, pushGatewaySecret],
+  },
+  async (request): Promise<{ registered: boolean }> => {
+    const uid = await requireProvisionedUser(request, 'registerMatrixPusher');
+    const { pushkey, deviceDisplayName, lang, appId } = request.data as {
+      pushkey: string; deviceDisplayName?: string; lang?: string; appId?: string;
+    };
+    if (!pushkey) throw new HttpsError('invalid-argument', 'pushkey is required');
+
+    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+    const localpart = await getMatrixLocalpart(uid);
+    const matrixUserId = `@${localpart}:${hostname}`;
+    const adminToken = matrixAdminToken.value();
+
+    // Mint a short-lived user token so we can call /pushers/set as the user.
+    const loginResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/login`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valid_until_ms: Date.now() + 5 * 60 * 1000 }),
+      }
+    );
+    if (!loginResp.ok) {
+      throw new HttpsError('internal', `Failed to mint Matrix token: ${await loginResp.text()}`);
+    }
+    const { access_token } = await loginResp.json() as { access_token: string };
+
+    // The URL path MUST be exactly /_matrix/push/v1/notify (Synapse validation); the secret
+    // travels as a query param (excluded from the path) and is verified by matrixPushGateway.
+    const url = `${PUSH_GATEWAY_BASE}/_matrix/push/v1/notify?secret=${encodeURIComponent(pushGatewaySecret.value())}`;
+    const setResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/pushers/set`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'http',
+          app_id: appId || PUSH_APP_ID,
+          app_display_name: 'BK2 Chat',
+          device_display_name: (deviceDisplayName || 'Unknown').substring(0, 100),
+          pushkey,
+          lang: lang || 'de',
+          data: { url },
+          append: false,
+        }),
+      }
+    );
+    if (!setResp.ok) {
+      throw new HttpsError('internal', `pushers/set failed: ${await setResp.text()}`);
+    }
+    console.log(`registerMatrixPusher: registered pusher for ${matrixUserId}`);
+    return { registered: true };
+  }
+);
+
 interface MatrixPushDevice {
   app_id: string;
   pushkey: string;
@@ -1505,10 +1591,22 @@ interface MatrixPushPayload {
 }
 
 export const matrixPushGateway = onRequest(
-  { cors: false, region: 'europe-west6' },
+  { cors: false, region: 'europe-west6', secrets: [pushGatewaySecret] },
   async (req, res) => {
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    // SEC-2: only Synapse (which stores the secret-bearing pusher URL set by
+    // registerMatrixPusher) knows the secret. Reject any caller that does not present it,
+    // so the gateway can no longer be used as an open notification relay. The secret is a
+    // query param because Synapse forces the URL path to be exactly /_matrix/push/v1/notify.
+    const expectedSecret = pushGatewaySecret.value();
+    const providedSecret = (req.query?.['secret'] as string | undefined) ?? '';
+    if (!expectedSecret || providedSecret !== expectedSecret) {
+      console.warn('matrixPushGateway: rejected request with missing/invalid secret');
+      res.status(403).json({ rejected: [] });
       return;
     }
 
@@ -1524,8 +1622,9 @@ export const matrixPushGateway = onRequest(
       const senderName = notification.sender_display_name ?? notification.sender ?? 'Unbekannt';
       const roomName   = notification.room_name ?? notification.room_alias ?? '';
       const unread     = notification.counts?.unread ?? 1;
-      const title      = roomName ? `${senderName} in ${roomName}` : senderName;
-      const msgBody    = (notification.content?.['body'] as string | undefined) ?? 'Neue Nachricht';
+      const title      = (roomName ? `${senderName} in ${roomName}` : senderName).substring(0, 200);
+      // Cap the body so a malformed/abusive payload can't push an oversized notification.
+      const msgBody    = ((notification.content?.['body'] as string | undefined) ?? 'Neue Nachricht').substring(0, 500);
       const roomId     = notification.room_id ?? '';
 
       const rejectedTokens: string[] = [];
@@ -1533,6 +1632,8 @@ export const matrixPushGateway = onRequest(
       for (const device of notification.devices) {
         const token = device.pushkey;
         if (!token) continue;
+        // Only deliver to our own app's pusher entries.
+        if (device.app_id && device.app_id !== PUSH_APP_ID) continue;
 
         try {
           await getMessaging().send({
