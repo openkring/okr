@@ -354,12 +354,24 @@ export const sendEmail = functions.onCall(
 
     if (isPasswordReset) {
       const config = getAppEmailConfig(appId);
-      const link = await getAuth().generatePasswordResetLink(to[0], { url: config.continueUrl });
+      // generatePasswordResetLink throws auth/user-not-found for an unregistered
+      // address — so a reset link is only ever produced for a real account. To
+      // avoid turning that into an account-enumeration oracle, swallow the error
+      // and return the SAME generic success response without sending (M-3).
+      let link: string;
+      try {
+        link = await getAuth().generatePasswordResetLink(to[0], { url: config.continueUrl });
+      } catch (e: any) {
+        logger.info(`${CF_NAME}: password-reset requested for an address with no account — responding generically (${e?.errorInfo?.code ?? e?.code ?? 'error'})`);
+        return { success: true };
+      }
       from = config.from;
       subject = `Passwort zurücksetzen – ${config.appName}`;
       html = `<p>Passwort zurücksetzen: <a href="${link}">${link}</a></p>`;
-      templateVariables = { ...templateVariables, url: link, email: to[0], app_name: config.appName };
-      logger.info(`${CF_NAME}: generated reset link for ${to[0]} (appId=${appId}, provider=${provider})`);
+      // Only controlled variables — do not echo caller-supplied templateVariables
+      // into the password-reset email.
+      templateVariables = { url: link, email: to[0], app_name: config.appName };
+      logger.info(`${CF_NAME}: generated reset link (appId=${appId}, provider=${provider})`);
     }
 
     if (!from) throw new functions.HttpsError('invalid-argument', 'from is required.');
