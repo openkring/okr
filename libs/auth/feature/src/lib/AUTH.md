@@ -19,12 +19,9 @@ Accepts an email address and calls `AuthService.resetPassword()`, which sends a 
 ### `ConfirmPasswordResetPage` (`confirm-password-reset.page.ts`)
 Handles the Firebase email-action link flow for completing a password reset.
 
-### `MatrixOidcCallback` (`matrix-oidc-callback.ts`)
-Handles the OAuth2/OIDC redirect from the Matrix homeserver after SSO. Mounted at route `/auth/matrix-callback`.
-- Reads `loginToken` and `state` query parameters.
-- Verifies `state` against `sessionStorage.oidc_state` to prevent CSRF.
-- Stores `loginToken` in `localStorage` as `matrix_login_token` and sets `sessionStorage.matrix_needs_token_exchange = 'true'` for the chat component to pick up.
-- Redirects to `sessionStorage.matrix_return_url` (or `/` as fallback).
+> **Removed (C-3):** the `MatrixOidcCallback` component and the OIDC bridge it
+> served were deleted. Matrix authentication uses the token-exchange approach
+> (`getMatrixCredentials`); there is no OIDC/SSO redirect flow.
 
 ## Route Guards
 
