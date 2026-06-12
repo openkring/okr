@@ -2,7 +2,7 @@
 import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
-import { checkAdminClaim, checkAdminUser, checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/shared-util-functions';
+import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/shared-util-functions';
 import { getAppEmailConfig } from './email-templates';
 import { isValidProvider, sendEmailViaProvider } from './email-transport';
 
@@ -30,7 +30,7 @@ export const createCustomToken = functions.onCall(
 
     checkAppCheckToken(request as any, CF_NAME);
     checkAuthentication(request as any, CF_NAME);
-    checkAdminUser(request as any, CF_NAME);
+    await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
 
     try {
@@ -71,8 +71,7 @@ export const createFirebaseUser = functions.onCall(
 
     checkAppCheckToken(request as any, CF_NAME);
     checkAuthentication(request as any, CF_NAME);
-    checkAdminUser(request as any, CF_NAME);
-    await checkAdminClaim(request as any, CF_NAME);
+    await checkAdminRole(request as any, CF_NAME);
 
     try {
       const userRecord = await getAuth().createUser({
@@ -109,8 +108,7 @@ export const getUidByEmail = functions.onCall(
     });
     checkAppCheckToken(request as any, CF_NAME);
     checkAuthentication(request as any, CF_NAME);
-    checkAdminUser(request as any, CF_NAME);
-    await checkAdminClaim(request as any, CF_NAME);
+    await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'email');
 
     try {
@@ -144,8 +142,7 @@ export const getFirebaseUser = functions.onCall(
     });
     checkAppCheckToken(request as any, CF_NAME);
     checkAuthentication(request as any, CF_NAME);
-    checkAdminUser(request as any, CF_NAME);
-    await checkAdminClaim(request as any, CF_NAME);
+    await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
 
     try {
@@ -189,8 +186,7 @@ export const setPassword = functions.onCall(
     });
     checkAppCheckToken(request as any, CF_NAME);
     checkAuthentication(request as any, CF_NAME);
-    checkAdminUser(request as any, CF_NAME);
-    await checkAdminClaim(request as any, CF_NAME);
+    await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
     checkStringField(request as any, CF_NAME, 'password');
     try {
@@ -234,8 +230,7 @@ export const updateFirebaseUser = functions.onCall(
     });
     checkAppCheckToken(request as any, CF_NAME);
     checkAuthentication(request as any, CF_NAME);
-    checkAdminUser(request as any, CF_NAME);
-    await checkAdminClaim(request as any, CF_NAME);
+    await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
     checkStringField(request as any, CF_NAME, 'email');
     try {
@@ -274,7 +269,7 @@ export const listFirebaseUsers = functions.onCall(
     const CF_NAME = 'listFirebaseUsers';
     checkAppCheckToken(request as any, CF_NAME);
     checkAuthentication(request as any, CF_NAME);
-    checkAdminUser(request as any, CF_NAME);
+    await checkAdminRole(request as any, CF_NAME);
 
     const users: FirebaseAuthUser[] = [];
     let pageToken: string | undefined;
@@ -306,7 +301,7 @@ export const deleteFirebaseAuthUser = functions.onCall(
     const CF_NAME = 'deleteFirebaseAuthUser';
     checkAppCheckToken(request as any, CF_NAME);
     checkAuthentication(request as any, CF_NAME);
-    checkAdminUser(request as any, CF_NAME);
+    await checkAdminRole(request as any, CF_NAME);
     checkStringField(request as any, CF_NAME, 'uid');
     const { uid } = request.data;
     await getAuth().deleteUser(uid);

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
 export function checkAppCheckToken(request: functions.CallableRequest, nameOfCallingFunction: string): void {
   if (!request.app) {
@@ -18,24 +18,26 @@ export function checkAuthentication(request: functions.CallableRequest, nameOfCa
   }
 }
 
-export function checkAdminUser(request: functions.CallableRequest, nameOfCallingFunction: string): void {
-  if (!request.auth?.token.admin) {
-    logger.error(`${nameOfCallingFunction}: user ${request.auth?.uid} must be an admin`);
-    throw new functions.HttpsError('permission-denied', 'impersonateUser can only be used by admin users.');
+/**
+ * Authorize an admin-only callable. The source of truth is the caller's
+ * users/{uid} document `roles.admin` flag — the same model the client and the
+ * Firestore rules use. A legacy `admin` custom claim is still accepted so that
+ * already-provisioned admins are not locked out during the transition. (M-6 —
+ * replaces the previous claim-only checkAdminUser/checkAdminClaim, which always
+ * failed when no claim was minted.)
+ */
+export async function checkAdminRole(request: functions.CallableRequest, nameOfCallingFunction: string): Promise<void> {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    logger.error(`${nameOfCallingFunction}: user is not authenticated`);
+    throw new functions.HttpsError('unauthenticated', 'user must be authenticated.');
   }
-}
-
-export async function checkAdminClaim(request: functions.CallableRequest, nameOfCallingFunction: string): Promise<void> {
-  if (!request.auth?.uid) {
-    logger.error(`${nameOfCallingFunction}: uid is mandatory`);
-  } else {
-    const caller = await getAuth().getUser(request.auth.uid);
-
-    if (!caller.customClaims?.admin) {
-      logger.error(`${nameOfCallingFunction}: user ${request.auth?.uid} must be an admin`);
-      throw new functions.HttpsError('permission-denied', 'Only admins can create users');
-    }
-  }
+  if (request.auth?.token?.['admin'] === true) return;   // legacy custom claim
+  const snap = await getFirestore().collection('users').doc(uid).get();
+  const roles = snap.data()?.['roles'] as Record<string, boolean> | undefined;
+  if (roles?.['admin'] === true) return;
+  logger.error(`${nameOfCallingFunction}: user ${uid} must be an admin`);
+  throw new functions.HttpsError('permission-denied', 'This operation requires the admin role.');
 }
 
 export function checkStringField(request: functions.CallableRequest, nameOfCallingFunction: string, fieldName: string): string {
