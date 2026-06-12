@@ -1032,13 +1032,31 @@ private async updateRoomsList(): Promise<void> {
 }
 
   /**
+   * True if the room has an explicit m.room.name state event.
+   * This is the reliable group-vs-DM discriminator: every group room is created with a
+   * name, a DM never is. (room.name is unsuitable — the SDK synthesises a name for DMs
+   * from the other member, so it is always non-empty.)
+   */
+  private roomHasName(room: Room): boolean {
+    const ev = room.getLiveTimeline().getState(EventTimeline.FORWARDS)
+      ?.getStateEvents('m.room.name', '') as MatrixEvent | null;
+    const name = ev?.getContent()?.['name'];
+    return typeof name === 'string' && name.trim().length > 0;
+  }
+
+  /**
    * Check if a room is a direct message room.
+   * Guard: a room with an explicit name is always a group, never a DM — this prevents
+   *   group rooms (including admin/bot-populated 2-member ones, S2) from rendering as
+   *   DMs even if m.direct still carries a stale entry for them.
    * Primary: checks m.direct account data (set by markRoomAsDirect on creation).
    * Fallback: checks all current member state events for is_direct:true,
    *   which is present on the invitee's m.room.member event when a room was
    *   created with is_direct:true and the invitee hasn't joined yet.
    */
   private isDirectRoom(room: Room): boolean {
+    if (this.roomHasName(room)) return false;
+
     const dmEvent = this.client?.getAccountData('m.direct' as any);
     if (dmEvent) {
       const directRooms = dmEvent.getContent() as Record<string, string[]>;
@@ -1062,9 +1080,15 @@ private async updateRoomsList(): Promise<void> {
   }
 
   /**
-   * After initial sync, retroactively mark all 2-member rooms in m.direct account data.
-   * This repairs DM rooms that were created without markRoomAsDirect (e.g. via Synapse
-   * admin API or Element) so that isDirectRoom() correctly identifies them.
+   * After initial sync, reconcile m.direct account data so the room list classifies
+   * DMs correctly (S2). Two passes:
+   *  - PRUNE: drop entries whose (synced) room is clearly a group — has an m.room.name,
+   *    a #group_ alias, or >2 joined members. This self-heals rooms that an earlier,
+   *    over-eager version wrongly marked as DMs (e.g. group rooms temporarily down to
+   *    two joined members, or an admin/bot 2-member room). Rooms not yet synced are
+   *    left untouched (absence ≠ deleted).
+   *  - ADD: register genuine DM-shaped rooms (exactly 2 joined members AND no name)
+   *    that arrived without an m.direct entry (e.g. an incoming DM created by the peer).
    */
   private async repairDmRoomsAccountData(): Promise<void> {
     if (!this.client) return;
@@ -1072,18 +1096,34 @@ private async updateRoomsList(): Promise<void> {
     if (!myUserId) return;
 
     const dmEvent = this.client.getAccountData('m.direct' as any);
-    const directRooms = (dmEvent?.getContent() ?? {}) as Record<string, string[]>;
-    const knownDmRoomIds = new Set(Object.values(directRooms).flat());
-
+    const directRooms = structuredClone((dmEvent?.getContent() ?? {})) as Record<string, string[]>;
     let updated = false;
+
+    // PRUNE — remove group rooms that were wrongly recorded as DMs.
+    const isGroupRoom = (roomId: string): boolean => {
+      const room = this.client!.getRoom(roomId);
+      if (!room) return false; // not synced — cannot judge, keep
+      if (this.roomHasName(room)) return true;
+      if (room.getCanonicalAlias()?.startsWith('#group_')) return true;
+      if (room.getJoinedMembers().length > 2) return true;
+      return false;
+    };
+    for (const userId of Object.keys(directRooms)) {
+      const kept = directRooms[userId].filter(roomId => !isGroupRoom(roomId));
+      if (kept.length !== directRooms[userId].length) {
+        updated = true;
+        if (kept.length === 0) delete directRooms[userId];
+        else directRooms[userId] = kept;
+      }
+    }
+
+    // ADD — register genuine DM-shaped rooms not yet in m.direct.
+    const knownDmRoomIds = new Set(Object.values(directRooms).flat());
     for (const room of this.client.getRooms()) {
       if (room.getMyMembership() !== 'join') continue;
       if (knownDmRoomIds.has(room.roomId)) continue;
-      // Obsolete/deleted rooms
-      if (room.name?.startsWith('!!')) continue;
-      // Group rooms identified by their canonical alias — never DMs regardless of member count
-      const alias = room.getCanonicalAlias();
-      if (alias?.startsWith('#group_')) continue;
+      if (this.roomHasName(room)) continue; // named → group, never a DM
+      if (room.getCanonicalAlias()?.startsWith('#group_')) continue;
 
       const joinedMembers = room.getJoinedMembers();
       if (joinedMembers.length !== 2) continue;
@@ -1091,16 +1131,13 @@ private async updateRoomsList(): Promise<void> {
       const otherMember = joinedMembers.find(m => m.userId !== myUserId);
       if (!otherMember) continue;
 
-      if (!directRooms[otherMember.userId]) directRooms[otherMember.userId] = [];
-      if (!directRooms[otherMember.userId].includes(room.roomId)) {
-        directRooms[otherMember.userId].push(room.roomId);
-        updated = true;
-      }
+      (directRooms[otherMember.userId] ??= []).push(room.roomId);
+      updated = true;
     }
 
     if (updated) {
       await this.client.setAccountData('m.direct' as any, directRooms as any);
-      debugMessage('MatrixChatService: repaired m.direct account data for existing DM rooms', this.appStore.currentUser());
+      debugMessage('MatrixChatService: reconciled m.direct account data', this.appStore.currentUser());
     }
   }
 
@@ -1351,6 +1388,22 @@ private async updateRoomsList(): Promise<void> {
   }
 
   /**
+   * Resolve once the initial sync has populated rooms and account data (m.direct).
+   * Returns immediately if already synced; otherwise waits up to timeoutMs then proceeds.
+   * Used before DM find-or-create so a cold cache can't cause a duplicate DM room (S2).
+   */
+  private async waitForSync(timeoutMs = 8000): Promise<void> {
+    const isReady = (s: string) => s === 'PREPARED' || s === 'SYNCING';
+    if (isReady(this.syncState$.value)) return;
+    await new Promise<void>(resolve => {
+      const sub = this.syncState$.subscribe(s => {
+        if (isReady(s)) { sub.unsubscribe(); resolve(); }
+      });
+      setTimeout(() => { sub.unsubscribe(); resolve(); }, timeoutMs);
+    });
+  }
+
+  /**
    * Find an existing direct message room with the given Matrix user ID.
    * Checks the m.direct account data and returns the first joined/invited room.
    */
@@ -1384,6 +1437,10 @@ private async updateRoomsList(): Promise<void> {
    */
   async createDirectRoom(userId: string): Promise<Room> {
     if (!this.client) throw new Error('Client not initialized');
+
+    // Ensure rooms + m.direct are loaded before find-or-create, otherwise a cold cache
+    // makes findExistingDirectRoom() return nothing and we create a duplicate DM (S2).
+    await this.waitForSync();
 
     // If userId is a Person.bkey (no leading @), convert to @localpart:server
     let matrixUserId = userId;
