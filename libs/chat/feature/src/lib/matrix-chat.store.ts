@@ -8,8 +8,8 @@ import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
-import { MatrixAuthToken, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@bk2/shared-models';
-import { debugItemLoaded, debugMessage } from '@bk2/shared-util-core';
+import { MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@bk2/shared-models';
+import { debugMessage } from '@bk2/shared-util-core';
 import { AlertService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
 
@@ -23,21 +23,19 @@ import { RoomEditModal } from './room-edit.modal';
 export type { MatrixChatI18n };
 
 export type MatrixChatState = {
-  isMatrixInitialized: boolean;
   currentRoomId: string | undefined;
   selectedThreadId: string | undefined;
   replyToMessage: MatrixMessage | undefined;
 }
 
 export const _MatrixChatStore = signalStore(
-  // Use a factory so we can read matrixService.isInitialized at creation time.
-  // If MatrixInitializationService has already started the client (e.g. on segment switch),
-  // the store starts in the ready state and the selectedRoom effect fires immediately.
-  withState(() => ({
-    isMatrixInitialized: inject(MatrixChatService).isInitialized,
-    currentRoomId: undefined as string | undefined,
-    selectedThreadId: undefined as string | undefined,
-    replyToMessage: undefined as MatrixMessage | undefined,
+  // C-9: isMatrixInitialized is NOT stored here — it is a computed derived from the
+  // MatrixChatService.initialized observable (the single source of truth), so it can
+  // never drift out of sync with the actual client whichever path initialized it.
+  withState((): MatrixChatState => ({
+    currentRoomId: undefined,
+    selectedThreadId: undefined,
+    replyToMessage: undefined,
   })),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -50,6 +48,17 @@ export const _MatrixChatStore = signalStore(
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
   })),
+  // C-9: derive isMatrixInitialized from the service's single `initialized` observable.
+  // Defined before the resource block below so receipts/messages resources can depend on it.
+  // The sync getter is the fallback for the first synchronous read before the resource emits
+  // (matches the previous withState factory snapshot of matrixService.isInitialized).
+  withProps((store) => {
+    const initializedResource = rxResource({ stream: () => store.matrixService.initialized });
+    return {
+      initializedResource,
+      isMatrixInitialized: computed(() => initializedResource.value() ?? store.matrixService.isInitialized),
+    };
+  }),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(MATRIX_CHAT_I18N_KEYS),
     syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),
@@ -193,8 +202,10 @@ export const _MatrixChatStore = signalStore(
         const roomId = state.currentRoomId();
         if (!roomId) return undefined;
         const rooms = state.rooms();
-        const found = rooms.find(r => r.roomId === roomId)
-          ?? rooms.find(r => r.name?.toLowerCase() === roomId.toLowerCase());
+        // C-8: match strictly by roomId. currentRoomId is always a real Matrix room id
+        // (set from the rooms list or a CF response), never a name/alias — the old
+        // name fallback conflated the two id spaces and only worked by accident.
+        const found = rooms.find(r => r.roomId === roomId);
         if (found) return found;
         // Fallback: room joined via CF but not yet in rooms$ (sync-delay window).
         // Return a stub so the   PFX doesn't show "select a room" while waiting.
@@ -224,10 +235,6 @@ export const _MatrixChatStore = signalStore(
 
     return {
       /******************************* Setters *************************** */
-
-      setIsInitialized(isMatrixInitialized: boolean): void {
-        patchState(store, { isMatrixInitialized });
-      },
 
       /** Synchronous snapshot of the rooms list — bypasses the rxResource async lag. */
       getRoomsSync(): MatrixRoom[] {
@@ -260,53 +267,14 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Get Matrix authentication token via simple token exchange
-       * Calls Cloud Function to get credentials for any Firebase auth method
+       * Ensure the Matrix client is initialized for the current user.
+       * ARCH-1: delegates to the single promise-cached MatrixChatService.ensureInitialized(),
+       * which fetches credentials (cached or via the getMatrixCredentials CF) and starts the
+       * client exactly once — replacing the former getMatrixToken + initializeMatrix pair that
+       * duplicated the early-init service and could mint a second server-side token.
        */
-      async getMatrixToken(): Promise<MatrixAuthToken | undefined> {
-        const user = store.currentUser();
-        if (!user) {
-          console.warn('MatrixChatStore.getMatrixToken: No user logged in');
-          return undefined;
-        }
-
-        try {
-          const stored = store.matrixService.getStoredCredentials();
-          if (stored) {
-            // Validate stored credentials use the person-key-based Matrix ID.
-            // If they don't (e.g., old firebase-  PFXd-based credentials), discard and re-fetch.
-            const expectedUserId = `@${user.personKey.toLowerCase()}:${store.homeServer()}`;
-            if (stored.userId !== expectedUserId) {
-              console.log(`MatrixChatStore.getMatrixToken: Clearing stale credentials (${stored.userId} → ${expectedUserId})`);
-              store.matrixService.clearStoredCredentials();
-            } else {
-              debugItemLoaded(`MatrixChatStore.getMatrixToken: Using cached Matrix token for ${user.personKey}`, user);
-              return {
-                ...stored,
-                homeserverUrl: stored.homeserverUrl || store.appStore.env.services.matrixHomeserver,
-                deviceId: stored.deviceId || `device_${user.personKey.toLowerCase()}`,
-              } as MatrixAuthToken;
-            }
-          }
-
-          debugMessage(`MatrixChatStore.getMatrixToken: Requesting Matrix credentials from Cloud Function for ${user.personKey}`, user);
-          const functions = getFunctions(getApp(), 'europe-west6');
-          const getMatrixCredentials = httpsCallable(functions, 'getMatrixCredentials');
-          const result = await getMatrixCredentials();
-          const credentials = result.data as MatrixAuthToken;
-
-          if (!credentials || !credentials.accessToken) {
-            throw new Error('Cloud Function returned invalid credentials');
-          }
-
-          store.matrixService.storeCredentials(credentials);
-          debugMessage(`MatrixChatStore.getMatrixToken: Successfully got Matrix credentials for ${credentials.userId}`, user);
-          return credentials;
-        } catch (error) {
-          console.error('MatrixChatStore.getMatrixToken: Failed to get token:', error);
-          store.matrixService.clearStoredCredentials();
-          throw error;
-        }
+      async ensureInitialized(): Promise<void> {
+        await store.matrixService.ensureInitialized();
       },
 
       clearCredentials(): void {
@@ -334,45 +302,6 @@ export const _MatrixChatStore = signalStore(
         return { roomId, joined };
       },
 
-      /**
-       * Initialize Matrix client
-       */
-      async initializeMatrix(matrixUser: MatrixUser, token: MatrixAuthToken): Promise<void> {
-        if (store.isMatrixInitialized()) {
-          debugMessage(`MatrixChatStore.initializeMatrix: Already initialized for user ${matrixUser.id}`, store.currentUser());
-          return;
-        }
-
-        try {
-          await store.matrixService.initialize({
-            homeserverUrl: token.homeserverUrl,
-            userId: token.userId,
-            accessToken: token.accessToken,
-            deviceId: token.deviceId,
-          });
-
-          patchState(store, { isMatrixInitialized: true });
-          debugMessage(`MatrixChatStore.initializeMatrix: Initialized for user ${matrixUser.id}`, store.currentUser());
-
-          // Sync avatar from Firebase to Matrix if available
-/*.  let's do this later         
-  if (matrixUser.imageUrl) {
-            console.log('MatrixChatStore: Syncing avatar to Matrix:', matrixUser.imageUrl);
-            try {
-              await store.matrixService.setUserAvatarFromUrl(matrixUser.imageUrl);
-              console.log('MatrixChatStore: Avatar synced successfully');
-            } catch (avatarError) {
-              console.warn('MatrixChatStore: Failed to sync avatar (non-critical):', avatarError);
-            }
-          } */
-
-          // Skip auto-join for now - rooms need to be created first via Cloud Functions
-          // TODO: Re-enable when ensureGroupRoom is called to create rooms
-        } catch (error) {
-          console.error('MatrixChatStore.initializeMatrix: Failed to initialize:', error);
-          throw error;
-        }
-      },
 
       /**
        * Create a new room.
@@ -660,7 +589,17 @@ export const _MatrixChatStore = signalStore(
         const comment = await store.alertService.bkPrompt(store.i18n.msg_report_header(), store.i18n.msg_report_placeholder());
         if (!comment?.trim()) return;
         const rooms = store.matrixService.roomsCurrentValue;
-        const supportRoom = rooms.find(r => r.name?.toLowerCase() === 'support');
+        // C-7: identify the support room by its immutable canonical alias
+        // (MatrixRoom.topic carries room.getCanonicalAlias() in this codebase), so a
+        // display-name change can't break reporting. Fall back to the name only for a
+        // room that has no alias at all (client-created rooms may lack one, see S2).
+        const supportAlias = (r: MatrixRoom): string | undefined =>
+          r.topic?.startsWith('#') ? r.topic.slice(1).split(':')[0] : undefined;
+        const supportRoom = rooms.find(r => {
+          const alias = supportAlias(r);
+          return alias ? (alias === 'support' || alias === 'group_support')
+                       : r.name?.toLowerCase() === 'support';
+        });
         if (!supportRoom) {
           await store.alertService.showToast(store.i18n.msg_report_noChannel());
           return;
@@ -851,8 +790,11 @@ export const _MatrixChatStore = signalStore(
        * Cleanup on destroy
        */
       async cleanup(): Promise<void> {
+        // disconnect() flips MatrixChatService.initialized → false, which the
+        // isMatrixInitialized computed reflects automatically (C-9); only the
+        // local selection state needs resetting here.
         await store.matrixService.disconnect();
-        patchState(store, { isMatrixInitialized: false, currentRoomId: undefined, selectedThreadId: undefined });
+        patchState(store, { currentRoomId: undefined, selectedThreadId: undefined });
       },
     };
   })

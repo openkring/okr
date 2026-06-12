@@ -47,19 +47,29 @@ const PUSH_APP_ID = 'bkaiser.scs.chat';
 const PUSH_GATEWAY_BASE = process.env.MATRIX_PUSH_GATEWAY_BASE || 'https://scs-app-54aef.web.app';
 
 /**
- * Resolve the Matrix user localpart for a Firebase UID.
- * Uses Person.bkey (via users/{uid}.personKey) which is consistent across
- * all chat scenarios (group chat, direct chat, chat overview).
- * Falls back to the Firebase UID if the Firestore lookup fails.
+ * Resolve the Matrix user localpart for a Firebase UID, requiring a provisioned
+ * user. The localpart is Person.bkey (via users/{uid}.personKey), which is the
+ * single consistent identity across all chat scenarios (group chat, direct chat,
+ * chat overview).
+ *
+ * SEC-3: this is the provisioning gate. It throws (never falls back to the raw
+ * Firebase UID) when the user has no `users/{uid}` doc or no `personKey`. The old
+ * UID fallback was a second avenue for duplicate `@<uid>` accounts (S1) — a
+ * caller without a personKey must be fixed in provisioning, not given a stray
+ * Matrix account.
  */
-async function getMatrixLocalpart(firebaseUid: string): Promise<string> {
-  try {
-    const doc = await getFirestore().collection('users').doc(firebaseUid).get();
-    const personKey = doc.data()?.personKey as string | undefined;
-    return personKey ? personKey.toLowerCase() : firebaseUid.toLowerCase();
-  } catch {
-    return firebaseUid.toLowerCase();
+async function requireMatrixLocalpart(firebaseUid: string, fnName: string): Promise<string> {
+  const doc = await getFirestore().collection('users').doc(firebaseUid).get();
+  if (!doc.exists) {
+    console.error(`${fnName}: uid ${firebaseUid} has no user profile`);
+    throw new HttpsError('permission-denied', 'No user profile.');
   }
+  const personKey = doc.data()?.personKey as string | undefined;
+  if (!personKey) {
+    console.error(`${fnName}: uid ${firebaseUid} has no personKey on its user profile`);
+    throw new HttpsError('failed-precondition', 'User profile has no linked person.');
+  }
+  return personKey.toLowerCase();
 }
 
 /**
@@ -291,9 +301,11 @@ export const getMatrixCredentials = onCall(
 
       console.log(`Getting Matrix credentials for Firebase user: ${firebaseUid}`);
 
-      // Derive Matrix user ID from Person.bkey (consistent across all chat scenarios)
+      // Derive Matrix user ID from Person.bkey (consistent across all chat scenarios).
+      // SEC-3: requireMatrixLocalpart is the provisioning gate — throws for any caller
+      // without a users/{uid}.personKey instead of minting a UID-based duplicate account.
       const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-      const localpart = await getMatrixLocalpart(firebaseUid);
+      const localpart = await requireMatrixLocalpart(firebaseUid, 'getMatrixCredentials');
       const matrixUserId = `@${localpart}:${hostname}`;
 
       // Check if Matrix user exists
@@ -1321,7 +1333,7 @@ export const syncFirebaseProfileToMatrix = onCall(
 
       const userRecord = await getAuth().getUser(firebaseUid);
       const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-      const localpart = await getMatrixLocalpart(firebaseUid);
+      const localpart = await requireMatrixLocalpart(firebaseUid, 'syncFirebaseProfileToMatrix');
       const matrixUserId = `@${localpart}:${hostname}`;
 
       // First, get Matrix access token for the user
@@ -1520,7 +1532,7 @@ export const registerMatrixPusher = onCall(
     if (!pushkey) throw new HttpsError('invalid-argument', 'pushkey is required');
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    const localpart = await getMatrixLocalpart(uid);
+    const localpart = await requireMatrixLocalpart(uid, 'registerMatrixPusher');
     const matrixUserId = `@${localpart}:${hostname}`;
     const adminToken = matrixAdminToken.value();
 

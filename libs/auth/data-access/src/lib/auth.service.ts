@@ -137,7 +137,7 @@ export class AuthService {
     if (result === true) {
       try {
         await signOut(this.auth);
-        this.clearMatrixCredentials();
+        await this.clearMatrixCredentials();
         void this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`);
         await this.alertService.showToast(this.i18n.logout_conf());
         return true;
@@ -151,16 +151,39 @@ export class AuthService {
   }
 
   /**
-   * Clear Matrix chat credentials from localStorage on logout (M-2).
-   * Without this, the Matrix access token survives Firebase signOut, letting the
-   * next user on a shared device resume the chat session (and exposing the token
-   * to any XSS). Done here — rather than via MatrixChatService — to avoid an
-   * auth-data-access → chat-data-access dependency. Keep this list in sync with
+   * Invalidate the server-side Matrix session and clear Matrix chat credentials from
+   * localStorage on logout (M-2).
+   *
+   * Without this, the Matrix access token survives Firebase signOut, letting the next
+   * user on a shared device resume the chat session (and exposing the token to any XSS).
+   * Done here — rather than via MatrixChatService — to avoid an auth-data-access →
+   * chat-data-access dependency; the server logout is a raw HTTP call for the same reason.
+   *
+   * SEC-4: on a deliberate logout the access token is still valid, so we POST to the
+   * Matrix `/logout` endpoint first to revoke it server-side. Otherwise every re-auth
+   * mints a fresh token and the old ones accumulate as valid sessions on Synapse. This
+   * is best-effort: a network failure (or an already-dead token) must not block logout,
+   * so the localStorage purge always runs. Keep the key list in sync with
    * MatrixChatService.clearStoredCredentials(). `matrix_login_token` is obsolete
    * (OIDC bridge removed, C-3) but cleared defensively for older sessions.
    */
-  private clearMatrixCredentials(): void {
+  private async clearMatrixCredentials(): Promise<void> {
     if (typeof localStorage === 'undefined') return;
+    const accessToken = localStorage.getItem('matrix_access_token');
+    let homeserver = localStorage.getItem('matrix_homeserver') || '';
+    if (homeserver && !homeserver.startsWith('https://')) homeserver = 'https://' + homeserver;
+    if (accessToken && homeserver) {
+      try {
+        await fetch(`${homeserver}/_matrix/client/v3/logout`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+      } catch (ex) {
+        // Best-effort: token already expired, offline, etc. Proceed to clear regardless.
+        console.warn('AuthService.clearMatrixCredentials: server-side Matrix logout failed', ex);
+      }
+    }
     [
       'matrix_access_token', 'matrix_user_id', 'matrix_device_id', 'matrix_homeserver',
       'matrix_avatar_firebase_url', 'matrix_avatar_mxc_url', 'matrix_login_token',

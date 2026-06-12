@@ -707,18 +707,12 @@ export class MatrixChat implements OnDestroy {
     this.isInitializing = true;
 
     try {
-      debugMessage('MatrixChat: Getting Matrix credentials via Cloud Function', this.store.currentUser());
+      debugMessage('MatrixChat: Ensuring Matrix is initialized', this.store.currentUser());
 
-      // Call Cloud Function to get Matrix credentials
-      // This works for any Firebase auth method (email, phone, Google, etc.)
-      const token = await this.store.getMatrixToken();
-
-      if (!token) {
-        throw new Error('Failed to get Matrix credentials');
-      }
-
-      // Initialize Matrix client with the credentials
-      await this.store.initializeMatrix(matrixUser, token);
+      // ARCH-1: single idempotent, promise-cached path (fetch credentials via CF +
+      // start client). Shared with the early-init service so the two never race to
+      // mint two tokens. Works for any Firebase auth method (email, phone, Google, …).
+      await this.store.ensureInitialized();
 
       debugMessage('MatrixChat: Matrix initialized successfully', this.store.currentUser());
     } catch (error) {

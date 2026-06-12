@@ -22,6 +22,9 @@ import { ActivityService } from '@bk2/activity-data-access';
  */
 const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'bruno']);
 
+/** P-1: max resolved media blob URLs kept in memory; evicted entries are revoked (LRU). */
+const MEDIA_CACHE_MAX = 200;
+
 export interface MatrixPollData {
   question: string;
   answers: string[];   // min 2, max 20
@@ -36,9 +39,26 @@ export class MatrixChatService {
   
   private client: MatrixClient | null = null;
   private readonly activityService = inject(ActivityService);
+  // ARCH-1: promise-cached so concurrent callers (early-init service + chat component)
+  // share one in-flight initialization instead of each minting a Matrix token.
+  private initPromise: Promise<void> | null = null;
+  // C-9: single source of truth for "is the Matrix client up". The store derives its
+  // isMatrixInitialized signal from this instead of maintaining its own copy.
+  private readonly isInitialized$ = new BehaviorSubject<boolean>(false);
+  // C-2: serialize updateRoomsList() so two async runs can't emit out of order (older
+  // list last). While a build runs, further triggers set a pending flag that schedules
+  // exactly one more build afterwards, so the final emit always reflects the latest state.
+  private roomsListInFlight = false;
+  private roomsListPending = false;
   private syncState$ = new BehaviorSubject<string>('STOPPED');
   private rooms$ = new BehaviorSubject<MatrixRoom[]>([]);
   private messages$ = new Map<string, BehaviorSubject<MatrixMessage[] | null>>();
+  // C-3: roomIds with a load in progress, so concurrent subscriptions don't double-load.
+  private readonly loadingRooms = new Set<string>();
+  // C-4: edits whose original message isn't in the list yet (edit arrived before the
+  // original on the live timeline). Keyed by original eventId → latest edit event; replayed
+  // by handleNewMessage when the original is added. Cleared on disconnect.
+  private readonly pendingEdits = new Map<string, MatrixEvent>();
   private typing$ = new Subject<TypingNotification>();
   private errors$ = new Subject<MatrixError>();
   private readonly tokenExpired$ = new Subject<void>();
@@ -72,17 +92,39 @@ export class MatrixChatService {
     return this.client !== null;
   }
 
+  /**
+   * Reactive mirror of {@link isInitialized}: emits true once the client is up,
+   * false after disconnect. C-9 — the store's `isMatrixInitialized` signal is derived
+   * from this single source instead of being written from two code paths.
+   */
+  get initialized(): Observable<boolean> {
+    return this.isInitialized$.asObservable().pipe(distinctUntilChanged());
+  }
+
   get syncState(): Observable<string> {
     return this.syncState$.asObservable().pipe(distinctUntilChanged());
   }
 
   get rooms(): Observable<MatrixRoom[]> {
+    // C-1: compare every field the UI renders, not just roomId/unread/lastMessage.timestamp.
+    // The old comparator swallowed room renames, avatar changes and typing updates until an
+    // unrelated field happened to change.
     return this.rooms$.asObservable().pipe(distinctUntilChanged((a, b) =>
-      a.length === b.length && a.every((room, i) =>
-        room.roomId === b[i]?.roomId &&
-        room.unreadCount === b[i]?.unreadCount &&
-        room.lastMessage?.timestamp === b[i]?.lastMessage?.timestamp
-      )
+      a.length === b.length && a.every((room, i) => {
+        const o = b[i];
+        return !!o &&
+          room.roomId === o.roomId &&
+          room.name === o.name &&
+          room.avatar === o.avatar &&
+          room.isDirect === o.isDirect &&
+          room.unreadCount === o.unreadCount &&
+          room.lastMessage?.eventId === o.lastMessage?.eventId &&
+          room.lastMessage?.timestamp === o.lastMessage?.timestamp &&
+          room.lastMessage?.body === o.lastMessage?.body &&
+          room.lastMessage?.isRedacted === o.lastMessage?.isRedacted &&
+          room.typingUsers.length === o.typingUsers.length &&
+          room.typingUsers.every((u, j) => u === o.typingUsers[j]);
+      })
     ));
   }
 
@@ -117,6 +159,79 @@ export class MatrixChatService {
       'matrix_access_token', 'matrix_user_id', 'matrix_device_id', 'matrix_homeserver',
       'matrix_avatar_firebase_url', 'matrix_avatar_mxc_url', 'matrix_login_token',
     ].forEach(key => localStorage.removeItem(key));
+  }
+
+  /**
+   * Resolve Matrix credentials for the current user: reuse a valid cached token, else
+   * fetch a fresh one from the `getMatrixCredentials` Cloud Function. Cached credentials
+   * are discarded when they reference a different Matrix user id (e.g. stale UID-based
+   * ids from before the personKey scheme).
+   *
+   * ARCH-1 / SEC-4: this is the SINGLE credential-fetch path. It replaces the former
+   * near-duplicate implementations in `MatrixInitializationService.getMatrixCredentials`
+   * and `MatrixChatStore.getMatrixToken` — having two meant two CF calls could race and
+   * each minted a server-side token that then accumulated.
+   */
+  private async fetchCredentials(): Promise<MatrixConfig | null> {
+    const user = this.appStore.currentUser();
+    if (!user) {
+      console.warn('MatrixChatService.fetchCredentials: no user logged in');
+      return null;
+    }
+    // server_name used in user IDs (e.g. @user:bkchat.etke.host); the homeserver URL
+    // often carries a 'matrix.' subdomain that is NOT part of the server_name.
+    const serverName = this.appStore.env.services.matrixHomeserver
+      .replace(/^https?:\/\//, '')
+      .replace(/^matrix\./, '');
+    try {
+      const stored = this.getStoredCredentials();
+      if (stored) {
+        const expectedUserId = `@${user.personKey.toLowerCase()}:${serverName}`;
+        if (stored.userId === expectedUserId) {
+          return {
+            ...stored,
+            homeserverUrl: stored.homeserverUrl || 'https://' + serverName,
+            deviceId: stored.deviceId || `device_${user.personKey.toLowerCase()}`,
+          };
+        }
+        // Stale (e.g. old UID-based id) — discard and re-fetch.
+        this.clearStoredCredentials();
+      }
+
+      const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'getMatrixCredentials');
+      const result = await fn();
+      const credentials = result.data as MatrixConfig;
+      if (!credentials?.accessToken) throw new Error('Cloud Function returned invalid credentials');
+      this.storeCredentials(credentials);
+      return credentials;
+    } catch (error) {
+      console.error('MatrixChatService.fetchCredentials: failed', error);
+      this.clearStoredCredentials();
+      throw error;
+    }
+  }
+
+  /**
+   * Idempotent, promise-cached initialization. Fetches credentials (cached or via CF)
+   * and starts the Matrix client exactly once per session — concurrent callers share the
+   * same in-flight promise, so the early-init service and the chat component can both call
+   * it without racing to mint two tokens (ARCH-1). Resolves immediately if already
+   * initialized; a failed attempt clears the cache so a later call can retry.
+   */
+  async ensureInitialized(): Promise<void> {
+    if (this.client) return;
+    if (this.initPromise) return this.initPromise;
+    this.initPromise = (async () => {
+      const credentials = await this.fetchCredentials();
+      if (!credentials) throw new Error('No Matrix credentials available');
+      await this.initialize(credentials);
+    })();
+    try {
+      await this.initPromise;
+    } catch (error) {
+      this.initPromise = null; // allow a later retry
+      throw error;
+    }
   }
 
   get typing(): Observable<TypingNotification> {
@@ -207,9 +322,12 @@ export class MatrixChatService {
         this.callState$.next('ringing');
         // No local notice here — the caller already sent a persistent notice visible to all room members.
       });
+
+      this.isInitialized$.next(true); // C-9: single source the store observes
     } catch (error) {
       console.error('MatrixChatService: Failed to initialize client', error);
       this.client = null; // reset so a retry attempt can create a fresh client
+      this.isInitialized$.next(false);
       throw error;
     }
   }
@@ -255,7 +373,12 @@ export class MatrixChatService {
   private async resolveMediaUrl(mxcUrl: string | undefined, mimeTypeHint?: string): Promise<string> {
     if (!this.client || !mxcUrl || !mxcUrl.startsWith('mxc://')) return '';
     const cached = this._mediaCache.get(mxcUrl);
-    if (cached) return cached;
+    if (cached) {
+      // P-1: mark as most-recently-used (re-insert moves it to the end of the Map order).
+      this._mediaCache.delete(mxcUrl);
+      this._mediaCache.set(mxcUrl, cached);
+      return cached;
+    }
     const httpUrl = this.client.mxcUrlToHttp(mxcUrl, undefined, undefined, undefined, false, true, true) ?? '';
     if (!httpUrl) return '';
     try {
@@ -271,6 +394,16 @@ export class MatrixChatService {
         ? new Blob([await raw.arrayBuffer()], { type: mimeTypeHint })
         : raw;
       const blobUrl = URL.createObjectURL(blob);
+      // P-1: bound the cache — evict and revoke the least-recently-used entry when full,
+      // so long sessions in image-heavy rooms don't leak blob URLs unboundedly.
+      if (this._mediaCache.size >= MEDIA_CACHE_MAX) {
+        const oldestKey = this._mediaCache.keys().next().value as string | undefined;
+        if (oldestKey !== undefined) {
+          const oldestUrl = this._mediaCache.get(oldestKey);
+          if (oldestUrl?.startsWith('blob:')) URL.revokeObjectURL(oldestUrl);
+          this._mediaCache.delete(oldestKey);
+        }
+      }
       this._mediaCache.set(mxcUrl, blobUrl);
       return blobUrl;
     } catch {
@@ -290,10 +423,14 @@ export class MatrixChatService {
     this._mediaCache.clear();
     this.typingByRoom.clear();
     this.receipts$.clear();
+    this.loadingRooms.clear();
+    this.pendingEdits.clear();
     if (this.client) {
       this.client.stopClient();
       await this.client.clearStores();
       this.client = null;
+      this.initPromise = null; // ARCH-1: allow a fresh ensureInitialized() after reconnect
+      this.isInitialized$.next(false);
       this.rooms$.next([]);
       this.syncState$.next('STOPPED');
       debugMessage('MatrixChatService: Client disconnected', this.appStore.currentUser());
@@ -532,12 +669,15 @@ export class MatrixChatService {
    * no-op load), retry loading now that the client may be initialized.
    */
   public getMessagesForRoom(roomId: string): Observable<MatrixMessage[] | null> {
-    if (!this.messages$.has(roomId)) {
+    const existing = this.messages$.get(roomId);
+    if (!existing) {
       this.messages$.set(roomId, new BehaviorSubject<MatrixMessage[] | null>(null));
       this.loadMessagesForRoom(roomId);
-    } else if (this.client && !this.messages$.get(roomId)!.value?.length) {
-      // Subject exists but is empty/null — was likely created before the client was ready.
-      // Retry loading now that the client is initialized.
+    } else if (this.client && existing.value === null) {
+      // C-3: retry only when the room was NEVER successfully loaded (value === null,
+      // e.g. the subject was created before the client was ready, or a prior load
+      // errored). A genuinely empty room has value === [] and must NOT re-paginate on
+      // every subscription, which the old `!value?.length` check caused.
       this.loadMessagesForRoom(roomId);
     }
     return this.messages$.get(roomId)!.asObservable();
@@ -587,6 +727,9 @@ export class MatrixChatService {
    */
   private async loadMessagesForRoom(roomId: string): Promise<void> {
     if (!this.client) return;
+    // C-3: guard against overlapping loads for the same room (a second subscription
+    // arriving while the first paginate/await is in flight would otherwise double-load).
+    if (this.loadingRooms.has(roomId)) return;
 
     const room = this.client.getRoom(roomId);
     if (!room) {
@@ -594,6 +737,7 @@ export class MatrixChatService {
       return;
     }
 
+    this.loadingRooms.add(roomId);
     try {
       const timeline = room.getLiveTimeline();
       const events = timeline.getEvents();
@@ -657,6 +801,8 @@ export class MatrixChatService {
       }
     } catch (error) {
       console.error('MatrixChatService: Error loading messages for room:', error);
+    } finally {
+      this.loadingRooms.delete(roomId);
     }
   }
 
@@ -715,8 +861,17 @@ export class MatrixChatService {
           }
         });
       }
+
+      // C-4: replay an edit that arrived before this original message was in the list.
+      const bufferedEdit = this.pendingEdits.get(message.eventId);
+      if (bufferedEdit) {
+        this.pendingEdits.delete(message.eventId);
+        this.applyMessageEdit(message.eventId, bufferedEdit, room);
+      }
     } else {
-      console.warn(`MatrixChatService: No message subject found for room ${room.roomId}, message not added to list`);
+      // S4: a not-yet-opened room has no message subject; this is normal operation,
+      // not an error. The room-list preview is handled separately via roomsUpdateTrigger$.
+      debugMessage(`MatrixChatService: no open message list for room ${room.roomId} — preview only`, this.appStore.currentUser());
     }
 
     this.roomsUpdateTrigger$.next();
@@ -772,7 +927,12 @@ export class MatrixChatService {
     if (!subject) return;
     const msgs = subject.value ?? [];
     const idx = msgs.findIndex(m => m.eventId === originalEventId);
-    if (idx < 0) return;
+    if (idx < 0) {
+      // C-4: original not in the list yet — buffer the edit (latest wins) and let
+      // handleNewMessage replay it once the original arrives, instead of dropping it.
+      this.pendingEdits.set(originalEventId, editEvent);
+      return;
+    }
     const newContent = editEvent.getContent()?.['m.new_content'];
     if (!newContent) return;
     const updated = [...msgs];
@@ -808,9 +968,12 @@ export class MatrixChatService {
   }
 
   /**
-   * Scan the room timeline for all poll.response events referencing pollEventId.
+   * Tally all poll.response events referencing pollEventId.
    * Deduplicates by sender — only the highest getTs() per sender counts.
    * Returns vote counts per answerId and the current user's voted answerId.
+   *
+   * C-6: uses the SDK relations API (like reactions) rather than scanning only the live
+   * timeline, so votes cast outside the currently-loaded window are still counted.
    */
   private computePollTally(
     pollEventId: string,
@@ -824,10 +987,12 @@ export class MatrixChatService {
     const currentUserId = this.getCurrentUserId();
     const latestByUser = new Map<string, { answerIds: string[]; ts: number }>();
 
-    for (const event of room.getLiveTimeline().getEvents()) {
-      if (event.getType() !== 'org.matrix.msc3381.poll.response') continue;
-      const relatesTo = event.getContent()?.['m.relates_to'];
-      if (relatesTo?.event_id !== pollEventId) continue;
+    const responses = room.relations.getChildEventsForEvent(
+      pollEventId,
+      RelationType.Reference,
+      'org.matrix.msc3381.poll.response'
+    )?.getRelations() ?? [];
+    for (const event of responses) {
       const sender = event.getSender();
       if (!sender) continue;
       const answerIds: string[] = event.getContent()?.['org.matrix.msc3381.poll.response']?.answers ?? [];
@@ -862,12 +1027,17 @@ export class MatrixChatService {
     return { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds };
   }
 
-  /** Returns true if a poll.end event referencing pollEventId exists in the room timeline. */
+  /**
+   * Returns true if a poll.end event referencing pollEventId exists.
+   * C-6: uses the relations API so an end event outside the loaded window is still seen.
+   */
   private isPollEnded(pollEventId: string, room: Room): boolean {
-    return room.getLiveTimeline().getEvents().some(event => {
-      if (event.getType() !== 'org.matrix.msc3381.poll.end') return false;
-      return event.getContent()?.['m.relates_to']?.event_id === pollEventId;
-    });
+    const ends = room.relations.getChildEventsForEvent(
+      pollEventId,
+      RelationType.Reference,
+      'org.matrix.msc3381.poll.end'
+    )?.getRelations() ?? [];
+    return ends.length > 0;
   }
 
   /** Re-map one message in a room's BehaviorSubject after its reactions changed. */
@@ -933,10 +1103,30 @@ export class MatrixChatService {
   }
 
 /**
- * Update the rooms list observable with current room data
- * Called after initial sync (PREPARED) and on relevant room events
+ * Update the rooms list observable with current room data.
+ * Called after initial sync (PREPARED) and on relevant room events.
+ *
+ * C-2: serialized — a single build runs at a time. Triggers arriving mid-build coalesce
+ * into exactly one follow-up build, so emits are always ordered and reflect the latest state.
  */
 private async updateRoomsList(): Promise<void> {
+  if (this.roomsListInFlight) {
+    this.roomsListPending = true;
+    return;
+  }
+  this.roomsListInFlight = true;
+  try {
+    do {
+      this.roomsListPending = false;
+      await this.buildAndEmitRoomsList();
+    } while (this.roomsListPending);
+  } finally {
+    this.roomsListInFlight = false;
+  }
+}
+
+/** Build the room-list snapshot and emit it. Always invoked via the serialized updateRoomsList(). */
+private async buildAndEmitRoomsList(): Promise<void> {
   if (!this.client) return;
 
   const rooms = this.client.getRooms();
@@ -1031,14 +1221,12 @@ private async updateRoomsList(): Promise<void> {
         isDirect,
         unreadCount,
         lastMessage,
-        members: room.getMembers()
-          .filter(m => !this.isServiceAccount(m.userId)) // hide service/bot accounts (S1)
-          .map(m => ({
-            userId: m.userId,
-            displayName: m.name,
-            avatarUrl: (m as any).getAvatarUrl?.(this.client!.baseUrl, 48, 48, 'crop') || undefined,
-            membership: (m.membership || 'leave') as string,
-          })),
+        // P-2: the room-list entry no longer carries the full member array. It was
+        // rebuilt for every room on every debounced event (O(rooms × members)) but is
+        // not consumed by any list/preview UI — DM detection and naming above read
+        // room.getMembers() from the SDK directly. Member-detail views resolve members
+        // for the single open room on demand.
+        members: [],
         typingUsers: this.typingByRoom.get(room.roomId) ?? [],
       };
     })
