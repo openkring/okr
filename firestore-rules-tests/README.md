@@ -1,10 +1,17 @@
-# Firestore security-rules tests
+# Firestore + Storage security-rules tests
 
-Emulator-based tests for [`firestore.rules`](../firestore.rules). They verify
-tenant isolation, role-escalation blocking, ownership, the public-read carve-outs,
-and — critically — that the app's `getSystemQuery` list shape
-(`where('tenants','array-contains', tenantId)`) is permitted while unfiltered and
-cross-tenant queries are denied.
+Emulator-based tests for [`firestore.rules`](../firestore.rules) and
+[`storage.rules`](../storage.rules):
+
+- **`rules.test.py`** (Firestore) — tenant isolation, role-escalation blocking,
+  ownership, the public-read carve-outs, and — critically — that the app's
+  `getSystemQuery` list shape (`where('tenants','array-contains', tenantId)`) is
+  permitted while unfiltered and cross-tenant queries are denied.
+- **`storage.test.py`** (Storage + Firestore) — tenant isolation across the three
+  storage prefixes (`tenant/`, `tenants/`, bare `{tenantId}/.../documents/`), the
+  public `logo/` assets, function-owned `generated-docs/` (`write:false`), the
+  size-gated write path, and default-deny. The rules read the caller's user doc
+  via `firestore.get`, so both emulators run together.
 
 ## Run
 
