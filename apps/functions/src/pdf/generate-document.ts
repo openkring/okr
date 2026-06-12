@@ -166,7 +166,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
       htmlToRender = compiled(payload);
     } else {
       // — Raw HTML mode —
-      htmlToRender = sanitizeHtml(rawHtml!);
+      htmlToRender = await sanitizeHtml(rawHtml!);
     }
 
     // Generate output
@@ -179,6 +179,17 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
         const browser = await getBrowser();
         const page = await browser.newPage();
         try {
+          if (!templateId) {
+            // Raw-HTML mode renders untrusted admin HTML. Block ALL external network
+            // so any url() in CSS / <img> / <style> cannot exfiltrate data or SSRF
+            // the function's network; only inline data: URIs are allowed (M-4).
+            // Template/asset mode keeps network on for its server-signed asset URLs.
+            await page.setRequestInterception(true);
+            page.on('request', (req) => {
+              if (req.url().startsWith('data:')) req.continue();
+              else req.abort();
+            });
+          }
           await page.setContent(htmlToRender, { waitUntil: 'networkidle0' });
           await page.pdf({
             path: tempPath,

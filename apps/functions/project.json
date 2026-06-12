@@ -47,7 +47,8 @@
           "swissqrbill",
           "puppeteer",
           "handlebars",
-          "html-to-docx"
+          "html-to-docx",
+          "sanitize-html"
         ],
         "esbuildOptions": {
           "logLevel": "info",
