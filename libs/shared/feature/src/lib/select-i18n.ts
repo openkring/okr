@@ -74,9 +74,14 @@ export type ResponsibilitySelectI18n = { [K in keyof typeof RESPONSIBILITY_SELEC
 // ---------------------------------------------------------------------------
 
 export const LOCATION_SELECT_I18N_KEYS = {
-  location_select:     PFX + 'location.select',
-  location_empty:      PFX + 'location.empty',
-  location_custom_use: PFX + 'location.custom_use',
+  location_select:        PFX + 'location.select',
+  location_empty:         PFX + 'location.empty',
+  location_custom_use:    PFX + 'location.custom_use',
+  location_segment_list:  PFX + 'location.segment.list',
+  location_segment_map:   PFX + 'location.segment.map',
+  location_map_select:    PFX + 'location.map.select',
+  location_map_copy_w3w:  PFX + 'location.map.copy_w3w',
+  location_map_copied:    PFX + 'location.map.copied',
 } satisfies Record<string, string>;
 
 export type LocationSelectI18n = { [K in keyof typeof LOCATION_SELECT_I18N_KEYS]: Signal<string> };

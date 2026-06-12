@@ -1,10 +1,11 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@bk2/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n } from '@bk2/shared-ui';
-import { debugFormErrors, debugFormModel, getDurationLabel, hasRole } from '@bk2/shared-util-core';
+import { debugFormModel, getDurationLabel, hasRole } from '@bk2/shared-util-core';
+import { validateVestTree } from '@bk2/shared-util-angular';
 import { DEFAULT_NOTES } from '@bk2/shared-constants';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
@@ -16,19 +17,13 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
   selector: 'bk-trip-edit-form',
   standalone: true,
   imports: [
-    vestForms,
     SvgIconPipe,
     IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonCard, IonCardContent, IonButton,
     NotesInput, Avatars, NumberInput
   ],
   styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
   template: `
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -141,23 +136,28 @@ export class TripEditForm {
   public readonly mode = input.required<'add' | 'edit' | 'end'>();
   public readonly boats = input.required<ResourceModel[]>();
   public readonly locations = input.required<LocationModel[]>();
-  public readonly category = input.required<CategoryListModel>(); // resource_type or rboat_type or...
+  public readonly category = input.required<CategoryListModel>();
 
-  // signals
+  // outputs
   public dirty = output<boolean>();
   public valid = output<boolean>();
   public personSelectClicked = output<void>();
   public boatSelectClicked = output<void>();
   public locationSelectClicked = output<void>();
 
- // validation and errors
-  protected readonly suite = tripValidationSuite;
-  private readonly validationResult = computed(() => tripValidationSuite(this.formData()));
+  // signal form — wraps formData with Vest validation
+  protected readonly tripForm = form(this.formData, (path) =>
+    validateVestTree(path, tripValidationSuite),
+  );
+
+  constructor() {
+    effect(() => this.valid.emit(this.tripForm().valid()));
+  }
 
   // derived
-  protected duration = computed(() => 
+  protected duration = computed(() =>
     getDurationLabel(this.formData().startDate, this.formData().startTime, this.formData().endTime)
-  )
+  );
   protected selectedLocationKey = computed(() => this.formData().locations?.[0] ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
@@ -174,15 +174,9 @@ export class TripEditForm {
   // constants
   protected formatTime = formatTripTime;
 
-  protected onFormChange(value: TripModel): void {
-    this.formData.update((vm) => ({ ...vm, ...value }));
-    debugFormErrors('TripEditForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
-  }
-
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo | AvatarInfo[] | undefined): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('TripEditForm.onFieldChange', this.validationResult().errors, this.currentUser());
     debugFormModel<TripModel>('TripEditForm', this.formData(), this.currentUser());
   }
 
@@ -204,7 +198,7 @@ export class TripEditForm {
     return this.getCategoryItem(this.category(), itemName)?.icon ?? '';
   }
 
-  getCategoryItem(cat: CategoryListModel, itemName?: string): CategoryItemModel | undefined {
+  protected getCategoryItem(cat: CategoryListModel, itemName?: string): CategoryItemModel | undefined {
     return cat ? cat.items.find(i => i.name === itemName) : undefined;
   }
 }

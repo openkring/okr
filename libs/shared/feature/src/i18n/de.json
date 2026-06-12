@@ -26,6 +26,15 @@
   "location": {
     "select": "Ort wählen",
     "empty": "Keine Orte gefunden.",
-    "custom_use": "als Ziel oder Strecke verwenden"
+    "custom_use": "als Ziel oder Strecke verwenden",
+    "segment": {
+      "list": "Liste",
+      "map": "Karte"
+    },
+    "map": {
+      "select": "Auswählen",
+      "copy_w3w": "what3words kopieren",
+      "copied": "Kopiert"
+    }
   }
 }

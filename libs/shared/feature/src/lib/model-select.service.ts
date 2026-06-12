@@ -124,49 +124,15 @@ export class ModelSelectService {
   }
 
   /***************************  location  *************************** */
-  public async selectLocation(selectedTag = DEFAULT_TAGS): Promise<LocationModel | undefined> {
+  public async selectLocation(type = '', showMap = true, allowCustom = true): Promise<LocationSelectResult | undefined> {
     const modal = await this.modalController.create({
       component: LocationSelectModal,
-      cssClass: 'list-modal',
+      cssClass: 'map-modal',
       componentProps: {
-        type: selectedTag,
+        type,
+        showMap,
         currentUser: this.appStore.currentUser(),
-      },
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss<LocationSelectResult>();
-    if (role === 'confirm' && data?.kind === 'predefined') {
-      if (isLocation(data.location, this.appStore.env.tenantId)) {
-        return data.location;
-      }
-    }
-    return undefined;
-  }
-
-  public async selectLocationAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL): Promise<AvatarInfo | undefined> {
-    const location = await this.selectLocation(selectedTag);
-    if (location) {
-      return {
-        key: location.bkey,
-        name1: location.distance + '',
-        name2: location.name,
-        label,
-        modelType: 'location',
-        type: location.type,
-        subType: ''
-      }
-    }
-    return undefined;
-  }
-
-  public async selectLocationResult(selectedTag = DEFAULT_TAGS): Promise<LocationSelectResult | undefined> {
-    const modal = await this.modalController.create({
-      component: LocationSelectModal,
-      cssClass: 'list-modal',
-      componentProps: {
-        type: selectedTag,
-        currentUser: this.appStore.currentUser(),
-        allowCustom: true,
+        allowCustom,
       },
     });
     modal.present();

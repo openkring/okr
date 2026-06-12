@@ -126,7 +126,11 @@ export const TripStore = signalStore(
       const { TripEditModal } = await import('./trip-edit.modal');
       const modal = await store.modalController.create({
         component: TripEditModal,
-        componentProps: { trip, mode },
+        cssClass: 'wide-modal',
+        componentProps: { 
+          trip, 
+          mode 
+        },
       });
       await modal.present();
       await modal.onDidDismiss();
@@ -183,12 +187,8 @@ export const TripStore = signalStore(
       return await store.modelSelectService.selectResourceAvatar('@tag.okBoat');
     },
 
-    async selectLocationAvatar(): Promise<AvatarInfo | undefined> {
-      return await store.modelSelectService.selectLocationAvatar('logbuch');
-    },
-
     async selectLocationForTrip(): Promise<LocationSelectResult | undefined> {
-      return await store.modelSelectService.selectLocationResult('logbuch');
+      return await store.modelSelectService.selectLocation('logbuch', true, true);
     },
 
     /******************************* security *************************************** */

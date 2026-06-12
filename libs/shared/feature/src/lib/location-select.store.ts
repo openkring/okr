@@ -13,6 +13,8 @@ import { LOCATION_SELECT_I18N_KEYS, LocationSelectI18n } from './select-i18n';
 import { rxResource } from '@angular/core/rxjs-interop';
 
 export const MIN_CUSTOM_SEARCH_LENGTH = 4;
+export const MAX_FIT_ZOOM = 16;
+export const FIT_PADDING: [number, number] = [32, 32];
 
 export function normalizeWhitespace(value: string): string {
   return value.trim().replace(/\s+/g, ' ');
@@ -22,11 +24,20 @@ export function normalizeForCompare(value: string): string {
   return normalizeWhitespace(value).toLowerCase();
 }
 
+export function hasValidCoordinates(l: LocationModel): boolean {
+  return Number.isFinite(l.latitude) && Number.isFinite(l.longitude)
+    && !(l.latitude === 0 && l.longitude === 0)
+    && Math.abs(l.latitude) <= 90 && Math.abs(l.longitude) <= 180;
+}
+
 export type LocationSelectState = {
   searchTerm: string;
   currentUser: UserModel | undefined;
   type: string;
   allowCustom: boolean;
+  showMap: boolean;
+  mapTag: string | undefined;
+  viewMode: 'list' | 'map';
 };
 
 export const locationInitialState: LocationSelectState = {
@@ -34,6 +45,9 @@ export const locationInitialState: LocationSelectState = {
   currentUser: undefined,
   type: 'logbuch',
   allowCustom: false,
+  showMap: false,
+  mapTag: undefined,
+  viewMode: 'list',
 };
 
 export const LocationSelectStore = signalStore(
@@ -84,6 +98,14 @@ export const LocationSelectStore = signalStore(
       && store.customLabel().length >= MIN_CUSTOM_SEARCH_LENGTH
       && !store.hasExactMatch()
     ),
+    mappableLocations: computed(() =>
+      (store.filteredLocations() ?? [])
+        .filter(hasValidCoordinates)
+        .filter(l => {
+          const tag = store.mapTag();
+          return tag == null || chipMatches(l.tags, tag);
+        })
+    ),
   })),
 
   withMethods((store) => ({
@@ -98,6 +120,15 @@ export const LocationSelectStore = signalStore(
     },
     setAllowCustom(allowCustom: boolean) {
       patchState(store, { allowCustom });
+    },
+    setShowMap(showMap: boolean) {
+      patchState(store, { showMap });
+    },
+    setMapTag(mapTag: string | undefined) {
+      patchState(store, { mapTag });
+    },
+    setViewMode(viewMode: 'list' | 'map') {
+      patchState(store, { viewMode });
     },
   })),
 );
