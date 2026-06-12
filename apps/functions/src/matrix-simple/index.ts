@@ -47,6 +47,52 @@ async function getMatrixLocalpart(firebaseUid: string): Promise<string> {
   }
 }
 
+/**
+ * Load the caller's roles map from users/{uid}. Empty object if the doc is missing.
+ * Authorization in this project is derived from the user document's `roles` map
+ * (the same model the client and Firestore rules use) — NOT from Firebase Auth
+ * custom claims, which are never minted anywhere in this codebase.
+ */
+async function getCallerRoles(uid: string): Promise<Record<string, boolean>> {
+  try {
+    const doc = await getFirestore().collection('users').doc(uid).get();
+    return (doc.data()?.roles ?? {}) as Record<string, boolean>;
+  } catch {
+    return {};
+  }
+}
+
+/** Throw unless the authenticated caller holds at least one of `allowedRoles`. Returns the uid. */
+async function requireRole(
+  request: { auth?: { uid?: string } },
+  fnName: string,
+  allowedRoles: string[],
+): Promise<string> {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Not authenticated with Firebase');
+  const roles = await getCallerRoles(uid);
+  if (!allowedRoles.some((r) => roles[r] === true)) {
+    console.error(`${fnName}: uid ${uid} lacks required role(s): ${allowedRoles.join(', ')}`);
+    throw new HttpsError('permission-denied', `Requires one of roles: ${allowedRoles.join(', ')}.`);
+  }
+  return uid;
+}
+
+/** Throw unless the caller is a provisioned app user (has a users/{uid} doc). Returns the uid. */
+async function requireProvisionedUser(
+  request: { auth?: { uid?: string } },
+  fnName: string,
+): Promise<string> {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Not authenticated with Firebase');
+  const doc = await getFirestore().collection('users').doc(uid).get();
+  if (!doc.exists) {
+    console.error(`${fnName}: uid ${uid} has no user profile`);
+    throw new HttpsError('permission-denied', 'No user profile.');
+  }
+  return uid;
+}
+
 export interface MatrixAuthResponse {
   accessToken: string;
   userId: string;
@@ -478,7 +524,9 @@ export const provisionMatrixUser = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ matrixUserId: string }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    // Provisioning a Matrix account for a person is part of the normal direct-chat
+    // flow — any provisioned app user may do it (creating accounts only for real persons).
+    await requireProvisionedUser(request, 'provisionMatrixUser');
     const { personKey } = request.data as { personKey: string };
     if (!personKey) throw new Error('personKey is required');
 
@@ -557,7 +605,8 @@ export const invitePersonToGroupRoom = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string; joined: boolean }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    // Group-membership management — performed by member/group admins.
+    await requireRole(request, 'invitePersonToGroupRoom', ['admin', 'memberAdmin', 'groupAdmin']);
 
     const { groupId, personKey } = request.data as { groupId: string; personKey: string };
     if (!groupId) throw new Error('groupId is required');
@@ -693,7 +742,8 @@ export const kickPersonFromGroupRoom = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string; kicked: boolean }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    // Group-membership management — performed by member/group admins.
+    await requireRole(request, 'kickPersonFromGroupRoom', ['admin', 'memberAdmin', 'groupAdmin']);
 
     const { groupId, personKey } = request.data as { groupId: string; personKey: string };
     if (!groupId) throw new Error('groupId is required');
@@ -791,7 +841,7 @@ export const renameMatrixRoom = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string; name: string }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    await requireRole(request, 'renameMatrixRoom', ['admin']);
 
     const { groupId, name } = request.data as { groupId: string; name: string };
     if (!groupId) throw new Error('groupId is required');
@@ -892,7 +942,7 @@ export const listMatrixRooms = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ rooms: AdminRoom[]; total: number }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    await requireRole(request, 'listMatrixRooms', ['admin']);
 
     const { personKey } = request.data as { personKey?: string };
     const adminToken = matrixAdminToken.value();
@@ -993,7 +1043,7 @@ export const getRoomDetails = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<RoomDetails> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    await requireRole(request, 'getRoomDetails', ['admin']);
     const { roomId } = request.data as { roomId: string };
     if (!roomId) throw new Error('roomId is required');
 
@@ -1058,7 +1108,7 @@ export const getAllMembersFromRoom = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ members: RoomMemberInfo[]; total: number }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    await requireRole(request, 'getAllMembersFromRoom', ['admin']);
     const { roomId } = request.data as { roomId: string };
     if (!roomId) throw new Error('roomId is required');
 
@@ -1103,7 +1153,7 @@ export const getMemberDetails = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<MemberDetails> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    await requireRole(request, 'getMemberDetails', ['admin']);
     const { userId, roomId } = request.data as { userId: string; roomId?: string };
     if (!userId) throw new Error('userId is required');
 
@@ -1163,7 +1213,7 @@ export const deleteMatrixRoom = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ deleteId: string }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    await requireRole(request, 'deleteMatrixRoom', ['admin']);
 
     const { roomId } = request.data as { roomId: string };
     if (!roomId) throw new Error('roomId is required');
@@ -1208,7 +1258,7 @@ export const deactivateMatrixUser = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ matrixUserId: string; deactivated: boolean }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    await requireRole(request, 'deactivateMatrixUser', ['admin']);
 
     const { personKey, erase = false } = request.data as { personKey: string; erase?: boolean };
     if (!personKey) throw new Error('personKey is required');
@@ -1258,7 +1308,7 @@ export const addMatrixRoomAlias = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ alias: string }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    await requireRole(request, 'addMatrixRoomAlias', ['admin']);
 
     const { roomId, aliasName } = request.data as { roomId: string; aliasName: string };
     if (!roomId) throw new Error('roomId is required');
