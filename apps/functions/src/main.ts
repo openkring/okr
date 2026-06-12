@@ -22,6 +22,7 @@ import * as Trip from './trip';
 import * as Pdf from './pdf';
 import * as Esign from './esign';
 import * as Forms from './forms';
+import * as Vcard from './vcard';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -192,6 +193,9 @@ export const esignArchiveSigned      = Esign.esignArchiveSigned;
 // form submission + JS token endpoint
 export const getFormToken = Forms.getFormToken;
 export const submitForm = Forms.submitForm;
+
+// vCard export (spec 17)
+export const vcardExport = Vcard.vcardExport;
 
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';

@@ -7,9 +7,11 @@ import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 import { SIZE_MD } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { Menu } from '@bk2/cms-menu-feature';
+import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@bk2/vcard-util';
 
 import { PersonStore } from './person.store';
 
@@ -124,6 +126,7 @@ export class PersonList {
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
   protected personModelName = PersonModelName;
+  protected readonly vcardI18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -191,6 +194,9 @@ export class PersonList {
     if (person.favZipCode) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.store.i18n.show_postal(), this.imgixBaseUrl, 'location'));
     }
+    if (resolveVcardCapability(this.currentUser()?.roles, 1).allowed) {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.vcard', this.vcardI18n.action_label(), this.imgixBaseUrl, 'download'));
+    }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -235,6 +241,9 @@ export class PersonList {
           break;
         case 'person.edit':
           await this.store.edit(person, this.readOnly());
+          break;
+        case 'person.vcard':
+          await this.store.exportVcard(person);
           break;
       }
     }

@@ -23,6 +23,7 @@ import { browseUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
 import { MatrixChatService } from '@bk2/chat-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
+import { VcardExportService } from '@bk2/vcard-feature';
 
 
 export type PersonState = {
@@ -59,6 +60,7 @@ export const PersonStore = signalStore(
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
     matrixService: inject(MatrixChatService),
+    vcardExportService: inject(VcardExportService),
     i18nService: inject(I18nService),
   })),
 
@@ -240,6 +242,20 @@ export const PersonStore = signalStore(
 
         async export(type: string): Promise<void> {
             console.log(`PersonStore.export(${type}) ist not yet implemented`);
+        },
+
+        /**
+         * Export a single person as a vCard (.vcf), scoped by the caller's role
+         * (spec 17). Routes through the VcardExportService → vcardExport callable.
+         */
+        async exportVcard(person: PersonModel): Promise<void> {
+            const displayName = `${person.firstName ?? ''} ${person.lastName ?? ''}`.trim() || person.lastName;
+            await store.vcardExportService.exportSingle(
+                { bkey: person.bkey, displayName, dateOfBirth: person.dateOfBirth },
+                'person',
+                store.currentUser()?.roles,
+                store.tenantId()
+            );
         },
 
         async edit(person: PersonModel, readOnly = true): Promise<void> {

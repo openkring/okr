@@ -228,7 +228,9 @@
       "@bk2/user-data-access": ["libs/user/data-access/src/index.ts"],
       "@bk2/user-feature": ["libs/user/feature/src/index.ts"],
       "@bk2/user-ui": ["libs/user/ui/src/index.ts"],
-      "@bk2/user-util": ["libs/user/util/src/index.ts"]
+      "@bk2/user-util": ["libs/user/util/src/index.ts"],
+      "@bk2/vcard-util": ["libs/vcard/util/src/index.ts"],
+      "@bk2/vcard-feature": ["libs/vcard/feature/src/index.ts"]
     },
     "types": ["node", "vitest"]
   },

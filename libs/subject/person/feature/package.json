@@ -35,6 +35,8 @@
     "@bk2/subject-person-util": "*",
     "@bk2/subject-swisscities-ui": "*",
     "@bk2/cms-menu-feature": "*",
-    "@bk2/category-data-access": "*"
+    "@bk2/category-data-access": "*",
+    "@bk2/vcard-util": "*",
+    "@bk2/vcard-feature": "*"
   }
 }

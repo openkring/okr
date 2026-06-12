@@ -99,6 +99,12 @@
     },
     {
       "path": "../../../finance/bill/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../vcard/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../vcard/feature/tsconfig.lib.json"
     }
   ]
 }

@@ -14,6 +14,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { AddressService } from '@bk2/subject-address-data-access';
 import { OrgService } from '@bk2/subject-org-data-access';
 import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel, ORG_I18N_KEYS } from '@bk2/subject-org-util';
+import { VcardExportService } from '@bk2/vcard-feature';
 
 
 export type OrgState = {
@@ -45,6 +46,7 @@ export const OrgStore = signalStore(
     modalController: inject(ModalController),
     alertService: inject(AlertService),
     toastController: inject(ToastController),
+    vcardExportService: inject(VcardExportService),
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
@@ -134,6 +136,19 @@ export const OrgStore = signalStore(
     /******************************** actions ******************************************* */
     async export(type: string): Promise<void> {
       console.log(`OrgStore.export(${type}) is not yet implemented.`);
+    },
+
+    /**
+     * Export a single organization as a vCard (.vcf), scoped by the caller's role
+     * (spec 17). Routes through the VcardExportService → vcardExport callable.
+     */
+    async exportVcard(org: OrgModel): Promise<void> {
+      await store.vcardExportService.exportSingle(
+        { bkey: org.bkey, displayName: org.name },
+        'org',
+        store.currentUser()?.roles,
+        store.tenantId()
+      );
     },
 
     async add(readOnly = true): Promise<void> {
