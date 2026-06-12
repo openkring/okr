@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
 import { logger } from 'firebase-functions/v2';
 import { sendEmailViaProvider } from '../../auth/email-transport';
+import { clientIp, checkRateLimit } from '../rateLimit';
+
+// Per-IP (best-effort) + global backstop. The global cap bounds total relayed
+// volume even if the per-IP key is spoofed.
+const HOUR_MS = 60 * 60 * 1000;
+const PER_IP_LIMIT = { limit: 5, windowMs: HOUR_MS };
+const GLOBAL_LIMIT = { limit: 100, windowMs: HOUR_MS };
 
 const VALID_SUBJECTS = ['general', 'course', 'lateral', 'youth', 'boathouse'] as const;
 type Subject = typeof VALID_SUBJECTS[number];
@@ -39,6 +46,20 @@ export async function contactRouter(req: Request, res: Response): Promise<void> 
   const validationError = validateContact(body);
   if (validationError) {
     res.status(400).json({ error: { code: 'validation_error', message: validationError } });
+    return;
+  }
+
+  // Throttle relay abuse: per-IP first, then a global backstop. (M-7)
+  const ip = clientIp(req);
+  const [perIp, global] = await Promise.all([
+    checkRateLimit('contact:ip', ip, PER_IP_LIMIT),
+    checkRateLimit('contact:global', 'all', GLOBAL_LIMIT),
+  ]);
+  if (!perIp.allowed || !global.allowed) {
+    const retryAfterMs = Math.max(perIp.retryAfterMs, global.retryAfterMs);
+    logger.warn('publicApi /contact: rate limited', { scope: !perIp.allowed ? 'ip' : 'global' });
+    res.set('Retry-After', String(Math.ceil(retryAfterMs / 1000)));
+    res.status(429).json({ error: { code: 'rate_limited', message: 'Too many requests. Please try again later.' } });
     return;
   }
 

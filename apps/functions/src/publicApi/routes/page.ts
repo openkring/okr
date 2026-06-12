@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { setCacheHeaders } from '../utils';
+import { getHtmlSanitizer } from '../sanitize';
 
 const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
@@ -38,12 +39,14 @@ interface SectionDoc {
   isArchived?: boolean;
 }
 
-function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>): unknown {
+type SanitizeFn = (html: string) => string;
+
+function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn): unknown {
   const type = s.type ?? 'article';
   const props = (s.properties ?? {}) as Record<string, unknown>;
   const title = pickI18n(props['titleI18n'] as I18nString | undefined, s.title ?? '');
   const subTitle = pickI18n(props['subTitleI18n'] as I18nString | undefined, s.subTitle ?? '');
-  const articleHtml = pickI18n(props['contentI18n'] as I18nString | undefined, s.content?.htmlContent ?? '');
+  const articleHtml = sanitize(pickI18n(props['contentI18n'] as I18nString | undefined, s.content?.htmlContent ?? ''));
 
   switch (type) {
     case 'hero': {
@@ -113,7 +116,7 @@ function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>): unk
           const nested = it.key ? nestedSections.get(it.key) : undefined;
           const nestedProps = (nested?.properties ?? {}) as { contentI18n?: I18nString };
           const content = nested
-            ? pickI18n(nestedProps.contentI18n, nested.content?.htmlContent ?? '')
+            ? sanitize(pickI18n(nestedProps.contentI18n, nested.content?.htmlContent ?? ''))
             : '';
           return { label: it.label ?? '', content };
         });
@@ -194,7 +197,8 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
       }
     }
 
-    const sections = liveSections.map(s => mapSection(s, nestedSections));
+    const sanitize = await getHtmlSanitizer();
+    const sections = liveSections.map(s => mapSection(s, nestedSections, sanitize));
 
     setCacheHeaders(res);
     res.json({ ...pageEnvelope, sections });

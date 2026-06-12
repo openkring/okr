@@ -99,6 +99,14 @@ seed("persons/pB", {"tenants": ["t2"], "isArchived": False, "lastName": "BB"})
 seed("memberships/mA", {"tenants": ["t1"], "isArchived": False, "x": "1"})
 seed("sessions/sX", {"isActive": True, "userKey": "", "tenants": ["t1"]})
 seed("invoices/iA", {"tenants": ["t1"], "isArchived": False, "amount": "100"})
+# M-7: orgs/resources/tags are no longer public — tenant-scoped read.
+seed("orgs/oA",      {"tenants": ["t1"], "isArchived": False, "name": "Org A"})
+seed("orgs/oB",      {"tenants": ["t2"], "isArchived": False, "name": "Org B"})
+seed("resources/rA", {"tenants": ["t1"], "isArchived": False, "name": "Res A"})
+seed("tags/tgA",     {"tenants": ["t1"], "isArchived": False, "tagModel": "x"})
+# CMS content stays public-readable.
+seed("pages/home",   {"tenants": ["t1"], "isArchived": False, "title": "Home"})
+seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"})
 
 A, B, C = jwt("uidA"), jwt("uidB"), jwt("uidC")
 GET, PATCH, POST = "GET", "PATCH", "POST"
@@ -154,6 +162,17 @@ single_cases = [
      body({"tenants": ["t1"], "type": "article"}), None),
     ("userC(contentAdmin) create pages cross-tenant t2 -> DENY", False, POST, "pages?documentId=pg3", C,
      body({"tenants": ["t2"], "title": "T"}), None),
+    # M-7: orgs/resources/tags no longer public — anon DENY, tenant member ALLOW, cross-tenant DENY.
+    ("anon GET orgs/oA -> DENY", False, GET, "orgs/oA", None, None, None),
+    ("anon GET resources/rA -> DENY", False, GET, "resources/rA", None, None, None),
+    ("anon GET tags/tgA -> DENY", False, GET, "tags/tgA", None, None, None),
+    ("userA GET orgs/oA (own tenant) -> ALLOW", True, GET, "orgs/oA", A, None, None),
+    ("userA GET orgs/oB (other tenant) -> DENY", False, GET, "orgs/oB", A, None, None),
+    ("userA GET resources/rA (own tenant) -> ALLOW", True, GET, "resources/rA", A, None, None),
+    ("userA GET tags/tgA (own tenant) -> ALLOW", True, GET, "tags/tgA", A, None, None),
+    # CMS content stays public-readable (PWA anonymous landing renders it).
+    ("anon GET pages/home (public) -> ALLOW", True, GET, "pages/home", None, None, None),
+    ("anon GET sections/secA (public) -> ALLOW", True, GET, "sections/secA", None, None, None),
     # default deny for unknown collection
     ("userA read unknown coll -> DENY", False, GET, "totallyUnknownColl/x", A, None, None),
 ]

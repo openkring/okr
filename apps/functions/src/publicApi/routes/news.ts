@@ -2,7 +2,10 @@ import { Request, Response } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { setCacheHeaders, parseTags, storeDateToIso, titleToI18n } from '../utils';
+import { getHtmlSanitizer, sanitizeI18n } from '../sanitize';
 import type { I18nString } from '@bk2/shared-models';
+
+type SanitizeFn = (html: string) => string;
 import { shortenText } from '@bk2/shared-util-core';
 
 const IMGIX_BASE = 'https://bkaiser.imgix.net';
@@ -57,7 +60,7 @@ function mapImage(img: StoredImage) {
   return { url: toImgixUrl(img.url), alt: { de: img.altText ?? '' } };
 }
 
-function sectionToNewsSummary(doc: ArticleSectionDoc) {
+function sectionToNewsSummary(doc: ArticleSectionDoc, sanitize: SanitizeFn) {
   const props = doc.properties ?? {};
   const img = props.images?.[0];
   const excerpt = hasContent(props.excerptI18n)
@@ -68,18 +71,18 @@ function sectionToNewsSummary(doc: ArticleSectionDoc) {
     date: storeDateToIso(props.datePublished ?? ''),
     title: titleToI18n(doc.title, props.titleI18n),
     subTitle: titleToI18n(doc.subTitle, props.subTitleI18n),
-    excerpt,
+    excerpt: sanitizeI18n(excerpt, sanitize),
     coverImage: img ? mapImage(img) : undefined,
     tags: parseTags(doc.tags),
   };
 }
 
-function sectionToNewsDetail(doc: ArticleSectionDoc) {
+function sectionToNewsDetail(doc: ArticleSectionDoc, sanitize: SanitizeFn) {
   const props = doc.properties ?? {};
   const images = (props.images ?? []).map(mapImage);
   return {
-    ...sectionToNewsSummary(doc),
-    content: props.contentI18n ?? { de: doc.content?.htmlContent ?? '' },
+    ...sectionToNewsSummary(doc, sanitize),
+    content: sanitizeI18n(props.contentI18n ?? { de: doc.content?.htmlContent ?? '' }, sanitize),
     images,
   };
 }
@@ -111,8 +114,9 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
       }
 
       const doc = { bkey: snap.docs[0].id, ...snap.docs[0].data() } as ArticleSectionDoc;
+      const sanitize = await getHtmlSanitizer();
       setCacheHeaders(res);
-      res.json(sectionToNewsDetail(doc));
+      res.json(sectionToNewsDetail(doc, sanitize));
       return;
     }
 
@@ -157,8 +161,9 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
       return dateB.localeCompare(dateA);
     });
 
+    const sanitize = await getHtmlSanitizer();
     setCacheHeaders(res);
-    res.json(docs.slice(0, limit).map(sectionToNewsSummary));
+    res.json(docs.slice(0, limit).map(d => sectionToNewsSummary(d, sanitize)));
   } catch (err) {
     logger.error('publicApi /news error', { tenantId, slug, err });
     res.status(500).json({ error: { code: 'internal_error', message: 'Failed to fetch news' } });

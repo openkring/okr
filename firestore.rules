@@ -61,10 +61,20 @@ service cloud.firestore {
     }
 
     // ============================================================================
-    //  Public read — CMS / bootstrap content needed before login.
+    //  Public read — only what an unauthenticated client genuinely renders.
+    //
+    //  The public-facing static websites (apps/*-website) do NOT read Firestore
+    //  directly — they fetch curated, field-mapped JSON from the publicApi Cloud
+    //  Function (server-side, Admin SDK), which is the single public gateway.
+    //
+    //  The only browser path that reads Firestore anonymously is the PWA's
+    //  public/* landing (cms-page PageDispatcher → pages + sections, ungated),
+    //  plus the app-config / app-version bootstrap docs. Everything else
+    //  (orgs/resources/tags/categories) is loaded by AppStore only after login
+    //  (its resources are gated on fbUser), so it must NOT be world-readable.
+    //
     //  CMS content (pages/sections/menuItems/categories) writes are content-role
-    //  gated (M-7); the rest stay authenticated + tenant-scoped (their edit UIs
-    //  are only authenticated-guarded, so a stricter rule would break edits).
+    //  gated (M-7).
     // ============================================================================
 
     match /app-config/{tenant} {
@@ -75,15 +85,20 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;                          // updated out-of-band / by admin tooling
     }
-    // CMS content — content-role authoring, tenant-scoped (M-7).
-    match /categories/{id}      { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
-    match /menuItems/{id}       { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    // CMS content rendered by the anonymous PWA landing — public read.
     match /pages/{id}           { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
     match /sections/{id}        { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
-    // tags/orgs/resources: edit UIs are authenticated-guarded → keep tenant-member writes.
-    match /tags/{id}            { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /orgs/{id}            { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /resources/{id}       { allow read: if true; allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    // menuItems/categories: navigation + select metadata. menuItems is read by the
+    // app shell's menu store (ungated); categories are CMS select-lists. Low
+    // sensitivity, kept public-readable; writes are content-role gated.
+    match /categories/{id}      { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    match /menuItems/{id}       { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    // tags/orgs/resources: NOT public. Read only by authenticated tenant members
+    // (AppStore loads them post-login). The static websites get any org info via
+    // the publicApi CF, never by reading these collections directly. (M-7)
+    match /tags/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /orgs/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /resources/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
 
     // ============================================================================
     //  Users — own doc, with role/tenant/personKey escalation blocked. (C-1)
