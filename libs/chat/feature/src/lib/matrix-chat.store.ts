@@ -375,22 +375,6 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Ensure a room exists or create it
-       */
-      async ensureRoomExists(roomIdOrAlias: string, _roomName?: string): Promise<string> {
-        try {
-          // Try to join existing room
-          const room = await store.matrixService.joinRoom(roomIdOrAlias);
-          patchState(store, { currentRoomId: room.roomId });
-          return room.roomId;
-        } catch (error) {
-          // If join fails, room might not exist or we might not have permission
-          console.warn('MatrixChatStore.ensureRoomExists: Failed to join room, might need to create:', error);
-          throw error;
-        }
-      },
-
-      /**
        * Create a new room.
        */
       async createRoom(room?: MatrixRoom, roomName?: string) {
