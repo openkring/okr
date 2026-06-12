@@ -6,9 +6,11 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { Menu } from '@bk2/cms-menu-feature';
+import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@bk2/vcard-util';
 
 import { OrgStore } from './org.store';
 
@@ -139,6 +141,7 @@ export class OrgList {
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+  protected readonly vcardI18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -171,27 +174,29 @@ export class OrgList {
    * @param org 
    */
   protected async showActions(org: OrgModel): Promise<void> {
-    if (this.hasRole('memberAdmin')) {
-      if (this.hasRole('admin')) {
-        const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-        this.addActionSheetButtons(actionSheetOptions, org);
-        await this.executeActions(actionSheetOptions, org);
-      } else {
-        await this.store.edit(org, this.readOnly());
-      }
-    } else {
-      await this.store.edit(org, true);
-    }
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    this.addActionSheetButtons(actionSheetOptions, org);
+    await this.executeActions(actionSheetOptions, org);
   }
 
   /**
-   * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * User is always admin here (see guard in showActions)
-   * @param org 
+   * Fills the ActionSheet with all possible actions, considering the user permissions:
+   * admins may edit and delete, memberAdmins may edit, everyone else may view; the
+   * vCard export is offered to anyone whose role allows a single-record export (spec 17).
+   * @param org
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, org: OrgModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+    if (this.hasRole('memberAdmin')) {
+      actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
+      if (this.hasRole('admin')) {
+        actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+      }
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('as_view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+    }
+    if (resolveVcardCapability(this.store.currentUser()?.roles, 1).allowed) {
+      actionSheetOptions.buttons.push(createActionSheetButton('as_vcard', this.vcardI18n.action_label(), this.imgixBaseUrl, 'download'));
+    }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
@@ -212,6 +217,12 @@ export class OrgList {
           break;
         case 'as_edit':
           await this.store.edit(org, this.readOnly());
+          break;
+        case 'as_view':
+          await this.store.edit(org, true);
+          break;
+        case 'as_vcard':
+          await this.store.exportVcard(org);
           break;
       }
     }

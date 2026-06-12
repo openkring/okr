@@ -1,0 +1,24 @@
+{
+  "name": "vcard-feature",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/vcard/feature/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:vcard", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/vcard/feature",
+        "main": "libs/vcard/feature/src/index.ts",
+        "tsConfig": "libs/vcard/feature/tsconfig.lib.json",
+        "assets": ["libs/vcard/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
