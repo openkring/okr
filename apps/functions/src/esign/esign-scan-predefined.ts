@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import {
   ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken, downloadFromStorage,
+  getDeepSignAccessToken, downloadFromStorage, getCallerTenants,
   deepsignClientId, deepsignClientSecret,
   deepsignServiceUsername, deepsignServicePassword,
 } from './shared';
@@ -16,6 +16,15 @@ export const esignScanPredefined = onCall<ScanPredefinedRequest>(
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
     const { storagePath } = request.data;
     if (!storagePath) throw new HttpsError('invalid-argument', 'storagePath required');
+
+    // The function downloads storagePath via the Admin SDK (bypassing Storage
+    // rules), so restrict it to the caller's own tenant prefix — otherwise any
+    // authenticated user could read any object by naming its path (H-5).
+    const tenants = await getCallerTenants(request.auth.uid);
+    const inTenant = tenants.some(
+      (t) => storagePath.startsWith(`tenant/${t}/`) || storagePath.startsWith(`tenants/${t}/`),
+    );
+    if (!inTenant) throw new HttpsError('permission-denied', 'storagePath is outside your tenant.');
 
     const token = await getDeepSignAccessToken(
       deepsignClientId.value(), deepsignClientSecret.value(),

@@ -5,7 +5,7 @@ import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import axios from 'axios';
 import {
   ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken, downloadFromStorage, computeWebhookToken,
+  getDeepSignAccessToken, downloadFromStorage, computeWebhookToken, getCallerTenants,
   deepsignClientId, deepsignClientSecret,
   deepsignServiceUsername, deepsignServicePassword, webhookSecret,
 } from './shared';
@@ -29,8 +29,9 @@ export const esignSendDocument = onCall<EsignSendDocumentRequest>(
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
 
     const userId = request.auth.uid;
-    const tenantId = typeof request.auth.token['tenantId'] === 'string'
-      ? request.auth.token['tenantId'] : '';
+    // Derive the tenant from the caller's user doc — token.tenantId is never
+    // minted in this project, so reading it yielded an empty tenant (H-5).
+    const tenantId = (await getCallerTenants(userId))[0] ?? '';
     const {
       storagePath, initiatorAliasName, comment,
       signatureMode = 'timestamp', jurisdiction = 'zertes',

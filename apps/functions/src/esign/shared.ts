@@ -1,5 +1,7 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { defineSecret } from 'firebase-functions/params';
+import { HttpsError } from 'firebase-functions/v2/https';
+import { getFirestore } from 'firebase-admin/firestore';
 import axios from 'axios';
 
 // ─── Secrets ─────────────────────────────────────────────────────────────────
@@ -79,4 +81,30 @@ export async function downloadFromStorage(storagePath: string): Promise<Buffer> 
     throw new Error(`File exceeds 40 MB limit (${buffer.length} bytes)`);
   }
   return buffer;
+}
+
+// ─── Authorization helpers (H-5) ───────────────────────────────────────────────
+// Authorization is derived from the caller's users/{uid} document, NOT from a
+// custom claim (token.tenantId is never minted in this project).
+
+/** Tenants the caller belongs to, from users/{uid}.tenants. Empty if no doc. */
+export async function getCallerTenants(uid: string): Promise<string[]> {
+  const snap = await getFirestore().collection('users').doc(uid).get();
+  const tenants = snap.data()?.tenants;
+  return Array.isArray(tenants) ? (tenants as string[]) : [];
+}
+
+/**
+ * Authorize access to an esign record loaded by esignId. Allowed when the caller
+ * is the record owner, or a member of the record's tenant. Prevents reading or
+ * mutating another tenant's/user's signing process by guessing the document id.
+ * Owner-based access also covers legacy records whose tenantId was never set.
+ */
+export async function assertEsignAccess(
+  uid: string,
+  record: { ownerUserId?: string; tenantId?: string },
+): Promise<void> {
+  if (record.ownerUserId && record.ownerUserId === uid) return;
+  if (record.tenantId && (await getCallerTenants(uid)).includes(record.tenantId)) return;
+  throw new HttpsError('permission-denied', 'You do not have access to this signing process.');
 }

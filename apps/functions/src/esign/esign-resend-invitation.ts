@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import axios from 'axios';
 import {
   ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken,
+  getDeepSignAccessToken, assertEsignAccess,
   deepsignClientId, deepsignClientSecret,
   deepsignServiceUsername, deepsignServicePassword,
 } from './shared';
@@ -22,7 +22,9 @@ export const esignResendInvitation = onCall<{ esignId: string; signeeId: string 
     const snap = await db.collection(EsignCollection).doc(esignId).get();
     if (!snap.exists) throw new HttpsError('not-found', 'Signing process not found');
 
-    const record = snap.data() as { deepsignDocumentId: string };
+    const record = snap.data() as { deepsignDocumentId: string; tenantId?: string; ownerUserId?: string };
+    await assertEsignAccess(request.auth.uid, record);
+
     const token = await getDeepSignAccessToken(
       deepsignClientId.value(), deepsignClientSecret.value(),
       deepsignServiceUsername.value(), deepsignServicePassword.value(),

@@ -6,7 +6,7 @@ import { getStorage } from 'firebase-admin/storage';
 import axios from 'axios';
 import {
   ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken,
+  getDeepSignAccessToken, assertEsignAccess,
   deepsignClientId, deepsignClientSecret,
   deepsignServiceUsername, deepsignServicePassword,
 } from './shared';
@@ -30,8 +30,10 @@ export const esignDelete = onCall<{ esignId: string; reason?: string }>(
       documentStatus: string;
       storagePath: string;
       signedPdfPath?: string;
-      tenantId: string;
+      tenantId?: string;
+      ownerUserId?: string;
     };
+    await assertEsignAccess(request.auth.uid, record);
 
     const status = record.documentStatus;
     let token: string | null = null;
