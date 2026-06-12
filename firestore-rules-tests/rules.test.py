@@ -93,13 +93,14 @@ def list_query(coll, tenant=None, token=None):
 # ------------------------------------------------------------------- seed ----
 seed("users/uidA", {"tenants": ["t1"], "roles": {}, "firstName": "A"})
 seed("users/uidB", {"tenants": ["t2"], "roles": {"admin": True}, "firstName": "B"})
+seed("users/uidC", {"tenants": ["t1"], "roles": {"contentAdmin": True}, "firstName": "C"})
 seed("persons/pA", {"tenants": ["t1"], "isArchived": False, "lastName": "AA"})
 seed("persons/pB", {"tenants": ["t2"], "isArchived": False, "lastName": "BB"})
 seed("memberships/mA", {"tenants": ["t1"], "isArchived": False, "x": "1"})
 seed("sessions/sX", {"isActive": True, "userKey": "", "tenants": ["t1"]})
 seed("invoices/iA", {"tenants": ["t1"], "isArchived": False, "amount": "100"})
 
-A, B = jwt("uidA"), jwt("uidB")
+A, B, C = jwt("uidA"), jwt("uidB"), jwt("uidC")
 GET, PATCH, POST = "GET", "PATCH", "POST"
 
 
@@ -141,6 +142,18 @@ single_cases = [
     # CF-only collection: client write denied
     ("userA write invoices -> DENY", False, PATCH, "invoices/iA", A,
      body({"amount": "999"}), ["amount"]),
+    # M-7: CMS content writes require the content role (contentAdmin/privileged/admin)
+    ("anon GET pages/none (public read) -> ALLOW(404)", True, GET, "pages/none", None, None, None),
+    ("userA(no role) create pages -> DENY", False, POST, "pages?documentId=pg1", A,
+     body({"tenants": ["t1"], "title": "T"}), None),
+    ("userC(contentAdmin) create pages -> ALLOW", True, POST, "pages?documentId=pg2", C,
+     body({"tenants": ["t1"], "title": "T"}), None),
+    ("userA(no role) create categories -> DENY", False, POST, "categories?documentId=c1", A,
+     body({"tenants": ["t1"], "name": "N"}), None),
+    ("userC(contentAdmin) create sections -> ALLOW", True, POST, "sections?documentId=s1", C,
+     body({"tenants": ["t1"], "type": "article"}), None),
+    ("userC(contentAdmin) create pages cross-tenant t2 -> DENY", False, POST, "pages?documentId=pg3", C,
+     body({"tenants": ["t2"], "title": "T"}), None),
     # default deny for unknown collection
     ("userA read unknown coll -> DENY", False, GET, "totallyUnknownColl/x", A, None, None),
 ]
