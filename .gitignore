@@ -4,6 +4,9 @@
 **/environment.ts
 **/environment.prod.ts
 **/.env
+# generated locally / per-deploy; must never be committed (writes environment.ts from env vars)
+set-env.js
+**/set-env.js
 emulator-storage
 **/firebase.config.ts
 **/firebase-config.js
