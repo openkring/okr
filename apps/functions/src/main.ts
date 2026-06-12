@@ -8,7 +8,6 @@ import * as Address from './address';
 import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
-import * as Matrix from './matrix';
 import * as MatrixSimple from './matrix-simple';
 import * as Rag from './rag';
 import * as Email from './email';
@@ -75,11 +74,6 @@ export const onResourceChange = Replication.onResourceChange;
 export const onPersonChange = Replication.onPersonChange;
 export const onOrgChange = Replication.onOrgChange;
 export const onGroupChange = Replication.onGroupChange;
-
-// matrix (Matrix chat integration)
-export const ensureMatrixUser = Matrix.ensureMatrixUser;
-export const ensureGroupRoom = Matrix.ensureGroupRoom;
-export const syncUserProfileToMatrix = Matrix.syncUserProfileToMatrix;
 
 // matrix-simple (Simpler Firebase → Matrix token exchange)
 export const getMatrixCredentials = MatrixSimple.getMatrixCredentials;

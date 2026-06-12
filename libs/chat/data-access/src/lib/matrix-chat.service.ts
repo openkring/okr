@@ -1,6 +1,6 @@
 
 import { effect, inject, Injectable } from '@angular/core';
-import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, createNewMatrixCall, CallEvent, type MatrixCall, type IPusherRequest, type Store } from 'matrix-js-sdk';
+import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, createNewMatrixCall, CallEvent, type MatrixCall, type Store } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -12,6 +12,15 @@ import { AppStore } from '@bk2/shared-feature';
 import { debugData, debugMessage } from '@bk2/shared-util-core';
 import { convertHeicToJpeg } from '@bk2/chat-util';
 import { ActivityService } from '@bk2/activity-data-access';
+
+/**
+ * Localparts of Matrix service/bot accounts to hide from user-facing lists (S1).
+ * The admin/service-token holder is force-joined into rooms to perform admin operations;
+ * it is not a real participant and must not appear in member lists, DM labels, read
+ * receipts, or call notifications. 'bk2-bot' is the dedicated service bot; 'bruno' is the
+ * legacy admin account that still lingers in many rooms from past force-joins.
+ */
+const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'bruno']);
 
 export interface MatrixPollData {
   question: string;
@@ -487,6 +496,12 @@ export class MatrixChatService {
     return this.client.getUser(uid) ?? undefined;
   }
 
+  /** True if the Matrix user ID belongs to a hidden service/bot account (S1). */
+  private isServiceAccount(userId: string | undefined): boolean {
+    if (!userId) return false;
+    return SERVICE_ACCOUNT_LOCALPARTS.has(userId.split(':')[0].replace(/^@/, ''));
+  }
+
   /**
    * Returns the display name of a given matrix user, or the local part of their user ID as fallback.
    * you can use it with getCurrentUser() or a specific user from a message sender.
@@ -546,6 +561,7 @@ export class MatrixChatService {
     const result = new Map<string, MatrixReadReceipt[]>();
     for (const member of room.getMembers()) {
       if (member.userId === currentUserId) continue;
+      if (this.isServiceAccount(member.userId)) continue; // hide service/bot accounts (S1)
       if (member.membership !== 'join') continue;
       const receipt = room.getReadReceiptForUserId(member.userId);
       if (!receipt) continue;
@@ -982,6 +998,7 @@ private async updateRoomsList(): Promise<void> {
       if (isDirect) {
         const otherMember = room.getMembers().find(m =>
           m.userId !== this.client!.getUserId() &&
+          !this.isServiceAccount(m.userId) && // never label a DM with a service/bot account (S1)
           (m.membership === 'join' || m.membership === 'invite')
         );
         if (otherMember) {
@@ -1014,12 +1031,14 @@ private async updateRoomsList(): Promise<void> {
         isDirect,
         unreadCount,
         lastMessage,
-        members: room.getMembers().map(m => ({
-          userId: m.userId,
-          displayName: m.name,
-          avatarUrl: (m as any).getAvatarUrl?.(this.client!.baseUrl, 48, 48, 'crop') || undefined,
-          membership: (m.membership || 'leave') as string,
-        })),
+        members: room.getMembers()
+          .filter(m => !this.isServiceAccount(m.userId)) // hide service/bot accounts (S1)
+          .map(m => ({
+            userId: m.userId,
+            displayName: m.name,
+            avatarUrl: (m as any).getAvatarUrl?.(this.client!.baseUrl, 48, 48, 'crop') || undefined,
+            membership: (m.membership || 'leave') as string,
+          })),
         typingUsers: this.typingByRoom.get(room.roomId) ?? [],
       };
     })
@@ -1737,7 +1756,7 @@ private async updateRoomsList(): Promise<void> {
 
     const calleeIds = room.getJoinedMembers()
       .map(m => m.userId)
-      .filter(id => id !== myUserId);
+      .filter(id => id !== myUserId && !this.isServiceAccount(id)); // don't ring service/bot accounts (S1)
     if (calleeIds.length === 0) return;
 
     const user = this.appStore.currentUser();
