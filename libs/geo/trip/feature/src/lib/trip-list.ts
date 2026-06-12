@@ -1,15 +1,17 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
+import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
 
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { RoleName, TripModel } from '@bk2/shared-models';
 
 import { formatTripTime } from '@bk2/trip-util';
 import { TripStore } from './trip.store';
-import { getYear, getYearList, hasRole } from '@bk2/shared-util-core';
+import { getWeekdayI18nKey, getYear, getYearList, hasRole } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AsyncPipe } from '@angular/common';
+import { AvatarDisplay } from '@bk2/avatar-ui';
 
 const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'corrected', 'all'];
 
@@ -17,11 +19,11 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
   selector: 'bk-trip-list',
   standalone: true,
   imports: [
-    DatePipe, SvgIconPipe,
-    Spinner, EmptyList, ListFilter,
+    SvgIconPipe, PrettyDatePipe, TranslatePipe, AsyncPipe,
+    Spinner, EmptyList, ListFilter, AvatarDisplay,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonMenuButton,
     IonIcon, IonContent, IonList, IonItem, IonLabel, IonItemDivider, IonPopover,
-    IonChip, IonBackdrop,
+    IonChip, IonBackdrop
   ],
   providers: [TripStore],
   template: `
@@ -111,17 +113,17 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
         <ion-list lines="inset">
           @for (day of store.groupedByDay(); track day.date) {
             <ion-item-divider>
-              <ion-label>{{ day.date | date:'EEEE, d. MMMM yyyy':'':'de' }}</ion-label>
+              <ion-label>{{ getWeekdayI18n(day.date) | translate | async }}, {{ day.date | prettyDate}}</ion-label>
             </ion-item-divider>
             @for (trip of day.trips; track trip.bkey) {
               <ion-item button (click)="showActions(trip)">
                 <ion-label>
-                  <strong>{{ formatTime(trip.startTime) }}</strong>
-                  {{ trip.resource?.name1 }}
+                  {{ formatTime(trip.startTime) }}
+                  {{ trip.resource?.name2 }}
                 </ion-label>
+                <bk-avatar-display [avatars]="trip.participants" [showName]="false" />
                 <ion-label slot="end">
-                  {{ trip.customLocationLabel || trip.locations[0] || '' }}
-                  @if (trip.distance > 0) { · {{ trip.distance }} km }
+                  {{ trip.distance }} km
                 </ion-label>
                 <ion-chip slot="end" [color]="stateColor(trip.state)">{{ trip.state }}</ion-chip>
               </ion-item>
@@ -160,6 +162,10 @@ export class TripList {
     await this.popoverController.dismiss(action);
   }
 
+  protected getWeekdayI18n(date: string): string {
+    return getWeekdayI18nKey(date, false);
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
@@ -183,7 +189,7 @@ export class TripList {
   }
 
   protected async showActions(trip: TripModel): Promise<void> {
-    const options = createActionSheetOptions(trip.resource?.name1 ?? '');
+    const options = createActionSheetOptions(this.store.i18n.as_title());
     const canWrite = this.store.canWrite();
     const isOpen = trip.state === 'open' || trip.state === 'open.rev';
     const isDeleted = trip.state === 'deleted';
@@ -192,14 +198,14 @@ export class TripList {
       options.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.store.imgixBaseUrl(), 'edit'));
     }
     if (canWrite && isOpen) {
-      options.buttons.push(createActionSheetButton('end', this.store.i18n.end(), this.store.imgixBaseUrl(), 'flag'));
+      options.buttons.push(createActionSheetButton('end', this.store.i18n.end(), this.store.imgixBaseUrl(), 'stop-circle'));
     }
     if (canWrite && !isDeleted) {
       options.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), this.store.imgixBaseUrl(), 'trash'));
     }
     options.buttons.push(createActionSheetButton('report_damage', this.store.i18n.report_damage(), this.store.imgixBaseUrl(), 'warning'));
     options.buttons.push(createActionSheetButton('report_bug', this.store.i18n.report_bug(), this.store.imgixBaseUrl(), 'bug'));
-    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.store.imgixBaseUrl(), 'close-circle'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.store.imgixBaseUrl(), 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
