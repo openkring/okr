@@ -2,7 +2,6 @@ import { Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
 
@@ -28,7 +27,6 @@ export interface PhoneInputI18n {
     IonItem, IonInput, IonNote,
     ButtonCopy
   ],
-  viewProviders: [vestFormsViewProviders],
   styles: [`ion-item.helper { --min-height: 0; }`],
   template: `
   <ion-item lines="none">

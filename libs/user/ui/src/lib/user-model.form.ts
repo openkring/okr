@@ -1,10 +1,9 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { RoleName, UserModel } from "@bk2/shared-models";
 import { EmailInput, EmailInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors, hasRole } from "@bk2/shared-util-core";
+import { coerceBoolean, hasRole } from "@bk2/shared-util-core";
 
 import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations } from "@bk2/user-util";
 
@@ -12,19 +11,12 @@ import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations
   selector: 'bk-user-model-form',
   standalone: true,
   imports: [
-    vestForms,
     EmailInput, NotesInput, TextInput,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  viewProviders: [vestFormsViewProviders],
   template: `
-    <form scVestForm
-      [formShape]="shape"
-      [formValue]="formData()"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().model_title() }}</ion-card-title>
@@ -106,7 +98,6 @@ export class UserModelForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = userModelFormValidations;
   protected readonly shape = USER_FORM_SHAPE;
   private readonly validationResult = computed(() => userModelFormValidations(this.formData()));
 
@@ -129,15 +120,9 @@ export class UserModelForm {
     });
   }
 
-  protected onFormChange(value: UserModelFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('UserModelForm.onFormChange', this.validationResult().errors, this.currentUser());
-  }
-
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('UserModelForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

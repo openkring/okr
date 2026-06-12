@@ -30,6 +30,9 @@
     },
     {
       "path": "../../category/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/util-angular/tsconfig.lib.json"
     }
   ]
 }

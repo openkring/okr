@@ -1,11 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { DeliveryTypes } from "@bk2/shared-categories";
 import { DeliveryType, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean } from "@bk2/shared-util-core";
 
 import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, userNotificationFormValidations } from "@bk2/user-util";
 
@@ -13,20 +12,13 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, user
   selector: 'bk-user-notification-form',
   standalone: true,
   imports: [
-    vestForms,
     CategoryOld,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle,
     IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  viewProviders: [vestFormsViewProviders],
   template: `
-    <form scVestForm
-      [formShape]="shape"
-      [formValue]="formData()"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().notification_title() }}</ion-card-title>
@@ -63,7 +55,6 @@ export class UserNotificationForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = userNotificationFormValidations;
   protected readonly shape = USER_NOTIFICATION_FORM_SHAPE;
   private readonly validationResult = computed(() => userNotificationFormValidations(this.formData()));
 
@@ -80,14 +71,8 @@ export class UserNotificationForm {
     });
   }
 
-  protected onFormChange(value: UserNotificationFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('UserNotificationForm.onFormChange', this.validationResult().errors, this.currentUser());
-  }
-
   protected onFieldChange(fieldName: string, fieldValue: DeliveryType): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('UserNotificationForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 }

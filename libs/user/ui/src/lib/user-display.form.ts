@@ -1,11 +1,10 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
 import { AvatarUsage, DeliveryType, Language, NameDisplay, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean } from "@bk2/shared-util-core";
 
 import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations, UserI18n } from "@bk2/user-util";
 
@@ -13,19 +12,12 @@ import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidatio
   selector: 'bk-user-display-form',
   standalone: true,
   imports: [
-    vestForms,
     CategoryOld, Checkbox,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  viewProviders: [vestFormsViewProviders],
   template: `
-    <form scVestForm
-      [formShape]="shape"
-      [formValue]="formData()"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().display_title() }}</ion-card-title>
@@ -83,7 +75,6 @@ export class UserDisplayForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = userDisplayFormValidations;
   protected readonly shape = USER_DISPLAY_FORM_SHAPE;
   private readonly validationResult = computed(() => userDisplayFormValidations(this.formData()));
 
@@ -110,13 +101,7 @@ export class UserDisplayForm {
     });
   }
 
-  protected onFormChange(value: UserDisplayFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('UserDisplayForm.onFormChange', this.validationResult().errors, this.currentUser());
-  }
-
   protected onFieldChange(fieldName: string, fieldValue: boolean | AvatarUsage | Language | NameDisplay): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('UserDisplayForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }}

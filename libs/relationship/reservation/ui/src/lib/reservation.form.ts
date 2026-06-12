@@ -1,11 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
-
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME } from '@bk2/shared-constants';
 import { CategoryListModel, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
 import { reservationValidations, ReservationI18n } from '@bk2/relationship-reservation-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -14,7 +12,6 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   selector: 'bk-reservation-form',
   standalone: true,
   imports: [
-    vestForms,
     AvatarPipe,
     TextInput, NumberInput, Chips, NotesInput, CategorySelect, DateInput, Checkbox, TimeInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton
@@ -22,13 +19,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      (formValueChange)="onFormChange($event)"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-    >
+    <form novalidate>
 
       @if(isSelectable()) {
         <ion-card>
@@ -223,7 +214,6 @@ export class ReservationForm {
   protected fullDayI18n   = computed(() => ({ name: 'fullDay', label: this.i18n().fullDay_label(), helper: this.i18n().fullDay_helper() } as CheckboxI18n));
 
   // validation and errors
-  protected readonly suite = reservationValidations;
   private readonly validationResult = computed(() => reservationValidations(this.formData(), this.tenantId(), this.allTags()));
 
   // fields
@@ -260,16 +250,14 @@ export class ReservationForm {
   protected description = linkedSignal(() => this.formData().description ?? '');
   protected bkey = computed(() => this.formData().bkey ?? '');
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: ReservationModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('ReservationForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('ReservationForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected onFullDayChange(isFullDay: boolean): void {

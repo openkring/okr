@@ -1,30 +1,23 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryI18n, categoryListValidations } from '@bk2/category-util';
 import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-category-list-form',
   standalone: true,
   imports: [
-    vestForms,
     Chips, NotesInput, TextInput, ErrorNote, CategoryItems, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -86,8 +79,11 @@ export class CategoryListForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   // validation and errors
-  protected readonly suite = categoryListValidations;
   private readonly validationResult = computed(() => categoryListValidations(this.formData(), this.tenants(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected i18nBaseErrors = computed(() => this.validationResult().getErrors('i18nBase'));
@@ -138,12 +134,7 @@ export class CategoryListForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | CategoryItemModel[] | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: CategoryListModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('CategoryListForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('CategoryListForm.onFormChange', this.validationResult().errors, this.currentUser());
+    debugFormModel('CategoryListForm.onFieldChange', this.formData(), this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

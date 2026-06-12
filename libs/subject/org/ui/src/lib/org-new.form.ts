@@ -1,11 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
 import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
 
 import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
@@ -18,20 +17,14 @@ import { ZefixLookup } from './zefix-lookup';
   selector: 'bk-org-new-form',
   standalone: true,
   imports: [
-    vestForms,
-    DateInput, TextInput, Chips, NotesInput, ErrorNote, EmailInput, PhoneInput, 
+    DateInput, TextInput, Chips, NotesInput, ErrorNote, EmailInput, PhoneInput,
     SwissCitySearch, CategorySelect, ZefixLookup,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -175,8 +168,9 @@ export class OrgNewForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
   
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validation and errors
-  protected readonly suite = orgNewFormValidations;
   private readonly validationResult = computed(() => orgNewFormValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected streetNameErrors = computed(() => this.validationResult().getErrors('streetName'));
@@ -213,12 +207,6 @@ export class OrgNewForm {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
-  protected onFormChange(value: OrgNewFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('OrgNewForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('OrgNewForm.onFormChange', this.validationResult().errors, this.currentUser());
-  }
-
   protected onZefixSelected(details: ZefixCompanyDetails): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({
@@ -237,7 +225,6 @@ export class OrgNewForm {
   protected onCitySelected(city: SwissCity): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: city.zipCode }));
-    debugFormErrors('OrgNewForm.onCitySelected', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

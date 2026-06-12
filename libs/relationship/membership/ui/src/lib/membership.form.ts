@@ -1,14 +1,12 @@
-import { FormsModule } from '@angular/forms';
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask } from '@bk2/shared-config';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { AppStore, OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
+import { areTagsVisible, coerceBoolean, getFullName, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
 
 import { MembershipI18n, membershipValidations } from '@bk2/relationship-membership-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -17,7 +15,6 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   selector: 'bk-membership-form',
   standalone: true,
   imports: [
-    vestForms, FormsModule,
     AvatarPipe,
     TextInput, DateInput,
     Chips, NotesInput, CategorySelect, NumberInput, StringSelect,
@@ -26,12 +23,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      <form scVestForm
-        [formValue]="formData()"
-        [suite]="suite"
-        (dirtyChange)="dirty.emit($event)"
-        (validChange)="valid.emit($event)"
-        (formValueChange)="onFormChange($event)">
+      <form novalidate>
 
           <ion-card>
             <ion-card-content class="ion-no-padding">
@@ -208,7 +200,6 @@ export class MembershipForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = membershipValidations;
   private readonly validationResult = computed(() => membershipValidations(this.formData(), this.appStore.env.tenantId, this.allTags()));
 
   // fields
@@ -252,16 +243,14 @@ export class MembershipForm {
   protected endFutureDate = END_FUTURE_DATE_STR;
   protected rebateReasons = REBATE_REASON_VALUES;
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     this.dirty.emit(true);
-  }
-
-  protected onFormChange(value: MembershipModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('MembershipForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('MembershipForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected async selectMember(): Promise<void> {
@@ -297,7 +286,6 @@ export class MembershipForm {
           memberZipCode: data.favZipCode,
           memberBexioId: data.bexioId
         }));
-        debugFormErrors('MembershipForm.selectPerson', this.validationResult().errors, this.currentUser());
       }
     }
   }
@@ -320,7 +308,6 @@ export class MembershipForm {
           orgKey: data.bkey,
           orgName: data.name,
         }));
-        debugFormErrors('MembershipForm.selectOrg', this.validationResult().errors, this.currentUser());
       }
     }
   }

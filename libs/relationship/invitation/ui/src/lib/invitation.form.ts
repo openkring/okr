@@ -1,11 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@bk2/shared-models';
 import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, getTodayStr, hasRole } from '@bk2/shared-util-core';
 import { PrettyDatePipe } from '@bk2/shared-pipes';
 import { AvatarDisplay, AvatarInput } from '@bk2/avatar-ui';
 import { invitationValidations, createPersonAvatar, InvitationI18n } from '@bk2/relationship-invitation-util';
@@ -14,7 +13,6 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@bk2/
   selector: 'bk-invitation-form',
   standalone: true,
   imports: [
-    vestForms,
     PrettyDatePipe,
     Chips, AvatarDisplay, AvatarInput, NotesInput, StringSelect, DateInput, TextInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel
@@ -22,13 +20,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@bk2/
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      <form scVestForm
-        [formValue]="formData()"
-        (formValueChange)="onFormChange($event)"
-        [suite]="suite"
-        (dirtyChange)="dirty.emit($event)"
-        (validChange)="valid.emit($event)"
-      >
+      <form novalidate>
         @if(currentUser(); as currentUser) {
           <ion-card>
             <ion-card-header>
@@ -141,7 +133,6 @@ export class InvitationForm {
   public selectClicked = output<'inviter' | 'invitee'>();
 
   // validation and errors
-  protected readonly suite = invitationValidations;
   private readonly validationResult = computed(() => invitationValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
@@ -162,16 +153,14 @@ export class InvitationForm {
   // passing constants to template
   protected nameLength = NAME_LENGTH;
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | AvatarInfo[] | AvatarInfo): void {
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: InvitationModel): void {
-    this.formData.update(vm => ({ ...vm, ...value }));
-    debugFormModel('InvitationForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('InvitationForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected add(role: 'inviter' | 'invitee', avatar: AvatarInfo): void {

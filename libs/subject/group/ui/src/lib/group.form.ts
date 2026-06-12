@@ -1,12 +1,11 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { LowercaseWordMask } from '@bk2/shared-config';
 import { WORD_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 
 import { Avatars } from '@bk2/avatar-ui';
 import { groupValidations, GroupI18n } from '@bk2/subject-group-util';
@@ -15,7 +14,6 @@ import { groupValidations, GroupI18n } from '@bk2/subject-group-util';
   selector: 'bk-group-form',
   standalone: true,
   imports: [
-    vestForms,
     TextInput, Chips, NotesInput, Checkbox, ButtonCopy, StringSelect, Avatars,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem
   ],
@@ -27,12 +25,7 @@ import { groupValidations, GroupI18n } from '@bk2/subject-group-util';
   `],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-card>
         <ion-card-header>
@@ -243,8 +236,9 @@ export class GroupForm {
   public selectPerson = output<void>();
   public showPersonOutput = output<string>();
 
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validation and errors
-  protected readonly suite = groupValidations;
   private readonly validationResult = computed(() => groupValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected bkeyErrors = computed(() => this.validationResult().getErrors('bkey'));
@@ -281,12 +275,6 @@ export class GroupForm {
     }
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: GroupModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('GroupForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('GroupForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

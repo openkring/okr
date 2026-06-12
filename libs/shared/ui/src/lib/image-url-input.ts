@@ -1,7 +1,6 @@
 import { Component, computed, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { URL_LENGTH } from '@bk2/shared-constants';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -25,7 +24,6 @@ export interface ImageUrlInputI18n {
     ButtonCopy
   ],
   styles: [`ion-item.helper { --min-height: 0; }`],
-  viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
       <ion-input (ionInput)="onChange($event)"

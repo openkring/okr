@@ -1,12 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@bk2/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 
 import { MenuI18n, menuItemValidations } from '@bk2/cms-menu-util';
 
@@ -14,7 +12,6 @@ import { MenuI18n, menuItemValidations } from '@bk2/cms-menu-util';
   selector: 'bk-menu-item-form',
   standalone: true,
   imports: [
-    vestForms, FormsModule,
     TextInput, UrlInput, CategorySelect, Chips, NotesInput, StringList, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
     IconInput
@@ -22,12 +19,7 @@ import { MenuI18n, menuItemValidations } from '@bk2/cms-menu-util';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -155,12 +147,13 @@ export class MenuForm {
   public iconSelectClicked = output();
 
   // validation and errors
-  protected readonly suite = menuItemValidations;
   private readonly validationResult = computed(() => menuItemValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected iconErrors = computed(() => this.validationResult().getErrors('icon'));
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));
   protected urlErrors = computed(() => this.validationResult().getErrors('url'));
+
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
 
   // fields
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
@@ -181,12 +174,6 @@ export class MenuForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | BaseProperty[]): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: MenuItemModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('MenuItemForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('MenuItemForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

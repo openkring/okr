@@ -1,12 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
 import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { areNotesVisible, areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
+import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
 import { personValidations, PersonI18n } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
@@ -15,20 +13,13 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
   selector: 'bk-person-form',
   standalone: true,
   imports: [
-    vestForms,
-    FormsModule,
     TextInput, DateInput, CategorySelect, Chips, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -125,8 +116,9 @@ export class PersonForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validation and errors
-  protected readonly suite = personValidations;
   private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.allTags()));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
 
@@ -151,12 +143,6 @@ export class PersonForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: PersonModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('PersonForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('PersonForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 
   protected isVisibleToUser(_field: string, privacyAccessor: PrivacyAccessor): boolean {

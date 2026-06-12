@@ -1,11 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
-
 import { DEFAULT_DATE, WORD_LENGTH } from '@bk2/shared-constants';
 import { ResponsibilityModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ButtonCopy, ButtonCopyI18n, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
+import { getAvatarName, hasRole } from '@bk2/shared-util-core';
 
 import { isDelegateActive, responsibilityValidations, ResponsibilityI18n } from '@bk2/relationship-responsibility-util';
 import { LowercaseWordMask } from '@bk2/shared-config';
@@ -14,18 +12,12 @@ import { LowercaseWordMask } from '@bk2/shared-config';
   selector: 'bk-responsibility-form',
   standalone: true,
   imports: [
-    vestForms,
     TextInput, DateInput, ButtonCopy, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonItem, IonLabel, IonButton, IonText
   ],
   template: `
-    <form scVestForm
-      [formValue]="formData()"
-      (formValueChange)="onFormChange($event)"
-      [suite]="suite"
-      (validChange)="valid.emit($event)"
-    >
+    <form novalidate>
 
       <!-- Responsible -->
       <ion-card class="ion-no-padding">
@@ -157,7 +149,6 @@ export class ResponsibilityForm {
   public clearDelegate = output<void>();
 
   // validation and errors
-  protected readonly suite = responsibilityValidations;
   private readonly validationResult = computed(() => responsibilityValidations(this.formData(), this.tenantId()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected bkeyErrors = computed(() => this.validationResult().getErrors('bkey'));
@@ -177,6 +168,10 @@ export class ResponsibilityForm {
   protected mask = LowercaseWordMask;
   protected readonly maxWordLength = WORD_LENGTH;
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | undefined): void {
     if (fieldName === 'bkey') {
@@ -184,12 +179,6 @@ export class ResponsibilityForm {
     }
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     this.dirty.emit(true);
-  }
-
-  protected onFormChange(value: ResponsibilityModel): void {
-    this.formData.update((vm) => ({ ...vm, ...value }));
-    debugFormModel('ResponsibilityForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('ResponsibilityForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

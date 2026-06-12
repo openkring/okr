@@ -1,11 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { ChSsnMask } from "@bk2/shared-config";
 import { CategoryListModel, PersonModel, UserModel } from "@bk2/shared-models";
 import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors, debugFormModel } from "@bk2/shared-util-core";
+import { coerceBoolean } from "@bk2/shared-util-core";
 import { DEFAULT_GENDER } from "@bk2/shared-constants";
 import { AhvFormat, formatAhv } from "@bk2/shared-util-angular";
 
@@ -16,7 +15,6 @@ import { ProfileI18n } from '@bk2/profile-util';
   selector: 'bk-profile-data-accordion',
   standalone: true,
   imports: [
-    vestForms,
     DateInput, TextInput, CategorySelect, ErrorNote,
     IonGrid, IonRow, IonCol, IonItem, IonAccordion, IonLabel
   ],
@@ -24,7 +22,6 @@ import { ProfileI18n } from '@bk2/profile-util';
     ion-icon { padding-right: 5px;}
     @media (width <= 600px) { ion-card { margin: 5px;} }
   `],
-  viewProviders: [vestFormsViewProviders],
   template: `
   <ion-accordion toggle-icon-slot="start" value="profile-data">
     <ion-item slot="header" [color]="color()">
@@ -32,12 +29,7 @@ import { ProfileI18n } from '@bk2/profile-util';
     </ion-item>
     <div slot="content">
       @if (showForm()) {
-        <form scVestForm
-          [formValue]="formData()"
-          [suite]="suite"
-          (dirtyChange)="dirty.emit($event)"
-          (validChange)="valid.emit($event)"
-          (formValueChange)="onFormChange($event)">
+        <form novalidate>
 
           <ion-grid>
             <ion-row>
@@ -103,7 +95,6 @@ export class ProfileDataAccordion {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = personValidations;
   private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.tags()));
   protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssnId'));
   protected dobI18n = computed(() => ({
@@ -129,14 +120,12 @@ export class ProfileDataAccordion {
   // passing constants to template
   protected ssnMask = ChSsnMask;
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: PersonModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('ProfilePrivacy.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('ProfileData.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 }

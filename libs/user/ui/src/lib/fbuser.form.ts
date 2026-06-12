@@ -1,10 +1,9 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
 import { Checkbox, CheckboxI18n, EmailInput, EmailInputI18n, ErrorNote, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean } from "@bk2/shared-util-core";
 
 import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@bk2/user-util";
 
@@ -12,20 +11,12 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@bk2
   selector: 'bk-fbuser-form',
   standalone: true,
   imports: [
-    vestForms,
     Checkbox, TextInput, EmailInput, PhoneInput, ErrorNote,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  viewProviders: [vestFormsViewProviders],
   template: `
-    <form scVestForm
-      [formValue]="formData()"
-      (formValueChange)="onFormChange($event)"
-      [suite]="suite" 
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-    >
+    <form novalidate>
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().fbuser_title() }}</ion-card-title>
@@ -106,7 +97,6 @@ export class FbuserForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = firebaseUserFormValidations;
   protected readonly shape = FIREBASE_USER_SHAPE;
   private readonly validationResult = computed(() => firebaseUserFormValidations(this.formData()));
   protected emailError = computed(() => this.validationResult().getErrors('email'));
@@ -127,15 +117,9 @@ export class FbuserForm {
     });
   }
 
-  protected onFormChange(value: FirebaseUserModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('FbuserForm.onFormChange', this.validationResult().errors, this.currentUser());
-  }
-
   protected onFieldChange(fieldName: string, fieldValue: string | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('FbuserForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 }
 

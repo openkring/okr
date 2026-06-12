@@ -1,18 +1,16 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@bk2/shared-constants';
 import { CategoryListModel, RoleName, TaskModel, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { TaskI18n, taskValidations } from '@bk2/task-util';
 
 @Component({
   selector: 'bk-task-form',
   standalone: true,
   imports: [
-    vestForms,
     DateInput, CategorySelect, Chips, NotesInput,
     TextInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonLabel, IonItem
@@ -20,12 +18,7 @@ import { TaskI18n, taskValidations } from '@bk2/task-util';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -104,8 +97,9 @@ export class TaskForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validation and errors
-  protected readonly suite = taskValidations;
   private readonly validationResult = computed(() => taskValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
@@ -151,12 +145,6 @@ export class TaskForm {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: TaskModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('TaskForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('TaskForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

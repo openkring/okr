@@ -1,12 +1,10 @@
-import { Component, computed, linkedSignal, model, output, input, signal, Signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, effect, linkedSignal, model, output, input, Signal } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { AuthCredentials } from '@bk2/shared-models';
 import { EmailInput, EmailInputI18n, ErrorNote, PasswordInput, PasswordInputI18n } from '@bk2/shared-ui';
 
-import { authCredentialsValidations, emailValidations, loginValidations, passwordValidations } from '@bk2/auth-util';
+import { authCredentialsValidations } from '@bk2/auth-util';
 
 export interface LoginFormI18n {
   email_label: Signal<string>;
@@ -28,16 +26,11 @@ export interface LoginFormI18n {
   selector: 'bk-login-form',
   standalone: true,
   imports: [
-    vestForms,
-    FormsModule,
     EmailInput, PasswordInput, ErrorNote,
     IonGrid, IonRow, IonCol
   ],
   template: `
-    <form scVestForm
-      [formValue]="vm()"
-      [suite]="suite"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
       <ion-grid>
         @if (context(); as context) {
           @if (context === 'login' || context === 'email') {
@@ -45,7 +38,8 @@ export interface LoginFormI18n {
               <ion-col size="12">
                 <bk-email
                   [i18n]="loginEmailI18n()"
-                  [(value)]="loginEmail"
+                  [value]="loginEmail()"
+                  (valueChange)="onEmailChange($event)"
                   [autofocus]="true"
                   [copyable]="false"
                   [clearInput]="false"
@@ -61,7 +55,8 @@ export interface LoginFormI18n {
               <ion-col size="12">
                 <bk-password-input
                   [i18n]="loginPasswordI18n()"
-                  [(value)]="loginPassword"
+                  [value]="loginPassword()"
+                  (valueChange)="onPasswordChange($event)"
                 />
                 <bk-error-note [errors]="passwordErrors()" />
               </ion-col>
@@ -91,27 +86,28 @@ export class LoginForm {
     helper: this.i18n().password_helper()
   } as PasswordInputI18n));
 
-  protected get suite() {
-    switch (this.context()) {
-      case 'email': return emailValidations;
-      case 'password': return passwordValidations;
-      default: return loginValidations;
-    }
-  }
   public validChange = output<boolean>();
-  // fields
+
+  // fields — read from vm; writes go back through handler methods
   protected loginEmail = linkedSignal(() => this.vm().loginEmail);
   protected loginPassword = linkedSignal(() => this.vm().loginPassword);
 
-  // errors
-  protected emailErrors = signal<string[]>([]);
-  protected passwordErrors = signal<string[]>([]);
-
-  protected onFormChange(value: AuthCredentials): void {
-    this.vm.set(value);
-    const result = authCredentialsValidations(this.vm(), undefined, this.context());
-    this.emailErrors.set(result.getErrors('loginEmail'));
-    this.passwordErrors.set(result.getErrors('loginPassword'));
-    this.validChange.emit(result.isValid());
+  constructor() {
+    effect(() => this.validChange.emit(this.validationResult().isValid()));
   }
+
+  protected onEmailChange(value: string): void {
+    this.vm.update(v => ({ ...v, loginEmail: value }));
+  }
+
+  protected onPasswordChange(value: string): void {
+    this.vm.update(v => ({ ...v, loginPassword: value }));
+  }
+
+  // errors — computed from vest validation result
+  private readonly validationResult = computed(() =>
+    authCredentialsValidations(this.vm(), undefined, this.context()),
+  );
+  protected emailErrors = computed(() => this.validationResult().getErrors('loginEmail'));
+  protected passwordErrors = computed(() => this.validationResult().getErrors('loginPassword'));
 }

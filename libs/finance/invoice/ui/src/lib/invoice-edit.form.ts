@@ -1,7 +1,5 @@
-import { Component, computed, input, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, effect, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { InvoiceModel, UserModel } from '@bk2/shared-models';
@@ -17,7 +15,6 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
   selector: 'bk-invoice-edit-form',
   standalone: true,
   imports: [
-    vestForms, FormsModule,
     TextInput, DateInput, NumberInput,
     StringSelect, NotesInput, Chips,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
@@ -25,12 +22,7 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if(showForm()) {
-      <form scVestForm
-        [formValue]="formData()"
-        [suite]="suite"
-        (dirtyChange)="dirty.emit($event)"
-        (validChange)="valid.emit($event)"
-        (formValueChange)="onFormChange($event)">
+      <form novalidate>
 
         <ion-card>
           <ion-card-content class="ion-no-padding">
@@ -126,7 +118,13 @@ export class InvoiceEditForm {
   public readonly valid = output<boolean>();
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  protected readonly suite = invoiceValidations;
+  private readonly validationResult = computed(() =>
+    invoiceValidations(this.formData(), '', this.allTags())
+  );
+
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
 
   protected readonly states = INVOICE_STATES;
   protected readonly vatTypes = VAT_TYPES;
@@ -141,10 +139,6 @@ export class InvoiceEditForm {
   protected readonly paymentDate = computed(() => this.formData()?.paymentDate ?? '');
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
-
-  protected onFormChange(formData: InvoiceModel): void {
-    this.formDataChange.emit(formData);
-  }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);

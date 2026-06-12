@@ -94,7 +94,6 @@
     "mime": "^4.1.0",
     "ngx-echarts": "^19.0.0",
     "ngx-editor": "^18.0.0",
-    "ngx-vest-forms": "^1.4.2",
     "playwright": "1.59.1",
     "rxfire": "^6.1.0",
     "rxjs": "~7.8.2",

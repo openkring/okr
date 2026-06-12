@@ -1,12 +1,11 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { AppStore, OrgSelectModal, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@bk2/shared-models';
 import { DateInput, DateInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
+import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
 import { OwnershipStore } from './ownership.store';
@@ -17,20 +16,13 @@ import { OwnershipStore } from './ownership.store';
   standalone: true,
   providers: [OwnershipStore],
   imports: [
-    vestForms,
     AvatarPipe,
     DateInput,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonImg, IonButton, IonCard, IonCardContent
   ],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      (formValueChange)="onFormChange($event)"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-    >
+    <form novalidate>
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -101,7 +93,6 @@ export class OwnershipNewForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = ownershipValidations;
   private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.appStore.tenantId(), this.appStore.getTags(OwnershipModelName)));
 
   // fields
@@ -118,15 +109,13 @@ export class OwnershipNewForm {
   private rboatTypes = this.appStore.getCategory('rboat_type');
   private resourceTypes = this.appStore.getCategory('resource_type');
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: OwnershipModel): void {
-    this.formData.update((vm) => ({ ...vm, ...value }));
-    debugFormModel('OwnershipNewForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('OwnershipNewForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 
   protected async selectOwner(): Promise<void> {
@@ -158,7 +147,6 @@ export class OwnershipNewForm {
           ownerModelType: 'person',
           ownerType: data.gender,
         }));
-        debugFormErrors('OwnershipNewForm (Person)', this.validationResult().errors, this.currentUser());
       }
     }
   }
@@ -184,7 +172,6 @@ export class OwnershipNewForm {
           ownerModelType: 'org',
           ownerType: data.type,
         }));
-        debugFormErrors('OwnershipNewForm (Org)', this.validationResult().errors, this.currentUser());
       }
     }
   }
@@ -210,7 +197,6 @@ export class OwnershipNewForm {
           resourceSubType: data.subType,
           resourceName: data.name,
         }));
-        debugFormErrors('OwnershipNewForm (Resource)', this.validationResult().errors, this.currentUser());
         this.dirty.emit(true);
       }
     }

@@ -1,11 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { PrivacyUsages } from "@bk2/shared-categories";
 import { PrivacyUsage, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean } from "@bk2/shared-util-core";
 
 import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFormValidations } from "@bk2/user-util";
 
@@ -13,20 +12,13 @@ import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFor
   selector: 'bk-user-privacy-form',
   standalone: true,
   imports: [
-    vestForms,
     CategoryOld, Checkbox,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle,
     IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  viewProviders: [vestFormsViewProviders],
   template: `
-    <form scVestForm
-      [formShape]="shape"
-      [formValue]="formData()"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().privacy_title() }}</ion-card-title>
@@ -95,7 +87,6 @@ export class UserPrivacyForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = userPrivacyFormValidations;
   protected readonly shape = USER_PRIVACY_FORM_SHAPE;
   private readonly validationResult = computed(() => userPrivacyFormValidations(this.formData()));
 
@@ -112,18 +103,12 @@ export class UserPrivacyForm {
 // passing constants to template
   protected privacyUsages = PrivacyUsages;
 
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: UserPrivacyFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('UserPrivacyForm.onFormChange', this.validationResult().errors, this.currentUser());
-  }
-
-  protected onChange(fieldName: string, fieldValue: boolean | PrivacyUsage): void {
-    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('UserPrivacyForm.onChange', this.validationResult().errors, this.currentUser());
   }
 }

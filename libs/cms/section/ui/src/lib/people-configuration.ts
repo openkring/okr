@@ -1,7 +1,5 @@
 import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
-import { FormsModule } from '@angular/forms';
 
 import { ColorsIonic, NameDisplays } from '@bk2/shared-categories';
 import { AvatarInfo, ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@bk2/shared-models';
@@ -35,7 +33,6 @@ interface PeopleConfigI18n {
   selector: 'bk-people-config',
   standalone: true,
   imports: [
-    vestForms, FormsModule,
     SvgIconPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonButton, IonIcon,
     CategoryOld, Avatars, StringSelect, Checkbox, TextInput

@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, computed, input, model } from '@angular/c
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonIcon, IonItem } from '@ionic/angular/standalone';
 import { Editor, NgxEditorModule } from 'ngx-editor';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -13,7 +12,6 @@ import { EditorToolbar } from './editor-toolbar';
 @Component({
   selector: 'bk-editor',
   standalone: true,
-  viewProviders: [vestFormsViewProviders],
   imports: [
     SvgIconPipe,
     NgxEditorModule, FormsModule,

@@ -1,12 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { CaseInsensitiveWordMask } from '@bk2/shared-config';
 import { CategoryListModel, PageModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@bk2/shared-constants';
 
 import { PageI18n, pageValidations } from '@bk2/cms-page-util';
@@ -15,19 +13,13 @@ import { PageI18n, pageValidations } from '@bk2/cms-page-util';
   selector: 'bk-page-form',
   standalone: true,
   imports: [
-    vestForms, FormsModule,
     Chips, NotesInput, TextInput, StringList, ButtonCopy, ErrorNote, CategorySelect, StringSelect,
     IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
-    <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+    <form novalidate>
 
         <!---------------------------------------------------
         Sections
@@ -110,7 +102,6 @@ export class PageForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = pageValidations;
   private readonly validationResult = computed(() => pageValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
@@ -128,6 +119,8 @@ export class PageForm {
 
   // passing constants to template
   protected mask = CaseInsensitiveWordMask;
+
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
 
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
 
@@ -159,12 +152,6 @@ export class PageForm {
     else {
       this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     }
-  }
-
-  protected onFormChange(value: PageModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('PageForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('PageForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

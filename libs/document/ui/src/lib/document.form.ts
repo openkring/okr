@@ -1,11 +1,9 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, ToastController } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
@@ -17,8 +15,6 @@ import { DocumentI18n, documentValidations } from '@bk2/document-util';
   selector: 'bk-document-form',
   standalone: true,
   imports: [
-    vestForms,
-    FormsModule,
     SvgIconPipe, ThumbnailUrlPipe, FileLogoPipe,
     TextInput, DateInput, CategorySelect, Chips, NotesInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonIcon, IonItem
@@ -26,12 +22,7 @@ import { DocumentI18n, documentValidations } from '@bk2/document-util';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      <form scVestForm
-      [formValue]="formData()"
-      [suite]="suite"
-      (dirtyChange)="dirty.emit($event)"
-      (validChange)="valid.emit($event)"
-      (formValueChange)="onFormChange($event)">
+      <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -160,8 +151,9 @@ export class DocumentForm {
   public valid = output<boolean>();
   public priorVersionClicked = output<string>();
 
+  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+
   // validations and errors
-  protected readonly suite = documentValidations;
   private readonly validationResult = computed(() => documentValidations(this.formData(), this.env.tenantId, this.allTags()));
 
   // fields
@@ -279,13 +271,6 @@ export class DocumentForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
-  }
-
-  protected onFormChange(value: DocumentModel): void {
-    // tags and description are managed via onFieldChange (not vest form controls), so preserve them
-    this.formData.update((vm) => ({...vm, ...value, tags: vm.tags, description: vm.description}));
-    debugFormModel('DocumentForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('DocumentForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected download(): void {

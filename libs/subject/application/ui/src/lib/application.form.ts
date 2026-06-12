@@ -5,7 +5,6 @@ import {
   IonCard, IonCardContent, IonCardHeader, IonCardTitle,
   IonInput, IonItem, IonLabel, IonRadio, IonRadioGroup, IonSelect, IonSelectOption
 } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { ApplicationKind, ApplicationModel } from '@bk2/shared-models';
 import { APPLICATION_KIND_VALUES } from '@bk2/shared-models';
@@ -17,7 +16,6 @@ import { ApplicationI18n, needsSsn } from '@bk2/application-util';
   standalone: true,
   imports: [
     DatePipe, FormsModule,
-    vestForms,
     IonCard, IonCardContent, IonCardHeader, IonCardTitle,
     IonItem, IonLabel, IonInput,
     IonRadioGroup, IonRadio, IonSelect, IonSelectOption

@@ -12,6 +12,8 @@
     "@bk2/shared-ui": "*",
     "@bk2/shared-util-core": "*",
     "@bk2/folder-data-access": "*",
-    "@bk2/folder-util": "*"
+    "@bk2/folder-util": "*",
+    "@bk2/shared-util-angular": "*",
+    "@angular/forms": "*"
   }
 }

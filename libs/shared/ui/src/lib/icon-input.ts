@@ -1,7 +1,6 @@
 
 import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { IonIcon, IonItem } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -16,7 +15,6 @@ import { TextInput, TextInputI18n } from './text-input';
     TextInput,
     IonItem, IonIcon
   ],
-  viewProviders: [vestFormsViewProviders],
   styles: [`
     ion-item.helper { --min-height: 0; }
     bk-viewdate-input { width: 100%; }

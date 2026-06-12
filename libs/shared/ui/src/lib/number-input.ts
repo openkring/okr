@@ -1,7 +1,6 @@
 import { Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { AutoComplete, InputMode, INT_LENGTH } from '@bk2/shared-constants';
 import { coerceBoolean } from '@bk2/shared-util-core';
@@ -24,7 +23,6 @@ export interface NumberInputI18n {
     IonItem, IonInput, IonNote,
     ButtonCopy
   ],
-  viewProviders: [vestFormsViewProviders],
   styles: [`ion-item.helper { --min-height: 0; }`],
   template: `
   <ion-item lines="none">

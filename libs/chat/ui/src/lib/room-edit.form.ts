@@ -1,11 +1,11 @@
-import { Component, computed, input, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, Signal } from '@angular/core';
+import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { vestForms } from 'ngx-vest-forms';
 
 import { MatrixRoom, UserModel } from '@bk2/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@bk2/shared-ui';
 import { DEFAULT_NAME, DEFAULT_URL } from '@bk2/shared-constants';
-import { debugFormErrors, debugFormModel } from '@bk2/shared-util-core';
+import { validateVestTree } from '@bk2/shared-util-angular';
 
 import { roomValidations } from '@bk2/chat-util';
 
@@ -41,18 +41,12 @@ export interface RoomEditFormI18n {
   selector: 'bk-room-edit-form',
   standalone: true,
   imports: [
-    vestForms,
     TextInput, ErrorNote, NotesInput, Checkbox, UrlInput, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-  <form scVestForm
-    [formValue]="formData()"
-    [suite]="suite"
-    (dirtyChange)="dirty.emit($event)"
-    (validChange)="valid.emit($event)"
-    (formValueChange)="onFormChange($event)">
+  <form novalidate>
 
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -95,8 +89,14 @@ export class RoomEditForm {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = roomValidations;
+  protected readonly roomForm = form(this.formData, (path) =>
+    validateVestTree(path, roomValidations),
+  );
   private readonly validationResult = computed(() => roomValidations(this.formData()));
+
+  constructor() {
+    effect(() => this.valid.emit(this.roomForm().valid()));
+  }
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected urlErrors = computed(() => this.validationResult().getErrors('avatar'));
 
@@ -162,9 +162,5 @@ export class RoomEditForm {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
-  protected onFormChange(value: MatrixRoom): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormModel('RoomEditForm.onFormChange', this.formData(), this.currentUser());
-    debugFormErrors('RoomEditForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
-  }
+
 }
