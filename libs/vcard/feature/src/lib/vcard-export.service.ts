@@ -13,9 +13,12 @@ import {
   AvatarCollection,
   AvatarModel,
   PersonalRelCollection,
+  PersonalRelModel,
   Roles,
   WorkrelCollection,
+  WorkrelModel,
 } from '@bk2/shared-models';
+import { getSystemQuery } from '@bk2/shared-util-core';
 import {
   ExportScope,
   resolveVcardCapability,
@@ -90,7 +93,7 @@ export class VcardExportService {
 
     let scope: ExportScope;
     if (cap.promptForScope) {
-      const availability = await this.gatherAvailability(target, kind);
+      const availability = await this.gatherAvailability(target, kind, tenantId);
       const chosen = await this.openScopeModal(availability, kind);
       if (!chosen) return; // cancelled
       scope = chosen;
@@ -110,11 +113,21 @@ export class VcardExportService {
     }
   }
 
-  private async gatherAvailability(target: VcardExportTarget, kind: VcardTargetKind): Promise<ScopeAvailability> {
+  private async gatherAvailability(target: VcardExportTarget, kind: VcardTargetKind, tenantId: string): Promise<ScopeAvailability> {
+    // Every list query must be tenant-scoped: the Firestore rules gate list reads on
+    // `tenants.hasAny(callerTenants())`, so a query without the tenant filter is rejected
+    // with "Missing or insufficient permissions". The `addresses` collection is indexed on
+    // `tenants, isArchived, parentKey`, so it can be filtered server-side; `workrels` and
+    // `personal-rels` are not indexed by subject/object key, so — like WorkrelService /
+    // PersonalRelService — we read the tenant-scoped list and filter in memory by key.
     const subjectKey = `${kind}.${target.bkey}`;
-    const [addresses, avatar] = await Promise.all([
-      firstValueFrom(this.firestoreService.searchData<AddressModel>(AddressCollection, [{ key: 'parentKey', operator: '==', value: subjectKey }], 'none')),
+    const [addresses, avatar, workrels, personalRels] = await Promise.all([
+      firstValueFrom(this.firestoreService.searchData<AddressModel>(AddressCollection, [...getSystemQuery(tenantId), { key: 'parentKey', operator: '==', value: subjectKey }], 'none')),
       firstValueFrom(this.firestoreService.readModel<AvatarModel>(AvatarCollection, subjectKey)),
+      firstValueFrom(this.firestoreService.searchData<WorkrelModel>(WorkrelCollection, getSystemQuery(tenantId))),
+      kind === 'person'
+        ? firstValueFrom(this.firestoreService.searchData<PersonalRelModel>(PersonalRelCollection, getSystemQuery(tenantId)))
+        : Promise.resolve<PersonalRelModel[]>([]),
     ]);
 
     const channelSet = new Set<VcardChannelType>();
@@ -123,27 +136,18 @@ export class VcardExportService {
       if (c && channelHasValue(a, c)) channelSet.add(c);
     }
 
-    let workRels = false;
-    let personalRels = false;
-    if (kind === 'person') {
-      const [work, relsAsSubject, relsAsObject] = await Promise.all([
-        firstValueFrom(this.firestoreService.searchData<unknown>(WorkrelCollection, [{ key: 'subjectKey', operator: '==', value: target.bkey }], 'none')),
-        firstValueFrom(this.firestoreService.searchData<unknown>(PersonalRelCollection, [{ key: 'subjectKey', operator: '==', value: target.bkey }], 'none')),
-        firstValueFrom(this.firestoreService.searchData<unknown>(PersonalRelCollection, [{ key: 'objectKey', operator: '==', value: target.bkey }], 'none')),
-      ]);
-      workRels = (work ?? []).length > 0;
-      personalRels = (relsAsSubject ?? []).length + (relsAsObject ?? []).length > 0;
-    } else {
-      const work = await firstValueFrom(this.firestoreService.searchData<unknown>(WorkrelCollection, [{ key: 'objectKey', operator: '==', value: target.bkey }], 'none'));
-      workRels = (work ?? []).length > 0;
-    }
+    const hasWorkRels = kind === 'person'
+      ? (workrels ?? []).some((w) => w.subjectKey === target.bkey)
+      : (workrels ?? []).some((w) => w.objectKey === target.bkey);
+    const hasPersonalRels = kind === 'person'
+      && (personalRels ?? []).some((r) => r.subjectKey === target.bkey || r.objectKey === target.bkey);
 
     return {
       addresses: CHANNEL_ORDER.filter((c) => channelSet.has(c)),
       birthday: kind === 'person' && !!target.dateOfBirth && target.dateOfBirth.length > 0,
       photo: !!avatar?.storagePath,
-      workRels,
-      personalRels,
+      workRels: hasWorkRels,
+      personalRels: hasPersonalRels,
       orgLinks: false,
     };
   }

@@ -13,7 +13,7 @@ import { addressValidations, AddressesI18n } from '@bk2/subject-address-util';
   selector: 'bk-address-form',
   standalone: true,
   imports: [
-    CategorySelect, TextInput, Checkbox, SwissCitySearch, NotesInput,
+    CategorySelect, TextInput, SwissCitySearch, NotesInput, Checkbox,
     EmailInput, PhoneInput, IbanInput, ErrorNote, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],

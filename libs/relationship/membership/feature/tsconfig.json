@@ -84,6 +84,9 @@
     },
     {
       "path": "../../../cms/menu/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../vcard/feature/tsconfig.lib.json"
     }
   ]
 }

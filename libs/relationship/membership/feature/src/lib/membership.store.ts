@@ -25,6 +25,7 @@ import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
 import { browseUrl } from '@bk2/subject-address-util';
 import { MatrixChatService } from '@bk2/chat-data-access';
 import { InvoiceNewModal } from '@bk2/finance-invoice-feature';
+import { VcardExportService, VcardExportTarget } from '@bk2/vcard-feature';
 
 import { MemberNewModal } from './member-new.modal';
 
@@ -87,6 +88,7 @@ export const _MembershipStore = signalStore(
     ownershipService: inject(OwnershipService),
     matrixService: inject(MatrixChatService),
     activityService: inject(ActivityService),
+    vcardExportService: inject(VcardExportService),
     personEditModalClass: inject(PERSON_EDIT_MODAL, { optional: true }),
     i18nService: inject(I18nService)
   })),
@@ -629,6 +631,27 @@ export const _MembershipStore = signalStore(
           debugMessage('MembershipStore.end: no ownerships found for member, no task needed for resourceAdmin', store.currentUser());
         }
         await this.addTask(membership, store.appStore.getGroup('treasurer'), `${memberName} ist ausgetreten -> bitte Gebühren prüfen.`);
+      },
+
+      /**
+       * Exports the member of the given membership as a vCard (.vcf), importable into
+       * Apple/Google Contacts (spec 17_spec-vcard-export). The actual scope of the export
+       * (favorites-only vs. full, with/without a scope dialog) is decided by the caller's
+       * role and re-enforced server-side by the `vcardExport` callable. The membership only
+       * provides the target identity; `readOnly` does not gate it (export is a read operation).
+       * @param membership the membership whose member (person or org) is exported
+       */
+      async downloadVcard(membership: MembershipModel): Promise<void> {
+        if (!membership) return;
+        const kind = membership.memberModelType === PersonModelName ? 'person' : 'org';
+        const target: VcardExportTarget = {
+          bkey: membership.memberKey,
+          displayName: kind === 'person'
+            ? getFullName(membership.memberName1, membership.memberName2)
+            : (membership.memberName2 || membership.memberName1),
+          dateOfBirth: kind === 'person' ? membership.memberDateOfBirth : undefined,
+        };
+        await store.vcardExportService.exportSingle(target, kind, store.currentUser()?.roles, store.appStore.tenantId());
       },
 
       /**

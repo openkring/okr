@@ -7,7 +7,7 @@ import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, Us
 import { FullNamePipe, RellogPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { DateFormat, getSvgIconUrl, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 import { SIZE_SM } from '@bk2/shared-constants';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -337,14 +337,15 @@ export class MembershipList {
     }
 
     // contact operations
+    actionSheetOptions.buttons.push(createActionSheetButton('download.vcard', this.store.i18n.download_vcard(), this.imgixBaseUrl, 'download'));
     if (await this.store.isPersonUser(membership.memberKey)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.store.i18n.chat_open(), this.imgixBaseUrl, 'chatbubbles'));
     }
     const email = this.store.getEmail(membership);
     if (email) {
       // handler fires synchronously within the tap gesture — required for iOS clipboard access
       actionSheetOptions.buttons.push({
         text: this.store.i18n.copy_email_label(),
+        icon: getSvgIconUrl(this.imgixBaseUrl, 'copy'),
         handler: () => { this.store.copy(email, '@subject.person.operation.copy.email.conf'); }
       });
       actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.store.i18n.send_email(), this.imgixBaseUrl, 'email'));
@@ -354,6 +355,7 @@ export class MembershipList {
       // handler fires synchronously within the tap gesture — required for iOS clipboard access
       actionSheetOptions.buttons.push({
         text: this.store.i18n.copy_phone_label(),
+        icon: getSvgIconUrl(this.imgixBaseUrl, 'copy'),
         handler: () => { this.store.copy(phone, '@subject.person.operation.copy.phone.conf'); }
       });
       actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.store.i18n.call_phone(), this.imgixBaseUrl, 'tel'));
@@ -393,6 +395,9 @@ export class MembershipList {
           break;
         case 'person.view':
           await this.store.editPerson(membership, true);
+          break;
+        case 'download.vcard':
+          await this.store.downloadVcard(membership);
           break;
         case 'membership.end':
           await this.store.end(membership, undefined, this.readOnly());

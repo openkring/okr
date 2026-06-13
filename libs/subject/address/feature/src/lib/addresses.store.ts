@@ -22,7 +22,7 @@ import { DocumentService } from '@bk2/document-data-access';
 import { FolderService } from '@bk2/folder-data-access';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
-import { ADDRESSES_I18N_KEYS, AddressesI18n, browseUrl, copyAddress, isAddress, stringifyPostalAddress } from '@bk2/subject-address-util';
+import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, isAddress, stringifyPostalAddress } from '@bk2/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
@@ -63,7 +63,7 @@ export const AddressStore = signalStore(
     uploadService: inject(UploadService),
     documentService: inject(DocumentService),
     folderService: inject(FolderService),
-    i18nService: inject(I18nService),
+    i18n: inject(I18nService).translateAll(ADDRESSES_I18N_KEYS),
     storage: inject(STORAGE),
     qrBillFn: httpsCallable<{ tenantId: string; addressBkey: string; data: Record<string, unknown> }, { storagePath: string }>(
       getFunctions(getApp(), 'europe-west6'),
@@ -71,8 +71,6 @@ export const AddressStore = signalStore(
     )
   })),
   withProps((store) => ({
-
-    i18n: store.i18nService.translateAll(ADDRESSES_I18N_KEYS),
     addressesResource: rxResource({
       params: () => ({
         parentKey: store.parentKey(),
