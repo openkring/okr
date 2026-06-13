@@ -27,11 +27,11 @@ pnpm nx lint <project>            # lint specific project
 source ./apps/<app-dir>/.env      # load env vars (never commit .env)
 ts-node ./set-env.js              # generate environment.ts from env vars
 
-# Deployment
+# Serve locally
 pnpm nx serve <app>               # serve a specific app (e.g. test-app) locally in development environment
-firebase deploy --only hosting:<app-id> # deploy a specific app to production on Firebase
-firebase deploy --only functions    # deploy firebase functions
 ```
+
+For all deployment (app/hosting, functions, rules, secrets), use the **`firebase-deploy` skill** — e.g. `pnpm run deploy:functions` to ship Cloud Functions.
 
 Run `pnpm nx show project <project>` to see all available targets for a project.
 
@@ -239,11 +239,11 @@ The build process is prepared for deployment with AppHosting. That's why we have
 
 All security sensitive configuration must be read from the environment. There is a file set-env.js, that writes the development or production environment file per app. Both set-env.js and environment.ts must not be git-committed. They are git-ignored. It is strictly forbidden to generate a config file with security sensitive information (e.g. API-keys, access tokens) into a file and to git-commit this.
 
-Save secrets for Firebase cloud functions with `firebase functions:secrets:set SECRET_NAME`
+Saving function secrets and all other deployment steps are documented in the **`firebase-deploy` skill**.
 
 ### Cloud Functions
 
-Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, `matrix-simple`, `oidc-bridge`, `replication`. Built with esbuild via `pnpm nx build functions --configuration production` and deployed with `firebase deploy --only functions`
+Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, `matrix-simple`, `oidc-bridge`, `replication`. Built with esbuild via `pnpm nx build functions --configuration production` and deployed with `pnpm run deploy:functions` (see the **`firebase-deploy` skill**).
 
 ### Security
 
@@ -257,9 +257,7 @@ Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, 
 
 ### Deployment
 
-- Try to keep the bundle size low by lazy loading (with router config) components.
-- First meaningful paint under 1 second.
-- Do not use SSR or hydration nor Firebase App Hosting (Ionic/stencils are not ready with Angular hydration)
+See the **`firebase-deploy` skill** for all deployment commands and guidelines (hosting/app, functions, rules, secrets, bundle-size and no-SSR/no-App-Hosting constraints).
 
 ### QA
 
@@ -269,7 +267,7 @@ Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, 
 ### Patterns
 
 - for date conversions in Cloud Functions and libs, always use `convertDateFormatToString` / `convertDateFormat` / `DateFormat` from `@bk2/shared-util-core`. Never write custom date helpers (e.g. no `toStoreDate` in bexio/shared.ts or similar).
-- use ngx-vest-forms with Angular template driven forms and create vest validations in util component of the feature
+- use Angular Signal Forms (`@angular/forms/signals`) for all forms. Build the form in the `*.form.ts` (ui component) with `form(this.formData, (path) => validateVestTree(path, <suite>))`, binding controls via `[control]`. Keep validation logic in Vest suites in the feature's `util` component and bridge them with `validateVestTree` from `@bk2/shared-util-angular`. (Do NOT use `ngx-vest-forms` / `scVestForm` / `validationConfig` — that dependency was removed in the 2026-06 Signal Forms migration.)
 - do only create form models if needed
 - a feature typically consists of FEATURE-list.ts (a list view of FEATURE[]), FEATURE-edit.modal.ts (the detail view) using FEATURE.form.ts (in ui component of the feature) as well as FEATURE.store.ts (feature related store).
 - for icons, always use `ion-icon` with the `src` attribute and `SvgIconPipe`. Never use the `name` attribute:
