@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, I
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@bk2/shared-ui';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
-import { AlertService, createActionSheetButton, createActionSheetOptions, downloadToBrowser, isBrowser } from '@bk2/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser } from '@bk2/shared-util-angular';
 import { MatrixMessage, RoleName } from '@bk2/shared-models';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
@@ -835,7 +835,20 @@ export class MatrixChat implements OnDestroy {
   }
 
   async onFileClicked(message: MatrixMessage): Promise<void> {
-    await downloadToBrowser(message.content.url);
+    // message.content.url is an mxc:// URI that the browser cannot resolve, and Synapse
+    // authenticated media needs a bearer header anyway. message.mediaUrl is the already
+    // authenticated blob URL produced by MatrixChatService.resolveMediaUrl — download that.
+    const url = message.mediaUrl ?? message.content.url;
+    if (!url || url.startsWith('mxc://')) {
+      await this.alertService.showToast('Datei nicht verfügbar');
+      return;
+    }
+    try {
+      await downloadFile(url, message.body);
+    } catch (error) {
+      console.error('Failed to download chat attachment:', error);
+      await this.alertService.showToast('Datei konnte nicht heruntergeladen werden');
+    }
   }
 
   protected async onFileQueued(file: File): Promise<void> {

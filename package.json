@@ -49,6 +49,7 @@
     "@capacitor/keyboard": "^8.0.1",
     "@capacitor/network": "8.0.0",
     "@capacitor/push-notifications": "8.0.2",
+    "@capacitor/share": "^8.0.1",
     "@capacitor/status-bar": "^8.0.1",
     "@capawesome/capacitor-file-picker": "^8.0.2",
     "@capgo/nativegeocoder": "^7.3.18",

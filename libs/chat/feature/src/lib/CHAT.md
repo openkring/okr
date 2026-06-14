@@ -157,3 +157,38 @@ The poll creator sees an "Umfrage beenden" button on their poll card (single tap
 
 - Multiple-choice polls (`max_selections > 1`)
 - Per-voter identity display
+
+---
+
+## Media & file attachments
+
+**Attachments live in the Matrix content repository, NOT in Firebase Storage.** There is **no `DocumentModel`** for a chat attachment. Do not reroute chat media through Firebase Storage — co-location with the room (ACLs, federation, redaction/retention) is the reason it stays in Matrix.
+
+### Send path
+
+`MatrixChatService.sendFile(roomId, file, threadId?)`:
+1. `client.uploadContent(file)` uploads to Synapse → returns an `mxc://<homeserver>/<mediaId>` URI.
+2. Sends an `m.image` / `m.file` event whose `content.url` is that `mxc://` URI.
+
+Image attachments are queued in `MatrixMessageInput` (`fileQueued` → `pendingImages`) and sent in a batch via `filesSent`; plain files and recorded audio are sent immediately via `fileSent`.
+
+### Display / download path — authenticated media
+
+Modern Synapse uses **authenticated media** (MSC3916): the media-download endpoint requires an `Authorization: Bearer <token>` header. Two consequences:
+
+- An `mxc://` URI is **not** an HTTP scheme — a browser/`Browser.open` cannot resolve it.
+- Even converted to the HTTP `/_matrix/media/.../download/...` URL, an unauthenticated request (e.g. opening it in a new tab) returns 401/404 because no bearer header is sent.
+
+So media is resolved through `MatrixChatService.resolveMediaUrl(mxcUrl, mimeTypeHint?)`, which does an authenticated `fetch()` with the bearer token and wraps the response in a `blob:` URL (LRU-cached, `mxc:// → blob:`). On room load and on each incoming timeline event, `m.image` / `m.file` / `m.audio` messages get this blob URL assigned to **`MatrixMessage.mediaUrl`**. Templates bind `mediaUrl` (not `content.url`) for `<img>` / `<audio>`.
+
+### File download (`onFileClicked`)
+
+`m.file` rows emit `fileClicked` → `MatrixChat.onFileClicked()`, which downloads **`message.mediaUrl`** (the authenticated blob URL) via the platform-aware `downloadFile(url, fileName)` helper in `@bk2/shared-util-angular`:
+
+- **Native (iOS/Android Capacitor app)** — write bytes to `Directory.Cache` and present the OS share sheet via `@capacitor/share`.
+- **Mobile web (iOS Safari 15+, Android Chrome)** — Web Share API (`navigator.share({ files })`) for a real share sheet. Required on iOS Safari, which does **not** honor `<a download>` for `blob:` URLs (the `saveAs` fallback would open the file inline and drop the filename). `Capacitor.isNativePlatform()` is `false` for a PWA/browser tab, so this branch is what covers the webapp on a phone.
+- **Desktop browsers** — `fetch` → Blob → `saveAs` (`file-saver`), so the file lands with its name.
+
+> ⚠️ Never pass `message.content.url` (the raw `mxc://` URI) to `downloadFile` / `downloadToBrowser`. That was the original "attachment can't be downloaded" bug: images/audio worked (they went through `resolveMediaUrl`) but the file-download click reached for `content.url` instead of the resolved `mediaUrl`. Only pass a `blob:` or already-authenticated `http(s)` URL.
+>
+> The `@capacitor/share` native plugin requires `npx cap sync` after install so iOS/Android register it.

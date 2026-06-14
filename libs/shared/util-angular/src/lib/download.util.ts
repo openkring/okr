@@ -1,6 +1,9 @@
 import { Inject } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
+import { Directory, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { ToastController } from '@ionic/angular';
 import { saveAs } from 'file-saver';
 import { deleteObject, getDownloadURL, ref } from "firebase/storage";
@@ -168,6 +171,79 @@ export function downloadFileAndStore(file: File) {
     if (downloadUrl) {
       Browser.open({ url: downloadUrl });
     }
+  }
+
+/**
+ * Platform-aware download of an already-fetchable resource (a `blob:` URL or an
+ * authenticated `http(s)` URL whose auth is already baked in — e.g. a Matrix media
+ * blob URL produced by `MatrixChatService.resolveMediaUrl`).
+ *
+ * Do NOT pass an `mxc://` URI or an unauthenticated homeserver download URL here —
+ * those cannot be fetched (`mxc://` is not an HTTP scheme, and Synapse authenticated
+ * media requires a bearer header the browser won't add). Resolve them to a blob URL first.
+ *
+ * Branches by runtime:
+ * - Native (iOS/Android Capacitor app): write the bytes to the Cache directory and
+ *   present the OS share sheet (open / save to Files / AirDrop / …) via `@capacitor/share`.
+ * - Mobile web (iOS Safari 15+, Android Chrome): use the Web Share API
+ *   (`navigator.share({ files })`) for a real share sheet. This is essential on iOS
+ *   Safari, which does NOT honor the `<a download>` attribute for `blob:` URLs — the
+ *   `saveAs` fallback there would open the file inline and lose the filename.
+ * - Desktop browsers: fetch into a Blob and save via `file-saver` (`saveAs`), so the
+ *   file lands with the correct name instead of opening in a tab.
+ *
+ * @param fetchableUrl a `blob:` or already-authenticated `http(s)` URL.
+ * @param fileName     the file name to save as (e.g. the Matrix message `body`).
+ * @returns A promise that resolves once the download/share has been triggered.
+ */
+  export async function downloadFile(fetchableUrl?: string, fileName?: string): Promise<void> {
+    if (!fetchableUrl) return;
+    const name = fileName?.trim() || 'download';
+    const response = await fetch(fetchableUrl);
+    if (!response.ok) throw new Error(`downloadFile: fetch failed (${response.status})`);
+    const blob = await response.blob();
+
+    // Native Capacitor app → write to cache + native share sheet.
+    if (Capacitor.isNativePlatform()) {
+      const base64 = await blobToBase64(blob);
+      const written = await Filesystem.writeFile({ path: name, data: base64, directory: Directory.Cache });
+      await Share.share({ url: written.uri, title: name });
+      return;
+    }
+
+    // Mobile web (PWA / browser tab) → Web Share API with the actual file, when supported.
+    // Critical for iOS Safari, where `saveAs` opens the blob inline instead of downloading.
+    const file = new File([blob], name, { type: blob.type || 'application/octet-stream' });
+    const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean };
+    if (typeof nav.share === 'function' && nav.canShare?.({ files: [file] })) {
+      try {
+        await nav.share({ files: [file], title: name });
+        return;
+      } catch (error) {
+        // User cancelled the share sheet — don't fall through to a surprise download.
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        // Any other share failure → fall back to saveAs below.
+      }
+    }
+
+    // Desktop browsers (and mobile web without file-share support) → file-saver.
+    saveAs(blob, name);
+  }
+
+/**
+ * Read a Blob as a base64 string (without the `data:...;base64,` prefix),
+ * suitable for `Filesystem.writeFile`.
+ */
+  function blobToBase64(blob: Blob): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.substring(result.indexOf(',') + 1));
+      };
+      reader.readAsDataURL(blob);
+    });
   }
 
  
