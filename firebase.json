@@ -277,9 +277,6 @@
     "runtime": "nodejs22"
   },
   "emulators": {
-    "apphosting": {
-      "port": 8717
-    },
     "auth": {
       "port": 9099
     },
