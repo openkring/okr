@@ -1,6 +1,12 @@
+import { Capacitor } from '@capacitor/core';
 import { isBrowser } from '@bk2/shared-util-core';
 
 export { isBrowser };
+
+/** True when running inside the native Capacitor app (iOS/Android), false for web/PWA. */
+export function isNativePlatform(): boolean {
+  return Capacitor.isNativePlatform();
+}
 
 export type BrowserName = 'safari' | 'chrome' | 'firefox' | 'opera' | 'other';
 

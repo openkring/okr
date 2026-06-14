@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, I
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@bk2/shared-ui';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
-import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser } from '@bk2/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@bk2/shared-util-angular';
 import { MatrixMessage, RoleName } from '@bk2/shared-models';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
@@ -365,7 +365,6 @@ import { PollCreateModal } from './poll-create.modal';
                     [i18n]="store.i18n"
                     (messageClicked)="onMessageClicked($event)"
                     (imageClicked)="onImageClicked($event)"
-                    (fileClicked)="onFileClicked($event)"
                     (reactionClicked)="onReactionClicked($event)"
                     (threadClicked)="onThreadClicked($event)"
                     (pollVoteClicked)="onPollVoteClicked($event)"
@@ -447,7 +446,6 @@ import { PollCreateModal } from './poll-create.modal';
                     [i18n]="store.i18n"
                     (messageClicked)="onMessageClicked($event)"
                     (imageClicked)="onImageClicked($event)"
-                    (fileClicked)="onFileClicked($event)"
                     (reactionClicked)="onReactionClicked($event)"
                     (threadClicked)="onThreadClicked($event)"
                     (pollVoteClicked)="onPollVoteClicked($event)"
@@ -834,10 +832,11 @@ export class MatrixChat implements OnDestroy {
     await modal.present();
   }
 
-  async onFileClicked(message: MatrixMessage): Promise<void> {
+  /** Share/download a file attachment. Invoked from the message action sheet (chat.message.share). */
+  private async shareFile(message: MatrixMessage): Promise<void> {
     // message.content.url is an mxc:// URI that the browser cannot resolve, and Synapse
     // authenticated media needs a bearer header anyway. message.mediaUrl is the already
-    // authenticated blob URL produced by MatrixChatService.resolveMediaUrl — download that.
+    // authenticated blob URL produced by MatrixChatService.resolveMediaUrl — share that.
     const url = message.mediaUrl ?? message.content.url;
     if (!url || url.startsWith('mxc://')) {
       await this.alertService.showToast('Datei nicht verfügbar');
@@ -845,6 +844,21 @@ export class MatrixChat implements OnDestroy {
     }
     try {
       await downloadFile(url, message.body);
+    } catch (error) {
+      console.error('Failed to share chat attachment:', error);
+      await this.alertService.showToast('Datei konnte nicht geteilt werden');
+    }
+  }
+
+  /** Save a file attachment straight to disk (web only). Invoked from the action sheet (chat.message.download). */
+  private async downloadFileToDisk(message: MatrixMessage): Promise<void> {
+    const url = message.mediaUrl ?? message.content.url;
+    if (!url || url.startsWith('mxc://')) {
+      await this.alertService.showToast('Datei nicht verfügbar');
+      return;
+    }
+    try {
+      await saveFile(url, message.body);
     } catch (error) {
       console.error('Failed to download chat attachment:', error);
       await this.alertService.showToast('Datei konnte nicht heruntergeladen werden');
@@ -1037,6 +1051,12 @@ export class MatrixChat implements OnDestroy {
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.store.i18n.thread_open(), this.imgixBaseUrl, 'branch'));
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.msg_report_header(), this.imgixBaseUrl, 'alert-circle'));
     }
+    if (message.type === 'm.file' && !!(message.mediaUrl ?? message.content.url)) { // file attachment → offer share (+ download on web)
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.share', this.store.i18n.msg_share(), this.imgixBaseUrl, 'share'));
+      if (!isNativePlatform()) { // web only — native already saves via the share sheet
+        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.download', this.store.i18n.msg_download(), this.imgixBaseUrl, 'download'));
+      }
+    }
     actionSheetOptions.buttons.push(createActionSheetButton('chat.message.copy', this.store.i18n.msg_copy(), this.imgixBaseUrl, 'copy'));
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.raw', this.store.i18n.msg_raw(), this.imgixBaseUrl, 'code'));
@@ -1070,6 +1090,12 @@ export class MatrixChat implements OnDestroy {
           break;
         case 'chat.message.report':
           await this.store.reportMessage(message);
+          break;
+        case 'chat.message.share':
+          await this.shareFile(message);
+          break;
+        case 'chat.message.download':
+          await this.downloadFileToDisk(message);
           break;
         case 'chat.message.copy':
           await this.store.copy(message);

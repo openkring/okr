@@ -231,6 +231,24 @@ export function downloadFileAndStore(file: File) {
   }
 
 /**
+ * Save an already-fetchable resource (a `blob:` or already-authenticated `http(s)` URL)
+ * straight to disk via `file-saver`, bypassing any share sheet. Use this for an explicit
+ * "download" action on web; use `downloadFile` when you want the share sheet on
+ * native/mobile. On iOS Safari `saveAs` for a `blob:` is unreliable (may open inline) —
+ * prefer `downloadFile`'s Web Share API path there.
+ *
+ * @param fetchableUrl a `blob:` or already-authenticated `http(s)` URL.
+ * @param fileName     the file name to save as.
+ */
+  export async function saveFile(fetchableUrl?: string, fileName?: string): Promise<void> {
+    if (!fetchableUrl) return;
+    const name = fileName?.trim() || 'download';
+    const response = await fetch(fetchableUrl);
+    if (!response.ok) throw new Error(`saveFile: fetch failed (${response.status})`);
+    saveAs(await response.blob(), name);
+  }
+
+/**
  * Read a Blob as a base64 string (without the `data:...;base64,` prefix),
  * suitable for `Filesystem.writeFile`.
  */

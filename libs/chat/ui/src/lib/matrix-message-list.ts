@@ -394,7 +394,9 @@ import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '
                             @if (isAudioFile(item) && item.mediaUrl) {
                               <audio controls class="message-audio" [src]="item.mediaUrl" (click)="$event.stopPropagation()"></audio>
                             } @else {
-                              <div class="message-file" (click)="fileClicked.emit(item); $event.stopPropagation()">
+                              <!-- No own click handler: let it bubble to the bubble's messageClicked,
+                                   so a tap on a file opens the message action sheet (with the share action). -->
+                              <div class="message-file">
                                 <ion-icon src="{{'document' | svgIcon}}"></ion-icon>
                                 <span>{{ item.body }}</span>
                               </div>
@@ -486,7 +488,6 @@ export class MatrixMessageList {
 
   messageClicked = output<MatrixMessage>();
   imageClicked = output<{ message: MatrixMessage; group: MatrixMessage[] }>();
-  fileClicked = output<MatrixMessage>();
   reactionClicked = output<{messageId: string, emoji: string}>();
   threadClicked = output<string>();
   pollVoteClicked = output<{ pollEventId: string; answerIds: string[] }>();

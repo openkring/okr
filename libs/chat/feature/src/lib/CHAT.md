@@ -181,14 +181,16 @@ Modern Synapse uses **authenticated media** (MSC3916): the media-download endpoi
 
 So media is resolved through `MatrixChatService.resolveMediaUrl(mxcUrl, mimeTypeHint?)`, which does an authenticated `fetch()` with the bearer token and wraps the response in a `blob:` URL (LRU-cached, `mxc:// → blob:`). On room load and on each incoming timeline event, `m.image` / `m.file` / `m.audio` messages get this blob URL assigned to **`MatrixMessage.mediaUrl`**. Templates bind `mediaUrl` (not `content.url`) for `<img>` / `<audio>`.
 
-### File download (`onFileClicked`)
+### File share (message action sheet → `shareFile`)
 
-`m.file` rows emit `fileClicked` → `MatrixChat.onFileClicked()`, which downloads **`message.mediaUrl`** (the authenticated blob URL) via the platform-aware `downloadFile(url, fileName)` helper in `@bk2/shared-util-angular`:
+A tap on an `m.file` row has **no own click handler** — it bubbles up to the message bubble's `messageClicked`, which opens the standard message **action sheet** (`MatrixChat.onMessageClicked`). For `m.file` messages with a resolved `mediaUrl`, that sheet includes a **`chat.message.share`** action (alongside copy/reply/react/…), plus a **`chat.message.download`** action **on web only** (`!isNativePlatform()` — native already saves via the share sheet). `share` runs `MatrixChat.shareFile()` → `downloadFile()` (share sheet); `download` runs `MatrixChat.downloadFileToDisk()` → `saveFile()` (straight `saveAs`, no share sheet). Both target **`message.mediaUrl`** (the authenticated blob URL); `downloadFile(url, fileName)` is the platform-aware helper in `@bk2/shared-util-angular`:
 
 - **Native (iOS/Android Capacitor app)** — write bytes to `Directory.Cache` and present the OS share sheet via `@capacitor/share`.
 - **Mobile web (iOS Safari 15+, Android Chrome)** — Web Share API (`navigator.share({ files })`) for a real share sheet. Required on iOS Safari, which does **not** honor `<a download>` for `blob:` URLs (the `saveAs` fallback would open the file inline and drop the filename). `Capacitor.isNativePlatform()` is `false` for a PWA/browser tab, so this branch is what covers the webapp on a phone.
 - **Desktop browsers** — `fetch` → Blob → `saveAs` (`file-saver`), so the file lands with its name.
 
 > ⚠️ Never pass `message.content.url` (the raw `mxc://` URI) to `downloadFile` / `downloadToBrowser`. That was the original "attachment can't be downloaded" bug: images/audio worked (they went through `resolveMediaUrl`) but the file-download click reached for `content.url` instead of the resolved `mediaUrl`. Only pass a `blob:` or already-authenticated `http(s)` URL.
+>
+> The share action uses the `share` icon (`icons` set) and the `msg_share` i18n key. The old direct `fileClicked` output on `MatrixMessageList` was removed — file taps now go through the action sheet.
 >
 > The `@capacitor/share` native plugin requires `npx cap sync` after install so iOS/Android register it.
