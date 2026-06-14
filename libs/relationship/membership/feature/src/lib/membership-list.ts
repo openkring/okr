@@ -316,6 +316,7 @@ export class MembershipList {
       }
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.person_view(), this.imgixBaseUrl, 'eye-on'));
     }
+    actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.chat_open(), this.imgixBaseUrl, 'chatbubbles'));
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // privileged operations on membership
@@ -387,7 +388,7 @@ export class MembershipList {
         case 'membership.view':
           await this.store.edit(membership, true);
           break;
-        case 'membership.chat':
+        case 'person.chat':
           await this.store.chat(membership);
           break;
         case 'person.edit':
