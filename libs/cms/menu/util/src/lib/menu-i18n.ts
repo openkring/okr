@@ -41,6 +41,10 @@ export const MENU_I18N_KEYS = {
   menu_action_label:              PFX + 'menu_action.label',
   menu_action_helper:             PFX + 'menu_action.helper',
 
+  error_save:                     PFX + 'error.save',
+  error_load:                     PFX + 'error.load',
+  error_delete:                   PFX + 'error.delete',
+
   as_title:                       '@actionsheet.title',
   name_label:                     '@name.label',
   name_placeholder:               '@name.placeholder',

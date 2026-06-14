@@ -3,18 +3,20 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
 import { CategoryListModel, MenuItemModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { MenuForm } from '@bk2/cms-menu-ui';
 import { MENU_I18N_KEYS, MenuI18n } from '@bk2/cms-menu-util';
 
+import { MenuStore } from './menu.store';
+
 @Component({
   selector: 'bk-menu-modal',
   standalone: true,
   imports: [
-    Header, ChangeConfirmation, MenuForm,
+    Header, ChangeConfirmation, ErrorBanner, MenuForm,
     IonContent
   ],
   template: `
@@ -22,6 +24,7 @@ import { MENU_I18N_KEYS, MenuI18n } from '@bk2/cms-menu-util';
     @if(showConfirmation()) {
       <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
+    <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-menu-item-form
@@ -45,6 +48,7 @@ import { MENU_I18N_KEYS, MenuI18n } from '@bk2/cms-menu-util';
 })
 export class MenuModal {
   private readonly modalController = inject(ModalController);
+  protected readonly store = inject(MenuStore);
   protected readonly i18n = inject(I18nService).translateAll(MENU_I18N_KEYS) as MenuI18n;
   protected readonly tenantId = inject(ENV).tenantId;
 

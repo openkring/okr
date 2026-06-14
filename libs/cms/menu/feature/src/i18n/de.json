@@ -11,6 +11,11 @@
     "add": {
       "submenu": "Sub-Menü hinzufügen"
     },
+    "error": {
+      "save": "Der Menüpunkt konnte nicht gespeichert werden. Bitte versuche es erneut.",
+      "load": "Die Menüpunkte konnten nicht geladen werden. Bitte versuche es erneut.",
+      "delete": "Der Menüpunkt konnte nicht gelöscht werden. Bitte versuche es erneut."
+    },
 
 
     "menu": {

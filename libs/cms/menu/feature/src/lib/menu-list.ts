@@ -1,9 +1,9 @@
-import { Component, computed, inject, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { MenuItemModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
+import { BkListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
@@ -14,9 +14,10 @@ import { MenuStore } from './menu.store';
   standalone: true,
   imports: [
     SvgIconPipe,
-    Spinner, EmptyList, ListFilter,
+    BkListSkeleton, EmptyList, ErrorBanner, ListFilter,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
-    IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
+    IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList,
+    IonInfiniteScroll, IonInfiniteScrollContent
   ],
   template: `
     <ion-header>
@@ -66,16 +67,18 @@ import { MenuStore } from './menu.store';
       </ion-toolbar>
     </ion-header>
 
+    <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+
     <!-- Data -->
     <ion-content #content>
       @if(isLoading()) {
-        <bk-spinner />
+        <bk-list-skeleton [rows]="6" />
       } @else {
         @if (filteredMenuItems().length === 0) {
           <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
-            @for(menuItem of filteredMenuItems(); track menuItem.bkey) {
+            @for(menuItem of visibleMenuItems(); track menuItem.bkey) {
                 <ion-item (click)="showActions(menuItem)">
                   <ion-label>{{ menuItem.name }}</ion-label>
                   @if(menuItem.action === 'sub') {
@@ -88,6 +91,11 @@ import { MenuStore } from './menu.store';
                 </ion-item>
             }
           </ion-list>
+          @if(hasMore()) {
+            <ion-infinite-scroll (ionInfinite)="loadMore($event)">
+              <ion-infinite-scroll-content />
+            </ion-infinite-scroll>
+          }
         }
       }
     </ion-content>
@@ -101,8 +109,14 @@ export class MenuList {
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
   protected selectedCategory = linkedSignal(() => this.store.selectedCategory());
 
+  // incremental rendering (ion-infinite-scroll)
+  private readonly pageSize = 50;
+  protected visibleCount = signal(this.pageSize);
+
   // computed
   protected filteredMenuItems = computed(() => this.store.filteredMenuItems() ?? []);
+  protected visibleMenuItems = computed(() => this.filteredMenuItems().slice(0, this.visibleCount()));
+  protected hasMore = computed(() => this.visibleCount() < this.filteredMenuItems().length);
   protected menuItemsCount = computed(() => this.store.menuItemsCount());
   protected selectedMenuItemsCount = computed(() => this.filteredMenuItems().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -149,10 +163,17 @@ export class MenuList {
   }
 
   protected onSearchTermChange(searchTerm: string): void {
+    this.visibleCount.set(this.pageSize);
     this.store.setSearchTerm(searchTerm);
   }
 
   protected onTypeSelected(type: string): void {
+    this.visibleCount.set(this.pageSize);
     this.store.setSelectedCategory(type);
+  }
+
+  protected loadMore(event: InfiniteScrollCustomEvent): void {
+    this.visibleCount.update((c) => c + this.pageSize);
+    event.target.complete();
   }
 }

@@ -3,10 +3,11 @@ import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, Ion
 
 import { MenuItemModel } from '@bk2/shared-models';
 import { Spinner } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
+import { debugData, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_MENU_ACTION } from '@bk2/shared-constants';
 
 import { MultiAvatar } from '@bk2/cms-menu-ui';
+import { isMenuBlocked, nextVisitedKeys } from '@bk2/cms-menu-util';
 
 import { MenuStore } from './menu.store';
 
@@ -46,7 +47,13 @@ import { MenuStore } from './menu.store';
                   </ion-item>
                   <div slot="content">
                     @for(menuItemName of menuItem.menuItems; track menuItemName) {
-                      <bk-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" />
+                      @if(isBlocked(menuItemName)) {
+                        @if(isAdmin()) {
+                          <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
+                        }
+                      } @else {
+                        <bk-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                      }
                     }
                   </div>
                 </ion-accordion>
@@ -60,14 +67,26 @@ import { MenuStore } from './menu.store';
             @case('main') {
               <ion-list>
                 @for(menuItemName of menuItem.menuItems; track menuItemName) {
-                  <bk-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" />
+                  @if(isBlocked(menuItemName)) {
+                    @if(isAdmin()) {
+                      <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
+                    }
+                  } @else {
+                    <bk-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                  }
                 }
               </ion-list>
             }
             @case('context') {
               <ion-list>
                 @for(menuItemName of menuItem.menuItems; track menuItemName) {
-                  <bk-menu [menuName]="menuItemName" />
+                  @if(isBlocked(menuItemName)) {
+                    @if(isAdmin()) {
+                      <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
+                    }
+                  } @else {
+                    <bk-menu [menuName]="menuItemName" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                  }
                 }
               </ion-list>
             }
@@ -91,11 +110,20 @@ export class Menu {
   public menuName = input.required<string>();
   public forceVisible = input(false);
   public excludeNames = input<string[]>([]);
+  /** Nesting depth of this menu (0 at the root). */
+  public inputDepth = input(0);
+  /** Names already rendered on the current path, used to break circular references. */
+  public inputVisitedKeys = input<ReadonlySet<string>>(new Set<string>());
 
   // derived signals
   protected safariWorkaround = computed(() => this.menuName() === 'files-add');
   protected menuItem = computed(() => this.menuStore.menu());
   private currentUser = computed(() => this.menuStore.currentUser());
+
+  // circular-reference / depth protection
+  protected readonly childDepth = computed(() => this.inputDepth() + 1);
+  protected readonly childVisitedKeys = computed(() => nextVisitedKeys(this.inputVisitedKeys(), this.menuName()));
+  protected readonly isAdmin = computed(() => hasRole('admin', this.currentUser()));
   protected roleNeeded = computed(() => this.menuItem()?.roleNeeded);
   protected action = computed(() => this.menuItem()?.action ?? DEFAULT_MENU_ACTION);
   protected icon = computed(() => this.menuItem()?.icon ?? 'help-circle');
@@ -111,6 +139,20 @@ export class Menu {
       this.currentUser();
       this.menuStore.setMenuName(this.menuName());
     });
+    // Warn (admins/debug) when a child would create a cycle, naming the offending key.
+    effect(() => {
+      const children = this.menuItem()?.menuItems ?? [];
+      for (const child of children) {
+        if (this.inputVisitedKeys().has(child)) {
+          debugData(`Menu.cycle: circular reference to '${child}' under '${this.menuName()}'`, { path: [...this.inputVisitedKeys()] }, this.currentUser());
+        }
+      }
+    });
+  }
+
+  /** Whether a child menu must render as a placeholder (cycle or depth cap reached). */
+  protected isBlocked(childName: string): boolean {
+    return isMenuBlocked(this.inputVisitedKeys(), childName, this.inputDepth());
   }
 
   protected async select(menuItem: MenuItemModel) {

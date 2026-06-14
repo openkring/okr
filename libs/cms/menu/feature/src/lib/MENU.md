@@ -62,3 +62,17 @@ The `MenuStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
 
 ## Search Index Format
 `n:<name> a:<action> k:<bkey>`
+
+## Dynamic Label Tokens
+A menu item's `label` may contain dynamic tokens that are expanded at render time by
+`expandMenuTokens(label, ctx)` (`@bk2/cms-menu-util`, see `menu-tokens.ts`). The token registry
+is the single source of truth:
+
+| Token | Expands to | Context field |
+|---|---|---|
+| `@VERSION@` | `v` + current app version (e.g. `v4.2.0`) | `version` |
+
+Expansion runs in `MenuStore.translatedMenuLabel` before the i18n-scope check, so a token-bearing
+label is never treated as a translation key. Adding a token is a one-file change in `menu-tokens.ts`
+(add a `MenuTokenContext` field if the resolver needs new data, plus a `MENU_TOKENS` entry) and is
+covered by `menu-tokens.spec.ts`.

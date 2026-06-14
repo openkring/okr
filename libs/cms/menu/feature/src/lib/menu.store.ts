@@ -5,16 +5,16 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 import { combineLatest, Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { ENV } from '@bk2/shared-config';
-import { AppStore } from '@bk2/shared-feature';
+import { AppStore, withErrorState } from '@bk2/shared-feature';
 import { CategoryListModel, MenuItemModel, TaskCollection, TaskModel } from '@bk2/shared-models';
-import { die, getSystemQuery, nameMatches, safeStructuredClone, warn } from '@bk2/shared-util-core';
+import { debugData, die, getSystemQuery, nameMatches, safeStructuredClone, warn } from '@bk2/shared-util-core';
 import { AppNavigationService, isInSplitPane, navigateByUrl, VersionCheckService } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
 
-import { MENU_I18N_KEYS } from '@bk2/cms-menu-util';
+import { expandMenuTokens, MENU_I18N_KEYS } from '@bk2/cms-menu-util';
 
 import { AuthService } from '@bk2/auth-data-access';
 import { ActivityService } from '@bk2/activity-data-access';
@@ -38,6 +38,7 @@ export const initialState: MenuState = {
 
 export const _MenuStore = signalStore(
   withState(initialState),
+  withErrorState(),
   withProps(() => ({
     appStore: inject(AppStore),
     menuService: inject(MenuService),
@@ -55,9 +56,17 @@ export const _MenuStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(MENU_I18N_KEYS),
+  })),
+  withProps((store) => ({
     menuItemsResource: rxResource({
       stream: () => {
-        return store.menuService.list();
+        return store.menuService.list().pipe(
+          catchError(error => {
+            debugData('MenuStore.menuItemsResource: stream error', error, store.appStore.currentUser());
+            store.setError(store.i18n.error_load());
+            return of([] as MenuItemModel[]);
+          })
+        );
       }
     }),
     menuResource: rxResource({
@@ -65,7 +74,13 @@ export const _MenuStore = signalStore(
         name: store.name()
       }),
       stream: ({ params }) => {
-        return store.menuService.read(params.name);
+        return store.menuService.read(params.name).pipe(
+          catchError(error => {
+            debugData('MenuStore.menuResource: stream error', error, store.appStore.currentUser());
+            store.setError(store.i18n.error_load());
+            return of(undefined);
+          })
+        );
       }
     }),
     notificationCountResource: rxResource({
@@ -119,8 +134,9 @@ export const _MenuStore = signalStore(
     translatedMenuLabel: toSignal(
       toObservable(computed(() => {
         const menuLabel = store.menu()?.label ?? '';
-        if (menuLabel.includes('@VERSION@')) {
-          return menuLabel.replace('@VERSION@', 'v' + store.versionService.getCurrentVersion());
+        const expanded = expandMenuTokens(menuLabel, { version: store.versionService.getCurrentVersion() });
+        if (expanded !== menuLabel) {
+          return expanded;  // a dynamic token (e.g. @VERSION@) was expanded
         }
         if (menuLabel.startsWith('@')) {
           return '@cms/menu/feature.' + menuLabel.substring(1);
@@ -170,8 +186,14 @@ export const _MenuStore = signalStore(
       /******************************* actions *************************************** */
       async delete(menuItem?: MenuItemModel, readOnly = true): Promise<void> {
         if (!readOnly && menuItem) {
-          await store.menuService.delete(menuItem);
-          store.menuItemsResource.reload();
+          store.clearError();
+          try {
+            await store.menuService.delete(menuItem);
+            store.menuItemsResource.reload();
+          } catch (error) {
+            store.setError(store.i18n.error_delete());
+            throw error;
+          }
         }
       },
       
@@ -194,8 +216,14 @@ export const _MenuStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isMenuItem(data, store.env.tenantId)) {
-            await ((!menuItem) ? store.menuService.create(data, store.currentUser()) : store.menuService.update(data));
-            store.menuItemsResource.reload();
+            store.clearError();
+            try {
+              await ((!menuItem) ? store.menuService.create(data, store.currentUser()) : store.menuService.update(data));
+              store.menuItemsResource.reload();
+            } catch (error) {
+              store.setError(store.i18n.error_save());
+              throw error;
+            }
           }
         }
       },
