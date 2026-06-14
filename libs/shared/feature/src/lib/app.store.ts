@@ -242,18 +242,20 @@ export const AppStore = signalStore(
        * For each overridable field the stricter of the two accessors wins — the person's data is
        * shown only if both the tenant policy AND the person's own wish allow it.
        * Fields that the user cannot override (showGender, showTaxId, etc.) always use the app default.
-       * @param personUserModel the UserModel of the person being viewed (not the current user)
+       * @param person the PersonModel of the person being viewed (not the current user). The
+       *   usage* privacy preferences live on the person (tenant-readable), so this works for
+       *   all viewers, not just privileged ones who can read the users collection.
        */
-      getPersonPrivacySettings(personUserModel?: UserModel): PrivacySettings {
+      getPersonPrivacySettings(person?: PersonModel): PrivacySettings {
         const defaults = store.privacySettings();
-        if (!personUserModel) return defaults;
+        if (!person) return defaults;
         return {
           ...defaults,
-          showName:          stricterAccessor(defaults.showName,          privacyUsageToAccessor(personUserModel.usageName)),
-          showDateOfBirth:   stricterAccessor(defaults.showDateOfBirth,   privacyUsageToAccessor(personUserModel.usageDateOfBirth)),
-          showEmail:         stricterAccessor(defaults.showEmail,         privacyUsageToAccessor(personUserModel.usageEmail)),
-          showPhone:         stricterAccessor(defaults.showPhone,         privacyUsageToAccessor(personUserModel.usagePhone)),
-          showPostalAddress: stricterAccessor(defaults.showPostalAddress, privacyUsageToAccessor(personUserModel.usagePostalAddress)),
+          showName:          stricterAccessor(defaults.showName,          privacyUsageToAccessor(person.usageName)),
+          showDateOfBirth:   stricterAccessor(defaults.showDateOfBirth,   privacyUsageToAccessor(person.usageDateOfBirth)),
+          showEmail:         stricterAccessor(defaults.showEmail,         privacyUsageToAccessor(person.usageEmail)),
+          showPhone:         stricterAccessor(defaults.showPhone,         privacyUsageToAccessor(person.usagePhone)),
+          showPostalAddress: stricterAccessor(defaults.showPostalAddress, privacyUsageToAccessor(person.usagePostalAddress)),
         };
       },
       getOrg(key: string) {

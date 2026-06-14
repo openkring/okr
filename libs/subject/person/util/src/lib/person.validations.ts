@@ -1,8 +1,8 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { PersonModel } from '@bk2/shared-models';
-import { baseValidations, dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
+import { PersonModel, PrivacyUsage } from '@bk2/shared-models';
+import { baseValidations, categoryValidations, dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
 
 export const personValidations = staticSuite((model: PersonModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
@@ -18,6 +18,14 @@ export const personValidations = staticSuite((model: PersonModel, tenants: strin
   stringValidations('bexioId', model.bexioId, 6);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   //tagValidations('tags', model.tags);
+
+  // privacy preferences (usage*)
+  categoryValidations('usageImages', model.usageImages, PrivacyUsage);
+  categoryValidations('usageDateOfBirth', model.usageDateOfBirth, PrivacyUsage);
+  categoryValidations('usagePostalAddress', model.usagePostalAddress, PrivacyUsage);
+  categoryValidations('usagePhone', model.usagePhone, PrivacyUsage);
+  categoryValidations('usageEmail', model.usageEmail, PrivacyUsage);
+  categoryValidations('usageName', model.usageName, PrivacyUsage);
 
   // cross field validations
   omitWhen(model.dateOfDeath === '' || model.dateOfBirth === '', () => {

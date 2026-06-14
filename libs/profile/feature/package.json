@@ -13,6 +13,8 @@
     "@bk2/shared-ui": "*",
     "@bk2/shared-util-core": "*",
     "@bk2/subject-address-feature": "*",
+    "@bk2/subject-person-data-access": "*",
+    "@bk2/subject-person-util": "*",
     "@bk2/avatar-data-access": "*",
     "@bk2/avatar-feature": "*",
     "@bk2/avatar-util": "*",

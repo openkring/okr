@@ -2,6 +2,7 @@ export * from './lib/ahvn13.pipe';
 export * from './lib/person-new-form.model';
 export * from './lib/person-new-form.validations';
 export * from './lib/person.util';
+export * from './lib/person-privacy.util';
 export * from './lib/person.validations';
 export * from './lib/person-label.pipe';
 export * from './lib/ssn.validations';

@@ -6,13 +6,14 @@ import { ModalController } from '@ionic/angular/standalone';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
-import { ExportFormat, UserCollection, UserModel } from '@bk2/shared-models';
+import { ExportFormat, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { AppNavigationService, exportCsv } from '@bk2/shared-util-angular';
 import { chipMatches, debugItemLoaded, generateRandomString, getDataRow, getSystemQuery, isUser, nameMatches } from '@bk2/shared-util-core';
 import { ExportFormats } from '@bk2/shared-categories';
 
 import { UserService } from '@bk2/user-data-access';
 import { USER_I18N_KEYS, UserI18n } from '@bk2/user-util';
+import { mirrorPrivacyUsageToPerson } from '@bk2/subject-person-util';
 
 export type { UserI18n };
 
@@ -103,6 +104,18 @@ export const UserStore = signalStore(
         return store.appStore.getTags('user');
       },
 
+      /**
+       * Mirror a user's privacy preferences (usage*) onto the linked person, which is the
+       * tenant-readable source for AppStore.getPersonPrivacySettings. No-op if there is no
+       * linked person in the cache.
+       */
+      async mirrorPrivacyToPerson(user: UserModel): Promise<void> {
+        const person = store.appStore.getPerson(user.personKey);
+        if (!person) return;
+        const updated = mirrorPrivacyUsageToPerson(person, user);
+        await store.firestoreService.updateModel<PersonModel>(PersonCollection, updated, false, undefined, undefined, store.currentUser());
+      },
+
       /******************************* actions *************************************** */
       async add(): Promise<void> {
         // not sure whether we should implement this
@@ -124,6 +137,7 @@ export const UserStore = signalStore(
         if (role === 'confirm' && data) {
           if (isUser(data, store.appStore.tenantId())) {
             await store.userService.update(data, store.currentUser());
+            await this.mirrorPrivacyToPerson(data);
           }
         }
         this.reload();
@@ -160,9 +174,10 @@ export const UserStore = signalStore(
       },
 
       async save(user: UserModel): Promise<void> {
-        await (!user.bkey ? 
-          store.userService.create(user, store.currentUser()) : 
+        await (!user.bkey ?
+          store.userService.create(user, store.currentUser()) :
           store.userService.update(user, store.currentUser()));
+        await this.mirrorPrivacyToPerson(user);
         store.appNavigationService.back();
       },
 

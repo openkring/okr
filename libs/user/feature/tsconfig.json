@@ -23,6 +23,9 @@
       "path": "../../shared/models/tsconfig.lib.json"
     },
     {
+      "path": "../../subject/person/util/tsconfig.lib.json"
+    },
+    {
       "path": "../../shared/config/tsconfig.lib.json"
     },
     {

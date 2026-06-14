@@ -21,7 +21,6 @@ import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewP
 import { browseUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
 
 import { MatrixChatService } from '@bk2/chat-data-access';
-import { UserService } from '@bk2/user-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { VcardExportService } from '@bk2/vcard-feature';
 import { ActivityService } from '@bk2/activity-data-access';
@@ -50,7 +49,6 @@ export const PersonStore = signalStore(
   withState(initialState),
   withProps(() => ({
     personService: inject(PersonService),
-    userService: inject(UserService),
     addressService: inject(AddressService),
     avatarService: inject(AvatarService),
     router: inject(Router),
@@ -82,11 +80,6 @@ export const PersonStore = signalStore(
   withProps((store) => ({
 
     i18n: store.i18nService.translateAll(PERSON_I18N_KEYS),
-
-    personUserModelResource: rxResource({
-      params: () => ({ personKey: store.personKey() }),
-      stream: ({ params }) => store.userService.readByPersonKey(params.personKey ?? '')
-    }),
 
     personResource: rxResource({
       params: () => ({
@@ -124,10 +117,9 @@ export const PersonStore = signalStore(
 
       // edit person
       person: computed(() => state.personResource.value()),
-      privacySettings: computed(() => {
-        const users = state.personUserModelResource.value();
-        return state.appStore.getPersonPrivacySettings(users?.[0]);
-      }),
+      // Privacy preferences (usage*) live on the person, which is tenant-readable, so this
+      // works for all viewers (no users-collection query, no permission error).
+      privacySettings: computed(() => state.appStore.getPersonPrivacySettings(state.personResource.value())),
     }
   }),
 

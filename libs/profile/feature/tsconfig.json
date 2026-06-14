@@ -41,6 +41,9 @@
       "path": "../../subject/person/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../subject/person/util/tsconfig.lib.json"
+    },
+    {
       "path": "../../avatar/data-access/tsconfig.lib.json"
     },
     {
