@@ -6,6 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is an Angular/Ionic project using TypeScript, Firebase, and pnpm. Use Angular signals and inputs (not legacy patterns). Check existing patterns in the codebase before implementing new features.
 
+## Skills
+
+Invoke the matching skill **before** starting work in its area — each one carries the project-specific conventions and overrides general defaults.
+
+| Skill | Use when… |
+| --- | --- |
+| `new-feature` | scaffolding a brand-new feature/entity — shared model (`FEATUREModelName`/`FEATURECollection`), the four layer libs (data-access/feature/ui/util), list + optional detail-page route, and the navigate/call/context `menuItems`. |
+| `i18n` | adding/translating/wiring any i18n string (keys, store wiring, labels to forms/ui, new-lib `de.json`, tenant overrides). |
+| `icons` | rendering or choosing an icon, the `svgIcon` pipe, icon sets, or an icon shows blank. |
+| `generating-lists` | scaffolding a new feature list view (`FEATURE-list.ts`) — header, filters, list/grid, per-item ActionSheet actions. |
+| `new-section` | creating a new CMS section type. |
+| `firebase-deploy` | deploying app/hosting, Cloud Functions, Firestore/Storage rules, or managing function secrets. |
+| `eslint` | linting or fixing lint errors (and the `nx lint` heap-OOM workaround). |
+| `fix-types` | type-checking after editing TypeScript files. |
+| `authoring-docs` | creating/saving a spec, design, or implementation plan doc. |
+
 ## Commands
 
 ```sh
@@ -180,15 +196,14 @@ See the **`firebase-deploy` skill** for all deployment commands and guidelines (
 - use Angular Signal Forms (`@angular/forms/signals`) for all forms. Build the form in the `*.form.ts` (ui component) with `form(this.formData, (path) => validateVestTree(path, <suite>))`, binding controls via `[control]`. Keep validation logic in Vest suites in the feature's `util` component and bridge them with `validateVestTree` from `@bk2/shared-util-angular`. (Do NOT use `ngx-vest-forms` / `scVestForm` / `validationConfig` — that dependency was removed in the 2026-06 Signal Forms migration.)
 - do only create form models if needed
 - a feature typically consists of FEATURE-list.ts (a list view of FEATURE[]), FEATURE-edit.modal.ts (the detail view) using FEATURE.form.ts (in ui component of the feature) as well as FEATURE.store.ts (feature related store).
-- for icons, always use `ion-icon` with the `src` attribute and `SvgIconPipe`. Never use the `name` attribute:
-    `<ion-icon slot="start" src="{{'menu' | svgIcon }}" />`
+- for all icon work (rendering, choosing a name, icon sets), use the **`icons` skill**. Core rule: always `<ion-icon src="{{ 'name' | svgIcon }}" />`, never the `name` attribute.
 
 ### Hard Rules
 
 - never install a new dependency without asking first
 - never modify the database schema (shared-models) without asking first
 - api calls for external integrations should use a firebase cloud function where possible. This Cloud functions stores the access token securely and caches token as well as data for later requests.
-- do not try to find icon assets in the code. The icons reside in the database and are loaded via url.
+- do not try to find icon assets in the code — the icons reside in the database and are loaded via url (see the **`icons` skill**).
 - Always git commit directly to main. Do not create feature branches or worktrees.
 - When creating a new library layer or feature (data-access, feature, ui, util), always create three files: `tsconfig.json`, update `tsconfig.lib.json` with `references`, and create `package.json`. Use an existing sibling lib (e.g. `libs/folder/<layer>/`) as a template. The `tsconfig.json` lists all `@bk2/*` dependencies as references; the `tsconfig.lib.json` lists only intra-domain sibling lib references; the `package.json` must have `"name": "@bk2/<lib-name>"` (with the `@bk2/` scope) and all `@bk2/*` dependencies listed. Missing or mis-named `package.json` (without `@bk2/` scope) causes `TS6059 rootDir` build errors in dependent libs because Nx can't redirect imports to the compiled declaration files.
 - when creating a new libray layer or feature, create a route for the list component (*.list) and for the detail component(*.page). Use existing routes as examples and ask user about guard permissions, if you are not sure.
