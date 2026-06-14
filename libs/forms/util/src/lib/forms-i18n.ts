@@ -11,6 +11,14 @@ export const FORM_I18N_KEYS = {
   list_title:                 PFX + 'list.title',
   list_empty:                 PFX + 'list.empty',
 
+  as_title:                   PFX + 'as.title',
+  action_builder:             PFX + 'action.builder',
+  action_settings:            PFX + 'action.settings',
+  action_export_csv:          PFX + 'action.export_csv',
+  action_export_pdf:          PFX + 'action.export_pdf',
+  action_duplicate:           PFX + 'action.duplicate',
+  action_archive:             PFX + 'action.archive',
+
   form_key:                   PFX + 'form.key.label',
   form_loading:               PFX + 'form.loading',
   form_not_found:             PFX + 'form.notfound',

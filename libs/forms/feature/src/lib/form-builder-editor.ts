@@ -65,7 +65,7 @@ function newField(type: FieldType, order: number): Field {
             <ion-title>Felder</ion-title>
             <ion-buttons slot="end">
               <ion-button (click)="save()" color="primary">
-                <ion-icon src="{{ 'save' | svgIcon }}" slot="start" />
+                <ion-icon src="{{ 'checkmark' | svgIcon }}" slot="start" />
                 Speichern
               </ion-button>
             </ion-buttons>

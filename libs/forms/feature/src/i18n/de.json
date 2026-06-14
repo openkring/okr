@@ -4,6 +4,17 @@
     "title": "Formulare",
     "empty": "Keine Formulare gefunden."
   },
+  "as": {
+    "title": "Formular-Aktionen"
+  },
+  "action": {
+    "builder": "Felder bearbeiten",
+    "settings": "Einstellungen",
+    "export_csv": "CSV exportieren",
+    "export_pdf": "PDF exportieren",
+    "duplicate": "Duplizieren",
+    "archive": "Archivieren"
+  },
   "form": {
     "key": {
       "label": "Form-Key (unveränderlich)"

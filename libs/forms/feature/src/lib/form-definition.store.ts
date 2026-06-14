@@ -45,6 +45,7 @@ export const FormDefinitionStore = signalStore(
     currentUser: computed(() => store.appStore.currentUser()),
     isLoading: computed(() => store.formsResource.isLoading()),
     canWrite: computed(() => hasRole('admin', store.appStore.currentUser())),
+    formsCount: computed(() => (store.formsResource.value() ?? []).filter((f: FormDefinitionModel) => !f.isArchived).length),
     filteredForms: computed(() => {
       const all = store.formsResource.value() ?? [];
       const term = store.searchTerm().toLowerCase();
@@ -63,6 +64,7 @@ export const FormDefinitionStore = signalStore(
       const form = new FormDefinitionModel(store.appStore.tenantId());
       const modal = await store.modalController.create({
         component: FormDefinitionEditModal,
+        cssClass: 'full-screen-modal',
         componentProps: { form, mode: 'create' },
       });
       await modal.present();
@@ -74,6 +76,7 @@ export const FormDefinitionStore = signalStore(
       if (!store.canWrite()) return;
       const modal = await store.modalController.create({
         component: FormDefinitionEditModal,
+        cssClass: 'full-screen-modal',
         componentProps: { form, mode: 'edit' },
       });
       await modal.present();
@@ -85,8 +88,10 @@ export const FormDefinitionStore = signalStore(
       if (!store.canWrite()) return;
       const modal = await store.modalController.create({
         component: FormBuilderEditor,
-        componentProps: { form },
-        cssClass: 'full-screen-modal',
+        cssClass: 'wide-modal',
+        componentProps: { 
+          form 
+        },
       });
       await modal.present();
       await modal.onDidDismiss();
