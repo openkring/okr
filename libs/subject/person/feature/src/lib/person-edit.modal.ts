@@ -74,8 +74,8 @@ import { PersonStore } from './person.store';
                     <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="!hasRole('resourceAdmin')" />
                     <bk-reservations-accordion [listId]="listId()" [readOnly]="!hasRole('resourceAdmin')" />
                     @if(hasRole('memberAdmin')) {
-                        <bk-personal-rel-accordion [person]="person" [readOnly]="true" />
-                        <bk-workrel-accordion [personKey]="personKey()" [readOnly]="true" />
+                        <bk-personal-rel-accordion [person]="person" [readOnly]="false" />
+                        <bk-workrel-accordion [personKey]="personKey()" [readOnly]="false" />
                     }
                     <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                     <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
