@@ -38,6 +38,7 @@ export interface CategoryOldI18n {
             label-placement="floating"
             interface="popover"
             [value]="selectedCategory"
+            [selectedText]="(selectedCategory.i18nBase + '.label' | translate | async) ?? ''"
             [compareWith]="compareWith">
             @for (cat of this.categories(); track cat) {
               <ion-select-option [value]="cat">
