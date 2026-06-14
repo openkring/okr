@@ -5,13 +5,17 @@ import sharedTestConfig from '../../../../vitest.shared';
 
 const libraryConfig = defineConfig({
   root: __dirname,
-  cacheDir: '../../../../node_modules/.vite/libs/cms/page/util',
+  cacheDir: '../../../../node_modules/.vite/libs/cms/page/feature',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
     setupFiles: ['./test-setup.ts'],
-    // only keep project-specific settings here
+    server: {
+      deps: {
+        inline: [/@ionic\//],
+      },
+    },
     coverage: {
-      reportsDirectory: '../../../../coverage/libs/cms/page/util',
+      reportsDirectory: '../../../../coverage/libs/cms/page/feature',
       provider: 'v8' as const,
     },
   },

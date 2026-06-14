@@ -44,6 +44,11 @@
     "image": "Bild/er hochladen",
     "file": "File/s hochladen"
   },
+  "error": {
+    "save": "Die Webseite konnte nicht gespeichert werden. Bitte versuche es erneut.",
+    "load": "Die Webseiten konnten nicht geladen werden. Bitte versuche es erneut.",
+    "delete": "Die Webseite konnte nicht gelöscht werden. Bitte versuche es erneut."
+  },
 
   "type": {
     "graph": {

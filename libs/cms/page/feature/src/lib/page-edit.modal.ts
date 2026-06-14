@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, PageModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { PageForm } from '@bk2/cms-page-ui';
@@ -12,8 +12,8 @@ import { PageStore } from './page.store';
   selector: 'bk-page-edit-modal',
   standalone: true,
   imports: [
-    Header, ChangeConfirmation,
-    PageForm, 
+    Header, ChangeConfirmation, ErrorBanner,
+    PageForm,
     IonContent
   ],
   template: `
@@ -21,6 +21,7 @@ import { PageStore } from './page.store';
     @if(showConfirmation()) {
       <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
+    <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {

@@ -47,6 +47,25 @@ Collection name: `pages`
 ## Blog Layout Types
 `minimal` | `grid` | `classic` | `magazine` | `bento` | `stream`
 
+`BlogPage` (`bk-blog-page`) reads `page.blogType` (default `minimal`) and `@switch`es to the
+matching layout component. All six share the same contract — inputs `sections`, `currentUser`,
+`editMode`; output `sectionClick` — and render each section through `bk-section-dispatcher`,
+wrapping it in an editable border when `editMode` is on. Switching `page.blogType` re-renders the
+page in the new layout live.
+
+| `blogType` | Component | Layout intent |
+|---|---|---|
+| `minimal` (default) | `BlogMinimal` | Single centered reading column (Substack/Ghost style) |
+| `grid` | `BlogGrid` | Uniform card grid |
+| `classic` | `BlogClassic` | Traditional blog list with lead/feature emphasis |
+| `magazine` | `BlogMagazine` | Editorial multi-column magazine layout |
+| `bento` | `BlogBento` | Mixed-size "bento box" tiles |
+| `stream` | `BlogStream` | Continuous feed with a search box |
+
+**Audit status (code-only):** all six components are implemented, wired into the `@switch`, and
+free of stubs/TODOs. A visual smoke test of each layout with sample data (and screenshots) is the
+remaining manual step — it requires the running app and is tracked as a follow-up.
+
 ## Page Dispatcher
 `PageDispatcher` (`bk-page-dispatcher`) is the single routable entry point for all pages. It:
 1. Receives `id` from the route (supports `@TID@` substitution).

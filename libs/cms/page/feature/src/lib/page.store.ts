@@ -4,12 +4,12 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { combineLatest, firstValueFrom, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { AppStore } from '@bk2/shared-feature';
+import { AppStore, withErrorState } from '@bk2/shared-feature';
 import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@bk2/shared-models';
 import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData } from '@bk2/shared-util-core';
-import { bkPrompt, confirm, navigateByUrl } from '@bk2/shared-util-angular';
+import { bkPrompt, confirm, downloadTextFile, exportCsv, getExportFileName, navigateByUrl } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { PageService } from '@bk2/cms-page-data-access';
@@ -44,6 +44,7 @@ export const initialState: PageState = {
 
 export const _PageStore = signalStore(
   withState(initialState),
+  withErrorState(),
   withProps(() => ({
     appStore: inject(AppStore),
     pageService: inject(PageService),
@@ -63,14 +64,20 @@ export const _PageStore = signalStore(
   }),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(PAGE_I18N_KEYS),
-
+  })),
+  withProps((store) => ({
     pagesResource: rxResource({
       params: () => ({
         currentUser: store.currentUser()
       }),
       stream: ({params}) => {
         return store.pageService.list().pipe(
-          debugListLoaded<PageModel>('PageStore.pages', params.currentUser)
+          debugListLoaded<PageModel>('PageStore.pages', params.currentUser),
+          catchError(error => {
+            debugData('PageStore.pagesResource: stream error', error, params.currentUser);
+            store.setError(store.i18n.error_load());
+            return of([] as PageModel[]);
+          })
         );
       }
     }),
@@ -110,6 +117,11 @@ export const _PageStore = signalStore(
                 };
               })
             );
+          }),
+          catchError(error => {
+            debugData('PageStore.pageResource: stream error', error, params.currentUser);
+            store.setError(store.i18n.error_load());
+            return of({ page: undefined, sections: [] as SectionModel[] });
           })
         );
       }
@@ -249,10 +261,16 @@ export const _PageStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isPage(data, store.tenantId())) {
-            page.bkey === '' ?
-              await store.pageService.create(data, store.currentUser()) :
-              await store.pageService.update(data, store.currentUser());
-            this.reload();
+            store.clearError();
+            try {
+              page.bkey === '' ?
+                await store.pageService.create(data, store.currentUser()) :
+                await store.pageService.update(data, store.currentUser());
+              this.reload();
+            } catch (error) {
+              store.setError(store.i18n.error_save());
+              throw error;
+            }
           }
         }
       },
@@ -267,8 +285,14 @@ export const _PageStore = signalStore(
         if (readOnly) return;
         const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
-          await store.pageService.delete(page, store.currentUser());
-          this.reload();
+          store.clearError();
+          try {
+            await store.pageService.delete(page, store.currentUser());
+            this.reload();
+          } catch (error) {
+            store.setError(store.i18n.error_delete());
+            throw error;
+          }
         }
       },
 
@@ -280,8 +304,14 @@ export const _PageStore = signalStore(
       async removeSectionById(sectionKey: string): Promise<void> {
         const page = store.page() ?? die('PageStore.deleteSectionFromPage: page is mandatory.');
         page.sections.splice(page.sections.indexOf(sectionKey), 1);
-        await store.pageService.update(page, store.currentUser());
-        this.reloadCurrentPage();
+        store.clearError();
+        try {
+          await store.pageService.update(page, store.currentUser());
+          this.reloadCurrentPage();
+        } catch (error) {
+          store.setError(store.i18n.error_save());
+          throw error;
+        }
       },
 
      /**
@@ -311,8 +341,14 @@ export const _PageStore = signalStore(
           const sortedSections = (data as SectionModel[]).map((section: SectionModel) => section.bkey ?? die('PageStore.sortSections: sectionKey is mandatory.'));
           const page = store.page() ?? die('PageStore.sortSections: page is mandatory.');
           page.sections = sortedSections;
-          await store.pageService.update(page, store.currentUser());
-          this.reloadCurrentPage();
+          store.clearError();
+          try {
+            await store.pageService.update(page, store.currentUser());
+            this.reloadCurrentPage();
+          } catch (error) {
+            store.setError(store.i18n.error_save());
+            throw error;
+          }
         }
       },
 
@@ -323,8 +359,14 @@ export const _PageStore = signalStore(
         const page = store.page();
         if (!page) return;
         page.sections.unshift(sectionId);
-        store.pageService.update(page, store.currentUser());
-        this.reloadCurrentPage();
+        store.clearError();
+        try {
+          await store.pageService.update(page, store.currentUser());
+          this.reloadCurrentPage();
+        } catch (error) {
+          store.setError(store.i18n.error_save());
+          throw error;
+        }
       },
 
       /**
@@ -357,8 +399,21 @@ export const _PageStore = signalStore(
         await navigateByUrl(store.router, url);
       },
 
+      /**
+       * Export the currently-filtered pages. `type === 'csv'` downloads a CSV
+       * (bkey, name, type, state, tags); any other value downloads pretty JSON.
+       */
       async export(type: string): Promise<void> {
-        console.log(`PageStore.export(${type}) is not yet implemented.`);
+        const pages = store.filteredPages() ?? [];
+        if (type === 'csv') {
+          const rows = [
+            ['bkey', 'name', 'type', 'state', 'tags'],
+            ...pages.map(p => [p.bkey ?? '', p.name ?? '', p.type ?? '', p.state ?? '', p.tags ?? ''])
+          ];
+          await exportCsv(rows, getExportFileName('pages', 'csv'));
+        } else {
+          await downloadTextFile(JSON.stringify(pages, null, 2), getExportFileName('pages', 'json'));
+        }
       },
 
       async print(): Promise<void> {

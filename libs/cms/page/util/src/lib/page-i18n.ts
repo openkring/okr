@@ -71,6 +71,10 @@ export const PAGE_I18N_KEYS = {
   unknownpagetype_logoAltText:  PFX + 'unknownpagetype.logoAltText',
   unknownpagetype_bannerAltText: PFX + 'unknownpagetype.bannerAltText',
 
+  error_save:                   PFX + 'error.save',
+  error_load:                   PFX + 'error.load',
+  error_delete:                 PFX + 'error.delete',
+
   as_title:                     '@actionsheet.title',
   ok:                           '@ok',
   cancel:                       '@cancel',

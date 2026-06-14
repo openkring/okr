@@ -1,9 +1,9 @@
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { PageModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
+import { BkListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -16,9 +16,10 @@ import { PageStore } from './page.store';
   standalone: true,
   imports: [
     SvgIconPipe,
-    Spinner, EmptyList, Menu, ListFilter,
+    BkListSkeleton, EmptyList, ErrorBanner, Menu, ListFilter,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
-    IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList, IonPopover
+    IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList, IonPopover,
+    IonInfiniteScroll, IonInfiniteScrollContent
   ],
   template: `
   <ion-header>
@@ -75,15 +76,16 @@ import { PageStore } from './page.store';
       </ion-item>
     </ion-toolbar>
   </ion-header>
+<bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
 <ion-content #content>
   @if(isLoading()) {
-    <bk-spinner />
+    <bk-list-skeleton [rows]="6" />
   } @else {
     @if (filteredPages().length === 0) {
       <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
-        @for(page of filteredPages(); track $index) {
+        @for(page of visiblePages(); track page.bkey) {
           <ion-item (click)="showActions(page)">
             <ion-label class="ion-hide-md-down">{{ page.bkey }}</ion-label>
             <ion-label>{{ page.name }}</ion-label>
@@ -91,6 +93,11 @@ import { PageStore } from './page.store';
           </ion-item>
         }
       </ion-list>
+      @if(hasMore()) {
+        <ion-infinite-scroll (ionInfinite)="loadMore($event)">
+          <ion-infinite-scroll-content />
+        </ion-infinite-scroll>
+      }
     }
   }
 </ion-content>
@@ -109,8 +116,12 @@ export class PageList {
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected selectedType = linkedSignal(() => this.store.selectedType());
 
-  // computed
+  // incremental rendering (ion-infinite-scroll)
+  private readonly pageSize = 50;
+  protected visibleCount = signal(this.pageSize);
   protected filteredPages = computed(() => this.store.filteredPages() || []);
+  protected visiblePages = computed(() => this.filteredPages().slice(0, this.visibleCount()));
+  protected hasMore = computed(() => this.visibleCount() < this.filteredPages().length);
   protected pagesCount = computed(() => this.store.pagesCount());
   protected selectedPagesCount = computed(() => this.filteredPages().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -123,20 +134,34 @@ export class PageList {
   // passing constants to the template
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
+  /******************************** incremental rendering ******************************************* */
+  protected loadMore(event: InfiniteScrollCustomEvent): void {
+    this.visibleCount.update((c) => c + this.pageSize);
+    event.target.complete();
+  }
+
+  private resetWindow(): void {
+    this.visibleCount.set(this.pageSize);
+  }
+
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
+    this.resetWindow();
     this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
+    this.resetWindow();
     this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
+    this.resetWindow();
     this.store.setSelectedType(type);
   }
 
   protected onStateSelected(state: string): void {
+    this.resetWindow();
     this.store.setSelectedState(state);
   }
 
