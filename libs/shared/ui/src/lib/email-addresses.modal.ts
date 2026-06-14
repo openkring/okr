@@ -15,9 +15,17 @@ const EmailAddressStore = signalStore(
   withProps(() => ({ i18nService: inject(I18nService) })),
   withProps(store => ({
     i18n: store.i18nService.translateAll({
+      membership_email_title: '@shared/ui.membership.email.title',
+      membership_email_empty: '@shared/ui.membership.email.empty',
+      membership_email_copy: '@shared/ui.membership.email.copy.label',
+      membership_email_copy_conf: '@shared/ui.membership.email.copy.conf',
+      membership_email_address_main: '@shared/ui.membership.email.address.main',
+      membership_email_address_cc: '@shared/ui.membership.email.address.cc',
+
       as_edit:  '@shared/ui.actionsheet.address.edit',
       as_view:  '@shared/ui.actionsheet.address.view',
       as_hide:  '@shared/ui.actionsheet.address.hide',
+      as_title: '@actionsheet.title',
       cancel:   '@cancel',
     }),
   })),
@@ -36,20 +44,20 @@ const EmailAddressStore = signalStore(
     IonList, IonItem, IonNote,
   ],
   template: `
-    <bk-header [i18n]="{ title: '@membership.operation.emailAddresses.title' }" [isModal]="true" />
+    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content>
       <ion-segment [(ngModel)]="activeSegment">
         <ion-segment-button value="main">
-          <ion-label>Hauptadressen</ion-label>
+          <ion-label>{{ store.i18n.membership_email_address_main() }}</ion-label>
         </ion-segment-button>
         <ion-segment-button value="cc">
-          <ion-label>cc: Adressen</ion-label>
+          <ion-label>{{ store.i18n.membership_email_address_cc() }}</ion-label>
         </ion-segment-button>
       </ion-segment>
 
       @if(activeSegment() === 'main') {
         @if(visibleMainEmails().length === 0) {
-          <ion-item lines="none"><ion-note class="ion-padding">{{ '@membership.operation.emailAddresses.empty' }}</ion-note></ion-item>
+          <ion-item lines="none"><ion-note class="ion-padding">{{ empty() }}</ion-note></ion-item>
         } @else {
           <ion-list lines="full">
             @for(entry of visibleMainEmails(); track entry.email) {
@@ -66,7 +74,7 @@ const EmailAddressStore = signalStore(
 
       @if(activeSegment() === 'cc') {
         @if(visibleCcEmails().length === 0) {
-          <ion-item lines="none"><ion-note class="ion-padding">{{ '@membership.operation.emailAddresses.empty' }}</ion-note></ion-item>
+          <ion-item lines="none"><ion-note class="ion-padding">{{ empty() }}</ion-note></ion-item>
         } @else {
           <ion-list lines="full">
             @for(entry of visibleCcEmails(); track entry.email) {
@@ -85,7 +93,7 @@ const EmailAddressStore = signalStore(
       <ion-toolbar>
         <ion-buttons slot="end">
           <ion-button color="primary" [disabled]="currentCount() === 0" (click)="copy()">
-            {{ '@membership.operation.emailAddresses.copy' }} ({{ currentCount() }})
+            {{ copy2() }} ({{ currentCount() }})
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -97,17 +105,28 @@ export class EmailAddressesModal {
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
   private readonly env = inject(ENV);
-  private readonly emailStore = inject(EmailAddressStore);
+  protected readonly store = inject(EmailAddressStore);
 
+  // inputs
   public mainEmails = input.required<EmailEntry[]>();
   public ccEmails = input.required<EmailEntry[]>();
   public canChange = input(false);
 
+  // i18n
+  protected title = computed(() => this.store.i18n.membership_email_title());
+  protected empty = computed(() => this.store.i18n.membership_email_empty());
+  protected copy2 = computed(() => this.store.i18n.membership_email_copy());
+  protected copy_conf = computed(() => this.store.i18n.membership_email_copy_conf());
+
+  // signals
   protected readonly activeSegment = linkedSignal<Segment>(() => 'main');
   private readonly hiddenEmails = signal<Set<string>>(new Set());
 
+  // derived
   protected readonly visibleMainEmails = computed(() =>
-    this.mainEmails().filter(e => !this.hiddenEmails().has(e.email))
+    this.mainEmails()
+      .filter(e => !this.hiddenEmails().has(e.email))
+      .sort((a, b) => a.lastName.localeCompare(b.lastName))
   );
 
   protected readonly visibleCcEmails = computed(() =>
@@ -118,16 +137,17 @@ export class EmailAddressesModal {
     this.activeSegment() === 'main' ? this.visibleMainEmails().length : this.visibleCcEmails().length
   );
 
+  // actions
   protected async showActions(entry: EmailEntry): Promise<void> {
     const url = this.env.services.imgixBaseUrl;
-    const opts: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const opts: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     if (this.canChange()) {
-      opts.buttons.push(createActionSheetButton('person.edit', this.emailStore.i18n.as_edit(), url, 'edit'));
+      opts.buttons.push(createActionSheetButton('person.edit', this.store.i18n.as_edit(), url, 'edit'));
     } else {
-      opts.buttons.push(createActionSheetButton('person.view', this.emailStore.i18n.as_view(), url, 'show'));
+      opts.buttons.push(createActionSheetButton('person.view', this.store.i18n.as_view(), url, 'show'));
     }
-    opts.buttons.push(createActionSheetButton('address.hide', this.emailStore.i18n.as_hide(), url, 'eye-off'));
-    opts.buttons.push(createActionSheetButton('cancel', this.emailStore.i18n.cancel(), url, 'cancel'));
+    opts.buttons.push(createActionSheetButton('address.hide', this.store.i18n.as_hide(), url, 'eye-off'));
+    opts.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), url, 'cancel'));
 
     const sheet = await this.actionSheetController.create(opts);
     await sheet.present();
@@ -150,6 +170,6 @@ export class EmailAddressesModal {
   protected async copy(): Promise<void> {
     const emails = this.activeSegment() === 'main' ? this.visibleMainEmails() : this.visibleCcEmails();
     const text = emails.map(e => e.email).join(', ');
-    await copyToClipboardWithConfirmation(this.toastController, text, '@subject.address.operation.emailCopy.conf');
+    await copyToClipboardWithConfirmation(this.toastController, text, this.copy_conf());
   }
 }

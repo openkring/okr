@@ -55,6 +55,20 @@
       }
     }
   },
+  "membership": {
+    "email": {
+      "title": "E-Mail Adressen",
+      "empty": "Keine E-Mail Adressen vorhanden.",
+      "copy": {
+        "label": "Kopieren",
+        "conf": "Die E-Mails wurden kopiert."
+      },
+      "address": {
+        "main": "Hauptadressen",
+        "cc": "cc: Adressen"
+      }
+    }
+  },
   "text": {
     "edit": "Text ändern"
   },

@@ -5,6 +5,7 @@ export type EmailEntry = {
   email: string;
   memberKey: string;
   memberName: string;
+  lastName: string;
 };
 
 /**
@@ -18,8 +19,9 @@ export function getMainEmailAddresses(persons: PersonModel[]): EmailEntry[] {
       email: p.favEmail!,
       memberKey: p.bkey ?? '',
       memberName: getFullName(p.firstName, p.lastName),
+      lastName: p.lastName ?? '',
     }))
-    .sort((a, b) => a.email.localeCompare(b.email));
+    .sort((a, b) => a.lastName.localeCompare(b.lastName));
 }
 
 /**
@@ -36,7 +38,8 @@ export function getCcEmailAddresses(persons: PersonModel[], allCcAddresses: Addr
         email: a.email,
         memberKey: person?.bkey ?? '',
         memberName: getFullName(person?.firstName, person?.lastName),
+        lastName: person?.lastName ?? '',
       };
     })
-    .sort((a, b) => a.email.localeCompare(b.email));
+    .sort((a, b) => a.lastName.localeCompare(b.lastName));
 }
