@@ -346,7 +346,7 @@ export class MembershipList {
       actionSheetOptions.buttons.push({
         text: this.store.i18n.copy_email_label(),
         icon: getSvgIconUrl(this.imgixBaseUrl, 'copy'),
-        handler: () => { this.store.copy(email, '@subject.person.operation.copy.email.conf'); }
+        handler: () => { this.store.copy(email); }
       });
       actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.store.i18n.send_email(), this.imgixBaseUrl, 'email'));
     }
@@ -356,7 +356,7 @@ export class MembershipList {
       actionSheetOptions.buttons.push({
         text: this.store.i18n.copy_phone_label(),
         icon: getSvgIconUrl(this.imgixBaseUrl, 'copy'),
-        handler: () => { this.store.copy(phone, '@subject.person.operation.copy.phone.conf'); }
+        handler: () => { this.store.copy(phone); }
       });
       actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.store.i18n.call_phone(), this.imgixBaseUrl, 'tel'));
     }

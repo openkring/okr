@@ -899,7 +899,7 @@ export const _MembershipStore = signalStore(
         }
       },
 
-      async copy(value: string, label: string): Promise<void> {
+      async copy(value: string, label?: string): Promise<void> {
         await copyToClipboardWithConfirmation(store.toastController, value ?? '', label);
       },
 
