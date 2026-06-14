@@ -25,6 +25,7 @@ export const DOCUMENT_I18N_KEYS = {
   create_conf:      '@document/feature.create.conf',
   create_error:     '@document/feature.create.error',
   download:         '@document/feature.download',
+  share:            '@document/feature.share',
 
   image_add:        '@document/feature.image.add',
   image_select:     '@document/feature.image.select',

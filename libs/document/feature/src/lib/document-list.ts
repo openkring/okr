@@ -293,6 +293,7 @@ export class DocumentList {
       actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.store.i18n.download(), this.imgixBaseUrl, 'download'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.share', this.store.i18n.share(), this.imgixBaseUrl, 'share'));
     actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.store.i18n.revisions(), this.imgixBaseUrl, 'timeline'));
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
@@ -317,6 +318,9 @@ export class DocumentList {
           break;
         case 'document.download':
           await this.store.download(document, this.readOnly());
+          break;
+        case 'document.share':
+          await this.store.share(document);
           break;
         case 'document.update':
           await this.store.update(document, this.readOnly());

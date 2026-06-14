@@ -8,8 +8,8 @@ import { firstValueFrom, Observable, of } from 'rxjs';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, DocumentCollection, DocumentModel, DocumentModelName, FolderModel } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
-import { confirm, AppNavigationService } from '@bk2/shared-util-angular';
+import { chipMatches, debugItemLoaded, debugListLoaded, fileName, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { confirm, AppNavigationService, downloadFile } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { DocumentService } from '@bk2/document-data-access';
@@ -396,6 +396,18 @@ export const DocumentStore = signalStore(
       async download(document?: DocumentModel, readOnly = true): Promise<void> {
         if (!document || readOnly) return;
         window.open(document.url, '_blank');
+      },
+
+      /**
+       * Share an internal document via the platform share sheet (native + mobile web)
+       * or save it (desktop). Fetches the Firebase Storage download URL into a blob and
+       * hands it to the platform-aware downloadFile() helper. Unlike download(), this is
+       * available to read-only users too — sharing is a read operation.
+       */
+      async share(document?: DocumentModel): Promise<void> {
+        if (!document?.url) return;
+        const name = fileName(document.fullPath) || document.title || 'document';
+        await downloadFile(document.url, name);
       },
 
       async showRevisions(document: DocumentModel): Promise<void> {
