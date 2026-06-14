@@ -68,14 +68,14 @@ import { OrgStore } from './org.store';
                 <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
                 <bk-membership-accordion [member]="org" [readOnly]="isReadOnly()" modelType="org" />
 
-                @if(hasRole('privileged') || !isReadOnly()) {
+                @if(hasRole('privileged') || hasRole('memberAdmin') || hasRole('resourceAdmin')) {
                     @if(resource(); as resource) {
                       <bk-ownerships-accordion [owner]="org" [defaultResource]="resource" ownerModelType="org" [readOnly]="isReadOnly()" />
                       <bk-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
-                      <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                     }
                     <bk-members-accordion [orgKey]="orgKey()" [orgType]="orgType()" [readOnly]="isReadOnly()" />
                     <bk-bill-accordion [listId]="orgKey()" />
+                    <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                     <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
                 }
               </ion-accordion-group>

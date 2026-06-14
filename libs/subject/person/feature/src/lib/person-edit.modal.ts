@@ -64,25 +64,25 @@ import { PersonStore } from './person.store';
             />
         }
         @if(person(); as person) {
-            <ion-card>
+          <ion-card>
             <ion-card-content class="ion-no-padding">
-                <ion-accordion-group value="addresses" [multiple]="true">
+              <ion-accordion-group value="addresses" [multiple]="true">
                 <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
                 <bk-membership-accordion [member]="person" [readOnly]="isReadOnly()" />
 
-                @if(hasRole('privileged') || !isReadOnly()) {
-                    <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="isReadOnly()" />
-                    <bk-reservations-accordion [listId]="listId()" [readOnly]="hideAddButton()" />
-                    @if(hasRole('privileged') || hasRole('memberAdmin')) {
-                        <bk-personal-rel-accordion [person]="person" [readOnly]="isReadOnly()" />
-                        <bk-workrel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
-                        <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
-                        <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
+                @if(hasRole('privileged') || hasRole('memberAdmin') || hasRole('resourceAdmin')) {
+                    <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="!hasRole('resourceAdmin')" />
+                    <bk-reservations-accordion [listId]="listId()" [readOnly]="!hasRole('resourceAdmin')" />
+                    @if(hasRole('memberAdmin')) {
+                        <bk-personal-rel-accordion [person]="person" [readOnly]="true" />
+                        <bk-workrel-accordion [personKey]="personKey()" [readOnly]="true" />
                     }
+                    <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
+                    <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                 }
-                </ion-accordion-group>
+              </ion-accordion-group>
             </ion-card-content>
-            </ion-card>
+          </ion-card>
         }
     </ion-content>
   `
@@ -115,10 +115,6 @@ export class PersonEditModal {
   protected listId = computed(() => 'p_' + this.personKey());
   protected priv = computed(() => this.store.privacySettings());
   protected defaultResource = computed(() => this.store.defaultResource());
-  protected hideAddButton = computed(() => {
-    if (this.hasRole('resourceAdmin')) return false;
-    return this.isReadOnly();
-  });
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
