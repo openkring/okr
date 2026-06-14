@@ -9,7 +9,7 @@ import { Photo } from '@capacitor/camera';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
-import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl } from '@bk2/shared-util-angular';
+import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@bk2/shared-util-angular';
 import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { EmailAddressesModal, MapViewModal } from '@bk2/shared-ui';
 import { Languages } from '@bk2/shared-categories';
@@ -24,6 +24,7 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { VcardExportService } from '@bk2/vcard-feature';
+import { ActivityService } from '@bk2/activity-data-access';
 
 
 export type PersonState = {
@@ -60,6 +61,7 @@ export const PersonStore = signalStore(
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
     matrixService: inject(MatrixChatService),
+    activityService: inject(ActivityService),
     vcardExportService: inject(VcardExportService),
     i18nService: inject(I18nService),
   })),
@@ -351,8 +353,18 @@ export const PersonStore = signalStore(
          * 
          */
         async chat(person: PersonModel): Promise<void> {
+          try {
+            // Matrix is initialized in the background after login (MatrixInitializationService).
+            // Await the idempotent, promise-cached init so opening a direct chat works even
+            // before the user has visited the chat overview (which otherwise primes the client).
+            await store.matrixService.ensureInitialized();
             const room = await store.matrixService.createDirectRoom(person.bkey);
             await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
+          } catch (error) {
+            const msg = error instanceof Error ? error.message : 'Could not start chat';
+            void store.activityService.log('chat', 'createdirect', store.currentUser(), `ERROR: ${person.bkey} ${msg}`);
+            await showToast(store.toastController, msg);
+          }
         },
 
         async isPersonUser(personKey: string): Promise<boolean> {

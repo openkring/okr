@@ -677,6 +677,10 @@ export const _MembershipStore = signalStore(
        */
       async chat(membership: MembershipModel): Promise<void> {
         try {
+          // Matrix is initialized in the background after login (MatrixInitializationService).
+          // Await the idempotent, promise-cached init so opening a direct chat works even
+          // before the user has visited the chat overview (which otherwise primes the client).
+          await store.matrixService.ensureInitialized();
           const room = await store.matrixService.createDirectRoom(membership.memberKey);
           void store.activityService.log('chat', 'createdirect', store.currentUser(), `SUCCESS: ${membership.memberKey}`);
           await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
