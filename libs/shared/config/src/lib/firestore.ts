@@ -22,13 +22,24 @@ export function isSafari(): boolean {
   return /safari/i.test(ua) && !/OPR\/|opera|chrome|chromium|crios|firefox|fxios/i.test(ua);
 }
 
+// Detects Firefox (desktop and iOS 'fxios'). Firefox shares Safari's WebChannel/IndexedDB
+// sensitivities under Enhanced Tracking Protection (strict / "block cookies and site data" /
+// private mode): the streaming transport can stall and the IndexedDB persistent cache can hang
+// on open, leaving Firestore's first snapshot pending forever. So Firefox gets the same
+// long-polling transport as Safari and skips the persistent cache.
+export function isFirefox(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /firefox|fxios/i.test(navigator.userAgent);
+}
+
 /**
  * Firestore initialization.
  *
- * Transport: Safari forces long polling (WebChannel/WebSocket reliability issue on Safari/iOS).
- * Other browsers use auto-detection.
+ * Transport: Safari and Firefox force long polling (WebChannel/WebSocket reliability issue on
+ * Safari/iOS and on Firefox under Enhanced Tracking Protection). Other browsers use auto-detection.
  *
- * Cache: persistentLocalCache with persistentSingleTabManager on every browser, including Safari.
+ * Cache: Firefox uses in-memory cache (its IndexedDB open can hang under ETP/private mode, see
+ * isFirefox). All other browsers use persistentLocalCache with persistentSingleTabManager.
  * The historical "no IndexedDB on Safari" carve-out was needed for firebase-js-sdk < 11.10
  * (issue #9056, fixed by PR #9162 in Jul 2025); v12.x no longer hits it. Single-tab manager
  * avoids the open multi-tab leader-election edge cases (#6511, #8314, #6806) which surface
@@ -43,6 +54,9 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
   factory: () => {
     const app = getApp();
     const isSafariBrowser = isSafari();
+    const isFirefoxBrowser = isFirefox();
+    // Safari and Firefox both need long polling (WebChannel reliability issue).
+    const useLongPolling = isSafariBrowser || isFirefoxBrowser;
 
     if (typeof navigator !== 'undefined' && navigator.storage?.persist) {
       navigator.storage.persist()
@@ -51,28 +65,39 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
     }
 
     const baseOptions = {
-      experimentalForceLongPolling: isSafariBrowser,
-      experimentalAutoDetectLongPolling: !isSafariBrowser,
+      experimentalForceLongPolling: useLongPolling,
+      experimentalAutoDetectLongPolling: !useLongPolling,
       ignoreUndefinedProperties: true,
     };
 
     let firestore: Firestore;
     let cacheMode: 'persistent-single-tab' | 'memory-fallback';
-    try {
-      firestore = initializeFirestore(app, {
-        ...baseOptions,
-        localCache: persistentLocalCache({
-          tabManager: persistentSingleTabManager({}),
-        }),
-      });
-      cacheMode = 'persistent-single-tab';
-    } catch (e) {
-      console.warn('Firestore persistent cache init failed, falling back to memory cache:', e);
+    // Firefox: skip the IndexedDB persistent cache outright. Its open is async, so a hang under
+    // ETP/private mode escapes the try/catch below (which only catches a synchronous throw) and
+    // stalls the first snapshot forever. Memory cache avoids that; offline persistence is dropped.
+    if (isFirefoxBrowser) {
       firestore = initializeFirestore(app, {
         ...baseOptions,
         localCache: memoryLocalCache(),
       });
       cacheMode = 'memory-fallback';
+    } else {
+      try {
+        firestore = initializeFirestore(app, {
+          ...baseOptions,
+          localCache: persistentLocalCache({
+            tabManager: persistentSingleTabManager({}),
+          }),
+        });
+        cacheMode = 'persistent-single-tab';
+      } catch (e) {
+        console.warn('Firestore persistent cache init failed, falling back to memory cache:', e);
+        firestore = initializeFirestore(app, {
+          ...baseOptions,
+          localCache: memoryLocalCache(),
+        });
+        cacheMode = 'memory-fallback';
+      }
     }
 
     const _env = Inject(ENV) as BkEnvironment;
@@ -84,7 +109,8 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
 
     console.log('Firestore initialized:', {
       isSafari: isSafariBrowser,
-      longPolling: isSafariBrowser,
+      isFirefox: isFirefoxBrowser,
+      longPolling: useLongPolling,
       cache: cacheMode,
       emulator: _env.useEmulators,
       mockUserToken: mockUserToken ? 'configured' : 'undefined',
