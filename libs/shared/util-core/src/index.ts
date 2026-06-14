@@ -17,6 +17,7 @@ export * from './lib/regasoft.util';
 export * from './lib/search.util';
 export * from './lib/sort.util';
 export * from './lib/text.util';
+export * from './lib/tokenize.util';
 export * from './lib/type.util';
 export * from './lib/url.util';
 export * from './lib/validate.util';

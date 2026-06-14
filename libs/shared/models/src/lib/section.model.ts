@@ -18,14 +18,14 @@ export const SectionModelName = 'section';
 export type SectionType =
     'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' |
     'people' | 'responsibility' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
-    'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat' | 'trip-stats' | 'form';
+    'news' | 'activities' | 'messages' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat' | 'trip-stats' | 'form';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -68,6 +68,8 @@ export interface MemberAgeSection extends BaseSection {
 
 export interface MemberAgeConfig {
   orgId: string;
+  chartType?: 'bar' | 'table'; // display the age distribution as a bar chart or a table
+  sortOrder?: 'asc' | 'desc';  // sort the age-group rows
 }
 
 // --------------------------------------- MEMBER CAT ----------------------------------------
@@ -78,6 +80,9 @@ export interface MemberCatSection extends BaseSection {
 
 export interface MemberCatConfig {
   orgId: string;
+  categoryFilter?: string;     // limit to a single membership category (empty = all)
+  chartType?: 'bar' | 'table'; // display the category distribution as a bar chart or a table
+  sortOrder?: 'asc' | 'desc';  // sort the category rows
 }
 
 // --------------------------------------- TRIP STATS ----------------------------------------
@@ -107,7 +112,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | FilesConfig | LinksConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -299,25 +304,6 @@ export interface EventsConfig {
   showEventLocation: boolean; // if true, show event location
 }
 
-// --------------------------------------- FILES ----------------------------------------
-/**
- * Shows the a file list.
- * Files are a selection of documents.
- * The files section properties can be used to configure how many files to show, and how to select these files.
- * The files section can also have a "more" button that navigates to a specified url, normally the list of all documents.
- * tbd: only the most recent updated files ?
- */
-export interface FilesSection extends BaseSection {
-  type: 'files';
-  properties: FilesConfig;
-}
-
-export interface FilesConfig {
-  // title is from BaseSection
-  moreUrl: string; // url to navigate to when 'more' button is clicked
-  maxItems: number; // maximum number of files to show
-}
-
 // --------------------------------------- HERO ----------------------------------------
 export interface HeroSection extends BaseSection {
   type: 'hero';
@@ -357,25 +343,6 @@ export interface InvitationsConfig {
   maxItems: number; // maximum number of invitations to show
   showPastItems: boolean; // if true, show past events
   showUpcomingItems: boolean; // if true, show upcoming events
-}
-
-// --------------------------------------- LINKS ----------------------------------------
-/**
- * Shows the a list of links.
- * Links are a selection of URLs, nicely presented with a logo, title and description.
- * The links section properties can be used to configure how many links to show, and how to select these links.
- * The links section can also have a "more" button that navigates to a specified url, normally the list of all links.
- * tbd: only the most recent updated links ?
- */
-export interface LinksSection extends BaseSection {
-  type: 'links';
-  properties: LinksConfig;
-}
-
-export interface LinksConfig {
-  // title is from BaseSection
-  moreUrl: string; // url to navigate to when 'more' button is clicked
-  maxItems: number; // maximum number of links to show
 }
 
 // --------------------------------------- MAP ----------------------------------------
@@ -487,8 +454,11 @@ export interface RagSection extends BaseSection {
 }
 
 export interface RagConfig {
-  model: 'gemini-3-flash-preview';
-  storeName: 'scs-rag'
+  model: string;            // LLM model id, e.g. 'gemini-3-flash-preview'
+  storeName: string;        // vector store name, e.g. 'scs-rag'
+  systemPrompt?: string;    // optional system prompt steering the assistant
+  documentScope?: string;   // optional folder path or tag limiting the retrieved documents
+  maxTokens?: number;       // optional cap on the response length
 }
 
 // --------------------------------------- SLIDER ----------------------------------------

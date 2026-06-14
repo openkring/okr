@@ -1,4 +1,5 @@
 export * from './lib/app.store';
+export * from './lib/with-error-state';
 export * from './lib/select-i18n';
 export * from './lib/calendar-select.modal';
 export * from './lib/group-select.modal';

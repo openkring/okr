@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { AlbumStyle } from './enums/album-style.enum';
@@ -395,6 +395,14 @@ export const MEMBER_CAT_SECTION_SHAPE = {
   type: 'member-cat' as const,
   properties: MEMBER_CAT_CONFIG_SHAPE,
 } as MemberCatSection;
+
+// --------------------------------------- RAG ----------------------------------------
+export const RAG_CONFIG_SHAPE: RagConfig = { model: 'gemini-3-flash-preview', storeName: 'scs-rag' };
+export const RAG_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'rag' as const,
+  properties: RAG_CONFIG_SHAPE,
+} as RagSection;
 
 // --------------------------------------- FORM ----------------------------------------
 export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {
