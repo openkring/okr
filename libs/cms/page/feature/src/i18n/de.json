@@ -93,6 +93,29 @@
     "abstract": "Es wurde eine HTML-Seite mit einem unbekannten Typ aufgerufen. Bitte versuche es erneut mit einer anderen URL, dh. klicke oben links aufs Menü und wähle eine Funktion.",
     "logoAltText": "Logo des Seeclub Stäfa",
     "bannerAltText": "Hintergrundbild aus dem Schilf heraus mit Sonnenuntergang auf dem Zürichsee."
+  },
+
+  "content_state": {
+    "label": "Status",
+    "helper": "Der Status hilft den Erstellern von Content beim Erzeugen. z.B. können neue Seiten im Entwurf oder während eines Reviews erst wenigen Benutzern angezeigt werden.",
+    "all": {
+      "label": "Alle Stati"
+    },
+    "draft": {
+      "label": "Entwurf"
+    },
+    "inReview": {
+      "label": "Review"
+    },
+    "published": {
+      "label": "Veröffentlicht"
+    },
+    "decommitted": {
+      "label": "Veraltet"
+    },
+    "archived": {
+      "label": "Archiviert"
+    }
   }
 }
 

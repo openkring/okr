@@ -17,160 +17,157 @@
       "delete": "Der Menüpunkt konnte nicht gelöscht werden. Bitte versuche es erneut."
     },
 
-
-    "menu": {
-      "main": {
-        "aoc": {
-          "title": "AOC - Operation Centre",
-          "icon": "Icon Tests",
-          "translation": "Übersetzungs Tests",
-          "storage": "Storage Tests",
-          "admin": "Admin Operationen",
-          "auth": "Berechtigungen",
-          "content": "Content",
-          "data": "Daten",
-          "statistics": "Statistiken"
-        },
-        "board": {
-          "docs": "Dokumente",
-          "igsport": "IG Sport Stäfa (Dateien)",
-          "groups": "Gruppen",
-          "meetings": "Vorstandssitzungen",
-          "orgs": "Organisationen",
-          "projects": "Projekte",
-          "title": "Vorstand",
-          "todos": "Aufgaben"
-        },
-        "boat": {
-          "title": "Boote",
-          "club": "Club Boote",
-          "archived": "Archivierte Boote",
-          "private": "Privat-Skiffs",
-          "info": "Bootsstatistiken",
-          "all": "Alle Boote",
-          "test": "Test Boote"
-        },
-        "boathouse": {
-          "title": "Bootshaus Projekt",
-          "history": "Rückblick",
-          "variants": "Variantenübersicht",
-          "status": "Projektstand",
-          "1haus": "Variante 1Haus",
-          "2haus": "Variante 2Haus",
-          "compare": "Variantenvergleich",
-          "funding": "Finanzierung"
-        },
-        "calEvent": {
-          "title": "Anlässe",
-          "calendar": "Kalender",
-          "list": "Anlässe"
-        },
-        "cms": {
-          "title": "CMS - Content Management",
-          "pages": "Webseiten",
-          "sections": "Sektionen",
-          "menus": "Menüs",
-          "documents": "Dokumente",
-          "testcms": "CMS Tests",
-          "locations": "Orte"
-        },
-        "finance": {
-          "title": "Finanzen",
-          "fees": "Beiträge",
-          "srvFees": "SRV Gebühren",
-          "docs": "Finanzunterlagen",
-          "invoice-positions": "Rechnungspositionen"
-        },
-        "gallery": {
-          "personal": "Persönliches Album",
-          "club": "Club Album"
-        },
-        "info": {
-          "album": "Album",
-          "boathouse": "Bootshaus Projekt",
-          "club": "Clubinformationen",
-          "directives": "Statuten und Reglemente",
-          "map": "Karte",
-          "marketing": "Logos und Templates",
-          "meetings": "Generalversammlungen",
-          "title": "Informationen",
-          "training": "Trainingsunterlagen",
-          "weather": "Wetter"
-        },
-        "members": {
-          "title": "Mitglieder",
-          "info": "Mitgliederstatistiken",
-          "active": "Aktive Mitglieder",
-          "persons": "Personen",
-          "person-contacts": "Alle Personen",
-          "member-contacts": "Adressliste",
-          "applications": "Anmeldungen",
-          "birthdays": "Geburtstage",
-          "passive": "Passivmitglieder",
-          "deceased": "Verstorbene Mitglieder",
-          "srvall": "SRV Mitglieder",
-          "alumni": "Ehemalige",
-          "men": "Männer",
-          "women": "Frauen",
-          "entries": "Eintritte",
-          "exits": "Austritte",
-          "oldJuniors": "Junioren > 18"
-        },
-        "misc": {
-          "title": "Verschiedenes",
-          "impressum": "Impressum",
-          "terms": "Rechtliches",
-          "privacy": "Datenschutz",
-          "help": "Anleitung",
-          "geotracker": "GeoTracker",
-          "counter": "Stop-Uhr",
-          "tenu": "Tenüs"
-        },
-        "news": {
-          "title": "Neuigkeiten",
-          "bkoWebsite": "Website",
-          "p13Website": "Website",
-          "stuerbord": "Stüürbord"
-        },
-        "reservations": {
-          "all": "Alle Reservationen",
-          "boathouse": "Bootshaus-Reservationen"
-        },
-        "resources": {
-          "title": "Ressourcen",
-          "resources": "Ressourcen",
-          "maleLockers": "Männer-Garderobe",
-          "femaleLockers": "Frauen-Garderobe",
-          "keys": "Schlüssel",
-          "motorboats": "Motorboote",
-          "vehicle": "Fahrzeuge",
-          "other": "Andere Resourcen",
-          "archivedResources": "Archivierte Resourcen"
-        },
-        "shop": {
-          "title": "Shop",
-          "tenu": "Tenüs",
-          "beverage": "Getränke",
-          "lifeJacket": "Rettungswesten"
-        },
-        "sport": {
-          "title": "Sport",
-          "competitionLevels": "Wettkampf-Kategorien",
-          "logbook": "Logbuch",
-          "sportCategory": "Sportkategorien",
-          "training": "Trainings-Infos",
-          "regattas": "Regatten"
-        },
-        "dashboard": "Dashboard",
-        "home": "Home",
-        "login": "Anmelden",
-        "logout": "Abmelden",
-        "profile": "Profil",
-        "schedule": "Terminabstimmung starten",
-        "userSettings": "Einstellungen",
-        "title": "Hauptmenü",
-        "version": "Version"
-      }
+    "main": {
+      "aoc": {
+        "title": "AOC - Operation Centre",
+        "icon": "Icon Tests",
+        "translation": "Übersetzungs Tests",
+        "storage": "Storage Tests",
+        "admin": "Admin Operationen",
+        "auth": "Berechtigungen",
+        "content": "Content",
+        "data": "Daten",
+        "statistics": "Statistiken"
+      },
+      "board": {
+        "docs": "Dokumente",
+        "igsport": "IG Sport Stäfa (Dateien)",
+        "groups": "Gruppen",
+        "meetings": "Vorstandssitzungen",
+        "orgs": "Organisationen",
+        "projects": "Projekte",
+        "title": "Vorstand",
+        "todos": "Aufgaben"
+      },
+      "boat": {
+        "title": "Boote",
+        "club": "Club Boote",
+        "archived": "Archivierte Boote",
+        "private": "Privat-Skiffs",
+        "info": "Bootsstatistiken",
+        "all": "Alle Boote",
+        "test": "Test Boote"
+      },
+      "boathouse": {
+        "title": "Bootshaus Projekt",
+        "history": "Rückblick",
+        "variants": "Variantenübersicht",
+        "status": "Projektstand",
+        "1haus": "Variante 1Haus",
+        "2haus": "Variante 2Haus",
+        "compare": "Variantenvergleich",
+        "funding": "Finanzierung"
+      },
+      "calEvent": {
+        "title": "Anlässe",
+        "calendar": "Kalender",
+        "list": "Anlässe"
+      },
+      "cms": {
+        "title": "CMS - Content Management",
+        "pages": "Webseiten",
+        "sections": "Sektionen",
+        "menus": "Menüs",
+        "documents": "Dokumente",
+        "testcms": "CMS Tests",
+        "locations": "Orte"
+      },
+      "finance": {
+        "title": "Finanzen",
+        "fees": "Beiträge",
+        "srvFees": "SRV Gebühren",
+        "docs": "Finanzunterlagen",
+        "invoice-positions": "Rechnungspositionen"
+      },
+      "gallery": {
+        "personal": "Persönliches Album",
+        "club": "Club Album"
+      },
+      "info": {
+        "album": "Album",
+        "boathouse": "Bootshaus Projekt",
+        "club": "Clubinformationen",
+        "directives": "Statuten und Reglemente",
+        "map": "Karte",
+        "marketing": "Logos und Templates",
+        "meetings": "Generalversammlungen",
+        "title": "Informationen",
+        "training": "Trainingsunterlagen",
+        "weather": "Wetter"
+      },
+      "members": {
+        "title": "Mitglieder",
+        "info": "Mitgliederstatistiken",
+        "active": "Aktive Mitglieder",
+        "persons": "Personen",
+        "person-contacts": "Alle Personen",
+        "member-contacts": "Adressliste",
+        "applications": "Anmeldungen",
+        "birthdays": "Geburtstage",
+        "passive": "Passivmitglieder",
+        "deceased": "Verstorbene Mitglieder",
+        "srvall": "SRV Mitglieder",
+        "alumni": "Ehemalige",
+        "men": "Männer",
+        "women": "Frauen",
+        "entries": "Eintritte",
+        "exits": "Austritte",
+        "oldJuniors": "Junioren > 18"
+      },
+      "misc": {
+        "title": "Verschiedenes",
+        "impressum": "Impressum",
+        "terms": "Rechtliches",
+        "privacy": "Datenschutz",
+        "help": "Anleitung",
+        "geotracker": "GeoTracker",
+        "counter": "Stop-Uhr",
+        "tenu": "Tenüs"
+      },
+      "news": {
+        "title": "Neuigkeiten",
+        "bkoWebsite": "Website",
+        "p13Website": "Website",
+        "stuerbord": "Stüürbord"
+      },
+      "reservations": {
+        "all": "Alle Reservationen",
+        "boathouse": "Bootshaus-Reservationen"
+      },
+      "resources": {
+        "title": "Ressourcen",
+        "resources": "Ressourcen",
+        "maleLockers": "Männer-Garderobe",
+        "femaleLockers": "Frauen-Garderobe",
+        "keys": "Schlüssel",
+        "motorboats": "Motorboote",
+        "vehicle": "Fahrzeuge",
+        "other": "Andere Resourcen",
+        "archivedResources": "Archivierte Resourcen"
+      },
+      "shop": {
+        "title": "Shop",
+        "tenu": "Tenüs",
+        "beverage": "Getränke",
+        "lifeJacket": "Rettungswesten"
+      },
+      "sport": {
+        "title": "Sport",
+        "competitionLevels": "Wettkampf-Kategorien",
+        "logbook": "Logbuch",
+        "sportCategory": "Sportkategorien",
+        "training": "Trainings-Infos",
+        "regattas": "Regatten"
+      },
+      "dashboard": "Dashboard",
+      "home": "Home",
+      "login": "Anmelden",
+      "logout": "Abmelden",
+      "profile": "Profil",
+      "schedule": "Terminabstimmung starten",
+      "userSettings": "Einstellungen",
+      "title": "Hauptmenü",
+      "version": "Version"
     },
 
 
