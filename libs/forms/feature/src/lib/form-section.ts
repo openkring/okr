@@ -8,8 +8,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { Spinner } from '@bk2/shared-ui';
 import { FormDefinitionModel, FormSection as FormSectionModel } from '@bk2/shared-models';
 import { FormDefinitionService } from '@bk2/forms-data-access';
-import { FORM_SECTION_I18N_KEYS, FormSectionI18n } from '@bk2/forms-util';
-export type { FormSectionI18n };
+import { FORM_I18N_KEYS, FormI18n } from '@bk2/forms-util';
 
 import { FormRenderer } from '@bk2/forms-ui';
 
@@ -20,7 +19,7 @@ const FormSectionStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(FORM_SECTION_I18N_KEYS) as FormSectionI18n,
+    i18n: store.i18nService.translateAll(FORM_I18N_KEYS) as FormI18n,
   })),
   withMethods(store => ({
     async fetchJsToken(formKey: string): Promise<string> {
@@ -101,7 +100,7 @@ const FormSectionStore = signalStore(
           <ion-note color="danger">{{ errorMsg() }}</ion-note>
         } @else if (definition(); as def) {
           @if (def.isArchived) {
-            <ion-note color="warning">{{ store.i18n.archived() }}</ion-note>
+            <ion-note color="warning">{{ store.i18n.form_archived() }}</ion-note>
           } @else {
             <bk-form-renderer
               [definition]="def"
@@ -112,7 +111,7 @@ const FormSectionStore = signalStore(
             />
           }
         } @else {
-          <ion-note color="medium">{{ store.i18n.not_found() }}</ion-note>
+          <ion-note color="medium">{{ store.i18n.form_not_found() }}</ion-note>
         }
       </ion-card-content>
     </ion-card>

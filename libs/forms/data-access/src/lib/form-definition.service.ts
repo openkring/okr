@@ -8,7 +8,7 @@ import { FormDefinitionCollection, FormDefinitionModel, UserModel } from '@bk2/s
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 import { generateFormKey } from '@bk2/forms-util';
 
-const PFX = '@forms.';
+const PFX = '@forms/feature.';
 
 @Injectable({ providedIn: 'root' })
 export class FormDefinitionService {

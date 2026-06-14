@@ -453,7 +453,7 @@ export const AOC_I18N_KEYS = {
   website_update_error:               PFX + 'website.update.error',
 
   as_title:                           '@actionsheet.title',
-  name:                               '@name',
+  name:                               '@name.label',
   membership:                         '@membership',
   copy_conf:                          '@copy.conf',
   save:                               '@save.label',

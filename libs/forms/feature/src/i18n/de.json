@@ -1,58 +1,61 @@
 {
+  "title": "Formular-Editor",
   "list": {
     "title": "Formulare",
     "empty": "Keine Formulare gefunden."
   },
-  "create": {
-    "conf": "Formular erstellt.",
-    "error": "Fehler beim Erstellen des Formulars."
-  },
-  "update": {
-    "conf": "Formular gespeichert.",
-    "error": "Fehler beim Speichern des Formulars."
-  },
-  "delete": {
-    "conf": "Formular archiviert.",
-    "error": "Fehler beim Archivieren."
-  },
-  "edit": {
-    "title_new": "Neues Formular",
-    "title_edit": "Formular bearbeiten",
-    "name_label": "Name",
-    "description_label": "Beschreibung",
-    "target_label": "Wo sollen Einreichungen gespeichert werden?",
-    "target_collection": "Firestore-Sammlung (empfohlen)",
-    "target_url": "Externe URL (z.B. Google Forms)",
-    "mapping_label": "Sammlung auswählen",
-    "url_label": "Ziel-URL",
-    "form_key_label": "Form-Key (unveränderlich)",
-    "cancel": "Abbrechen",
-    "save": "Speichern"
-  },
-  "builder": {
-    "title": "Formular-Editor",
-    "add_field": "Feld hinzufügen",
-    "canvas_empty": "Ziehe Felder aus der Bibliothek hierher.",
-    "field_library": "Feldbibliothek",
-    "field_key_label": "Feldname (snake_case)",
-    "field_label_label": "Label",
-    "field_required_label": "Pflichtfeld",
-    "field_width_label": "Breite",
-    "field_help_label": "Hilfetext",
-    "save": "Speichern",
-    "preview": "Vorschau"
-  },
-  "section": {
-    "submit": "Absenden",
-    "submit_conf": "Vielen Dank! Deine Einreichung wurde gespeichert.",
-    "submit_error": "Fehler beim Absenden. Bitte versuche es erneut.",
+  "form": {
+    "key": {
+      "label": "Form-Key (unveränderlich)"
+    },
     "loading": "Formular wird geladen…",
-    "not_found": "Formular nicht gefunden.",
+    "notfound": "Formular nicht gefunden.",
     "archived": "Dieses Formular ist nicht mehr verfügbar."
   },
-  "field_config": {
+  "field": {
     "title": "Feld konfigurieren",
-    "cancel": "Abbrechen",
-    "save": "Übernehmen"
+    "add": "Feld hinzufügen"
+  },
+
+  "canvas_empty": "Ziehe Felder aus der Bibliothek hierher.",
+  "library": "Feldbibliothek",
+  "key": "Feldname (snake_case)",
+  "label": "Label",
+  "required": "Pflichtfeld",
+  "width": "Breite",
+  "help": "Hilfetext",
+  "preview": "Vorschau",
+  "mapping": {
+    "choose": "Sammlung auswählen"
+  },
+  "target": {
+    "label": "Wo sollen Einreichungen gespeichert werden?",
+    "collection": "Firestore-Sammlung (empfohlen)",
+    "url": "Externe URL (z.B. Google Forms)"
+  },
+  "url": {
+    "label": "Ziel-URL"
+  },
+
+  "create": {
+    "label": "Neues Formular erstellen",
+    "conf": "Das Formular wurde erstellt.",
+    "error": "Das Formular konnte nicht erstellt werden."
+  },
+  "delete": {
+    "label": "Formular löschen",
+    "confirm": "Soll das Formular wirklich gelöscht werden ?",
+    "conf": "Das Formular wurde gelöscht.",
+    "error": "Das Formular konnte nicht gelöscht werden."
+  },
+  "submit": {
+    "label": "Absenden",
+    "conf": "Vielen Dank! Deine Einreichung wurde gespeichert.",
+    "error": "Fehler beim Absenden. Bitte versuche es erneut."
+  },
+  "update": {
+    "label": "Formular ändern",
+    "conf": "Das Formular wurde gespeichert.",
+    "error": "Das Formular konnte nicht gespeichert werden."
   }
 }

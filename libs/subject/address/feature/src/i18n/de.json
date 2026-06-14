@@ -111,7 +111,8 @@
   "address_usage": {
     "name": "Verwendung",
     "helper": "Eine Bezeichnung dafür, wie die Adresse verwendet wird, z.B. Privat, Geschäft.",
-    "label": {
+    "label": "Verwendung",
+    "customLabel": {
       "label": "Verwendungsbezeichnung",
       "placeholder": "z.B. Privat, Geschäft",
       "helper": "Die Verwendungsart der Adresse."
@@ -136,7 +137,8 @@
   },
   "address_channel": {
     "helper": "Art der Adresse, z.B. Telefon oder Email.",
-    "label": {
+    "label": "Adressen-Art",
+    "customLabel": {
       "label": "Kanal-Bezeichnung",
       "placeholder": "z.B. Telefon, Email, Facebook etc.",
       "helper": "Das Kommunikatins-Netzwerk oder Produkt."

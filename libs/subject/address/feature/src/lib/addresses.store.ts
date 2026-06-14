@@ -246,11 +246,11 @@ export const AddressStore = signalStore(
         const [parentModelType, parentKey] = getModelAndKey(address.parentKey);
 
         const fetchPostal = async (pk: string): Promise<AddressModel | undefined> => {
-          const addrs = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, [
-            { key: 'parentKey', operator: '==', value: pk },
-            { key: 'addressChannel', operator: '==', value: 'postal' },
-            { key: 'isFavorite', operator: '==', value: true }
-          ]));
+          const dbQuery = getSystemQuery(tenantId);
+          dbQuery.push({ key: 'parentKey', operator: '==', value: pk });
+          dbQuery.push({ key: 'addressChannel', operator: '==', value: 'postal' });
+          dbQuery.push({ key: 'isFavorite', operator: '==', value: true });
+          const addrs = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery));
           return addrs[0];
         };
 

@@ -47,7 +47,7 @@ import { FormDefinitionStore } from './form-definition.store';
               <ion-chip slot="end" color="medium">{{ form.target.kind }}</ion-chip>
               @if (store.canWrite()) {
                 <ion-button slot="end" fill="clear" (click)="store.openBuilder(form)">
-                  <ion-icon src="{{ 'construct' | svgIcon }}" slot="icon-only" />
+                  <ion-icon src="{{ 'edit' | svgIcon }}" slot="icon-only" />
                 </ion-button>
                 <ion-button slot="end" fill="clear" (click)="store.openEditModal(form)">
                   <ion-icon src="{{ 'settings' | svgIcon }}" slot="icon-only" />

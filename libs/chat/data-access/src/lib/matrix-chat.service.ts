@@ -289,17 +289,17 @@ export class MatrixChatService {
       // incrementally instead of running a full initial sync. matrix-js-sdk handles
       // a missing/unavailable store gracefully — we fall back to the default
       // in-memory store. See docs/16_spec-pwa-caching.md §8.2.
-      const store = await this.createPersistentStore();
-
-      this.client = createClient({
+      const clientOptions = {
         baseUrl: url,
         accessToken: config.accessToken,
         userId: config.userId,
         deviceId: config.deviceId,
         timelineSupport: true,
         useAuthorizationHeader: true,
-        ...(store ? { store } : {}),
-      });
+      };
+
+      const store = this.createPersistentStore();
+      this.client = createClient({ ...clientOptions, ...(store ? { store } : {}) });
 
       this.setupEventHandlers();
 
@@ -310,7 +310,26 @@ export class MatrixChatService {
       // slow networks (notably iOS). The store sets isMatrixInitialized=true right
       // after this returns, the spinner disappears, and rooms/messages update
       // reactively once PREPARED is reached.
-      await this.client.startClient({ initialSyncLimit: 10 });
+      //
+      // matrix-js-sdk does NOT call store.startup() from startClient() — the caller
+      // must run it after createClient() (so the store's createUser hook is wired) and
+      // before startClient(). store.startup() opens IndexedDB via the backend and loads
+      // the cached rooms/sync token; without it the backend stays unconnected (its
+      // internal `db` is undefined), the first /sync read throws "reading 'transaction'",
+      // and the SDK silently degrades to an in-memory store — defeating the cache.
+      // startup() itself can reject (private mode, eviction); the catch below then
+      // recreates the client with the default in-memory store and pays a full sync.
+      try {
+        if (store) await store.startup();
+        await this.client.startClient({ initialSyncLimit: 10 });
+      } catch (startError) {
+        if (!store) throw startError;
+        console.warn('MatrixChatService: IndexedDB store startup failed, falling back to in-memory store:', startError);
+        this.client.stopClient();
+        this.client = createClient(clientOptions);
+        this.setupEventHandlers();
+        await this.client.startClient({ initialSyncLimit: 10 });
+      }
       debugMessage('MatrixChatService: Client started, sync in progress', this.appStore.currentUser());
 
       // Incoming calls are emitted directly on the MatrixClient (not on callEventHandler).
@@ -335,21 +354,21 @@ export class MatrixChatService {
   /**
    * Create an IndexedDB-backed Matrix store so rooms, members and the sync `since`
    * token survive page reloads (notably iOS reload-on-resume). Returns undefined if
-   * IndexedDB is unavailable (SSR, private mode, eviction) or startup fails — the
-   * caller then uses the default in-memory store and pays a full initial sync.
+   * IndexedDB is unavailable (SSR). The store is NOT started here — `startup()` must
+   * be called after the store is assigned to a client (it needs the client's createUser
+   * hook). initialize() calls `store.startup()` itself right before `startClient()`;
+   * matrix-js-sdk does NOT do this for us.
    */
-  private async createPersistentStore(): Promise<Store | undefined> {
+  private createPersistentStore(): Store | undefined {
     if (typeof window === 'undefined' || !window.indexedDB) return undefined;
     try {
-      const store = new IndexedDBStore({
+      return new IndexedDBStore({
         indexedDB: window.indexedDB,
         localStorage: window.localStorage,
         dbName: 'bk2-matrix',
       });
-      await store.startup();
-      return store;
     } catch (e) {
-      console.warn('MatrixChatService: IndexedDB store startup failed, using in-memory store:', e);
+      console.warn('MatrixChatService: IndexedDB store creation failed, using in-memory store:', e);
       return undefined;
     }
   }
