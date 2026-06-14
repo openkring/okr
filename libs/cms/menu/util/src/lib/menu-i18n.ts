@@ -15,7 +15,7 @@ export const MENU_I18N_KEYS = {
   add_submenu:                    PFX + 'add.submenu',
 
   // menu entries are directly referenced
-  menu_main_aoc_title:            PFX + 'menu.main.aoc.title',
+  menu_main_aoc_title:            PFX + 'main.aoc.title',
 
   description:                    PFX + 'description.menu',
   description_label:              PFX + 'description.label',

@@ -70,7 +70,8 @@
         "menus": "Menüs",
         "documents": "Dokumente",
         "testcms": "CMS Tests",
-        "locations": "Orte"
+        "locations": "Orte",
+        "forms": "Form Builder"
       },
       "finance": {
         "title": "Finanzen",
@@ -168,6 +169,12 @@
       "userSettings": "Einstellungen",
       "title": "Hauptmenü",
       "version": "Version"
+    },
+
+    "context": {
+      "forms": {
+        "add": "Neues Formular erstellen"
+      }
     },
 
 
