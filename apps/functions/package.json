@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "main": "./main.cjs",
   "type": "commonjs",
+  "engines": {
+    "node": "22"
+  },
   "dependencies": {
     "@google-cloud/functions-framework": "^3.4.0",
     "@types/pdfkit": "0.17.5",

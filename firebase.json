@@ -262,21 +262,6 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "apphosting": {
-    "backendId": "bko-test-euw4-be",
-    "rootDir": "apps/test-app",
-    "ignore": [
-      "node_modules",
-      ".git",
-      "firebase-debug.log",
-      "firebase-debug.*.log",
-      "functions"
-    ],
-    "environmentVariables": {
-      "NODE_VERSION": "20",
-      "NODE_ENV": "production"
-    }
-  },
   "storage": {
     "rules": "storage.rules"
   },
@@ -289,7 +274,7 @@
       "firebase-debug.log",
       "firebase-debug.*.log"
     ],
-    "runtime": "nodejs20" 
+    "runtime": "nodejs22"
   },
   "emulators": {
     "apphosting": {
