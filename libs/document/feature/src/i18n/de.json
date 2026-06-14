@@ -147,5 +147,62 @@
     "logo": "Logo",
     "marketing": "Marketing",
     "avatar": "Avatar"
+  },
+
+  "document_type": {
+    "name": "Dokumentenart",
+    "label": "Dokumentenart",
+    "helper": "Die Art eines Dokuments hilft beim Suchen.",
+    "all": {
+      "label": "Alle Arten"
+    },
+    "marketing": {
+      "label": "Marketing",
+      "description": "Flyer, Prospekt, Präsentation, Banner"
+    },
+    "doc": {
+      "label": "Dokumentation",
+      "description": "Wiki, Standard, Report, Protokoll, Memo, Buch."
+    },
+    "hr": {
+      "label": "Personal",
+      "description": "Bewerbung, Stellenbeschrieb, CV, Bewilligung, Antrag, Kündigung, Verwarnung, Erlaubnis."
+    },
+    "business": {
+      "label": "Geschäftlich",
+      "description": "Vorschlag, Studie, FAQ, Support, Analyse, Business Case."
+    },
+    "finance": {
+      "label": "Finanziell",
+      "description": "Kontoauszug, ER, Bilanz, Bank Statement, Beleg, Budget, Jahresrechnung, Rechnung."
+    },
+    "info": {
+      "label": "Information",
+      "description": "Zeitschrift, Artikel, Link, Text, Magazin."
+    },
+    "corr": {
+      "label": "Korrespondenz",
+      "description": "Brief, Meldung, Anschlag."
+    },
+    "instruction": {
+      "label": "Instruktion",
+      "description": "Anleitung, Weisung, Kochbuch, Rezept."
+    },
+    "other": {
+      "label": "Andere",
+      "description": "Sonstige Dokumente."
+    },
+    "legal": {
+      "label": "Rechtlich",
+      "description": "Vertrag, Offerte, Lizenz, NDA, AGB, Gesetz, Statuten, Visum, Patent, Zertifikat, Pass, ID."
+    },
+    "source": {
+      "label": "Quelldatei",
+      "description": "Source Code, Daten, Archiv."
+    },
+    "media": {
+      "label": "Medien",
+      "description": "Video, Audio, Graphics, Comics, Visual, Illustration, Design, Icon, Font."
+    }
   }
 }
