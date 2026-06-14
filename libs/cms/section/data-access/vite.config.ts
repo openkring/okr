@@ -5,7 +5,7 @@ import sharedTestConfig from '../../../../vitest.shared';
 
 const libraryConfig = defineConfig({
   root: __dirname,
-  cacheDir: '../../../../node_modules/.vite/libs/cms/section/feature',
+  cacheDir: '../../../../node_modules/.vite/libs/cms/section/data-access',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
     setupFiles: ['./test-setup.ts'],
@@ -15,7 +15,7 @@ const libraryConfig = defineConfig({
       },
     },
     coverage: {
-      reportsDirectory: '../../../../coverage/libs/cms/section/feature',
+      reportsDirectory: '../../../../coverage/libs/cms/section/data-access',
       provider: 'v8' as const,
     },
   },

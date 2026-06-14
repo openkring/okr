@@ -1,11 +1,11 @@
-import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
-import { Chips, ImageConfigEdit, NotesInput, NotesInputI18n } from '@bk2/shared-ui';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
+import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { ModelSelectService } from '@bk2/shared-feature';
-import { SectionI18n } from '@bk2/cms-section-util';
+import { ChartOption, SectionI18n, validateSection } from '@bk2/cms-section-util';
 
 import { SectionConfiguration } from './section-configuration';
 import { EditorConfiguration } from './editor-configuration';
@@ -19,6 +19,10 @@ import { ButtonStyleConfiguration } from './button-style-configuration';
 import { ButtonActionConfiguration } from './button-action-configuration';
 import { IconConfiguration } from './icon-configuration';
 import { ChatConfiguration } from './chat-configuration';
+import { CalendarConfiguration, CalendarDisplayOptions } from './calendar-configuration';
+import { ChartConfiguration } from './chart-configuration';
+import { MemberConfiguration } from './member-configuration';
+import { RagConfiguration } from './rag-configuration';
 import { MapConfiguration } from './map-configuration';
 import { TableGridConfiguration } from './table-grid-configuration';
 import { TableStyleConfiguration } from './table-style-configuration';
@@ -33,12 +37,13 @@ import { TrackerConfiguration } from './tracker-configuration';
   selector: 'bk-section-form',
   standalone: true,
   imports: [
-    Chips, ImageConfigEdit, NotesInput,
+    Chips, ImageConfigEdit, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
     IframeConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration, 
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration, 
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader, 
-    TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration
+    TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
+    MemberConfiguration, RagConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -125,10 +130,22 @@ import { TrackerConfiguration } from './tracker-configuration';
           }
         }
         @case('cal') {
-          <!-- Calendar-specific, e.g., calendarOptions -->
+          @if(calendarConfig(); as calendarConfig) {
+            <bk-calendar-config
+              [formData]="calendarConfig" (formDataChange)="onCalendarConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
         }
         @case('chart') {
-          <!-- Chart-specific, e.g., chartOptions -->
+          @if(chartConfig(); as chartConfig) {
+            <bk-chart-config
+              [formData]="chartConfig" (formDataChange)="onChartConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
         }
         @case('chat') {
           @if(chatConfig(); as chatConfig) {
@@ -290,8 +307,44 @@ import { TrackerConfiguration } from './tracker-configuration';
             />
           }
         }
+        @case('member-age') {
+          @if(memberConfig(); as memberConfig) {
+            <bk-member-config
+              [formData]="memberConfig" (formDataChange)="onMemberConfigChange($event)"
+              [showCategoryFilter]="false"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
+        @case('member-cat') {
+          @if(memberConfig(); as memberConfig) {
+            <bk-member-config
+              [formData]="memberConfig" (formDataChange)="onMemberConfigChange($event)"
+              [showCategoryFilter]="true"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
+        @case('rag') {
+          @if(ragConfig(); as ragConfig) {
+            <bk-rag-config
+              [formData]="ragConfig" (formDataChange)="onRagConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
       }
-    
+
+      <!-- validation errors (per-type vest suite); shown only for invalid fields -->
+      @if(!isReadOnly() && validationErrors().length > 0) {
+        @for(error of validationErrors(); track error.field) {
+          <bk-error-note [errors]="error.messages" />
+        }
+      }
+
       @if(hasRole('privileged')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
       }
@@ -301,11 +354,26 @@ import { TrackerConfiguration } from './tracker-configuration';
     }
   `
 })
-/** 
- * Because vest validation is type specific and we want to have a generic section form component for all union types, we do not use vest here.
+/**
+ * Generic form for all section union types. Validation is type-specific: the active vest
+ * suite is picked at runtime from `formData().type` via the section validation registry.
+ * Invalid fields surface through `<bk-error-note>` and the form emits its `valid` state.
  */
 export class SectionForm {
   private readonly modelSelectService = inject(ModelSelectService);
+
+  // outputs
+  public readonly valid = output<boolean>();
+
+  // validation (per-type suite, picked from formData().type)
+  private readonly validationResult = computed(() => validateSection(this.formData()));
+  protected readonly validationErrors = computed(() =>
+    Object.entries(this.validationResult().getErrors()).map(([field, messages]) => ({ field, messages: messages as string[] }))
+  );
+
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
 
   // i18n
   public readonly i18n = input.required<SectionI18n>();
@@ -355,6 +423,10 @@ export class SectionForm {
   protected buttonStyle = linkedSignal(() => this.getButtonStyle());
   protected iconConfig = linkedSignal(() => this.getIconConfig());
   protected chatConfig = linkedSignal(() => this.getChatConfig());
+  protected calendarConfig = linkedSignal(() => this.getCalendarConfig());
+  protected chartConfig = linkedSignal(() => this.getChartConfig());
+  protected memberConfig = linkedSignal(() => this.getMemberConfig());
+  protected ragConfig = linkedSignal(() => this.getRagConfig());
   protected eventsConfig = linkedSignal(() => this.getEventsConfig());
   protected invitationsConfig = linkedSignal(() => this.getInvitationsConfig());
   protected logoConfig = linkedSignal(() => this.getLogoConfig());
@@ -448,6 +520,31 @@ export class SectionForm {
   private getChatConfig(): ChatConfig | undefined {
     if (this.formData().type === 'chat') {
       return ((this.formData() as ChatSection).properties as ChatConfig);
+    }
+  }
+
+  private getCalendarConfig(): CalendarDisplayOptions | undefined {
+    if (this.formData().type === 'cal') {
+      return ((this.formData() as CalendarSection).properties as CalendarDisplayOptions);
+    }
+  }
+
+  private getChartConfig(): ChartOption | undefined {
+    if (this.formData().type === 'chart') {
+      return ((this.formData() as ChartSection).properties as ChartOption);
+    }
+  }
+
+  private getMemberConfig(): MemberCatConfig | undefined {
+    const type = this.formData().type;
+    if (type === 'member-age' || type === 'member-cat') {
+      return ((this.formData() as MemberAgeSection | MemberCatSection).properties as MemberCatConfig);
+    }
+  }
+
+  private getRagConfig(): RagConfig | undefined {
+    if (this.formData().type === 'rag') {
+      return ((this.formData() as RagSection).properties as RagConfig);
     }
   }
 
@@ -665,6 +762,46 @@ export class SectionForm {
         ...section,
         properties: config
       } as EventsSection);
+    }
+  }
+
+  protected onCalendarConfigChange(config: CalendarDisplayOptions): void {
+    const section = this.formData();
+    if (section.type === 'cal') {
+      this.formData.set({
+        ...section,
+        properties: { ...section.properties, ...config }
+      } as CalendarSection);
+    }
+  }
+
+  protected onChartConfigChange(config: ChartOption): void {
+    const section = this.formData();
+    if (section.type === 'chart') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as ChartSection);
+    }
+  }
+
+  protected onMemberConfigChange(config: MemberCatConfig): void {
+    const section = this.formData();
+    if (section.type === 'member-age' || section.type === 'member-cat') {
+      this.formData.set({
+        ...section,
+        properties: { ...section.properties, ...config }
+      } as MemberAgeSection | MemberCatSection);
+    }
+  }
+
+  protected onRagConfigChange(config: RagConfig): void {
+    const section = this.formData();
+    if (section.type === 'rag') {
+      this.formData.set({
+        ...section,
+        properties: { ...section.properties, ...config }
+      } as RagSection);
     }
   }
 

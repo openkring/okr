@@ -26,3 +26,21 @@ export function buildCatRows(
   );
   return [...rows, totals];
 }
+
+/**
+ * Applies the section config to category rows: optional substring filter on the category
+ * label and asc/desc ordering. The trailing `Total` row is always kept last.
+ */
+export function applyCatRowConfig(rows: CatRow[], categoryFilter: string, sortOrder: 'asc' | 'desc'): CatRow[] {
+  if (rows.length === 0) return rows;
+  const total = rows[rows.length - 1];
+  let body = rows.slice(0, -1);
+  const filter = categoryFilter.trim().toLowerCase();
+  if (filter) {
+    body = body.filter(r => r.label.toLowerCase().includes(filter));
+  }
+  if (sortOrder === 'desc') {
+    body = [...body].reverse();
+  }
+  return [...body, total];
+}

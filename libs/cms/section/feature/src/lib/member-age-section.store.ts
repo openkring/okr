@@ -56,8 +56,8 @@ export function buildAgeRows(
   return [...rows, totals];
 }
 
-type MemberAgeSectionState = { orgId: string };
-const initialState: MemberAgeSectionState = { orgId: '' };
+type MemberAgeSectionState = { orgId: string; sortOrder: 'asc' | 'desc' };
+const initialState: MemberAgeSectionState = { orgId: '', sortOrder: 'asc' };
 
 export const MemberAgeSectionStore = signalStore(
   withState(initialState),
@@ -80,15 +80,20 @@ export const MemberAgeSectionStore = signalStore(
 
   withComputed((store) => ({
     isLoading: computed(() => store.membershipsResource.isLoading()),
-    rows: computed(() => buildAgeRows(
-      store.membershipsResource.value() ?? [],
-      new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    )),
+    rows: computed(() => {
+      const all = buildAgeRows(
+        store.membershipsResource.value() ?? [],
+        new Date().toISOString().slice(0, 10).replace(/-/g, '')
+      );
+      if (store.sortOrder() !== 'desc' || all.length === 0) return all;
+      const total = all[all.length - 1];
+      return [...all.slice(0, -1).reverse(), total]; // reverse age buckets, keep Total last
+    }),
   })),
 
   withMethods((store) => ({
     setConfig(config: MemberAgeConfig | undefined): void {
-      patchState(store, { orgId: config?.orgId ?? '' });
+      patchState(store, { orgId: config?.orgId ?? '', sortOrder: config?.sortOrder ?? 'asc' });
     },
   }))
 );

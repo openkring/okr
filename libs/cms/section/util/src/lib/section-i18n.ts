@@ -67,6 +67,32 @@ export const SECTION_I18N_KEYS = {
   button_style_fill_label:                  PFX + 'button.style.fill.label',
   button_style_color_label:                 PFX + 'button.style.color.label',
 
+  // calendar config
+  cal_title:                                PFX + 'cal.title',
+  cal_subtitle:                             PFX + 'cal.subtitle',
+  cal_view_label:                           PFX + 'cal.view.label',
+  cal_slotMinTime_label:                    PFX + 'cal.slotMinTime.label',
+  cal_slotMinTime_placeholder:              PFX + 'cal.slotMinTime.placeholder',
+  cal_slotMinTime_helper:                   PFX + 'cal.slotMinTime.helper',
+  cal_slotMaxTime_label:                    PFX + 'cal.slotMaxTime.label',
+  cal_slotMaxTime_placeholder:              PFX + 'cal.slotMaxTime.placeholder',
+  cal_slotMaxTime_helper:                   PFX + 'cal.slotMaxTime.helper',
+  cal_weekNumbers_label:                    PFX + 'cal.weekNumbers.label',
+  cal_weekNumbers_helper:                   PFX + 'cal.weekNumbers.helper',
+  cal_editable_label:                       PFX + 'cal.editable.label',
+  cal_editable_helper:                      PFX + 'cal.editable.helper',
+
+  // chart config
+  chart_title:                              PFX + 'chart.title',
+  chart_subtitle:                           PFX + 'chart.subtitle',
+  chart_type_label:                         PFX + 'chart.type.label',
+  chart_titleText_label:                    PFX + 'chart.titleText.label',
+  chart_titleText_placeholder:              PFX + 'chart.titleText.placeholder',
+  chart_titleText_helper:                   PFX + 'chart.titleText.helper',
+  chart_options_label:                      PFX + 'chart.options.label',
+  chart_options_helper:                     PFX + 'chart.options.helper',
+  chart_options_error:                      PFX + 'chart.options.error',
+
   // calendar
   calevents:                                PFX + 'calendar.calevents',
   calevent_update:                          PFX + 'calendar.update.label',
@@ -282,6 +308,18 @@ export const SECTION_I18N_KEYS = {
   member_cat_total:                         PFX + 'member.cat.total',
   member_cat_empty:                         PFX + 'member.cat.empty',
 
+  // member config (age + cat)
+  member_config_title:                      PFX + 'member.config.title',
+  member_config_subtitle:                   PFX + 'member.config.subtitle',
+  member_config_orgId_label:                PFX + 'member.config.orgId.label',
+  member_config_orgId_placeholder:          PFX + 'member.config.orgId.placeholder',
+  member_config_orgId_helper:               PFX + 'member.config.orgId.helper',
+  member_config_chartType_label:            PFX + 'member.config.chartType.label',
+  member_config_sortOrder_label:            PFX + 'member.config.sortOrder.label',
+  member_config_categoryFilter_label:       PFX + 'member.config.categoryFilter.label',
+  member_config_categoryFilter_placeholder: PFX + 'member.config.categoryFilter.placeholder',
+  member_config_categoryFilter_helper:      PFX + 'member.config.categoryFilter.helper',
+
   // news
   news_empty:                               PFX + 'news.empty',
   news_view:                                PFX + 'news.view',
@@ -316,6 +354,25 @@ export const SECTION_I18N_KEYS = {
   // rag
   rag_placeholder:                          PFX + 'rag.placeholder',
   rag_upload:                               PFX + 'rag.upload',
+
+  // rag config
+  rag_config_title:                         PFX + 'rag.config.title',
+  rag_config_subtitle:                      PFX + 'rag.config.subtitle',
+  rag_config_model_label:                   PFX + 'rag.config.model.label',
+  rag_config_model_placeholder:             PFX + 'rag.config.model.placeholder',
+  rag_config_model_helper:                  PFX + 'rag.config.model.helper',
+  rag_config_storeName_label:               PFX + 'rag.config.storeName.label',
+  rag_config_storeName_placeholder:         PFX + 'rag.config.storeName.placeholder',
+  rag_config_storeName_helper:              PFX + 'rag.config.storeName.helper',
+  rag_config_systemPrompt_label:            PFX + 'rag.config.systemPrompt.label',
+  rag_config_systemPrompt_placeholder:      PFX + 'rag.config.systemPrompt.placeholder',
+  rag_config_systemPrompt_helper:           PFX + 'rag.config.systemPrompt.helper',
+  rag_config_documentScope_label:           PFX + 'rag.config.documentScope.label',
+  rag_config_documentScope_placeholder:     PFX + 'rag.config.documentScope.placeholder',
+  rag_config_documentScope_helper:          PFX + 'rag.config.documentScope.helper',
+  rag_config_maxTokens_label:               PFX + 'rag.config.maxTokens.label',
+  rag_config_maxTokens_placeholder:         PFX + 'rag.config.maxTokens.placeholder',
+  rag_config_maxTokens_helper:              PFX + 'rag.config.maxTokens.helper',
 
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',
@@ -425,6 +482,10 @@ export const SECTION_I18N_KEYS = {
   video_baseUrl_label:                      PFX + 'video.baseUrl.label',
   video_baseUrl_placeholder:                PFX + 'video.baseUrl.placeholder',
   video_baseUrl_helper:                     PFX + 'video.baseUrl.helper',
+
+  error_save:                               PFX + 'error.save',
+  error_load:                               PFX + 'error.load',
+  error_delete:                             PFX + 'error.delete',
 
   name_label:                               '@name.label',
   name_placeholder:                         '@name.placeholder',

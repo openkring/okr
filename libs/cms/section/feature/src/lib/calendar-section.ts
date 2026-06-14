@@ -2,7 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effec
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
-import { EventInput } from '@fullcalendar/core';
+import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -49,8 +49,8 @@ import { CalendarStore } from './calendar-section.store';
       <ion-card-content>
         <div [style.display]="'block'">
           {{ filteredEvents().length }} {{ calendarStore.i18n.calevents() }}
-          <full-calendar #fullCalendar 
-            [options]="calendarOptions"
+          <full-calendar #fullCalendar
+            [options]="calendarOptions()"
             [events]="calendarEvents()"
             (dateClick)="onDateClick($event)"
             (eventDrop)="onEventDrop($event)"
@@ -76,7 +76,6 @@ export class CalendarSectionComponent implements OnInit {
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
   protected readonly calendarName = computed(() => this.section()?.name);
-  //protected readonly calendarOptions = computed(() => this.section()?.properties);
   protected isLoading = computed(() => this.calendarStore.isLoading());
   protected filteredEvents = computed(() => this.calendarStore.calevents());
   protected calendarEvents = computed<EventInput[]>(() => {
@@ -88,22 +87,27 @@ export class CalendarSectionComponent implements OnInit {
     }));
   });
 
-  protected calendarOptions = {
-    plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
-    initialView: 'timeGridWeek',
-    headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay'
-    },
-    locale: 'de',
-    firstDay: 1,
-    height: 'auto',
-    slotMinTime: '05:00:00',
-    slotMaxTime: '22:00:00',
-    weekNumbers: true,
-    editable: true,
-  };
+  // The editable subset (initialView, slot times, weekNumbers, editable) comes from
+  // the section's saved properties; plugins/toolbar/locale stay as code defaults.
+  protected calendarOptions = computed<CalendarOptions>(() => {
+    const props = (this.section()?.properties ?? {}) as CalendarOptions;
+    return {
+      plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
+      initialView: props.initialView ?? 'timeGridWeek',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      locale: 'de',
+      firstDay: 1,
+      height: 'auto',
+      slotMinTime: props.slotMinTime ?? '05:00:00',
+      slotMaxTime: props.slotMaxTime ?? '22:00:00',
+      weekNumbers: props.weekNumbers ?? true,
+      editable: props.editable ?? true,
+    };
+  });
 
   constructor() {
     effect(() => {

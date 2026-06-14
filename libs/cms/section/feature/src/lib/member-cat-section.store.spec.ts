@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildCatRows } from './member-cat-section.util';
+import { applyCatRowConfig, buildCatRows, CatRow } from './member-cat-section.util';
 
 const TODAY = '20260525';
 
@@ -66,5 +66,32 @@ describe('buildCatRows', () => {
     ], TODAY);
     const total = rows[rows.length - 1];
     expect(total).toEqual({ label: 'Total', male: 1, female: 2, total: 3 });
+  });
+});
+
+describe('applyCatRowConfig', () => {
+  const rows: CatRow[] = [
+    { label: 'A', male: 1, female: 0, total: 1 },
+    { label: 'J', male: 0, female: 1, total: 1 },
+    { label: 'Total', male: 1, female: 1, total: 2 }
+  ];
+
+  it('returns rows unchanged for empty input', () => {
+    expect(applyCatRowConfig([], '', 'asc')).toEqual([]);
+  });
+
+  it('keeps the Total row last when filtering', () => {
+    const result = applyCatRowConfig(rows, 'a', 'asc');
+    expect(result.map(r => r.label)).toEqual(['A', 'Total']);
+  });
+
+  it('reverses the body (not the Total) for desc order', () => {
+    const result = applyCatRowConfig(rows, '', 'desc');
+    expect(result.map(r => r.label)).toEqual(['J', 'A', 'Total']);
+  });
+
+  it('filter is case-insensitive and trimmed', () => {
+    const result = applyCatRowConfig(rows, '  J  ', 'asc');
+    expect(result.map(r => r.label)).toEqual(['J', 'Total']);
   });
 });

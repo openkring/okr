@@ -7,11 +7,13 @@ import { getApp } from 'firebase/app';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 
-import { AppStore } from '@bk2/shared-feature';
+import { catchError, of } from 'rxjs';
+
+import { AppStore, withErrorState } from '@bk2/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
-import { confirm, showToast } from '@bk2/shared-util-angular';
+import { confirm, downloadTextFile, exportCsv, getExportFileName, showToast } from '@bk2/shared-util-angular';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { I18nService } from '@bk2/shared-i18n';
 
@@ -51,6 +53,7 @@ export const initialState: SectionState = {
 
 export const _SectionStore = signalStore(
   withState(initialState),
+  withErrorState(),
   withProps(() => ({
     sectionService: inject(SectionService),
     uploadService: inject(UploadService),
@@ -64,10 +67,17 @@ export const _SectionStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(SECTION_I18N_KEYS),
-
+  })),
+  withProps((store) => ({
     sectionsResource: rxResource({
       stream: () => {
-        return store.sectionService.list();
+        return store.sectionService.list().pipe(
+          catchError(error => {
+            debugData('SectionStore.sectionsResource: stream error', error, store.appStore.currentUser());
+            store.setError(store.i18n.error_load());
+            return of([] as SectionModel[]);
+          })
+        );
       }
     }),
 
@@ -78,7 +88,12 @@ export const _SectionStore = signalStore(
       }),
       stream: ({ params }) => {
         return store.sectionService.read(params.sectionId).pipe(
-          debugItemLoaded<SectionModel>(`SectionStore.sectionResource`, params.currentUser)
+          debugItemLoaded<SectionModel>(`SectionStore.sectionResource`, params.currentUser),
+          catchError(error => {
+            debugData('SectionStore.sectionResource: stream error', error, params.currentUser);
+            store.setError(store.i18n.error_load());
+            return of(undefined);
+          })
         );
       }
     })
@@ -214,11 +229,17 @@ export const _SectionStore = signalStore(
         if (role === 'confirm' && data && !readOnly) {
           const section = narrowSection(data);
           if (section) {
-            const sectionId = section.bkey?.length === 0 ?
-              await store.sectionService.create(section, store.currentUser()) :
-              await store.sectionService.update(data, store.currentUser());
-            this.reload();
-            return sectionId;
+            store.clearError();
+            try {
+              const sectionId = section.bkey?.length === 0 ?
+                await store.sectionService.create(section, store.currentUser()) :
+                await store.sectionService.update(data, store.currentUser());
+              this.reload();
+              return sectionId;
+            } catch (error) {
+              store.setError(store.i18n.error_save());
+              throw error;
+            }
           }
         }
       },
@@ -227,8 +248,14 @@ export const _SectionStore = signalStore(
         if (readOnly || !section) return;
         const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
-          await store.sectionService.delete(section, store.currentUser());
-          this.reset();
+          store.clearError();
+          try {
+            await store.sectionService.delete(section, store.currentUser());
+            this.reset();
+          } catch (error) {
+            store.setError(store.i18n.error_delete());
+            throw error;
+          }
         }
       },
 
@@ -260,9 +287,15 @@ export const _SectionStore = signalStore(
           section.properties.imageStyle = IMAGE_STYLE_SHAPE;
         }
         section.properties.imageStyle.action = ImageActionType.Download;
-        await store.sectionService.update(section, store.currentUser());
-        await this.createDocument(file, storagePath, downloadUrl);  // create a document for the uploaded image
-        this.reload();
+        store.clearError();
+        try {
+          await store.sectionService.update(section, store.currentUser());
+          await this.createDocument(file, storagePath, downloadUrl);  // create a document for the uploaded image
+          this.reload();
+        } catch (error) {
+          store.setError(store.i18n.error_save());
+          throw error;
+        }
       },
 
       async uploadFile(section?: ButtonSection): Promise<void> {
@@ -280,17 +313,36 @@ export const _SectionStore = signalStore(
         section.properties.action.url = downloadUrl;
         section.properties.action.altText = file.name;
         section.properties.action.type = ButtonAction.Download;
-        await store.sectionService.update(section, store.currentUser());
-        await this.createDocument(file, storagePath, downloadUrl);  // create a document for the uploaded file
-        this.reload();
+        store.clearError();
+        try {
+          await store.sectionService.update(section, store.currentUser());
+          await this.createDocument(file, storagePath, downloadUrl);  // create a document for the uploaded file
+          this.reload();
+        } catch (error) {
+          store.setError(store.i18n.error_save());
+          throw error;
+        }
       },
 
       async createDocument(file: File, storagePath: string, downloadUrl: string) {
         return store.uploadService.createAndSaveDocument(file, store.tenantId(), storagePath, downloadUrl, store.currentUser());
       },
 
+      /**
+       * Export the currently-filtered sections. `type === 'csv'` downloads a CSV
+       * (bkey, name, type, state, tags); any other value downloads pretty JSON.
+       */
       async export(type: string): Promise<void> {
-        console.log(`SectionStore.export(${type}) is not yet implemented.`);
+        const sections = store.filteredSections() ?? [];
+        if (type === 'csv') {
+          const rows = [
+            ['bkey', 'name', 'type', 'state', 'tags'],
+            ...sections.map(s => [s.bkey ?? '', s.name ?? '', s.type ?? '', s.state ?? '', s.tags ?? ''])
+          ];
+          await exportCsv(rows, getExportFileName('sections', 'csv'));
+        } else {
+          await downloadTextFile(JSON.stringify(sections, null, 2), getExportFileName('sections', 'json'));
+        }
       },
 
       async send(section: SectionModel): Promise<void> {

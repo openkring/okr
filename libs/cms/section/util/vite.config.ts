@@ -8,6 +8,7 @@ const libraryConfig = defineConfig({
   cacheDir: '../../../../node_modules/.vite/libs/cms/section/util',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    setupFiles: ['./test-setup.ts'],
     // only keep project-specific settings here
     coverage: {
       reportsDirectory: '../../../../coverage/libs/cms/section/util',

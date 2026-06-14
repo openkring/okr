@@ -4,21 +4,39 @@
   "sourceRoot": "libs/cms/section/data-access/src",
   "prefix": "bk",
   "projectType": "library",
-  "tags": ["type:data-access", "scope:section", "platform:mobile", "platform:web"],
+  "tags": [
+    "type:data-access",
+    "scope:section",
+    "platform:mobile",
+    "platform:web"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/libs/cms/section/data-access",
         "main": "libs/cms/section/data-access/src/index.ts",
         "tsConfig": "libs/cms/section/data-access/tsconfig.lib.json",
-        "assets": ["libs/cms/section/data-access/*.md"],
+        "assets": [
+          "libs/cms/section/data-access/*.md"
+        ],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "configFile": "libs/cms/section/data-access/vite.config.ts"
+      }
     }
   }
 }

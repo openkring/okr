@@ -2,7 +2,7 @@ import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { RoleName, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
+import { BkListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
@@ -13,8 +13,8 @@ import { SectionStore } from './section.store';
   standalone: true,
   imports: [
     SvgIconPipe,
-    Spinner, EmptyList, ListFilter,
-    IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
+    BkListSkeleton, EmptyList, ErrorBanner, ListFilter,
+    IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
   ],
   template: `
@@ -67,10 +67,12 @@ import { SectionStore } from './section.store';
     </ion-toolbar>
   </ion-header>
 
+  <bk-error-banner [message]="sectionStore.errorMessage()" (dismiss)="sectionStore.clearError()" />
+
   <!-- Data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <bk-list-skeleton [rows]="6" />
     } @else {
       @if (filteredSections().length === 0) {
         <bk-empty-list message="@content.section.field.empty" />

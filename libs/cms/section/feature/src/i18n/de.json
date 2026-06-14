@@ -22,6 +22,11 @@
     "conf": "Email(s) wurde(n) abgeschickt.",
     "error": "Email(s) konnte(n) nicht verschickt werden."
   },
+  "error": {
+    "save": "Die Sektion konnte nicht gespeichert werden. Bitte versuche es erneut.",
+    "load": "Die Sektionen konnten nicht geladen werden. Bitte versuche es erneut.",
+    "delete": "Die Sektion konnte nicht gelöscht werden. Bitte versuche es erneut."
+  },
 
   "activity": {
     "empty": "Keine Aktivitäten vorhanden."
@@ -133,6 +138,48 @@
     "edit": "Ereignis bearbeiten",
     "view": "Ereignis anzeigen",
     "download": "Ereignis herunterladen (ICS)"
+  },
+  "cal": {
+    "title": "Kalender-Konfiguration",
+    "subtitle": "Anzeigeoptionen für den Kalender.",
+    "view": {
+      "label": "Standardansicht"
+    },
+    "slotMinTime": {
+      "label": "Frühester Zeitpunkt",
+      "placeholder": "05:00:00",
+      "helper": "Früheste angezeigte Uhrzeit in der Tages-/Wochenansicht (Format HH:MM:SS)."
+    },
+    "slotMaxTime": {
+      "label": "Spätester Zeitpunkt",
+      "placeholder": "22:00:00",
+      "helper": "Späteste angezeigte Uhrzeit in der Tages-/Wochenansicht (Format HH:MM:SS)."
+    },
+    "weekNumbers": {
+      "label": "Kalenderwochen anzeigen",
+      "helper": "Zeigt die ISO-Kalenderwochennummern an."
+    },
+    "editable": {
+      "label": "Ereignisse verschiebbar",
+      "helper": "Erlaubt das Verschieben und Ändern der Dauer von Ereignissen per Drag & Drop."
+    }
+  },
+  "chart": {
+    "title": "Diagramm-Konfiguration",
+    "subtitle": "Diagrammtyp, Titel und ECharts-Optionen.",
+    "type": {
+      "label": "Diagrammtyp"
+    },
+    "titleText": {
+      "label": "Diagrammtitel",
+      "placeholder": "z.B. Mitgliederentwicklung",
+      "helper": "Optionaler Titel, der über dem Diagramm angezeigt wird."
+    },
+    "options": {
+      "label": "ECharts-Optionen (JSON)",
+      "helper": "Vollständige ECharts-Optionen als JSON (Achsen, Datenreihen, Farben). Siehe echarts.apache.org/option.html.",
+      "error": "Ungültiges JSON – die Änderungen wurden nicht übernommen."
+    }
   },
   "chat": {
     "title": "Chat Konfiguration ändern",
@@ -487,6 +534,26 @@
       "female": "Frauen",
       "total": "Total",
       "empty": "Keine aktiven Mitglieder gefunden."
+    },
+    "config": {
+      "title": "Mitglieder-Statistik-Konfiguration",
+      "subtitle": "Organisation, Anzeige und Sortierung.",
+      "orgId": {
+        "label": "Organisation",
+        "placeholder": "Schlüssel der Organisation",
+        "helper": "Die Organisation, deren Mitglieder ausgewertet werden."
+      },
+      "chartType": {
+        "label": "Darstellung"
+      },
+      "sortOrder": {
+        "label": "Sortierung"
+      },
+      "categoryFilter": {
+        "label": "Kategorie-Filter",
+        "placeholder": "z.B. Aktiv",
+        "helper": "Nur diese Mitgliederkategorie anzeigen (leer = alle)."
+      }
     }
   },
   "news": {
@@ -552,7 +619,36 @@
   },
   "rag": {
     "placeholder": "Frage irgendetwas über den Seeclub Stäfa",
-    "upload": "Dokumente in den RAG-Store hochladen"
+    "upload": "Dokumente in den RAG-Store hochladen",
+    "config": {
+      "title": "RAG-Konfiguration",
+      "subtitle": "Modell, Vektor-Store und Verhalten des Assistenten.",
+      "model": {
+        "label": "Modell",
+        "placeholder": "gemini-3-flash-preview",
+        "helper": "Die ID des verwendeten Sprachmodells."
+      },
+      "storeName": {
+        "label": "Vektor-Store",
+        "placeholder": "scs-rag",
+        "helper": "Name des Vektor-Stores mit den indexierten Dokumenten."
+      },
+      "systemPrompt": {
+        "label": "System-Prompt",
+        "placeholder": "Du bist ein hilfreicher Assistent ...",
+        "helper": "Optionale Anweisung, die das Verhalten des Assistenten steuert."
+      },
+      "documentScope": {
+        "label": "Dokument-Bereich",
+        "placeholder": "Ordnerpfad oder Tag",
+        "helper": "Optionale Einschränkung der durchsuchten Dokumente."
+      },
+      "maxTokens": {
+        "label": "Max. Tokens",
+        "placeholder": "1024",
+        "helper": "Optionale Begrenzung der Antwortlänge."
+      }
+    }
   },
   "responsibility": {
     "label": "Verantwortlichkeit",

@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, SectionModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header} from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@bk2/shared-ui';
 import { coerceBoolean, deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
 import { SectionForm } from '@bk2/cms-section-ui';
 
@@ -11,23 +11,23 @@ import { SectionStore } from './section.store';
 
 /**
  * This modal is used to edit a SectionModel.
- * SectionModels are quite complex, so we dont use vest here, but derive dirty from deep comparison of initial vs current form data.
- * Consequently, there are no form validations applied. This is ok, because 
- * a) most fields are selectable (no errors possible)
- * b) only few people are allowed to edit sections (admins, editors), it is assumed they know what they are doing
+ * `dirty` is derived from a deep comparison of initial vs current form data, while validity
+ * comes from the per-type vest suite run inside SectionForm (emitted via its `valid` output).
+ * The save action is only offered when the form is both dirty and valid.
  */
 @Component({
     selector: 'bk-section-edit-modal',
     standalone: true,
     imports: [
-      ChangeConfirmation, Header, SectionForm,
+      ChangeConfirmation, Header, ErrorBanner, SectionForm,
       IonContent
     ],
     template: `
       <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
-      @if(formDirty() && formData()) {
+      @if(formDirty() && formValid() && formData()) {
         <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
+      <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
       <ion-content class="ion-no-padding">
         @if(formData(); as formData) {
           <bk-section-form
@@ -41,6 +41,7 @@ import { SectionStore } from './section.store';
             [allTags]="tags()"
             [tenantId]="tenantId()"
             [readOnly]="isReadOnly()"
+            (valid)="formValid.set($event)"
           />
         }
       </ion-content>
@@ -66,6 +67,7 @@ export class SectionEditModal {
     return fd ? !fd.bkey || fd.bkey.length === 0 : false;
   });
   protected formData = linkedSignal(() => safeStructuredClone(this.section()));
+  protected formValid = signal(true);
   protected showForm = signal(true);
 
   // derived signals

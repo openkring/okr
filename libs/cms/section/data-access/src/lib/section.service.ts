@@ -81,14 +81,16 @@ export class SectionService {
   }
 
   /*-------------------------- SEARCH --------------------------------*/
-  public searchByKeys(sectionKeys: string[]): Observable<SectionModel[]> {
-    if (!sectionKeys || sectionKeys.length === 0) {
+  public searchByKeys(sectionKeys: string[], limit?: number): Observable<SectionModel[]> {
+    // optionally cap the number of keys to read (pagination / large section sets)
+    const keys = (limit !== undefined && limit >= 0) ? (sectionKeys ?? []).slice(0, limit) : (sectionKeys ?? []);
+    if (keys.length === 0) {
       return of([]);    // Return an empty array if no keys are provided
     }
 
     // read all sections
     // we need to use first() on each read() in order to make sure that each observable completes
-    const sectionObservables: Observable<SectionModel | undefined>[] = sectionKeys.map(key => this.read(key).pipe(first()));
+    const sectionObservables: Observable<SectionModel | undefined>[] = keys.map(key => this.read(key).pipe(first()));
    // Use forkJoin to wait for all read operations to complete
    return forkJoin(sectionObservables).pipe(
     // After forkJoin emits the array of results (including potential undefined values)
