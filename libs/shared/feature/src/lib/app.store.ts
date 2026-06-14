@@ -76,11 +76,16 @@ export const AppStore = signalStore(
       // the resource will reload whenever the fbUser changes (login/logout).
       params: () => store.fbUser(),
       stream: () => {
-        const query = getSystemQuery(store.tenantId());
-        const loginEmail = store.fbUser()?.email;
-        if (!loginEmail) return of(undefined);
-        query.push({ key: 'loginEmail', operator: '==', value: loginEmail });
-        return store.firestoreService.searchData<UserModel>(UserCollection, query, 'loginEmail', 'asc');
+        // Read the user's own doc BY DOCUMENT ID (== auth uid). The users security
+        // rule grants self-read via `request.auth.uid == userId` (a get), but NOT via
+        // a loginEmail list query: Firestore validates queries against their potential
+        // result set, and a loginEmail filter doesn't constrain the document id, so the
+        // self-read branch can never validate the list — only privileged users would
+        // pass (via the isPrivileged() branch). Reading by uid works for every signed-in
+        // user, including the 'registered' role.
+        const uid = store.fbUser()?.uid;
+        if (!uid) return of(undefined);
+        return store.firestoreService.readModel<UserModel>(UserCollection, uid);
       }
     }),
     personsResource: rxResource({
@@ -158,19 +163,12 @@ export const AppStore = signalStore(
   withComputed((state) => {
     return {
       currentUser: computed(() => {
-        const users = state.currentUserResource.value();
-        if (!users) {
-          console.warn('AppStore.currentUser: currentUserResource has no value yet.');
+        const user = state.currentUserResource.value();
+        if (!user) {
+          console.warn('AppStore.currentUser: no user doc found for uid ', state.fbUser()?.uid);
           return undefined;
         }
-        if (users.length === 0) {
-          console.warn('AppStore.currentUser: no user found for loginEmail ', state.fbUser()?.email);
-          return undefined;
-        }
-        if (users.length > 1) {
-          console.error('AppStore.currentUser: multiple users found for loginEmail ', state.fbUser()?.email);
-        }
-        return users[0];
+        return user;
       }),
       allPersons: computed(() => state.personsResource.value() ?? []),
       allOrgs: computed(() => state.orgsResource.value() ?? []),

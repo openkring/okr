@@ -1,4 +1,4 @@
-import { Inject, InjectionToken } from "@angular/core";
+import { inject, InjectionToken } from "@angular/core";
 import {
   connectFirestoreEmulator,
   EmulatorMockTokenOptions,
@@ -8,7 +8,7 @@ import {
   persistentLocalCache,
   persistentSingleTabManager,
 } from "firebase/firestore";
-import { BkEnvironment, ENV } from "./env";
+import { ENV } from "./env";
 import { getApp } from "firebase/app";
 
 export const FIRESTORE_EMULATOR_PORT = 8080;
@@ -100,7 +100,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
       }
     }
 
-    const _env = Inject(ENV) as BkEnvironment;
+    const _env = inject(ENV);
     const mockUserToken: EmulatorMockTokenOptions | undefined = undefined;
 
     if (_env.useEmulators) {
