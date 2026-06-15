@@ -20,7 +20,7 @@ import { FOLDER_I18N_KEYS, FolderI18n } from '@bk2/folder-util';
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [showCancel]="true" [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (okClicked)="save()" />
+      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
@@ -62,9 +62,8 @@ export class FolderEditModal {
   });
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({
-    ok: this.i18n.changeConfirmation_ok(),
     cancel: this.i18n.changeConfirmation_cancel(),
-    confirmation: this.i18n.changeConfirmation_confirmation(),
+    save: this.i18n.changeConfirmation_ok(),
   } as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */

@@ -2,9 +2,9 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { FolderModel, UserModel } from '@bk2/shared-models';
+import { FolderModel, RoleName, UserModel } from '@bk2/shared-models';
 import { Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { validateVestTree } from '@bk2/shared-util-angular';
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
@@ -26,31 +26,26 @@ import { FolderI18n, folderValidations } from '@bk2/folder-util';
           <ion-card-content class="ion-no-padding">
             <ion-grid>
               <ion-row>
-                <ion-col size="12">
+                <ion-col size="12" size-md="6">
                   <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
-                    [maxLength]="50" [readOnly]="isReadOnly()" />
+                    [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
                 </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
+                <ion-col size="12" size-md="6">
                   <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
                     [maxLength]="50" [readOnly]="isReadOnly()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
-                  <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
-                    [readOnly]="isReadOnly()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
-                  <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
           </ion-card-content>
         </ion-card>
+
+        <!-- guarded, always last -->
+        @if (hasRole('contentAdmin')) {
+          <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        }
+        @if (hasRole('contentAdmin')) {
+          <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+        }
       </form>
     }
   `
@@ -107,5 +102,9 @@ export class FolderForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected hasRole(role: RoleName): boolean {
+    return hasRole(role, this.currentUser());
   }
 }
