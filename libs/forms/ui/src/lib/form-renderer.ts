@@ -2,7 +2,7 @@ import { Component, computed, input, OnInit, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { IonButton, IonList } from '@ionic/angular/standalone';
 import { Field, FormDefinitionModel } from '@bk2/shared-models';
-import { validatorsFor, defaultFor } from '@bk2/forms-util';
+import { validatorsFor, defaultFor, isInputField } from '@bk2/forms-util';
 import { FieldRenderer } from './field-renderer';
 
 @Component({
@@ -36,20 +36,23 @@ import { FieldRenderer } from './field-renderer';
           <bk-field-renderer [field]="field" [control]="getControl(field)" />
         }
       </ion-list>
-      <ion-button
-        type="submit"
-        expand="block"
-        [disabled]="form().invalid || submitting()"
-        style="margin: 16px;"
-      >
-        {{ submitLabel() }}
-      </ion-button>
+      @if (showSubmit()) {
+        <ion-button
+          type="submit"
+          expand="block"
+          [disabled]="form().invalid || submitting()"
+          style="margin: 16px;"
+        >
+          {{ submitLabel() }}
+        </ion-button>
+      }
     </form>
   `,
 })
 export class FormRenderer implements OnInit {
   public readonly definition = input.required<FormDefinitionModel>();
   public readonly submitLabel = input('Absenden');
+  public readonly showSubmit = input(true);
   public readonly submitting = input(false);
   public readonly jsToken = input('');
   public readonly submitted = output<Record<string, unknown>>();
@@ -69,6 +72,8 @@ export class FormRenderer implements OnInit {
   public ngOnInit(): void {
     const controls: Record<string, FormControl> = {};
     for (const field of this.definition().fields) {
+      // Display-only elements (label, divider) hold no value — no control, not submitted.
+      if (!isInputField(field)) continue;
       controls[field.key] = new FormControl(defaultFor(field), validatorsFor(field));
     }
     // Honeypot — always empty, no validators

@@ -1,9 +1,10 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { IonCheckbox, IonInput, IonItem, IonLabel, IonNote, IonRadio, IonRadioGroup, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import {
-  IonCheckbox, IonInput, IonItem, IonLabel, IonNote,
-  IonRadio, IonRadioGroup, IonSelect, IonSelectOption, IonTextarea, IonToggle,
-} from '@ionic/angular/standalone';
+  Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, PasswordInput, PasswordInputI18n,
+  PhoneInput, PhoneInputI18n, TextInput, TextInputI18n,
+} from '@bk2/shared-ui';
 import { Field } from '@bk2/shared-models';
 
 @Component({
@@ -11,57 +12,57 @@ import { Field } from '@bk2/shared-models';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    IonItem, IonLabel, IonNote,
-    IonInput, IonTextarea, IonCheckbox, IonToggle,
+    IonItem, IonLabel, IonNote, IonInput, IonCheckbox,
     IonSelect, IonSelectOption, IonRadioGroup, IonRadio,
+    TextInput, NotesInput, PhoneInput, PasswordInput, Checkbox,
   ],
   styles: [`
     .field-full  { width: 100%; }
     .field-half  { width: 50%; }
     .field-third { width: 33.33%; }
     .help-text   { font-size: 12px; color: var(--ion-color-medium); padding: 2px 16px 4px; }
+    .static-label { padding: 8px 16px; white-space: pre-wrap; }
+    .field-divider { border: none; border-top: 1px solid var(--ion-color-step-200, #ccc); margin: 12px 16px; }
   `],
   template: `
     @switch (field().type) {
+      <!-- migrated to shared/ui primitives (bridged back to the FormControl) -->
       @case ('text') {
-        <ion-item [class]="'field-' + field().width">
-          <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
+        <div [class]="'field-' + field().width">
           @if ($any(field()).multiline) {
-            <ion-textarea [formControl]="control()" [placeholder]="field().placeholder ?? ''" [rows]="4" auto-grow />
+            <bk-notes-input [i18n]="notesI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
           } @else {
-            <ion-input [formControl]="control()" [placeholder]="field().placeholder ?? ''" type="text" />
+            <bk-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
           }
-        </ion-item>
+        </div>
       }
       @case ('email') {
-        <ion-item [class]="'field-' + field().width">
-          <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
-          <ion-input [formControl]="control()" [placeholder]="field().placeholder ?? ''" type="email" />
-        </ion-item>
+        <div [class]="'field-' + field().width">
+          <bk-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" inputMode="email" />
+        </div>
       }
+      @case ('iban') {
+        <div [class]="'field-' + field().width">
+          <bk-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
+        </div>
+      }
+      @case ('phone') {
+        <div [class]="'field-' + field().width">
+          <bk-phone [i18n]="phoneI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
+        </div>
+      }
+      @case ('password') {
+        <div [class]="'field-' + field().width">
+          <bk-password-input [i18n]="passwordI18n()" [value]="strValue()" (valueChange)="setValue($event)" />
+        </div>
+      }
+
+      <!-- raw controls: a primitive would change stored format or required semantics -->
       @case ('number') {
         <ion-item [class]="'field-' + field().width">
           <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
           <ion-input [formControl]="control()" [placeholder]="field().placeholder ?? ''" type="number"
             [min]="$any(field()).min ?? null" [max]="$any(field()).max ?? null" [step]="$any(field()).step ?? 1" />
-        </ion-item>
-      }
-      @case ('phone') {
-        <ion-item [class]="'field-' + field().width">
-          <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
-          <ion-input [formControl]="control()" [placeholder]="field().placeholder ?? '+41 ...'" type="tel" />
-        </ion-item>
-      }
-      @case ('iban') {
-        <ion-item [class]="'field-' + field().width">
-          <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
-          <ion-input [formControl]="control()" [placeholder]="field().placeholder ?? 'CH..'" type="text" />
-        </ion-item>
-      }
-      @case ('password') {
-        <ion-item [class]="'field-' + field().width">
-          <ion-label position="stacked">{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
-          <ion-input [formControl]="control()" type="password" />
         </ion-item>
       }
       @case ('dropdown') {
@@ -83,10 +84,9 @@ import { Field } from '@bk2/shared-models';
             </ion-item>
           }
         } @else {
-          <ion-item [class]="'field-' + field().width">
-            <ion-label>{{ field().label }}@if(field().required){<span> *</span>}</ion-label>
-            <ion-toggle [formControl]="control()" slot="end" />
-          </ion-item>
+          <div [class]="'field-' + field().width">
+            <bk-checkbox [i18n]="checkboxI18n()" [checked]="boolValue()" (checkedChange)="setValue($event)" [readOnly]="false" />
+          </div>
         }
       }
       @case ('radio') {
@@ -140,6 +140,12 @@ import { Field } from '@bk2/shared-models';
           />
         </ion-item>
       }
+      @case ('label') {
+        <div [class]="'static-label field-' + field().width">{{ field().label }}</div>
+      }
+      @case ('divider') {
+        <hr class="field-divider" />
+      }
       @default {
         <ion-item>
           <ion-label color="medium">{{ field().label }} ({{ field().type }} — not rendered yet)</ion-label>
@@ -165,6 +171,34 @@ import { Field } from '@bk2/shared-models';
 export class FieldRenderer {
   public readonly field = input.required<Field>();
   public readonly control = input.required<FormControl>();
+
+  // required marker appended to the primitive's own label
+  protected readonly fieldLabel = computed(() => this.field().label + (this.field().required ? ' *' : ''));
+
+  protected readonly textI18n = computed<TextInputI18n>(() => ({
+    name: this.field().key, label: this.fieldLabel(),
+    placeholder: this.field().placeholder ?? '', helper: this.field().helpText ?? '',
+  }));
+  protected readonly notesI18n = computed<NotesInputI18n>(() => ({
+    name: this.field().key, label: this.fieldLabel(), placeholder: this.field().placeholder ?? '',
+  }));
+  protected readonly phoneI18n = computed<PhoneInputI18n>(() => ({
+    name: this.field().key, label: this.fieldLabel(), placeholder: this.field().placeholder ?? '',
+  }));
+  protected readonly passwordI18n = computed<PasswordInputI18n>(() => ({
+    name: this.field().key, label: this.fieldLabel(), placeholder: this.field().placeholder ?? '',
+  }));
+  protected readonly checkboxI18n = computed<CheckboxI18n>(() => ({
+    name: this.field().key, label: this.fieldLabel(), helper: this.field().helpText ?? '',
+  }));
+
+  // bridge: primitives emit (value/checked)Change → write back into the FormControl
+  protected strValue(): string { return (this.control().value ?? '') as string; }
+  protected boolValue(): boolean { return !!this.control().value; }
+  protected setValue(value: string | boolean): void {
+    this.control().setValue(value);
+    this.control().markAsDirty();
+  }
 
   protected onFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;

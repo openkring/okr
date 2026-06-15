@@ -1,5 +1,4 @@
 import { Component, input, output } from '@angular/core';
-import { CdkDrag } from '@angular/cdk/drag-drop';
 import { IonCard, IonCardContent, IonIcon, IonLabel } from '@ionic/angular/standalone';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { FieldType } from '@bk2/shared-models';
@@ -28,22 +27,22 @@ export const FIELD_TYPE_DEFS: FieldTypeDef[] = [
   { type: 'signature', label: 'Signature', icon: 'shield',       description: 'Client-side signature capture' },
   { type: 'rating',    label: 'Rating',    icon: 'star',         description: 'Star rating (1–5 by default)' },
   { type: 'avatar',    label: 'Avatar',    icon: 'person',       description: 'Select person/org/resource (auth only)' },
+  { type: 'label',     label: 'Label',     icon: 'info-circle', description: 'Static text — no input, not submitted' },
+  { type: 'divider',   label: 'Divider',   icon: 'remove',       description: 'Visual separator line' },
 ];
 
 @Component({
   selector: 'bk-field-type-card',
   standalone: true,
-  imports: [CdkDrag, SvgIconPipe, IonCard, IonCardContent, IonIcon, IonLabel],
+  imports: [SvgIconPipe, IonCard, IonCardContent, IonIcon, IonLabel],
   styles: [`
     ion-card { margin: 4px; cursor: grab; }
     ion-card-content { display: flex; align-items: center; gap: 8px; padding: 8px; }
     ion-icon { font-size: 20px; flex-shrink: 0; }
     .desc { font-size: 11px; color: var(--ion-color-medium); }
-    .cdk-drag-preview { opacity: 0.8; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-    .cdk-drag-placeholder { opacity: 0.3; }
   `],
   template: `
-    <ion-card cdkDrag [cdkDragData]="def()" (click)="add.emit(def())">
+    <ion-card (click)="add.emit(def())">
       <ion-card-content>
         <ion-icon src="{{ def().icon | svgIcon }}" />
         <div>
