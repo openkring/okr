@@ -1,13 +1,13 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, IonSelect, IonSelectOption, IonTextarea, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonNote, IonRadio, IonRadioGroup, IonSelect, IonSelectOption, IonTextarea, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { Header } from '@bk2/shared-ui';
 import { FormDefinitionModel, SubmissionTarget } from '@bk2/shared-models';
 import { safeStructuredClone } from '@bk2/shared-util-core';
 import { FormDefinitionService } from '@bk2/forms-data-access';
-import { FORM_MAPPINGS } from '@bk2/forms-util';
+import { FORM_MAPPINGS, getPrefillFields } from '@bk2/forms-util';
 
 @Component({
   selector: 'bk-form-definition-edit-modal',
@@ -16,7 +16,7 @@ import { FORM_MAPPINGS } from '@bk2/forms-util';
     FormsModule, Header,
     IonContent, IonList, IonItem, IonLabel,
     IonInput, IonTextarea, IonRadioGroup, IonRadio,
-    IonSelect, IonSelectOption, IonButton,
+    IonSelect, IonSelectOption, IonButton, IonNote,
   ],
   template: `
     <bk-header [i18n]="{ title: title() }" [isModal]="true" />
@@ -26,13 +26,13 @@ import { FORM_MAPPINGS } from '@bk2/forms-util';
         <!-- Name -->
         <ion-item>
           <ion-label position="stacked">Name *</ion-label>
-          <ion-input [(ngModel)]="formData().name" placeholder="Kontaktformular" />
+          <ion-input [ngModel]="formData().name" (ngModelChange)="patch({ name: $event })" placeholder="Kontaktformular" />
         </ion-item>
 
         <!-- Description -->
         <ion-item>
           <ion-label position="stacked">Beschreibung</ion-label>
-          <ion-textarea [(ngModel)]="formData().description" rows="3" />
+          <ion-textarea [ngModel]="formData().description" (ngModelChange)="patch({ description: $event })" rows="3" />
         </ion-item>
 
         <!-- form key (read-only after creation) -->
@@ -79,8 +79,24 @@ import { FORM_MAPPINGS } from '@bk2/forms-util';
         <!-- PDF template (optional) -->
         <ion-item>
           <ion-label position="stacked">PDF-Template-ID (optional)</ion-label>
-          <ion-input [(ngModel)]="formData().pdfTemplateId" placeholder="Template-ID aus dem Dokument-Generator" />
+          <ion-input [ngModel]="formData().pdfTemplateId" (ngModelChange)="patch({ pdfTemplateId: $event })" placeholder="Template-ID aus dem Dokument-Generator" />
         </ion-item>
+
+        <!-- Field preview (prefilled from the selected collection) -->
+        @if (formData().fields.length > 0) {
+          <ion-item lines="none">
+            <ion-label position="stacked">Felder ({{ formData().fields.length }}) – im Formular-Editor anpassbar</ion-label>
+          </ion-item>
+          @for (field of formData().fields; track field.id) {
+            <ion-item>
+              <ion-label>
+                {{ field.label }}
+                @if (field.required) { <span style="color: var(--ion-color-danger);">*</span> }
+                <ion-note slot="end">{{ field.type }}</ion-note>
+              </ion-label>
+            </ion-item>
+          }
+        }
 
       </ion-list>
 
@@ -125,8 +141,16 @@ export class FormDefinitionEditModal {
     return true;
   });
 
+  /** Emit a new formData object so computeds (e.g. isValid) react to plain-text edits. */
+  protected patch(partial: Partial<FormDefinitionModel>): void {
+    this.formData.update(fd => ({ ...fd, ...partial }));
+  }
+
   protected setTargetKind(kind: 'collection' | 'url'): void {
     const fd = this.formData();
+    // Ionic's radio-group emits ngModelChange on init; ignore the echo so it
+    // doesn't wipe the pre-selected mapping (and disable Save).
+    if (fd.target.kind === kind) return;
     const target: SubmissionTarget = kind === 'collection'
       ? { kind: 'collection', mappingKey: '', modelType: '', collectionName: '' }
       : { kind: 'url', url: '' };
@@ -137,8 +161,14 @@ export class FormDefinitionEditModal {
     const mapping = FORM_MAPPINGS.find(m => m.mappingKey === mappingKey);
     if (!mapping) return;
     const fd = this.formData();
+    // In create mode the field list is a read-only preview, so swap it to the
+    // selected collection's template. In edit mode never clobber saved fields.
+    const fields = this.mode() === 'create'
+      ? getPrefillFields(mappingKey)
+      : fd.fields;
     this.formData.set({
       ...fd,
+      fields,
       target: { kind: 'collection', mappingKey, modelType: mapping.modelType, collectionName: mapping.collectionName },
     });
   }

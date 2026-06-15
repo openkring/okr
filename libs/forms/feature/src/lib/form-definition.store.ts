@@ -9,7 +9,7 @@ import { FormDefinitionModel } from '@bk2/shared-models';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { FormDefinitionService } from '@bk2/forms-data-access';
-import { FORM_I18N_KEYS, FormI18n, FORM_MAPPINGS } from '@bk2/forms-util';
+import { FORM_I18N_KEYS, FormI18n, FORM_MAPPINGS, getPrefillFields, isInputField } from '@bk2/forms-util';
 export type { FormI18n };
 
 import { FormDefinitionEditModal } from './form-definition-edit.modal';
@@ -62,6 +62,13 @@ export const FormDefinitionStore = signalStore(
     async openCreateModal(): Promise<void> {
       if (!store.canWrite()) return;
       const form = new FormDefinitionModel(store.appStore.tenantId());
+      // Pre-select the default collection mapping and prefill its model fields,
+      // so a new form starts with a usable field set instead of an empty builder.
+      const mapping = FORM_MAPPINGS[0];
+      if (mapping) {
+        form.target = { kind: 'collection', mappingKey: mapping.mappingKey, modelType: mapping.modelType, collectionName: mapping.collectionName };
+        form.fields = getPrefillFields(mapping.mappingKey);
+      }
       const modal = await store.modalController.create({
         component: FormDefinitionEditModal,
         cssClass: 'full-screen-modal',
@@ -151,7 +158,7 @@ export const FormDefinitionStore = signalStore(
         'generateDocument',
       );
 
-      const fields = [...form.fields].sort((a, b) => a.order - b.order);
+      const fields = [...form.fields].filter(isInputField).sort((a, b) => a.order - b.order);
 
       if (submissionId && form.pdfTemplateId) {
         // Template mode — single submission
@@ -211,7 +218,7 @@ export const FormDefinitionStore = signalStore(
         )
       );
 
-      const fields = [...form.fields].sort((a, b) => a.order - b.order);
+      const fields = [...form.fields].filter(isInputField).sort((a, b) => a.order - b.order);
       const headerRow = fields
         .map(f => `"${f.label.replace(/"/g, '""')} (${f.key})"`)
         .concat(['"is_spam"', '"submittedAt"'])

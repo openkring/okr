@@ -9,6 +9,7 @@ import {
 import { Header } from '@bk2/shared-ui';
 import { Field } from '@bk2/shared-models';
 import { safeStructuredClone } from '@bk2/shared-util-core';
+import { isDisplayField } from '@bk2/forms-util';
 
 @Component({
   selector: 'bk-field-config-modal',
@@ -22,15 +23,19 @@ import { safeStructuredClone } from '@bk2/shared-util-core';
     <ion-content class="ion-padding">
       <ion-list lines="full">
 
-        <ion-item>
-          <ion-label position="stacked">Label *</ion-label>
-          <ion-input [(ngModel)]="fieldData().label" />
-        </ion-item>
+        @if (fieldData().type !== 'divider') {
+          <ion-item>
+            <ion-label position="stacked">{{ fieldData().type === 'label' ? 'Text *' : 'Label *' }}</ion-label>
+            <ion-input [(ngModel)]="fieldData().label" />
+          </ion-item>
+        }
 
-        <ion-item>
-          <ion-label position="stacked">Feldname (snake_case) *</ion-label>
-          <ion-input [(ngModel)]="fieldData().key" placeholder="my_field" />
-        </ion-item>
+        @if (!isDisplay()) {
+          <ion-item>
+            <ion-label position="stacked">Feldname (snake_case) *</ion-label>
+            <ion-input [(ngModel)]="fieldData().key" placeholder="my_field" />
+          </ion-item>
+        }
 
         <ion-item>
           <ion-label position="stacked">Breite</ion-label>
@@ -41,20 +46,22 @@ import { safeStructuredClone } from '@bk2/shared-util-core';
           </ion-select>
         </ion-item>
 
-        <ion-item>
-          <ion-label>Pflichtfeld</ion-label>
-          <ion-toggle [(ngModel)]="fieldData().required" slot="end" />
-        </ion-item>
+        @if (!isDisplay()) {
+          <ion-item>
+            <ion-label>Pflichtfeld</ion-label>
+            <ion-toggle [(ngModel)]="fieldData().required" slot="end" />
+          </ion-item>
 
-        <ion-item>
-          <ion-label position="stacked">Hilfetext</ion-label>
-          <ion-input [(ngModel)]="fieldData().helpText" />
-        </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Hilfetext</ion-label>
+            <ion-input [(ngModel)]="fieldData().helpText" />
+          </ion-item>
 
-        <ion-item>
-          <ion-label position="stacked">Platzhalter</ion-label>
-          <ion-input [(ngModel)]="fieldData().placeholder" />
-        </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Platzhalter</ion-label>
+            <ion-input [(ngModel)]="fieldData().placeholder" />
+          </ion-item>
+        }
 
       </ion-list>
 
@@ -70,8 +77,12 @@ export class FieldConfigModal {
   public readonly field = input.required<Field>();
   protected fieldData = linkedSignal(() => safeStructuredClone(this.field()) ?? this.field());
 
+  protected readonly isDisplay = computed(() => isDisplayField(this.fieldData().type));
+
   protected readonly isValid = computed(() => {
     const fd = this.fieldData();
+    if (fd.type === 'divider') return true;
+    if (fd.type === 'label') return !!fd.label.trim();
     return !!fd.label.trim() && !!fd.key.trim();
   });
 
