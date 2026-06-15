@@ -16,6 +16,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | `i18n` | adding/translating/wiring any i18n string (keys, store wiring, labels to forms/ui, new-lib `de.json`, tenant overrides). |
 | `icons` | rendering or choosing an icon, the `svgIcon` pipe, icon sets, or an icon shows blank. |
 | `generating-lists` | scaffolding a new feature list view (`FEATURE-list.ts`) — header, filters, list/grid, per-item ActionSheet actions. |
+| `building-forms` | building/scaffolding a form (`FEATURE.form.ts` or a form-builder form) — Signal Forms + Vest validation, shared/ui field primitives, `valid`/`dirty` outputs, no submit button (parent drives saving via change-confirmation), i18n, autofocus/tab order, `ion-card`/`ion-grid size-md` layout, guarded chips/notes. |
 | `new-section` | creating a new CMS section type. |
 | `firebase-deploy` | deploying app/hosting, Cloud Functions, Firestore/Storage rules, or managing function secrets. |
 | `eslint` | linting or fixing lint errors (and the `nx lint` heap-OOM workaround). |
