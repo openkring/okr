@@ -8,7 +8,8 @@ import { BkModel, NamedModel, TaggedModel } from './base.model';
 export type FieldType =
   | 'text' | 'email' | 'number' | 'phone' | 'iban' | 'password'
   | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'images'
-  | 'date' | 'time' | 'signature' | 'rating' | 'avatar';
+  | 'date' | 'time' | 'signature' | 'rating' | 'avatar'
+  | 'label' | 'divider';
 
 export interface FieldOption { label: string; value: string; }
 
@@ -40,11 +41,15 @@ export interface TimeField extends FieldBase { type: 'time'; min?: string; max?:
 export interface SignatureField extends FieldBase { type: 'signature'; }
 export interface RatingField extends FieldBase { type: 'rating'; scale?: number; allowHalf?: boolean; }
 export interface AvatarField extends FieldBase { type: 'avatar'; avatarType: 'person' | 'org' | 'resource'; multi?: boolean; }
+// Display-only elements — no input value, never submitted. `label` holds the static text.
+export interface LabelField extends FieldBase { type: 'label'; }
+export interface DividerField extends FieldBase { type: 'divider'; }
 
 export type Field =
   | TextField | EmailField | NumberField | PhoneField | IbanField | PasswordField
   | DropdownField | CheckboxField | RadioField | FileField | ImagesField
-  | DateField | TimeField | SignatureField | RatingField | AvatarField;
+  | DateField | TimeField | SignatureField | RatingField | AvatarField
+  | LabelField | DividerField;
 
 // ──────────────────────────────────────────
 // Submission target

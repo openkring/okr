@@ -1,9 +1,11 @@
 import { AbstractControl, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { parsePhoneNumber } from 'libphonenumber-js';
 import { Field } from '@bk2/shared-models';
+import { isDisplayField } from './field-kind';
 
 export function validatorsFor(field: Field): ValidatorFn[] {
   const fns: ValidatorFn[] = [];
+  if (isDisplayField(field.type)) return fns;
   if (field.required) fns.push(Validators.required);
 
   switch (field.type) {

@@ -8,6 +8,13 @@ export const FORM_MAPPINGS: FormMapping[] = [
     collectionName: 'applications',
     defaults: { state: 'applied', source: 'form' },
   },
+  {
+    mappingKey: 'applications.junior',
+    label: 'Applications (Junioren)',
+    modelType: 'ApplicationModel',
+    collectionName: 'applications',
+    defaults: { state: 'applied', source: 'form', applicationAs: 'youth' },
+  },
 ];
 
 export function getFormMapping(mappingKey: string): FormMapping | undefined {
