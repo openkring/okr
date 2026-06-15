@@ -6,8 +6,8 @@ import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, 
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { Spinner } from '@bk2/shared-ui';
-import { FormSection } from '@bk2/shared-models';
-import { FormDefinitionService } from '@bk2/forms-data-access';
+import { from, of } from 'rxjs';
+import { FormDefinitionModel, FormSection } from '@bk2/shared-models';
 import { FormRenderer } from '@bk2/forms-ui';
 
 import { FORMS_SECTION_I18N_KEYS, FormsSectionI18n } from '@bk2/cms-section-util';
@@ -16,13 +16,29 @@ export type { FormsSectionI18n };
 const FormSectionStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
-    formDefinitionService: inject(FormDefinitionService),
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(FORMS_SECTION_I18N_KEYS),
   })),
   withMethods(store => ({
+    // Public, anonymous gateway — reads the form definition server-side so it works
+    // on public pages where the formDefinitions collection is not client-readable.
+    async fetchDefinition(formKey: string): Promise<FormDefinitionModel | undefined> {
+      try {
+        const { getFunctions, httpsCallable } = await import('firebase/functions');
+        const { getApp } = await import('firebase/app');
+        const fn = httpsCallable<{ formKey: string; tenantId: string }, FormDefinitionModel>(
+          getFunctions(getApp(), 'europe-west6'),
+          'getFormDefinition',
+        );
+        const result = await fn({ formKey, tenantId: store.appStore.tenantId() });
+        return result.data;
+      } catch {
+        return undefined;   // not found / unavailable → section shows "form not found"
+      }
+    },
+
     async fetchJsToken(formKey: string): Promise<string> {
       try {
         const { getFunctions, httpsCallable } = await import('firebase/functions');
@@ -136,7 +152,7 @@ export class FormSectionComponent {
   protected readonly definitionResource = rxResource({
     params: () => ({ formKey: this.section().properties?.formKey }),
     stream: ({ params }: { params: { formKey: string } }) =>
-      this.store.formDefinitionService.readByFormKey(params.formKey),
+      params.formKey ? from(this.store.fetchDefinition(params.formKey)) : of(undefined),
   });
 
   protected readonly definition = computed(() => {

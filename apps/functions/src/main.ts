@@ -193,6 +193,7 @@ export const esignArchiveSigned      = Esign.esignArchiveSigned;
 // form submission + JS token endpoint
 export const getFormToken = Forms.getFormToken;
 export const submitForm = Forms.submitForm;
+export const getFormDefinition = Forms.getFormDefinition;
 
 // vCard export (spec 17)
 export const vcardExport = Vcard.vcardExport;

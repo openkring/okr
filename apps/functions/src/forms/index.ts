@@ -198,6 +198,50 @@ export const getFormToken = onCall(
 );
 
 // ──────────────────────────────────────────
+// Public form definition — anonymous gateway so forms render on public pages
+// without exposing the formDefinitions collection to client reads. Returns only
+// the fields the renderer/submit need; never the encryption key hash or audit data.
+// ──────────────────────────────────────────
+export const getFormDefinition = onCall(
+  { region: REGION },
+  async (request: CallableRequest<{ formKey: string; tenantId: string }>) => {
+    const formKey = request.data?.formKey;
+    const tenantId = request.data?.tenantId;
+    if (!formKey || !tenantId) {
+      throw new HttpsError('invalid-argument', 'formKey and tenantId are required');
+    }
+    const db = getFirestore();
+    const snap = await db.collection('formDefinitions')
+      .where('formKey', '==', formKey)
+      .where('tenants', 'array-contains', tenantId)
+      .where('isArchived', '==', false)
+      .limit(1)
+      .get();
+    if (snap.empty) {
+      throw new HttpsError('not-found', `Form '${formKey}' not found`);
+    }
+    const doc = snap.docs[0];
+    const data = doc.data();
+    // Public-safe projection — whitelist only. encryptionSalt is needed client-side
+    // for file encryption and is not secret; encryptionKeyHash is NEVER exposed.
+    return {
+      bkey: doc.id,
+      tenants: data['tenants'] ?? [tenantId],
+      isArchived: data['isArchived'] ?? false,
+      name: data['name'] ?? '',
+      description: data['description'] ?? '',
+      formKey: data['formKey'] ?? formKey,
+      honeypotKey: data['honeypotKey'] ?? '',
+      encryptionSalt: data['encryptionSalt'] ?? '',
+      pdfTemplateId: data['pdfTemplateId'] ?? '',
+      target: data['target'] ?? { kind: 'collection', mappingKey: '', modelType: '', collectionName: '' },
+      fields: data['fields'] ?? [],
+      version: data['version'] ?? 1,
+    };
+  }
+);
+
+// ──────────────────────────────────────────
 // Phase 5 helpers
 // ──────────────────────────────────────────
 
