@@ -13,6 +13,14 @@ export class BookingLineService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly tenantId = this.env.tenantId;
 
+  public list(accountingTenantId: string): Observable<BookingLineModel[]> {
+    const query = [
+      ...getSystemQuery(this.tenantId),
+      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
+    ];
+    return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
+  }
+
   public listForBooking(bookingKey: string, accountingTenantId: string): Observable<BookingLineModel[]> {
     const query = [
       ...getSystemQuery(this.tenantId),
