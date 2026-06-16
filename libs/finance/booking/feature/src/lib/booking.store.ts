@@ -107,6 +107,7 @@ export const BookingStore = signalStore(
           await store.bookingService.create(data.booking, data.lines, store.currentUser());
         }
         store.bookingsResource.reload();
+        store.linesResource.reload();
       }
     },
 
@@ -114,6 +115,7 @@ export const BookingStore = signalStore(
       if (store.isReadOnly()) return;
       await store.bookingService.delete(booking, store.currentUser());
       store.bookingsResource.reload();
+      store.linesResource.reload();
     },
 
     availableActions(booking: BookingModel): BookingAction[] {
@@ -147,10 +149,13 @@ export const BookingStore = signalStore(
         const org = await firstValueFrom(store.orgService.read(cp.key).pipe(take(1)));
         if (!org) { await this.toast(store.i18n.action_failed()); return; }
         party = { kind: 'org', org };
-      } else {
+      } else if (cp.modelType === 'person') {
         const person = await firstValueFrom(store.personService.read(cp.key).pipe(take(1)));
         if (!person) { await this.toast(store.i18n.action_failed()); return; }
         party = { kind: 'person', person };
+      } else {
+        await this.toast(store.i18n.action_failed());
+        return;
       }
 
       const payload = {
