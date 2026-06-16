@@ -71,6 +71,9 @@
       "path": "../../../subject/address/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../../avatar/ui/tsconfig.lib.json"
+    },
+    {
       "path": "../../../pdf-template/data-access/tsconfig.lib.json"
     }
   ]

@@ -1,12 +1,14 @@
-import { Component, inject, input, OnInit } from '@angular/core';
+import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ModalController, IonButton, IonButtons, IonContent, IonHeader,
+import { ActionSheetController, ModalController, IonButton, IonButtons, IonContent, IonHeader,
   IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { BookingLineModel, BookingModel, UserModel, VatCodeModel } from '@bk2/shared-models';
+import { AvatarInfo, BookingLineModel, BookingModel, UserModel, VatCodeModel } from '@bk2/shared-models';
+import { ModelSelectService } from '@bk2/shared-feature';
 import { validateBookingBalance } from '@bk2/finance-booking-util';
 import { VatCodeService } from '@bk2/finance-vat-code-data-access';
+import { AvatarSelect } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-booking-edit-modal',
@@ -15,6 +17,7 @@ import { VatCodeService } from '@bk2/finance-vat-code-data-access';
     FormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
     IonContent, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption,
+    AvatarSelect,
   ],
   template: `
     <ion-header>
@@ -37,6 +40,15 @@ import { VatCodeService } from '@bk2/finance-vat-code-data-access';
         <ion-label position="stacked">Description</ion-label>
         <ion-input [(ngModel)]="editBooking.title" [readonly]="readOnly()" />
       </ion-item>
+      <bk-avatar-select
+        name="counterparty"
+        title="Gegenpartei"
+        selectLabel="auswählen"
+        [avatar]="counterparty()"
+        [clearable]="true"
+        [readOnly]="readOnly()"
+        (selectClicked)="selectCounterparty()"
+        (clearClicked)="counterparty.set(undefined)" />
 
       @for (line of editLines; track $index) {
         <ion-item>
@@ -86,6 +98,9 @@ export class BookingEditModal implements OnInit {
 
   private readonly modalController = inject(ModalController);
   private readonly vatCodeService = inject(VatCodeService);
+  private readonly modelSelectService = inject(ModelSelectService);
+  private readonly actionSheetCtrl = inject(ActionSheetController);
+  protected counterparty = signal<AvatarInfo | undefined>(undefined);
 
   protected editBooking!: BookingModel;
   protected editLines!: BookingLineModel[];
@@ -93,6 +108,7 @@ export class BookingEditModal implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     this.editBooking = { ...this.booking() };
+    this.counterparty.set(this.editBooking.counterparty);
     this.editLines = this.lines().map(l => ({
       ...l,
       debitAmount:  l.debitAmount  ?? { amount: 0, currency: 'CHF' as const, periodicity: 'one-time' as const },
@@ -122,6 +138,23 @@ export class BookingEditModal implements OnInit {
     this.editLines = [...this.editLines, blank];
   }
 
+  protected async selectCounterparty(): Promise<void> {
+    const sheet = await this.actionSheetCtrl.create({
+      header: 'Gegenpartei',
+      buttons: [
+        { text: 'Person', role: 'person' },
+        { text: 'Organisation', role: 'org' },
+        { text: 'Abbrechen', role: 'cancel' },
+      ],
+    });
+    await sheet.present();
+    const { role } = await sheet.onDidDismiss();
+    let avatar: AvatarInfo | undefined;
+    if (role === 'person') avatar = await this.modelSelectService.selectPersonAvatar();
+    else if (role === 'org') avatar = await this.modelSelectService.selectOrgAvatar();
+    if (avatar) this.counterparty.set(avatar);
+  }
+
   protected async dismiss(): Promise<void> {
     await this.modalController.dismiss(null, 'cancel');
   }
@@ -134,6 +167,7 @@ export class BookingEditModal implements OnInit {
       creditAmount: (l.creditAmount?.amount ?? 0) > 0 ? l.creditAmount : undefined,
       amountFx:     (l.amountFx?.amount     ?? 0) > 0 ? l.amountFx     : undefined,
     }));
+    this.editBooking.counterparty = this.counterparty();
     await this.modalController.dismiss({ booking: this.editBooking, lines: cleanLines }, 'confirm');
   }
 }

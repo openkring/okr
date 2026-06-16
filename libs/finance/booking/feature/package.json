@@ -24,6 +24,7 @@
     "@bk2/subject-person-data-access": "*",
     "@bk2/subject-org-data-access": "*",
     "@bk2/subject-address-data-access": "*",
-    "@bk2/pdf-template-data-access": "*"
+    "@bk2/pdf-template-data-access": "*",
+    "@bk2/avatar-ui": "*"
   }
 }
