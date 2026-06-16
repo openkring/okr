@@ -4,25 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { VideoConfig } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
-
-interface VideoConfI18n {
-  video_youtubeId_label:       Signal<string>,
-  video_youtubeId_placeholder: Signal<string>,
-  video_youtubeId_helper:      Signal<string>,
-  video_width_label:           Signal<string>,
-  video_width_placeholder:     Signal<string>,
-  video_width_helper:          Signal<string>,
-  video_height_label:          Signal<string>,
-  video_height_placeholder:    Signal<string>,
-  video_height_helper:         Signal<string>,
-  video_frameborder_label:     Signal<string>,
-  video_frameborder_placeholder: Signal<string>,
-  video_frameborder_helper:    Signal<string>,
-  video_baseUrl_label:         Signal<string>,
-  video_baseUrl_placeholder:   Signal<string>,
-  video_baseUrl_helper:        Signal<string>,
-}
+import { SectionI18n } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-video-config',
@@ -35,7 +17,7 @@ interface VideoConfI18n {
   template: `
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ title() }}</ion-card-title>
+          <ion-card-title>{{ cardTitle() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -64,10 +46,10 @@ interface VideoConfI18n {
 export class VideoConfiguration {
   // inputs
   public formData = model.required<VideoConfig>();
-  public title = input('@content.section.type.video.edit');
+  public title = input<string>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  public readonly i18n = input.required<VideoConfI18n>();
+  public readonly i18n = input.required<SectionI18n>();
 
   // linked signals (fields)
   protected url = linkedSignal(() => this.formData().url ?? '');
@@ -75,6 +57,7 @@ export class VideoConfiguration {
   protected height = linkedSignal(() => this.formData().height ?? 'auto');
   protected frameborder = linkedSignal(() => this.formData().frameborder ?? '0');
   protected baseUrl = linkedSignal(() => this.formData().baseUrl ?? 'https://www.youtube.com/embed/');
+  protected cardTitle = computed(() => this.title() ?? this.i18n().video_edit);
 
   protected youtubeIdI18n = computed(() => ({
     name: 'youtubeId',

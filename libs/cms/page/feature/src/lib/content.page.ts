@@ -157,7 +157,7 @@ import { PageStore } from './page.store';
           <ion-item lines="none">
             <ion-button (click)="this.addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
-              {{ store.i18n.add_label() }}
+              {{ store.i18n.add_section() }}
             </ion-button>
           </ion-item>
         } @else {     <!-- page contains sections -->

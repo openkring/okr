@@ -1,4 +1,4 @@
-import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, MEMBER_AGE_SECTION_SHAPE, MemberAgeSection, MEMBER_CAT_SECTION_SHAPE, MemberCatSection, PEOPLE_SECTION_SHAPE, PeopleSection, RAG_SECTION_SHAPE, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition } from '@bk2/shared-models';
+import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, MEMBER_AGE_SECTION_SHAPE, MemberAgeSection, MEMBER_CAT_SECTION_SHAPE, MemberCatSection, PEOPLE_SECTION_SHAPE, PeopleSection, RAG_SECTION_SHAPE, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition, FORM_SECTION_CONFIG_SHAPE, FormSection, FORM_SECTION_SHAPE } from '@bk2/shared-models';
 import { buildSearchTokens, die } from '@bk2/shared-util-core';
 
 /**
@@ -39,6 +39,7 @@ export function createSection(type: SectionType, tenantId: string): SectionModel
     case 'member-age': section = { ...MEMBER_AGE_SECTION_SHAPE } as MemberAgeSection; break;
     case 'member-cat': section = { ...MEMBER_CAT_SECTION_SHAPE } as MemberCatSection; break;
     case 'rag': section = { ...RAG_SECTION_SHAPE } as RagSection; break;
+    case 'form': section = { ...FORM_SECTION_SHAPE } as FormSection; break;
     default:
       die(`section.util.createSection: unknown section type '${type}'`);
   }
@@ -57,6 +58,7 @@ export function narrowSection(section: any): SectionModel | undefined {
     case 'cal': return section as CalendarSection;
     case 'chart': return section as ChartSection;
     case 'chat': return section as ChatSection;
+    case 'form': return section as FormSection;
     case 'hero': return section as HeroSection;
     case 'iframe': return section as IframeSection;
     case 'map': return section as MapSection;

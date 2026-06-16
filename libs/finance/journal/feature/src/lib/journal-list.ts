@@ -101,8 +101,8 @@ export class JournalList {
     const options = createActionSheetOptions('@actionsheet.label.choose');
     const base = this.imgixBaseUrl();
     options.buttons.push(createActionSheetButton(this.store.i18n.as_view(), base, 'eye-on'));
-    options.buttons.push(createActionSheetButton(this.store.i18n.as_showDebitAccount(), base, 'information'));
-    options.buttons.push(createActionSheetButton(this.store.i18n.as_showCreditAccount(), base, 'information'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.as_showDebitAccount(), base, 'info-circle'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.as_showCreditAccount(), base, 'info-circle'));
     options.buttons.push(createActionSheetButton(this.store.i18n.cancel(), base, 'cancel'));
 
     const actionSheet = await this.actionSheetController.create(options);

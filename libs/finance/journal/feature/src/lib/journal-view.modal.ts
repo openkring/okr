@@ -59,7 +59,7 @@ const JournalViewStore = signalStore(
             </ion-item>
             <!-- debitAccount -->
             <ion-item lines="none">
-              <ion-icon slot="start" src="{{'information' | svgIcon}}" />
+              <ion-icon slot="start" src="{{'info-circle' | svgIcon}}" />
               <ion-label>
                 <p class="view-label">{{ store.i18n.field_debit_account() }}</p>
                 <p class="view-value">{{ debitAccount() }}</p>
@@ -67,7 +67,7 @@ const JournalViewStore = signalStore(
             </ion-item>
             <!-- creditAccount -->
             <ion-item lines="none">
-              <ion-icon slot="start" src="{{'information' | svgIcon}}" />
+              <ion-icon slot="start" src="{{'info-circle' | svgIcon}}" />
               <ion-label>
                 <p class="view-label">{{ store.i18n.field_credit_account() }}</p>
                 <p class="view-value">{{ creditAccount() }}</p>

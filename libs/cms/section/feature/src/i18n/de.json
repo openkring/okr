@@ -5,7 +5,8 @@
   "noImages": "Es sind noch keine Bilder definiert, die hier angezeigt werden sollen.",
   "noSuchSection": "Die Sektion {{ type }} existiert nicht. ev. wurde sie noch nicht implementiert oder falsch konfiguriert.",
   "select": {
-    "label": "Sektion wählen"
+    "label": "Sektion wählen",
+    "section": "Sektion wählen"
   },
   "view": "Sektionskonfiguration anzeigen",
   "edit": "Sektion bearbeiten",
@@ -33,6 +34,7 @@
   },
   "album": {
     "title": "Album",
+    "label": "Album",
     "zoomed": "Bild zoomen",
     "edit": "Albumskonfiguration bearbeiten",
     "directory": {
@@ -69,13 +71,17 @@
       }
     }
   },
+  "article": {
+    "label": "Artikel"
+  },
   "button": {
     "name": "Button",
+    "label": "Button",
     "edit": "Button Konfiguration ändern",
     "title": "Button Konfiguration",
     "subtitle": "Definiere das Aussehen des Buttons",
     "description": "Button mit Icon und/oder Text für Download oder Navigation.",
-    "label": {
+    "label2": {
       "label": "Bezeichnung",
       "placeholder": "Text auf dem Button",
       "helper": "Der Text, der auf dem Button angezeigt wird.",
@@ -128,6 +134,7 @@
   },
   "calendar": {
     "calevents": "Ereignisse",
+    "label": "Kalender",
     "update": {
       "label": "Ereignis ändern",
       "conf": "Das Ereignis wurde geändert.",
@@ -141,6 +148,7 @@
   },
   "cal": {
     "title": "Kalender-Konfiguration",
+    "label": "Kalender",
     "subtitle": "Anzeigeoptionen für den Kalender.",
     "view": {
       "label": "Standardansicht"
@@ -165,6 +173,7 @@
     }
   },
   "chart": {
+    "label": "Chart",
     "title": "Diagramm-Konfiguration",
     "subtitle": "Diagrammtyp, Titel und ECharts-Optionen.",
     "type": {
@@ -183,6 +192,7 @@
   },
   "chat": {
     "title": "Chat Konfiguration ändern",
+    "label": "Chat",
     "subtitle": "Passe hier die Chat-Einstellungen an deine Bedürfnisse an.",
     "empty": "Du hast keine offenen Mitteilungen.",
     "id": {
@@ -214,6 +224,7 @@
     }
   },
   "context": {
+    "label": "Kontextdiagramm",
     "title": "Anzeigeoptionen",
     "show": {
       "avatar": "Avatar anzeigen",
@@ -282,8 +293,12 @@
       }
     }
   },
+  "events": {
+    "label": "Ereignisse"
+  },
   "form": {
     "title": "Sektion",
+    "label": "Form",
     "content": {
       "title": "Inhalt"
     },
@@ -304,6 +319,9 @@
     "not_found": "Das Forms Template konnte nicht gefunden werden.",
     "archived": "Das Forms Template ist archiviert."
   },
+  "hero": {
+    "label": "Hero"
+  },
   "icon": {
     "label": "Symbol",
     "placeholder": "Symbol-Name",
@@ -322,6 +340,7 @@
   },
   "iframe": {
     "title": "Iframe",
+    "label": "Iframe",
     "edit": "Iframe Konfiguration ändern",
     "description": "Einbetten von externen Inhalten, z.B. Wetter, Webcams, Videoconf",
     "style": {
@@ -336,6 +355,7 @@
     }
   },
   "image": {
+    "label": "Bild",
     "empty": "Kein Bild gefunden.",
     "delete": "Bild löschen",
     "upload": "Bild hochladen",
@@ -562,6 +582,7 @@
     "edit": "Artikel ändern"
   },
   "orgchart": {
+    "label": "Organigramm",
     "accordion": "Liste",
     "chart": "Organigramm",
     "group": {
@@ -618,6 +639,7 @@
     }
   },
   "rag": {
+    "label": "Retrieval Augmented Generation (RAG)",
     "placeholder": "Frage irgendetwas über den Seeclub Stäfa",
     "upload": "Dokumente in den RAG-Store hochladen",
     "config": {
@@ -697,6 +719,9 @@
         "error": "Die Spaltengrösse muss eine Ganzzahl aus lauter Ziffern sein, zwischen 0 und 12."
       }
     }
+  },
+  "slider": {
+    "label": "Slider"
   },
   "table": {
     "label": "Tabelle",
@@ -793,6 +818,7 @@
     "edit": "Aufgabe bearbeiten"
   },
   "tracker": {
+    "label": "Tracker",
     "title": "Tracker Konfiguration",
     "intervalInSeconds": {
       "label": "Intervall in Sekunden",
@@ -822,6 +848,7 @@
   },
   "tripstats": {
     "title": "Ausfahrten",
+    "label": "Statistiken über Ausfahrten",
     "empty":    "Keine Statistiken für dieses Jahr gefunden.",
     "colName":  "Name",
     "colKm":    "km",
@@ -836,6 +863,8 @@
     }
   },
   "video": {
+    "label": "Video",
+    "edit": "Video Konfiguration ändern",
     "youtubeId": {
       "label": "YouTube-ID",
       "placeholder": "ssssssssssss",

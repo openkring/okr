@@ -12,6 +12,7 @@ export const SECTION_I18N_KEYS = {
   no_images:                  PFX + 'noImages',
   no_such_section:            PFX + 'noSuchSection',
   select_label:               PFX + 'select.label',
+  select_section:             PFX + 'select.section',
   view:                       PFX + 'view',
   edit:                       PFX + 'edit',
   create:                     PFX + 'create',
@@ -27,6 +28,7 @@ export const SECTION_I18N_KEYS = {
 
   // album
   album_title:                              PFX + 'album.title',
+  album_label:                              PFX + 'album.label',
   album_zoomed:                             PFX + 'album.zoomed',
   album_edit:                               PFX + 'album.edit',
   album_directory_label:                    PFX + 'album.directory.label',
@@ -48,9 +50,9 @@ export const SECTION_I18N_KEYS = {
   // button
   button_name:                              PFX + 'button.name',
   button_edit:                              PFX + 'button.edit',
-  button_label_label:                       PFX + 'button.label.label',
-  button_label_placeholder:                 PFX + 'button.label.placeholder',
-  button_label_helper:                      PFX + 'button.label.helper',
+  button_label_label:                       PFX + 'button.label2.label',
+  button_label_placeholder:                 PFX + 'button.label2.placeholder',
+  button_label_helper:                      PFX + 'button.label2.helper',
   button_image_zoomed:                      PFX + 'button.image.zoomed',
   button_action_title:                      PFX + 'button.action.title',
   button_action_subtitle:                   PFX + 'button.action.subtitle',
@@ -467,6 +469,7 @@ export const SECTION_I18N_KEYS = {
   tripstats_type_content_label:             PFX + 'tripstats.type.content.label',
 
   // video
+  video_edit:                               PFX + 'video.edit',
   video_youtubeId_label:                    PFX + 'video.youtubeId.label',
   video_youtubeId_placeholder:              PFX + 'video.youtubeId.placeholder',
   video_youtubeId_helper:                   PFX + 'video.youtubeId.helper',

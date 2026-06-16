@@ -79,7 +79,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@bk2/
                     <bk-string-select [i18n]="stateI18n()" [selectedString]="state()" (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="readOnly()" [stringList]="['pending', 'accepted', 'declined', 'maybe']" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-string-select [i18n]="roleI18n()" [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList]="['required', 'optional', 'info']" />           
+                    <bk-string-select [i18n]="roleI18n()" [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList]="['required', 'optional', 'info-circle']" />           
                   </ion-col>
 
                   <!-- sentAt -->

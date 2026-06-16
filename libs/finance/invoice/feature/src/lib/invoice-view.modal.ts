@@ -45,7 +45,7 @@ const InvoiceViewStore = signalStore(
           <ion-card-content>
             <!-- invoiceId -->
             <ion-item lines="none">
-              <ion-icon slot="start" src="{{'information' | svgIcon}}" />
+              <ion-icon slot="start" src="{{'info' | svgIcon}}" />
               <ion-label>
                 <p class="view-label">{{ store.i18n.field_invoice_id() }}</p>
                 <p class="view-value">{{ invoiceId() }}</p>

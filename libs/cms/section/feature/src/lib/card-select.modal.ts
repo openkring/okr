@@ -6,22 +6,27 @@ import { switchMap } from 'rxjs/operators';
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
 import { ENV } from '@bk2/shared-config';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { I18nService } from '@bk2/shared-i18n';
+import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
 import { Header } from '@bk2/shared-ui';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { PFX } from './scope';
+import { AsyncPipe } from '@angular/common';
 
 const CardSelectStore = signalStore(
-  withState({ slug: '' }),
-  withProps(() => ({ i18nService: inject(I18nService) })),
+  withState({ 
+    slug: '' 
+  }),
+  withProps(() => ({ 
+    i18nService: inject(I18nService) 
+  })),
   withProps(store => ({
     headerTitle: toSignal(
       toObservable(computed(() => PFX + 'select.' + store.slug())).pipe(
         switchMap(key => store.i18nService.translate(key))
       ),
       { initialValue: '' }
-    ),
+    )
   })),
   withMethods(store => ({
     setSlug(slug: string): void { patchState(store, { slug }); },
@@ -33,7 +38,7 @@ const CardSelectStore = signalStore(
   standalone: true,
   providers: [CardSelectStore],
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe,
     Header,
     IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonImg
   ],
@@ -51,7 +56,7 @@ const CardSelectStore = signalStore(
               <ion-col size="6" size-md="3">
                 <ion-card (click)="select(item)">
                   <ion-card-header>
-                    <ion-card-title>{{ '@' + i18nBase() + '.' + item.name + '.label' }}</ion-card-title>
+                    <ion-card-title>{{ getName(item) | translate | async }}</ion-card-title>
                     <ion-card-subtitle>{{ item.name }}</ion-card-subtitle>
                   </ion-card-header>
                   <ion-card-content>
@@ -76,12 +81,15 @@ export class CardSelectModal {
   public slug = input.required<string>();
 
   // computed
-  protected i18nBase = computed(() => this.category().i18n);
   protected items = computed(() => this.category().items);
   protected path = computed(() => `${this.env.services.imgixBaseUrl}/logo/${this.slug()}/`);
 
   constructor() {
     effect(() => this.store.setSlug(this.slug()));
+  }
+
+  protected getName(item: CategoryItemModel): string {
+    return this.category().i18n + '.' + item.name + '.label';
   }
 
   public async select(item: CategoryItemModel): Promise<boolean> {

@@ -3,26 +3,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { ImageConfig, ImageType } from '@bk2/shared-models';
 import { StringSelect, StringSelectI18n, TextInput, TextInputI18n, Header } from '@bk2/shared-ui';
-
-interface ImageEditI18n {
-  image_edit_title:                  Signal<string>;
-  image_edit_label_label:            Signal<string>;
-  image_edit_label_placeholder:      Signal<string>;
-  image_edit_label_helper:           Signal<string>;
-  image_edit_url_label:              Signal<string>;
-  image_edit_url_placeholder:        Signal<string>;
-  image_edit_url_helper:             Signal<string>;
-  image_edit_action_label:           Signal<string>;
-  image_edit_action_placeholder:     Signal<string>;
-  image_edit_action_helper:          Signal<string>;
-  altText_label:                     Signal<string>;
-  altText_placeholder:               Signal<string>;
-  altText_helper:                    Signal<string>;
-  image_edit_overlay_label:          Signal<string>;
-  image_edit_overlay_placeholder:    Signal<string>;
-  image_edit_overlay_helper:         Signal<string>;
-  image_edit_type_label:             Signal<string>;
-}
+import { SectionI18n } from '@bk2/cms-section-util';
 
 const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
 
@@ -38,7 +19,7 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
     <bk-header [i18n]="{ title: i18n().image_edit_title() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ '@content.section.image.edit.title' }}</ion-card-title>
+        <ion-card-title>{{ i18n().image_edit_title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
@@ -73,7 +54,7 @@ export class ImageEditModal {
   // inputs
   public formData = model.required<ImageConfig>();
   public readOnly = input<boolean>(true);
-  public readonly i18n = input.required<ImageEditI18n>();
+  public readonly i18n = input.required<SectionI18n>();
 
   // linked signals for fields
   protected label = linkedSignal(() => this.formData().label ?? '');
