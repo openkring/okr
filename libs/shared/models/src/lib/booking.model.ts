@@ -1,6 +1,7 @@
 import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@bk2/shared-constants';
 
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { AvatarInfo } from './avatar-info';
 
 export type BookingStatus = 'draft' | 'posted' | 'cancelled';
 
@@ -22,6 +23,7 @@ export class BookingModel implements BkModel, SearchableModel, TaggedModel {
   public documentKey = '';               // ref to DocumentModel (voucher)
   public status: BookingStatus = 'draft';
   public accountingTenantId = '';        // = org.bkey of the accounting tenant
+  public counterparty: AvatarInfo | undefined;  // external party of the booking (Gutschrift sender, donor, invoice receiver)
 
   constructor(tenantId: string, accountingTenantId: string) {
     this.tenants = [tenantId];
