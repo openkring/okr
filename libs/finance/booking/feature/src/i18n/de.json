@@ -14,5 +14,11 @@
     },
     "delete": {
         "label": "Buchung löschen"
+    },
+    "action": {
+        "createReceipt": "Gönnerbestätigung erstellen",
+        "counterpartyRequired": "Bitte zuerst den Absender (Gegenpartei) erfassen.",
+        "noAddress": "Für die Gegenpartei ist keine Adresse hinterlegt.",
+        "failed": "Das Dokument konnte nicht erstellt werden."
     }
 }
