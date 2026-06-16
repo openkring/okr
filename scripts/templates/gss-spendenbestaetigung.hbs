@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+{{!--
+  Spendenbestätigung – Gönnerverein Seeclub Stäfa
+  HTML/Handlebars template for PDF rendering (Puppeteer-friendly: @page A4, no external fonts).
+
+  Expected context:
+  {
+    "logoUrl":      "https://bkaiser.imgix.net/tenant/scs/logo/gss.png",
+    "greeting":     "Liebe Anna",   // pre-constructed salutation (caller picks Liebe/Lieber)
+    "firstName":    "Anna",
+    "lastName":     "Muster",
+    "streetName":   "Seestrasse",
+    "streetNumber": "12",
+    "zipCode":      "8712",
+    "city":         "Stäfa",
+    "date":         "07.05.2026",   // pre-formatted DD.MM.YYYY
+    "amount":       "1’000.00"      // pre-formatted string (Swiss apostrophe), rendered after the literal "CHF "
+  }
+
+  No Handlebars helpers required — all values are pre-formatted by the caller.
+--}}
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<style>
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  :root {
+    --ink: #1a1a1a;
+    --muted: #1a1a1a;
+    --accent: #1d70b8;      /* "Spendenbestätigung" blue */
+    --hairline: #1a1a1a;
+    --margin: 25mm;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    font-size: 11pt;
+    line-height: 1.45;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    position: relative;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm var(--margin) 20mm var(--margin);
+  }
+
+  /* ---- Header: logo left, sender block right ---- */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .logo {
+    width: 42mm;
+    height: auto;
+  }
+
+  .sender-block {
+    text-align: right;
+    font-size: 11pt;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  /* ---- Recipient address (window position) ---- */
+  .address {
+    margin-top: 22mm;
+    margin-left: 95mm;
+  }
+
+  .address .return-line {
+    font-size: 7.5pt;
+    text-decoration: underline;
+    margin-bottom: 6mm;
+  }
+
+  .address .recipient div {
+    line-height: 1.45;
+  }
+
+  /* ---- Body ---- */
+  .title {
+    color: var(--accent);
+    font-size: 17pt;
+    font-weight: 400;
+    margin-top: 22mm;
+    margin-bottom: 9mm;
+  }
+
+  p {
+    margin: 0 0 5mm 0;
+  }
+
+  .greeting {
+    margin-bottom: 7mm;
+  }
+
+  /* ---- Date / amount rows ---- */
+  .field {
+    display: flex;
+    margin-bottom: 4mm;
+  }
+
+  .field .label {
+    width: 42mm;
+    flex: 0 0 42mm;
+  }
+
+  .field .value.amount {
+    font-weight: 700;
+  }
+
+  .legal {
+    margin-top: 4mm;
+  }
+
+  .closing {
+    margin-top: 9mm;
+  }
+
+  .signature {
+    margin-top: 6mm;
+  }
+
+  /* ---- Footer pinned to bottom margin ---- */
+  .footer {
+    position: absolute;
+    left: var(--margin);
+    right: var(--margin);
+    bottom: 12mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 9pt;
+    line-height: 1.4;
+  }
+
+  .footer .right {
+    text-align: right;
+  }
+
+  .footer a {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <header class="header">
+      <img class="logo" src="{{logoUrl}}" alt="Gönnerverein Seeclub Stäfa">
+      <div class="sender-block">
+        Gönnerverein<br>
+        Seeclub Stäfa<br>
+        8712 Stäfa
+      </div>
+    </header>
+
+    <section class="address">
+      <div class="return-line">Gönnerverein Seeclub Stäfa, 8712 Stäfa</div>
+      <div class="recipient">
+        <div>{{firstName}} {{lastName}}</div>
+        <div>{{streetName}} {{streetNumber}}</div>
+        <div>{{zipCode}} {{city}}</div>
+      </div>
+    </section>
+
+    <h1 class="title">Spendenbestätigung</h1>
+
+    <p class="greeting">{{greeting}},</p>
+
+    <p>Vielen Dank für deine finanzielle Unterstützung des Jugendsports im Seeclub Stäfa.</p>
+
+    <p>Hiermit bestätigen wir gerne deine Zuwendung</p>
+
+    <div class="field">
+      <div class="label">Datum:</div>
+      <div class="value">{{date}}</div>
+    </div>
+
+    <div class="field">
+      <div class="label">Spende:</div>
+      <div class="value amount">CHF {{amount}}</div>
+    </div>
+
+    <p class="legal">Der Gönnerverein Seeclub Stäfa (GSS) leistet finanzielle Unterstützung zur Förderung der Jugendarbeit im Seeclub Stäfa. Gemäss Verfügung des Kant. Steueramtes vom 23.3.2026 sind Mitgliederbeiträge und Spenden an den GSS steuerbefreit. Solche Beiträge sind also bei Staats- und Gemeindesteuern sowie bei der direkten Bundessteuer abziehbar.</p>
+
+    <p class="closing">Mit freundlichen Grüssen und bestem Dank,</p>
+
+    <div class="signature">
+      <div>Bruno Kaiser, Kassier</div>
+      <div>Gönnerverein Seeclub Stäfa</div>
+    </div>
+
+    <footer class="footer">
+      <div class="left">ZKB CH62 0070 0114 9052 1829 7</div>
+      <div class="right">
+        079 790 8929<br>
+        <a href="mailto:bruno@seeclub.org">bruno@seeclub.org</a>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>
