@@ -57,6 +57,21 @@
     },
     {
       "path": "../../../finance/exchange-rate/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../account/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/person/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/org/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/address/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../pdf-template/data-access/tsconfig.lib.json"
     }
   ]
 }

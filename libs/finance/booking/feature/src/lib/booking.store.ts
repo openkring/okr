@@ -1,15 +1,30 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { firstValueFrom } from 'rxjs';
+import { take } from 'rxjs/operators';
 
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { BookingLineModel, BookingModel } from '@bk2/shared-models';
 
 import { AccountingStore } from '@bk2/finance-accounting-feature';
+import { AccountService } from '@bk2/finance-account-data-access';
 import { BookingLineService, BookingService } from '@bk2/finance-booking-data-access';
-import { BOOKING_I18N_KEYS, BookingI18n } from '@bk2/finance-booking-util';
+import {
+  BOOKING_ACTIONS,
+  BookingAction,
+  BOOKING_I18N_KEYS,
+  BookingI18n,
+  buildReceiptPayload,
+  matchActions,
+  ReceiptParty,
+} from '@bk2/finance-booking-util';
+import { PersonService } from '@bk2/subject-person-data-access';
+import { OrgService } from '@bk2/subject-org-data-access';
+import { AddressService } from '@bk2/subject-address-data-access';
+import { DocGenerationService } from '@bk2/pdf-template-data-access';
 
 import { BookingEditModal } from './booking-edit.modal';
 
@@ -24,11 +39,23 @@ export const BookingStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
+    accountService: inject(AccountService),
+    personService: inject(PersonService),
+    orgService: inject(OrgService),
+    addressService: inject(AddressService),
+    docGenerationService: inject(DocGenerationService),
+    toastController: inject(ToastController),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(BOOKING_I18N_KEYS),
     bookingsResource: rxResource({
       stream: () => store.bookingService.list(store.accountingStore.accountingTenantId()),
+    }),
+    linesResource: rxResource({
+      stream: () => store.bookingLineService.list(store.accountingStore.accountingTenantId()),
+    }),
+    accountsResource: rxResource({
+      stream: () => store.accountService.list('id', 'asc'),
     }),
   })),
   withComputed(store => ({
@@ -38,6 +65,20 @@ export const BookingStore = signalStore(
     accountingTenantId: computed(() => store.accountingStore.accountingTenantId()),
     isReadOnly: computed(() => store.accountingStore.isExternallyManaged()),
     tenantId: computed(() => store.appStore.tenantId()),
+    accountIdByKey: computed(() => {
+      const map = new Map<string, string>();
+      for (const a of store.accountsResource.value() ?? []) map.set(a.bkey, a.id);
+      return map;
+    }),
+    linesByBooking: computed(() => {
+      const map = new Map<string, BookingLineModel[]>();
+      for (const line of store.linesResource.value() ?? []) {
+        const arr = map.get(line.bookingKey) ?? [];
+        arr.push(line);
+        map.set(line.bookingKey, arr);
+      }
+      return map;
+    }),
   })),
   withMethods(store => ({
     async openCreate(): Promise<void> {
@@ -73,6 +114,70 @@ export const BookingStore = signalStore(
       if (store.isReadOnly()) return;
       await store.bookingService.delete(booking, store.currentUser());
       store.bookingsResource.reload();
+    },
+
+    availableActions(booking: BookingModel): BookingAction[] {
+      const lines = store.linesByBooking().get(booking.bkey) ?? [];
+      const accountIds = lines
+        .map((l) => store.accountIdByKey().get(l.accountKey))
+        .filter((id): id is string => !!id);
+      return matchActions(booking.accountingTenantId, accountIds, BOOKING_ACTIONS);
+    },
+
+    async runAction(action: BookingAction, booking: BookingModel): Promise<void> {
+      if (action.type !== 'generateDocument') return;
+      if (!booking.counterparty) {
+        await this.toast(store.i18n.action_counterpartyRequired());
+        return;
+      }
+      const lines = store.linesByBooking().get(booking.bkey) ?? [];
+      const line = lines.find(
+        (l) => store.accountIdByKey().get(l.accountKey) === action.trigger.accountId,
+      );
+      const amountRappen = line?.creditAmount?.amount ?? line?.debitAmount?.amount ?? 0;
+
+      const cp = booking.counterparty;
+      const address = await firstValueFrom(store.addressService.getFavoritePostalAddress(cp.key).pipe(take(1)));
+      if (!address) {
+        await this.toast(store.i18n.action_noAddress());
+        return;
+      }
+      let party: ReceiptParty;
+      if (cp.modelType === 'org') {
+        const org = await firstValueFrom(store.orgService.read(cp.key).pipe(take(1)));
+        if (!org) { await this.toast(store.i18n.action_failed()); return; }
+        party = { kind: 'org', org };
+      } else {
+        const person = await firstValueFrom(store.personService.read(cp.key).pipe(take(1)));
+        if (!person) { await this.toast(store.i18n.action_failed()); return; }
+        party = { kind: 'person', person };
+      }
+
+      const payload = {
+        ...(action.staticPayload ?? {}),
+        ...buildReceiptPayload(party, address, amountRappen, booking.date),
+      };
+
+      try {
+        const res = await store.docGenerationService.generate({
+          templateId: action.templateId,
+          payload,
+          options: {
+            outputFormat: action.outputFormat ?? 'pdf',
+            storageMode: 'persist',
+            margin: { top: '0', right: '0', bottom: '0', left: '0' },
+            metadata: { entityType: 'booking', entityId: booking.bkey },
+          },
+        });
+        window.open(res.url, '_blank');
+      } catch {
+        await this.toast(store.i18n.action_failed());
+      }
+    },
+
+    async toast(message: string): Promise<void> {
+      const t = await store.toastController.create({ message, duration: 2500 });
+      await t.present();
     },
   }))
 );

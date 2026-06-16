@@ -19,6 +19,11 @@
     "@bk2/finance-booking-ui": "*",
     "@bk2/finance-vat-code-data-access": "*",
     "@bk2/finance-exchange-rate-data-access": "*",
-    "@bk2/finance-exchange-rate-util": "*"
+    "@bk2/finance-exchange-rate-util": "*",
+    "@bk2/finance-account-data-access": "*",
+    "@bk2/subject-person-data-access": "*",
+    "@bk2/subject-org-data-access": "*",
+    "@bk2/subject-address-data-access": "*",
+    "@bk2/pdf-template-data-access": "*"
   }
 }
