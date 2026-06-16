@@ -145,4 +145,17 @@ export class AddressService {
     query.push({ key: 'parentKey', operator: '==', value: parentKey });
     return this.firestoreService.searchData<AddressModel>(AddressCollection, query, 'isFavorite', 'desc');
   }
+
+  /**
+   * Returns the favourite postal address for a subject (person or org), or undefined.
+   * @param parentKey the subject's bkey (AddressModel.parentKey)
+   */
+  public getFavoritePostalAddress(parentKey: string): Observable<AddressModel | undefined> {
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'parentKey', operator: '==', value: parentKey });
+    query.push({ key: 'addressChannel', operator: '==', value: 'postal' });
+    return this.firestoreService
+      .searchData<AddressModel>(AddressCollection, query, 'isFavorite', 'desc')
+      .pipe(map((addresses) => addresses[0]));
+  }
 }
