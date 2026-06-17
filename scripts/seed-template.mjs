@@ -10,6 +10,11 @@
  *
  * The script extracts the {{placeholders}} from the template and asks you,
  * field by field, for the sample-data values, then for the template metadata.
+ *
+ * Optional defaults: drop a sidecar file scripts/templates/<template-id>.sample.json
+ * next to the .hbs. Its top-level values pre-fill the sample-data prompts (and can
+ * be accepted wholesale in one keystroke — handy for non-scalar fields like arrays);
+ * an optional "_meta" object pre-fills the metadata prompts (name, category, …).
  */
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -151,29 +156,63 @@ async function main() {
   const html = readFileSync(hbsPath, 'utf8');
   const placeholders = extractPlaceholders(html);
 
+  // ---- optional sidecar defaults: scripts/templates/<template-id>.sample.json ----
+  const samplePath = join(TEMPLATES_DIR, `${templateId}.sample.json`);
+  let sampleDefaults; // sample-data values (sans _meta)
+  let metaDefaults = {}; // metadata prompt defaults
+  if (existsSync(samplePath)) {
+    try {
+      const parsed = JSON.parse(readFileSync(samplePath, 'utf8'));
+      metaDefaults = parsed._meta ?? {};
+      sampleDefaults = { ...parsed };
+      delete sampleDefaults._meta;
+    } catch (e) {
+      console.warn(`⚠ Could not parse ${samplePath}: ${e.message} — falling back to per-field prompts.`);
+    }
+  }
+
   console.log(`\nTemplate file: ${hbsPath}`);
   console.log(`Found ${placeholders.length} placeholder(s): ${placeholders.join(', ') || '(none)'}\n`);
 
-  // ---- 1. sample data, field by field ----
+  // ---- 1. sample data ----
   console.log('── Sample data (one value per placeholder) ──');
-  const sampleData = {};
-  for (const name of placeholders) {
-    sampleData[name] = await ask(`  ${name}`, '');
+  let sampleData = {};
+  let acceptedSampleAsIs = false;
+  if (sampleDefaults) {
+    console.log(`  Defaults found in ${templateId}.sample.json:`);
+    console.log(`  ${JSON.stringify(sampleDefaults)}`);
+    acceptedSampleAsIs = (await askChoice('  Use these sample values as-is?', ['y', 'n'], 'y')) === 'y';
+  }
+  if (acceptedSampleAsIs) {
+    sampleData = sampleDefaults;
+  } else {
+    for (const name of placeholders) {
+      // pre-fill scalar defaults from the sidecar; non-scalars (arrays/objects) can't be prompted
+      const raw = sampleDefaults ? sampleDefaults[name] : undefined;
+      const def = raw !== undefined && (raw === null || typeof raw !== 'object') ? String(raw) : '';
+      sampleData[name] = await ask(`  ${name}`, def);
+    }
+    // keep any non-scalar sidecar fields (e.g. a "sections" array) that prompts can't capture
+    if (sampleDefaults) {
+      for (const [k, v] of Object.entries(sampleDefaults)) {
+        if (v !== null && typeof v === 'object' && !(k in sampleData)) sampleData[k] = v;
+      }
+    }
   }
 
   // ---- 2. template metadata ----
   console.log('\n── Template metadata ──');
   let tenant;
   do {
-    tenant = await ask('  tenant', undefined);
+    tenant = await ask('  tenant', metaDefaults.tenant);
   } while (tenant === '');
-  const name = await ask('  name', templateId);
-  const description = await ask('  description', '');
-  const category = await askChoice('  category', CATEGORIES, 'other');
-  const language = await askChoice('  language', LANGUAGES, 'de');
-  const defaultOutputFormat = await askChoice('  defaultOutputFormat', OUTPUT_FORMATS, 'pdf');
-  const defaultFormat = await ask('  defaultFormat', 'A4');
-  const defaultOrientation = await askChoice('  defaultOrientation', ORIENTATIONS, 'portrait');
+  const name = await ask('  name', metaDefaults.name ?? templateId);
+  const description = await ask('  description', metaDefaults.description ?? '');
+  const category = await askChoice('  category', CATEGORIES, metaDefaults.category ?? 'other');
+  const language = await askChoice('  language', LANGUAGES, metaDefaults.language ?? 'de');
+  const defaultOutputFormat = await askChoice('  defaultOutputFormat', OUTPUT_FORMATS, metaDefaults.defaultOutputFormat ?? 'pdf');
+  const defaultFormat = await ask('  defaultFormat', metaDefaults.defaultFormat ?? 'A4');
+  const defaultOrientation = await askChoice('  defaultOrientation', ORIENTATIONS, metaDefaults.defaultOrientation ?? 'portrait');
   const attachQrSlip = (await askChoice('  attachQrSlip', ['y', 'n'], 'n')) === 'y';
   const qrSlipWithAmount = attachQrSlip
     ? (await askChoice('  qrSlipWithAmount', ['y', 'n'], 'n')) === 'y'

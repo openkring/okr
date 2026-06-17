@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "name": "Seite drucken",
+    "description": "Druckt eine Inhalts- oder Blog-Seite als PDF (Logo oben rechts, Quelle-Link über dem Titel).",
+    "category": "report",
+    "language": "de",
+    "defaultOutputFormat": "pdf",
+    "defaultFormat": "A4",
+    "defaultOrientation": "portrait"
+  },
+  "pageTitle": "Beispielseite",
+  "pageSubtitle": "Untertitel",
+  "orgName": "Seeclub Stäfa",
+  "logoUrl": "https://bkaiser.imgix.net/tenant/scs/logo/logo_round.svg",
+  "sourceUrl": "https://seeclub.org/private/beispiel",
+  "sourceUrlLabel": "seeclub.org/private/beispiel",
+  "printedDate": "17.06.2026",
+  "sections": [
+    { "title": "Einleitung", "html": "<p>Beispieltext für die Vorschau.</p>" },
+    { "title": "Details", "html": "<ul><li>Punkt eins</li><li>Punkt zwei</li></ul>" }
+  ]
+}
