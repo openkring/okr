@@ -1,6 +1,6 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { combineLatest, firstValueFrom, of } from 'rxjs';
@@ -8,8 +8,8 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AppStore, withErrorState } from '@bk2/shared-feature';
 import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData } from '@bk2/shared-util-core';
-import { bkPrompt, confirm, downloadTextFile, exportCsv, getExportFileName, navigateByUrl } from '@bk2/shared-util-angular';
+import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData, getTodayStr, DateFormat } from '@bk2/shared-util-core';
+import { bkPrompt, confirm, downloadTextFile, error, exportCsv, getExportFileName, navigateByUrl } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { PageService } from '@bk2/cms-page-data-access';
@@ -17,6 +17,8 @@ import { SectionSelectModal } from '@bk2/cms-section-feature';
 import { SectionService } from '@bk2/cms-section-data-access';
 import { isPage, PAGE_I18N_KEYS } from '@bk2/cms-page-util';
 
+import { DocGenerationService } from '@bk2/pdf-template-data-access';
+import { PagePrintService } from './page-print.service';
 import { PageEditModal } from './page-edit.modal';
 import { PageSortModal } from './page-sort.modal';
 
@@ -51,6 +53,9 @@ export const _PageStore = signalStore(
     sectionService: inject(SectionService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    toastController: inject(ToastController),
+    docGenerationService: inject(DocGenerationService),
+    pagePrintService: inject(PagePrintService),
     router: inject(Router),
     i18nService: inject(I18nService)
   })),
@@ -416,9 +421,53 @@ export const _PageStore = signalStore(
         }
       },
 
-      async print(): Promise<void> {
-        store.page() ?? die('PageStore.print: page is mandatory.');
-        window.print();
+      /**
+       * Generate a PDF of the current page via the page-print template, using
+       * client-side DOM capture of the rendered sections. `root` is the page
+       * content element holding the rendered <bk-section-dispatcher> hosts;
+       * `visibleSections` is exactly the list the page component rendered (already
+       * filtered for accordion-nesting + state), so it lines up 1:1 with the
+       * top-level hosts. On any failure, falls back to the native print dialog.
+       */
+      async print(root?: HTMLElement, visibleSections?: SectionModel[]): Promise<void> {
+        const page = store.page() ?? die('PageStore.print: page is mandatory.');
+        const sections = visibleSections ?? [];
+
+        if (!root || sections.length === 0) {
+          if (sections.length === 0) error(store.toastController, store.i18n.print_empty());
+          window.print();
+          return;
+        }
+
+        const appConfig = store.appStore.appConfig();
+        const logoUrl = `${store.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(appConfig.logoUrl)}`;
+        const sourceUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+        const payload = store.pagePrintService.buildPayload(root, sections, {
+          pageTitle: page.title?.length ? page.title : page.name,
+          pageSubtitle: '',
+          orgName: appConfig.appName,
+          logoUrl,
+          sourceUrl,
+          printedDate: getTodayStr(DateFormat.ViewDate),
+        });
+
+        try {
+          const result = await store.docGenerationService.generate({
+            templateId: 'page-print',
+            payload: payload as unknown as Record<string, unknown>,
+            options: {
+              outputFormat: 'pdf',
+              storageMode: 'ephemeral',
+              filename: `${page.name || 'page'}.pdf`,
+            },
+          });
+          if (typeof window !== 'undefined') window.open(result.url, '_blank');
+        } catch (e) {
+          debugMessage(`PageStore.print: generation failed: ${e}`, store.currentUser());
+          error(store.toastController, store.i18n.print_error());
+          window.print();
+        }
       },
 
       getTitleLabel(readOnly: boolean, key?: string): string {
