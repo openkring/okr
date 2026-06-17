@@ -166,6 +166,10 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
               Betrag im Einzahlungsschein ausfüllen
             </ion-checkbox>
           </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Zahlungsempfänger-Organisation (Org-ID, leer = Standard-Org)</ion-label>
+            <ion-input [ngModel]="tmpl.payeeOrgId" (ngModelChange)="onTemplateFieldChange('payeeOrgId', $event)" [disabled]="readOnly()" />
+          </ion-item>
         }
       }
 
