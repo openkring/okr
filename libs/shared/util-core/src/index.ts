@@ -15,6 +15,7 @@ export * from './lib/log.util';
 export * from './lib/query.util';
 export * from './lib/regasoft.util';
 export * from './lib/search.util';
+export * from './lib/sentry-redact.util';
 export * from './lib/sort.util';
 export * from './lib/text.util';
 export * from './lib/tokenize.util';
