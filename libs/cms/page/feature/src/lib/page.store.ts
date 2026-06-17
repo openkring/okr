@@ -443,6 +443,7 @@ export const _PageStore = signalStore(
         // No rendered container handed in (should not happen in practice):
         // degrade gracefully to the browser's own print.
         if (!root) {
+          console.error('PageStore.print: no renderer container available.');
           window.print();
           return;
         }
