@@ -1,23 +1,30 @@
 <!DOCTYPE html>
 {{!--
-  Spendenbestätigung – Gönnerverein Seeclub Stäfa
+  Rechnung Mitgliederbeitrag – Gönnerverein Seeclub Stäfa
   HTML/Handlebars template for PDF rendering (Puppeteer-friendly: @page A4, no external fonts).
 
-  Expected context:
+  Expected context (same conventions as the Spendenbestätigung template,
+  plus two invoice-specific fields: invoiceNumber, dueDate):
   {
-    "logoUrl":      "https://bkaiser.imgix.net/tenant/scs/logo/gss.png",
-    "greeting":     "Liebe Anna",   // pre-constructed salutation (caller picks Liebe/Lieber)
-    "firstName":    "Anna",
-    "lastName":     "Muster",
-    "streetName":   "Seestrasse",
-    "streetNumber": "12",
-    "zipCode":      "8712",
-    "city":         "Stäfa",
-    "date":         "07.05.2026",   // pre-formatted DD.MM.YYYY
-    "amount":       "1’000.00"      // pre-formatted string (Swiss apostrophe), rendered after the literal "CHF "
+    "logoUrl":       "https://bkaiser.imgix.net/tenant/scs/logo/gss.png",
+    "greeting":      "Liebe Anna",   // pre-constructed salutation (caller picks Liebe/Lieber)
+    "firstName":     "Anna",
+    "lastName":      "Muster",
+    "streetName":    "Seestrasse",
+    "streetNumber":  "12",
+    "zipCode":       "8712",
+    "city":          "Stäfa",
+    "date":          "07.05.2026",   // pre-formatted DD.MM.YYYY
+    "dueDate":       "06.06.2026",   // pre-formatted DD.MM.YYYY
+    "invoiceNumber": "REA-260501",
+    "amount":        "500.00"        // pre-formatted string (Swiss apostrophe), rendered after the literal "CHF "
   }
 
   No Handlebars helpers required — all values are pre-formatted by the caller.
+
+  Note: the source letter references a QR-Bill Einzahlungsschein "auf der
+  nächsten Seite". This template renders the letter page only; append the
+  QR-Bill page from your ISO 20022 / QR-Bill generator as page 2.
 --}}
 <html lang="de">
 <head>
@@ -30,9 +37,7 @@
 
   :root {
     --ink: #1a1a1a;
-    --muted: #1a1a1a;
-    --accent: #1d70b8;      /* "Spendenbestätigung" blue */
-    --hairline: #1a1a1a;
+    --accent: #1d70b8;      /* title blue */
     --margin: 25mm;
   }
 
@@ -96,11 +101,12 @@
     line-height: 1.45;
   }
 
-  /* ---- Body ---- */
+  /* ---- Title (two lines) ---- */
   .title {
     color: var(--accent);
     font-size: 17pt;
     font-weight: 400;
+    line-height: 1.3;
     margin-top: 22mm;
     margin-bottom: 9mm;
   }
@@ -113,31 +119,32 @@
     margin-bottom: 7mm;
   }
 
-  /* ---- Date / amount rows ---- */
-  .field {
+  /* ---- Date / due-date row (4 columns) ---- */
+  .meta-row {
     display: flex;
     margin-bottom: 4mm;
   }
 
-  .field .label {
-    width: 42mm;
-    flex: 0 0 42mm;
+  .meta-row .c-label-1 { flex: 0 0 35mm; }
+  .meta-row .c-value-1 { flex: 0 0 38mm; }
+  .meta-row .c-label-2 { flex: 0 0 40mm; }
+  .meta-row .c-value-2 { flex: 1 1 auto; }
+
+  /* ---- Line item: description left, amount aligned under due-date value ---- */
+  .lineitem {
+    display: flex;
+    margin-bottom: 7mm;
   }
 
-  .field .value.amount {
-    font-weight: 700;
-  }
-
-  .legal {
-    margin-top: 4mm;
-  }
+  .lineitem .desc { flex: 0 0 113mm; }
+  .lineitem .amount { font-weight: 700; }
 
   .closing {
     margin-top: 9mm;
   }
 
   .signature {
-    margin-top: 6mm;
+    margin-top: 9mm;
   }
 
   /* ---- Footer pinned to bottom margin ---- */
@@ -183,25 +190,30 @@
       </div>
     </section>
 
-    <h1 class="title">Spendenbestätigung</h1>
+    <h1 class="title">
+      Rechnung {{invoiceNumber}}<br>
+      Mitgliederbeitrag Gönnerverein Seeclub Stäfa
+    </h1>
 
     <p class="greeting">{{greeting}},</p>
 
-    <p>Vielen Dank für deine finanzielle Unterstützung des Jugendsports im Seeclub Stäfa.</p>
-
-    <p>Hiermit bestätigen wir gerne deine Zuwendung</p>
-
-    <div class="field">
-      <div class="label">Datum:</div>
-      <div class="value">{{date}}</div>
+    <div class="meta-row">
+      <div class="c-label-1">Datum:</div>
+      <div class="c-value-1">{{date}}</div>
+      <div class="c-label-2">Zahlbar bis:</div>
+      <div class="c-value-2">{{dueDate}}</div>
     </div>
 
-    <div class="field">
-      <div class="label">Spende:</div>
-      <div class="value amount">CHF {{amount}}</div>
+    <div class="lineitem">
+      <div class="desc">Mitgliederbeitrag</div>
+      <div class="amount">CHF {{amount}}</div>
     </div>
 
-    <p class="legal">Der Gönnerverein Seeclub Stäfa (GSS) leistet finanzielle Unterstützung zur Förderung der Jugendarbeit im Seeclub Stäfa. Gemäss Verfügung des Kant. Steueramtes vom 23.3.2026 sind Mitgliederbeiträge und Spenden an den GSS steuerbefreit. Solche Beiträge sind also bei Staats- und Gemeindesteuern sowie bei der direkten Bundessteuer abziehbar.</p>
+    <p>Vielen Dank für die Bezahlung der Rechnung innert 30 Tagen auf unser Konto IBAN {{payee.iban}}.</p>
+
+    <p>Bitte verwende den QR-Code Einzahlungsschein auf der nächsten Seite oder überweise direkt auf die IBAN-Nummer.</p>
+
+    <p>Der Gönnerverein Seeclub Stäfa (GSS) leistet finanzielle Unterstützung zur Förderung der Jugendarbeit im Seeclub Stäfa. Gemäss Verfügung des Kant. Steueramtes vom 23.3.2026 sind Mitgliederbeiträge und Spenden an den GSS steuerbefreit. Solche Beiträge sind also bei Staats- und Gemeindesteuern sowie bei der direkten Bundessteuer abziehbar.</p>
 
     <p class="closing">Mit freundlichen Grüssen und bestem Dank,</p>
 
