@@ -132,7 +132,7 @@ import { EsignService } from '@bk2/esign-data-access';
     <ion-toolbar>
       <ion-buttons slot="start">
         <ion-button (click)="refresh()">
-          <ion-icon src="{{ 'refresh' | svgIcon }}" slot="icon-only" />
+          <ion-icon src="{{ 'reload' | svgIcon }}" slot="icon-only" />
         </ion-button>
         @if(esign().documentStatus === 'signed') {
           <ion-button (click)="downloadSigned()">

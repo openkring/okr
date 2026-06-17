@@ -137,7 +137,7 @@ const AocTripStore = signalStore(
                     <p>{{ trip.notes }}</p>
                   </ion-label>
                   <ion-button slot="end" fill="clear" color="success" (click)="store.restoreTrip(trip)">
-                    <ion-icon src="{{ 'refresh' | svgIcon }}" slot="icon-only" />
+                    <ion-icon src="{{ 'reload' | svgIcon }}" slot="icon-only" />
                   </ion-button>
                   <ion-button slot="end" fill="clear" color="danger" (click)="store.hardDeleteTrip(trip)">
                     <ion-icon src="{{ 'trash' | svgIcon }}" slot="icon-only" />
