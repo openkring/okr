@@ -45,10 +45,12 @@
           "@google-cloud/*",
           "pdfkit",
           "swissqrbill",
-          "puppeteer",
+          "puppeteer-core",
+          "@sparticuz/chromium",
           "handlebars",
           "html-to-docx",
-          "sanitize-html"
+          "sanitize-html",
+          "cors"
         ],
         "esbuildOptions": {
           "logLevel": "info",

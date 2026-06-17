@@ -43,6 +43,14 @@
     "conf": "Die Aenderungen wurden gespeichert.",
     "error": "Die Aenderungen konnten nicht gespeichert werden"
   },
+  "view": {
+    "label": "Aktuelle Version ansehen"
+  },
+  "revert": {
+    "label": "Auf letzte Version zurücksetzen",
+    "conf": "Auf letzte Version zurückgesetzt.",
+    "error": "Zurücksetzen fehlgeschlagen."
+  },
 
 
   "name": { 

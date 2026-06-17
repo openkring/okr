@@ -1,6 +1,8 @@
-import { Injectable, isDevMode } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
+
+import { ENV } from '@bk2/shared-config';
 
 export interface GenerateDocumentRequest {
   templateId?: string;
@@ -31,9 +33,13 @@ export interface GenerateDocumentResponse {
 
 @Injectable({ providedIn: 'root' })
 export class DocGenerationService {
+  private readonly env = inject(ENV);
+
   private get functions() {
     const fns = getFunctions(getApp(), 'europe-west6');
-    if (isDevMode()) {
+    // Only route to the emulator when it is actually running (env flag), not for
+    // every dev build — otherwise calls hang against a dead localhost:5001.
+    if (this.env.useEmulators) {
       try { connectFunctionsEmulator(fns, 'localhost', 5001); } catch { /* already connected */ }
     }
     return fns;

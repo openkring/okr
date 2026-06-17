@@ -100,6 +100,41 @@ export class TemplateService {
     );
   }
 
+  /**
+   * Discard the active (unpublished) draft: delete its version document and
+   * reset the template back to its current published version.
+   */
+  public async discardDraft(template: TemplateModel, currentUser?: UserModel): Promise<void> {
+    const draft = template.draftVersion;
+    if (!draft) return;
+    await this.firestoreService.deleteObject(
+      `${TemplateCollection}/${template.bkey}/${TemplateVersionSubcollection}`,
+      String(draft)
+    );
+    await this.update(
+      { ...template, draftVersion: undefined, status: 'published' },
+      currentUser
+    );
+  }
+
+  /**
+   * Roll the published pointer back to the previous version (N → N-1).
+   * Non-destructive: the newer version document is kept intact, so the next
+   * new draft must use max(existing version) + 1 to avoid overwriting it.
+   */
+  public async rollbackVersion(template: TemplateModel, currentUser?: UserModel): Promise<void> {
+    if (template.currentVersion <= 1) return;
+    await this.update(
+      {
+        ...template,
+        currentVersion: template.currentVersion - 1,
+        draftVersion: undefined,
+        status: 'published',
+      },
+      currentUser
+    );
+  }
+
   public async publishVersion(
     templateKey: string,
     versionNum: number,

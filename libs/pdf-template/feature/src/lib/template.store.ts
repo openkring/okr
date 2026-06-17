@@ -19,9 +19,16 @@ interface TemplateState {
   previewLoading: boolean;
 }
 
+const initialState: TemplateState = {
+  searchTerm: '',
+  previewUrl: '',
+  previewLoading: false
+};
+
 export const TemplateStore = signalStore(
+  withState(initialState),
   withProps(() => ({
-    i18nService:     inject(I18nService),
+    i18n:     inject(I18nService).translateAll(TEMPLATE_I18N_KEYS) as TemplateI18n,
     templateService: inject(TemplateService),
     docGenService:   inject(DocGenerationService),
     appStore:        inject(AppStore),
@@ -29,28 +36,25 @@ export const TemplateStore = signalStore(
     toastController: inject(ToastController),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(TEMPLATE_I18N_KEYS) as TemplateI18n,
-  })),
-  withState<TemplateState>({
-    searchTerm:     '',
-    previewUrl:     '',
-    previewLoading: false,
-  }),
-  withProps(store => ({
-    _templates: rxResource({
-      params: () => ({ tenantId: store.appStore.tenantId() }),
+    allTemplatesResource: rxResource({
+      params: () => ({ 
+        tenantId: store.appStore.tenantId() 
+      }),
       stream: () => store.templateService.list(),
     }),
   })),
   withComputed(store => ({
-    isLoading: computed(() => store._templates.isLoading()),
-    templates:  computed(() => (store._templates.value() ?? []) as TemplateModel[]),
+    isLoading: computed(() => store.allTemplatesResource.isLoading()),
+    templates:  computed(() => (store.allTemplatesResource.value() ?? []) as TemplateModel[]),
     currentUser: computed(() => store.appStore.currentUser()),
     filteredTemplates: computed(() => {
-      const term = store.searchTerm();
-      const all  = (store._templates.value() ?? []) as TemplateModel[];
-      if (!term) return all;
-      return all.filter((t: TemplateModel) => nameMatches(t.index, term));
+      const searchTerm = store.searchTerm();
+      let templates  = (store.allTemplatesResource.value() ?? []) as TemplateModel[];
+      // filter by search term
+      if (searchTerm) {
+        templates = templates.filter(i => nameMatches(i.index, searchTerm));
+      }
+      return templates;
     }),
   })),
   withMethods(store => ({
@@ -69,6 +73,36 @@ export const TemplateStore = signalStore(
 
     async deleteTemplate(template: TemplateModel): Promise<void> {
       await store.templateService.delete(template, store.currentUser());
+    },
+
+    /**
+     * Revert to the last version:
+     * - if a draft exists, discard the draft (back to the current published version);
+     * - otherwise roll the published pointer back one version (N → N-1).
+     */
+    async revertToLastVersion(template: TemplateModel): Promise<void> {
+      try {
+        if (template.draftVersion) {
+          await store.templateService.discardDraft(template, store.currentUser());
+        } else if (template.currentVersion > 1) {
+          await store.templateService.rollbackVersion(template, store.currentUser());
+        } else {
+          return;
+        }
+        const toast = await store.toastController.create({
+          message:  store.i18n.revert_conf(),
+          duration: 2000,
+          color:    'success',
+        });
+        await toast.present();
+      } catch {
+        const toast = await store.toastController.create({
+          message:  store.i18n.revert_error(),
+          duration: 3000,
+          color:    'danger',
+        });
+        await toast.present();
+      }
     },
 
     async saveDraft(templateKey: string, version: TemplateVersionModel): Promise<void> {
@@ -127,14 +161,18 @@ export const TemplateStore = signalStore(
     async generatePreview(
       templateKey: string,
       version: TemplateVersionModel,
-      sampleData: string
+      sampleData: string,
+      persist = true
     ): Promise<GenerateDocumentResponse | undefined> {
       patchState(store, { previewLoading: true, previewUrl: '' });
       try {
         let payload: Record<string, unknown> = {};
         try { payload = JSON.parse(sampleData || '{}'); } catch { /* ignore parse error */ }
 
-        await store.templateService.saveDraftVersion(templateKey, version, store.currentUser());
+        // In read-only view the version already exists in Firestore, so don't write a draft.
+        if (persist) {
+          await store.templateService.saveDraftVersion(templateKey, version, store.currentUser());
+        }
         const response = await store.docGenService.preview(templateKey, payload, version.version);
         patchState(store, { previewUrl: response.url });
         return response;

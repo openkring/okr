@@ -101,6 +101,17 @@ export class TemplateList {
     actionSheetOptions.buttons.push(
       createActionSheetButton('template.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit')
     );
+    if (tmpl.currentVersion > 0) {
+      actionSheetOptions.buttons.push(
+        createActionSheetButton('template.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on')
+      );
+    }
+    // revert is only meaningful when there is a draft or more than one published version
+    if (tmpl.draftVersion || tmpl.currentVersion > 1) {
+      actionSheetOptions.buttons.push(
+        createActionSheetButton('template.revert', this.store.i18n.revert(), this.imgixBaseUrl, 'reload')
+      );
+    }
     actionSheetOptions.buttons.push(
       createActionSheetButton('template.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash')
     );
@@ -115,6 +126,12 @@ export class TemplateList {
     switch (data.action) {
       case 'template.edit':
         await this.router.navigate(['/templates', tmpl.bkey]);
+        break;
+      case 'template.view':
+        await this.router.navigate(['/templates', tmpl.bkey], { queryParams: { mode: 'view' } });
+        break;
+      case 'template.revert':
+        await this.store.revertToLastVersion(tmpl);
         break;
       case 'template.delete':
         await this.store.deleteTemplate(tmpl);

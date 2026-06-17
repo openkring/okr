@@ -36,6 +36,11 @@ export const TEMPLATE_I18N_KEYS = {
   update_conf:      PFX + 'update.conf',
   update_error:     PFX + 'update.error',
 
+  view:             PFX + 'view.label',
+  revert:           PFX + 'revert.label',
+  revert_conf:      PFX + 'revert.conf',
+  revert_error:     PFX + 'revert.error',
+
   name_label:       PFX + 'name.label',
   category_label:   PFX + 'category.label',
   language_label:   PFX + 'language.label',

@@ -12,6 +12,19 @@ export function newTemplateVersion(version = 1): TemplateVersionModel {
   return v;
 }
 
+/**
+ * Pretty-print a JSON string with 2-space indentation so it can be shown
+ * structured in an editor. Returns the input unchanged if it is not valid JSON.
+ */
+export function prettifyJson(json: string): string {
+  if (!json) return json;
+  try {
+    return JSON.stringify(JSON.parse(json), null, 2);
+  } catch {
+    return json;
+  }
+}
+
 export function getTemplateIndex(template: TemplateModel): string {
   let index = '';
   index = addIndexElement(index, 'n', template.name);
