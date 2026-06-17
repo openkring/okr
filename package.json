@@ -1,7 +1,7 @@
 {
   "name": "bk2monorepo",
   "version": "6.4.58",
-  "packageManager": "pnpm@11.6.0",
+  "packageManager": "pnpm@11.7.0",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -18,7 +18,8 @@
     "format": "nx run-many --target=format --all",
     "format:check": "nx run-many --target=format:check --all",
     "copy:website": "mkdir -p dist/apps/scs-app/browser/web && cp -r apps/scs-website/* dist/apps/scs-app/browser/web/",
-    "export-i18n": "source ./apps/scs-app/.env && ts-node -P scripts/tsconfig.json scripts/export-i18n.ts"
+    "export-i18n": "source ./apps/scs-app/.env && ts-node -P scripts/tsconfig.json scripts/export-i18n.ts",
+    "sentry:sourcemaps": "node scripts/sentry-sourcemaps.mjs scs-app"
   },
   "private": true,
   "dependencies": {
