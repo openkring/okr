@@ -161,9 +161,10 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
         Handlebars.registerPartial(name, content);
       }
 
-      // Resolve the org payee once; exposed to the template as {{payee.*}} and
-      // used to build the QR slip.
-      const payee = await resolvePayee(db, tenantId);
+      // Resolve the payee org once; exposed to the template as {{payee.*}} and
+      // used to build the QR slip. tmpl.payeeOrgId lets a template name a specific
+      // org (e.g. a sub-entity); empty falls back to the tenant's default org.
+      const payee = await resolvePayee(db, tenantId, tmpl.payeeOrgId);
 
       // Compile template (cached)
       const cacheKey = `${templateId}@${resolvedVersion}`;

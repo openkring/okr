@@ -7,20 +7,27 @@ import { AppConfigCollection, OrgCollection, AddressCollection, AddressModel } f
 import { pickFavoriteByChannel, QrPayee, QrSlipData } from '@bk2/shared-util-functions';
 
 /**
- * Resolve the payee (creditor) from the owner org: name from the org, IBAN from
- * its favorite bankaccount address, postal address from its favorite postal
- * address. Best-effort — returns empty strings for missing parts; the caller
- * decides whether a missing IBAN is fatal.
+ * Resolve the payee (creditor) org: name from the org, IBAN from its favorite
+ * bankaccount address, postal address from its favorite postal address.
+ *
+ * The org is `payeeOrgId` when the template sets one (a tenant may contain
+ * sub-entities, e.g. a Gönnerverein within a Seeclub — different IBAN), else the
+ * tenant's default org (`AppConfig.ownerOrgId`, which defaults to the tenantId).
+ * Best-effort — returns empty strings for missing parts; the caller decides
+ * whether a missing IBAN is fatal.
  */
-export async function resolvePayee(db: Firestore, tenantId: string): Promise<QrPayee> {
-  const configSnap = await db.collection(AppConfigCollection).doc(tenantId).get();
-  const ownerOrgId = (configSnap.data()?.['ownerOrgId'] as string) || tenantId;
+export async function resolvePayee(db: Firestore, tenantId: string, payeeOrgId?: string): Promise<QrPayee> {
+  let orgId = payeeOrgId ?? '';
+  if (!orgId) {
+    const configSnap = await db.collection(AppConfigCollection).doc(tenantId).get();
+    orgId = (configSnap.data()?.['ownerOrgId'] as string) || tenantId;
+  }
 
-  const orgSnap = await db.collection(OrgCollection).doc(ownerOrgId).get();
+  const orgSnap = await db.collection(OrgCollection).doc(orgId).get();
   const orgName = (orgSnap.data()?.['name'] as string) ?? '';
 
   const addrSnap = await db.collection(AddressCollection)
-    .where('parentKey', '==', `org.${ownerOrgId}`).get();
+    .where('parentKey', '==', `org.${orgId}`).get();
   const addresses = addrSnap.docs.map(d => ({ bkey: d.id, ...d.data() }) as AddressModel);
 
   const bank = pickFavoriteByChannel(addresses, 'bankaccount');

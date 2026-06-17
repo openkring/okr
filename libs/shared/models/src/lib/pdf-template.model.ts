@@ -38,6 +38,7 @@ export class TemplateModel implements BkModel {
   public payloadSchema = '';  // JSON schema string (optional)
   public attachQrSlip = false;       // append a QR payment slip as a second page
   public qrSlipWithAmount = false;   // fill the slip amount from payload.amount
+  public payeeOrgId = '';            // org whose IBAN/address is the payee/sender; '' = tenant's default org
 
   public createdAt = '';
   public createdBy = '';
