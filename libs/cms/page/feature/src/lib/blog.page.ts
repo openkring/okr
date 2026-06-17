@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -90,7 +90,7 @@ import { BlogStream } from './blog-stream';
           </ion-item>
         }
       } @else {
-        <div class="print-content">
+        <div class="print-content" #printRoot>
           @switch (blogType()) {
             @case ('grid') {
               <bk-blog-grid [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
@@ -124,6 +124,7 @@ export class BlogPage {
   private actionSheetController = inject(ActionSheetController);
   private route = inject(ActivatedRoute);
   private ionContent = viewChild(IonContent);
+  private printRoot = viewChild<ElementRef<HTMLElement>>('printRoot');
   private routeFragment = toSignal(this.route.fragment);
 
   public contextMenuName = input<string>();
@@ -175,7 +176,7 @@ export class BlogPage {
       case 'selectSection': await this.store.selectSection(); break;
       case 'addSection':    await this.addSection(); break;
       case 'exportRaw':     await this.store.export('raw'); break;
-      case 'print':         await this.store.print(); break;
+      case 'print':         await this.store.print(this.printRoot()?.nativeElement, this.sections()); break;
       default: error(undefined, `BlogPage.onPopoverDismiss: unknown method ${$event.detail.data}`);
     }
   }

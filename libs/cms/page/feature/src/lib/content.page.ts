@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -148,7 +148,7 @@ import { PageStore } from './page.store';
         </ion-toolbar>
       </ion-header>
     }
-    <ion-content class="ion-no-padding">
+    <ion-content class="ion-no-padding" #printRoot>
       @if(isEditable()) {
         @if(isEmptyPage()) {
           <ion-item lines="none">
@@ -209,6 +209,7 @@ export class ContentPage {
   private actionSheetController = inject(ActionSheetController);
   private route = inject(ActivatedRoute);
   private ionContent = viewChild(IonContent);
+  private printRoot = viewChild<ElementRef<HTMLElement>>('printRoot');
   private routeFragment = toSignal(this.route.fragment);
 
   // inputs
@@ -316,7 +317,7 @@ export class ContentPage {
       case 'selectSection': await this.store.selectSection(); break;
       case 'addSection':    await this.addSection(); break;
       case 'exportRaw': await this.store.export("raw"); break;
-      case 'print': await this.store.print(); break;
+      case 'print': await this.store.print(this.printRoot()?.nativeElement, this.visibleSections()); break;
       default: error(undefined, `ContentPage.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
