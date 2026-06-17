@@ -433,8 +433,16 @@ export const _PageStore = signalStore(
         const page = store.page() ?? die('PageStore.print: page is mandatory.');
         const sections = visibleSections ?? [];
 
-        if (!root || sections.length === 0) {
-          if (sections.length === 0) error(store.toastController, store.i18n.print_empty());
+        // Nothing printable on this page: inform the user and stop (no PDF, no
+        // browser dialog). The native-print fallback is reserved for genuine
+        // generation failures and the no-container case below.
+        if (sections.length === 0) {
+          error(store.toastController, store.i18n.print_empty());
+          return;
+        }
+        // No rendered container handed in (should not happen in practice):
+        // degrade gracefully to the browser's own print.
+        if (!root) {
           window.print();
           return;
         }
@@ -452,6 +460,15 @@ export const _PageStore = signalStore(
           printedDate: getTodayStr(DateFormat.ViewDate),
         });
 
+        // Generation runs on a Cloud Function and takes a few seconds — show a
+        // non-blocking hint so the click feels acknowledged.
+        const generating = await store.toastController.create({
+          message: store.i18n.print_generating(),
+          duration: 4000,
+          position: 'bottom',
+        });
+        await generating.present();
+
         try {
           const result = await store.docGenerationService.generate({
             templateId: 'page-print',
@@ -462,8 +479,10 @@ export const _PageStore = signalStore(
               filename: `${page.name || 'page'}.pdf`,
             },
           });
+          await generating.dismiss();
           if (typeof window !== 'undefined') window.open(result.url, '_blank');
         } catch (e) {
+          await generating.dismiss();
           debugMessage(`PageStore.print: generation failed: ${e}`, store.currentUser());
           error(store.toastController, store.i18n.print_error());
           window.print();
