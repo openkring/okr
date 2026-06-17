@@ -21,6 +21,7 @@
     "@bk2/cms-page-util": "*",
     "@bk2/cms-section-feature": "*",
     "@bk2/cms-section-data-access": "*",
-    "@bk2/cms-section-util": "*"
+    "@bk2/cms-section-util": "*",
+    "@bk2/pdf-template-data-access": "*"
   }
 }
