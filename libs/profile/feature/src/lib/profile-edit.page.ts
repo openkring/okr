@@ -11,6 +11,7 @@ import { AddressesAccordion } from '@bk2/subject-address-feature';
 import { AvatarToolbar } from '@bk2/avatar-feature';
 import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
 import { ProfileStore } from './profile.store';
+import { EmailSignatureAccordion } from './email-signature.accordion';
 
 @Component({
   selector: 'bk-profile-edit-page',
@@ -18,7 +19,7 @@ import { ProfileStore } from './profile.store';
   imports: [
     AsyncPipe,
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
-    ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion,
+    ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -89,6 +90,7 @@ import { ProfileStore } from './profile.store';
                 (dirty)="formDirty.set($event)"
               />
             }
+            <bk-email-signature-accordion [i18n]="store.i18n" />
           </ion-accordion-group>
         </ion-card-content>
       </ion-card>

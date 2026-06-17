@@ -55,6 +55,70 @@
   "view": "Profil Details ansehen",
   "edit": "Profil ändern",
   "create": "Profil kreieren ? das sollte nicht gehen !",
+  "signature": {
+    "title": "E-Mail-Signatur",
+    "description": "Erstelle eine persönliche E-Mail-Signatur mit deinen Kontaktdaten und dem Logo deiner Organisation. Wähle deinen E-Mail-Client, kopiere die Signatur und füge sie gemäss Anleitung ein.",
+    "function": {
+      "label": "Funktion (optional)",
+      "placeholder": "z.B. Finanzen",
+      "helper": "Deine Funktion oder Rolle in der Organisation. Freier Text, wird nicht gespeichert."
+    },
+    "client": {
+      "label": "E-Mail-Client",
+      "gmail": "Gmail",
+      "outlookWeb": "Outlook (neu/web)",
+      "outlookWin": "Outlook (Windows)",
+      "appleMac": "Apple Mail (Mac)",
+      "appleIos": "Apple Mail (iPhone)"
+    },
+    "format": {
+      "label": "Format",
+      "html": "HTML",
+      "raw": "Raw",
+      "text": "Nur Text"
+    },
+    "preview": "Vorschau",
+    "copy": {
+      "button": "Kopieren",
+      "html": "HTML kopieren",
+      "raw": "RAW kopieren",
+      "text": "Text kopieren",
+      "success": "Signatur in die Zwischenablage kopiert.",
+      "error": "Die Signatur konnte nicht kopiert werden."
+    },
+    "noOrg": "Es ist keine Standard-Organisation verfügbar. Bitte tritt einer Organisation bei oder wähle eine aus, um eine Signatur zu erstellen.",
+    "guide": {
+      "title": "Anleitung",
+      "rawFallback": "Der Raw-Modus kopiert den HTML-Quelltext der Signatur als reinen Text statt formatiert. Verwende ihn, wenn dein Client ein HTML-/Quelltext-Feld bietet, oder für die dateibasierten Methoden (Outlook .htm, Apple Mail .mailsignature), bei denen du den Code direkt in eine Datei einfügst.",
+      "gmail": {
+        "s1": "Einstellungen (Zahnrad) → «Alle Einstellungen anzeigen» → «Allgemein».",
+        "s2": "Abschnitt «Signatur» → «Neu erstellen».",
+        "s3": "In das Signaturfeld einfügen (⌘/Strg-V).",
+        "s4": "Unten «Änderungen speichern» klicken."
+      },
+      "oweb": {
+        "s1": "Einstellungen → «E-Mail» → «Verfassen und antworten».",
+        "s2": "In das Signaturfeld einfügen (⌘/Strg-V).",
+        "s3": "«Speichern» klicken."
+      },
+      "owin": {
+        "s1": "«Datei» → «Optionen» → «E-Mail» → «Signaturen…».",
+        "s2": "«Neu» → einfügen → «OK».",
+        "s3": "Falls die Abstände beim Einfügen verrutschen: Format «Raw» verwenden.",
+        "s4": "Alternativ die Raw-Ausgabe als «signatur.htm» in %APPDATA%\\Microsoft\\Signatures\\ speichern."
+      },
+      "amac": {
+        "s1": "«Mail» → «Einstellungen» → «Signaturen», eine Signatur hinzufügen.",
+        "s2": "«Immer mit Standardschrift antworten» deaktivieren.",
+        "s3": "Signatur einfügen (Tipp: aus Chrome einfügen, nicht aus Safari).",
+        "s4": "Fallback: die .mailsignature-Datei direkt bearbeiten und den Raw-HTML-Code unter den Metadaten einfügen."
+      },
+      "aios": {
+        "s1": "«Einstellungen» → «Mail» → «Signatur» → einfügen.",
+        "s2": "Komplexe Layouts werden ev. vereinfacht – am besten auf dem Mac einrichten und synchronisieren."
+      }
+    }
+  },
   "changeConfirmation": {
     "ok": "OK",
     "cancel": "Abbrechen",

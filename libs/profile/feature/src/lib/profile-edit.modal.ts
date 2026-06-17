@@ -3,7 +3,7 @@ import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { CategoryListModel, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
+import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { safeStructuredClone } from '@bk2/shared-util-core';
 
@@ -12,14 +12,15 @@ import { AddressesAccordion } from '@bk2/subject-address-feature';
 import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
 
 import { ProfileStore } from './profile.store';
+import { EmailSignatureAccordion } from './email-signature.accordion';
 
 @Component({
   selector: 'bk-profile-edit-modal',
   standalone: true,
   imports: [
     AsyncPipe,
-    Header, ChangeConfirmation, AvatarToolbar, AddressesAccordion, 
-    ProfileDataAccordion, ProfileSettingsAccordion, ProfilePrivacyAccordion, 
+    Header, ChangeConfirmation, AvatarToolbar, AddressesAccordion,
+    ProfileDataAccordion, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
     IonContent, IonAccordionGroup, IonCard, IonCardContent, IonItem, IonLabel
   ],
   providers: [ProfileStore],
@@ -83,10 +84,11 @@ import { ProfileStore } from './profile.store';
                 [tags]="tags()"
                 [i18n]="store.i18n"
                 [tenantId]="tenantId()"
-                (valid)="formValid.set($event)" 
+                (valid)="formValid.set($event)"
                 (dirty)="formDirty.set($event)"
               />
             }
+            <bk-email-signature-accordion [i18n]="store.i18n" />
           </ion-accordion-group>
         </ion-card-content>
       </ion-card>
