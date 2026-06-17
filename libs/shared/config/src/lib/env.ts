@@ -21,6 +21,13 @@ export interface BkEnvironment {
     nxCloudAccessToken: string;
     imgixBaseUrl: string;
     fcmVapidKey?: string; // Web Push VAPID key (Firebase Console → Project Settings → Cloud Messaging)
+  },
+  sentry?: {
+    dsn: string;                                        // EU (DE) project DSN, e.g. https://...ingest.de.sentry.io/...
+    environment: 'development' | 'staging' | 'production';
+    release: string;                                    // '<tenantId>@<package.json version>'
+    tracesSampleRate: number;                           // 0 in dev, 0.1 in prod
+    enabled: boolean;                                   // false in dev / when no DSN
   }
 }
 
