@@ -22,6 +22,8 @@ import {
 import { registerHelpers } from './handlebars-helpers';
 import { getBrowser } from './browser-pool';
 import { compileTemplate } from './template-cache';
+import { resolvePayee, renderQrSlipSvg, buildQrSlipPageHtml } from './qr-slip';
+import { buildQrSlipData } from '@bk2/shared-util-functions';
 import { resolveAssetUrls } from './asset-resolver';
 import { checkRateLimit } from './rate-limiter';
 import { sanitizeHtml } from './sanitize';
@@ -159,11 +161,24 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
         Handlebars.registerPartial(name, content);
       }
 
+      // Resolve the org payee once; exposed to the template as {{payee.*}} and
+      // used to build the QR slip.
+      const payee = await resolvePayee(db, tenantId);
+
       // Compile template (cached)
       const cacheKey = `${templateId}@${resolvedVersion}`;
       const compiled = await compileTemplate(cacheKey, version.html, version.css);
 
-      htmlToRender = compiled(payload);
+      htmlToRender = compiled({ ...payload, payee });
+
+      // Append the QR payment slip as a second page (PDF output only).
+      if (tmpl.attachQrSlip && outputFormat === 'pdf') {
+        if (!payee.iban) {
+          throw new HttpsError('failed-precondition', 'No payee IBAN configured for organisation');
+        }
+        const slipData = buildQrSlipData(payee, payload, !!tmpl.qrSlipWithAmount);
+        htmlToRender += buildQrSlipPageHtml(renderQrSlipSvg(slipData));
+      }
     } else {
       // — Raw HTML mode —
       htmlToRender = await sanitizeHtml(rawHtml!);
