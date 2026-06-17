@@ -47,6 +47,9 @@ export class PagePrintService {
   /** Clone a section host, inline computed styles, convert canvases, strip scripts. */
   private captureSectionHtml(hostEl: HTMLElement): string {
     const clone = hostEl.cloneNode(true) as HTMLElement;
+    // Order matters: inline styles first (relies on original↔clone node lists
+    // staying index-aligned), THEN replace canvases — which mutates the clone's
+    // structure and would break that alignment if run first.
     this.inlineStylesDeep(hostEl, clone);
     this.replaceCanvases(hostEl, clone);
     clone.querySelectorAll('script').forEach(el => el.remove());
