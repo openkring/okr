@@ -3,7 +3,7 @@ import { AddressModel } from '@bk2/shared-models';
 /** Parse a (possibly Swiss-formatted) amount string into a number, or undefined. */
 export function parseSwissAmount(value: unknown): number | undefined {
   if (value === null || value === undefined) return undefined;
-  const cleaned = String(value).replace(/['''’\s]/g, '');
+  const cleaned = String(value).replace(/['‘’\s]/g, ''); // strip ' ‘ ’ + whitespace
   if (cleaned === '') return undefined;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : undefined;

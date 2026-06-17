@@ -174,7 +174,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
 
       // Append the QR payment slip as a second page (PDF output only).
       if (tmpl.attachQrSlip && outputFormat === 'pdf') {
-        if (!payee.iban) {
+        if (!payee.iban.trim()) {
           throw new HttpsError('failed-precondition', 'No payee IBAN configured for organisation');
         }
         const slipData = buildQrSlipData(payee, payload, !!tmpl.qrSlipWithAmount);

@@ -6,8 +6,9 @@ describe('parseSwissAmount', () => {
   it('parses a Swiss-formatted string with apostrophe', () => {
     expect(parseSwissAmount("1'000.00")).toBe(1000);
   });
-  it('parses a curly apostrophe', () => {
-    expect(parseSwissAmount('1’500.50')).toBe(1500.5);
+  it('parses both curly apostrophes', () => {
+    expect(parseSwissAmount('1’500.50')).toBe(1500.5); // U+2019 right
+    expect(parseSwissAmount('1‘500.50')).toBe(1500.5); // U+2018 left
   });
   it('parses a plain decimal', () => {
     expect(parseSwissAmount('250.50')).toBe(250.5);
