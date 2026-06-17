@@ -124,7 +124,7 @@ export class BlogPage {
   private actionSheetController = inject(ActionSheetController);
   private route = inject(ActivatedRoute);
   private ionContent = viewChild(IonContent);
-  private printRoot = viewChild<ElementRef<HTMLElement>>('printRoot');
+  private printRoot = viewChild('printRoot', { read: ElementRef });
   private routeFragment = toSignal(this.route.fragment);
 
   public contextMenuName = input<string>();

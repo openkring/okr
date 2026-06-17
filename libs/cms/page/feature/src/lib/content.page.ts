@@ -209,7 +209,10 @@ export class ContentPage {
   private actionSheetController = inject(ActionSheetController);
   private route = inject(ActivatedRoute);
   private ionContent = viewChild(IonContent);
-  private printRoot = viewChild<ElementRef<HTMLElement>>('printRoot');
+  // `#printRoot` is on <ion-content> (a component), so we must read the host
+  // element explicitly — otherwise viewChild returns the IonContent instance
+  // and `.nativeElement` is undefined ("no renderer container").
+  private printRoot = viewChild('printRoot', { read: ElementRef });
   private routeFragment = toSignal(this.route.fragment);
 
   // inputs
