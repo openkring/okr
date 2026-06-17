@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+{{!--
+  Page Print — renders a CMS content/blog page to PDF.
+  Caller pre-formats all values (Approach A: client-side DOM capture).
+  Context:
+  {
+    "pageTitle":      "Page title",
+    "pageSubtitle":   "optional subtitle",
+    "orgName":        "Seeclub Stäfa",
+    "logoUrl":        "https://…imgix…/tenant/scs/logo/logo_round.svg",
+    "sourceUrl":      "https://seeclub.org/private/…",  // link target
+    "sourceUrlLabel": "seeclub.org/private/…",          // protocol-less display
+    "printedDate":    "17.06.2026",
+    "sections":       [ { "title": "…", "html": "<…captured markup…>" } ]
+  }
+  Note: page numbers are intentionally omitted — they require Puppeteer's
+  footerTemplate, which generateDocument does not expose. The fixed footer
+  (orgName + printedDate) repeats on every page (Chromium repeats fixed elements).
+--}}
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 22mm 18mm 20mm 18mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    font-size: 11pt;
+    line-height: 1.45;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* fixed logo — repeated top-right on every page */
+  .print-logo {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 20mm;
+    height: auto;
+  }
+
+  /* fixed footer — repeated on every page */
+  .print-footer {
+    position: fixed;
+    bottom: -14mm;
+    left: 0;
+    right: 0;
+    font-size: 8pt;
+    color: #6b6b6b;
+    display: flex;
+    justify-content: space-between;
+    border-top: 0.3pt solid #cfcfcf;
+    padding-top: 2mm;
+  }
+
+  .source {
+    font-size: 8.5pt;
+    color: #6b6b6b;
+    margin-bottom: 2mm;
+  }
+  .source a { color: #1d70b8; text-decoration: none; }
+
+  h1.page-title { font-size: 20pt; margin: 0 0 1mm 0; color: #1a1a1a; }
+  .page-subtitle { font-size: 12pt; color: #555; margin: 0 0 6mm 0; }
+
+  .print-section { margin-bottom: 6mm; break-inside: avoid; page-break-inside: avoid; }
+  .print-section h2 { font-size: 14pt; margin: 0 0 2mm 0; color: #1d70b8; }
+  .print-section img { max-width: 100%; height: auto; }
+  .print-section table { border-collapse: collapse; width: 100%; }
+</style>
+</head>
+<body>
+  <img class="print-logo" src="{{logoUrl}}" alt="{{orgName}}">
+
+  <header>
+    {{#if sourceUrl}}
+      <div class="source">Quelle: <a href="{{sourceUrl}}">{{sourceUrlLabel}}</a></div>
+    {{/if}}
+    <h1 class="page-title">{{pageTitle}}</h1>
+    {{#if pageSubtitle}}<div class="page-subtitle">{{pageSubtitle}}</div>{{/if}}
+  </header>
+
+  <main>
+    {{#each sections}}
+      <section class="print-section">
+        {{#if title}}<h2>{{title}}</h2>{{/if}}
+        {{{html}}}
+      </section>
+    {{/each}}
+  </main>
+
+  <footer class="print-footer">
+    <span>{{orgName}}</span>
+    <span>{{printedDate}}</span>
+  </footer>
+</body>
+</html>
