@@ -1,6 +1,6 @@
 import { effect, inject, Injectable } from '@angular/core';
 import { clearSentryUser, setSentryUser } from '@bk2/shared-util-angular';
-import { Roles } from '@bk2/shared-models';
+import type { Roles } from '@bk2/shared-models';
 import { AppStore } from './app.store';
 
 /**
