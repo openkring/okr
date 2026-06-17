@@ -75,6 +75,10 @@ export const PAGE_I18N_KEYS = {
   error_load:                   PFX + 'error.load',
   error_delete:                 PFX + 'error.delete',
 
+  print_generating:             PFX + 'print.generating',
+  print_error:                  PFX + 'print.error',
+  print_empty:                  PFX + 'print.empty',
+
   as_title:                     '@actionsheet.title',
   ok:                           '@ok',
   cancel:                       '@cancel',

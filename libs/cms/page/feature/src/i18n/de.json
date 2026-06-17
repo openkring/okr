@@ -49,6 +49,11 @@
     "load": "Die Webseiten konnten nicht geladen werden. Bitte versuche es erneut.",
     "delete": "Die Webseite konnte nicht gelöscht werden. Bitte versuche es erneut."
   },
+  "print": {
+    "generating": "PDF wird erstellt …",
+    "error": "Das PDF konnte nicht erstellt werden. Es wird der Browser-Druck verwendet.",
+    "empty": "Diese Seite enthält keine druckbaren Abschnitte."
+  },
 
   "type": {
     "graph": {
