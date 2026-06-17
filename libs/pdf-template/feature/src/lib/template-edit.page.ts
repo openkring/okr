@@ -12,7 +12,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
   IonContent, IonSegment, IonSegmentButton, IonLabel, IonItem,
   IonInput, IonSelect, IonSelectOption, IonTextarea, IonSpinner,
-  IonBackButton,
+  IonCheckbox, IonBackButton,
 } from '@ionic/angular/standalone';
 
 import { TemplateModel, TemplateVersionModel } from '@bk2/shared-models';
@@ -36,7 +36,7 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonItem,
     IonInput, IonSelect, IonSelectOption, IonTextarea, IonSpinner,
-    IonBackButton,
+    IonCheckbox, IonBackButton,
   ],
   styles: [`
     .editor-area { width: 100%; font-family: monospace; font-size: 0.9rem; }
@@ -149,6 +149,22 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
               [disabled]="readOnly()"
               placeholder='{}'
             />
+          </ion-item>
+          <ion-item>
+            <ion-checkbox
+              [checked]="tmpl.attachQrSlip"
+              (ionChange)="onTemplateFieldChange('attachQrSlip', $any($event).detail.checked)"
+              [disabled]="readOnly()">
+              QR-Einzahlungsschein anhängen
+            </ion-checkbox>
+          </ion-item>
+          <ion-item>
+            <ion-checkbox
+              [checked]="tmpl.qrSlipWithAmount"
+              (ionChange)="onTemplateFieldChange('qrSlipWithAmount', $any($event).detail.checked)"
+              [disabled]="readOnly() || !tmpl.attachQrSlip">
+              Betrag im Einzahlungsschein ausfüllen
+            </ion-checkbox>
           </ion-item>
         }
       }
