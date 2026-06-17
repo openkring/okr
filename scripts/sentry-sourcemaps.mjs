@@ -4,12 +4,16 @@
 // Requires env: SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
+// Resolve the repo root relative to this script so it works regardless of cwd.
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const app = process.argv[2] || 'scs-app';
 const tenantId = app.replace(/-app$/, '');
-const version = JSON.parse(readFileSync('./package.json', 'utf8')).version;
+const version = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')).version;
 const release = `${tenantId}@${version}`;
-const dir = `./dist/apps/${app}/browser`;
+const dir = join(repoRoot, 'dist', 'apps', app, 'browser');
 
 for (const v of ['SENTRY_AUTH_TOKEN', 'SENTRY_ORG', 'SENTRY_PROJECT']) {
   if (!process.env[v]) {
