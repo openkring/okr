@@ -22,6 +22,17 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | `eslint` | linting or fixing lint errors (and the `nx lint` heap-OOM workaround). |
 | `fix-types` | type-checking after editing TypeScript files. |
 | `authoring-docs` | creating/saving a spec, design, or implementation plan doc. |
+| `pending-implementation` | creating/updating/regenerating `docs/PENDING_IMPLEMENTATION.md` — the TOC of specified-but-not-fully-implemented topics. |
+
+### Documentation layout (`docs/`)
+
+Docs are organised by **type**: `docs/ideas/` (seed/stub specs), `docs/specs/` (all spec & design docs,
+kept here for their whole life), `docs/plans/` (implementation plans), `docs/documentation/` (reference
+docs). Specs are **not moved on completion**; status lives in `docs/PENDING_IMPLEMENTATION.md` (the TOC)
+via each entry's `State:` field. `docs/done/` is retired (archive for superseded docs only).
+**This overrides the superpowers defaults:** the `brainstorming` skill must save design docs to
+`docs/specs/` and `writing-plans` must save plans to `docs/plans/` (not under `docs/superpowers/`).
+See the `authoring-docs` skill for the full convention.
 
 ## Commands
 
