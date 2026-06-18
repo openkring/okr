@@ -190,7 +190,11 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
             <ion-spinner name="crescent" />
           </div>
         } @else if(safePreviewUrl(); as url) {
-          <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px;">
+            <ion-button fill="outline" size="small" (click)="store.sendPreview()">
+              <ion-icon src="{{ 'send' | svgIcon }}" slot="start" />
+              Senden
+            </ion-button>
             <ion-button fill="outline" size="small" (click)="downloadPreview()">
               <ion-icon src="{{ 'download' | svgIcon }}" slot="start" />
               Herunterladen

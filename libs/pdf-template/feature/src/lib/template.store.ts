@@ -16,12 +16,16 @@ import { nameMatches } from '@bk2/shared-util-core';
 interface TemplateState {
   searchTerm: string;
   previewUrl: string;
+  previewStoragePath: string;
+  previewFilename: string;
   previewLoading: boolean;
 }
 
 const initialState: TemplateState = {
   searchTerm: '',
   previewUrl: '',
+  previewStoragePath: '',
+  previewFilename: '',
   previewLoading: false
 };
 
@@ -158,13 +162,31 @@ export const TemplateStore = signalStore(
       }
     },
 
+    /** Open the email composer for the current preview document (attached via its storage path). */
+    async sendPreview(): Promise<void> {
+      const storagePath = store.previewStoragePath();
+      if (!storagePath) return;
+      // Lazy import to avoid circular reference at module load time
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { EmailComposerModal } = await import('@bk2/pdf-template-ui' as any);
+      const modal = await store.modalController.create({
+        component: EmailComposerModal,
+        componentProps: {
+          storagePath,
+          filename: store.previewFilename() || 'document.pdf',
+          outputFormat: 'pdf',
+        },
+      });
+      await modal.present();
+    },
+
     async generatePreview(
       templateKey: string,
       version: TemplateVersionModel,
       sampleData: string,
       persist = true
     ): Promise<GenerateDocumentResponse | undefined> {
-      patchState(store, { previewLoading: true, previewUrl: '' });
+      patchState(store, { previewLoading: true, previewUrl: '', previewStoragePath: '', previewFilename: '' });
       try {
         let payload: Record<string, unknown> = {};
         try { payload = JSON.parse(sampleData || '{}'); } catch { /* ignore parse error */ }
@@ -174,7 +196,11 @@ export const TemplateStore = signalStore(
           await store.templateService.saveDraftVersion(templateKey, version, store.currentUser());
         }
         const response = await store.docGenService.preview(templateKey, payload, version.version);
-        patchState(store, { previewUrl: response.url });
+        patchState(store, {
+          previewUrl: response.url,
+          previewStoragePath: response.storagePath,
+          previewFilename: response.filename,
+        });
         return response;
       } catch (err) {
         const toast = await store.toastController.create({
