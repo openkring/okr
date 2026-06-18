@@ -8,6 +8,7 @@ import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { TemplateModel, TemplateVersionModel } from '@bk2/shared-models';
 import { DocGenerationService, GenerateDocumentResponse, TemplateService } from '@bk2/pdf-template-data-access';
+import { EmailComposerModal } from '@bk2/pdf-template-ui';
 import { newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n } from '@bk2/pdf-template-util';
 export type { TemplateI18n };
 
@@ -166,9 +167,6 @@ export const TemplateStore = signalStore(
     async sendPreview(): Promise<void> {
       const storagePath = store.previewStoragePath();
       if (!storagePath) return;
-      // Lazy import to avoid circular reference at module load time
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { EmailComposerModal } = await import('@bk2/pdf-template-ui' as any);
       const modal = await store.modalController.create({
         component: EmailComposerModal,
         componentProps: {
