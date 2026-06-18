@@ -2,9 +2,52 @@
 import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
+import { getStorage } from 'firebase-admin/storage';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/shared-util-functions';
 import { getAppEmailConfig } from './email-templates';
-import { isValidProvider, sendEmailViaProvider } from './email-transport';
+import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
+
+/** Storage prefixes that `generateDocument` writes generated documents to. */
+const ALLOWED_ATTACHMENT_PREFIXES = ['generated-docs/', 'generated-docs-ephemeral/'];
+
+/** Infer a content type from a storage path extension (attachments are PDFs in practice). */
+function contentTypeFromPath(path: string): string {
+  const ext = path.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'pdf':  return 'application/pdf';
+    case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    case 'html': return 'text/html';
+    default:     return 'application/octet-stream';
+  }
+}
+
+/**
+ * Resolve attachment references ({ storagePath, filename }) into in-memory EmailAttachments by
+ * downloading them from the default Storage bucket via the Admin SDK. Paths are validated against an
+ * allow-list so the callable cannot be coerced into reading arbitrary Storage objects.
+ */
+async function resolveAttachments(
+  refs: { storagePath: string; filename?: string }[] | undefined,
+  cfName: string,
+): Promise<EmailAttachment[]> {
+  if (!refs?.length) return [];
+  const bucket = getStorage().bucket();
+  const resolved: EmailAttachment[] = [];
+  for (const ref of refs) {
+    const path = ref.storagePath ?? '';
+    const isAllowed = ALLOWED_ATTACHMENT_PREFIXES.some(p => path.startsWith(p));
+    if (!isAllowed || path.includes('..')) {
+      throw new functions.HttpsError('invalid-argument', `${cfName}: attachment path not allowed: ${path}`);
+    }
+    const [content] = await bucket.file(path).download();
+    resolved.push({
+      filename: ref.filename || path.split('/').pop() || 'document.pdf',
+      content,
+      contentType: contentTypeFromPath(path),
+    });
+  }
+  return resolved;
+}
 
 // onCall methods are automatically POST requests, so we don't need to check the method.
 
@@ -332,11 +375,11 @@ export const sendEmail = functions.onCall(
     enforceAppCheck: true,
     secrets: ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP_PASSWORD', 'MAILTRAP_TEST_USER', 'MAILTRAP_TEST_PASS'],
   },
-  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider: string; template?: string; templateVariables?: Record<string, string> }>) => {
+  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider: string; template?: string; templateVariables?: Record<string, string>; attachments?: { storagePath: string; filename?: string }[] }>) => {
     const CF_NAME = 'sendEmail';
     checkAppCheckToken(request as any, CF_NAME);
 
-    const { to, cc, bcc, appId, provider, template } = request.data;
+    const { to, cc, bcc, appId, provider, template, attachments } = request.data;
     let { html, from, subject, templateVariables } = request.data;
 
     const isPasswordReset = template === 'scs_password_reset';
@@ -379,9 +422,12 @@ export const sendEmail = functions.onCall(
 
     logger.info(`${CF_NAME}: sending via ${provider} to=${to.join(', ')} (appId=${appId}, template=${template ?? 'none'})`);
 
+    // Attachments are resolved server-side from Storage (never on the password-reset path).
+    const resolvedAttachments = isPasswordReset ? [] : await resolveAttachments(attachments, CF_NAME);
+
     try {
-      await sendEmailViaProvider(provider, { from, to, cc, bcc, subject, html: html ?? '', template, templateVariables });
-      logger.info(`${CF_NAME}: email sent to ${to.join(', ')}`);
+      await sendEmailViaProvider(provider, { from, to, cc, bcc, subject, html: html ?? '', template, templateVariables, attachments: resolvedAttachments });
+      logger.info(`${CF_NAME}: email sent to ${to.join(', ')}${resolvedAttachments.length ? ` with ${resolvedAttachments.length} attachment(s)` : ''}`);
       return { success: true };
     } catch (error: any) {
       logger.error(`${CF_NAME}: failed to send email`, { error: error.message });

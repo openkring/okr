@@ -56,6 +56,8 @@ export class DocButton {
   public readonly autoOpenPreview = input<boolean>(true);
   public readonly entityType = input<string | undefined>(undefined);
   public readonly entityId = input<string | undefined>(undefined);
+  public readonly recipientEmail = input<string | undefined>(undefined);
+  public readonly recipientName = input<string | undefined>(undefined);
 
   @Output() public readonly generated = new EventEmitter<GenerateDocumentResponse>();
   @Output() public readonly errorOccurred = new EventEmitter<Error>();
@@ -104,6 +106,9 @@ export class DocButton {
             title: response.filename,
             filename: response.filename,
             outputFormat: response.outputFormat,
+            storagePath: response.storagePath,
+            recipientEmail: this.recipientEmail(),
+            recipientName: this.recipientName(),
           },
         });
         await modal.present();

@@ -6,6 +6,7 @@ import {
   IonContent, IonFooter, ModalController,
 } from '@ionic/angular/standalone';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { EmailComposerModal } from './email-composer.modal';
 
 @Component({
   selector: 'bk-pdf-preview-modal',
@@ -25,6 +26,11 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
       <ion-toolbar color="secondary">
         <ion-title>{{ title() }}</ion-title>
         <ion-buttons slot="end">
+          @if(canSend()) {
+            <ion-button (click)="send()">
+              <ion-icon src="{{ 'send' | svgIcon }}" slot="icon-only" />
+            </ion-button>
+          }
           <ion-button (click)="download()">
             <ion-icon src="{{ 'download' | svgIcon }}" slot="icon-only" />
           </ion-button>
@@ -53,6 +59,12 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
       <ion-toolbar>
         <ion-buttons slot="end">
           <ion-button fill="outline" (click)="close()">Schliessen</ion-button>
+          @if(canSend()) {
+            <ion-button fill="outline" color="primary" (click)="send()">
+              <ion-icon src="{{ 'send' | svgIcon }}" slot="start" />
+              Senden
+            </ion-button>
+          }
           <ion-button fill="solid" color="primary" (click)="download()">
             <ion-icon src="{{ 'download' | svgIcon }}" slot="start" />
             Herunterladen
@@ -70,11 +82,31 @@ export class PdfPreviewModal {
   public readonly title = input<string>('Dokument');
   public readonly filename = input<string>('document.pdf');
   public readonly outputFormat = input<'pdf' | 'docx' | 'html'>('pdf');
+  public readonly storagePath = input<string>('');
+  public readonly recipientEmail = input<string | undefined>(undefined);
+  public readonly recipientName = input<string | undefined>(undefined);
 
   protected readonly safeUrl = computed((): SafeResourceUrl | null => {
     const u = this.url();
     return u ? this.sanitizer.bypassSecurityTrustResourceUrl(u) : null;
   });
+
+  // Senden is offered only for a persisted PDF (the CF resolves the attachment from storagePath).
+  protected readonly canSend = computed(() => this.outputFormat() === 'pdf' && this.storagePath().length > 0);
+
+  protected async send(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: EmailComposerModal,
+      componentProps: {
+        to: this.recipientEmail() ?? '',
+        recipientName: this.recipientName(),
+        storagePath: this.storagePath(),
+        filename: this.filename(),
+        outputFormat: this.outputFormat(),
+      },
+    });
+    await modal.present();
+  }
 
   protected async close(): Promise<void> {
     await this.modalController.dismiss(null, 'cancel');
