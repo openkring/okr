@@ -1,3 +1,5 @@
+import { getFirestore } from 'firebase-admin/firestore';
+
 interface AppEmailConfig {
   appName: string;
   from: string;
@@ -5,29 +7,39 @@ interface AppEmailConfig {
   continueUrl: string;
 }
 
-const APP_CONFIGS: Record<string, AppEmailConfig> = {
-  scs: {
-    appName: 'Seeclub Stäfa',
-    from: '"Seeclub Stäfa" <app@seeclub.org>',
-    replyTo: 'app@seeclub.org',
-    continueUrl: 'https://seeclub.org/auth/login',
-  },
-  test: {
-    appName: 'bkaiser test',
-    from: '"bkaiser" <app@seeclub.org>',
-    replyTo: 'info@seeclub.org',
-    continueUrl: 'https://bkaiser.org/auth/login',
-  },
-};
+// Ultimate fallback when the tenant's app-config document is missing/incomplete.
+const FALLBACK_DOMAIN = 'bkaiser.ch';
+const FALLBACK_APP_NAME = 'bkaiser';
+const FALLBACK_LOGIN_PATH = '/auth/login';
 
-const DEFAULT_CONFIG: AppEmailConfig = {
-  appName: 'bkaiser',
-  from: '"bkaiser" <app@bkaiser.ch>',
-  replyTo: 'info@bkaiser.ch',
-  continueUrl: 'https://bkaiser.ch/auth/login',
-};
+/**
+ * Resolve the per-tenant email config from the `app-config/{appId}` Firestore document.
+ *
+ * Multi-tenant by design: the sender domain is ALWAYS derived from `appDomain` (never hardcoded
+ * per app), so each tenant sends from its own domain (e.g. app@seeclub.org, app@p13.ch).
+ * Note: the configured email provider must authorize that sending domain, otherwise the send fails.
+ */
+export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> {
+  let appName = FALLBACK_APP_NAME;
+  let appDomain = FALLBACK_DOMAIN;
+  let loginPath = FALLBACK_LOGIN_PATH;
 
-export function getAppEmailConfig(appId: string): AppEmailConfig {
-  return APP_CONFIGS[appId] ?? DEFAULT_CONFIG;
+  try {
+    const snap = await getFirestore().collection('app-config').doc(appId).get();
+    const cfg = snap.data();
+    if (cfg) {
+      appName = String(cfg['appName'] ?? appName);
+      appDomain = String(cfg['appDomain'] ?? appDomain) || FALLBACK_DOMAIN;
+      loginPath = String(cfg['loginUrl'] ?? loginPath) || FALLBACK_LOGIN_PATH;
+    }
+  } catch {
+    // fall through to fallback values
+  }
+
+  return {
+    appName,
+    from: `"${appName}" <app@${appDomain}>`,
+    replyTo: `app@${appDomain}`,
+    continueUrl: `https://${appDomain}${loginPath}`,
+  };
 }
-

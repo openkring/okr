@@ -333,7 +333,7 @@ async function runSideEffects(
   if (Array.isArray(emailAddresses) && emailAddresses.length > 0) {
     try {
       // Use the app's verified sender address (mailtrap_api only accepts authorized domains).
-      const from = getAppEmailConfig(tenantId).from;
+      const from = (await getAppEmailConfig(tenantId)).from;
       const subject = `${formDef.name} – neue Einreichung`;
       const html = buildSubmissionEmailHtml(formDef, values, submissionId, submittedAt);
 

@@ -147,13 +147,17 @@ export class EmailComposerModal {
   protected readonly subject  = computed(() => this.formData().subject);
   protected readonly body     = computed(() => this.formData().body);
 
+  /** The app's email domain (e.g. seeclub.org), always taken from app config. */
+  protected readonly appDomain = computed(() => this.appStore.appConfig().appDomain?.toLowerCase() ?? '');
+
   protected readonly fromWarning = computed(() => {
     const from = this.formData().from?.trim() ?? '';
     if (from.length === 0) return '';
+    const expected = this.appDomain();
     const domain = from.split('@')[1]?.toLowerCase() ?? '';
-    return domain === 'seeclub.org'
+    return expected && domain === expected
       ? ''
-      : 'Warnung: Der Absender ist nicht auf der Domain seeclub.org – der Versand wird abgelehnt.';
+      : `Warnung: Der Absender ist nicht auf der Domain ${expected || '(unbekannt)'} – der Versand wird abgelehnt.`;
   });
 
   // i18n objects (literals; this lib uses literal German strings, like the other modals)
@@ -165,13 +169,12 @@ export class EmailComposerModal {
   protected readonly buttonCopyI18n: ButtonCopyI18n = { copy_conf: 'Kopiert' };
   protected readonly changeConfirmationI18n: ChangeConfirmationI18n = { cancel: 'Verwerfen', save: 'Senden' };
 
-  /** Default sender — on the verified seeclub.org domain so the send isn't rejected. */
-  private static readonly DEFAULT_FROM = 'app@seeclub.org';
-
   private buildInitial(): EmailComposerFormModel {
+    const domain = this.appStore.appConfig().appDomain ?? '';
     return {
       to: this.to(),
-      from: EmailComposerModal.DEFAULT_FROM,
+      // Default sender on the app's own domain (e.g. app@seeclub.org), derived from app config.
+      from: domain ? `app@${domain}` : '',
       cc: '',
       bcc: '',
       subject: `Dokument: ${this.filename()}`,

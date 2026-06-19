@@ -396,7 +396,7 @@ export const sendEmail = functions.onCall(
     }
 
     if (isPasswordReset) {
-      const config = getAppEmailConfig(appId);
+      const config = await getAppEmailConfig(appId);
       // generatePasswordResetLink throws auth/user-not-found for an unregistered
       // address — so a reset link is only ever produced for a real account. To
       // avoid turning that into an account-enumeration oracle, swallow the error
@@ -419,7 +419,7 @@ export const sendEmail = functions.onCall(
 
     // When the caller does not supply a sender, fall back to the app's verified sender
     // address (same one used for password-reset) so the provider accepts the from-domain.
-    if (!from) from = getAppEmailConfig(appId).from;
+    if (!from) from = (await getAppEmailConfig(appId)).from;
     if (!from) throw new functions.HttpsError('invalid-argument', 'from is required.');
     if (!subject) throw new functions.HttpsError('invalid-argument', 'subject is required.');
 

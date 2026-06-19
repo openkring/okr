@@ -178,10 +178,12 @@ Feasible for web-only usage. For mobile (Capacitor), defer until the native tool
 ### Email providers & sender domain
 
 - **Default provider: `mailtrap_api`** for all application email — password reset, document send (`pdf-template`), form-submission notifications, application confirm/decision mails, CMS section mailings, the public `/contact` route, and esign send-by-email. The other providers (`mailgun_smtp`, `netzone_smtp`, `mailtrap_test`) remain available in `email-transport.ts` but are no longer the default.
-- **Verified sending domain: `seeclub.org`.** The Mailtrap API token is authorized for the `seeclub.org` domain only, so **every `from` address must be on `seeclub.org`** (e.g. `app@seeclub.org`, `kommunikation@seeclub.org`). Sending from any other domain (e.g. `bkaiser.com`/`bkaiser.ch`) returns `401 Unauthorized`.
+- **Sender domain is per-tenant, derived from `appDomain`.** The `from` domain is ALWAYS taken from the tenant's `app-config/{appId}.appDomain` (e.g. `seeclub.org`, `p13.ch`) — never hardcoded per app. `getAppEmailConfig(appId)` reads the `app-config` Firestore doc and builds `"<appName>" <app@<appDomain>>`, `replyTo: app@<appDomain>`, and `continueUrl: https://<appDomain><loginUrl>`. This is multi-tenant by design.
+- **Provider must authorize that domain.** The Mailtrap token must be authorized for each tenant's `appDomain` (today only `seeclub.org` is verified). Sending from an unauthorized domain returns `401 Unauthorized`; the operator must verify the domain with the provider for that tenant to send.
 - **Where `from` comes from:**
-  - Client callers of the `sendEmail` CF (password reset, application mails, document send) should omit `from`; the CF fills in the app's verified sender from `email-templates.ts` (`getAppEmailConfig(appId).from`, e.g. `"Seeclub Stäfa" <app@seeclub.org>`).
-  - CMS section mailings pass a user-chosen `from` (defaulting to `kommunikation@seeclub.org`) via the message center.
-  - `forms` uses `getAppEmailConfig(tenantId).from`; the public `/contact` route uses `Website Kontakt <app@seeclub.org>`; esign uses the `EMAIL_FROM` secret — **set it to a `seeclub.org` address**.
+  - Client callers of the `sendEmail` CF (password reset, application mails, document send) should omit `from`; the CF fills in the per-tenant sender via `getAppEmailConfig(appId)`.
+  - The document composer (`pdf-template`) prefills `from` with `app@<appDomain>` and warns if the user edits it off-domain.
+  - CMS section mailings pass a user-chosen `from` via the message center.
+  - `forms` uses `getAppEmailConfig(tenantId).from`; the public `/contact` route uses `Website Kontakt <app@seeclub.org>`; esign uses the `EMAIL_FROM` secret — **set it to an address on the tenant's domain**.
 - Each function sending via `mailtrap_api` must mount the `MAILTRAP_APIKEY` secret (`sendEmail`, `sendFormSubmission`/forms, `publicApi`, `esignSendByEmail`).
 - SPF/DKIM/DMARC are configured on `seeclub.org` (Mailgun SMTP, `mail.seeclub.org`) and remain valid if a send falls back to `mailgun_smtp`.
