@@ -10,6 +10,17 @@ import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-
 /** Storage prefixes that `generateDocument` writes generated documents to. */
 const ALLOWED_ATTACHMENT_PREFIXES = ['generated-docs/', 'generated-docs-ephemeral/'];
 
+/** Max size of an inline (base64) attachment after decoding. */
+const MAX_INLINE_ATTACHMENT_BYTES = 8 * 1024 * 1024;
+
+/**
+ * An attachment is either a reference to a generated document in Storage (server-fetched), or an
+ * inline base64 payload (e.g. a file the user picked from their device in the email composer).
+ */
+type AttachmentRef =
+  | { storagePath: string; filename?: string }
+  | { filename: string; contentBase64: string; contentType?: string };
+
 /** Infer a content type from a storage path extension (attachments are PDFs in practice). */
 function contentTypeFromPath(path: string): string {
   const ext = path.split('.').pop()?.toLowerCase();
@@ -27,13 +38,27 @@ function contentTypeFromPath(path: string): string {
  * allow-list so the callable cannot be coerced into reading arbitrary Storage objects.
  */
 async function resolveAttachments(
-  refs: { storagePath: string; filename?: string }[] | undefined,
+  refs: AttachmentRef[] | undefined,
   cfName: string,
 ): Promise<EmailAttachment[]> {
   if (!refs?.length) return [];
   const bucket = getStorage().bucket();
   const resolved: EmailAttachment[] = [];
   for (const ref of refs) {
+    // Inline base64 attachment (user-picked file) — no Storage involved.
+    if ('contentBase64' in ref) {
+      const content = Buffer.from(ref.contentBase64, 'base64');
+      if (content.length > MAX_INLINE_ATTACHMENT_BYTES) {
+        throw new functions.HttpsError('invalid-argument', `${cfName}: attachment too large: ${ref.filename}`);
+      }
+      resolved.push({
+        filename: ref.filename || 'attachment',
+        content,
+        contentType: ref.contentType || 'application/octet-stream',
+      });
+      continue;
+    }
+    // Storage reference — validate against the allow-list and download via the Admin SDK.
     const path = ref.storagePath ?? '';
     const isAllowed = ALLOWED_ATTACHMENT_PREFIXES.some(p => path.startsWith(p));
     if (!isAllowed || path.includes('..')) {
@@ -375,7 +400,7 @@ export const sendEmail = functions.onCall(
     enforceAppCheck: true,
     secrets: ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP_PASSWORD', 'MAILTRAP_TEST_USER', 'MAILTRAP_TEST_PASS'],
   },
-  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider: string; template?: string; templateVariables?: Record<string, string>; attachments?: { storagePath: string; filename?: string }[] }>) => {
+  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider: string; template?: string; templateVariables?: Record<string, string>; attachments?: AttachmentRef[] }>) => {
     const CF_NAME = 'sendEmail';
     checkAppCheckToken(request as any, CF_NAME);
 

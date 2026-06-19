@@ -5,6 +5,13 @@ import { getApp } from 'firebase/app';
 
 import { ENV } from '@bk2/shared-config';
 
+/** A user-picked file attached inline (base64) to the email. */
+export interface InlineAttachment {
+  filename: string;
+  contentBase64: string;
+  contentType: string;
+}
+
 export interface SendDocumentByEmailRequest {
   to: string[];
   cc?: string[];
@@ -17,6 +24,8 @@ export interface SendDocumentByEmailRequest {
   storagePath: string;
   /** Filename to use for the attachment. */
   filename: string;
+  /** Additional user-picked files attached inline. */
+  extraAttachments?: InlineAttachment[];
 }
 
 /**
@@ -46,7 +55,10 @@ export class DocEmailService {
       html: req.html,
       provider: 'mailtrap_api',
       appId: this.env.appId,
-      attachments: [{ storagePath: req.storagePath, filename: req.filename }],
+      attachments: [
+        { storagePath: req.storagePath, filename: req.filename },
+        ...(req.extraAttachments ?? []),
+      ],
     });
   }
 }

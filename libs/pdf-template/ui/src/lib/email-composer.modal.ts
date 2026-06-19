@@ -19,7 +19,10 @@ import {
   buildBrandedEmailHtml, parseEmails,
   EmailComposerFormModel, emailComposerValidations,
 } from '@bk2/pdf-template-util';
-import { DocEmailService } from '@bk2/pdf-template-data-access';
+import { DocEmailService, InlineAttachment } from '@bk2/pdf-template-data-access';
+
+/** Reject files larger than this client-side (the CF caps inline attachments at 8 MB). */
+const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
 
 @Component({
   selector: 'bk-email-composer-modal',
@@ -88,12 +91,26 @@ import { DocEmailService } from '@bk2/pdf-template-data-access';
                       (valueChange)="onFieldChange('subject', $event)" [maxLength]="100" [readOnly]="false" />
                   </ion-col>
                 </ion-row>
-                <ion-row>
-                  <ion-col size="12">
-                    <ion-chip class="attachment" [outline]="true">
+                <ion-row class="ion-align-items-center">
+                  <ion-col size="9">
+                    <ion-chip [outline]="true">
                       <ion-icon src="{{ 'attach' | svgIcon }}" />
                       <ion-label>{{ filename() }}</ion-label>
                     </ion-chip>
+                    @for (att of extraAttachments(); track att.filename) {
+                      <ion-chip [outline]="true">
+                        <ion-icon src="{{ 'attach' | svgIcon }}" />
+                        <ion-label>{{ att.filename }}</ion-label>
+                        <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="removeAttachment(att.filename)" />
+                      </ion-chip>
+                    }
+                  </ion-col>
+                  <ion-col size="3" class="ion-text-end">
+                    <ion-button fill="outline" size="small" (click)="fileInput.click()">
+                      <ion-icon src="{{ 'add' | svgIcon }}" slot="start" />
+                      Hinzufügen
+                    </ion-button>
+                    <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
@@ -136,6 +153,7 @@ export class EmailComposerModal {
   protected readonly isDirty = signal(false);
   protected readonly isSending = signal(false);
   protected readonly showForm = signal(true);
+  protected readonly extraAttachments = signal<InlineAttachment[]>([]);
   protected readonly showConfirmation = computed(() =>
     this.composerForm().valid() && this.isDirty() && !this.isSending());
 
@@ -191,8 +209,37 @@ export class EmailComposerModal {
     this.onFieldChange('body', '<p></p>');
   }
 
+  /** Read a user-picked file from the device and attach it inline (base64). */
+  protected onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';                          // allow re-selecting the same file later
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      void this.showToast(`Datei zu gross (max. ${Math.round(MAX_ATTACHMENT_BYTES / 1024 / 1024)} MB): ${file.name}`, 'danger');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;        // data:<type>;base64,<data>
+      const contentBase64 = result.split(',')[1] ?? '';
+      this.extraAttachments.update((list) => [
+        ...list,
+        { filename: file.name, contentBase64, contentType: file.type || 'application/octet-stream' },
+      ]);
+      this.isDirty.set(true);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  protected removeAttachment(filename: string): void {
+    this.extraAttachments.update((list) => list.filter((a) => a.filename !== filename));
+    this.isDirty.set(true);
+  }
+
   protected revert(): void {
     this.isDirty.set(false);
+    this.extraAttachments.set([]);
     this.formData.set(this.buildInitial());
     this.showForm.set(false);          // toggle to clear stale Vest state
     setTimeout(() => this.showForm.set(true), 0);
@@ -229,6 +276,7 @@ export class EmailComposerModal {
         html,
         storagePath: this.storagePath(),
         filename: this.filename(),
+        extraAttachments: this.extraAttachments(),
       });
 
       await this.showToast(`Dokument gesendet an ${recipients.join(', ')}`);
