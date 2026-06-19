@@ -417,6 +417,9 @@ export const sendEmail = functions.onCall(
       logger.info(`${CF_NAME}: generated reset link (appId=${appId}, provider=${provider})`);
     }
 
+    // When the caller does not supply a sender, fall back to the app's verified sender
+    // address (same one used for password-reset) so the provider accepts the from-domain.
+    if (!from) from = getAppEmailConfig(appId).from;
     if (!from) throw new functions.HttpsError('invalid-argument', 'from is required.');
     if (!subject) throw new functions.HttpsError('invalid-argument', 'subject is required.');
 

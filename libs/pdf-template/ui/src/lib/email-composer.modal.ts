@@ -141,7 +141,7 @@ export class EmailComposerModal {
         to,
         cc: parseEmails(this.cc()),
         bcc: parseEmails(this.bcc()),
-        from: cfg.opEmail,
+        // from is omitted on purpose: the CF supplies the app's verified sender address.
         subject: this.subject(),
         html,
         storagePath: this.storagePath(),

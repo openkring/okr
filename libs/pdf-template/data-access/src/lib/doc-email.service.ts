@@ -9,7 +9,8 @@ export interface SendDocumentByEmailRequest {
   to: string[];
   cc?: string[];
   bcc?: string[];
-  from: string;
+  /** Optional sender; when omitted the CF uses the app's verified sender address. */
+  from?: string;
   subject: string;
   html: string;
   /** Storage path of the generated document to attach (resolved server-side). */
@@ -40,7 +41,7 @@ export class DocEmailService {
       to: req.to,
       cc: req.cc,
       bcc: req.bcc,
-      from: req.from,
+      ...(req.from ? { from: req.from } : {}),
       subject: req.subject,
       html: req.html,
       provider: 'mailtrap_api',
