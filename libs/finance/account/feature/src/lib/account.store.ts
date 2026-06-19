@@ -10,8 +10,6 @@ import { AccountModel } from '@bk2/shared-models';
 import { AccountService } from '@bk2/finance-account-data-access';
 import { ACCOUNT_I18N_KEYS, AccountI18n, flattenAccountTree, isAccount } from '@bk2/finance-account-util';
 
-import { AccountEditModal } from './account-edit.modal';
-
 export type { AccountI18n };
 
 export type AccountListState = {
@@ -92,6 +90,9 @@ export const AccountStore = signalStore(
     },
 
     async edit(account: AccountModel, readOnly = true): Promise<void> {
+      // Lazy import to break the store <-> modal circular reference at module load time.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { AccountEditModal } = await import('./account-edit.modal' as any);
       const modal = await store.modalController.create({
         component: AccountEditModal,
         componentProps: {
@@ -142,12 +143,12 @@ export const AccountStore = signalStore(
 
     getTitleLabel(readOnly: boolean, key?: string): string {
       if (readOnly) {
-        return store.i18n.as_view();
+        return store.i18n.view();
       }
       if (key && key.length > 0) {
-        return store.i18n.as_edit();
+        return store.i18n.update();
       } else {
-        return store.i18n.as_create();
+        return store.i18n.create();
       }
     }
   }))
