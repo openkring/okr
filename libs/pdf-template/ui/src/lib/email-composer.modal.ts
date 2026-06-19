@@ -165,10 +165,13 @@ export class EmailComposerModal {
   protected readonly buttonCopyI18n: ButtonCopyI18n = { copy_conf: 'Kopiert' };
   protected readonly changeConfirmationI18n: ChangeConfirmationI18n = { cancel: 'Verwerfen', save: 'Senden' };
 
+  /** Default sender — on the verified seeclub.org domain so the send isn't rejected. */
+  private static readonly DEFAULT_FROM = 'app@seeclub.org';
+
   private buildInitial(): EmailComposerFormModel {
     return {
       to: this.to(),
-      from: this.appStore.appConfig().opEmail ?? '',
+      from: EmailComposerModal.DEFAULT_FROM,
       cc: '',
       bcc: '',
       subject: `Dokument: ${this.filename()}`,
