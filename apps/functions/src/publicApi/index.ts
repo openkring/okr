@@ -1,7 +1,11 @@
 import express from 'express';
 import { onRequest } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import corsLib from 'cors';
+
+// Mounted so the /contact route can send via mailtrap_api (reads process.env['MAILTRAP_APIKEY']).
+const mailtrapApiKey = defineSecret('MAILTRAP_APIKEY');
 
 import { orgRouter } from './routes/org';
 import { contentRouter } from './routes/content';
@@ -87,4 +91,4 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   }
 });
 
-export const publicApi = onRequest({ region: 'europe-west6' }, app);
+export const publicApi = onRequest({ region: 'europe-west6', secrets: [mailtrapApiKey] }, app);

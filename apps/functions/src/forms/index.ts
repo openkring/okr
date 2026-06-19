@@ -6,10 +6,11 @@ import { createHmac, createHash } from 'node:crypto';
 
 import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
 import { sendEmailViaProvider } from '../auth/email-transport';
+import { getAppEmailConfig } from '../auth/email-templates';
 
 const REGION = 'europe-west6';
 const formsHmacSecret = defineSecret('FORMS_HMAC_SECRET');
-const mailgunSmtpPassword = defineSecret('MAILGUN_SMTP_PASSWORD');
+const mailtrapApiKey = defineSecret('MAILTRAP_APIKEY');
 
 // ──────────────────────────────────────────
 // Inlined types (avoids monorepo cross-bundle imports)
@@ -331,15 +332,12 @@ async function runSideEffects(
   // ── Email notification ───────────────────
   if (Array.isArray(emailAddresses) && emailAddresses.length > 0) {
     try {
-      const appConfigSnap = await db.collection('app-config').doc(tenantId).get();
-      const appConfig = appConfigSnap.data();
-      const appName = String(appConfig?.['appName'] ?? 'bk2');
-      const opEmail = String(appConfig?.['opEmail'] ?? 'app@bkaiser.ch');
-      const from = `"${appName}" <${opEmail}>`;
+      // Use the app's verified sender address (mailtrap_api only accepts authorized domains).
+      const from = getAppEmailConfig(tenantId).from;
       const subject = `${formDef.name} – neue Einreichung`;
       const html = buildSubmissionEmailHtml(formDef, values, submissionId, submittedAt);
 
-      await sendEmailViaProvider('mailgun_smtp', { from, to: emailAddresses, subject, html });
+      await sendEmailViaProvider('mailtrap_api', { from, to: emailAddresses, subject, html });
       logger.info(`${cfName}: notification email sent to ${emailAddresses.join(', ')}`);
     } catch (e) {
       logger.error(`${cfName}: failed to send notification email`, e);
@@ -352,7 +350,7 @@ async function runSideEffects(
 // ──────────────────────────────────────────
 
 export const submitForm = onCall(
-  { region: REGION, secrets: [formsHmacSecret, mailgunSmtpPassword] },
+  { region: REGION, secrets: [formsHmacSecret, mailtrapApiKey] },
   async (request: CallableRequest<SubmitFormPayload>) => {
     const CF_NAME = 'submitForm';
     const payload = request.data;

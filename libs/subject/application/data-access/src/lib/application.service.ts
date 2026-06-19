@@ -324,8 +324,8 @@ export class ApplicationService {
         appId: this.env.appId,
         subject: 'Wir haben Ihren Antrag erhalten',
         html: '',
-        from: this.env.appId + '@app.bkaiser.ch',
-        provider: 'mailgun_smtp',
+        // from omitted: the sendEmail CF supplies the app's verified sender address.
+        provider: 'mailtrap_api',
         template: 'application.confirmation',
       });
       await showToast(this.toastController, this.i18n.mail_conf());
@@ -361,8 +361,8 @@ export class ApplicationService {
           ? 'Ihr Antrag wurde angenommen'
           : 'Ihr Antrag wurde nicht angenommen',
         html: '',
-        from: this.env.appId + '@app.bkaiser.ch',
-        provider: 'mailgun_smtp',
+        // from omitted: the sendEmail CF supplies the app's verified sender address.
+        provider: 'mailtrap_api',
         template,
       });
       await showToast(this.toastController, this.i18n.mail_decision_conf());

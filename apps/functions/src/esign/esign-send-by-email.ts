@@ -13,8 +13,9 @@ import {
 } from './shared';
 import { EsignCollection } from '@bk2/shared-models';
 
-const emailProvider = defineSecret('EMAIL_PROVIDER');
-const emailFrom     = defineSecret('EMAIL_FROM');
+const mailtrapApiKey = defineSecret('MAILTRAP_APIKEY');
+// EMAIL_FROM must be an address on the verified Mailtrap sending domain (e.g. app@seeclub.org).
+const emailFrom      = defineSecret('EMAIL_FROM');
 
 export const esignSendByEmail = onCall<{
   esignId: string;
@@ -26,7 +27,7 @@ export const esignSendByEmail = onCall<{
   {
     region: REGION,
     enforceAppCheck: true,
-    secrets: [...ALL_ESIGN_SECRETS, emailProvider, emailFrom],
+    secrets: [...ALL_ESIGN_SECRETS, mailtrapApiKey, emailFrom],
   },
   async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
@@ -56,7 +57,7 @@ export const esignSendByEmail = onCall<{
       const pdfResponse = await axios.get<ArrayBuffer>(documentUrl, { responseType: 'arraybuffer' });
       const pdfBuffer = Buffer.from(pdfResponse.data);
 
-      await sendEmailViaProvider(emailProvider.value(), {
+      await sendEmailViaProvider('mailtrap_api', {
         from: emailFrom.value(),
         to: recipients,
         subject: subject ?? `Dokument: ${record.documentName}`,
@@ -64,7 +65,7 @@ export const esignSendByEmail = onCall<{
         attachments: [{ filename: `${record.documentName}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
       });
     } else {
-      await sendEmailViaProvider(emailProvider.value(), {
+      await sendEmailViaProvider('mailtrap_api', {
         from: emailFrom.value(),
         to: recipients,
         subject: subject ?? `Dokument: ${record.documentName}`,

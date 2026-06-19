@@ -388,7 +388,7 @@ export const _SectionStore = signalStore(
         return imgHtml + content;
       },
 
-      async sendEmail(to: string[], subject: string, html: string, from: string, cc: string[] = [], bcc: string[] = [], provider = 'mailgun_smtp', template?: string): Promise<void> {
+      async sendEmail(to: string[], subject: string, html: string, from: string, cc: string[] = [], bcc: string[] = [], provider = 'mailtrap_api', template?: string): Promise<void> {
         try {
           const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
           await fn({ to, cc, bcc, appId: store.appStore.env.appId, html, from, subject, provider, template });

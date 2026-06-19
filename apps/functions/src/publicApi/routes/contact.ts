@@ -64,7 +64,7 @@ export async function contactRouter(req: Request, res: Response): Promise<void> 
   }
 
   const toEmail = process.env['CONTACT_EMAIL'] ?? 'info@seeclub.org';
-  const provider = process.env['EMAIL_PROVIDER'] ?? 'mailgun_smtp';
+  const provider = process.env['EMAIL_PROVIDER'] ?? 'mailtrap_api';
   const reference = `msg_${Date.now().toString(36)}`;
 
   const phoneText = body.phone ? `<br><strong>Telefon:</strong> ${escHtml(body.phone)}` : '';
