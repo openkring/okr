@@ -5,7 +5,7 @@ import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
 
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { addDuration, convertDateFormatToString, getTodayStr, DateFormat } from '@bk2/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, BEXIO_BASE_V4 } from './shared';
 
@@ -21,6 +21,7 @@ interface BexioBill {
   attachment_ids: string[];   // UUID strings
   booking_account_ids: number[];
   created_at: string;
+  updated_at: string;
 }
 
 interface BexioBillsResponse {
@@ -33,14 +34,22 @@ interface BexioBillsResponse {
   };
 }
 
-/** Fetch paginated bills from Bexio v4. Uses { data, paging } envelope with page-based pagination. */
-async function fetchBexioBills(apiKey: string, updatedAfter: string): Promise<BexioBill[]> {
+/**
+ * Fetch paginated bills from Bexio v4. Uses { data, paging } envelope with page-based pagination.
+ * @param billDateStart server-side lower bound on bill_date (yyyy-MM-dd) — a rolling lookback
+ *   window that limits how far back Bexio pages. Bills with an older bill_date are not returned,
+ *   so their status changes are only picked up by a manual full re-sync.
+ * @param updatedAfter client-side lower bound on updated_at — within the window, only re-emit
+ *   bills modified since the last sync, so status changes on already-synced bills are caught while
+ *   unchanged bills are skipped.
+ */
+async function fetchBexioBills(apiKey: string, billDateStart: string, updatedAfter: string): Promise<BexioBill[]> {
   const PAGE_SIZE = 500;
   const all: BexioBill[] = [];
   let page = 1;
   while (true) {
     const response = await axios.get<BexioBillsResponse>(`${BEXIO_BASE_V4}/purchase/bills`, {
-      params: { limit: PAGE_SIZE, page },
+      params: { limit: PAGE_SIZE, page, bill_date_start: billDateStart },
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Accept': 'application/json',
@@ -49,7 +58,9 @@ async function fetchBexioBills(apiKey: string, updatedAfter: string): Promise<Be
     const items: BexioBill[] = response.data.data ?? [];
     const paging = response.data.paging;
     logger.info(`fetchBexioBills: page ${page}/${paging?.page_count ?? '?'}, got ${items.length} items`);
-    const filtered = items.filter(b => !updatedAfter || b.created_at > updatedAfter);
+    // Filter by updated_at (not created_at) so status changes on already-synced
+    // bills are re-fetched and re-persisted on incremental syncs.
+    const filtered = items.filter(b => !updatedAfter || b.updated_at > updatedAfter);
     all.push(...filtered);
     if (!paging || page >= paging.page_count) break;
     page++;
@@ -90,10 +101,20 @@ async function persistBills(bills: BexioBill[], tenantId: string, nowStr: string
   await batch.commit();
 }
 
+/** Rolling lookback window (months) for the scheduled sync's server-side bill_date_start filter. */
+const BILL_DATE_LOOKBACK_MONTHS = 12;
+/** Server-side bill_date_start for a full-history backfill (manual sync). */
+const BILL_DATE_FULL_HISTORY = '2000-01-01';
+
+/** Lookback window start date (yyyy-MM-dd) used by the scheduled incremental sync. */
+function billDateWindowStart(): string {
+  return addDuration(getTodayStr(DateFormat.IsoDate), { months: -BILL_DATE_LOOKBACK_MONTHS }, DateFormat.IsoDate);
+}
+
 /** Core sync logic shared by manual and scheduled bill triggers. */
-async function runBillSync(fromDate: string, tenantId: string, label: string): Promise<{ count: number }> {
-  logger.info(`${label}: fetching bills updated after "${fromDate}"`);
-  const bills = await fetchBexioBills(bexioApiKey.value(), fromDate);
+async function runBillSync(fromDate: string, billDateStart: string, tenantId: string, label: string): Promise<{ count: number }> {
+  logger.info(`${label}: fetching bills with bill_date >= "${billDateStart}" updated after "${fromDate}"`);
+  const bills = await fetchBexioBills(bexioApiKey.value(), billDateStart, fromDate);
   logger.info(`${label}: fetched ${bills.length} bills`);
   const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
   await persistBills(bills, tenantId, nowStr);
@@ -111,10 +132,12 @@ export const syncBexioBills = onCall(
     enforceAppCheck: true,
     secrets: [bexioApiKey, bexioTenantId],
   },
-  async (request: CallableRequest<{ fromDate?: string }>) => {
+  async (request: CallableRequest<{ fromDate?: string; billDateStart?: string }>) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
     const fromDate = request.data?.fromDate ?? '2000-01-01 00:00:00';
-    return runBillSync(fromDate, bexioTenantId.value(), 'syncBexioBills');
+    // Manual sync defaults to full history; pass billDateStart to limit the window.
+    const billDateStart = request.data?.billDateStart ?? BILL_DATE_FULL_HISTORY;
+    return runBillSync(fromDate, billDateStart, bexioTenantId.value(), 'syncBexioBills');
   }
 );
 
@@ -132,7 +155,8 @@ export const scheduleBexioBillSync = onSchedule(
     const db = admin.firestore();
     const configDoc = await db.collection('config').doc('bexioSync').get();
     const fromDate: string = configDoc.data()?.lastBillSyncedAt ?? '2000-01-01 00:00:00';
-    await runBillSync(fromDate, bexioTenantId.value(), 'scheduleBexioBillSync');
+    // Scheduled incremental sync: only page the recent bill_date window.
+    await runBillSync(fromDate, billDateWindowStart(), bexioTenantId.value(), 'scheduleBexioBillSync');
   }
 );
 
