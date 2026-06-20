@@ -11,10 +11,16 @@ import { isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, AvatarInfo, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
-import { getCatAbbreviation, getFullName, getSystemQuery } from '@bk2/shared-util-core';
+import { getCatAbbreviation, getFullName, getSystemQuery, isMembership, isOrg, isPerson } from '@bk2/shared-util-core';
 import { ModalController } from '@ionic/angular/standalone';
 import { AocBexioContactEditModal } from './aoc-bexio-contact-edit.modal';
 import { createFavoriteAddress } from '@bk2/subject-address-util';
+import { PersonService } from '@bk2/subject-person-data-access';
+import { PersonEditModal } from '@bk2/subject-person-feature';
+import { OrgService } from '@bk2/subject-org-data-access';
+import { OrgEditModal } from '@bk2/subject-org-feature';
+import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { MembershipEditModal } from '@bk2/relationship-membership-feature';
 
 export interface BexioIndex {
   // person or org
@@ -28,13 +34,16 @@ export interface BexioIndex {
   streetNumber: string,
   zipCode: string,
   city: string,
-  email: string, 
+  email: string,
+  phone: string,    // BK favPhone
 
   // membership
   mkey: string;     // membership bkey
+  mname: string;          // membership full name (getFullName(memberName1, memberName2))
+  memberModelType: string; // membership.memberModelType ('person' | 'org')
   mbexioId: string; // membership.memberBexioId
   dateOfExit: string;   // exit date, this is needed to finde the current members
-  mcat: string; 
+  mcat: string;
 
   // bexio
   bx_id: string;     // Bexio contact ID
@@ -46,6 +55,7 @@ export interface BexioIndex {
   bx_zipCode: string;
   bx_city: string;
   bx_email: string;
+  bx_phone: string;
 }
 
 interface BexioContact {
@@ -57,6 +67,7 @@ interface BexioContact {
   postcode: string,
   city: string,
   mail: string,
+  phone: string,           // landline (or mobile fallback)
   contact_type_id: number; // 1=company, 2=person
 }
 
@@ -99,6 +110,9 @@ export const AocBexioStore = signalStore(
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
+    personService: inject(PersonService),
+    orgService: inject(OrgService),
+    membershipService: inject(MembershipService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
@@ -115,21 +129,31 @@ export const AocBexioStore = signalStore(
       // 1. Load persons and orgs from AppStore (already in memory)
       const persons = store.appStore.allPersons();
       const orgs = store.appStore.allOrgs();
-      console.log(`Loaded ${persons.length} persons, ${orgs.length} orgs`);
 
       // 2. Load memberships for the default org (orgKey === tenantId)
       const allMemberships = await firstValueFrom(
         store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.tenantId()), 'memberName2', 'asc')
       );
-      console.log('all memberships: ' + allMemberships.length);
       const memberships = allMemberships.filter(m => m.orgKey === store.tenantId()); // only members of defaultOrg
-      console.log(`Loaded ${memberships.length} memberships for default org`);
+
+      // 2b. Load favorite postal addresses (street/number/zip/city are no longer cached on person/org,
+      //     they live in the separate address collection). Map them by parentKey (person.{bkey} / org.{bkey}).
+      const allAddresses = await firstValueFrom(
+        store.firestoreService.searchData<AddressModel>(AddressCollection, getSystemQuery(store.tenantId()), 'parentKey', 'asc')
+      );
+      const favPostalByParent = new Map<string, AddressModel>();
+      for (const address of allAddresses) {
+        if (address.addressChannel === 'postal' && address.isFavorite) {
+          favPostalByParent.set(address.parentKey, address);
+        }
+      }
 
       const index: BexioIndex[] = [];
 
       // 3. Build index from persons
       for (const person of persons) {
         const membership = memberships.find(m => m.memberKey === person.bkey);
+        const postal = favPostalByParent.get(`person.${person.bkey}`);
         index.push({
           key: getFullName(person.firstName ?? '', person.lastName ?? '').trim().toLowerCase(),
           bkey: person.bkey ?? '',
@@ -137,13 +161,16 @@ export const AocBexioStore = signalStore(
           name2: person.lastName ?? '',
           type: 'person',
           bexioId: person.bexioId,
-          streetName: '',
-          streetNumber: '',
-          zipCode: person.favZipCode,
-          city: '',
+          streetName: postal?.streetName ?? '',
+          streetNumber: postal?.streetNumber ?? '',
+          zipCode: postal?.zipCode ?? person.favZipCode,
+          city: postal?.city ?? '',
           email: person.favEmail,
+          phone: person.favPhone,
 
           mkey: membership?.bkey ?? '',
+          mname: membership ? getFullName(membership.memberName1, membership.memberName2) : '',
+          memberModelType: membership?.memberModelType ?? '',
           mbexioId: membership?.memberBexioId ?? '',
           dateOfExit: membership?.dateOfExit ?? '',
           mcat: this.getCategoryAbbreviation(membership?.category ?? ''),
@@ -156,15 +183,16 @@ export const AocBexioStore = signalStore(
           bx_streetNumber: '',
           bx_zipCode: '',
           bx_city: '',
-          bx_email: ''
+          bx_email: '',
+          bx_phone: ''
         });
       }
-      console.log(index.length + ' person-members of defaultOrg in index.');
 
       // 4. Add orgs to index
       let i = 0;
       for (const org of orgs) {
         const membership = memberships.find(m => m.memberKey === org.bkey);
+        const postal = favPostalByParent.get(`org.${org.bkey}`);
         index.push({
           key: org.name.toLowerCase(),
           bkey: org.bkey ?? '',
@@ -172,13 +200,16 @@ export const AocBexioStore = signalStore(
           name2: org.name,
           type: 'org',
           bexioId: org.bexioId,
-          streetName: '',
-          streetNumber: '',
-          zipCode: org.favZipCode,
-          city: '',
+          streetName: postal?.streetName ?? '',
+          streetNumber: postal?.streetNumber ?? '',
+          zipCode: postal?.zipCode ?? org.favZipCode,
+          city: postal?.city ?? '',
           email: org.favEmail,
-          
+          phone: org.favPhone,
+
           mkey: membership?.bkey ?? '',
+          mname: membership ? getFullName(membership.memberName1, membership.memberName2) : '',
+          memberModelType: membership?.memberModelType ?? '',
           mbexioId: membership?.memberBexioId ?? '',
           dateOfExit: '',  // not needed for orgs
           mcat: this.getCategoryAbbreviation(membership?.category ?? ''),
@@ -191,11 +222,11 @@ export const AocBexioStore = signalStore(
           bx_streetNumber: '',
           bx_zipCode: '',
           bx_city: '',
-          bx_email: ''
+          bx_email: '',
+          bx_phone: ''
         });
         i++;
       }
-      console.log('added ' + i + ' org-members of defaultOrg into index; total is now ' + index.length);
 
       // 5. Sort by name2
       index.sort((a, b) => a.name2.localeCompare(b.name2));
@@ -211,7 +242,6 @@ export const AocBexioStore = signalStore(
             membership.memberBexioId = item.bexioId;
             await store.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, undefined, undefined, currentUser);
             item.mbexioId = item.bexioId;
-            console.log(`Updated membership ${item.mkey}: memberBexioId = ${item.bexioId}`);
           }
         } else if (!item.bexioId && item.mbexioId) {
           // membership has memberBexioId set, but person/org.bexioId is missing -> update person/org
@@ -221,7 +251,6 @@ export const AocBexioStore = signalStore(
               person.bexioId = item.mbexioId;
               await store.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, undefined, currentUser);
               item.bexioId = item.mbexioId;
-              console.log(`Updated person ${item.bkey}: bexioId = ${item.mbexioId}`);
             }
           } else {
             const org = orgs.find(o => o.bkey === item.bkey);
@@ -229,7 +258,6 @@ export const AocBexioStore = signalStore(
               org.bexioId = item.mbexioId;
               await store.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, undefined, undefined, currentUser);
               item.bexioId = item.mbexioId;
-              console.log(`Updated org ${item.bkey}: bexioId = ${item.mbexioId}`);
             }
           }
         }
@@ -246,7 +274,6 @@ export const AocBexioStore = signalStore(
         const getBexioContacts = httpsCallable<void, BexioContact[]>(functions, 'getBexioContacts');
         const result = await getBexioContacts();
         const contacts = result.data;
-        console.log(`Loaded ${contacts.length} Bexio contacts`);
 
         // log entries that have a bexioId set, to verify reconciliation worked
         const withId = index.filter(i => !!i.bexioId);
@@ -271,7 +298,8 @@ export const AocBexioStore = signalStore(
             item.bx_streetNumber = contact.house_number,
             item.bx_zipCode = contact.postcode,
             item.bx_city = contact.city,
-            item.bx_email = contact.mail
+            item.bx_email = contact.mail,
+            item.bx_phone = contact.phone
           } else {
             // Before adding as orphan, check if a name-key entry already exists (unmatched due to bexioId mismatch)
             // If so, enrich it rather than creating a duplicate key
@@ -286,6 +314,7 @@ export const AocBexioStore = signalStore(
               nameKeyEntry.bx_zipCode = contact.postcode;
               nameKeyEntry.bx_city = contact.city;
               nameKeyEntry.bx_email = contact.mail;
+              nameKeyEntry.bx_phone = contact.phone;
               console.log(`Enriched by name key (bexioId mismatch): ${bxKey}`);
             } else {
               index.push({
@@ -300,8 +329,11 @@ export const AocBexioStore = signalStore(
                 zipCode: '',
                 city: '',
                 email: '',
+                phone: '',
 
                 mkey: '',
+                mname: '',
+                memberModelType: '',
                 mbexioId: '',
                 dateOfExit: '',
                 mcat: '',
@@ -315,6 +347,7 @@ export const AocBexioStore = signalStore(
                 bx_zipCode: contact.postcode,
                 bx_city: contact.city,
                 bx_email: contact.mail,
+                bx_phone: contact.phone,
               });
             }
           }
@@ -504,6 +537,61 @@ export const AocBexioStore = signalStore(
     },
 
 
+    /**
+     * Update an existing BK contact (person/org) with the address data from Bexio.
+     * The favorite postal and email addresses are updated (or created if missing);
+     * the cached fav* fields on the person/org are kept in sync by the address Cloud Function trigger.
+     */
+    async updateInBk(item: BexioIndex): Promise<void> {
+      if (!item.bkey) return;
+      const currentUser = store.currentUser();
+      const avatarKey = `${item.type}.${item.bkey}`;
+      const usage = item.type === 'org' ? 'work' : 'home';
+
+      // load this contact's addresses
+      const query = getSystemQuery(store.tenantId());
+      query.push({ key: 'parentKey', operator: '==', value: avatarKey });
+      const addresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, query));
+
+      // postal: update the favorite postal address, or create one if none exists yet
+      const postal = addresses.find(a => a.addressChannel === 'postal' && a.isFavorite);
+      if (postal) {
+        await store.firestoreService.updateModel<AddressModel>(AddressCollection, {
+          ...postal,
+          streetName: item.bx_streetName,
+          streetNumber: item.bx_streetNumber,
+          zipCode: item.bx_zipCode,
+          city: item.bx_city,
+        }, false, undefined, undefined, currentUser);
+      } else if (item.bx_streetName || item.bx_zipCode || item.bx_city) {
+        await this.saveAddress(createFavoriteAddress('postal', usage, item.bx_streetName, store.tenantId(), item.bx_streetNumber, '', item.bx_zipCode, item.bx_city, 'CH'), avatarKey);
+      }
+
+      // email: update the favorite email address, or create one if none exists yet
+      if (item.bx_email) {
+        const email = addresses.find(a => a.addressChannel === 'email' && a.isFavorite);
+        if (email) {
+          await store.firestoreService.updateModel<AddressModel>(AddressCollection, { ...email, email: item.bx_email }, false, undefined, undefined, currentUser);
+        } else {
+          await this.saveAddress(createFavoriteAddress('email', usage, item.bx_email, store.tenantId()), avatarKey);
+        }
+      }
+
+      // reflect the new BK values in the in-memory index
+      patchState(store, {
+        index: store.index().map(i => i.key === item.key
+          ? { ...i,
+              streetName: item.bx_streetName,
+              streetNumber: item.bx_streetNumber,
+              zipCode: item.bx_zipCode,
+              city: item.bx_city,
+              email: item.bx_email,
+            }
+          : i
+        ),
+      });
+    },
+
     async saveAddress(address: AddressModel, avatarKey: string): Promise<string | undefined> {
       address.parentKey = avatarKey;
       return await store.firestoreService.createModel<AddressModel>(AddressCollection, address, undefined, undefined, store.currentUser());
@@ -523,7 +611,7 @@ export const AocBexioStore = signalStore(
     async loadInvoiceStats(): Promise<void> {
       const db = getFirestore(getApp());
       const [snap, configDoc] = await Promise.all([
-        getCountFromServer(collection(db, InvoiceCollection)),
+        getCountFromServer(query(collection(db, InvoiceCollection), where('tenants', 'array-contains', store.tenantId()))),
         getDoc(doc(db, 'config', 'bexioSync')),
       ]);
       patchState(store, {
@@ -620,7 +708,7 @@ export const AocBexioStore = signalStore(
     async loadBillStats(): Promise<void> {
       const db = getFirestore(getApp());
       const [snap, configDoc] = await Promise.all([
-        getCountFromServer(collection(db, 'bills')),
+        getCountFromServer(query(collection(db, 'bills'), where('tenants', 'array-contains', store.tenantId()))),
         getDoc(doc(db, 'config', 'bexioSync')),
       ]);
       patchState(store, {
@@ -641,8 +729,9 @@ export const AocBexioStore = signalStore(
 
     async loadJournalStats(): Promise<void> {
       const db = getFirestore(getApp());
+      // Bexio journal entries are synced into the native `bookings` collection (the legacy `journallogs` collection was retired).
       const [snap, configDoc] = await Promise.all([
-        getCountFromServer(collection(db, 'journallogs')),
+        getCountFromServer(query(collection(db, 'bookings'), where('tenants', 'array-contains', store.tenantId()))),
         getDoc(doc(db, 'config', 'bexioSync')),
       ]);
       patchState(store, {
@@ -787,8 +876,85 @@ export const AocBexioStore = signalStore(
         await this.addToBexio(bexioIndex);
       } else if (role === 'update') {
         await this.updateInBexio(bexioIndex);
+      } else if (role === 'updateBk') {
+        await this.updateInBk(bexioIndex);
       } else if (role === 'download') {
         await this.addToBk(bexioIndex);
+      } else if (role === 'editPerson') {
+        await this.editPerson(bexioIndex);
+      } else if (role === 'editOrg') {
+        await this.editOrg(bexioIndex);
+      } else if (role === 'editMembership') {
+        await this.editMembership(bexioIndex);
+      }
+    },
+
+    /** Open the standard person edit modal for the BK person behind this index entry. */
+    async editPerson(item: BexioIndex): Promise<void> {
+      const person = store.appStore.getPerson(item.bkey);
+      if (!person) return;
+      const modal = await store.modalController.create({
+        component: PersonEditModal,
+        componentProps: {
+          person,
+          currentUser: store.currentUser(),
+          tags: store.appStore.getTags('person'),
+          tenantId: store.tenantId(),
+          genders: store.appStore.getCategory('gender'),
+          readOnly: false,
+        },
+      });
+      await modal.present();
+      const { data, role } = await modal.onDidDismiss();
+      if (role === 'confirm' && data && isPerson(data, store.tenantId())) {
+        await store.personService.update(data, store.currentUser());
+      }
+    },
+
+    /** Open the standard org edit modal for the BK org behind this index entry. */
+    async editOrg(item: BexioIndex): Promise<void> {
+      const org = store.appStore.getOrg(item.bkey);
+      if (!org) return;
+      const modal = await store.modalController.create({
+        component: OrgEditModal,
+        componentProps: {
+          org,
+          currentUser: store.currentUser(),
+          resource: store.appStore.defaultResource(),
+          tags: store.appStore.getTags('org'),
+          tenantId: store.tenantId(),
+          types: store.appStore.getCategory('org_type'),
+          readOnly: false,
+        },
+      });
+      await modal.present();
+      const { data, role } = await modal.onDidDismiss();
+      if (role === 'confirm' && data && isOrg(data, store.tenantId())) {
+        await store.orgService.update(data, store.currentUser());
+      }
+    },
+
+    /** Open the standard membership edit modal for the membership behind this index entry. */
+    async editMembership(item: BexioIndex): Promise<void> {
+      if (!item.mkey) return;
+      const membership = await firstValueFrom(store.firestoreService.readModel<MembershipModel>(MembershipCollection, item.mkey));
+      if (!membership) return;
+      const modal = await store.modalController.create({
+        component: MembershipEditModal,
+        componentProps: {
+          membership: { ...membership },
+          currentUser: store.currentUser(),
+          tags: store.appStore.getTags('membership'),
+          priv: store.appStore.privacySettings(),
+          mcat: store.appStore.getCategory('mcat_' + store.tenantId()),
+          isNew: false,
+          readOnly: false,
+        },
+      });
+      await modal.present();
+      const { data, role } = await modal.onDidDismiss();
+      if (role === 'confirm' && data && isMembership(data, store.tenantId())) {
+        await store.membershipService.update(data, store.currentUser());
       }
     }
   }))

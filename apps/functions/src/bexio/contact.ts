@@ -4,6 +4,16 @@ import axios from 'axios';
 
 import { bexioApiKey, bexioUserId, BEXIO_BASE } from './shared';
 
+/**
+ * Bexio's `mail` field only accepts a valid email address; sending anything else
+ * (e.g. a phone number that ended up in the email field) fails with HTTP 422
+ * ("mail: Diese Eingabe ist nicht korrekt."). Use this to decide whether to send mail.
+ */
+function isValidEmail(value: string | null | undefined): boolean {
+  if (!value) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 export interface BexioContact {
   id: number;
   name_1: string;          // last name or company name
@@ -13,6 +23,8 @@ export interface BexioContact {
   postcode: string;
   city: string;
   mail: string;
+  phone_fixed: string;     // Bexio landline number
+  phone_mobile: string;    // Bexio mobile number
   contact_type_id: number; // 1=company, 2=person
 }
 
@@ -41,10 +53,15 @@ export const createBexioContact = onCall(
     const userId = parseInt(bexioUserId.value(), 10);
     logger.info(`${CF_NAME}: creating contact "${name_1}" by bexio user ${userId}`);
 
+    const validMail = isValidEmail(mail);
+    if (mail && !validMail) {
+      logger.warn(`${CF_NAME}: dropping invalid mail "${mail}" for contact "${name_1}" (not a valid email address)`);
+    }
+
     try {
       const response = await axios.post<BexioContact>(
         `${BEXIO_BASE}/contact`,
-        { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(mail ? { mail } : {}) },
+        { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(validMail ? { mail } : {}) },
         {
           headers: {
             'Authorization': `Bearer ${bexioApiKey.value()}`,
@@ -93,10 +110,15 @@ export const updateBexioContact = onCall(
     const userId = parseInt(bexioUserId.value(), 10);
     logger.info(`${CF_NAME}: updating contact ${id} "${name_1}"`);
 
+    const validMail = isValidEmail(mail);
+    if (mail && !validMail) {
+      logger.warn(`${CF_NAME}: dropping invalid mail "${mail}" for contact ${id} "${name_1}" (not a valid email address)`);
+    }
+
     try {
       await axios.post<BexioContact>(
         `${BEXIO_BASE}/contact/${id}`,
-        { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(mail ? { mail } : {}) },
+        { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(validMail ? { mail } : {}) },
         {
           headers: {
             'Authorization': `Bearer ${bexioApiKey.value()}`,
@@ -173,6 +195,7 @@ export const getBexioContacts = onCall(
         postcode: c.postcode,
         city: c.city,
         mail: c.mail,
+        phone: c.phone_fixed || c.phone_mobile || '', // prefer landline, fall back to mobile
         contact_type_id: c.contact_type_id
       }));
     } catch (error: unknown) {

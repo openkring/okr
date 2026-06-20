@@ -24,6 +24,11 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
     IonCardSubtitle
 ],
   providers: [AocBexioStore],
+  styles: [`
+    /* Bexio-only contacts (no BK record, hence no avatar): flag the label column danger */
+    .bexio-only { background-color: var(--ion-color-danger); }
+    .bexio-only ion-item { --background: transparent; --color: var(--ion-color-danger-contrast); }
+  `],
   template: `
     <bk-header [i18n]="{ title: store.i18n.title() }" />
     <ion-content>
@@ -52,6 +57,29 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
                   {{ store.i18n.bexio_invoices_history() }}
+                </ion-button>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-input
+                    label="Ab Datum"
+                    labelPlacement="floating"
+                    placeholder="JJJJ-MM-TT"
+                    [value]="invoiceFromDate()"
+                    (ionInput)="invoiceFromDate.set($any($event.detail.value))"
+                  />
+                </ion-item>
+              </ion-col>
+              <ion-col size="3" class="ion-align-self-center">
+                <ion-button (click)="updateInvoices()" [disabled]="isSyncing() || !invoiceFromDate()">
+                  @if(isSyncing()) {
+                    <ion-spinner name="crescent" slot="start" />
+                  } @else {
+                    <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
+                  }
+                  Aktualisieren
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -92,6 +120,29 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                     <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
                   }
                   {{ store.i18n.bexio_bills_history() }}
+                </ion-button>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-input
+                    label="Ab Datum"
+                    labelPlacement="floating"
+                    placeholder="JJJJ-MM-TT"
+                    [value]="billFromDate()"
+                    (ionInput)="billFromDate.set($any($event.detail.value))"
+                  />
+                </ion-item>
+              </ion-col>
+              <ion-col size="3" class="ion-align-self-center">
+                <ion-button (click)="updateBills()" [disabled]="isSyncingBills() || !billFromDate()">
+                  @if(isSyncingBills()) {
+                    <ion-spinner name="crescent" slot="start" />
+                  } @else {
+                    <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
+                  }
+                  Aktualisieren
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -239,22 +290,23 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
               </ion-row>
               <ion-row>
                 <ion-col size="5"><strong>Name</strong></ion-col>
+                <ion-col size="1"><strong>Kat</strong></ion-col>
                 <ion-col size="3"><strong>BK Bexio ID</strong></ion-col>
                 <ion-col size="3"><strong>Bexio ID</strong></ion-col>
               </ion-row>
               @for(item of filteredIndex(); track item.key + '_' + item.bkey + '_' + item.bx_id) {
-                <ion-row>
-                  <ion-col size="4">
+                <ion-row style="cursor: pointer" (click)="edit(item)">
+                  <ion-col size="5" [class.bexio-only]="!item.bkey">
                     @if(item.bkey) {
                       <bk-avatar-label
                         [key]="avatarKey(item)"
                         [label]="displayName(item)"
-                        [color]="color"
+                        [color]="avatarColor(item)"
                         [alt]="displayName(item)"
                       />
                     } @else {
                       <ion-item lines="none">
-                        <ion-label color="medium">{{ displayName(item) }}</ion-label>
+                        <ion-label>{{ displayName(item) }}</ion-label>
                       </ion-item>
                     }
                   </ion-col>
@@ -266,28 +318,11 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   <ion-col size="3">
                     <ion-item lines="none">
                       <ion-label>{{ item.bexioId || '' }}</ion-label>
-                      @if(!item.bexioId && item.bx_id) {
-                        <ion-button slot="end" fill="clear" (click)="addToBk(item)">
-                          <ion-icon src="{{ 'add-circle' | svgIcon }}" slot="icon-only" />
-                        </ion-button>
-                      }
                     </ion-item>
                   </ion-col>
                   <ion-col size="3">
                     <ion-item lines="none">
                       <ion-label>{{ item.bx_id || '' }}</ion-label>
-                      @if(item.bexioId && !item.bx_id) {
-                        <ion-button slot="end" fill="clear" (click)="addToBexio(item)">
-                          <ion-icon src="{{ 'add-circle' | svgIcon }}" slot="icon-only" />
-                        </ion-button>
-                      }
-                    </ion-item>
-                  </ion-col>
-                  <ion-col size="1">
-                    <ion-item lines="none">
-                      <ion-button slot="end" fill="clear" (click)="edit(item)">
-                        <ion-icon src="{{ 'address' | svgIcon }}" slot="icon-only" [color]="addressColor(item)" />
-                      </ion-button>
                     </ion-item>
                   </ion-col>
                 </ion-row>
@@ -383,7 +418,6 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 })
 export class AocBexio implements OnInit {
   protected readonly store = inject(AocBexioStore);
-  protected readonly color = ColorIonic.Light;
 
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly index = computed(() => this.store.index());
@@ -405,8 +439,10 @@ export class AocBexio implements OnInit {
 
   protected isSyncing = signal(false);
   protected invoiceSyncResult = signal('');
+  protected invoiceFromDate = signal('');
   protected isSyncingBills = signal(false);
   protected billSyncResult = signal('');
+  protected billFromDate = signal('');
   protected isSyncingJournal = signal(false);
   protected journalSyncResult = signal('');
   protected isSyncingAccounts = signal(false);
@@ -471,6 +507,38 @@ export class AocBexio implements OnInit {
     }
   }
 
+  /** Incremental re-sync of invoices from a chosen date (enabled even when invoices already exist). */
+  protected async updateInvoices(): Promise<void> {
+    this.isSyncing.set(true);
+    this.invoiceSyncResult.set('');
+    try {
+      const result = await this.store.syncInvoices(this.normalizeFromDate(this.invoiceFromDate()));
+      this.invoiceSyncResult.set(`Downloaded ${result.count} invoices.`);
+      await this.store.loadInvoiceStats();
+    } finally {
+      this.isSyncing.set(false);
+    }
+  }
+
+  /** Incremental re-sync of bills from a chosen date (enabled even when bills already exist). */
+  protected async updateBills(): Promise<void> {
+    this.isSyncingBills.set(true);
+    this.billSyncResult.set('');
+    try {
+      const result = await this.store.syncBills(this.normalizeFromDate(this.billFromDate()));
+      this.billSyncResult.set(`Downloaded ${result.count} bills.`);
+      await this.store.loadBillStats();
+    } finally {
+      this.isSyncingBills.set(false);
+    }
+  }
+
+  /** Accept "YYYY-MM-DD" (append midnight) or a full "YYYY-MM-DD HH:mm:ss" as Bexio expects. */
+  private normalizeFromDate(input: string): string {
+    const trimmed = input.trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? `${trimmed} 00:00:00` : trimmed;
+  }
+
   protected async syncJournal(): Promise<void> {
     this.isSyncingJournal.set(true);
     this.journalSyncResult.set('');
@@ -527,20 +595,11 @@ export class AocBexio implements OnInit {
     await this.store.buildIndex();
   }
 
-  protected async addToBexio(item: BexioIndex): Promise<void> {
-    await this.store.addToBexio(item);
-  }
-
-  protected async addToBk(item: BexioIndex): Promise<void> {
-    await this.store.addToBk(item);
-  }
-
-  protected addressColor(item: BexioIndex): string {
-    return this.store.compareAddressData(item) ? 'success' : 'danger';
+  protected avatarColor(item: BexioIndex): ColorIonic {
+    return this.store.compareAddressData(item) ? ColorIonic.Success : ColorIonic.Danger;
   }
 
   protected async edit(item: BexioIndex): Promise<void> {
-    console.log(item);
     await this.store.edit(item);
   }
 }

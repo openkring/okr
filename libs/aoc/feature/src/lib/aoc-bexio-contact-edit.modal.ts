@@ -3,8 +3,10 @@ import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, ModalControll
 
 import { UserModel } from "@bk2/shared-models";
 import { Header, Spinner } from "@bk2/shared-ui";
+import { I18nService } from "@bk2/shared-i18n";
+import { AOC_I18N_KEYS } from "@bk2/aoc-util";
 
-import { AocBexioStore, BexioIndex } from "..";
+import { BexioIndex } from "..";
 import { getFullName } from "@bk2/shared-util-core";
 
 type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
@@ -18,81 +20,124 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
   ],
   styles: [`
     .table-header { font-size: 1.2rem; background-color: var(--ion-color-light); }
+    .row-label { background-color: var(--ion-color-light); font-weight: bold; }
     .mismatch { background-color: var(--ion-color-danger-tint); }
     .sync-row { margin-top: 1rem; }
   `],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.title()}" [isModal]="true" />
+    <bk-header [i18n]="{ title: i18n.title()}" [isModal]="true" />
     <ion-content class="ion-no-padding">
       @if(bexioIndex(); as bx) {
       <ion-grid>
         <ion-row class="table-header"> <!-- header -->
-          <ion-col size="4"><strong>Person/Org</strong></ion-col>
-          <ion-col size="4"><strong>Membership</strong></ion-col>
-          <ion-col size="4"><strong>Bexio</strong></ion-col>
+          <ion-col size="3"><strong>Quelle</strong></ion-col>
+          <ion-col size="3"><strong>{{ effectiveType() }}</strong></ion-col>
+          <ion-col size="3"><strong>Membership</strong></ion-col>
+          <ion-col size="3"><strong>Bexio</strong></ion-col>
         </ion-row>
-        <ion-row> <!-- sync key -->
-          <ion-col size="4">sync-key:</ion-col>
-          <ion-col size="8">{{bx.key}}</ion-col>
-        </ion-row>
-        <ion-row> <!-- bkey -->
-          <ion-col size="4">{{bx.bkey}}</ion-col>
-          <ion-col size="4">{{bx.mkey}}</ion-col>
-          <ion-col size="4">{{bx.bx_id}}</ion-col>
+        <ion-row> <!-- key -->
+          <ion-col size="3" class="row-label">Key</ion-col>
+          <ion-col size="3">{{bx.bkey}}</ion-col>
+          <ion-col size="3">{{bx.mkey}}</ion-col>
+          <ion-col size="3">{{bx.bx_id}}</ion-col>
         </ion-row>
         <ion-row> <!-- name -->
-          <ion-col size="4">{{name()}}</ion-col>
-          <ion-col size="4">{{bx.type}}</ion-col>
-          <ion-col size="4" [class.mismatch]="nameMismatch()">-{{bx_name()}}-</ion-col>
+          <ion-col size="3" class="row-label">Name</ion-col>
+          <ion-col size="3">{{name()}}</ion-col>
+          <ion-col size="3">{{bx.mname}}</ion-col>
+          <ion-col size="3" [class.mismatch]="nameMismatch()">{{bx_name()}}</ion-col>
+        </ion-row>
+        <ion-row> <!-- type -->
+          <ion-col size="3" class="row-label">Type</ion-col>
+          <ion-col size="3">{{bx.type}}</ion-col>
+          <ion-col size="3">{{bx.memberModelType}}</ion-col>
+          <ion-col size="3">{{bx.bx_type}}</ion-col>
         </ion-row>
         <ion-row> <!-- bexioId -->
-          <ion-col size="4">-{{bx.bexioId}}-</ion-col>
-          <ion-col size="4">{{bx.mbexioId}}</ion-col>
-          <ion-col size="4">-{{bx.bx_id}}-</ion-col>
+          <ion-col size="3" class="row-label">BexioId</ion-col>
+          <ion-col size="3">{{bx.bexioId}}</ion-col>
+          <ion-col size="3">{{bx.mbexioId}}</ion-col>
+          <ion-col size="3">{{bx.bx_id}}</ion-col>
         </ion-row>
         <ion-row> <!-- street -->
-          <ion-col size="4">-{{street()}}-</ion-col>
-          <ion-col size="4"></ion-col>
-          <ion-col size="4" [class.mismatch]="streetMismatch()">-{{bx_street()}}-</ion-col>
+          <ion-col size="3" class="row-label">Strasse</ion-col>
+          <ion-col size="3">{{street()}}</ion-col>
+          <ion-col size="3"></ion-col>
+          <ion-col size="3" [class.mismatch]="streetMismatch()">{{bx_street()}}</ion-col>
         </ion-row>
         <ion-row> <!-- zip/city -->
-          <ion-col size="4">-{{zipCity()}}-</ion-col>
-          <ion-col size="4"></ion-col>
-          <ion-col size="4" [class.mismatch]="zipCityMismatch()">-{{bx_zipCity()}}-</ion-col>
+          <ion-col size="3" class="row-label">Ort</ion-col>
+          <ion-col size="3">{{zipCity()}}</ion-col>
+          <ion-col size="3"></ion-col>
+          <ion-col size="3" [class.mismatch]="zipCityMismatch()">{{bx_zipCity()}}</ion-col>
         </ion-row>
         <ion-row> <!-- email -->
-          <ion-col size="4">-{{bx.email}}-</ion-col>
-          <ion-col size="4"></ion-col>
-          <ion-col size="4" [class.mismatch]="emailMismatch()">-{{bx.bx_email}}-</ion-col>
+          <ion-col size="3" class="row-label">Email</ion-col>
+          <ion-col size="3">{{bx.email}}</ion-col>
+          <ion-col size="3"></ion-col>
+          <ion-col size="3" [class.mismatch]="emailMismatch()">{{bx.bx_email}}</ion-col>
+        </ion-row>
+        <ion-row> <!-- tel -->
+          <ion-col size="3" class="row-label">Tel</ion-col>
+          <ion-col size="3">{{bx.phone}}</ion-col>
+          <ion-col size="3"></ion-col>
+          <ion-col size="3" [class.mismatch]="phoneMismatch()">{{bx.bx_phone}}</ion-col>
         </ion-row>
 
-        <!-- sync action row -->
+        <!-- edit BK records row: edit person/org under Person/Org, edit membership under Membership -->
         <ion-row class="sync-row">
-          <ion-col size="12">
-            @switch(syncStatus()) {
-              @case('in-sync') {
-                <ion-label color="success"><strong>Sync is ok</strong></ion-label>
-              }
-              @case('update') {
-                <ion-button color="warning" (click)="dismiss('update')">Update an existing Bexio Contact</ion-button>
-              }
-              @case('create') {
-                <ion-button color="primary" (click)="dismiss('create')">Create a contact in Bexio</ion-button>
-              }
-              @case('bexio-only') {
-                  <ion-button color="primary" (click)="dismiss('download')">Download Bexio Contact to the App</ion-button>
-                <ion-label color="danger">
-                  This contact exists only in Bexio. BE CAREFUL: only apply this function when you are sure that there is no corresponding person or org in the app already.
-                </ion-label>
-              }
-              @case('both-empty') {
-                <ion-label color="danger">
-                  Both contacts are empty - this should not happen in theory. Check this manually.
-                </ion-label>
+          <ion-col size="3"></ion-col>
+          <ion-col size="3">
+            @if(bx.bkey) {
+              @if(bx.type === 'person') {
+                <ion-button fill="outline" (click)="dismiss('editPerson')">{{ i18n.bexio_edit_person() }}</ion-button>
+              } @else {
+                <ion-button fill="outline" (click)="dismiss('editOrg')">{{ i18n.bexio_edit_org() }}</ion-button>
               }
             }
           </ion-col>
+          <ion-col size="3">
+            @if(bx.mkey) {
+              <ion-button fill="outline" (click)="dismiss('editMembership')">{{ i18n.bexio_edit_membership() }}</ion-button>
+            }
+          </ion-col>
+          <ion-col size="3"></ion-col>
         </ion-row>
+
+        <!-- sync action row: BK-modifying actions under Person/Org, Bexio-modifying actions under Bexio -->
+        <ion-row class="sync-row">
+          <ion-col size="3"></ion-col>
+          <ion-col size="3">
+            @if(showDownload()) {
+              <ion-button fill="outline" (click)="dismiss('download')">Download Bexio Contact to the App</ion-button>
+            }
+            @if(showUpdateBk()) {
+              <ion-button fill="outline" (click)="dismiss('updateBk')">Update BK Contact</ion-button>
+            }
+          </ion-col>
+          <ion-col size="3"></ion-col>
+          <ion-col size="3">
+            @if(showCreate()) {
+              <ion-button fill="outline" (click)="dismiss('create')">Create a contact in Bexio</ion-button>
+            }
+            @if(showUpdateBexio()) {
+              <ion-button fill="outline" (click)="dismiss('update')">Update Bexio Contact</ion-button>
+            }
+          </ion-col>
+        </ion-row>
+        @if(syncStatus() === 'in-sync') {
+          <ion-row><ion-col size="12"><ion-label color="success"><strong>Sync is ok</strong></ion-label></ion-col></ion-row>
+        }
+        @if(syncStatus() === 'bexio-only') {
+          <ion-row><ion-col size="12"><ion-label color="danger">
+            This contact exists only in Bexio. BE CAREFUL: only apply this function when you are sure that there is no corresponding person or org in the app already.
+          </ion-label></ion-col></ion-row>
+        }
+        @if(syncStatus() === 'both-empty') {
+          <ion-row><ion-col size="12"><ion-label color="danger">
+            Both contacts are empty - this should not happen in theory. Check this manually.
+          </ion-label></ion-col></ion-row>
+        }
       </ion-grid>
       } @else {
         <bk-spinner />
@@ -101,8 +146,10 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
   `
 })
 export class AocBexioContactEditModal {
-  protected readonly store = inject(AocBexioStore);
   private readonly modalController = inject(ModalController);
+  private readonly i18nService = inject(I18nService);
+
+  protected readonly i18n = this.i18nService.translateAll(AOC_I18N_KEYS);
 
   // inputs
   public bexioIndex = input.required<BexioIndex>();
@@ -110,6 +157,7 @@ export class AocBexioContactEditModal {
   public tenantId = input.required<string>();
 
   // derived signals
+  protected effectiveType = computed(() => this.bexioIndex().type === 'person' ? 'Person' : 'Organisation');
   protected name = computed(() => getFullName(this.bexioIndex().name1, this.bexioIndex().name2));
   protected bx_name = computed(() => getFullName(this.bexioIndex().bx_name1, this.bexioIndex().bx_name2));
   protected street = computed(() => this.bexioIndex().streetName + ' ' + this.bexioIndex().streetNumber);
@@ -134,6 +182,22 @@ export class AocBexioContactEditModal {
     return this.norm(bx.zipCode) !== this.norm(bx.bx_zipCode) || this.norm(bx.city) !== this.norm(bx.bx_city);
   });
   protected emailMismatch = computed(() => this.norm(this.bexioIndex().email) !== this.norm(this.bexioIndex().bx_email));
+  // informational only — phone number formats differ between BK and Bexio, so it is NOT part of anyMismatch
+  protected phoneMismatch = computed(() => this.norm(this.bexioIndex().phone) !== this.norm(this.bexioIndex().bx_phone));
+
+  protected anyMismatch = computed(() => this.nameMismatch() || this.streetMismatch() || this.zipCityMismatch() || this.emailMismatch());
+  // Bexio holds address data for this contact (street/zip/city/email)
+  protected bexioHasAddress = computed(() => {
+    const bx = this.bexioIndex();
+    return !!(this.norm(bx.bx_streetName) || this.norm(bx.bx_zipCode) || this.norm(bx.bx_city) || this.norm(bx.bx_email));
+  });
+
+  // BK-modifying actions (shown under the Person/Org column)
+  protected showDownload = computed(() => !this.bexioIndex().bkey && !!this.bexioIndex().bx_id);
+  protected showUpdateBk = computed(() => !!this.bexioIndex().bkey && !!this.bexioIndex().bx_id && this.anyMismatch() && this.bexioHasAddress());
+  // Bexio-modifying actions (shown under the Bexio column)
+  protected showCreate = computed(() => !!this.bexioIndex().bkey && !this.bexioIndex().bx_id);
+  protected showUpdateBexio = computed(() => !!this.bexioIndex().bkey && !!this.bexioIndex().bx_id && this.anyMismatch());
 
   protected syncStatus = computed<SyncStatus>(() => {
     const bx = this.bexioIndex();
@@ -151,7 +215,7 @@ export class AocBexioContactEditModal {
 
   /******************************* actions *************************************** */
 
-  protected async dismiss(role: 'create' | 'update' | 'cancel' | 'download'): Promise<void> {
+  protected async dismiss(role: 'create' | 'update' | 'updateBk' | 'cancel' | 'download' | 'editPerson' | 'editOrg' | 'editMembership'): Promise<void> {
     await this.modalController.dismiss(null, role);
   }
 }
