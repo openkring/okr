@@ -10,7 +10,6 @@ export * from './lib/avatar-info';
 export * from './lib/avatar.model';
 export * from './lib/base.model';
 export * from './lib/bill.model';
-export * from './lib/booking-journal.model';
 export * from './lib/booking-line.model';
 export * from './lib/booking.model';
 export * from './lib/payment-order.model';
