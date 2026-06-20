@@ -8,6 +8,8 @@ import {
   matchesStateFilter,
   compareTripDate,
   formatTripTime,
+  isTripEditable,
+  TRIP_EDIT_WINDOW_MS,
 } from './trip.util';
 
 const TENANT = 'test-tenant';
@@ -45,7 +47,7 @@ describe('newTripName', () => {
 describe('getTripIndex', () => {
   it('includes boat name, date and participant names', () => {
     const trip = makeTrip({
-      resource: { key: 'r1', name1: 'Skiff', name2: '', modelType: 'resource', type: 'rboat', subType: '', label: 'Skiff' },
+      resource: { key: 'r1', name1: '', name2: 'Skiff', modelType: 'resource', type: 'rboat', subType: '', label: 'Skiff' },
       participants: [
         { key: 'p1', name1: 'Anna', name2: 'Müller', modelType: 'person', type: '', subType: '', label: 'Anna Müller' },
         { key: 'p2', name1: 'Max', name2: 'Muster', modelType: 'person', type: '', subType: '', label: 'Max Muster' },
@@ -60,7 +62,7 @@ describe('getTripIndex', () => {
 
   it('returns index without participants when array is empty', () => {
     const trip = makeTrip({
-      resource: { key: 'r1', name1: 'Skiff', name2: '', modelType: 'resource', type: 'rboat', subType: '', label: 'Skiff' },
+      resource: { key: 'r1', name1: '', name2: 'Skiff', modelType: 'resource', type: 'rboat', subType: '', label: 'Skiff' },
     });
     const idx = getTripIndex(trip);
     expect(idx).toContain('Skiff');
@@ -119,6 +121,32 @@ describe('compareTripDate', () => {
     const a = makeTrip({ startDate: '20240601', startTime: '0800' });
     const b = makeTrip({ startDate: '20240601', startTime: '0800' });
     expect(compareTripDate(a, b)).toBe(0);
+  });
+});
+
+describe('isTripEditable', () => {
+  // reference "now": 2024-06-01 12:00:00 local time
+  const now = new Date(2024, 5, 1, 12, 0, 0).getTime();
+
+  it('is editable when the trip has no endDate/endTime (not yet ended)', () => {
+    expect(isTripEditable(makeTrip({ endDate: '', endTime: '' }), now)).toBe(true);
+  });
+
+  it('is editable right after ending', () => {
+    // ended at 11:55, 5 min ago
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '1155' }), now)).toBe(true);
+  });
+
+  it('is editable exactly at the 15 min window boundary', () => {
+    const endMs = now - TRIP_EDIT_WINDOW_MS;
+    const end = new Date(endMs);
+    const endTime = `${`${end.getHours()}`.padStart(2, '0')}${`${end.getMinutes()}`.padStart(2, '0')}`;
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime }), now)).toBe(true);
+  });
+
+  it('is NOT editable more than 15 min after ending', () => {
+    // ended at 11:40, 20 min ago
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '1140' }), now)).toBe(false);
   });
 });
 

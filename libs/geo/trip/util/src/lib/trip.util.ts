@@ -1,7 +1,10 @@
 import { format } from 'date-fns';
 
 import { TripModel } from '@bk2/shared-models';
-import { addIndexElement, DateFormat, getCurrentTime, getTodayStr } from '@bk2/shared-util-core';
+import { addIndexElement, DateFormat, getCurrentTime, getTodayStr, parseDate } from '@bk2/shared-util-core';
+
+/** Editing of an ended trip is allowed for this long after its endTime. */
+export const TRIP_EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 export function newTrip(tenantId: string): TripModel {
   const trip = new TripModel(tenantId);
@@ -12,17 +15,30 @@ export function newTrip(tenantId: string): TripModel {
   return trip;
 }
 
+/**
+ * A trip may be edited while it is not yet ended, or within TRIP_EDIT_WINDOW_MS (15 min) after
+ * its endTime. Afterwards it should only be opened read-only.
+ */
+export function isTripEditable(trip: TripModel, now: number = Date.now()): boolean {
+  if (!trip.endDate || !trip.endTime) return true;
+  const endDate = parseDate(`${trip.endDate}${trip.endTime.padStart(4, '0')}00`, DateFormat.StoreDateTime, false);
+  if (!endDate) return true;
+  return now - endDate.getTime() <= TRIP_EDIT_WINDOW_MS;
+}
+
 export function newTripName(trip: TripModel): string {
   return `${trip.startDate}${trip.startTime}${trip.resource?.name1 ?? ''}`;
 }
 
 export function getTripIndex(trip: TripModel): string {
   let index = '';
-  index = addIndexElement(index, 'b', trip.resource?.name1 ?? '');
+  index = addIndexElement(index, 'r', trip.resource?.name2 ?? '');
   index = addIndexElement(index, 'd', trip.startDate);
-  for (const p of trip.participants ?? []) {
-    index = addIndexElement(index, 'p', `${p.name1} ${p.name2}`.trim());
-  }
+  const participants = (trip.participants ?? [])
+    .map((p) => `${p.name1} ${p.name2}`.trim())
+    .filter((name) => name.length > 0)
+    .join(',');
+  index = addIndexElement(index, 'p', participants);
   return index;
 }
 
