@@ -7,6 +7,7 @@ export class LocationModel implements BkModel, NamedModel, SearchableModel, Tagg
   public isArchived = false;
   public index = DEFAULT_INDEX;
   public name = DEFAULT_NAME; // a meaningful name for the location
+  public address = ''; // human-readable postal address (e.g. from geocoding)
   public tags = DEFAULT_TAGS;
   public type = DEFAULT_LOCATION_TYPE;
   public latitude = 0;

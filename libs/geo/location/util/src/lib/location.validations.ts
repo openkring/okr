@@ -1,7 +1,7 @@
 
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
 import { LocationModel } from '@bk2/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
@@ -11,6 +11,7 @@ export const locationValidations = staticSuite((model: LocationModel, tenants: s
   baseValidations(model, tenants, tags, field);  // bkey, tenants, isArchived
   stringValidations('index', model.index, SHORT_NAME_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
+  stringValidations('address', model.address, LONG_NAME_LENGTH);
   //tagValidations('tags', model.tags);
   stringValidations('type', model.type, WORD_LENGTH);
   numberValidations('latitude', model.latitude, false, -90, 90);

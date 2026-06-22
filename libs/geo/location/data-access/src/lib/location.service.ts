@@ -70,9 +70,11 @@ export class LocationService {
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
-  public list(type = 'address', orderBy = 'address', sortOrder = 'asc'): Observable<LocationModel[]> {
+  public list(type?: string, orderBy = 'address', sortOrder = 'asc'): Observable<LocationModel[]> {
     const query = getSystemQuery(this.tenantId);
-    query.push({ key: 'type', operator: '==', value: type});
+    if (type && type !== 'all') {  // only filter by type when a concrete type is requested; otherwise return all locations
+      query.push({ key: 'type', operator: '==', value: type});
+    }
     return this.firestoreService.searchData<LocationModel>(LocationCollection, query, orderBy, sortOrder);
   }
 }

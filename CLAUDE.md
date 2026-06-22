@@ -21,6 +21,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | `firebase-deploy` | deploying app/hosting, Cloud Functions, Firestore/Storage rules, or managing function secrets. |
 | `eslint` | linting or fixing lint errors (and the `nx lint` heap-OOM workaround). |
 | `fix-types` | type-checking after editing TypeScript files. |
+| `testing` | writing or running tests — Vitest unit tests (only for util functions and services) or Playwright e2e; includes the `@angular/compiler` JIT-error fix. |
 | `authoring-docs` | creating/saving a spec, design, or implementation plan doc. |
 | `pending-implementation` | creating/updating/regenerating `docs/PENDING_IMPLEMENTATION.md` — the TOC of specified-but-not-fully-implemented topics. |
 

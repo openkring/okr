@@ -9,6 +9,7 @@ const libraryConfig = defineConfig({
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
     // only keep project-specific settings here
+    setupFiles: ['./test-setup.ts'],  // load @angular/compiler so JIT-compiled Angular deps in the import graph don't fail
     coverage: {
       reportsDirectory: '../../../coverage/libs/location/util',
       provider: 'v8' as const,
