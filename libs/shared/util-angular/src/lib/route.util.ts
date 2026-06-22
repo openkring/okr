@@ -14,6 +14,19 @@ import { Subscription } from 'rxjs';
 export async function navigateByUrl(router: Router, url: string | undefined, queryParams?: Params): Promise<void> {
     if (!url || url.length === 0) die('route.util.navigateByUrl() -> ERROR: url is mandatory');
     if (!router) die('route.util.navigateByUrl() -> ERROR: router is mandatory');
+    // Angular's Router only understands in-app (relative) URLs. An absolute URL — e.g. a Firebase
+    // continueUrl like https://seeclub.org/auth/login — would be mis-parsed into a bogus route such
+    // as /https:. Normalize it: keep same-origin links inside the SPA, hand genuine externals to the browser.
+    if (/^https?:\/\//i.test(url)) {
+      const parsed = new URL(url);
+      const origin = globalThis.location?.origin;
+      if (!origin || parsed.origin === origin) {
+        url = parsed.pathname + parsed.search + parsed.hash;
+      } else {
+        globalThis.location.assign(url);
+        return;
+      }
+    }
     // Skip navigation if already on the same URL (Ionic outlets throw on re-activation)
     const currentUrl = router.url.split('?')[0];
     if (currentUrl === url) return;

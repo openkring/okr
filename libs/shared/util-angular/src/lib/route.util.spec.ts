@@ -28,6 +28,20 @@ describe('route.util', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/test'], { queryParams });
     });
 
+    it('should normalize a same-origin absolute URL to a relative path before navigating', async () => {
+      const router = { url: '/somewhere', navigateByUrl: vi.fn().mockResolvedValue(undefined) };
+      const origin = globalThis.location.origin;
+      await navigateByUrl(router as any, `${origin}/auth/login`);
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/login');
+    });
+
+    it('should preserve query and hash when normalizing an absolute URL', async () => {
+      const router = { url: '/somewhere', navigateByUrl: vi.fn().mockResolvedValue(undefined) };
+      const origin = globalThis.location.origin;
+      await navigateByUrl(router as any, `${origin}/auth/login?foo=bar#top`);
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/login?foo=bar#top');
+    });
+
     it('should call die if url is missing', async () => {
       const router = { navigateByUrl: vi.fn(), navigate: vi.fn() };
       await navigateByUrl(router as any, '');
