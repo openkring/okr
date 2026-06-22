@@ -1,12 +1,12 @@
-import { effect, Inject, Injectable, Injector, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, Observable, of, take } from 'rxjs';
+import { computed, effect, Inject, Injectable, Injector, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { map, Observable, of, switchMap, take } from 'rxjs';
 import { Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
 
 import { BkEnvironment, ENV } from '@bk2/shared-config';
 import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
-import { FirestoreService } from '@bk2/shared-data-access';
+import { APP_STORE_MIN, AppStoreMin, FirestoreService } from '@bk2/shared-data-access';
 import { AvatarCollection, AvatarModel } from '@bk2/shared-models';
 import { addImgixParams } from '@bk2/shared-util-core';
 
@@ -34,14 +34,24 @@ export class AvatarService {
     private readonly firestoreService: FirestoreService, 
     private readonly uploadService: UploadService,
     @Inject(ENV) private readonly env: BkEnvironment,
+    @Inject(APP_STORE_MIN) private readonly appStore: AppStoreMin,
     private readonly injector: Injector
   ) {
-    // Convert avatar collection Observable to signal for reactive cache updates
+    // Convert avatar collection Observable to signal for reactive cache updates.
+    // Gate the subscription on an authenticated user: the `avatars` collection is
+    // protected (rule `allow read: if tenantRead()` → requires a signed-in user), so
+    // querying it while logged out yields a permission-denied Listen error. Only open
+    // the Firestore Listen once a user doc is present; re-runs on login/logout.
     const avatars = toSignal(
-      this.firestoreService.searchData<AvatarModel>(
-        AvatarCollection,
-        [{ key: 'tenants', operator: 'array-contains', value: this.env.tenantId }],
-        'none'
+      toObservable(computed(() => !!this.appStore.currentUser()), { injector: this.injector }).pipe(
+        switchMap((isAuthenticated) => isAuthenticated
+          ? this.firestoreService.searchData<AvatarModel>(
+              AvatarCollection,
+              [{ key: 'tenants', operator: 'array-contains', value: this.env.tenantId }],
+              'none'
+            )
+          : of([] as AvatarModel[])
+        )
       ),
       { initialValue: [], injector: this.injector }
     );
