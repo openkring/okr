@@ -19,8 +19,6 @@ import { isPage, PAGE_I18N_KEYS } from '@bk2/cms-page-util';
 
 import { DocGenerationService } from '@bk2/pdf-template-data-access';
 import { PagePrintService } from './page-print.service';
-import { PageEditModal } from './page-edit.modal';
-import { PageSortModal } from './page-sort.modal';
 
 export type PageState = {
   pageId: string;
@@ -250,6 +248,7 @@ export const _PageStore = signalStore(
        * @param readOnly 
        */
       async edit(page: PageModel, readOnly = true): Promise<void> {
+        const { PageEditModal } = await import('./page-edit.modal');
         const modal = await store.modalController.create({
           component: PageEditModal,
           componentProps: {
@@ -334,6 +333,7 @@ export const _PageStore = signalStore(
         }
         // convert the list of sectionKeys to a list of SectionModels
         const sections = await firstValueFrom(store.sectionService.searchByKeys(store.sections()));
+        const { PageSortModal } = await import('./page-sort.modal');
         const modal = await store.modalController.create({
           component: PageSortModal,
           componentProps: {

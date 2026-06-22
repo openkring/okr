@@ -15,6 +15,7 @@ import { AccountStore } from './account.store';
     Header, ChangeConfirmation, AccountForm,
     IonContent
   ],
+  providers: [AccountStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {

@@ -16,8 +16,6 @@ import { isLocation } from '@bk2/location-util';
 import { LOCATION_I18N_KEYS, LocationI18n } from '@bk2/location-util';
 export type { LocationI18n };
 
-import { LocationEditModal } from './location-edit.modal';
-
 function zoomForBounds(latSpan: number, lngSpan: number): number {
   const span = Math.max(latSpan, lngSpan);
   if (span === 0) return 15;
@@ -107,6 +105,7 @@ export const LocationStore = signalStore(
       },
 
       async edit(location: LocationModel, readOnly = true): Promise<void> {
+        const { LocationEditModal } = await import('./location-edit.modal');
         const modal = await store.modalController.create({
           component: LocationEditModal,
           componentProps: {

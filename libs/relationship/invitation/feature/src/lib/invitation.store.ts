@@ -13,8 +13,6 @@ import { I18nService } from '@bk2/shared-i18n';
 import { InvitationService } from '@bk2/relationship-invitation-data-access';
 import { isInvitation, INVITATION_I18N_KEYS, InvitationI18n } from '@bk2/relationship-invitation-util';
 
-import { InvitationEditModal } from './invitation-edit.modal';
-
 export type { InvitationI18n };
 
 export type InvitationState = {
@@ -162,6 +160,7 @@ export const InvitationStore = signalStore(
        * @param readOnly 
        */
       async edit(invitation?: InvitationModel, readOnly = true): Promise<void> {
+        const { InvitationEditModal } = await import('./invitation-edit.modal');
         const modal = await store.modalController.create({
           component: InvitationEditModal,
           componentProps: {

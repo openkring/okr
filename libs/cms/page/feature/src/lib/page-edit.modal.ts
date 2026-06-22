@@ -16,6 +16,7 @@ import { PageStore } from './page.store';
     PageForm,
     IonContent
   ],
+  providers: [PageStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {

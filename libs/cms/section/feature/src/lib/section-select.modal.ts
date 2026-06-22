@@ -15,6 +15,7 @@ import { SectionStore } from './section.store';
     Spinner, Header,
     IonContent, IonItem, IonList, IonLabel
   ],
+  providers: [SectionStore],
   template: `
     <bk-header
       [searchTerm]="searchTerm()"

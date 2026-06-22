@@ -16,8 +16,6 @@ import { BillService } from '@bk2/finance-bill-data-access';
 import { BILL_I18N_KEYS, BillI18n } from '@bk2/finance-bill-util';
 import { AccountingStore } from '@bk2/finance-accounting-feature';
 
-import { BillViewModal } from './bill-view.modal';
-
 export type { BillI18n };
 
 export type BillState = {
@@ -111,6 +109,7 @@ export const BillStore = signalStore(
     },
 
     async view(bill: BillModel): Promise<void> {
+      const { BillViewModal } = await import('./bill-view.modal');
       const modal = await store.modalController.create({
         component: BillViewModal,
         componentProps: { bill: { ...bill } },

@@ -16,6 +16,7 @@ import { LocationStore } from './location.store';
     Header, ChangeConfirmation, LocationForm,
     IonContent
   ],
+  providers: [LocationStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {

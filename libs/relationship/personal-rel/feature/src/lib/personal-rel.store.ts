@@ -14,8 +14,6 @@ import { I18nService } from '@bk2/shared-i18n';
 import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
 import { PERSONAL_REL_I18N_KEYS, PersonalRelI18n } from '@bk2/relationship-personal-rel-util';
 
-import { PersonalRelEditModal } from './personal-rel-edit.modal';
-
 export type PersonalRelState = {
   person: PersonModel | undefined;
   showOnlyCurrent: boolean;
@@ -148,7 +146,8 @@ export const PersonalRelStore = signalStore(
        * Show a modal to edit an existing personal relationship.
        * @param personalRel the personal relationship to edit
        */
-      async edit(personalRel: PersonalRelModel, readOnly = true): Promise<void> {        
+      async edit(personalRel: PersonalRelModel, readOnly = true): Promise<void> {
+        const { PersonalRelEditModal } = await import('./personal-rel-edit.modal');
         const modal = await store.modalController.create({
           component: PersonalRelEditModal,
           componentProps: {

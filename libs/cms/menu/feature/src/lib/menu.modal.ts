@@ -19,6 +19,7 @@ import { MenuStore } from './menu.store';
     Header, ChangeConfirmation, ErrorBanner, MenuForm,
     IonContent
   ],
+  providers: [MenuStore],
   template: `
     <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {

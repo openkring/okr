@@ -18,7 +18,6 @@ import { getInvoiceExportData, INVOICE_I18N_KEYS, InvoiceI18n, newInvoice } from
 import { AccountingStore } from '@bk2/finance-accounting-feature';
 
 import { InvoiceEditModal } from './invoice-edit.modal';
-import { InvoiceViewModal } from './invoice-view.modal';
 
 export type InvoiceState = {
   listId: string;         // 'all' | 'my' | personKey
@@ -161,6 +160,7 @@ export const InvoiceStore = signalStore(
     },
 
     async view(invoice: InvoiceModel): Promise<void> {
+      const { InvoiceViewModal } = await import('./invoice-view.modal');
       const modal = await store.modalController.create({
         component: InvoiceViewModal,
         componentProps: {

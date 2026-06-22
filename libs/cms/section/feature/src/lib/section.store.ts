@@ -21,7 +21,6 @@ import { UploadService } from '@bk2/avatar-data-access';
 import { SectionService } from '@bk2/cms-section-data-access';
 import { createSection, narrowSection, SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
-import { SectionEditModal } from './section-edit.modal';
 import { MessageCenterModal } from './message-center.modal';
 import { CardSelectModal } from './card-select.modal';
 import { MatrixChatService } from '@bk2/chat-data-access';
@@ -212,6 +211,7 @@ export const _SectionStore = signalStore(
         const tags = this.getTags();
         const roles = this.getRoles();
         const states = store.appStore.getCategory('content_state');
+        const { SectionEditModal } = await import('./section-edit.modal');
         const modal = await store.modalController.create({
           component: SectionEditModal,
           cssClass: 'full-modal',

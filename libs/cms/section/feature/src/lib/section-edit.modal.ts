@@ -22,6 +22,7 @@ import { SectionStore } from './section.store';
       ChangeConfirmation, Header, ErrorBanner, SectionForm,
       IonContent
     ],
+    providers: [SectionStore],
     template: `
       <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
       @if(formDirty() && formValid() && formData()) {

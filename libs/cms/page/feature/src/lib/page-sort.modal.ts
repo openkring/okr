@@ -17,6 +17,7 @@ import { PageStore } from './page.store';
     Spinner, Header,
     IonContent, IonReorderGroup, IonReorder, IonItem
   ],
+  providers: [PageStore],
   template: `
     <bk-header [i18n]="{ title: store.i18n.sort_label() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
     <ion-content>

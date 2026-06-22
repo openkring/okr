@@ -9,6 +9,7 @@ import { AssetStore } from './asset.store';
   selector: 'bk-asset-edit-modal',
   standalone: true,
   imports: [FormsModule, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption],
+  providers: [AssetStore],
   template: `
     <ion-header>
       <ion-toolbar>

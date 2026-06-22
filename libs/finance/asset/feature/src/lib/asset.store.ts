@@ -12,8 +12,6 @@ import { AssetCategoryService, AssetService } from '@bk2/finance-asset-data-acce
 import { ASSET_I18N_KEYS, AssetI18n, linearDepreciationMonthly, proRataMonths } from '@bk2/finance-asset-util';
 import { BookingService } from '@bk2/finance-booking-data-access';
 
-import { AssetEditModal } from './asset-edit.modal';
-
 export type { AssetI18n };
 
 export const AssetStore = signalStore(
@@ -52,6 +50,7 @@ export const AssetStore = signalStore(
 
     },
     async openEdit(asset: AssetModel, readOnly = true): Promise<void> {
+      const { AssetEditModal } = await import('./asset-edit.modal');
       const modal = await store.modalController.create({
         component: AssetEditModal,
         componentProps: {
