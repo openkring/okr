@@ -16,6 +16,7 @@
     "@bk2/shared-util-angular": "*",
     "@bk2/shared-util-core": "*",
     "@bk2/avatar-ui": "*",
+    "@bk2/finance-accounting-feature": "*",
     "@bk2/finance-bill-data-access": "*",
     "@bk2/finance-bill-util": "*"
   }

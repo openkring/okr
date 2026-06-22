@@ -51,10 +51,11 @@ export class TripEditModal {
 
   // inputs
   public readonly trip = input.required<TripModel>();
-  public readonly mode = input.required<'add' | 'edit' | 'end'>();
+  public readonly mode = input.required<'add' | 'edit' | 'end' | 'view'>();
 
   // signals
-  protected formDirty = signal(false);
+  // 'end' starts dirty so the change-confirmation toolbar shows immediately and the trip can be saved right away
+  protected formDirty = linkedSignal(() => this.mode() === 'end');
   protected formValid = signal(false);
 
   // derived
@@ -75,6 +76,7 @@ export class TripEditModal {
       case 'add':  return this.store.i18n.create();
       case 'edit': return this.store.i18n.update();
       case 'end':  return this.store.i18n.end();
+      case 'view': return this.store.i18n.view();
     }
   });
 

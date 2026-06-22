@@ -1,23 +1,29 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of, take } from 'rxjs';
 
 import { yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
-import { confirm } from '@bk2/shared-util-angular';
-import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
+import { confirm, navigateByUrl, showToast } from '@bk2/shared-util-angular';
+import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, PersonModelName, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isPerson, isResource, isValidAt, nameMatches } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { ReservationService } from '@bk2/relationship-reservation-data-access';
 import { isReservation, RESERVATION_I18N_KEYS, ReservationI18n } from '@bk2/relationship-reservation-util';
+import { PersonService } from '@bk2/subject-person-data-access';
+import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
 
 import { CalEventEditModal } from '@bk2/calevent-feature';
 import { isCalEvent } from '@bk2/calevent-util';
+import { browseUrl } from '@bk2/subject-address-util';
+import { MatrixChatService } from '@bk2/chat-data-access';
+import { ActivityService } from '@bk2/activity-data-access';
+import { Router } from '@angular/router';
 
 export type ReservationState = {
   listId: string;       // filter format: t_resourceType, r_resourceKey, p_reserverKey, or 'all'
@@ -59,10 +65,16 @@ export const ReservationStore = signalStore(
     reservationService: inject(ReservationService),
     alertController: inject(AlertController),
     modalController: inject(ModalController),
-    i18nService: inject(I18nService)
+    i18nService: inject(I18nService),
+    matrixService: inject(MatrixChatService),
+    activityService: inject(ActivityService),
+    personService: inject(PersonService),
+    toastController: inject(ToastController),
+    personEditModalClass: inject(PERSON_EDIT_MODAL, { optional: true }),
+    router: inject(Router)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(RESERVATION_I18N_KEYS),
+    i18n: store.i18nService.translateAll(RESERVATION_I18N_KEYS) as ReservationI18n,
 
     allReservationsResource: rxResource({
       params: () => ({
@@ -129,6 +141,7 @@ export const ReservationStore = signalStore(
       currentUser: computed(() => state.appStore.currentUser()),
       currentPerson: computed(() => state.appStore.currentPerson()),
       defaultResource: computed(() => state.appStore.defaultResource()),
+      genders: computed(() => state.appStore.getCategory('gender')),
 
       isLoading: computed(() => state.allReservationsResource.isLoading() || state.currentResourceResource.isLoading() || state.caleventResource.isLoading()),
       tenantId: computed(() => state.appStore.tenantId()),
@@ -292,6 +305,12 @@ export const ReservationStore = signalStore(
         return store.appStore.appConfig().locale;
       },
 
+      getPhone(reservation: ReservationModel): string | undefined {
+        if (!reservation.reserver?.key) return undefined;
+        const person = store.appStore.getPerson(reservation.reserver.key);
+        return person ? person.favPhone : undefined;
+      },
+
       /******************************** actions ******************************************* */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
@@ -352,6 +371,54 @@ export const ReservationStore = signalStore(
             await store.reservationService.delete(reservation, store.appStore.currentUser());
             this.reload();
           }
+        }
+      },
+
+      async editPerson(reservation?: ReservationModel, readOnly = true): Promise<void> {
+        if (!reservation || !reservation.reserver?.key || readOnly) return;
+        const person = store.appStore.getPerson(reservation.reserver.key);
+        if (!person || !store.personEditModalClass) return;
+        const modal = await store.modalController.create({
+          component: store.personEditModalClass,
+          componentProps: {
+            person,
+            currentUser: store.currentUser(),
+            tags: store.appStore.getTags(PersonModelName),
+            tenantId: store.tenantId(),
+            genders: store.genders(),
+            readOnly
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data && !readOnly) {
+          await store.personService.update(data, store.currentUser());
+        }
+      },
+
+      async callPhone(reservation?: ReservationModel, readOnly = true): Promise<void> {
+        if (!reservation || readOnly) return;
+        const phone = this.getPhone(reservation);
+        if (phone) {
+          return await browseUrl(`tel:${phone}`, '');
+        }
+      },
+
+      async openDirectChat(reservation?: ReservationModel, readOnly = true): Promise<void> {
+        if (!reservation || !reservation.reserver?.key || readOnly) return;
+        const key = reservation.reserver.key;
+        try {
+          // Matrix is initialized in the background after login (MatrixInitializationService).
+          // Await the idempotent, promise-cached init so opening a direct chat works even
+          // before the user has visited the chat overview (which otherwise primes the client).
+          await store.matrixService.ensureInitialized();
+          const room = await store.matrixService.createDirectRoom(key);
+          void store.activityService.log('chat', 'createdirect', store.currentUser(), `SUCCESS: ${key}`);
+          await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : 'Could not start chat';
+          void store.activityService.log('chat', 'createdirect', store.currentUser(), `ERROR: ${key} ${msg}`);
+          await showToast(store.toastController, msg);
         }
       },
 

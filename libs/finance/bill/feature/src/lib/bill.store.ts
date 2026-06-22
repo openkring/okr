@@ -14,6 +14,7 @@ import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-c
 
 import { BillService } from '@bk2/finance-bill-data-access';
 import { BILL_I18N_KEYS, BillI18n } from '@bk2/finance-bill-util';
+import { AccountingStore } from '@bk2/finance-accounting-feature';
 
 import { BillViewModal } from './bill-view.modal';
 
@@ -42,6 +43,7 @@ export const BillStore = signalStore(
     return {
       billService: inject(BillService),
       appStore,
+      accountingStore: inject(AccountingStore),
       firestoreService: inject(FirestoreService),
       modalController: inject(ModalController),
       functions,
@@ -56,13 +58,17 @@ export const BillStore = signalStore(
     allBillsResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),
+        accountingTenantId: store.accountingStore.accountingTenantId(),
         version: store.version(),
       }),
       stream: ({ params }) => {
-        if (!params.currentUser) return of([]);
+        if (!params.currentUser || !params.accountingTenantId) return of([]);
         return store.firestoreService.searchData<BillModel>(
           BillCollection,
-          getSystemQuery(store.appStore.tenantId()),
+          [
+            ...getSystemQuery(store.appStore.tenantId()),
+            { key: 'accountingTenantId', operator: '==' as const, value: params.accountingTenantId },
+          ],
           'billDate',
           'desc'
         ).pipe(debugListLoaded('BillStore.allBills', params.currentUser));

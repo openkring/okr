@@ -34,6 +34,12 @@
   "view": {
     "label": "Reservation anzeigen"
   },
+  "person": {
+    "edit": "Reservierende Person ändern",
+    "view": "Reservierende Person anzeigen",
+    "phone": "Reservierende Person anrufen",
+    "chat": "Direkt Chat mit reservierender Person"
+  },
 
   "list": {
     "title": "Reservationen",
@@ -130,8 +136,9 @@
     "helper": "Die Vermietung der Clubanlagen erfolgt nur, wenn die obigen Bestimmungen eingehalten werden. Der Club behält sich vor, bei Missachtung der Bestimmungen die Veranstaltung abzusagen oder dem Mieter allfällige Schäden oder Mehraufwände zu verrechnen."
   },
 
-
   "reservation_reason": {
+    "label": "Grund der Reservation",
+    "helper": "Eine grobe Kategorisierung der Reservations-Art für die Filterung der Reservationsliste.",
     "all": {
       "label": "Alle Arten"
     },
@@ -187,6 +194,7 @@
 
   "reservation_state": {
     "label": "Status",
+    "helper": "Der Bearbeitungs-Stand der Reservation (initial/angefragt/reserviert/abgeschlossen/abgesagt/abgelehnt).",
     "all": {
       "label": "Alle Stati"
     },

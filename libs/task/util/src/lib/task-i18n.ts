@@ -9,9 +9,9 @@ export const TASK_I18N_KEYS = {
   empty:                          PFX + 'empty',
   empty_my:                       PFX + 'empty-my',
 
-  calendarName_label:              PFX + 'calendarName.label',
-  calendarName_description:        PFX + 'calendarName.description',
-  calendarName_addLabel:           PFX + 'calendarName.addLabel',
+  calendarName_label:              PFX + 'calendar.name.label',
+  calendarName_description:        PFX + 'calendar.name.description',
+  calendarName_addLabel:           PFX + 'calendar.name.addLabel',
 
   quick_entry_label:              PFX + 'taskQuickEntry.label',
   quick_entry_placeholder:        PFX + 'taskQuickEntry.placeholder',
@@ -20,13 +20,16 @@ export const TASK_I18N_KEYS = {
   create:                         PFX + 'create.label',
   create_conf:                    PFX + 'create.conf',
   create_error:                   PFX + 'create.error',
+
   delete:                         PFX + 'delete.label',
   delete_confirm:                 PFX + 'delete.confirm',
   delete_conf:                    PFX + 'delete.conf',
   delete_error:                   PFX + 'delete.error',
+
   update:                         PFX + 'update.label',
   update_conf:                    PFX + 'update.conf',
   update_error:                   PFX + 'update.error',
+
   view:                           PFX + 'view.label',
 
   done:                           PFX + 'done',
@@ -67,10 +70,13 @@ export const TASK_I18N_KEYS = {
 
   priority:                        PFX + 'priority.label',
   importance:                      PFX + 'importance.label',
+
   assignee:                        PFX + 'assignee.label',
   assignee_description:            PFX + 'assignee.description',
+
   author:                          PFX + 'author.label',
   author_description:              PFX + 'author.description',
+  
   scope:                           PFX + 'scope.label',
   scope_description:               PFX + 'scope.description',
 

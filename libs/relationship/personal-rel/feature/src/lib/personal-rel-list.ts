@@ -71,7 +71,7 @@ import { PersonalRelStore } from './personal-rel.store';
       <bk-spinner />
     } @else {
       @if(selectedPersonalRelsCount() === 0) {
-        <bk-empty-list message="@personalRel.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(personalRel of filteredPersonalRels(); track $index) {

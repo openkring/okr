@@ -170,7 +170,7 @@ export class CalEventForm {
   protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
   protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
   protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
-  protected durationMinutes = linkedSignal(() => this.formData().durationMinutes ?? 60);
+  protected durationMinutes = linkedSignal(() => this.formData().durationMinutes);
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
   protected isRecurring = computed(() => this.periodicity() && this.periodicity() !== 'once');
   protected repeatUntilDate = linkedSignal(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);

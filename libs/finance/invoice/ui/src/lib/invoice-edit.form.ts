@@ -92,7 +92,7 @@ export class InvoiceEditForm {
   public readonly i18n = input.required<InvoiceI18n>();
 
   protected invoiceIdI18n = computed(() => ({
-    name: 'invoiceId', label: this.i18n().invoiceId_label(), placeholder: this.i18n().invoiceId_placeholder(), helper: this.i18n().invoiceId_helper()
+    name: 'invoiceId', label: this.i18n().id_label(), placeholder: this.i18n().id_placeholder(), helper: this.i18n().id_helper()
   } as TextInputI18n));
 
   protected titleI18n = computed(() => ({
@@ -107,10 +107,10 @@ export class InvoiceEditForm {
     name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
 
-  protected invoiceDateI18n = computed(() => ({ name: 'invoiceDate', label: this.i18n().invoiceDate_label(), placeholder: this.i18n().invoiceDate_placeholder(), helper: this.i18n().invoiceDate_helper() } as DateInputI18n));
-  protected dueDateI18n = computed(() => ({ name: 'dueDate', label: this.i18n().dueDate_label(), placeholder: this.i18n().dueDate_placeholder(), helper: this.i18n().dueDate_helper() } as DateInputI18n));
-  protected paymentDateI18n = computed(() => ({ name: 'paymentDate', label: this.i18n().paymentDate_label(), placeholder: this.i18n().paymentDate_placeholder(), helper: this.i18n().paymentDate_helper() } as DateInputI18n));
-  protected vatTypeI18n = computed(() => ({ name: 'vatType', label: this.i18n().vatType_label() } as StringSelectI18n));
+  protected invoiceDateI18n = computed(() => ({ name: 'invoiceDate', label: this.i18n().invoice_date_label(), placeholder: this.i18n().invoice_date_placeholder(), helper: this.i18n().invoice_date_helper() } as DateInputI18n));
+  protected dueDateI18n = computed(() => ({ name: 'dueDate', label: this.i18n().due_date_label(), placeholder: this.i18n().due_date_placeholder(), helper: this.i18n().due_date_helper() } as DateInputI18n));
+  protected paymentDateI18n = computed(() => ({ name: 'paymentDate', label: this.i18n().payment_date_label(), placeholder: this.i18n().payment_date_placeholder(), helper: this.i18n().payment_date_helper() } as DateInputI18n));
+  protected vatTypeI18n = computed(() => ({ name: 'vatType', label: this.i18n().vat_type() } as StringSelectI18n));
   protected stateI18n   = computed(() => ({ name: 'state',   label: this.i18n().state_label()   } as StringSelectI18n));
 
   public readonly formDataChange = output<InvoiceModel>();

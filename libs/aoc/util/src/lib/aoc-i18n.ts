@@ -122,6 +122,10 @@ export const AOC_I18N_KEYS = {
   bexio_receiver_status_unmatched:          PFX + 'bexio.receiver.status.unmatched',
   bexio_receiver_link:                      PFX + 'bexio.receiver.link',
 
+  bexio_edit_person:                        PFX + 'bexio.edit.person',
+  bexio_edit_org:                           PFX + 'bexio.edit.org',
+  bexio_edit_membership:                    PFX + 'bexio.edit.membership',
+
   // chat
   chat_title:                               PFX + 'chat.title',
   chat_rooms:                               PFX + 'chat.rooms',

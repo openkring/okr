@@ -8,7 +8,8 @@ import { InvitationCollection, InvitationModel, UserModel } from '@bk2/shared-mo
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getInvitationIndex } from '@bk2/relationship-invitation-util';
-import { PFX } from './scope';
+
+const PFX = '@relationship/invitation/data-access.';
 
 @Injectable({
   providedIn: 'root'

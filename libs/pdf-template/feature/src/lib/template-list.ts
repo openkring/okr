@@ -49,7 +49,7 @@ import { TemplateStore } from './template.store';
       @if(store.isLoading()) {
         <bk-spinner />
       } @else if(store.filteredTemplates().length === 0) {
-        <bk-empty-list message="@pdf-template/feature.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
           @for(tmpl of store.filteredTemplates(); track tmpl.bkey) {

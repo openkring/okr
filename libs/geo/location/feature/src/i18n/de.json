@@ -1,21 +1,131 @@
 {
-  "locations": "Orte",
+  "singular": "Ort",
+  "plural": "Orte",
   "description": "Ein Ort, der mittels Koordinaten genau lokalisiert werden kann.",
   "empty": "Es sind noch keine Orte erfasst. Erstelle einen neuen Ort mit Klicken des + Buttons.",
-  "copy": {
-    "coord": "Koordinaten kopieren",
-    "w3wcopy": "what3word kopieren",
-    "conf": "Der Ort wurde kopiert."
+
+  "list": {
+    "header": {
+      "name": "Name",
+      "type": "Typ",
+      "latitude": "Breitengrad",
+      "longitude": "Längengrad"
+    }
   },
-  "view": "Ort-Details ansehen",
-  "edit": "Ort ändern",
-  "create": "Neuen Ort erstellen",
-  "delete": "Ort löschen",
-  "show": "Ort auf der Karte anzeigen",
-  "convert": "Formate konvertieren",
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+
+  "copy": {
+    "label": "Ort kopieren",
+    "conf": "Der Ort wurde kopiert.",
+    "error": "Der Ort konnte nicht kopiert werden.",
+    "coord": "Koordinaten kopieren",
+    "w3w": "what3word kopieren"
+  },
+  "convert": {
+    "label": "Formate konvertieren"
+  },
+  "create": {
+    "label": "Ort hinzufügen",
+    "conf": "Ort wurde hinzugefügt.",
+    "error": "Ort konnte nicht hinzugefügt werden."
+  },
+  "delete": {
+    "label": "Ort löschen",
+    "confirm": "Soll der Ort wirklich gelöscht werden ?",
+    "conf": "Ort wurde gelöscht.",
+    "error": "Ort konnte nicht gelöscht werden."
+  },
+  "show": {
+    "label": "Ort auf der Karte anzeigen"
+  },
+  "update": {
+    "label": "Ort ändern",
+    "conf": "Ort wurde geändert.",
+    "error": "Ort konnte nicht geändert werden."
+  },
+  "view": {
+    "label": "Orts-Details anzeigen"
+  },
+
+  "bkey": {
+    "label": "bkey",
+    "placeholder": "ssssss",
+    "helper": "Die eindeutige ID in der Datenbank."
+  },
+  "name": {
+    "label": "Orts-Name",
+    "placeholder": "ssssss",
+    "helper": "Der Name des Orts, z.B. Adresse"
+  },
+  "latitude": {
+    "label": "Latitude",
+    "placeholder": "nn.nnnnn",
+    "helper": "Die Position Nort/Süd from Aequator (+-0-90 Grad)."
+  },
+  "longitude": {
+    "label": "Longitude",
+    "placeholder": "nnn.nnnnnn",
+    "helper": "Die Position Ost/West von Greenwich +-0 - 180 Grad)."
+  },
+  "placeId": {
+    "label": "PlaceID",
+    "placeholder": "ssssss",
+    "helper": "Die Place ID von Google Places."
+  }, 
+  "what3words": {
+    "label": "What3Words",
+    "placeholder": "ssss.ssss.ssss",
+    "helper": "Die What3Words Bezeichnung dieses Ortes."
+  },
+  "seaLevel": {
+    "label": "Höhe über Meer",
+    "placeholder": "nnn",
+    "helper": "Die Höhe über Meer in Metern."
+  },
+  "speed": {
+    "label": "Geschwindigkeit",
+    "placeholder": "nnn",
+    "helper": "Die Geschwindigkeit in km/h."
+  },
+  "direction": {
+    "label": "Richtung",
+    "placeholder": "nnn",
+    "helper": "Die Richtung in Grad als Abweichung zu Norden."
+  },
+  "distance": {
+    "label": "Distanz",
+    "placeholder": "nnn",
+    "helper": "Die Distanz des Orts im Bezug auf den Ausgangspunkt in Kilometern."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Text"
+  },
+
+  "location_type": {
+    "label": "Ortstyp",
+    "helper": "Typ einer Ortsangabe, normalerweise als Filter in Ortslisten verwendet.",
+    "all": {
+      "label": "Alle"
+    },
+    "address": {
+      "label": "Adresse",
+      "description": "Ort repräsentiert eine Adresse."
+    },
+    "logbuch": {
+      "label": "Logbuch",
+      "description": "Ort ist ein Eintrag im Logbuch."
+    },
+    "geomarker": {
+      "label": "Geomarker",
+      "description": "Ort ist ein pin auf einer Karte."
+    },
+    "airport": {
+      "label": "Flughafen",
+      "description": "Internationale Flughäfen für Flighttracking."
+    },
+    "other": {
+      "label": "Anderer Ort",
+      "description": "Ort repräsentatiert eine andere Orts-Information."
+    }
   }
 }

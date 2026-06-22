@@ -67,7 +67,7 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
       <bk-spinner />
     } @else {
       @if(filteredAccounts().length === 0) {
-        <bk-empty-list message="@user.field.empty" />
+        <bk-empty-list [message]="store.i18n.account_empty()" />
       } @else {
         <ion-list lines="inset">
           @for(account of filteredAccounts(); track $index) {

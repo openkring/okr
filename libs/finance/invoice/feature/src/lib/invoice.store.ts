@@ -15,6 +15,7 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { InvoiceService } from '@bk2/finance-invoice-data-access';
 import { getInvoiceExportData, INVOICE_I18N_KEYS, InvoiceI18n, newInvoice } from '@bk2/finance-invoice-util';
+import { AccountingStore } from '@bk2/finance-accounting-feature';
 
 import { InvoiceEditModal } from './invoice-edit.modal';
 import { InvoiceViewModal } from './invoice-view.modal';
@@ -44,28 +45,31 @@ export const InvoiceStore = signalStore(
     return {
       invoiceService: inject(InvoiceService),
       appStore,
+      accountingStore: inject(AccountingStore),
       firestoreService: inject(FirestoreService),
       modalController: inject(ModalController),
       toastController: inject(ToastController),
       alertController: inject(AlertController),
-      i18nService: inject(I18nService),
+      i18n: inject(I18nService).translateAll(INVOICE_I18N_KEYS) as InvoiceI18n,
       functions,
     };
   }),
 
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(INVOICE_I18N_KEYS),
-
     allInvoicesResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),
+        accountingTenantId: store.accountingStore.accountingTenantId(),
         version: store.version(),
       }),
       stream: ({ params }) => {
-        if (!params.currentUser) return of([]);
+        if (!params.currentUser || !params.accountingTenantId) return of([]);
         return store.firestoreService.searchData<InvoiceModel>(
           InvoiceCollection,
-          getSystemQuery(store.appStore.tenantId()),
+          [
+            ...getSystemQuery(store.appStore.tenantId()),
+            { key: 'accountingTenantId', operator: '==' as const, value: params.accountingTenantId },
+          ],
           'invoiceDate',
           'desc'
         ).pipe(debugListLoaded('InvoiceStore.allInvoices', params.currentUser));
@@ -120,6 +124,7 @@ export const InvoiceStore = signalStore(
 
     async add(): Promise<void> {
       const invoice = newInvoice(store.appStore.tenantId());
+      invoice.accountingTenantId = store.accountingStore.accountingTenantId();
       const modal = await store.modalController.create({
         component: InvoiceEditModal,
         componentProps: {

@@ -11,7 +11,6 @@ import { TenantSelector } from './tenant-selector';
   selector: 'bk-accounting-shell',
   standalone: true,
   imports: [IonHeader, IonToolbar, IonContent, IonRouterOutlet, ReadOnlyBanner, TenantSelector],
-  providers: [AccountingStore],
   template: `
     <ion-header>
       <ion-toolbar>

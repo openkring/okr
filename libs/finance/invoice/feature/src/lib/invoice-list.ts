@@ -72,7 +72,7 @@ import { InvoiceStore } from './invoice.store';
       @if(isLoading()) {
         <bk-spinner />
       } @else if(filteredInvoices().length === 0) {
-        <bk-empty-list message="@finance.invoice.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
           @for(invoice of filteredInvoices(); track invoice.bkey) {
@@ -191,8 +191,8 @@ export class InvoiceList {
 
   private async addActionSheetButtons(options: ActionSheetOptions, _invoice: InvoiceModel): Promise<void> {
     const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton(this.store.i18n.as_view(), base, 'eye-on'));
-    options.buttons.push(createActionSheetButton(this.store.i18n.as_showpdf(), base, 'download'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.view(), base, 'eye-on'));
+    options.buttons.push(createActionSheetButton(this.store.i18n.show_pdf(), base, 'download'));
 /*. invoices are currently read-only; they are processed in Bexio
     if (this.canChange()) {
       options.buttons.push(createActionSheetButton(this.store.i18n.as_edit(), base, 'edit'));

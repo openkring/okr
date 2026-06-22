@@ -35,8 +35,8 @@ export class AccountService {
     return await this.firestoreService.createModel<AccountModel>(AccountCollection, account, PFX + 'create.conf', PFX + 'create.error', currentUser);
   }
 
-  public read(key: string): Observable<AccountModel | undefined> {
-    return findByKey<AccountModel>(this.list(), key);
+  public read(key: string, accountingTenantId: string): Observable<AccountModel | undefined> {
+    return findByKey<AccountModel>(this.list(accountingTenantId), key);
   }
 
   public async update(account: AccountModel, currentUser?: UserModel): Promise<string | undefined> {
@@ -54,8 +54,8 @@ export class AccountService {
    * @param rootKey 
    * @param currentUser 
    */
-  public async deleteTree(rootKey: string, currentUser?: UserModel): Promise<void> {
-    const all = await firstValueFrom(this.list());
+  public async deleteTree(rootKey: string, accountingTenantId: string, currentUser?: UserModel): Promise<void> {
+    const all = await firstValueFrom(this.list(accountingTenantId));
     const subtree = this.collectSubtree(all, rootKey);
     for (const account of subtree) {
       await this.delete(account, currentUser);
@@ -77,7 +77,11 @@ export class AccountService {
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
-  public list(orderBy = 'id', sortOrder = 'asc'): Observable<AccountModel[]> {
-    return this.firestoreService.searchData<AccountModel>(AccountCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+  public list(accountingTenantId: string, orderBy = 'id', sortOrder = 'asc'): Observable<AccountModel[]> {
+    const query = [
+      ...getSystemQuery(this.tenantId),
+      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
+    ];
+    return this.firestoreService.searchData<AccountModel>(AccountCollection, query, orderBy, sortOrder);
   }
 }

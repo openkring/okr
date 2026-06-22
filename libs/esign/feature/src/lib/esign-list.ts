@@ -60,7 +60,7 @@ import { EsignStore } from './esign.store';
       @if(store.isLoading()) {
         <bk-spinner />
       } @else if(store.filteredEsigns().length === 0) {
-        <bk-empty-list message="@esign/feature.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
           @for(esign of store.filteredEsigns(); track esign.esignId) {

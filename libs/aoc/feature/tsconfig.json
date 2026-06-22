@@ -84,6 +84,18 @@
     },
     {
       "path": "../../subject/person/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../subject/org/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../subject/org/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/membership/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/membership/feature/tsconfig.lib.json"
     }
   ]
 }

@@ -10,18 +10,17 @@ import { AppStore, LocationSelectResult, ModelSelectService } from '@bk2/shared-
 import { I18nService } from '@bk2/shared-i18n';
 import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@bk2/shared-models';
 import { AlertService } from '@bk2/shared-util-angular';
-import { getFullName, getYear, hasRole, nameMatches } from '@bk2/shared-util-core';
+import { getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, nameMatches } from '@bk2/shared-util-core';
+import { yearMatches } from '@bk2/shared-categories';
 
 import { TaskService } from '@bk2/task-data-access';
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
 import { UploadService } from '@bk2/avatar-data-access';
 import { readAsFile } from '@bk2/avatar-util';
+import { LocationService } from '@bk2/location-data-access';
 
 import { TripService } from '@bk2/trip-data-access';
-import { groupTripsByDay, newTrip, TRIP_I18N_KEYS, TripI18n } from '@bk2/trip-util';
-import { LocationService } from '@bk2/location-data-access';
-import { yearMatches } from '@bk2/shared-categories';
-export type { TripI18n };
+import { groupTripsByDay, newTrip, TRIP_I18N_KEYS } from '@bk2/trip-util';
 
 
 const SUSPICIOUS_WINDOW_MS = 15 * 60 * 1000;
@@ -30,6 +29,22 @@ const SUSPICIOUS_DISTANCE_KM = 100;
 const SUSPICIOUS_SEAT_DIFF = 2;
 const SUSPICIOUS_HOUR_EARLY = 5;
 const SUSPICIOUS_HOUR_LATE = 23;
+
+/** Matches Swiss-format dates with optional leading zeros and 2- or 4-digit year: d[d].[m]m.[yy]yy */
+const SWISS_DATE_RE = /^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})$/;
+
+/**
+ * If the user enters a date in Swiss format (d[d].[m]m.[yy]yy, detected by the dots),
+ * convert it to store-date format (yyyymmdd) so it matches the date stored in trip.index.
+ * Any other search term (or a partially typed / invalid date) is returned unchanged.
+ */
+function normalizeTripSearchTerm(searchTerm: string): string {
+  const match = SWISS_DATE_RE.exec(searchTerm.trim());
+  if (!match) return searchTerm;
+  const [, day, month, year] = match;
+  const fullYear = year.length === 2 ? `20${year}` : year;
+  return `${fullYear}${month.padStart(2, '0')}${day.padStart(2, '0')}`;
+}
 
 export type TripState = {
   searchTerm: string;
@@ -94,8 +109,9 @@ export const TripStore = signalStore(
   })),
   withComputed(store => ({
     filteredTrips: computed(() => {
-      return store.trips().filter((trip: TripModel) => 
-        nameMatches(trip.index, store.searchTerm()) &&
+      const searchTerm = normalizeTripSearchTerm(store.searchTerm());
+      return store.trips().filter((trip: TripModel) =>
+        nameMatches(trip.index, searchTerm) &&
         yearMatches(trip.startDate, store.selectedYear()) &&
         nameMatches(trip.state, store.selectedState())
       )
@@ -121,8 +137,8 @@ export const TripStore = signalStore(
 
     /******************************* CRUD on single trip  *************************************** */
 
-    async openTripModal(trip: TripModel, mode: 'add' | 'edit' | 'end'): Promise<void> {
-      if (!store.canWrite()) return;
+    async openTripModal(trip: TripModel, mode: 'add' | 'edit' | 'end' | 'view'): Promise<void> {
+      if (mode !== 'view' && !store.canWrite()) return;
       const { TripEditModal } = await import('./trip-edit.modal');
       const modal = await store.modalController.create({
         component: TripEditModal,
@@ -149,6 +165,10 @@ export const TripStore = signalStore(
 
     async endTrip(trip: TripModel): Promise<void> {
       await this.openTripModal(trip, 'end');
+    },
+
+    async viewTrip(trip: TripModel): Promise<void> {
+      await this.openTripModal(trip, 'view');
     },
 
     async deleteTrip(trip: TripModel): Promise<void> {
@@ -180,11 +200,11 @@ export const TripStore = signalStore(
     },
 
     async selectPersonAvatar(): Promise<AvatarInfo | undefined> {
-      return await store.modelSelectService.selectPersonAvatar();
+      return await store.modelSelectService.selectPersonAvatar(undefined, undefined, true);
     },
 
     async selectResourceAvatar(): Promise<AvatarInfo | undefined> {
-      return await store.modelSelectService.selectResourceAvatar('@tag.okBoat');
+      return await store.modelSelectService.selectResourceAvatar('@tag.okBoat', undefined, store.i18n.select_boat_title());
     },
 
     async selectLocationForTrip(): Promise<LocationSelectResult | undefined> {
@@ -250,19 +270,23 @@ export const TripStore = signalStore(
 
     /******************************* other actions *************************************** */
     async reportDamage(currentUser?: UserModel, trip?: TripModel): Promise<void> {
+      const message = await store.alertService.bkPrompt(store.i18n.report_damage(), store.i18n.report_damage_prompt());
+      if (message === undefined) return;
       const user = currentUser ? getFullName(currentUser.firstName, currentUser.lastName) : 'undefined';
-      const msg = trip ? 
-        `${user} ${store.i18n.report_damage_trip()} ${trip.name}` : 
-        `${user} ${store.i18n.report_damage_plain()}: `;
-      await this.notifyResponsibility('Ressort Boote', msg, '', undefined, store.currentUser());
+      const taskName = trip ?
+        `${user} ${store.i18n.report_damage_trip()} ${trip.name}` :
+        `${user} ${store.i18n.report_damage_plain()}`;
+      await this.notifyResponsibility('Ressort Boote', taskName, message, undefined, store.currentUser());
     },
 
     async reportBug(currentUser?: UserModel, trip?: TripModel): Promise<void> {
-        const user = currentUser ? getFullName(currentUser.firstName, currentUser.lastName) : 'undefined';
-      const msg = trip ? 
-        `${user} ${store.i18n.report_bug_trip()} ${trip.name}` : 
-        `${user} ${store.i18n.report_bug_plain()}: `;
-      await this.notifyResponsibility('Logbuch2', msg, '', undefined, store.currentUser());
+      const message = await store.alertService.bkPrompt(store.i18n.report_bug(), store.i18n.report_bug_prompt());
+      if (message === undefined) return;
+      const user = currentUser ? getFullName(currentUser.firstName, currentUser.lastName) : 'undefined';
+      const taskName = trip ?
+        `${user} ${store.i18n.report_bug_trip()} ${trip.name}` :
+        `${user} ${store.i18n.report_bug_plain()}`;
+      await this.notifyResponsibility('Logbuch2', taskName, message, undefined, store.currentUser());
     },
 
     async notifyResponsibility(
@@ -279,6 +303,7 @@ export const TripStore = signalStore(
       const task = new TaskModel(store.tenantId());
       task.name = taskName;
       task.assignee = responsibility.responsibleAvatar;
+      task.author = currentUser ? getAvatarInfoForCurrentUser(currentUser) : undefined;
       task.notes = photoUrl ? `${notes}\nFoto: ${photoUrl}` : notes;
       task.tags = responsibilityName;
       await store.taskService.create(task, currentUser);
@@ -289,11 +314,22 @@ export const TripStore = signalStore(
     },
 
     async showBoatStatistics(): Promise<void> {
-      console.log(`IconStore.showBoatStatistics('showBoatStatistics is not yet implemented.`);
+      await this.openStatsModal('boat');
     },
 
     async showPersonStatistics(): Promise<void> {
-      console.log(`IconStore.showPersonStatistics('showPersonStatistics is not yet implemented.`);
+      await this.openStatsModal('member');
+    },
+
+    async openStatsModal(contentType: 'boat' | 'member'): Promise<void> {
+      const { TripStatsModal } = await import('./trip-stats.modal');
+      const modal = await store.modalController.create({
+        component: TripStatsModal,
+        cssClass: 'wide-modal',
+        componentProps: { contentType },
+      });
+      await modal.present();
+      await modal.onDidDismiss();
     },
   }))
 );

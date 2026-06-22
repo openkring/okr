@@ -77,7 +77,7 @@ let id = 0;
   }
   @if(shouldShowHelper()) {
     <ion-item lines="none">
-      <ion-note>{{helper() }}</ion-note>
+      <ion-note>{{helper() | translate | async }}</ion-note>
     </ion-item>
   }
   `
@@ -88,7 +88,6 @@ export class CategorySelect {
   public category = input.required<CategoryListModel>(); // mandatory view model
   public withAll = input(false); // if true, the first item in the list is 'All' and the user can select it. This is useful for filtering.
   protected showWithAll = computed(() => coerceBoolean(this.withAll()));
-  public labelName = input('label'); // the name of the label in the i18n file
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public showHelper = input(false);
@@ -96,13 +95,8 @@ export class CategorySelect {
   public showIcons = input(true);
   protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
 
-  private i18nService = inject(I18nService);
   protected name = computed(() => this.category().name);
-  private labelKey = computed(() => `${this.category().i18n}.${this.name()}.${this.labelName()}`);
-  private helperKey = computed(() => `${this.category().i18n}.${this.name()}.helper`);
-  protected label = toSignal(toObservable(this.labelKey).pipe(switchMap(key => this.i18nService.translate(key))), { initialValue: '' });
-  protected helper = toSignal(toObservable(this.helperKey).pipe(switchMap(key => this.i18nService.translate(key))), { initialValue: '' });
-
+  protected helper = computed(() => `${this.category().i18n}.${this.name()}.helper`);
   protected hovered = '';
 
   protected items = computed(() => {
@@ -129,6 +123,6 @@ export class CategorySelect {
   }
 
   protected getItemLabel(item: CategoryItemModel): string {
-    return `${this.category().i18n}.${this.name()}.${item.name}.${this.labelName()}`;
+    return `${this.category().i18n}.${this.name()}.${item.name}.label`;
   }
 }

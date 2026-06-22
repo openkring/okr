@@ -6,7 +6,7 @@ import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { RoleName, TripModel } from '@bk2/shared-models';
 
-import { formatTripTime } from '@bk2/trip-util';
+import { formatTripTime, isTripEditable } from '@bk2/trip-util';
 import { TripStore } from './trip.store';
 import { getWeekdayI18nKey, getYear, getYearList, hasRole } from '@bk2/shared-util-core';
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -33,7 +33,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
           @if(showMenuButton() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
-          <ion-title>{{ store.filteredTrips().length }} {{ store.i18n.list_title() }}</ion-title>
+          <ion-title>{{ store.i18n.list_title() }}</ion-title>
           @if (store.canWrite()) {  <!-- kiosk or admin -->
             <ion-buttons slot="end">
               <ion-button id="c-trip">
@@ -170,8 +170,8 @@ export class TripList {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
       case 'add': await this.store.createTrip(); break;
-      case 'reportDamage': await this.store.reportDamage(); break;
-      case 'reportbug': await this.store.export('raw'); break;
+      case 'reportDamage': await this.store.reportDamage(this.currentUser()); break;
+      case 'reportBug': await this.store.reportBug(this.currentUser()); break;
       case 'showBoatStatistics': await this.store.showBoatStatistics(); break;
       case 'showPersonStatistics': await this.store.showPersonStatistics(); break;
       case 'exportRaw': await this.store.export('raw'); break;
@@ -195,7 +195,12 @@ export class TripList {
     const isDeleted = trip.state === 'deleted';
 
     if (canWrite && !isDeleted) {
-      options.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.store.imgixBaseUrl(), 'edit'));
+      if (isTripEditable(trip)) {
+        options.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.store.imgixBaseUrl(), 'edit'));
+      } else {
+        // more than 15 min after the trip ended: read-only view instead of edit
+        options.buttons.push(createActionSheetButton('view', this.store.i18n.view(), this.store.imgixBaseUrl(), 'eye-on'));
+      }
     }
     if (canWrite && isOpen) {
       options.buttons.push(createActionSheetButton('end', this.store.i18n.end(), this.store.imgixBaseUrl(), 'stop-circle'));
@@ -214,6 +219,7 @@ export class TripList {
 
     switch (data.action) {
       case 'edit':          await this.store.editTrip(trip); break;
+      case 'view':          await this.store.viewTrip(trip); break;
       case 'end':           await this.store.endTrip(trip); break;
       case 'delete':        await this.store.deleteTrip(trip); break;
       case 'report_damage': await this.store.reportDamage(this.currentUser(), trip); break;

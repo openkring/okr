@@ -14,6 +14,7 @@
     "@bk2/shared-ui": "*",
     "@bk2/shared-util-angular": "*",
     "@bk2/shared-util-core": "*",
+    "@bk2/finance-accounting-feature": "*",
     "@bk2/finance-account-data-access": "*",
     "@bk2/finance-account-ui": "*",
     "@bk2/finance-account-util": "*",

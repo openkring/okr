@@ -232,13 +232,8 @@ export const TaskStore = signalStore(
 
     async setCompleted(task: TaskModel, readOnly = true): Promise<void> {
       if (!readOnly) {
-        if (task.completionDate) {
-          task.completionDate = '';
-          task.state = 'planned';
-        } else {
-          task.completionDate = getTodayStr();
-          task.state = 'done';
-        }
+        task.completionDate = getTodayStr();
+        task.state = 'done';
         await store.taskService.update(task, store.currentUser());
         this.reload();
       }

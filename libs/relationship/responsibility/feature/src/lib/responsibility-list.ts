@@ -69,7 +69,7 @@ import { ResponsibilityStore } from './responsibility.store';
         <bk-spinner />
       } @else {
         @if(store.filteredResponsibilities().length === 0) {
-          <bk-empty-list message="@responsibility.field.empty" />
+          <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-grid>
             @for(r of store.filteredResponsibilities(); track r.bkey) {

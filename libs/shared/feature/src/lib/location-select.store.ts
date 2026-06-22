@@ -1,6 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { LocationModel, UserModel } from '@bk2/shared-models';
@@ -9,8 +10,7 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { LocationService } from '@bk2/location-data-access';
 import { AppStore } from './app.store';
-import { LOCATION_SELECT_I18N_KEYS, LocationSelectI18n } from './select-i18n';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { SHARED_FEATURE_I18N_KEYS, SharedFeatureI18n } from './select-i18n';
 
 export const MIN_CUSTOM_SEARCH_LENGTH = 4;
 export const MAX_FIT_ZOOM = 16;
@@ -57,11 +57,10 @@ export const LocationSelectStore = signalStore(
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     locationService: inject(LocationService),
-    i18nService: inject(I18nService)
+    i18n: inject(I18nService).translateAll(SHARED_FEATURE_I18N_KEYS) as SharedFeatureI18n
   })),
 
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(LOCATION_SELECT_I18N_KEYS) as LocationSelectI18n,
     locationsResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),

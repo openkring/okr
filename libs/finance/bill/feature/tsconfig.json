@@ -47,6 +47,9 @@
       "path": "../../../avatar/ui/tsconfig.lib.json"
     },
     {
+      "path": "../../accounting/feature/tsconfig.lib.json"
+    },
+    {
       "path": "../data-access/tsconfig.lib.json"
     },
     {

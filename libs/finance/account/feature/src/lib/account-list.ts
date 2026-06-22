@@ -149,14 +149,14 @@ export class AccountList {
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, account: AccountModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('account.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('account.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('account.add', this.store.i18n.as_create(), this.imgixBaseUrl, 'add'));
+      actionSheetOptions.buttons.push(createActionSheetButton('account.add', this.store.i18n.create(), this.imgixBaseUrl, 'add'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('account.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('account.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
   }
 

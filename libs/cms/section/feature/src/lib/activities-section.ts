@@ -33,7 +33,7 @@ import { ActivitiesSectionStore } from './activities-section.store';
         <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if(store.activities().length === 0) {
-            <bk-empty-list message="@activity.field.empty" />
+            <bk-empty-list [message]="store.i18n.empty()" />
           } @else {
             <ion-list lines="inset">
               @for(activity of store.activities(); track activity.bkey) {

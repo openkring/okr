@@ -8,8 +8,7 @@ import { chipMatches, nameMatches } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { AppStore } from './app.store';
-import { ORG_SELECT_I18N_KEYS, OrgSelectI18n } from './select-i18n';
-export type { OrgSelectI18n };
+import { SHARED_FEATURE_I18N_KEYS, SharedFeatureI18n } from './select-i18n';
 
 export type OrgSelectState = {
   searchTerm: string;
@@ -29,11 +28,7 @@ export const OrgSelectStore = signalStore(
     firestoreService: inject(FirestoreService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
-    i18nService: inject(I18nService)  
-  })),
-
-  withProps((store) => ({
-      i18n: store.i18nService.translateAll(ORG_SELECT_I18N_KEYS),
+    i18n: inject(I18nService).translateAll(SHARED_FEATURE_I18N_KEYS) as SharedFeatureI18n
   })),
 
   withComputed((store) => {

@@ -9,8 +9,7 @@ import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/
 import { I18nService } from '@bk2/shared-i18n';
 
 import { AppStore } from './app.store';
-import { RESOURCE_SELECT_I18N_KEYS, ResourceSelectI18n } from './select-i18n';
-export type { ResourceSelectI18n };
+import { SHARED_FEATURE_I18N_KEYS, SharedFeatureI18n } from './select-i18n';
 
 export type ResourceSelectState = {
   searchTerm: string;
@@ -30,11 +29,9 @@ export const ResourceSelectStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    i18nService: inject(I18nService)
+    i18n: inject(I18nService).translateAll(SHARED_FEATURE_I18N_KEYS) as SharedFeatureI18n
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(RESOURCE_SELECT_I18N_KEYS),
-
     resourcesResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(

@@ -66,8 +66,9 @@
     "label": "Rolle"
   },
 
-  "state": {
+  "invitation_state": {
     "label": "Status",
+    "helper": "Status der Einladung",
     "all": {
       "label": "Alle Stati"
     },

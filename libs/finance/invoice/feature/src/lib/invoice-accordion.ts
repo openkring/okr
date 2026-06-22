@@ -17,7 +17,7 @@ import { InvoiceStore } from './invoice.store';
   template: `
     <ion-accordion toggle-icon-slot="start" value="invoices">
       <ion-item slot="header" lines="none">
-        <ion-label>{{ store.i18n.accordion_title() }}</ion-label>
+        <ion-label>{{ store.i18n.invoices() }}</ion-label>
         <ion-icon src="{{ 'invoice' | svgIcon }}" slot="end" />
       </ion-item>
       <div slot="content">

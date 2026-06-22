@@ -88,6 +88,8 @@
 
   "workrel_type": {
     "name": "Arbeits-Art",
+    "label": "Beschäftigungs-Typ",
+    "helper": "Die Art einer Beschäftigung, normalerweise zum Filtern in einer Liste verwendet.",
     "all": {
       "label": "Alle"
     },
@@ -106,6 +108,10 @@
     "intern": {
       "label": "Praktikant/in",
       "description": "Praktikant"
+    },
+    "project": {
+      "label": "Projekt",
+      "description": "Ein Projekt hat einen definierten Start, ein definiertes Ende und ein Ziel."
     },
     "trainee": {
       "label": "Lehrling",
@@ -137,7 +143,9 @@
     }
   },
 
-  "state": {
+  "workrel_state": {
+    "label": "Status",
+    "helper": "Status einer Beschäftigung: Initial / Angemeldet / Aktiv / Passiv / Beendet / Abgebrochen",
     "all": {
       "label": "Alle"
     },

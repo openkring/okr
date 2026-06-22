@@ -16,7 +16,7 @@ import { BillStore } from './bill.store';
   template: `
     <ion-accordion toggle-icon-slot="start" value="bills">
       <ion-item slot="header" lines="none">
-        <ion-label>{{ store.i18n.accordion_title() }}</ion-label>
+        <ion-label>{{ store.i18n.bills() }}</ion-label>
       </ion-item>
       <div slot="content">
         <ion-list lines="inset">
@@ -32,7 +32,7 @@ import { BillStore } from './bill.store';
           }
           @if(myBills().length === 0 && !isLoading()) {
             <ion-item lines="none">
-              <ion-label color="medium">{{ store.i18n.field_empty() }}</ion-label>
+              <ion-label color="medium">{{ store.i18n.empty() }}</ion-label>
             </ion-item>
           }
         </ion-list>
@@ -65,11 +65,11 @@ export class BillAccordion implements OnInit {
   }
 
   protected async showActions(bill: BillModel): Promise<void> {
-    const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton('bill.view', base, 'eye-on', this.store.i18n.as_view()));
+    options.buttons.push(createActionSheetButton('bill.view', base, 'eye-on', this.store.i18n.view()));
     if (bill.attachments.length > 0) {
-      options.buttons.push(createActionSheetButton('bill.download', base, 'download', this.store.i18n.as_download()));
+      options.buttons.push(createActionSheetButton('bill.download', base, 'download', this.store.i18n.download()));
     }
     options.buttons.push(createActionSheetButton('cancel', base, 'cancel', this.store.i18n.cancel()));
 

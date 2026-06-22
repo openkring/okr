@@ -8,8 +8,7 @@ import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-c
 import { I18nService } from '@bk2/shared-i18n';
 
 import { AppStore } from './app.store';
-import { CALENDAR_SELECT_I18N_KEYS, CalendarSelectI18n } from './select-i18n';
-export type { CalendarSelectI18n };
+import { SHARED_FEATURE_I18N_KEYS, SharedFeatureI18n } from './select-i18n';
 
 export type CalendarSelectState = {
   searchTerm: string;
@@ -27,12 +26,10 @@ export const CalendarSelectStore = signalStore(
   withProps(() => ({
     firestoreService: inject(FirestoreService),
     appStore: inject(AppStore),
-    i18nService: inject(I18nService)
+    i18n: inject(I18nService).translateAll(SHARED_FEATURE_I18N_KEYS) as SharedFeatureI18n
   })),
 
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(CALENDAR_SELECT_I18N_KEYS),
-
     calendarsResource: rxResource({
       stream: () => store.firestoreService.searchData<CalendarModel>(
         CalendarCollection,

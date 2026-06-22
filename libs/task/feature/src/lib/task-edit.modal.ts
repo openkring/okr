@@ -45,8 +45,22 @@ import { TaskStore } from './task.store';
         />
       }
 
-      <bk-avatar-select name="assignee" [avatar]="assignee()" [readOnly]="isReadOnly()" (selectClicked)="selectPerson('assignee')" />
-      <bk-avatar-select name="author" [avatar]="author()" [readOnly]="isReadOnly()" (selectClicked)="selectPerson('author')" />
+      <bk-avatar-select 
+        name="assignee"
+        [title]="store.i18n.assignee()"
+        [note]="store.i18n.assignee_description()"
+        [avatar]="assignee()"
+        [readOnly]="isReadOnly()"
+        (selectClicked)="selectPerson('assignee')" 
+      />
+      <bk-avatar-select
+        name="author"
+        [title]="store.i18n.author()"
+        [note]="store.i18n.author_description()"
+        [avatar]="author()"
+        [readOnly]="isReadOnly()"
+        (selectClicked)="selectPerson('author')"
+        />
 
       <bk-strings
         [strings]="calendars()"

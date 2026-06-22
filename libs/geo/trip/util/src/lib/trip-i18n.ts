@@ -24,15 +24,18 @@ export const TRIP_I18N_KEYS = {
   delete_error:             PFX + 'delete.error',
 
   end:                      PFX + 'end.label',
+  view:                     PFX + 'view.label',
   export_raw:               PFX + 'export.raw',
 
   report_damage:            PFX + 'report.damage.label',
   report_damage_plain:      PFX + 'report.damage.plain',
   report_damage_trip:       PFX + 'report.damage.trip',
+  report_damage_prompt:     PFX + 'report.damage.prompt',
 
   report_bug:               PFX + 'report.bug.label',
   report_bug_plain:         PFX + 'report.bug.plain',
   report_bug_trip:          PFX + 'report.bug.trip',
+  report_bug_prompt:        PFX + 'report.bug.prompt',
 
   search:                   PFX + 'search.label',
 
@@ -46,6 +49,11 @@ export const TRIP_I18N_KEYS = {
   show_images:              PFX + 'show.images',
   show_statistics_boatkm:   PFX + 'show.statistics.boatkm',
   show_statistics_personkm: PFX + 'show.statistics.personkm',
+
+  stats_boat_title:         PFX + 'stats.boat_title',
+  stats_member_title:       PFX + 'stats.member_title',
+  stats_view_list:          PFX + 'stats.view_list',
+  stats_view_graph:         PFX + 'stats.view_graph',
 
   update:                   PFX + 'update.label',
   update_conf:              PFX + 'update.conf',

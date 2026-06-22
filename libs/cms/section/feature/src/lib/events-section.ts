@@ -48,7 +48,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
       <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
         @if(numberOfEvents() === 0) {
-          <bk-empty-list message="@events.field.empty" />
+          <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
             @for(event of calevents(); track event.bkey) {

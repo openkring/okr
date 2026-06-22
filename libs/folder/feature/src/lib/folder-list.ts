@@ -27,7 +27,7 @@ import { FolderStore } from './folder.store';
           @if(showMenuButton() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
-          <ion-title>{{ filteredFoldersCount() }}/{{ foldersCount() }} {{ folderStore.i18n.plural() }}</ion-title>
+          <ion-title>{{ filteredFoldersCount() }}/{{ foldersCount() }} {{ store.i18n.plural() }}</ion-title>
           @if(!readOnly()) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
@@ -52,7 +52,7 @@ import { FolderStore } from './folder.store';
         <bk-spinner />
       } @else {
         @if(filteredFoldersCount() === 0) {
-          <bk-empty-list [message]="folderStore.i18n.empty()" />
+          <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list>
             @for(folder of filteredFolders(); track folder.bkey) {
@@ -71,7 +71,7 @@ import { FolderStore } from './folder.store';
   `
 })
 export class FolderList {
-  protected readonly folderStore = inject(FolderStore);
+  protected readonly store = inject(FolderStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);
 
@@ -81,26 +81,26 @@ export class FolderList {
   public showMenuButton = input<boolean>(true);
 
   // data
-  protected readonly filteredFolders = computed(() => this.folderStore.filteredFolders());
-  protected readonly foldersCount = computed(() => this.folderStore.folders().length);
+  protected readonly filteredFolders = computed(() => this.store.filteredFolders());
+  protected readonly foldersCount = computed(() => this.store.folders().length);
   protected readonly filteredFoldersCount = computed(() => this.filteredFolders().length);
-  protected readonly isLoading = computed(() => this.folderStore.isLoading());
-  protected readonly currentUser = computed(() => this.folderStore.currentUser());
+  protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   protected readonly popupId = computed(() => `c_folders_list`);
 
-  private imgixBaseUrl = this.folderStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters ******************************************* */
   protected onSearchTermChange(searchTerm: string): void {
-    this.folderStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   /******************************* actions *************************************** */
   protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.folderStore.add(); break;
+      case 'add': await this.store.add(); break;
       default: this.alertService.error(`FolderListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -108,13 +108,13 @@ export class FolderList {
   protected async showActions(folder: FolderModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton(this.folderStore.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton(this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton(this.folderStore.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton(this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton(this.folderStore.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton(this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
     }
 
     if (actionSheetOptions.buttons.length > 0) {
@@ -123,8 +123,8 @@ export class FolderList {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'folder.edit': await this.folderStore.edit(folder, this.readOnly()); break;
-        case 'folder.delete': await this.folderStore.delete(folder); break;
+        case 'folder.edit': await this.store.edit(folder, this.readOnly()); break;
+        case 'folder.delete': await this.store.delete(folder); break;
       }
     }
   }

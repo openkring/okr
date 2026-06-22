@@ -3,7 +3,7 @@ import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonBut
 import { AvatarInfo, OrgModel, PersonModel, ReservationModel, ResourceModelName, RoleName } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson } from '@bk2/shared-util-core';
 
 import { Menu } from '@bk2/cms-menu-feature';
@@ -354,22 +354,26 @@ export class ReservationList {
    * @param reservation 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('reservation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-    }
     if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('reservation.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       if (isOngoing(reservation.endDate)) {
         actionSheetOptions.buttons.push(createActionSheetButton('reservation.end', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
       }
+      if (hasRole('admin', this.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('reservation.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetDivider());
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
-    if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('reservation.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.person_edit(), this.imgixBaseUrl, 'edit'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.person_view(), this.imgixBaseUrl, 'eye-on'));
     }
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
+    actionSheetOptions.buttons.push(createActionSheetButton('person.phone', this.store.i18n.person_phone(), this.imgixBaseUrl, 'tel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.person_chat(), this.imgixBaseUrl, 'chatbubbles'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -395,6 +399,18 @@ export class ReservationList {
           break;
         case 'reservation.end':
           await this.store.end(reservation, this.readOnly());
+          break;
+        case 'person.edit':
+          await this.store.editPerson(reservation, this.readOnly());
+          break;
+        case 'person.view':
+          await this.store.editPerson(reservation, true);
+          break;
+        case 'person.phone':
+          await this.store.callPhone(reservation, this.readOnly());
+          break;
+        case 'person.chat':
+          await this.store.openDirectChat(reservation, this.readOnly());
           break;
       }
     }

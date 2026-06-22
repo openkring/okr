@@ -60,7 +60,7 @@ import { BillStore } from './bill.store';
       @if(isLoading()) {
         <bk-spinner />
       } @else if(filteredBills().length === 0) {
-        <bk-empty-list message="@finance.bill.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
           @for(bill of filteredBills(); track bill.bkey) {
@@ -161,11 +161,11 @@ export class BillList {
   }
 
   protected async showActions(bill: BillModel): Promise<void> {
-    const options = createActionSheetOptions('@actionsheet.label.choose');
+    const options = createActionSheetOptions(this.store.i18n.as_title());
     const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton('bill.view', base, 'eye-on', this.store.i18n.as_view()));
+    options.buttons.push(createActionSheetButton('bill.view', base, 'eye-on', this.store.i18n.view()));
     if (bill.attachments.length > 0) {
-      options.buttons.push(createActionSheetButton('bill.download', base, 'download', this.store.i18n.as_download()));
+      options.buttons.push(createActionSheetButton('bill.download', base, 'download', this.store.i18n.download()));
     }
     options.buttons.push(createActionSheetButton('cancel', base, 'cancel', this.store.i18n.cancel()));
 

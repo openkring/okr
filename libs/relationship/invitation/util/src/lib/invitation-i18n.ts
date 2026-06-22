@@ -57,11 +57,11 @@ export const INVITATION_I18N_KEYS = {
   role_label:                       PFX + 'role.label',
 
   // state: explicit
-  state:                            PFX + 'state.label',
-  state_pending_label:              PFX + 'state.pending.label',
-  state_accepted_label:             PFX + 'state.accepted.label',
-  state_maybe_label:                PFX + 'state.maybe.label',
-  state_declined_label:             PFX + 'state.declined.label',
+  state:                            PFX + 'invitation_state.label',
+  state_pending_label:              PFX + 'invitation_state.pending.label',
+  state_accepted_label:             PFX + 'invitation_state.accepted.label',
+  state_maybe_label:                PFX + 'invitation_state.maybe.label',
+  state_declined_label:             PFX + 'invitation_state.declined.label',
 
   date:                            '@date',
   name:                            '@name.label',

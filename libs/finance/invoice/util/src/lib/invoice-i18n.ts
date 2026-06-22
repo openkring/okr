@@ -1,70 +1,109 @@
 import { Signal } from '@angular/core';
 
-export const INVOICE_I18N_KEYS = {
-  delete_confirm: '@finance/invoice/feature.delete.confirm',
-  ok: '@ok',
-  cancel: '@cancel',
-  save: '@save.label',
-  list_title:      '@finance/invoice/feature.list.title',
-  accordion_title: '@finance/invoice/feature.accordion.title',
-  empty:     '@finance/invoice/feature.empty',
-  as_view:    '@finance/invoice/feature.actionsheet.view',
-  as_showpdf: '@finance/invoice/feature.actionsheet.showpdf',
-  as_edit:    '@finance/invoice/feature.actionsheet.edit',
-  as_delete:  '@finance/invoice/feature.actionsheet.delete',
+const PFX = '@finance/invoice/feature.';
 
-  invoiceId_label:          '@finance/invoice/feature.invoiceId.label',
-  invoiceId_placeholder:    '@finance/invoice/feature.invoiceId.placeholder',
-  invoiceId_helper:         '@finance/invoice/feature.invoiceId.helper',
-  title_label:              '@finance/invoice/feature.title.label',
-  title_placeholder:        '@finance/invoice/feature.title.placeholder',
-  title_helper:             '@finance/invoice/feature.title.helper',
-  amount_label:             '@finance/invoice/feature.amount.label',
-  amount_placeholder:       '@finance/invoice/feature.amount.placeholder',
-  amount_helper:            '@finance/invoice/feature.amount.helper',
-  notes_label:              '@finance/invoice/feature.notes.label',
-  notes_placeholder:        '@finance/invoice/feature.notes.placeholder',
-  invoiceDate_label:        '@finance/invoice/feature.invoiceDate.label',
-  invoiceDate_placeholder:  '@finance/invoice/feature.invoiceDate.placeholder',
-  invoiceDate_helper:       '@finance/invoice/feature.invoiceDate.helper',
-  dueDate_label:            '@finance/invoice/feature.dueDate.label',
-  dueDate_placeholder:      '@finance/invoice/feature.dueDate.placeholder',
-  dueDate_helper:           '@finance/invoice/feature.dueDate.helper',
-  paymentDate_label:        '@finance/invoice/feature.paymentDate.label',
-  paymentDate_placeholder:  '@finance/invoice/feature.paymentDate.placeholder',
-  paymentDate_helper:       '@finance/invoice/feature.paymentDate.helper',
-  vatType_label:            '@finance/invoice/feature.vatType.label',
-  state_label:              '@finance/invoice/feature.state.label',
-  // BexioInvoiceNewFormI18n keys
-  bexioId_label:            '@finance/invoice/feature.bexioId.label',
-  bexioId_placeholder:      '@finance/invoice/feature.bexioId.placeholder',
-  bexioId_helper:           '@finance/invoice/feature.bexioId.helper',
-  posText_label:            '@finance/invoice/feature.position.text.label',
-  posText_placeholder:      '@finance/invoice/feature.position.text.placeholder',
-  posText_helper:           '@finance/invoice/feature.position.text.helper',
-  unitPrice_label:          '@finance/invoice/feature.position.unitPrice.label',
-  unitPrice_placeholder:    '@finance/invoice/feature.position.unitPrice.placeholder',
-  unitPrice_helper:         '@finance/invoice/feature.position.unitPrice.helper',
-  posAmount_label:          '@finance/invoice/feature.position.amount.label',
-  posAmount_placeholder:    '@finance/invoice/feature.position.amount.placeholder',
-  posAmount_helper:         '@finance/invoice/feature.position.amount.helper',
-  accountId_label:          '@finance/invoice/feature.position.accountId.label',
-  accountId_placeholder:    '@finance/invoice/feature.position.accountId.placeholder',
-  accountId_helper:         '@finance/invoice/feature.position.accountId.helper',
-  header_label:             '@finance/invoice/feature.header.label',
-  header_placeholder:       '@finance/invoice/feature.header.placeholder',
-  header_title:             '@finance/invoice/feature.field.header.label',
-  footer_label:             '@finance/invoice/feature.footer.label',
-  footer_placeholder:       '@finance/invoice/feature.footer.placeholder',
-  footer_title:             '@finance/invoice/feature.field.footer.label',
-  validFrom_label:          '@finance/invoice/feature.validFrom.label',
-  validFrom_placeholder:    '@finance/invoice/feature.validFrom.placeholder',
-  validFrom_helper:         '@finance/invoice/feature.validFrom.helper',
-  validTo_label:            '@finance/invoice/feature.validTo.label',
-  validTo_placeholder:      '@finance/invoice/feature.validTo.placeholder',
-  validTo_helper:           '@finance/invoice/feature.validTo.helper',
-  template_label:           '@finance/invoice/feature.template.label',
-  defaultPosition_label:    '@finance/invoice/feature.defaultPosition.label',
+export const INVOICE_I18N_KEYS = {
+  invoice:                    PFX + 'singular',
+  invoices:                   PFX + 'plural',
+
+  invoice_aging:              PFX + 'aging',
+  empty:                      PFX + 'empty',
+
+  list_title:               PFX + 'list.title',
+
+  id_label:                 PFX + 'id.label',
+  id_placeholder:           PFX + 'id.placeholder',
+  id_helper:                PFX + 'id.helper',
+
+  invoice_date_label:               PFX + 'date.invoice.label',
+  invoice_date_placeholder:         PFX + 'date.invoice.placeholder',
+  invoice_date_helper:              PFX + 'date.invoice.helper',
+
+  due_date_label:            PFX + 'date.due.label',
+  due_date_placeholder:      PFX + 'date.due.placeholder',
+  due_date_helper:           PFX + 'date.due.helper',
+
+  payment_date_label:        PFX + 'date.payment.label',
+  payment_date_placeholder:  PFX + 'date.payment.placeholder',
+  payment_date_helper:       PFX + 'date.payment.helper',
+
+  title_label:              PFX + 'title.label',
+  title_placeholder:        PFX + 'title.placeholder',
+  title_helper:             PFX + 'title.helper',
+
+  amount_label:             PFX + 'amount.label',
+  amount_placeholder:       PFX + 'amount.placeholder',
+  amount_helper:            PFX + 'amount.helper',
+
+  notes_label:              PFX + 'notes.label',
+  notes_placeholder:        PFX + 'notes.placeholder',
+
+  state_label:              PFX + 'state.label',
+
+  bexioId_label:            PFX + 'bexio.id.label',
+  bexioId_placeholder:      PFX + 'bexio.id.placeholder',
+  bexioId_helper:           PFX + 'bexio.id.helper',
+
+  posText_label:            PFX + 'position.text.label',
+  posText_placeholder:      PFX + 'position.text.placeholder',
+  posText_helper:           PFX + 'position.text.helper',
+
+  posAmount_label:          PFX + 'position.amount.label',
+  posAmount_placeholder:    PFX + 'position.amount.placeholder',
+  posAmount_helper:         PFX + 'position.amount.helper',
+
+  unitPrice_label:          PFX + 'position.unitPrice.label',
+  unitPrice_placeholder:    PFX + 'position.unitPrice.placeholder',
+  unitPrice_helper:         PFX + 'position.unitPrice.helper',
+
+  accountId_label:          PFX + 'position.accountId.label',
+  accountId_placeholder:    PFX + 'position.accountId.placeholder',
+  accountId_helper:         PFX + 'position.accountId.helper',
+
+  header_label:             PFX + 'header.label',
+  header_placeholder:       PFX + 'header.placeholder',
+  header_title:             PFX + 'field.header.label',
+
+  footer_label:             PFX + 'footer.label',
+  footer_placeholder:       PFX + 'footer.placeholder',
+  footer_title:             PFX + 'field.footer.label',
+
+  validFrom_label:          PFX + 'valid.from.label',
+  validFrom_placeholder:    PFX + 'valid.from.placeholder',
+  validFrom_helper:         PFX + 'valid.from.helper',
+
+  validTo_label:            PFX + 'valid.to.label',
+  validTo_placeholder:      PFX + 'valid.to.placeholder',
+  validTo_helper:           PFX + 'valid.to.helper',
+
+  template_label:           PFX + 'template.label',
+  defaultPosition_label:    PFX + 'defaultPosition.label',
+  vat_label:                PFX + 'vat.label',
+  vat_type:                 PFX + 'vat.type',
+
+
+  add_position:             PFX + 'add.position',
+
+  create:                   PFX + 'create.label',
+  create_conf:              PFX + 'create.conf',
+  create_error:             PFX + 'create.error',
+
+  delete:                   PFX + 'delete.label',
+  delete_confirm:           PFX + 'delete.confirm',
+  delete_conf:              PFX + 'delete.conf',
+  delete_error:             PFX + 'delete.error',
+
+  update:                   PFX + 'update.label',
+  update_conf:              PFX + 'update.conf',
+  update_error:             PFX + 'update.error',
+
+  view:                     PFX + 'view.label',
+  show_pdf:                 PFX + 'view.pdf',
+
+  as_title:         '@actionsheet.title',
+  ok:               '@ok',
+  cancel:           '@cancel',
+  save:             '@save.label'
 } satisfies Record<string, string>;
 
 export type InvoiceI18n = { [K in keyof typeof INVOICE_I18N_KEYS]: Signal<string> };

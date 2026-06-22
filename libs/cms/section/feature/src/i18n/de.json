@@ -294,7 +294,8 @@
     }
   },
   "events": {
-    "label": "Ereignisse"
+    "label": "Ereignisse",
+    "empty": "Keine Ereignisse gefunden."
   },
   "form": {
     "title": "Sektion",
@@ -890,6 +891,144 @@
       "label": "Basis-URL",
       "placeholder": "https://",
       "helper": "Die Basis-URL wird einer relativen URL als Prefix voran gestellt."
+    }
+  },
+
+  "section_type": {
+    "label": "Sektions-Art",
+    "helper": "Der Typ einer Sektion, hauptsächlich als Filter in Sektionslisten verwendet.",
+    "all": {
+      "label": "Alle Sektionsarten"
+    },
+    "accordion": {
+      "label": "Akkordeon",
+      "edit": "Akkordeon Konfiguration ändern",
+      "description": "Ein- und Ausklappbare Sektionen"
+    },
+    "album": {
+      "label": "Album",
+      "edit": "Albumskonfiguration bearbeiten",
+      "description": "Bildübersicht mit Thumbnails."
+    },
+    "article": {
+      "label": "Artikel",
+      "edit": "Artikel bearbeiten",
+      "description": "Artikel mit Titel, Untertitel und Freitext. Das Bild ist optional und die Anordnung kann eingestellt werden."
+    },
+    "button": {
+      "label": "Button",
+      "description": "Die Sektion zeigt einen Button mit optionalem Text."
+    },
+    "cal": {
+      "label": "Kalender",
+      "edit": "Kalender Konfiguration ändern",
+      "description": "Darstellung von Terminen in einem Kalender"
+    },
+    "chart": {
+      "label": "Diagramm",
+      "edit": "Diagramm Konfiguration ändern",
+      "description": "Darstellung von Daten in Form von Diagrammen"
+    },
+    "chat": {
+      "label": "Chat",
+      "title": "Chat Konfiguration ändern",
+      "subtitle": "Passe hier die Chat-Einstellungen an deine Bedürfnisse an.",
+      "edit": "Chat Konfiguration ändern",
+      "description": "Chat-Fenster für direkte oder Gruppen-Kommunikation"
+    },
+    "context": {
+      "label": "Kontextdiagramm",
+      "description": "Zeigt die Beziehungen einer Person, Gruppe oder Organisation."
+    },
+    "events": {
+      "label": "Events",
+      "title": "Konfiguration der Eventliste",
+      "subtitle": "Passe hier die Einstellungen der Eventliste an deine Bedürfnisse an.",
+      "edit": "Eventliste Konfiguration ändern",
+      "description": "Darstellung von Events, z.B. Regatten, Anlässe, Trainings"
+    },
+    "form": {
+      "label": "Form",
+      "edit": "Formular Konfiguration ändern",
+      "description": "Formular, um Daten zu erfassen, z.B. Bootshaus Reservation, Anmeldung, Kontaktformular"
+    },
+    "gallery": {
+      "label": "Gallerie",
+      "edit": "Gallerie Konfiguration ändern",
+      "description": "Darstellung von Bildern in Grossformat"
+    },
+    "hero": {
+      "label": "Hero",
+      "edit": "Hero Konfiguration ändern",
+      "description": "Sektion mit grossem Bild und Titel"
+    },
+    "iframe": {
+      "label": "iFrame",
+      "description": "Sektion zum Einbetten einer Webview/iframe"
+    },
+    "invitations": {
+      "label": "Einladungen",
+      "title": "Konfiguration der Einladungen",
+      "subtitle": "Passe hier die Einstellungen der Einladungen an deine Bedürfnisse an.",
+      "edit": "Einladungen Konfiguration ändern",
+      "description": "Darstellung von Einladungen, z.B. für Veranstaltungen, Meetings"
+    },
+    "list": {
+      "label": "Liste",
+      "edit": "Listen-Konfiguration ändern",
+      "description": "Eine Listendarstellung von BOM-Objekten (z.B. Personen, Boote, Events)"
+    },
+    "map": {
+      "label": "Karte",
+      "description": "Sektion zur Anzeige einer Kartenansicht"
+    },
+    "model": {
+      "label": "Modell",
+      "description": "3D Modell, z.B. Boot, Haus, Auto"
+    },
+    "orgchart": {
+      "label": "Organigramm",
+      "description": "Zeigt eine hierarchische Organisation grafisch als Organigramm oder als Liste."
+    },
+    "people": {
+      "label": "Personen",
+      "addLabel": "Person auswählen",
+      "select": {
+        "group": "Gruppe auswählen",
+        "responsibility": "Verantwortliche wählen"
+      },
+      "edit": "Personen Konfiguration ändern",
+      "editorLabel": "Optionale Beschreibung",
+      "configLabel": "Avatar Konfiguration",
+      "description": "Liste von Personen mit Bild, Name, Funktion und optionaler Beschreibung",
+      "labelField": {
+        "label": "Name",
+        "placeholder": "Text, der zusätzlich zum Namen angezeigt wird, z.B. Abkürzung, Funktion"
+      }
+    },
+    "responsibility": {
+      "label": "Verantwortlichkeiten",
+      "edit": "Konfiguration",
+      "description": "Eine Visualisierung einer Rolle mit einer verantwortlichen Person oder Gruppe."
+    },
+    "slider": {
+      "label": "Slider",
+      "edit": "Slider Konfiguration ändern",
+      "description": "Mehrere Bilder werden nebeneinander oder nacheinander dargestellt."
+    },
+    "table": {
+      "label": "Tabelle",
+      "description": "Sektion zum Darstellen von Daten in einer einfachen Tabelle"
+    },
+    "tracker": {
+      "label": "Tracker",
+      "edit": "Tracker Konfiguration ändern",
+      "description": "Tracking-Elemente, z.B. für Regatten, Wanderfahrten, Trainings"
+    },
+    "video": {
+      "label": "Video",
+      "edit": "Video Konfiguration ändern",
+      "description": "Sektion zeigt ein Youtube Video. Geeignet z.B. für Anleitungen, Marketing etc."
     }
   }
 }

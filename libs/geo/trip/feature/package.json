@@ -20,6 +20,7 @@
     "@bk2/avatar-data-access": "*",
     "@bk2/avatar-util": "*",
     "@bk2/cms-menu-feature": "*",
+    "@bk2/cms-section-feature": "*",
     "@bk2/location-data-access": "*",
     "@bk2/trip-data-access": "*",
     "@bk2/trip-ui": "*",

@@ -13,7 +13,9 @@
   },
   "person": {
     "select": "Person wählen",
-    "empty": "Keine Personen gefunden."
+    "empty": "Keine Personen gefunden.",
+    "custom_use": "als Gast verwenden",
+    "label": "Person"
   },
   "resource": {
     "select": "Resource wählen",

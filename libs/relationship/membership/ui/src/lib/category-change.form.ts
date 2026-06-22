@@ -27,7 +27,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
               <ion-row>
                 <ion-col size="4">
                   <ion-item lines="none">
-                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" [readOnly]="true" labelName="labelOld" />
+                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" [readOnly]="true" />
                   </ion-item>
                 </ion-col>
                 <ion-col size="3" class="ion-align-self-center ion-text-center">
@@ -35,7 +35,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
                 </ion-col>
                 <ion-col size="5">
                   <ion-item lines="none">
-                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="newCategory()" (selectedItemNameChange)="onFieldChange('membershipCategoryNew', $event)" labelName="labelNew" [readOnly]="isReadOnly()" />
+                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="newCategory()" (selectedItemNameChange)="onFieldChange('membershipCategoryNew', $event)" [readOnly]="isReadOnly()" />
                   </ion-item>
                 </ion-col>
               </ion-row>

@@ -1,8 +1,11 @@
 import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, getNonSelectedChips, string2stringArray } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { ChipSelectModal } from './chip-select.modal';
 
 /**
@@ -14,7 +17,7 @@ import { ChipSelectModal } from './chip-select.modal';
   selector: 'bk-chips',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe,
     IonItem, IonLabel, IonIcon, IonChip, IonButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
@@ -25,13 +28,13 @@ import { ChipSelectModal } from './chip-select.modal';
     <ion-card>
       @if(doShowTitle()) {
         <ion-card-header>
-          <ion-card-title>{{ title() }}</ion-card-title>
+          <ion-card-title>{{ title() | translate | async }}</ion-card-title>
         </ion-card-header>
       }
       <ion-card-content>
         <ion-item lines="none">
           @if (isReadOnly()) {
-            <ion-label class="ion-hide-sm-down">{{ title() }}</ion-label>
+            <ion-label class="ion-hide-sm-down">{{ title() | translate | async }}</ion-label>
             <div  class="ion-text-wrap">
               @for (chip of selectedChips(); track $index) {
                 <ion-chip color="primary">
@@ -74,7 +77,7 @@ export class Chips {
   // derived fields
   protected selectedChips = computed<string[]>(() => string2stringArray(this.storedChips()));
   protected nonSelectedChips = computed<string[]>(() => getNonSelectedChips(string2stringArray(this.allChips()), this.selectedChips()));
-  protected title = computed(() => `@general.util.${this.chipName()}`);
+  protected title = computed(() => `@chip.${this.chipName()}.label`);
 
   public removeChip(chip: string): void {
     const selectedChips = this.selectedChips();

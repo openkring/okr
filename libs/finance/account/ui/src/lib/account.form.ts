@@ -72,27 +72,27 @@ export class AccountForm {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   protected bkeyI18n = computed(() => ({
-    name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
+    name: 'bkey', label: this.i18n().bkey(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
   } as TextInputI18n));
 
   protected idI18n = computed(() => ({
-    name: 'id', label: this.i18n().id_label(), placeholder: this.i18n().id_placeholder(), helper: this.i18n().id_helper()
+    name: 'id', label: this.i18n().id(), placeholder: this.i18n().id_placeholder(), helper: this.i18n().id_helper()
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({
-    name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper()
+    name: 'name', label: this.i18n().name(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper()
   } as TextInputI18n));
 
   protected labelI18n = computed(() => ({
-    name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper()
+    name: 'label', label: this.i18n().label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper()
   } as TextInputI18n));
 
   protected parentIdI18n = computed(() => ({
-    name: 'parentId', label: this.i18n().parentId_label(), placeholder: this.i18n().parentId_placeholder(), helper: this.i18n().parentId_helper()
+    name: 'parentId', label: this.i18n().parentId(), placeholder: this.i18n().parentId_placeholder(), helper: this.i18n().parentId_helper()
   } as TextInputI18n));
 
   protected notesI18n = computed(() => ({
-    name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
+    name: 'notes', label: this.i18n().notes(), placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
 
   public dirty = output<boolean>();

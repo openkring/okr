@@ -301,8 +301,10 @@ export class TaskList {
    * @param task 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.done(), this.imgixBaseUrl, 'checkbox'));
-    actionSheetOptions.buttons.push(createActionSheetDivider());
+    if (task.state !== 'done') {
+      actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.done(), this.imgixBaseUrl, 'checkbox'));
+      actionSheetOptions.buttons.push(createActionSheetDivider());
+    }
     if (this.canChange(task)) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     } else {

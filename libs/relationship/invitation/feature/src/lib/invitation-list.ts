@@ -67,7 +67,7 @@ import { InvitationStore } from './invitation.store';
   <!-- list data -->
   <ion-content #content>
     @if(selectedInvitationsCount() === 0) {
-      <bk-empty-list message="@invitation.field.empty" />
+      <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
         @for(invitation of filteredInvitations(); track $index) {

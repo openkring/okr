@@ -50,7 +50,7 @@ import { MembershipStore } from './membership.store';
     </ion-item>
     <div slot="content">
       @if(membersForType().length === 0) {
-        <bk-empty-list [message]="this.store.i18n.no_data_members()" />
+        <bk-empty-list [message]="store.i18n.no_data_members()" />
       } @else {
         <ion-list lines="inset">
           @for(member of membersForType(); track $index) {

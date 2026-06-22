@@ -199,7 +199,11 @@ export const AocChatStore = signalStore(
     async renameRoom(roomId: string): Promise<void> {
       const alert = await store.alertController.create({
         header: store.i18n.chat_room_rename(),
-        inputs: [{ name: 'name', type: 'text', placeholder: store.i18n.chat_room_rename_newname() }],
+        inputs: [{ 
+          name: 'name', 
+          type: 'text', 
+          placeholder: store.i18n.chat_room_rename_newname() 
+        }],
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
           { text: store.i18n.chat_room_rename_action(), role: 'confirm' },

@@ -53,9 +53,6 @@
   },
 
 
-  "name": { 
-    "label": "Name" 
-  },
   "category": { 
     "label": "Kategorie" 
   },

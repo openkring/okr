@@ -374,6 +374,8 @@
 
   "mcat_scs": {
     "label": "Mitglieder Kategorie",
+    "labelOld": "Aktuelle Kategorie",
+    "labelNew": "Neue Kategorie",
     "helper": "Mitglieder Kategorie",
     "all": {
       "label": "Alle Kategorien"

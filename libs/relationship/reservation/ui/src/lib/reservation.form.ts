@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME } from '@bk2/shared-constants';
-import { CategoryListModel, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME } from '@bk2/shared-constants';
+import { CategoryListModel, MoneyModel, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, getAvatarName, hasRole } from '@bk2/shared-util-core';
 
@@ -155,7 +155,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-number-input [i18n]="priceI18n()" [value]="amount()" (valueChange)="onFieldChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
+                <bk-number-input [i18n]="priceI18n()" [value]="amount()" (valueChange)="onAmountChange($event)" [maxLength]=6 [readOnly]="isReadOnly()" />
               </ion-col>
 
             </ion-row>
@@ -231,7 +231,7 @@ export class ReservationForm {
 
   protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
   protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
-  protected durationMinutes = linkedSignal(() => this.formData().durationMinutes ?? 60);
+  protected durationMinutes = linkedSignal(() => this.formData().durationMinutes);
   protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
   protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
 
@@ -242,7 +242,8 @@ export class ReservationForm {
   protected reason = linkedSignal(() => this.formData().reason ?? DEFAULT_RES_REASON);
   protected order = linkedSignal(() => this.formData().order ?? 0);
   protected price = linkedSignal(() => this.formData().price);
-  protected amount = linkedSignal(() => this.price()?.amount ?? 0);
+  // displayed amount; may be empty (no price) — the cast lets the number input render an empty field instead of snapping to 0
+  protected amount = linkedSignal(() => this.price()?.amount as number);
   protected currency = linkedSignal(() => this.price()?.currency ?? DEFAULT_CURRENCY);
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
@@ -258,6 +259,21 @@ export class ReservationForm {
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /**
+   * Maps the price number field to the structured MoneyModel on the reservation.
+   * An empty field clears the price; any value (re)creates the MoneyModel, preserving
+   * the existing currency/periodicity.
+   */
+  protected onAmountChange(amount: number | null | undefined): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => {
+      if (amount === null || amount === undefined) {
+        return { ...vm, price: undefined };
+      }
+      return { ...vm, price: new MoneyModel(amount, vm.price?.currency ?? DEFAULT_CURRENCY, vm.price?.periodicity ?? DEFAULT_PERIODICITY) };
+    });
   }
 
   protected onFullDayChange(isFullDay: boolean): void {

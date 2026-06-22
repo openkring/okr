@@ -41,6 +41,7 @@ export const CALENDAR_SECTION_I18N_KEYS = {
   edit:                       PFX + 'calendar.edit',
   view:                       PFX + 'calendar.view',
   download:                   PFX + 'calendar.download',
+  empty:                      PFX + 'events.empty',
   cancel:                     '@cancel',
 } satisfies Record<string, string>;
 

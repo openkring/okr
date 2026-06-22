@@ -55,7 +55,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         @if(orgIsLoading()) {
           <bk-spinner />
         } @else if(filteredOrgs().length === 0) {
-          <bk-empty-list [message]="'@empty.org' | translate | async" />
+          <bk-empty-list [message]="orgSelectStore.i18n.org_empty()" />
         } @else {
           <ion-list lines="none">
             @for(org of filteredOrgs(); track $index) {
@@ -74,7 +74,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         @if(groupIsLoading()) {
           <bk-spinner />
         } @else if(filteredGroups().length === 0) {
-          <bk-empty-list [message]="'@empty.group' | translate | async" />
+          <bk-empty-list [message]="groupSelectStore.i18n.group_empty()" />
         } @else {
           <ion-list lines="none">
             @for(group of filteredGroups(); track $index) {
@@ -93,7 +93,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         @if(personIsLoading()) {
           <bk-spinner />
         } @else if(filteredPersons().length === 0) {
-          <bk-empty-list [message]="'@empty.person' | translate | async" />
+          <bk-empty-list [message]="personSelectStore.i18n.person_empty()" />
         } @else {
           <ion-list lines="none">
             @for(person of filteredPersons(); track $index) {

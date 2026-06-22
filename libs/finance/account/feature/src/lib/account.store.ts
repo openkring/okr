@@ -2,6 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
@@ -9,6 +10,7 @@ import { AccountModel } from '@bk2/shared-models';
 
 import { AccountService } from '@bk2/finance-account-data-access';
 import { ACCOUNT_I18N_KEYS, AccountI18n, flattenAccountTree, isAccount } from '@bk2/finance-account-util';
+import { AccountingStore } from '@bk2/finance-accounting-feature';
 
 export type { AccountI18n };
 
@@ -27,6 +29,7 @@ export const AccountStore = signalStore(
   withProps(() => ({
     accountService: inject(AccountService),
     appStore: inject(AppStore),
+    accountingStore: inject(AccountingStore),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
   })),
@@ -35,7 +38,9 @@ export const AccountStore = signalStore(
   })),
   withProps((store) => ({
     accountsResource: rxResource({
-      stream: () => store.accountService.list()
+      params: () => store.accountingStore.accountingTenantId(),
+      stream: ({ params: accountingTenantId }) =>
+        accountingTenantId ? store.accountService.list(accountingTenantId) : of([]),
     })
   })),
 
@@ -43,6 +48,7 @@ export const AccountStore = signalStore(
     accounts: computed(() => state.accountsResource.value() ?? []),
     isLoading: computed(() => state.accountsResource.isLoading()),
     currentUser: computed(() => state.appStore.currentUser()),
+    isReadOnly: computed(() => state.accountingStore.isExternallyManaged()),
     rootAccounts: computed(() =>
       (state.accountsResource.value() ?? []).filter(a => a.type === 'root')
     ),
@@ -78,12 +84,14 @@ export const AccountStore = signalStore(
     /*-------------------------- actions --------------------------------*/
     async addRoot(): Promise<void> {
       const account = new AccountModel(store.appStore.tenantId());
+      account.accountingTenantId = store.accountingStore.accountingTenantId();
       account.type = 'root';
       await this.edit(account, false);
     },
 
     async addChild(parentKey: string): Promise<void> {
       const account = new AccountModel(store.appStore.tenantId());
+      account.accountingTenantId = store.accountingStore.accountingTenantId();
       account.parentKey = parentKey;
       account.type = 'leaf';
       await this.edit(account, false);
@@ -130,7 +138,7 @@ export const AccountStore = signalStore(
      */
     async delete(account: AccountModel, readOnly = true): Promise<void> {
       if (readOnly) return;
-      await store.accountService.deleteTree(account.bkey, store.currentUser());
+      await store.accountService.deleteTree(account.bkey, store.accountingStore.accountingTenantId(), store.currentUser());
       if (store.selectedRootKey() === account.bkey) {
         patchState(store, { selectedRootKey: '', expandedKeys: [] });
       }

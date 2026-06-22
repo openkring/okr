@@ -131,6 +131,11 @@
       "button": "Sync",
       "contactFilter": { "label": "Kontakt-Filter" }
     },
+    "edit": {
+      "person": "Person bearbeiten",
+      "org": "Organisation bearbeiten",
+      "membership": "Mitgliedschaft bearbeiten"
+    },
     "vendor": {
       "title": "Lieferanten (Vendor)",
       "subtitle": "Verknüpft die Lieferanten der Bills mit Personen oder Orgs anhand des Namens.",

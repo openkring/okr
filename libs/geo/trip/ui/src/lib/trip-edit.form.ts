@@ -53,8 +53,10 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
                   @if(formData().resource; as boat) {
                     <ion-icon slot="start" src="{{ getIcon(boat) | svgIcon }}" />
                     <ion-label>{{ boat.name2 }}</ion-label>
-                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearBoat()" />
-                  } @else {
+                    @if(!isReadOnly()) {
+                      <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearBoat()" />
+                    }
+                  } @else if(!isReadOnly()) {
                     <ion-button (click)="boatSelectClicked.emit()">
                       <ion-icon slot="start" src="{{'boat' | svgIcon }}" />
                       {{ i18n().select_boat_add() }}
@@ -75,11 +77,15 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
                 <ion-item lines="none">
                   @if(formData().locations.length > 0) {
                     <ion-label>{{ formData().locations[0]?.name2 }}</ion-label>
-                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
+                    @if(!isReadOnly()) {
+                      <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
+                    }
                   } @else if(formData().customLocationLabel) {
                     <ion-label>{{ formData().customLocationLabel }}</ion-label>
-                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
-                  } @else {
+                    @if(!isReadOnly()) {
+                      <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
+                    }
+                  } @else if(!isReadOnly()) {
                     <ion-button (click)="locationSelectClicked.emit()">
                       <ion-icon slot="start" src="{{'location' | svgIcon }}" />
                       {{ i18n().select_location_add() }}
@@ -93,7 +99,7 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
             @if(formData().locations.length > 0 || formData().customLocationLabel) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [readOnly]="false" />
+                  <bk-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
@@ -116,14 +122,14 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
         <bk-avatars (selectClicked)="personSelectClicked.emit()"
           [avatars]="participants()"
           (avatarsChange)="onFieldChange('participants', $event)"
-          [readOnly]="false"
+          [readOnly]="isReadOnly()"
           [currentUser]="currentUser"
           [title]="i18n().select_participant_title()"
         />
       }
 
     @if(hasRole('admin')) {
-      <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="false" />
+      <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
     }
   `,
 })
@@ -133,7 +139,7 @@ export class TripEditForm {
   public readonly formData = model.required<TripModel>();
   protected readonly currentUser = input<UserModel | undefined>();
   public readonly tenantId = input.required<string>();
-  public readonly mode = input.required<'add' | 'edit' | 'end'>();
+  public readonly mode = input.required<'add' | 'edit' | 'end' | 'view'>();
   public readonly boats = input.required<ResourceModel[]>();
   public readonly locations = input.required<LocationModel[]>();
   public readonly category = input.required<CategoryListModel>();
@@ -155,6 +161,7 @@ export class TripEditForm {
   }
 
   // derived
+  protected isReadOnly = computed(() => this.mode() === 'view');
   protected duration = computed(() =>
     getDurationLabel(this.formData().startDate, this.formData().startTime, this.formData().endTime)
   );

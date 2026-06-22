@@ -164,7 +164,7 @@ export class LocationList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, location: LocationModel): void {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('location.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('location.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('location.convert', this.store.i18n.convert(), this.imgixBaseUrl, 'edit'));
     } else {
       actionSheetOptions.buttons.push(createActionSheetButton('location.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));

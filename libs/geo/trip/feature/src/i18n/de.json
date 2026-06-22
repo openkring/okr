@@ -17,8 +17,11 @@
     "conf": "Die Fahrt wurde gelöscht.",
     "error": "Die Fahrt konnte nicht gelöscht werden."
   },
-  "end": { 
-    "label": "Fahrt abschliessen" 
+  "end": {
+    "label": "Fahrt abschliessen"
+  },
+  "view": {
+    "label": "Fahrt ansehen"
   },
   "export": {
     "raw": "Rohdaten exportieren"
@@ -27,12 +30,14 @@
     "damage": {
       "label": "Schaden melden",
       "plain": "meldet Schaden",
-      "trip": "meldet Schaden auf Fahrt"
+      "trip": "meldet Schaden auf Fahrt",
+      "prompt": "Beschreibe den Schaden"
     },
     "bug": {
       "label": "Fehler melden",
       "plain": "meldet Fehler",
-      "trip": "meldet Fehler auf Fahrt"
+      "trip": "meldet Fehler auf Fahrt",
+      "prompt": "Beschreibe den Fehler"
     }
   },
   "search": {
@@ -58,6 +63,12 @@
       "boatkm": "Boots-Statistik anzeigen",
       "personkm": "Personen-Statistik anzeigen"
     }
+  },
+  "stats": {
+    "boat_title": "Boots-Statistik",
+    "member_title": "Personen-Statistik",
+    "view_list": "Tabelle",
+    "view_graph": "Verlauf"
   },
   "update": { 
     "label": "Fahrt ändern",

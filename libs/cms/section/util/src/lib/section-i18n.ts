@@ -169,6 +169,9 @@ export const SECTION_I18N_KEYS = {
   event_show_location_label:                PFX + 'event.show.location.label',
   event_show_location_helper:               PFX + 'event.show.location.helper',
 
+  events_label:                             PFX + 'events.label',
+  events_empty:                             PFX + 'events.empty',
+
   // form
   form_title:                               PFX + 'form.title',
   form_content:                             PFX + 'form.content.title',

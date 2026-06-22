@@ -32,6 +32,11 @@ export const RESERVATION_I18N_KEYS = {
 
   view:                           PFX + 'view.label',
 
+  person_edit:                    PFX + 'person.edit',
+  person_view:                    PFX + 'person.view',
+  person_phone:                   PFX + 'person.phone',
+  person_chat:                    PFX + 'person.chat',
+
   list_title:                     PFX + 'list.title',
   list_header_reserver:           PFX + 'list.header.reserver',
   list_header_name:               PFX + 'list.header.name',

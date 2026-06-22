@@ -240,5 +240,21 @@
         "description": "Eine Aufgabe / ein Todo, die zu erledigen ist.",
         "placeholder": "Kurze Beschreibung der Aufgabe"
       }
+    },
+
+   "importance": {
+      "label": "Wichtigkeit",
+      "low": {
+        "label": "Unwichtig",
+        "description": "Niedrige Wichtigkeit"
+      },
+      "medium": {
+        "label": "Normal",
+        "description": "Normale Wichtigkeit"
+      },
+      "high": {
+        "label": "Hoch",
+        "description": "Hohe Wichtigkeit"
+      }
     }
 }

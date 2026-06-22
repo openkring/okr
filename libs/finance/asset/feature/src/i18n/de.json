@@ -1,0 +1,60 @@
+{
+    "singular": "Aktivum",
+    "plural": "Aktiven",
+    "empty": "Keine Aktiven gefunden",
+
+    "list": {
+        "title": "Aktiven / Vermögenswerte / Asset"
+    },
+    "deduction": {
+        "label": "Abschreibung",
+        "run": "Abschreibungslauf"
+    },
+
+   "name": {
+        "label": "Aktivum Name"
+    },
+   "number": {
+        "label": "Konto Nummer"
+    },
+   "category": {
+        "label": "Kategorie"
+    },
+   "date": {
+        "acquisition": {
+            "label": "Beschaffungsdatum"
+        },
+        "end": {
+            "label": "Periodenende"
+        }
+    },
+    "life": {
+        "label": "Lebenszeit (Monate)"
+    },
+    "preview": {
+        "label": "Vorschau"
+    },
+
+    "book": {
+        "label": "Buchen"
+    },
+    "create": {
+        "label": "Neues Aktivum erstellen",
+        "conf": "Das Aktivum wurde gespeichert.",
+        "error": "Das Aktivum konnte nicht gespeichert werden."
+    },
+    "delete": {
+        "label": "Aktivum löschen",
+        "conf": "Aktivum wurde gelöscht.",
+        "confirm": "Soll das Aktivum wirklich gelöscht werden ?",
+        "error": "Das Aktivum konnte nicht gelöscht werden."
+    },
+    "update": {
+        "label": "Aktivum ändern",
+        "conf": "Das Aktivum wurde gespeichert.",
+        "error": "Das Aktivum konnte nicht gespeichert werden."
+    },
+    "view": {
+        "label": "Aktivum anzeigen"
+    }
+}

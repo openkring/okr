@@ -55,7 +55,7 @@ export const BookingStore = signalStore(
       stream: () => store.bookingLineService.list(store.accountingStore.accountingTenantId()),
     }),
     accountsResource: rxResource({
-      stream: () => store.accountService.list('id', 'asc'),
+      stream: () => store.accountService.list(store.accountingStore.accountingTenantId(), 'id', 'asc'),
     }),
   })),
   withComputed(store => ({

@@ -1,22 +1,45 @@
 {
   "accounts": "Konti",
   "empty": "Keine Konti gefunden.",
-  "id": "Konto Nr.",
-  "name": "Konto Name",
+
+  "create": "Neues Konto eröffnen",
+  "delete": "Konto löschen",
   "select": {
     "root": "Kontoplan wählen",
     "hint": "Bitte zuerst einen Kontoplan wählen."
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Konto Details ansehen",
-    "edit": "Konto editieren",
-    "create": "Neues Konto eröffnen",
-    "delete": "Konto löschen"
+  "update": "Konto editieren",
+  "view": "Konto Details ansehen",
+
+  "bkey": {
+    "label": "bkey",
+    "placeholder": "bkey",
+    "helper": "Der bkey ist der Schlüssel eines Elements, bestehend aus dem Präfix der Kategorie und einer fortlaufenden Nummer, z.B. boat-001 für das erste Boot."
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+  "id": {
+    "label": "Konto Nr.",
+    "placeholder": "nnnn",
+    "helper": "Die eindeutige Nummer des Kontos."
+  },
+  "name": {
+    "label": "Konto Name",
+    "placeholder": "Name",
+    "error": "Der Name ist obligatorisch und muss aus alphanumerischen Zeichen bestehen.",
+    "helper": "Ein Name kann aus mehreren Wörtern bestehen. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+  },
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "Bezeichnung",
+    "error": "Die Bezeichnung ist obligatorisch und muss aus alphanumerischen Zeichen bestehen.",
+    "helper": "Dieser Text wird dem User gezeigt."
+  },
+  "parentId": {
+    "label": "Hauptkonto",
+    "placeholder": "nnnn",
+    "helper": "Die Nummer des Hauptkontos. Das Hauptkonto gruppiert mehrere Konti und formiert so die Hierarchie im Kontoplan."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Freie Notizen zum Konto."
   }
 }

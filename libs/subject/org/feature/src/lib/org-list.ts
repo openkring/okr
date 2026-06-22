@@ -82,7 +82,7 @@ import { OrgStore } from './org.store';
       <bk-spinner />
     } @else {
       @if(selectedOrgsCount() === 0) {
-        <bk-empty-list message="@subject.org.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(org of filteredOrgs(); track $index) {

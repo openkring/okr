@@ -45,7 +45,7 @@ export const TasksStore = signalStore(
         const query = getSystemQuery(store.appStore.env.tenantId);
         query.push({ key: 'completionDate', operator: '==', value: '' }); // only get tasks that are not completed (completionDate is empty)
         return store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, query, 'dueDate', 'asc').pipe(
-          map(tasks => tasks.filter(task => task.assignee?.key === personKey || task.author?.key === personKey))
+          map(tasks => tasks.filter(task => task.assignee?.key === personKey))
         );
       }
     })

@@ -124,9 +124,9 @@ export const CATEGORY_I18N_KEYS = {
   model_type_membership_description:     PFX + 'model_type.membership.description',
   model_type_membership_placeholder:     PFX + 'model_type.membership.placeholder',
 
-  model_type_menuItem_label:           PFX + 'model_type.menuItem.label',
-  model_type_menuItem_description:     PFX + 'model_type.menuItem.description',
-  model_type_menuItem_placeholder:     PFX + 'model_type.menuItem.placeholder',
+  model_type_menuItem_label:           PFX + 'model_type.menuitem.label',
+  model_type_menuItem_description:     PFX + 'model_type.menuitem.description',
+  model_type_menuItem_placeholder:     PFX + 'model_type.menuitem.placeholder',
 
   model_type_org_label:           PFX + 'model_type.org.label',
   model_type_org_description:     PFX + 'model_type.org.description',

@@ -1,33 +1,15 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
-import { signalStore, withProps } from '@ngrx/signals';
 
-import { I18nService } from '@bk2/shared-i18n';
 import { InvoiceModel } from '@bk2/shared-models';
 import { Header } from '@bk2/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-
-const InvoiceViewStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps(store => ({
-    i18n: store.i18nService.translateAll({
-      view_title:         '@finance.invoice.operation.view.label',
-      field_invoice_id:   '@finance.invoice.field.invoiceId.label',
-      field_title:        '@finance.invoice.field.title.label',
-      field_invoice_date: '@finance.invoice.field.invoiceDate.label',
-      field_due_date:     '@finance.invoice.field.dueDate.label',
-      field_amount:       '@finance.invoice.field.amount.label',
-      field_state:        '@finance.invoice.field.state.label',
-      field_payment_date: '@finance.invoice.field.paymentDate.label',
-      field_notes:        '@finance.invoice.field.notes.label',
-    }),
-  })),
-);
+import { InvoiceStore } from './invoice.store';
 
 @Component({
   selector: 'bk-invoice-view-modal',
   standalone: true,
-  providers: [InvoiceViewStore],
+  providers: [InvoiceStore],
   imports: [
     SvgIconPipe, PrettyDatePipe,
     Header,
@@ -38,16 +20,16 @@ const InvoiceViewStore = signalStore(
     .view-label { font-size: 0.8rem }
   `],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.view_title() }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.view() }" [isModal]="true" />
     <ion-content class="ion-no-padding">
       @if(invoice(); as invoice) {
         <ion-card>
           <ion-card-content>
             <!-- invoiceId -->
             <ion-item lines="none">
-              <ion-icon slot="start" src="{{'info' | svgIcon}}" />
+              <ion-icon slot="start" src="{{'info-circle' | svgIcon}}" />
               <ion-label>
-                <p class="view-label">{{ store.i18n.field_invoice_id() }}</p>
+                <p class="view-label">{{ store.i18n.id_label() }}</p>
                 <p class="view-value">{{ invoiceId() }}</p>
               </ion-label>
             </ion-item>
@@ -55,7 +37,7 @@ const InvoiceViewStore = signalStore(
             <ion-item lines="none">
               <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
               <ion-label>
-                <p class="view-label">{{ store.i18n.field_title() }}</p>
+                <p class="view-label">{{ store.i18n.title_label() }}</p>
                 <p class="view-value">{{ title() }}</p>
               </ion-label>
             </ion-item>
@@ -63,7 +45,7 @@ const InvoiceViewStore = signalStore(
             <ion-item lines="none">
               <ion-icon slot="start" src="{{'calendar-number' | svgIcon}}" />
               <ion-label>
-                <p class="view-label">{{ store.i18n.field_invoice_date() }}</p>
+                <p class="view-label">{{ store.i18n.invoice_date_label() }}</p>
                 <p class="view-value">{{ invoiceDate() | prettyDate }}</p>
               </ion-label>
             </ion-item>
@@ -71,7 +53,7 @@ const InvoiceViewStore = signalStore(
             <ion-item lines="none">
               <ion-icon slot="start" src="{{'calendar-number' | svgIcon}}" />
               <ion-label>
-                <p class="view-label">{{ store.i18n.field_due_date() }}</p>
+                <p class="view-label">{{ store.i18n.due_date_label() }}</p>
                 <p class="view-value">{{ dueDate() | prettyDate }}</p>
               </ion-label>
             </ion-item>
@@ -79,7 +61,7 @@ const InvoiceViewStore = signalStore(
             <ion-item lines="none">
               <ion-icon slot="start" src="{{'chf' | svgIcon}}" />
               <ion-label>
-                <p class="view-label">{{ store.i18n.field_amount() }}</p>
+                <p class="view-label">{{ store.i18n.amount_label() }}</p>
                 <p class="view-value">{{ amount() }}</p>
               </ion-label>
             </ion-item>
@@ -87,7 +69,7 @@ const InvoiceViewStore = signalStore(
             <ion-item lines="none">
               <ion-icon slot="start" src="{{'target' | svgIcon}}" />
               <ion-label>
-                <p class="view-label">{{ store.i18n.field_state() }}</p>
+                <p class="view-label">{{ store.i18n.state_label() }}</p>
                 <ion-chip [outline]="true" size="small" [color]="getStateColor(state())">
                   {{ state() }}
                 </ion-chip>
@@ -98,7 +80,7 @@ const InvoiceViewStore = signalStore(
               <ion-item lines="none">
                 <ion-icon slot="start" src="{{'calendar-number' | svgIcon}}" />
                 <ion-label>
-                  <p class="view-label">{{ store.i18n.field_payment_date() }}</p>
+                  <p class="view-label">{{ store.i18n.payment_date_label() }}</p>
                   <p class="view-value">{{ paymentDate() | prettyDate }}</p>
                 </ion-label>
               </ion-item>
@@ -108,7 +90,7 @@ const InvoiceViewStore = signalStore(
               <ion-item lines="none">
                 <ion-icon slot="start" src="{{'chatbox' | svgIcon}}" />
                 <ion-label>
-                  <p class="view-label">{{ store.i18n.field_notes() }}</p>
+                  <p class="view-label">{{ store.i18n.notes_label() }}</p>
                   <p class="view-value">{{ notes() }}</p>
                 </ion-label>
               </ion-item>
@@ -120,7 +102,7 @@ const InvoiceViewStore = signalStore(
   `
 })
 export class InvoiceViewModal {
-  protected readonly store = inject(InvoiceViewStore);
+  protected readonly store = inject(InvoiceStore);
 
   public readonly invoice = input.required<InvoiceModel>();
 

@@ -18,7 +18,7 @@ import { AssetStore } from './asset.store';
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      @if (store.isLoading()) { <p>Loading...</p> }
+      @if (store.isLoading()) { <p>{{ store.i18n.loading() }}</p> }
       @else if (store.assets().length === 0) { <p>{{ store.i18n.empty() }}</p> }
       @else {
         <ion-list>

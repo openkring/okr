@@ -26,7 +26,7 @@ import { ResourceSelectStore } from './resource-select.store';
       [searchTerm]="searchTerm()"
       (searchTermChange)="store.setSearchTerm($event)"
       [isSearchable]="true"
-      [i18n]="{ title: store.i18n.resource_select()}"
+      [i18n]="{ title: modalTitle()}"
       [isModal]="true"
     />   
     <ion-content>
@@ -56,6 +56,8 @@ export class ResourceSelectModal {
   // inputs
   public selectedTag = input.required<string>();
   public currentUser = input.required<UserModel>();
+  /** Optional, already-resolved title string; falls back to the generic "Resource wählen". */
+  public title = input<string>();
 
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
 
@@ -64,6 +66,7 @@ export class ResourceSelectModal {
   protected resources = computed(() => this.store.resources() ?? []);
   protected selectedResourcesCount = computed(() => this.resources().length);
   protected isLoading = computed(() => this.store.isLoading());
+  protected modalTitle = computed(() => this.title() ?? this.store.i18n.resource_select());
 
   constructor() {
     effect(() => {

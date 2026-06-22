@@ -1,23 +1,32 @@
 {
-  "accordion": {
-    "title": "Lieferanten-Rechnungen"
-  },
+  "singular": "Lieferanten-Rechnung",
+  "plural": "Lieferanten-Rechnungen",
   "empty": "Keine Rechnungen gefunden",
+
   "id": "Rechnungs-Nr.",
   "title": "Betreff",
-  "billDate": "Rechnungsdatum",
-  "dueDate": "zu zahlen bis",
+  "date": {
+    "bill": {
+      "label": "Rechnungsdatum"
+    },
+    "due": {
+      "label": "zu zahlen bis"
+    },
+    "payment": {
+      "label": "Zahlungsdatum"
+    }
+  },
   "amount": "Rechnungsbetrag",
+  "notes": "Notizen",
   "state": "Status",
+
+  "download": {
+    "label":  "Rechnung herunterladen"
+  },
   "list": {
     "title": "Kreditoren-Rechnungen"
   },
   "view": {
     "label": "Rechnung anzeigen"
-  },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Rechnung anzeigen",
-    "download": "Rechnung herunterladen"
   }
 }

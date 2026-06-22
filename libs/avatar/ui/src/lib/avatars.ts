@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonImg, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
 import { NAME_LENGTH } from '@bk2/shared-constants';
 
@@ -8,7 +8,10 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { AlertService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
 import { coerceBoolean, getAvatarName } from '@bk2/shared-util-core';
 
+import { getDefaultIcon } from '@bk2/avatar-util';
+
 import { AvatarDisplay } from './avatar-display';
+import { AvatarPipe } from './avatar.pipe';
 
 /**
  * Vest updates work by binding to ngModel.
@@ -20,14 +23,15 @@ import { AvatarDisplay } from './avatar-display';
   selector: 'bk-avatars',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, AvatarPipe,
     AvatarDisplay,
-    IonList, IonItem, IonLabel, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton
+    IonList, IonItem, IonLabel, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton, IonAvatar, IonImg
 ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
     .title { font-size: 1.25rem; font-weight: 500; margin-left: 0;}
     ion-card-header { padding: 0; }
+    ion-avatar { width: 30px; height: 30px; }
   `],
   template: `
     <ion-card>
@@ -61,6 +65,9 @@ import { AvatarDisplay } from './avatar-display';
                 @for(avatar of avatars; track $index) {
                   <ion-item>
                     <ion-reorder slot="start" />
+                    <ion-avatar slot="start">
+                      <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar" />
+                    </ion-avatar>
                     <ion-label>{{ getAvatarName(avatar) }}</ion-label>
                     <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove($index)" slot="end" />
                     @if (isCopyable()) {
@@ -147,6 +154,10 @@ export class Avatars {
 
   protected getAvatarName(avatar: AvatarInfo): string {
     return getAvatarName(avatar, this.currentUser()?.nameDisplay);
+  }
+
+  protected getDefaultIcon(modelType: string): string {
+    return getDefaultIcon(modelType);
   }
 
   /**

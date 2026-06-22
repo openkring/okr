@@ -13,14 +13,16 @@ import { ACCOUNTING_I18N_KEYS } from '@bk2/finance-accounting-util';
 export type AccountingState = { accountingTenantId: string };
 
 export const AccountingStore = signalStore(
-  withState<AccountingState>({ accountingTenantId: '' }),
+  { providedIn: 'root' },
+  withState<AccountingState>({
+    accountingTenantId: ''
+  }),
   withProps(() => ({
     configService: inject(AccountingConfigService),
     appStore: inject(AppStore),
-    i18nService: inject(I18nService),
+    i18n: inject(I18nService).translateAll(ACCOUNTING_I18N_KEYS),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(ACCOUNTING_I18N_KEYS),
     configResource: rxResource({
       stream: () => {
         const id = store.accountingTenantId();

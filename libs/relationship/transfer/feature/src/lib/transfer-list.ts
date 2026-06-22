@@ -69,7 +69,7 @@ import { TransferStore } from './transfer.store';
   <!-- list data -->
   <ion-content #content>
     @if(selectedTransfersCount() === 0) {
-      <bk-empty-list message="@transfer.field.empty" />
+      <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
         @for(transfer of filteredTransfers(); track $index) {

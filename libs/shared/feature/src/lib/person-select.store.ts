@@ -8,20 +8,22 @@ import { chipMatches, nameMatches } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { AppStore } from './app.store';
-import { PERSON_SELECT_I18N_KEYS, PersonSelectI18n } from './select-i18n';
-export type { PersonSelectI18n };
+import { SHARED_FEATURE_I18N_KEYS, SharedFeatureI18n } from './select-i18n';
+import { MIN_CUSTOM_SEARCH_LENGTH, normalizeForCompare, normalizeWhitespace } from './location-select.store';
 
 
 export type PersonSelectState = {
   searchTerm: string;
   currentUser: UserModel | undefined;
   selectedTag: string;
+  allowCustom: boolean;
 };
 
 export const personInitialState: PersonSelectState = {
   searchTerm: '',
   currentUser: undefined,
   selectedTag: '',
+  allowCustom: false,
 };
 
 export const PersonSelectStore = signalStore(
@@ -30,11 +32,7 @@ export const PersonSelectStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    i18nService: inject(I18nService)
-  })),
-
-  withProps((store) => ({
-      i18n: store.i18nService.translateAll(PERSON_SELECT_I18N_KEYS),
+    i18n: inject(I18nService).translateAll(SHARED_FEATURE_I18N_KEYS) as SharedFeatureI18n
   })),
 
   withComputed((store) => {
@@ -46,18 +44,31 @@ export const PersonSelectStore = signalStore(
 
   withComputed((store) => {
     return {
-      personsCount: computed(() => store.persons()?.length ?? 0), 
-      filteredPersons: computed(() => 
-        store.persons()?.filter((person: PersonModel) => 
+      personsCount: computed(() => store.persons()?.length ?? 0),
+      filteredPersons: computed(() =>
+        store.persons()?.filter((person: PersonModel) =>
           nameMatches(person.index, store.searchTerm()) &&
           chipMatches(person.tags, store.selectedTag()))
-      )
+      ),
+      customLabel: computed(() => normalizeWhitespace(store.searchTerm())),
+      hasExactMatch: computed(() => {
+        const q = normalizeForCompare(store.searchTerm());
+        return (store.persons() ?? []).some(p => normalizeForCompare(`${p.firstName} ${p.lastName}`) === q);
+      }),
     }
   }),
 
+  withComputed((store) => ({
+    showCustomEntry: computed(() =>
+      store.allowCustom()
+      && store.customLabel().length >= MIN_CUSTOM_SEARCH_LENGTH
+      && !store.hasExactMatch()
+    ),
+  })),
+
   withMethods((store) => {
     return {
-      
+
       setCurrentUser(currentUser: UserModel | undefined) {
         patchState(store, { currentUser });
       },
@@ -68,6 +79,10 @@ export const PersonSelectStore = signalStore(
 
       setSelectedTag(selectedTag: string) {
         patchState(store, { selectedTag });
+      },
+
+      setAllowCustom(allowCustom: boolean) {
+        patchState(store, { allowCustom });
       }
     }
   }),

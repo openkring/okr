@@ -1,36 +1,169 @@
 {
-  "invoices": "Debitoren Rechnungen",
+  "singular": "Rechnung",
+  "plural": "Debitoren Rechnungen",
+  "aging": "Debitorenalterung",
   "empty": "Keine Rechnungen gefunden",
-  "invoiceId": "Rechnungsnummer",
-  "title": "Betreff",
-  "invoiceDate": "Rechnungsdatum",
-  "dueDate": "Zahlbar bis",
-  "amount": "Betrag",
-  "state": "Rechnungsstatus",
-  "paymentDate": "Bezahlt am",
-  "notes": "Notizen",
-  "create": {
-    "label": "Rechnung hinzufügen",
-    "error": "Die Rechnung konnte nicht erstellt werden."
-  },
-  "update": "Rechnung ändern",
-  "delete": {
-    "confirm": "Soll die Rechnung wirklich gelöscht werden ?"
-  },
-  "view": "Rechnung anzeigen",
+
   "list": {
     "title": "Rechnungsübersicht"
   },
-  "actionsheet": {
-    "title": "Wähle eine Aktion",
-    "view": "Rechnung anzeigen",
-    "showpdf": "PDF anzeigen",
-    "edit": "Rechnung ändern",
-    "delete": "Rechnung löschen"
+
+  "id": {
+    "label": "ID",
+    "placeholder": "nnnnn",
+    "helper": "Ein eindeutiger Identifikator für eine Rechnung."
   },
-  "changeConfirmation": {
-    "ok": "OK",
-    "cancel": "Abbrechen",
-    "confirmation": "Speichern"
+  "date": {
+    "invoice": {
+      "label": "Rechnungsdatum",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Das Datum an dem die Rechnung gestellt wurde. Ab dann beginnt die Zahlungsfrist zu laufen."
+    },
+    "due": {
+      "label": "Zahlbar bis",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Das Datum der Zahlungsfrist. Bis dann muss die Rechnung bezahlt werden."
+    },
+    "payment": {
+      "label": "Bezahlt am",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Das Datum an dem die Rechnung bezahlt wurde."
+    }
+  },
+  "title": {
+    "label": "Betreff",
+    "placeholder": "Text",
+    "helper": "Eine kurze Beschreibung worum es geht."
+  },
+  "amount": {
+    "label": "Betrag",
+    "placeholder": "nn.nn",
+    "helper": "Der Rechnungsbetrag."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Freie Notizen zur Rechnung"
+  },
+  "state": "Rechnungsstatus",
+  "bexio": {
+    "id": {
+      "label": "Bexio ID",
+      "placeholder": "nnnnnnn",
+      "helper": "Rechnungs ID in Bexio"
+    }
+  },
+  "position": {
+    "text": {
+      "label": "Text",
+      "placeholder": "ssssssss",
+      "helper": "Ein Bezeichner für die Rechnungsposition."
+    },
+    "amount": {
+      "label": "Rechnungsbetrag",
+      "placeholder": "nnnn.nn",
+      "helper": "Totalbetrag auf der Rechnung über alle Positionen."
+    }
+  },
+  "unitPrice": {
+      "label": "",
+      "placeholder": "",
+      "helper": ""
+    },
+  "accountId": {
+      "label": "",
+      "placeholder": "",
+      "helper": ""
+    },
+  "header": {
+      "label": "Kopfzeile",
+      "placeholder": "Text",
+      "helper": "Text, der über den Rechnungspositionen auf der Rechnung dargestellt wird."
+    },
+  "footer": {
+      "label": "Fusszeile",
+      "placeholder": "Text",
+      "helper": "Text, der unter den Rechnungspositionen auf der Rechnung dargestellt wird."
+    },
+  "valid": {
+    "from": {
+      "label": "Gültig ab",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Ab diesem Datum gilt die Rechnung."
+    },
+    "to": {
+      "label": "Gültig bis",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Bis zu diesem Datum gilt die Rechnung."
+    }
+  },
+  "template": {
+    "label": "Template"
+  },
+  "defaultPosition": {
+    "label": "Default Rechnungsposition"
+  },
+  "vat": {
+    "label": "MwSt",
+    "type": "MwSt Stz"
+  },
+
+  "add": {
+    "position": "Rechnungsposition hinzufügen"
+  },
+  "create": {
+    "label": "Rechnung hinzufügen",
+    "conf": "Die Rechnung wurde erstellt.",
+    "error": "Die Rechnung konnte nicht erstellt werden."
+  },
+  "delete": {
+    "label": "Rechnung löschen",
+    "confirm": "Soll die Rechnung wirklich gelöscht werden ?",
+    "conf": "Die Rechnung wurde gelöscht.",
+    "error": "Die Rechnung konnte nicht gelöscht werden."
+  },
+  "update": {
+    "label": "Rechnung ändern",
+    "conf": "Die Rechnung wurde geändert.",
+    "error": "Die Rechnung konnte nicht geändert werden."
+  },
+  "view": {
+    "label":  "Rechnungsdetails anzeigen",
+    "pdf": "PDF anzeigen"
+  },
+
+  "invoice_state": {
+    "name": "Rechnungsstatus",
+    "created": {
+      "label": "Erstellt",
+      "description": "Die Rechnungs wurde erstellt."
+    },
+    "synched": {
+      "label": "Synchronisiert",
+      "description": "Die Rechnung wurde mit Bexio synchronisiert."
+    },
+    "free": {
+      "label": "Gratis",
+      "description": "Die Rechnung muss nicht bezahlt werden."
+    },
+    "billed": {
+      "label": "Verrechnet",
+      "description": "Die Rechnung wurde versendet."
+    },
+    "reminded": {
+      "label": "Gemahnt",
+      "description": "Die Zahlungs erfolgte nicht rechtzeitig, die Rechnung wurde gemahnt."
+    },
+    "paid": {
+      "label": "Bezahlt",
+      "description": "Die Rechnung wurde bezahlt"
+    },
+    "closed": {
+      "label": "Abgeschlossen",
+      "description": "Die Rechnung ist abgeschlossen und archiviert."
+    },
+    "cancelled": {
+      "label": "Storniert",
+      "description": "Die Rechnung wurde storniert."
+    }
   }
 }

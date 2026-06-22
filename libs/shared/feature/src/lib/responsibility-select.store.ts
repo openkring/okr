@@ -8,9 +8,7 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
 import { AppStore } from './app.store';
-import { RESPONSIBILITY_SELECT_I18N_KEYS, ResponsibilitySelectI18n } from './select-i18n';
-// kept for backward compatibility
-export type { ResponsibilitySelectI18n as PersonSelectI18n };
+import { SHARED_FEATURE_I18N_KEYS, SharedFeatureI18n } from './select-i18n';
 
 export type ResponsibilitySelectState = {
   searchTerm: string;
@@ -27,11 +25,9 @@ export const ResponsibilitySelectStore = signalStore(
   withProps(() => ({
     responsibilityService: inject(ResponsibilityService),
     appStore: inject(AppStore),
-    i18nService: inject(I18nService)
+    i18n: inject(I18nService).translateAll(SHARED_FEATURE_I18N_KEYS) as SharedFeatureI18n
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(RESPONSIBILITY_SELECT_I18N_KEYS),
-
     responsibilitiesResource: rxResource({
       stream: () => store.responsibilityService.list('name', 'asc').pipe(),
     }),

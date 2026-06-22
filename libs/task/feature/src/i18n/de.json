@@ -4,10 +4,12 @@
   "desc": "Aufgaben, die erledigt werden sollen.",
   "empty": "Keine Todos gefunden.",
   "empty-my": "Gratulation ! - Du hast keine offenen Aufgaben.",
-  "calendarName": {
-    "label": "Kalender",
-    "description": "In diesen Kalendern wird das Ereignis eingetragen.",
-    "addLabel": "Kalendername hinzufügen"
+  "calendar": {
+    "name": {
+      "label": "Kalender",
+      "description": "In diesen Kalendern wird das Ereignis eingetragen.",
+      "addLabel": "Kalendername hinzufügen"
+    }
   },
   "taskQuickEntry": {
     "label": "Schnelleingabe",

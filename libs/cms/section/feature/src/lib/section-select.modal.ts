@@ -1,7 +1,7 @@
 import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { Header, HeaderI18n, Spinner } from '@bk2/shared-ui';
+import { Header, Spinner } from '@bk2/shared-ui';
 
 import { SectionStore } from './section.store';
 

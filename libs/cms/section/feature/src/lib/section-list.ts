@@ -22,7 +22,7 @@ import { SectionStore } from './section.store';
     <!-- page header -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
-      <ion-title>{{ selectedSectionsCount() }}/{{ sectionsCount() }} {{ sectionStore.i18n.sections() }}</ion-title>
+      <ion-title>{{ selectedSectionsCount() }}/{{ sectionsCount() }} {{ store.i18n.sections() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('contentAdmin')) {
           <ion-button (click)="add()">
@@ -35,7 +35,7 @@ import { SectionStore } from './section.store';
     <!-- description -->
     <ion-toolbar class="ion-hide-md-down">
       <ion-item lines="none">
-        <ion-label>{{ sectionStore.i18n.description() }}</ion-label>
+        <ion-label>{{ store.i18n.description() }}</ion-label>
       </ion-item>
     </ion-toolbar>
 
@@ -53,13 +53,13 @@ import { SectionStore } from './section.store';
         <ion-grid>
           <ion-row>
             <ion-col size="4" class="ion-hide-md-down">
-              <ion-label><strong>{{ sectionStore.i18n.key() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.key() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-              <ion-label><strong>{{ sectionStore.i18n.name() }}</strong></ion-label>
+              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
             </ion-col>
             <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ sectionStore.i18n.type() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.type() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -67,7 +67,7 @@ import { SectionStore } from './section.store';
     </ion-toolbar>
   </ion-header>
 
-  <bk-error-banner [message]="sectionStore.errorMessage()" (dismiss)="sectionStore.clearError()" />
+  <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
 
   <!-- Data -->
   <ion-content #content>
@@ -75,7 +75,7 @@ import { SectionStore } from './section.store';
       <bk-list-skeleton [rows]="6" />
     } @else {
       @if (filteredSections().length === 0) {
-        <bk-empty-list message="@content.section.field.empty" />
+        <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(section of filteredSections(); track section.bkey) {
@@ -92,40 +92,40 @@ import { SectionStore } from './section.store';
   `
 })
 export class SectionAllList {
-  protected sectionStore = inject(SectionStore);
+  protected store = inject(SectionStore);
   private actionSheetController = inject(ActionSheetController);
 
   // filters
-  protected searchTerm = linkedSignal(() => this.sectionStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.sectionStore.selectedTag());
-  protected selectedType = linkedSignal(() => this.sectionStore.selectedCategory());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedType = linkedSignal(() => this.store.selectedCategory());
 
   // fields
-  protected filteredSections = computed(() => this.sectionStore.filteredSections() ?? []);
-  protected sectionsCount = computed(() => this.sectionStore.sections()?.length ?? 0);
+  protected filteredSections = computed(() => this.store.filteredSections() ?? []);
+  protected sectionsCount = computed(() => this.store.sections()?.length ?? 0);
   protected selectedSectionsCount = computed(() => this.filteredSections().length);
-  protected isLoading = computed(() => this.sectionStore.isLoading());
-  protected tags = computed(() => this.sectionStore.getTags());
-  protected types = computed(() => this.sectionStore.getTypes());
-  private currentUser = computed(() => this.sectionStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.store.getTypes());
+  private currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
-  protected states = computed(() => this.sectionStore.appStore.getCategory('content_state'));
+  protected states = computed(() => this.store.appStore.getCategory('content_state'));
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.sectionStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.sectionStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.sectionStore.setSelectedCategory(type);
+    this.store.setSelectedCategory(type);
   }
 
   protected onStateSelected(state: string): void {
-    this.sectionStore.setSelectedState(state);
+    this.store.setSelectedState(state);
   }
 
   /******************************** actions ******************************************* */
@@ -146,14 +146,14 @@ export class SectionAllList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
     if (hasRole('registered', this.currentUser())) {
-            actionSheetOptions.buttons.push(createActionSheetButton('section.view', this.sectionStore.i18n.view(), 'eye-on'));
-            actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.sectionStore.i18n.cancel(), 'cancel'));
+            actionSheetOptions.buttons.push(createActionSheetButton('section.view', this.store.i18n.view(), 'eye-on'));
+            actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), 'cancel'));
     }
     if (!this.readOnly()) {
-            actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.sectionStore.i18n.edit(), 'edit'));
+            actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.store.i18n.edit(), 'edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('section.delete', this.sectionStore.i18n.delete(), 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('section.delete', this.store.i18n.delete(), 'trash'));
     }
   }
 
@@ -170,20 +170,20 @@ export class SectionAllList {
       if (!data) return;
       switch (data.action) {
         case 'section.delete':
-          await this.sectionStore.delete(section, this.readOnly());
+          await this.store.delete(section, this.readOnly());
           break;
         case 'section.edit':
-          await this.sectionStore.edit(section, this.readOnly());
+          await this.store.edit(section, this.readOnly());
           break;
         case 'section.view':
-          await this.sectionStore.edit(section, true);
+          await this.store.edit(section, true);
           break;
       }
     }
   }
 
   protected async add(): Promise<void> {
-    await this.sectionStore.add(this.readOnly());
+    await this.store.add(this.readOnly());
   }
 
   protected hasRole(role: RoleName): boolean {
