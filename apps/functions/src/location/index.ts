@@ -47,6 +47,25 @@ async function reverseGeocode(lat: number, lng: number, key: string): Promise<st
   return data?.results?.[0]?.formatted_address;
 }
 
+// Each enrichment step is best-effort: log the real cause (axios status + body) and carry on.
+// A single external-API failure (invalid/partial w3w, expired key, rate-limit) must not abort
+// the whole conversion or block the caller from saving the location.
+function logStepFailure(step: string, err: unknown): void {
+  if (axios.isAxiosError(err)) {
+    logger.warn(`convertLocation: ${step} failed`, {
+      step,
+      status: err.response?.status,
+      data: err.response?.data,
+      message: err.message,
+    });
+  } else {
+    logger.warn(`convertLocation: ${step} failed`, {
+      step,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 export const convertLocation = onCall(
   {
     region: 'europe-west6',
@@ -74,32 +93,34 @@ export const convertLocation = onCall(
       hasW3w: !!result.what3words,
     });
 
-    try {
-      // Step 1: w3w → coords (most precise when available)
-      if (result.what3words && (result.lat == null || result.lng == null)) {
+    // Step 1: w3w → coords (most precise when available)
+    if (result.what3words && (result.lat == null || result.lng == null)) {
+      try {
         const coords = await w3wToCoords(result.what3words, w3wApiKey.value());
         if (coords) { result.lat = coords.lat; result.lng = coords.lng; }
-      }
+      } catch (err: unknown) { logStepFailure('w3wToCoords', err); }
+    }
 
-      // Step 2: address → coords (if coords still missing)
-      if (result.address && (result.lat == null || result.lng == null)) {
+    // Step 2: address → coords (if coords still missing)
+    if (result.address && (result.lat == null || result.lng == null)) {
+      try {
         const coords = await geocode(result.address, gmapKey.value());
         if (coords) { result.lat = coords.lat; result.lng = coords.lng; }
-      }
+      } catch (err: unknown) { logStepFailure('geocode', err); }
+    }
 
-      // Step 3: coords → address (if address missing)
-      if (result.lat != null && result.lng != null && !result.address) {
+    // Step 3: coords → address (if address missing)
+    if (result.lat != null && result.lng != null && !result.address) {
+      try {
         result.address = await reverseGeocode(result.lat, result.lng, gmapKey.value());
-      }
+      } catch (err: unknown) { logStepFailure('reverseGeocode', err); }
+    }
 
-      // Step 4: coords → w3w (if w3w missing)
-      if (result.lat != null && result.lng != null && !result.what3words) {
+    // Step 4: coords → w3w (if w3w missing)
+    if (result.lat != null && result.lng != null && !result.what3words) {
+      try {
         result.what3words = await coordsToW3w(result.lat, result.lng, w3wApiKey.value());
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      logger.error('convertLocation: failed', { message });
-      throw new HttpsError('internal', message);
+      } catch (err: unknown) { logStepFailure('coordsToW3w', err); }
     }
 
     logger.info('convertLocation: result', result);

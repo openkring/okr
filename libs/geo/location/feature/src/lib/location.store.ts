@@ -118,7 +118,16 @@ export const LocationStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data) {
           if (isLocation(data, store.appStore.tenantId())) {
-            await store.locationConversionService.convert(data);  // address string comes from AddressModel (not yet wired)
+            // best-effort enrichment: a conversion failure must not block saving the location
+            try {
+              await store.locationConversionService.convert(data);  // address string comes from AddressModel (not yet wired)
+              if (!data.address?.length) {
+                data.address = data.name;
+              }
+            } catch (error) {
+              console.warn('LocationStore.edit: location conversion failed, saving without enrichment', error);
+              await store.alertService.showToast(store.i18n.convert_error());
+            }
             data.bkey?.length > 0 ?
               await store.locationService.update(data, store.currentUser()) :
               await store.locationService.create(data, store.currentUser());
@@ -128,7 +137,12 @@ export const LocationStore = signalStore(
       },
 
       async convert(location: LocationModel): Promise<void> {
-        await store.locationConversionService.convert(location);
+        try {
+          await store.locationConversionService.convert(location);
+        } catch (error) {
+          console.warn('LocationStore.convert: location conversion failed, saving without enrichment', error);
+          await store.alertService.showToast(store.i18n.convert_error());
+        }
         await store.locationService.update(location, store.currentUser());
       },
 

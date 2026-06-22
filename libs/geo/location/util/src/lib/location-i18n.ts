@@ -20,6 +20,7 @@ export const LOCATION_I18N_KEYS = {
   copy_w3w:                     PFX + 'copy.w3w',
 
   convert:                      PFX + 'convert.label',
+  convert_error:                PFX + 'convert.error',
 
   create:                       PFX + 'create.label',
   create_conf:                  PFX + 'create.conf',

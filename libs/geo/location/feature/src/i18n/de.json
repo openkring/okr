@@ -21,7 +21,8 @@
     "w3w": "what3word kopieren"
   },
   "convert": {
-    "label": "Formate konvertieren"
+    "label": "Formate konvertieren",
+    "error": "Die Adresse/Koordinaten konnten nicht konvertiert werden. Der Ort wurde unverändert gespeichert."
   },
   "create": {
     "label": "Ort hinzufügen",
