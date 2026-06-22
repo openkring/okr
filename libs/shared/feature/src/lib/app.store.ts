@@ -162,14 +162,7 @@ export const AppStore = signalStore(
 
   withComputed((state) => {
     return {
-      currentUser: computed(() => {
-        const user = state.currentUserResource.value();
-        if (!user) {
-          console.warn('AppStore.currentUser: no user doc found for uid ', state.fbUser()?.uid);
-          return undefined;
-        }
-        return user;
-      }),
+      currentUser: computed(() => state.currentUserResource.value()),
       allPersons: computed(() => state.personsResource.value() ?? []),
       allOrgs: computed(() => state.orgsResource.value() ?? []),
       allGroups: computed(() => state.groupsResource.value() ?? []),
