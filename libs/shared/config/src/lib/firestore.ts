@@ -38,13 +38,17 @@ export function isFirefox(): boolean {
  * Transport: Safari and Firefox force long polling (WebChannel/WebSocket reliability issue on
  * Safari/iOS and on Firefox under Enhanced Tracking Protection). Other browsers use auto-detection.
  *
- * Cache: Firefox uses in-memory cache (its IndexedDB open can hang under ETP/private mode, see
- * isFirefox). All other browsers use persistentLocalCache with persistentSingleTabManager.
- * The historical "no IndexedDB on Safari" carve-out was needed for firebase-js-sdk < 11.10
- * (issue #9056, fixed by PR #9162 in Jul 2025); v12.x no longer hits it. Single-tab manager
- * avoids the open multi-tab leader-election edge cases (#6511, #8314, #6806) which surface
- * most often on Safari. If init still throws (e.g. open issue #8860), fall back to in-memory
- * cache so the app continues to work without persistence.
+ * Cache: Safari and Firefox use in-memory cache; all other browsers use persistentLocalCache
+ * with persistentSingleTabManager. Both Safari (under ITP) and Firefox (under ETP/private mode)
+ * can hang on the async IndexedDB open — the open never settles, so the first snapshot never
+ * arrives and list views spin forever (observed live: normal Safari with persistentLocalCache
+ * hangs the side-menu; the same Safari in private mode falls back to memory cache and works).
+ * The async hang escapes the try/catch below (which only catches a synchronous throw), so it
+ * must be avoided up front, not caught. This re-establishes the "no IndexedDB on Safari" carve-out
+ * (the v12 #9056 fix addressed a different, synchronous failure — not this ITP open-hang). Both
+ * lose offline persistence, which is acceptable. Single-tab manager avoids the open multi-tab
+ * leader-election edge cases (#6511, #8314, #6806). If persistent init still throws on the
+ * remaining browsers (e.g. open issue #8860), fall back to in-memory cache.
  *
  * Eviction: navigator.storage.persist() is requested on first init — harmless in a tab,
  * materially helps an installed iOS Home Screen PWA stay durable across WebKit storage pressure.
@@ -72,10 +76,11 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
 
     let firestore: Firestore;
     let cacheMode: 'persistent-single-tab' | 'memory-fallback';
-    // Firefox: skip the IndexedDB persistent cache outright. Its open is async, so a hang under
-    // ETP/private mode escapes the try/catch below (which only catches a synchronous throw) and
-    // stalls the first snapshot forever. Memory cache avoids that; offline persistence is dropped.
-    if (isFirefoxBrowser) {
+    // Safari and Firefox: skip the IndexedDB persistent cache outright. Its open is async, so a
+    // hang under Safari ITP / Firefox ETP / private mode escapes the try/catch below (which only
+    // catches a synchronous throw) and stalls the first snapshot forever (e.g. the side-menu
+    // spinner never clears). Memory cache avoids that; offline persistence is dropped.
+    if (isFirefoxBrowser || isSafariBrowser) {
       firestore = initializeFirestore(app, {
         ...baseOptions,
         localCache: memoryLocalCache(),
