@@ -6,7 +6,7 @@ import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList } from '@bk2/shared-ui';
 import { coerceBoolean, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { PersonSelectModal } from '@bk2/shared-feature';
+import { PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { I18nService } from '@bk2/shared-i18n';
@@ -154,7 +154,8 @@ export class AttendeesAccordion {
       }
     });
     await modal.present();
-    const { data, role } = await modal.onWillDismiss();
+    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+    const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm') {
       if (isPerson(data, this.tenantId())) {
         const calevent = this.calevent();

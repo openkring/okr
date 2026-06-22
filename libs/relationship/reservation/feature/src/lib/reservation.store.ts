@@ -6,7 +6,7 @@ import { of, take } from 'rxjs';
 
 import { yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@bk2/shared-feature';
 import { confirm, navigateByUrl, showToast } from '@bk2/shared-util-angular';
 import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, PersonModelName, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
@@ -480,7 +480,8 @@ export const ReservationStore = signalStore(
           }
         });
         modal.present();
-        const { data, role } = await modal.onWillDismiss();
+        const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+        const data = result?.kind === 'predefined' ? result.person : undefined;
         if (role === 'confirm' && data) {
           if (isPerson(data, store.tenantId())) {
             return data;

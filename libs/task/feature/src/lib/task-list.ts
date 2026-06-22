@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { PersonModel, RoleName, TaskModel } from '@bk2/shared-models';
+import type { PersonSelectResult } from '@bk2/shared-feature';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, QuickEntryService } from '@bk2/shared-util-angular';
@@ -247,7 +248,8 @@ export class TaskList {
           },
         });
         await modal.present();
-        const { data, role } = await modal.onWillDismiss<PersonModel>();
+        const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+        const data = result?.kind === 'predefined' ? result.person : undefined;
         if (role === 'confirm' && data) {
           this.selectedQuickEntryPerson.set(data);
           textarea.value = this.quickEntryService.replaceToken(value, '@', `@${data.firstName} ${data.lastName}`);

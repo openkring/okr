@@ -8,7 +8,7 @@ import { firstValueFrom, from, of } from 'rxjs';
 
 import { AUTH, isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
@@ -169,12 +169,9 @@ export const AocRolesStore = signalStore(
           },
         });
         modal.present();
-        const { data, role } = await modal.onWillDismiss();
-        if (role === 'confirm') {
-          if (isPerson(data, store.appStore.env.tenantId)) {
-            console.log('RolesStore: selected person: ', data);
-            this.setSelectedPerson(data);
-          }
+        const { data, role } = await modal.onWillDismiss<PersonSelectResult>();
+        if (role === 'confirm' && data?.kind === 'predefined' && isPerson(data.person, store.appStore.env.tenantId)) {
+          this.setSelectedPerson(data.person);
         }
       },
 

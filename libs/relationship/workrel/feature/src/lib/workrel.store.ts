@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
+import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { CategoryListModel, OrgModel, PersonModel, WorkrelModel } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isOrg, isPerson, isValidAt, nameMatches } from '@bk2/shared-util-core';
 import { confirm } from '@bk2/shared-util-angular';
@@ -13,8 +13,6 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { WorkrelService } from '@bk2/relationship-workrel-data-access';
 import { isWorkrel, WORKREL_I18N_KEYS, WorkrelI18n } from '@bk2/relationship-workrel-util';
-
-import { WorkrelEditModal } from './workrel-edit.modal';
 
 export type WorkrelState = {
   personKey: string | undefined;    // parent e.g. in accordions
@@ -191,6 +189,7 @@ export const WorkrelStore = signalStore(
        * @param workrel the work relationship to edit
        */
       async edit(workrel: WorkrelModel, readOnly = true): Promise<void> {
+        const { WorkrelEditModal } = await import('./workrel-edit.modal');
         const modal = await store.modalController.create({
           component: WorkrelEditModal,
           componentProps: {
@@ -266,7 +265,8 @@ export const WorkrelStore = signalStore(
           }
         });
         modal.present();
-        const { data, role } = await modal.onWillDismiss();
+        const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+        const data = result?.kind === 'predefined' ? result.person : undefined;
         if (role === 'confirm' && data) {
           if (isPerson(data, store.tenantId())) {
             return data;

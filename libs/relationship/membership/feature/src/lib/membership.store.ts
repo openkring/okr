@@ -7,7 +7,7 @@ import { firstValueFrom, of } from 'rxjs';
 
 import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@bk2/shared-util-angular';
@@ -464,7 +464,8 @@ export const _MembershipStore = signalStore(
           },
         });
         modal.present();
-        const { data, role } = await modal.onWillDismiss();
+        const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+        const data = result?.kind === 'predefined' ? result.person : undefined;
         if (role !== 'confirm') return;
         if (!isPerson(data, store.tenantId())) { console.log('MembershipStore.addMemberToGroup: no valid person selected.'); return; }
         const member = data as PersonModel;

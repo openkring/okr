@@ -12,6 +12,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 
 import { CalEventModel, PersonModel, RoleName } from '@bk2/shared-models';
+import type { PersonSelectResult } from '@bk2/shared-feature';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, QuickEntryService } from '@bk2/shared-util-angular';
@@ -473,7 +474,8 @@ export class CalEventList implements OnInit {
           },
         });
         await modal.present();
-        const { data, role } = await modal.onWillDismiss<PersonModel>();
+        const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+        const data = result?.kind === 'predefined' ? result.person : undefined;
         if (role === 'confirm' && data) {
           this.selectedQuickEntryPerson.set(data);
           textarea.value = this.quickEntryService.replaceToken(value, '@', `@${data.firstName} ${data.lastName}`);

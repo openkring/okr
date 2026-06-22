@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, MultiSelectModal, PersonSelectModal } from '@bk2/shared-feature';
+import { AppStore, MultiSelectModal, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { confirm } from '@bk2/shared-util-angular';
 import { CategoryListModel, PersonModel, ResponsibilityModel } from '@bk2/shared-models';
 import { debugListLoaded, isPerson, isValidAt, nameMatches } from '@bk2/shared-util-core';
@@ -12,8 +12,6 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
 import { isResponsibility, RESPONSIBILITY_I18N_KEYS, ResponsibilityI18n } from '@bk2/relationship-responsibility-util';
-
-import { ResponsibilityEditModal } from './responsibility-edit.modal';
 
 export type ResponsibilityState = {
   listId: string;          // 'k_key', 'r_responsibleKey', 'all'
@@ -120,6 +118,7 @@ export const ResponsibilityStore = signalStore(
     },
 
     async edit(responsibility: ResponsibilityModel, isNew = false): Promise<void> {
+      const { ResponsibilityEditModal } = await import('./responsibility-edit.modal');
       const modal = await store.modalController.create({
         component: ResponsibilityEditModal,
         componentProps: {
@@ -174,7 +173,8 @@ export const ResponsibilityStore = signalStore(
         },
       });
       modal.present();
-      const { data, role } = await modal.onWillDismiss();
+      const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+      const data = result?.kind === 'predefined' ? result.person : undefined;
       if (role === 'confirm' && data && isPerson(data, store.tenantId())) return data;
       return undefined;
     },

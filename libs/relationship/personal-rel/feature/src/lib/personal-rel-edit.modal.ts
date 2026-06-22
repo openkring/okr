@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
-import { PersonSelectModal } from '@bk2/shared-feature';
+import { PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 
 import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
 import { CommentsAccordion } from '@bk2/comment-feature';
@@ -152,7 +152,8 @@ export class PersonalRelEditModal {
       }
     });
     modal.present();
-    const { data, role } = await modal.onWillDismiss();
+    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+    const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm' && data) {
       if (isPerson(data, this.tenantId())) {
         return data;

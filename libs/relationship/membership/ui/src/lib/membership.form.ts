@@ -3,7 +3,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg,
 
 import { BexioIdMask } from '@bk2/shared-config';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { AppStore, OrgSelectModal, PersonSelectModal } from '@bk2/shared-feature';
+import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@bk2/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { areTagsVisible, coerceBoolean, getFullName, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
@@ -271,7 +271,8 @@ export class MembershipForm {
       }
     });
     await modal.present();
-    const { data, role } = await modal.onWillDismiss();
+    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+    const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm') {
       if (isPerson(data, this.appStore.tenantId())) {
         this.formData.update((vm) => ({

@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { DateFormat, convertDateFormatToString, hasRole } from '@bk2/shared-util-core';
-import { PersonSelectModal } from '@bk2/shared-feature';
+import { PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 
@@ -145,7 +145,8 @@ export class InvoiceList {
       componentProps: { selectedTag: '', currentUser },
     });
     await modal.present();
-    const { data, role } = await modal.onWillDismiss();
+    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+    const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm' && data) {
       this.store.setListId(data.bkey);
       const name = [data.firstName, data.lastName].filter(Boolean).join(' ');

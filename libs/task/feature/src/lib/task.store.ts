@@ -5,7 +5,7 @@ import { map, of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { CategoryListModel, PersonModel, TaskCollection, TaskModel } from '@bk2/shared-models';
 import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, isPerson, nameMatches } from '@bk2/shared-util-core';
@@ -249,7 +249,8 @@ export const TaskStore = signalStore(
         }
       });
       modal.present();
-      const { data, role } = await modal.onWillDismiss();
+      const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+      const data = result?.kind === 'predefined' ? result.person : undefined;
       if (role === 'confirm' && data) {
         if (isPerson(data, store.tenantId())) {
           return data;

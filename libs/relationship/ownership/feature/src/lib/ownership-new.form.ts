@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, model, output
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { AppStore, OrgSelectModal, PersonSelectModal, ResourceSelectModal } from '@bk2/shared-feature';
+import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@bk2/shared-feature';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@bk2/shared-models';
 import { DateInput, DateInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
@@ -136,7 +136,8 @@ export class OwnershipNewForm {
       }
     });
     await modal.present();
-    const { data, role } = await modal.onWillDismiss();
+    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+    const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm') {
       if (isPerson(data, this.appStore.tenantId())) {
         this.formData.update((vm) => ({

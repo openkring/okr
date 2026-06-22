@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { AVATAR_INFO_SHAPE, GroupModel, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
 import { coerceBoolean, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
-import { PersonSelectModal } from '@bk2/shared-feature';
+import { PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { GroupForm } from '@bk2/subject-group-ui';
@@ -116,7 +116,8 @@ export class GroupEditModal {
       }
     });
     modal.present();
-    const { data, role } = await modal.onWillDismiss();
+    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+    const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm' && data) {
       if (isPerson(data, this.tenantId())) {
         return data;

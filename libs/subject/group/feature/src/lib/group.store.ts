@@ -7,7 +7,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { AlertService, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
@@ -426,7 +426,8 @@ export const GroupStore = signalStore(
             }
           });
           modal.present();
-          const { data, role } = await modal.onWillDismiss();
+          const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
+          const data = result?.kind === 'predefined' ? result.person : undefined;
           if (role === 'confirm') {
             if (isPerson(data, store.tenantId())) {
               membership = createGroupMembership(group, data, store.tenantId());
