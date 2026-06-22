@@ -24,6 +24,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | `testing` | writing or running tests — Vitest unit tests (only for util functions and services) or Playwright e2e; includes the `@angular/compiler` JIT-error fix. |
 | `authoring-docs` | creating/saving a spec, design, or implementation plan doc. |
 | `pending-implementation` | creating/updating/regenerating `docs/PENDING_IMPLEMENTATION.md` — the TOC of specified-but-not-fully-implemented topics. |
+| `creating-help-videos` | creating/updating a step-by-step help/tutorial/onboarding video for end users (login, password reset, …) — German storyboard + Sprechertext + screenshot-capture guide per `tenant/topic`, for desktop and mobile. |
 
 ### Documentation layout (`docs/`)
 
