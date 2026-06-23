@@ -27,6 +27,8 @@ export const INVOICE_I18N_KEYS = {
   payment_date_placeholder:  PFX + 'date.payment.placeholder',
   payment_date_helper:       PFX + 'date.payment.helper',
 
+  receiver_label:           PFX + 'receiver.label',
+
   title_label:              PFX + 'title.label',
   title_placeholder:        PFX + 'title.placeholder',
   title_helper:             PFX + 'title.helper',

@@ -1,9 +1,11 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAvatar, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { InvoiceModel } from '@bk2/shared-models';
 import { Header } from '@bk2/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { getFullName } from '@bk2/shared-util-core';
+import { AvatarPipe } from '@bk2/avatar-ui';
 import { InvoiceStore } from './invoice.store';
 
 @Component({
@@ -11,9 +13,9 @@ import { InvoiceStore } from './invoice.store';
   standalone: true,
   providers: [InvoiceStore],
   imports: [
-    SvgIconPipe, PrettyDatePipe,
+    SvgIconPipe, PrettyDatePipe, AvatarPipe,
     Header,
-    IonContent, IonCard, IonIcon, IonLabel, IonCardContent, IonItem, IonChip
+    IonContent, IonCard, IonIcon, IonLabel, IonCardContent, IonItem, IonChip, IonAvatar, IonImg
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -33,6 +35,18 @@ import { InvoiceStore } from './invoice.store';
                 <p class="view-value">{{ invoiceId() }}</p>
               </ion-label>
             </ion-item>
+            <!-- receiver -->
+            @if(invoice.receiver; as receiver) {
+              <ion-item lines="none">
+                <ion-avatar slot="start">
+                  <ion-img src="{{ receiver.modelType + '.' + receiver.key | avatar:receiver.modelType }}" alt="Receiver Logo" />
+                </ion-avatar>
+                <ion-label>
+                  <p class="view-label">{{ store.i18n.receiver_label() }}</p>
+                  <p class="view-value">{{ receiverName() }}</p>
+                </ion-label>
+              </ion-item>
+            }
             <!-- title -->
             <ion-item lines="none">
               <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
@@ -106,6 +120,11 @@ export class InvoiceViewModal {
 
   public readonly invoice = input.required<InvoiceModel>();
 
+  protected readonly receiverName = computed(() => {
+    const receiver = this.invoice()?.receiver;
+    if (!receiver) return '';
+    return receiver.label || getFullName(receiver.name1, receiver.name2);
+  });
   protected readonly title = computed(() => this.invoice()?.title ?? '');
   protected readonly invoiceId = computed(() => this.invoice()?.invoiceId ?? '');
   protected readonly invoiceDate = computed(() => this.invoice()?.invoiceDate ?? '');

@@ -30,6 +30,9 @@
       "helper": "Das Datum an dem die Rechnung bezahlt wurde."
     }
   },
+  "receiver": {
+    "label": "Empfänger"
+  },
   "title": {
     "label": "Betreff",
     "placeholder": "Text",
@@ -130,7 +133,7 @@
   },
   "view": {
     "label":  "Rechnungsdetails anzeigen",
-    "pdf": "PDF anzeigen"
+    "pdf": "Rechnung als PDF herunterladen"
   },
 
   "invoice_state": {

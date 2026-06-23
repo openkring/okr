@@ -15,6 +15,7 @@
     "@bk2/shared-ui": "*",
     "@bk2/shared-util-angular": "*",
     "@bk2/shared-util-core": "*",
+    "@bk2/avatar-ui": "*",
     "@bk2/cms-menu-feature": "*",
     "@bk2/finance-accounting-feature": "*",
     "@bk2/finance-invoice-data-access": "*",
