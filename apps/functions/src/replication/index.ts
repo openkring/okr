@@ -13,7 +13,49 @@ import {
   updateFavoriteAddressInfo
 } from "@bk2/shared-util-functions";
 
-const firestore = admin.firestore(); 
+const firestore = admin.firestore();
+
+/**
+ * Synchronizes a set of related documents with new (denormalized) data.
+ * Each relation type is handled independently: a failure (e.g. a missing index)
+ * is logged but does NOT prevent the other relation types from being synced.
+ * @param label a human-readable label for logging (e.g. 'membership')
+ * @param sourceId the id of the changed source document (for logging)
+ * @param collection the Firestore collection of the related documents
+ * @param relations the related documents to (potentially) update
+ * @param newData the denormalized data to write if it has changed
+ */
+async function syncRelations(
+  label: string,
+  sourceId: string,
+  collection: string,
+  relations: { bkey: string }[],
+  newData: Record<string, unknown>
+): Promise<void> {
+  try {
+    for (const relation of relations) {
+      if (hasChanged(relation, newData)) {
+        await admin.firestore().doc(`${collection}/${relation.bkey}`).update(newData);
+        logger.info(`Successfully updated ${label} ${relation.bkey} for ${sourceId}`);
+      }
+    }
+  } catch (error) {
+    logger.error(`Error syncing ${label} for ${sourceId}:`, { error });
+  }
+}
+
+/**
+ * Fetches related documents, isolating failures so that one failing query
+ * (e.g. a missing composite index) does not abort the whole replication.
+ */
+async function fetchRelations<T>(label: string, sourceId: string, fetch: () => Promise<T[]>): Promise<T[]> {
+  try {
+    return await fetch();
+  } catch (error) {
+    logger.error(`Error fetching ${label} for ${sourceId}:`, { error });
+    return [];
+  }
+}
 
 /**
  * BE AWARE OF RECURSIVE TRIGGERS !
@@ -117,109 +159,73 @@ export const onPersonChange = onDocumentWritten(
     const personId = event.params.personId;
     logger.info(`person ${personId} has changed`);
 
-    try {
-      const person = event.data?.after.data();
-      if (person) {
-
-        // synchronize the ownerships
-        const newPerson = {
-          ownerName1: person.firstName,
-          ownerName2: person.lastName,
-          ownerType: person.gender
-        };
-        const ownerships = await getAllOwnershipsOfOwner(firestore, personId);
-        for (const ownership of ownerships) {
-          if (hasChanged(ownership, newPerson)) {
-            const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.bkey}`);
-            await ownershipRef.update(newPerson);
-            logger.info(`Successfully updated ownership ${ownership.bkey} for person ${personId} (owner)`);
-          }
-        }
-
-        // synchronize the memberships
-        const newMember = {
-          memberName1: person.firstName,
-          memberName2: person.lastName,
-          memberType: person.gender,
-          memberDateOfBirth: person.dateOfBirth,
-          memberDateOfDeath: person.dateOfDeath,
-          memberZipCode: person.favZipCode,
-          memberBexioId: person.bexioId,
-        };
-        const memberships = await getAllMembershipsOfMember(firestore, personId);
-        for (const membership of memberships) {
-          if (hasChanged(membership, newMember)) {
-            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
-            await membershipRef.update(newMember);
-            logger.info(`Successfully updated membership ${membership.bkey} for person ${personId} (member)`);
-          }
-        }
-
-        // synchronize the personalRels (by subject)
-        const newPrelSubject = {
-          subjectFirstName: person.firstName,
-          subjectLastName: person.lastName,
-          subjectGender: person.gender
-        };
-        const personalRels = await getAllPersonalRelsOfSubject(firestore, personId);
-        for (const personalRel of personalRels) {
-          if (hasChanged(personalRel, newPrelSubject)) {
-            const personalRelRef = admin.firestore().doc(`${PersonalRelCollection}/${personalRel.bkey}`);
-            await personalRelRef.update(newPrelSubject);
-            logger.info(`Successfully updated personalRel ${personalRel.bkey} for person ${personId} (subject)`);
-          }
-        }
-
-        // synchronize the personalRels (by object)
-        const newPrelObject = {
-          objectFirstName: person.firstName,
-          objectLastName: person.lastName,
-          objectGender: person.gender
-        };
-        const personalRelsByObject = await getAllPersonalRelsOfObject(firestore, personId);
-        for (const personalRel of personalRelsByObject) {
-          if (hasChanged(personalRel, newPrelObject)) {
-            const personalRelRef = admin.firestore().doc(`${PersonalRelCollection}/${personalRel.bkey}`);
-            await personalRelRef.update(newPrelObject);
-            logger.info(`Successfully updated personalRel ${personalRel.bkey} for person ${personId} (object)`);
-          }
-        }
-
-        // synchronize the workRels (by subject)
-        const newWorkRel = {
-          subjectName1: person.firstName,
-          subjectName2: person.lastName,
-          subjectType: person.gender
-        };
-        const workRels = await getAllWorkrelsOfSubject(firestore, personId);
-        for (const workRel of workRels) {
-          if (hasChanged(workRel, newWorkRel)) {
-            const workRelRef = admin.firestore().doc(`${WorkrelCollection}/${workRel.bkey}`);
-            await workRelRef.update(newWorkRel);
-            logger.info(`Successfully updated workingRel ${workRel.bkey} for person ${personId} (subject)`);
-          }
-        }
-
-        // synchronize the reservations (by reserver)
-        const newReserver = {
-          reserverName: person.firstName,
-          reserverName2: person.lastName,
-          reserverType: person.gender,
-        };
-        const reservations = await getAllReservationsOfReserver(firestore, personId);
-        for (const reservation of reservations) {
-          if (hasChanged(reservation, newReserver)) {
-            const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.bkey}`);
-            await resRef.update(newReserver);
-            logger.info(`Successfully updated reservation ${reservation.bkey} for person ${personId} (reserver)`);
-          }
-        }
-      } else {
-        logger.warn(`Person ${personId} does not exist or has been deleted.`);
-      }
-    } catch (error) {
-      logger.error(`Error updating person ${personId}:`, { error });
+    const person = event.data?.after.data();
+    if (!person) {
+      logger.warn(`Person ${personId} does not exist or has been deleted.`);
+      return;
     }
+    const source = `person ${personId}`;
+
+    // Each relation type is synced independently. A failure in one (e.g. a missing
+    // index) is logged but must NOT prevent the others from being updated.
+
+    // synchronize the ownerships
+    await syncRelations('ownership', source, OwnershipCollection,
+      await fetchRelations('ownerships', source, () => getAllOwnershipsOfOwner(firestore, personId)),
+      {
+        ownerName1: person.firstName,
+        ownerName2: person.lastName,
+        ownerType: person.gender
+      });
+
+    // synchronize the memberships
+    await syncRelations('membership', source, MembershipCollection,
+      await fetchRelations('memberships', source, () => getAllMembershipsOfMember(firestore, personId)),
+      {
+        memberName1: person.firstName,
+        memberName2: person.lastName,
+        memberType: person.gender,
+        memberDateOfBirth: person.dateOfBirth,
+        memberDateOfDeath: person.dateOfDeath,
+        memberZipCode: person.favZipCode,
+        memberBexioId: person.bexioId,
+      });
+
+    // synchronize the personalRels (by subject)
+    await syncRelations('personalRel (subject)', source, PersonalRelCollection,
+      await fetchRelations('personalRels (subject)', source, () => getAllPersonalRelsOfSubject(firestore, personId)),
+      {
+        subjectFirstName: person.firstName,
+        subjectLastName: person.lastName,
+        subjectGender: person.gender
+      });
+
+    // synchronize the personalRels (by object)
+    await syncRelations('personalRel (object)', source, PersonalRelCollection,
+      await fetchRelations('personalRels (object)', source, () => getAllPersonalRelsOfObject(firestore, personId)),
+      {
+        objectFirstName: person.firstName,
+        objectLastName: person.lastName,
+        objectGender: person.gender
+      });
+
+    // synchronize the workRels (by subject)
+    await syncRelations('workingRel (subject)', source, WorkrelCollection,
+      await fetchRelations('workingRels (subject)', source, () => getAllWorkrelsOfSubject(firestore, personId)),
+      {
+        subjectName1: person.firstName,
+        subjectName2: person.lastName,
+        subjectType: person.gender
+      });
+
+    // synchronize the reservations (by reserver)
+    await syncRelations('reservation (reserver)', source, ReservationCollection,
+      await fetchRelations('reservations (reserver)', source, () => getAllReservationsOfReserver(firestore, personId)),
+      {
+        reserverName: person.firstName,
+        reserverName2: person.lastName,
+        reserverType: person.gender,
+      });
   }
 );
 
