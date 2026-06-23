@@ -29,13 +29,9 @@ export const AccountingStore = signalStore(
         return id ? store.configService.read(id) : of(undefined);
       },
     }),
-    tenantsResource: rxResource({
-      stream: () => store.configService.listForTenant(),
-    }),
   })),
   withComputed(store => ({
     config: computed(() => store.configResource.value()),
-    availableTenants: computed(() => store.tenantsResource.value() ?? []),
     isExternallyManaged: computed(() => store.configResource.value()?.accountingBackend !== 'native'),
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId: computed(() => store.appStore.tenantId()),
@@ -46,7 +42,6 @@ export const AccountingStore = signalStore(
     },
     async createConfig(config: AccountingConfigModel): Promise<void> {
       await store.configService.create(config, store.currentUser());
-      store.tenantsResource.reload();
     },
     async updateConfig(config: AccountingConfigModel): Promise<void> {
       await store.configService.update(config, store.currentUser());

@@ -1,22 +1,16 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IonContent, IonHeader, IonRouterOutlet, IonToolbar } from '@ionic/angular/standalone';
+import { IonContent, IonRouterOutlet } from '@ionic/angular/standalone';
 
 import { AccountingStore } from './accounting.store';
 import { ReadOnlyBanner } from './read-only-banner';
-import { TenantSelector } from './tenant-selector';
 
 @Component({
   selector: 'bk-accounting-shell',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonContent, IonRouterOutlet, ReadOnlyBanner, TenantSelector],
+  imports: [IonContent, IonRouterOutlet, ReadOnlyBanner],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <bk-tenant-selector />
-      </ion-toolbar>
-    </ion-header>
     <ion-content>
       <bk-read-only-banner />
       <ion-router-outlet />
