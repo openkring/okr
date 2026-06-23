@@ -349,6 +349,10 @@
       "label": "Team-Meeting",
       "description": "Regelmässiges Treffen des Teams."
     },
+    "todo": {
+      "label": "Todo",
+      "description": "Eine Aufgabe, die zu erledigen ist."
+    },
     "work": {
       "label": "Arbeit",
       "description": "zB. Putzen, Reparaturen, Wartung"
