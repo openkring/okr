@@ -98,7 +98,7 @@ import { SignatureService } from './signature.service';
             <ion-col class="sig-guide">
               <ion-item lines="none"><ion-label><strong>{{ i18n().sig_guide_title() }} — {{ plan.guide.title }}</strong></ion-label></ion-item>
               <ol>
-                @for (step of plan.guide.steps; track step) {
+                @for (step of plan.guide.steps; track $index) {
                   <li>{{ step }}</li>
                 }
               </ol>
