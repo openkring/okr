@@ -573,8 +573,15 @@ export const requestGroupRoomAccess = onCall(
     );
     if (!joinResp.ok) {
       const errText = await joinResp.text();
-      console.error(`requestGroupRoomAccess: Admin join failed for ${matrixUserId} in room ${roomId}: ${errText}`);
-      throw new HttpsError('internal', `Room access denied for group ${groupId}: ${errText}`);
+      // Synapse returns M_FORBIDDEN "<user> is already in the room." when the target is already
+      // a member. That is the desired end-state, not a failure — treat it as success so the client
+      // still receives the roomId (otherwise the chat falls back to "choose a chat room").
+      const alreadyMember = errText.includes('already in the room');
+      if (!alreadyMember) {
+        console.error(`requestGroupRoomAccess: Admin join failed for ${matrixUserId} in room ${roomId}: ${errText}`);
+        throw new HttpsError('internal', `Room access denied for group ${groupId}: ${errText}`);
+      }
+      console.log(`requestGroupRoomAccess: ${matrixUserId} already in room ${roomId} (treated as joined)`);
     }
 
     console.log(`requestGroupRoomAccess: User ${matrixUserId} joined room ${roomId} for group ${groupId}`);
