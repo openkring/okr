@@ -11,6 +11,7 @@ import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { showToast } from '@bk2/shared-util-angular';
 import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@bk2/chat-util';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
 export interface AdminRoom {
@@ -61,6 +62,7 @@ export type AocChatState = {
   selectedRoomId: string | undefined;
   selectedMemberId: string | undefined;
   detailsTarget: DetailsTarget | undefined;
+  logLevel: MatrixLogLevel;
 };
 
 const initialState: AocChatState = {
@@ -68,6 +70,7 @@ const initialState: AocChatState = {
   selectedRoomId: undefined,
   selectedMemberId: undefined,
   detailsTarget: undefined,
+  logLevel: getMatrixLogLevel(),
 };
 
 function getFn() {
@@ -386,6 +389,12 @@ export const AocChatStore = signalStore(
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
+    },
+
+    /** Set the matrix-js-sdk console log level (admin-only, persisted across reloads). */
+    setLogLevel(level: MatrixLogLevel): void {
+      setMatrixLogLevel(level);
+      patchState(store, { logLevel: level });
     },
 
     reloadRooms(): void {

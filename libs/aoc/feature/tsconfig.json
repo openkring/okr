@@ -56,6 +56,9 @@
       "path": "../../aoc/util/tsconfig.lib.json"
     },
     {
+      "path": "../../chat/util/tsconfig.lib.json"
+    },
+    {
       "path": "../../calevent/util/tsconfig.lib.json"
     },
     {

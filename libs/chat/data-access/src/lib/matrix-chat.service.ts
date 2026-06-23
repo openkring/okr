@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@bk2/shared-models';
 import { AppStore } from '@bk2/shared-feature';
 import { debugData, debugMessage } from '@bk2/shared-util-core';
-import { convertHeicToJpeg } from '@bk2/chat-util';
+import { convertHeicToJpeg, initMatrixLogLevel } from '@bk2/chat-util';
 import { ActivityService } from '@bk2/activity-data-access';
 
 /**
@@ -274,6 +274,11 @@ export class MatrixChatService {
       console.warn('MatrixChatService: Client already initialized');
       return;
     }
+
+    // Apply the configured matrix-js-sdk log level (default: WARN) before the client starts logging,
+    // so the console isn't flooded with the SDK's per-request debug lines. Admins can change the
+    // level at runtime via the AOC chat console; the choice is persisted in localStorage.
+    initMatrixLogLevel();
 
     try {
       const url = config.homeserverUrl.startsWith('https://') ? config.homeserverUrl : 'https://' + config.homeserverUrl;

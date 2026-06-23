@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonBadge, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBadge, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
@@ -9,7 +9,7 @@ import { ModelSelectService } from '@bk2/shared-feature';
 import { AvatarInfo } from '@bk2/shared-models';
 import { AvatarSelect } from '@bk2/avatar-ui';
 
-import { formatMatrixTimestamp, isMatrixPhotoUrl } from '@bk2/chat-util';
+import { formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLevel } from '@bk2/chat-util';
 import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
 
 @Component({
@@ -19,7 +19,7 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
     FormsModule, 
     SvgIconPipe,
     Header, AvatarSelect,
-    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner
+    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSelect, IonSelectOption
   ],
   providers: [AocChatStore],
   styles: [`
@@ -127,6 +127,18 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
           (selectClicked)="onPersonSelectClicked()"
           (clearClicked)="onClearPerson()"
         />
+        <ion-select
+          label="Log"
+          labelPlacement="stacked"
+          interface="popover"
+          [value]="logLevel()"
+          (ionChange)="onLogLevelChange($event)"
+          style="max-width: 120px"
+        >
+          @for (level of logLevels; track level) {
+            <ion-select-option [value]="level">{{ level }}</ion-select-option>
+          }
+        </ion-select>
       </div>
 
       <!-- 3-column layout -->
@@ -283,6 +295,8 @@ export class AocChat {
   protected readonly selectedPersonKey = computed(() => this.store.selectedPersonKey());
   protected readonly detailsTarget = computed(() => this.store.detailsTarget());
   protected readonly title = computed(() => this.store.i18n.chat_title());
+  protected readonly logLevel = computed(() => this.store.logLevel());
+  protected readonly logLevels = MATRIX_LOG_LEVELS;
 
   // constants
   private imgixBaseUrl = this.store.imgixBaseUrl();
@@ -307,6 +321,10 @@ export class AocChat {
 
   protected onReloadRooms(): void {
     this.store.reloadRooms();
+  }
+
+  protected onLogLevelChange(event: CustomEvent): void {
+    this.store.setLogLevel(event.detail.value as MatrixLogLevel);
   }
 
   // ─── room click → action sheet ──────────────────────────────────────────────
