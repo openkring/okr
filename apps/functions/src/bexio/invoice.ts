@@ -4,7 +4,7 @@ import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
-import { convertDateFormatToString, addDuration, getTodayStr, DateFormat } from '@bk2/shared-util-core';
+import { convertDateFormatToString, addDuration, getTodayStr, getFullName, addIndexElement, DateFormat } from '@bk2/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, bexioDefaultTaxId, BEXIO_BASE } from './shared';
 
@@ -76,48 +76,215 @@ async function fetchBexioInvoices(apiKey: string, updatedAfter: string): Promise
   return all;
 }
 
-/** Write invoices to Firestore and update the sync pointer. */
-async function persistInvoices(invoices: BexioInvoice[], tenantId: string, nowStr: string): Promise<void> {
-  const db = admin.firestore();
-  const batch = db.batch();
+/** A resolved invoice receiver = AvatarInfo of a local Person or Org. */
+interface ReceiverInfo {
+  key: string;
+  name1: string;
+  name2: string;
+  modelType: 'person' | 'org';
+  type: string;
+  subType: string;
+  label: string;
+}
 
-  for (const inv of invoices) {
-    const bkey = String(inv.id);
-    const totalCents = Math.round(parseFloat(inv.total) * 100);
-    const doc: Record<string, unknown> = {
-      tenants: [tenantId],
-      isArchived: false,
-      index: '',
-      tags: [],
-      notes: inv.contact_id != null ? String(inv.contact_id) : '',
-      title: inv.title ?? inv.document_nr,
-      invoiceId: inv.document_nr,
-      invoiceDate: inv.is_valid_from ? convertDateFormatToString(inv.is_valid_from, DateFormat.IsoDate, DateFormat.StoreDate, false) : '',
-      dueDate: inv.is_valid_to ? convertDateFormatToString(inv.is_valid_to, DateFormat.IsoDate, DateFormat.StoreDate, false) : '',
-      totalAmount: { amount: totalCents, currency: 'CHF', periodicity: 'one-time' },
-      taxes: parseFloat(inv.total_taxes) || 0,
-      vatType: mapVatType(inv.mwst_type),
-      state: mapInvoiceStatus(inv.kb_item_status_id),
-      paymentDate: '',
-      accountingTenantId: tenantId,
-    };
-    batch.set(db.collection('invoices').doc(bkey), doc, { merge: true });
+/**
+ * Build a map from Bexio contact id → local receiver (AvatarInfo) by reading the
+ * persons and orgs collections and keying on their `bexioId` field.
+ * PersonModel/OrgModel both carry `bexioId`; we normalize it to a plain numeric
+ * string so lookups by `String(inv.contact_id)` match.
+ */
+async function loadReceiverMap(db: admin.firestore.Firestore): Promise<Map<string, ReceiverInfo>> {
+  const map = new Map<string, ReceiverInfo>();
+
+  const normalize = (bexioId: unknown): string | undefined => {
+    const raw = (bexioId ?? '').toString().trim();
+    if (!raw) return undefined;
+    const n = parseInt(raw, 10);
+    return Number.isNaN(n) ? undefined : String(n);
+  };
+
+  const [personSnap, orgSnap] = await Promise.all([
+    db.collection('persons').get(),
+    db.collection('orgs').get(),
+  ]);
+
+  for (const docSnap of personSnap.docs) {
+    const d = docSnap.data();
+    const key = normalize(d.bexioId);
+    if (!key) continue;
+    const firstName = d.firstName ?? '';
+    const lastName = d.lastName ?? '';
+    map.set(key, {
+      key: docSnap.id,
+      name1: firstName,
+      name2: lastName,
+      modelType: 'person',
+      type: '',
+      subType: '',
+      label: getFullName(firstName, lastName),
+    });
   }
 
-  // update sync pointer
-  batch.set(db.collection('config').doc('bexioSync'), { lastSyncedAt: nowStr }, { merge: true });
+  for (const docSnap of orgSnap.docs) {
+    const d = docSnap.data();
+    const key = normalize(d.bexioId);
+    if (!key) continue;
+    const name = d.name ?? '';
+    map.set(key, {
+      key: docSnap.id,
+      name1: '',
+      name2: name,
+      modelType: 'org',
+      type: '',
+      subType: '',
+      label: name,
+    });
+  }
 
-  await batch.commit();
+  logger.info(`loadReceiverMap: loaded ${map.size} receivers (persons + orgs with bexioId)`);
+  return map;
+}
+
+interface BexioPayment {
+  id: number;
+  date: string;   // "YYYY-MM-DD"
+  value: string;
+}
+
+/**
+ * Fetch the payment date for an invoice from Bexio. The kb_invoice object itself
+ * carries no payment date; payments live on /kb_invoice/{id}/payment. Returns the
+ * latest payment's date as a StoreDate ("YYYYMMDD"), or '' if there are none.
+ */
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+/** Run `fn` over `items` with at most `limit` concurrent calls; results stay index-aligned with `items`. */
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+  async function worker(): Promise<void> {
+    while (true) {
+      const i = cursor++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
+  return results;
+}
+
+async function fetchInvoicePaymentDate(apiKey: string, invoiceId: number): Promise<string> {
+  const MAX_RETRIES = 5;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const response = await axios.get<BexioPayment[]>(
+        `${BEXIO_BASE}/kb_invoice/${invoiceId}/payment`,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Accept': 'application/json',
+          },
+        }
+      );
+      const payments = Array.isArray(response.data) ? response.data : [];
+      if (payments.length === 0) return '';
+      const latest = payments.reduce((a, b) => (a.date >= b.date ? a : b));
+      if (!latest.date) return '';
+      return convertDateFormatToString(latest.date.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate, false);
+    } catch (error) {
+      // Bexio rate-limits (HTTP 429); back off and retry rather than dropping the payment date.
+      if (axios.isAxiosError(error) && error.response?.status === 429 && attempt < MAX_RETRIES) {
+        const retryAfter = parseInt(String(error.response.headers?.['retry-after'] ?? ''), 10);
+        const delayMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(1000 * 2 ** attempt, 16000);
+        logger.info(`fetchInvoicePaymentDate: 429 for invoice ${invoiceId}, retry ${attempt + 1}/${MAX_RETRIES} after ${delayMs}ms`);
+        await sleep(delayMs);
+        continue;
+      }
+      logger.warn(`fetchInvoicePaymentDate: failed for invoice ${invoiceId}`, error);
+      return '';
+    }
+  }
+}
+
+/** Build the searchable index for an invoice (mirrors getInvoiceIndex in @bk2/finance-invoice-util). */
+function buildInvoiceIndex(invoiceId: string, totalCents: number, receiver: ReceiverInfo | undefined, title: string): string {
+  let index = '';
+  index = addIndexElement(index, 'i', invoiceId);
+  index = addIndexElement(index, 'a', (totalCents / 100).toFixed(2));
+  if (receiver) {
+    index = addIndexElement(index, 'n', receiver.label || getFullName(receiver.name1, receiver.name2));
+  }
+  index = addIndexElement(index, 't', title);
+  return index;
+}
+
+/** Write invoices to Firestore (chunked) and update the sync pointer. */
+async function persistInvoices(invoices: BexioInvoice[], tenantId: string, nowStr: string, apiKey: string): Promise<void> {
+  const db = admin.firestore();
+  const BATCH_SIZE = 100; // 1 doc per invoice; keeps each batch well under Firestore's 500-write limit
+
+  const receiverMap = await loadReceiverMap(db);
+
+  for (let i = 0; i < invoices.length; i += BATCH_SIZE) {
+    const chunk = invoices.slice(i, i + BATCH_SIZE);
+
+    // payment date lives on a separate Bexio endpoint; fetch it only for paid invoices (status 9).
+    // Throttle to a low concurrency — firing a whole chunk in parallel trips Bexio's rate limit (HTTP 429).
+    const paymentDates = await mapWithConcurrency(chunk, 3, inv =>
+      inv.kb_item_status_id === 9 ? fetchInvoicePaymentDate(apiKey, inv.id) : Promise.resolve('')
+    );
+
+    const batch = db.batch();
+    chunk.forEach((inv, idx) => {
+      const bkey = String(inv.id);
+      const totalCents = Math.round(parseFloat(inv.total) * 100);
+      const receiver = inv.contact_id != null ? receiverMap.get(String(inv.contact_id)) : undefined;
+      const title = inv.title ?? inv.document_nr;
+      if (inv.contact_id != null && !receiver) {
+        logger.warn(`persistInvoices: no local person/org found for Bexio contact ${inv.contact_id} (invoice ${bkey})`);
+      }
+
+      const doc: Record<string, unknown> = {
+        tenants: [tenantId],
+        isArchived: false,
+        index: buildInvoiceIndex(inv.document_nr, totalCents, receiver, title),
+        tags: [],
+        // when resolved, the receiver carries the linkage; keep contact_id in notes only
+        // when unresolved, so the "Link receivers" step (or a later re-sync) can still match it
+        notes: (inv.contact_id != null && !receiver) ? String(inv.contact_id) : '',
+        title,
+        invoiceId: inv.document_nr,
+        invoiceDate: inv.is_valid_from ? convertDateFormatToString(inv.is_valid_from, DateFormat.IsoDate, DateFormat.StoreDate, false) : '',
+        dueDate: inv.is_valid_to ? convertDateFormatToString(inv.is_valid_to, DateFormat.IsoDate, DateFormat.StoreDate, false) : '',
+        totalAmount: { amount: totalCents, currency: 'CHF', periodicity: 'one-time' },
+        taxes: parseFloat(inv.total_taxes) || 0,
+        vatType: mapVatType(inv.mwst_type),
+        state: mapInvoiceStatus(inv.kb_item_status_id),
+        paymentDate: paymentDates[idx],
+        accountingTenantId: tenantId,
+      };
+      if (receiver) doc.receiver = receiver;
+
+      batch.set(db.collection('invoices').doc(bkey), doc, { merge: true });
+    });
+
+    await batch.commit();
+    logger.info(`persistInvoices: committed chunk ${Math.floor(i / BATCH_SIZE) + 1}, invoices ${i + 1}-${i + chunk.length}`);
+  }
+
+  // update sync pointer after all chunks are written
+  await db.collection('config').doc('bexioSync').set({ lastSyncedAt: nowStr }, { merge: true });
 }
 
 /** Core sync logic shared by manual and scheduled triggers. */
 async function runInvoiceSync(fromDate: string, tenantId: string, label: string): Promise<{ count: number }> {
+  const apiKey = bexioApiKey.value();
   logger.info(`${label}: fetching invoices updated after "${fromDate}"`);
-  const invoices = await fetchBexioInvoices(bexioApiKey.value(), fromDate);
+  const invoices = await fetchBexioInvoices(apiKey, fromDate);
   logger.info(`${label}: fetched ${invoices.length} invoices`);
 
   const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19); // "YYYY-MM-DD HH:mm:ss"
-  await persistInvoices(invoices, tenantId, nowStr);
+  await persistInvoices(invoices, tenantId, nowStr, apiKey);
   logger.info(`${label}: persisted ${invoices.length} invoices, pointer updated to ${nowStr}`);
   return { count: invoices.length };
 }
@@ -177,6 +344,7 @@ export const syncBexioInvoices = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
+    timeoutSeconds: 540, // per-paid-invoice payment lookups make a full backfill slow
     secrets: [bexioApiKey, bexioTenantId],
   },
   async (request: CallableRequest<{ fromDate?: string }>) => {
@@ -307,6 +475,7 @@ export const scheduledBexioInvoiceSync = onSchedule(
     schedule: '0 6 * * *',
     timeZone: 'Europe/Zurich',
     region: 'europe-west6',
+    timeoutSeconds: 540, // per-paid-invoice payment lookups make a large sync slow
     secrets: [bexioApiKey, bexioTenantId],
   },
   async () => {
