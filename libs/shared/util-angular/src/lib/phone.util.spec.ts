@@ -103,6 +103,17 @@ describe('phone.util', () => {
       const result = formatPhoneNumber('0791231234', 'CH');
       expect(result).toBe('+41 79 123 12 34');
     });
+
+    it('should format an international number detected from its + prefix', () => {
+      (isSupportedCountry as any).mockReturnValue(true);
+      (parsePhoneNumberFromString as any).mockReturnValue({
+        isValid: () => true,
+        formatInternational: () => '+49 1512 3456789'
+      });
+      // default country stays CH, but libphonenumber detects +49 from the prefix
+      const result = formatPhoneNumber('+4915123456789', 'CH');
+      expect(result).toBe('+49 1512 3456789');
+    });
   });
 
   describe('getCountryPrefix', () => {

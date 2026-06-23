@@ -128,3 +128,13 @@ export const UsPhoneMask: MaskitoOptions = {
 export const ChPhoneMask: MaskitoOptions = {
   mask: ['+', '4', '1', ' ', /[1-9]/, /\d/, ' ', /[1-9]/, /\d/, /\d/, ' ', /\d/, /\d/, /\d/, /\d/],
 };
+
+/*
+  International phone mask: permissive so users can enter numbers from any country.
+  Allows an optional leading '+' (international prefix) followed by digits and spaces,
+  e.g. '+49 151 23456789' or a Swiss-local '079 123 1234'.
+  The value is normalized to international format on save (see formatPhoneNumber).
+*/
+export const IntlPhoneMask: MaskitoOptions = {
+  mask: /^\+?[\d\s]*$/,
+};

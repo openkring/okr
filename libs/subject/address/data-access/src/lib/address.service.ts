@@ -7,7 +7,7 @@ import { AddressCollection, AddressModel, UserModel } from "@bk2/shared-models";
 import { die, getSystemQuery } from "@bk2/shared-util-core";
 import { I18nService } from "@bk2/shared-i18n";
 
-import { getAddressIndex, getAddressValueByChannel } from "@bk2/subject-address-util";
+import { getAddressIndex, getAddressValueByChannel, normalizeAddressValue } from "@bk2/subject-address-util";
 import { ActivityService } from '@bk2/activity-data-access';
 
 import { PFX } from "./scope";
@@ -46,6 +46,7 @@ export class AddressService {
    * @returns an Observable of the new or existing address or undefined if the operation failed
    */
   public async create(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
+    normalizeAddressValue(address);
     address.index = getAddressIndex(address);
     const key = await this.firestoreService.createModel<AddressModel>(AddressCollection, address, 
       this.i18n.create_conf(), this.i18n.create_error(), currentUser);
@@ -70,6 +71,7 @@ export class AddressService {
    * @returns the key of the updated address or undefined if the operation failed
    */
   public async update(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
+    normalizeAddressValue(address);
     address.index = getAddressIndex(address);
     const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, 
       this.i18n.update_conf(), this.i18n.update_error(), currentUser);

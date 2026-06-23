@@ -7,7 +7,7 @@ import { MaskitoElementPredicate } from '@maskito/core';
 
 import { PHONE_LENGTH } from '@bk2/shared-constants';
 import { coerceBoolean } from '@bk2/shared-util-core';
-import { ChPhoneMask } from '@bk2/shared-config';
+import { IntlPhoneMask } from '@bk2/shared-config';
 
 import { ButtonCopy } from './button-copy';
 
@@ -74,6 +74,6 @@ export class PhoneInput {
   protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'PHONE_INPUT: NYI' }));
 
   // mask
-  protected phoneMask = ChPhoneMask;
+  protected phoneMask = IntlPhoneMask;
   readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();
 }

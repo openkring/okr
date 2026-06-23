@@ -2,7 +2,7 @@ import { Browser } from '@capacitor/browser';
 import { ToastController } from '@ionic/angular';
 
 import { AddressModel } from '@bk2/shared-models';
-import { copyToClipboard, formatIban, IbanFormat, showToast } from '@bk2/shared-util-angular';
+import { copyToClipboard, formatIban, formatPhoneNumber, IbanFormat, showToast } from '@bk2/shared-util-angular';
 import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@bk2/shared-util-core';
 
 /*-------------------------- address creation --------------------------------*/
@@ -161,6 +161,21 @@ export function getAddressValueByChannel(address: AddressModel): string {
 
 
 /**
+ * Normalize channel-specific values before storing an address.
+ * For phone numbers this strips any 'tel:' prefix and formats the number into
+ * international format (e.g. '+49 1512 3456789'), so foreign and Swiss numbers
+ * are stored consistently. Unparseable numbers are kept as entered.
+ * @param address the address to normalize (mutated in place and returned)
+ * @returns the normalized address
+ */
+export function normalizeAddressValue(address: AddressModel): AddressModel {
+  if (address.addressChannel === 'phone' && address.phone) {
+    address.phone = formatPhoneNumber(replaceSubstring(address.phone, 'tel:', ''));
+  }
+  return address;
+}
+
+/**
  * Copy an address to the clipboard.
  * @param toastController used to show a confirmation message
  * @param address the address to copy
@@ -175,8 +190,8 @@ export function stringifyAddress(address: AddressModel, lang = 'de'): string {
   switch (address.addressChannel) {
     case 'email': 
       return address.email;
-    case 'phone': 
-      return address.phone;
+    case 'phone':
+      return formatPhoneNumber(address.phone);
     case 'postal': 
       return stringifyPostalAddress(address, lang);
     case 'bankaccount':

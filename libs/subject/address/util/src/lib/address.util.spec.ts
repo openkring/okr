@@ -1,11 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AddressModel } from '@bk2/shared-models';
 import { getCountryName } from '@bk2/shared-util-core';
-import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, stringifyAddress, stringifyPostalAddress } from './address.util';
+import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, normalizeAddressValue, stringifyAddress, stringifyPostalAddress } from './address.util';
 
 // Mock all external dependencies
 vi.mock('@capacitor/browser');
-vi.mock('@bk2/shared-util-core');
+// ToastController (used by copyAddress) pulls in @ionic/core ESM that fails to resolve under Vitest;
+// stub it without importing the real module so collection can proceed.
+vi.mock('@ionic/angular', () => ({ ToastController: class {} }));
+// keep the real util helpers (replaceSubstring, die, isType, …) but spy on getCountryName
+vi.mock('@bk2/shared-util-core', async (importActual) => ({
+  ...(await importActual<typeof import('@bk2/shared-util-core')>()),
+  getCountryName: vi.fn(),
+}));
 
 describe('Address Utils', () => {
   const mockGetCountryName = vi.mocked(getCountryName);
@@ -13,14 +20,14 @@ describe('Address Utils', () => {
   let address: AddressModel;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();  // reset return values too (clearAllMocks leaves getCountryName's mockReturnValue leaking between tests)
     address = new AddressModel(tenantId);
   });
 
   describe('stringifyPostalAddress', () => {
-    it('should return undefined for non-postal addresses', () => {
+    it('should return an empty string for non-postal addresses', () => {
       address.addressChannel = 'email';
-      expect(stringifyPostalAddress(address, 'en')).toBeUndefined();
+      expect(stringifyPostalAddress(address, 'en')).toBe('');
     });
 
     it('should return a formatted string for postal addresses', () => {
@@ -121,6 +128,52 @@ describe('Address Utils', () => {
       address.addressChannel = 'email';
       address.email = 'test@example.com';
       expect(stringifyAddress(address)).toBe('test@example.com');
+    });
+
+    it('should format a Swiss phone number into international format', () => {
+      address.addressChannel = 'phone';
+      address.phone = '0791231234';
+      expect(stringifyAddress(address)).toMatch(/^\+41/);
+    });
+
+    it('should format an international phone number', () => {
+      address.addressChannel = 'phone';
+      address.phone = '+4915123456789';
+      expect(stringifyAddress(address)).toMatch(/^\+49/);
+    });
+  });
+
+  describe('normalizeAddressValue', () => {
+    it('should normalize a Swiss-local phone number to international format', () => {
+      address.addressChannel = 'phone';
+      address.phone = '0791231234';
+      expect(normalizeAddressValue(address).phone).toMatch(/^\+41/);
+    });
+
+    it('should normalize a foreign (German) phone number', () => {
+      address.addressChannel = 'phone';
+      address.phone = '+4915123456789';
+      expect(normalizeAddressValue(address).phone).toMatch(/^\+49/);
+    });
+
+    it('should strip a tel: prefix before formatting', () => {
+      address.addressChannel = 'phone';
+      address.phone = 'tel:0791231234';
+      expect(normalizeAddressValue(address).phone).toMatch(/^\+41/);
+    });
+
+    it('should keep an unparseable phone number as entered', () => {
+      address.addressChannel = 'phone';
+      address.phone = 'not-a-number';
+      expect(normalizeAddressValue(address).phone).toBe('not-a-number');
+    });
+
+    it('should leave non-phone channels untouched', () => {
+      address.addressChannel = 'email';
+      address.email = 'test@example.com';
+      const result = normalizeAddressValue(address);
+      expect(result.email).toBe('test@example.com');
+      expect(result.phone).toBe('');
     });
   });
 });

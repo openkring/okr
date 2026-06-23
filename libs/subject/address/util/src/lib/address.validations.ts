@@ -3,6 +3,7 @@ import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import { CITY_LENGTH, COUNTRY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
 import { AddressModel } from '@bk2/shared-models';
 import { baseValidations, booleanValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
+import { isPhoneNumberValid } from '@bk2/shared-util-angular';
 
 export const addressValidations = staticSuite((model: AddressModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
@@ -40,6 +41,13 @@ export const addressValidations = staticSuite((model: AddressModel, tenants: str
     test('addressUsageLabel', '@address.customUsageLabelMandatory', () => {
       enforce(model.addressUsageLabel).isNotEmpty();
     })
+  });
+
+  // accept a valid number for any country (international '+' prefix or Swiss-local), only when present
+  omitWhen(model.addressChannel !== 'phone' || !model.phone, () => {
+    test('phone', '@address.invalidPhoneFormat', () => {
+      enforce(isPhoneNumberValid(model.phone)).isTruthy();
+    });
   });
 
   omitWhen(model.addressChannel !== 'postal', () => {
