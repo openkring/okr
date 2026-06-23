@@ -5,7 +5,7 @@ import { InvoiceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { DateFormat, convertDateFormatToString, hasRole } from '@bk2/shared-util-core';
+import { DateFormat, convertDateFormatToString, getYear, getYearList, hasRole } from '@bk2/shared-util-core';
 import { PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -65,7 +65,11 @@ import { InvoiceStore } from './invoice.store';
           } -->
         </ion-buttons>
       </ion-toolbar>
-      <bk-list-filter (searchTermChanged)="onSearchTermChange($event)" />
+      <bk-list-filter
+        (searchTermChanged)="onSearchTermChange($event)"
+        (stateChanged)="onStateSelected($event)" [types]="states()"
+        (yearChanged)="onYearSelected($event)" [years]="years()"
+      />
     </ion-header>
 
     <ion-content>
@@ -110,18 +114,24 @@ export class InvoiceList {
   private readonly modalController = inject(ModalController);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  // inputs
   public readonly listId = input.required<string>();  // all, my, personKey
   public readonly contextMenuName = input.required<string>();
 
+  // computed
   protected readonly popupId = crypto.randomUUID();
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly filteredInvoices = computed(() => this.store.filteredInvoices());
   protected readonly filteredCount = computed(() => this.filteredInvoices().length);
   protected readonly currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly imgixBaseUrl = computed(() => this.store.appStore.env.services.imgixBaseUrl);
+  protected years = computed(() => getYearList(getYear(), 8));
+  protected states = computed(() => this.store.states());
 
+  // signals
   protected readonly selectedPersonName = signal('');
 
+  /******************************** constructor ******************************************* */
   constructor() {
     effect(() => {
       const listId = this.listId();
@@ -129,8 +139,34 @@ export class InvoiceList {
     });
   }
 
+  /******************************** setters (filter) ******************************************* */
   protected onSearchTermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
+  }
+
+  protected onStateSelected(state: string): void {
+    console.log('InvoiceList set state to ' + state);
+    this.store.setSelectedState(state);
+  }
+
+  protected onYearSelected(year: number): void {
+    this.store.setSelectedYear(year);
+  }
+
+  /******************************** getters ******************************************* */
+
+  protected getAmount(cents?: number): string {
+    if (cents === undefined) return '';
+    return (cents / 100).toFixed(2);
+  }
+
+  protected getStateColor(state: string): string {
+    switch(state) {
+      case 'paid': return 'success';
+      case 'overdue': return 'danger';
+      case 'draft': return 'warning';
+    }
+    return '';
   }
 
   protected formatDate(storeDate: string): string {
@@ -160,20 +196,7 @@ export class InvoiceList {
     this.selectedPersonName.set('');
   }
 
-  protected getAmount(cents?: number): string {
-    if (cents === undefined) return '';
-    return (cents / 100).toFixed(2);
-  }
-
-  protected getStateColor(state: string): string {
-    switch(state) {
-      case 'paid': return 'success';
-      case 'overdue': return 'danger';
-      case 'draft': return 'warning';
-    }
-    return '';
-  }
-
+  /******************************* actions *************************************** */
   protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
@@ -185,23 +208,24 @@ export class InvoiceList {
   }
 
   protected async showActions(invoice: InvoiceModel): Promise<void> {
-    const options = createActionSheetOptions('@actionsheet.label.choose');
+    const options = createActionSheetOptions(this.store.i18n.as_title());
     await this.addActionSheetButtons(options, invoice);
     await this.executeActions(options, invoice);
   }
 
   private async addActionSheetButtons(options: ActionSheetOptions, _invoice: InvoiceModel): Promise<void> {
     const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton(this.store.i18n.view(), base, 'eye-on'));
-    options.buttons.push(createActionSheetButton(this.store.i18n.show_pdf(), base, 'download'));
-/*. invoices are currently read-only; they are processed in Bexio
-    if (this.canChange()) {
-      options.buttons.push(createActionSheetButton(this.store.i18n.as_edit(), base, 'edit'));
+    options.buttons.push(createActionSheetButton('invoice.view', this.store.i18n.view(), base, 'eye-on'));
+    options.buttons.push(createActionSheetButton('invoice.showpdf', this.store.i18n.show_pdf(), base, 'download'));
+    if (this.store.isExternallyManaged() === false) {
+      if (this.canChange()) {
+        options.buttons.push(createActionSheetButton('invoice.edit', this.store.i18n.update(), base, 'edit'));
+      }
+      if (this.canDelete()) {
+        options.buttons.push(createActionSheetButton('invoice.delete', this.store.i18n.delete(), base, 'trash'));
+      }
     }
-    if (this.canDelete()) {
-      options.buttons.push(createActionSheetButton(this.store.i18n.as_delete(), base, 'trash'));
-    } */
-    options.buttons.push(createActionSheetButton(this.store.i18n.cancel(), base, 'cancel'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), base, 'cancel'));
     if (options.buttons.length === 1) options.buttons = [];
   }
 
@@ -220,6 +244,7 @@ export class InvoiceList {
     this.cdr.markForCheck();
   }
 
+  /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
   }

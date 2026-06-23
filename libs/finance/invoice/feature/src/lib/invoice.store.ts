@@ -10,7 +10,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { InvoiceCollection, InvoiceModel } from '@bk2/shared-models';
 import { confirm, exportCsv } from '@bk2/shared-util-angular';
-import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { InvoiceService } from '@bk2/finance-invoice-data-access';
@@ -23,6 +23,7 @@ export type InvoiceState = {
   listId: string;         // 'all' | 'my' | personKey
   searchTerm: string;
   selectedState: string;  // 'all' | 'draft' | 'pending' | 'paid' | 'cancelled'
+  selectedYear: number;   // all is 99
   version: number;
 };
 
@@ -30,6 +31,7 @@ const initialState: InvoiceState = {
   listId: 'all',
   searchTerm: '',
   selectedState: 'all',
+  selectedYear: getYear(),
   version: 0,
 };
 
@@ -79,16 +81,15 @@ export const InvoiceStore = signalStore(
   withComputed((store) => ({
     isLoading: computed(() => store.allInvoicesResource.isLoading()),
     currentUser: computed(() => store.appStore.currentUser()),
+    isExternallyManaged: computed(() => store.accountingStore.isExternallyManaged()),
+    states: computed(() => store.appStore.getCategory('invoice_state')),
 
     filteredInvoices: computed(() => {
-      const listId = store.listId();
-      const searchTerm = store.searchTerm().toLowerCase();
-      const selectedState = store.selectedState();
-      const currentUser = store.appStore.currentUser();
-
       let invoices = store.allInvoicesResource.value() ?? [];
 
       // filter by listId
+      const listId = store.listId();
+      const currentUser = store.appStore.currentUser();
       if (listId === 'my') {
         const personKey = currentUser?.personKey;
         invoices = personKey ? invoices.filter(i => i.receiver?.key === personKey) : [];
@@ -97,11 +98,19 @@ export const InvoiceStore = signalStore(
       }
 
       // filter by state
+      const selectedState = store.selectedState();
       if (selectedState !== 'all') {
         invoices = invoices.filter(i => i.state === selectedState);
       }
 
+      // filter by year
+      const selectedYear = store.selectedYear();
+      if (selectedYear !== 99) {
+        invoices = invoices.filter(i => i.invoiceDate.startsWith(selectedYear + ''));
+      }
+
       // filter by search term
+      const searchTerm = store.searchTerm().toLowerCase();
       if (searchTerm) {
         invoices = invoices.filter(i => nameMatches(i.index, searchTerm));
       }
@@ -110,17 +119,28 @@ export const InvoiceStore = signalStore(
     }),
   })),
 
-  withMethods((store) => ({
+  withMethods((store) => ({     
+    /******************************** setters (filter) ******************************************* */
     setListId(listId: string): void {
       patchState(store, { listId });
     },
+
     setSearchTerm(searchTerm: string): void {
       patchState(store, { searchTerm });
     },
+
     setSelectedState(selectedState: string): void {
+      console.log('InvoiceStore.set state to ' + selectedState);
       patchState(store, { selectedState });
     },
 
+    setSelectedYear(selectedYear: number): void {
+      patchState(store, { selectedYear });
+    },
+
+    /******************************** getters ******************************************* */
+
+    /******************************** actions ******************************************* */
     async add(): Promise<void> {
       const invoice = newInvoice(store.appStore.tenantId());
       invoice.accountingTenantId = store.accountingStore.accountingTenantId();

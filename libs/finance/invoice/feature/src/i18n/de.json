@@ -138,6 +138,9 @@
 
   "invoice_state": {
     "name": "Rechnungsstatus",
+    "all": {
+      "label": "Alle Stati"
+    },
     "created": {
       "label": "Erstellt",
       "description": "Die Rechnungs wurde erstellt."
