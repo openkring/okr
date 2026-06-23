@@ -1,6 +1,5 @@
 import { Component, inject, input, linkedSignal, computed, signal } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -22,7 +21,7 @@ import { InvoiceStore } from './invoice.store';
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
-    <bk-header [i18n]="{ title: '@finance.invoice.operation.create.label' }" [isModal]="true" />
+    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
@@ -39,8 +38,6 @@ import { InvoiceStore } from './invoice.store';
   `
 })
 export class InvoiceNewModal {
-  private readonly modalController = inject(ModalController);
-  private readonly toastController = inject(ToastController);
   protected readonly store = inject(InvoiceStore);
 
   // input
@@ -56,6 +53,7 @@ export class InvoiceNewModal {
   // computed
   protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly title = computed(() => this.store.i18n.create());
 
   // actions
   protected onFormDataChange(data: BexioInvoiceFormModel): void {
@@ -87,14 +85,14 @@ export class InvoiceNewModal {
         positions: data.positions,
         template_slug: data.template_slug,
       });
-      await this.modalController.dismiss({ id: result.data.id }, 'confirm');
+      await this.store.modalController.dismiss({ id: result.data.id }, 'confirm');
     } catch (error) {
       console.error('BexioInvoiceNewModal.save: createBexioInvoice failed', error);
-      await showToast(this.toastController, '@finance.invoice.operation.create.error');
+      await showToast(this.store.toastController, this.store.i18n.create_error());
     }
   }
 
   protected async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await this.store.modalController.dismiss(null, 'cancel');
   }
 }

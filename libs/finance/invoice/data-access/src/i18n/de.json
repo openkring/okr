@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Rechnung hinzufügen",
+    "conf": "Die Rechnung wurde erstellt.",
+    "error": "Die Rechnung konnte nicht erstellt werden."
+  },
+  "delete": {
+    "label": "Rechnung löschen",
+    "confirm": "Soll die Rechnung wirklich gelöscht werden ?",
+    "conf": "Die Rechnung wurde gelöscht.",
+    "error": "Die Rechnung konnte nicht gelöscht werden."
+  },
+  "update": {
+    "label": "Rechnung ändern",
+    "conf": "Die Rechnung wurde geändert.",
+    "error": "Die Rechnung konnte nicht geändert werden."
+  }
+}

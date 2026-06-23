@@ -9,7 +9,7 @@ import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 import { ActivityService } from '@bk2/activity-data-access';
 
 import { getInvoiceIndex } from '@bk2/finance-invoice-util';
-import { PFX } from './scope';
+const PFX = '@finance/invoice/data-access.';
 
 @Injectable({
   providedIn: 'root'

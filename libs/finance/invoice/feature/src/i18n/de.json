@@ -44,7 +44,9 @@
     "label": "Notizen",
     "placeholder": "Freie Notizen zur Rechnung"
   },
-  "state": "Rechnungsstatus",
+  "state": {
+    "label": "Rechnungsstatus"
+  },
   "bexio": {
     "id": {
       "label": "Bexio ID",
@@ -65,14 +67,14 @@
     }
   },
   "unitPrice": {
-      "label": "",
-      "placeholder": "",
-      "helper": ""
+      "label": "Einzelpreis",
+      "placeholder": "nn.nn",
+      "helper": "Der Preis einer einzelnen Position."
     },
   "accountId": {
-      "label": "",
-      "placeholder": "",
-      "helper": ""
+      "label": "Kontonummer",
+      "placeholder": "nnnn",
+      "helper": "Die eindeutige Nummer eines Kontos."
     },
   "header": {
       "label": "Kopfzeile",

@@ -35,7 +35,7 @@ import { InvoiceStore } from './invoice.store';
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ filteredCount() }} {{ store.i18n.list_title() }}</ion-title>
+        <ion-title>{{ store.i18n.list_title() }}</ion-title>
         <ion-buttons slot="end">
           @if(listId() === 'all') {
             @if(selectedPersonName()) {

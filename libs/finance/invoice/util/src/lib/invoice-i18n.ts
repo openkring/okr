@@ -52,21 +52,21 @@ export const INVOICE_I18N_KEYS = {
   posAmount_placeholder:    PFX + 'position.amount.placeholder',
   posAmount_helper:         PFX + 'position.amount.helper',
 
-  unitPrice_label:          PFX + 'position.unitPrice.label',
-  unitPrice_placeholder:    PFX + 'position.unitPrice.placeholder',
-  unitPrice_helper:         PFX + 'position.unitPrice.helper',
+  unitPrice_label:          PFX + 'unitPrice.label',
+  unitPrice_placeholder:    PFX + 'unitPrice.placeholder',
+  unitPrice_helper:         PFX + 'unitPrice.helper',
 
-  accountId_label:          PFX + 'position.accountId.label',
-  accountId_placeholder:    PFX + 'position.accountId.placeholder',
-  accountId_helper:         PFX + 'position.accountId.helper',
+  accountId_label:          PFX + 'accountId.label',
+  accountId_placeholder:    PFX + 'accountId.placeholder',
+  accountId_helper:         PFX + 'accountId.helper',
 
   header_label:             PFX + 'header.label',
   header_placeholder:       PFX + 'header.placeholder',
-  header_title:             PFX + 'field.header.label',
+  header_title:             PFX + 'header.label',
 
   footer_label:             PFX + 'footer.label',
   footer_placeholder:       PFX + 'footer.placeholder',
-  footer_title:             PFX + 'field.footer.label',
+  footer_title:             PFX + 'footer.label',
 
   validFrom_label:          PFX + 'valid.from.label',
   validFrom_placeholder:    PFX + 'valid.from.placeholder',

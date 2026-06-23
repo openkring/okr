@@ -60,9 +60,7 @@ export class InvoiceEditModal {
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   // actions
-  protected readonly headerTitle = computed(() =>
-    this.isNew() ? '@finance.invoice.operation.create.label' : '@finance.invoice.operation.update.label'
-  );
+  protected readonly headerTitle = computed(() => this.isNew() ? this.i18n.create() : this.i18n.update());
 
   protected onFormDataChange(data: InvoiceModel): void {
     this.formData.set(data);
