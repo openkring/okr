@@ -188,7 +188,7 @@ export class ProfileSettingsAccordion {
   protected async enableNotifications(): Promise<void> {
     const uid = this.currentUser()?.bkey;
     if (!uid) return;
-    await this.fcmService.registerAndSave(uid);
+    await this.fcmService.registerAndSave(uid, true); // user gesture → allowed to prompt
     if (typeof Notification !== 'undefined') {
       this.notificationPermission.set(Notification.permission);
     }

@@ -40,21 +40,34 @@ export class FcmService {
    * at users/{uid}/fcmTokens/{token} so Cloud Functions can send targeted notifications.
    * On native Capacitor (iOS/Android) uses PushNotifications plugin for the native token.
    * On web uses Firebase Messaging (service worker / VAPID).
+   *
+   * @param allowPrompt When `false` (default) the method never shows a permission prompt and
+   *   only registers a token if permission was already granted. This is required for automatic
+   *   background initialisation: Safari/WebKit throws "Notification prompting can only be done
+   *   from a user gesture" if `Notification.requestPermission()` is called outside a user
+   *   activation. Pass `true` ONLY from a user-gesture handler (e.g. a button click).
    */
-  async registerAndSave(uid: string): Promise<string | null> {
+  async registerAndSave(uid: string, allowPrompt = false): Promise<string | null> {
     if (!isBrowser(this.platformId)) return null;
 
     if (Capacitor.isNativePlatform()) {
-      return this.registerNativeAndSave(uid);
+      return this.registerNativeAndSave(uid, allowPrompt);
     } else {
-      return this.registerWebAndSave(uid);
+      return this.registerWebAndSave(uid, allowPrompt);
     }
   }
 
   /** Native Capacitor (iOS / Android / macOS) — uses APNs / FCM native SDK. */
-  private async registerNativeAndSave(uid: string): Promise<string | null> {
+  private async registerNativeAndSave(uid: string, allowPrompt: boolean): Promise<string | null> {
     try {
-      const { receive } = await PushNotifications.requestPermissions();
+      let { receive } = await PushNotifications.checkPermissions();
+      if (receive === 'prompt' || receive === 'prompt-with-rationale') {
+        if (!allowPrompt) {
+          console.log('FcmService: Native push permission not yet granted; skipping (no user gesture)');
+          return null;
+        }
+        receive = (await PushNotifications.requestPermissions()).receive;
+      }
       if (receive !== 'granted') {
         console.log('FcmService: Native push permission denied');
         return null;
@@ -87,7 +100,7 @@ export class FcmService {
   }
 
   /** Web / PWA — uses Firebase Messaging + VAPID key + service worker. */
-  private async registerWebAndSave(uid: string): Promise<string | null> {
+  private async registerWebAndSave(uid: string, allowPrompt: boolean): Promise<string | null> {
     const vapidKey = this.env.services.fcmVapidKey;
     if (!vapidKey) {
       console.warn('FcmService.registerWebAndSave: fcmVapidKey not configured in environment');
@@ -99,7 +112,17 @@ export class FcmService {
     }
 
     try {
-      const permission = await Notification.requestPermission();
+      // Safari/WebKit throws "Notification prompting can only be done from a user gesture" if
+      // requestPermission() is called outside a user activation. Only prompt when allowPrompt
+      // is set (i.e. invoked from a click handler); otherwise proceed only if already granted.
+      let permission = Notification.permission;
+      if (permission === 'default') {
+        if (!allowPrompt) {
+          console.log('FcmService.registerWebAndSave: permission not yet granted; skipping (no user gesture)');
+          return null;
+        }
+        permission = await Notification.requestPermission();
+      }
       if (permission !== 'granted') {
         console.log('FcmService.registerWebAndSave: Notification permission denied');
         return null;
