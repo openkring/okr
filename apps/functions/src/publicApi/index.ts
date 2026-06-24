@@ -25,6 +25,16 @@ import { pageRouter } from './routes/page';
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://scs-app-54aef.web.app',
   'https://scs-app-54aef.firebaseapp.com',
+  // Production custom domains of the tenant marketing sites that call this API
+  // from the browser (their bundled /web pages). Mirrors the trusted domains in
+  // main.ts. Additional/temporary origins can still be added via PUBLIC_API_ALLOWED_ORIGINS.
+  'https://seeclub.org',
+  'https://bkaiser.ch',
+  'https://bkaiser.com',
+  'https://bkaiser.org',
+  'https://p13.ch',
+  'https://kwa.ch',
+  'https://silcrest7.ch',
 ];
 const EXTRA_ALLOWED_ORIGINS = (process.env['PUBLIC_API_ALLOWED_ORIGINS'] ?? '')
   .split(',')
