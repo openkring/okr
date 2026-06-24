@@ -23,6 +23,8 @@ export class SessionModel implements BkModel {
   public browser: BrowserName = 'other';
   public os: OsName = 'other';
 
+  public index = '';            // search index: lowercased "userEmail browser os"
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }
