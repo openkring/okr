@@ -59,8 +59,8 @@ import { AocSessionStore } from './aoc-session.store';
         (searchTermChanged)="store.setSearchTerm($event)"
         [strings]="statusOptions()"
         [stringsName]="'sessionStatus'"
-        [selectedString]="store.selectedStatus()"
-        (stringsChanged)="store.setStatus($event)"
+        [selectedString]="selectedStatusLabel()"
+        (stringsChanged)="onStatusChange($event)"
       />
 
       <!-- list header -->
@@ -123,7 +123,21 @@ export class AocSession {
   protected readonly filteredCount = computed(() => this.store.filteredSessions().length);
   protected readonly totalCount = computed(() => this.store.allSessions().length);
   protected readonly popupId = computed(() => `c_sessions_${generateRandomString(5)}`);
-  protected readonly statusOptions = computed(() => ['all', 'active', 'stale', 'orphaned', 'ended']);
+
+  private readonly statusValues: ReadonlyArray<'all' | 'active' | 'stale' | 'orphaned' | 'ended'> = ['all', 'active', 'stale', 'orphaned', 'ended'];
+  protected readonly statusLabels = computed<Record<string, string>>(() => ({
+    all: this.store.i18n.session_status_all(),
+    active: this.store.i18n.session_status_active(),
+    stale: this.store.i18n.session_status_stale(),
+    orphaned: this.store.i18n.session_status_orphaned(),
+    ended: this.store.i18n.session_status_ended(),
+  }));
+  protected readonly statusOptions = computed(() => this.statusValues.map(v => this.statusLabels()[v]));
+  protected readonly selectedStatusLabel = computed(() => this.statusLabels()[this.store.selectedStatus()]);
+  protected onStatusChange(label: string): void {
+    const match = this.statusValues.find(v => this.statusLabels()[v] === label);
+    this.store.setStatus(match ?? 'all');
+  }
 
   /* ---------------- context menu ---------------- */
   protected async dismissPopover(action: string): Promise<void> {
@@ -177,7 +191,7 @@ export class AocSession {
   }
 
   protected statusLabel(session: SessionModel): string {
-    return getSessionStatus(session, Date.now());
+    return this.statusLabels()[getSessionStatus(session, Date.now())];
   }
 
   protected statusColor(session: SessionModel): string {

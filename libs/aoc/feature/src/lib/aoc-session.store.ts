@@ -145,7 +145,7 @@ export const AocSessionStore = signalStore(
       const { SessionStatisticsModal } = await import('./session-statistics.modal');
       const modal = await store.modalController.create({
         component: SessionStatisticsModal,
-        componentProps: { sessions: store.filteredSessions(), title: store.i18n.session_stats_title() },
+        componentProps: { sessions: store.filteredSessions(), title: store.i18n.session_stats_title(), i18n: store.i18n },
       });
       await modal.present();
     },
@@ -158,6 +158,8 @@ export const AocSessionStore = signalStore(
           fromDateTime: store.fromDateTime(),
           toDateTime: store.toDateTime(),
           title: store.i18n.session_duration_title(),
+          fromLabel: store.i18n.session_duration_from(),
+          toLabel: store.i18n.session_duration_to(),
         },
       });
       await modal.present();
@@ -172,7 +174,7 @@ export const AocSessionStore = signalStore(
       const { SessionDetailModal } = await import('./session-detail.modal');
       const modal = await store.modalController.create({
         component: SessionDetailModal,
-        componentProps: { session, title: store.i18n.session_detail_title() },
+        componentProps: { session, title: store.i18n.session_detail_title(), i18n: store.i18n },
       });
       await modal.present();
     },

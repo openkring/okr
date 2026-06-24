@@ -3,6 +3,7 @@ import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonItem,
 
 import { SessionModel } from '@bk2/shared-models';
 import { getSessionStatus, SessionStatus } from '@bk2/session-util';
+import { AocI18n } from '@bk2/aoc-util';
 
 interface CountRow { key: string; count: number; }
 
@@ -24,23 +25,23 @@ interface CountRow { key: string; count: number; }
     </ion-header>
     <ion-content class="ion-padding">
       <ion-grid>
-        <ion-row><ion-col size="8">Sessions total</ion-col><ion-col size="4">{{ total() }}</ion-col></ion-row>
-        <ion-row><ion-col size="8">Eindeutige Benutzer</ion-col><ion-col size="4">{{ uniqueUsers() }}</ion-col></ion-row>
-        <ion-row><ion-col size="8">Anonyme Sessions</ion-col><ion-col size="4">{{ anonymous() }}</ion-col></ion-row>
-        <ion-row><ion-col size="8">aktiv</ion-col><ion-col size="4">{{ statusCount('active') }}</ion-col></ion-row>
-        <ion-row><ion-col size="8">inaktiv</ion-col><ion-col size="4">{{ statusCount('stale') }}</ion-col></ion-row>
-        <ion-row><ion-col size="8">verwaist</ion-col><ion-col size="4">{{ statusCount('orphaned') }}</ion-col></ion-row>
-        <ion-row><ion-col size="8">beendet</ion-col><ion-col size="4">{{ statusCount('ended') }}</ion-col></ion-row>
-        <ion-row><ion-col size="8">Durchschnittliche Dauer</ion-col><ion-col size="4">{{ avgDuration() }}</ion-col></ion-row>
-        <ion-row><ion-col size="8">Median-Dauer</ion-col><ion-col size="4">{{ medianDuration() }}</ion-col></ion-row>
+        <ion-row><ion-col size="8">{{ i18n().session_stats_total() }}</ion-col><ion-col size="4">{{ total() }}</ion-col></ion-row>
+        <ion-row><ion-col size="8">{{ i18n().session_stats_users() }}</ion-col><ion-col size="4">{{ uniqueUsers() }}</ion-col></ion-row>
+        <ion-row><ion-col size="8">{{ i18n().session_stats_anonymous() }}</ion-col><ion-col size="4">{{ anonymous() }}</ion-col></ion-row>
+        <ion-row><ion-col size="8">{{ i18n().session_status_active() }}</ion-col><ion-col size="4">{{ statusCount('active') }}</ion-col></ion-row>
+        <ion-row><ion-col size="8">{{ i18n().session_status_stale() }}</ion-col><ion-col size="4">{{ statusCount('stale') }}</ion-col></ion-row>
+        <ion-row><ion-col size="8">{{ i18n().session_status_orphaned() }}</ion-col><ion-col size="4">{{ statusCount('orphaned') }}</ion-col></ion-row>
+        <ion-row><ion-col size="8">{{ i18n().session_status_ended() }}</ion-col><ion-col size="4">{{ statusCount('ended') }}</ion-col></ion-row>
+        <ion-row><ion-col size="8">{{ i18n().session_stats_avg_duration() }}</ion-col><ion-col size="4">{{ avgDuration() }}</ion-col></ion-row>
+        <ion-row><ion-col size="8">{{ i18n().session_stats_median_duration() }}</ion-col><ion-col size="4">{{ medianDuration() }}</ion-col></ion-row>
       </ion-grid>
 
       <ion-list>
-        <ion-list-header>Nach Browser</ion-list-header>
+        <ion-list-header>{{ i18n().session_stats_by_browser() }}</ion-list-header>
         @for (row of byBrowser(); track row.key) {
           <ion-item><ion-label>{{ row.key }}</ion-label><ion-label slot="end">{{ row.count }}</ion-label></ion-item>
         }
-        <ion-list-header>Nach OS</ion-list-header>
+        <ion-list-header>{{ i18n().session_stats_by_os() }}</ion-list-header>
         @for (row of byOs(); track row.key) {
           <ion-item><ion-label>{{ row.key }}</ion-label><ion-label slot="end">{{ row.count }}</ion-label></ion-item>
         }
@@ -52,6 +53,7 @@ export class SessionStatisticsModal {
   private readonly modalController = inject(ModalController);
 
   public sessions = input.required<SessionModel[]>();
+  public i18n = input.required<AocI18n>();
   public title = input('Session-Statistik');
   public closeLabel = input('Schliessen');
 
