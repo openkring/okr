@@ -123,14 +123,24 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
         </ion-list>
       }
       @if (hasRole('kiosk')) {
-        <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-          <ion-fab-button (click)="store.createTrip()">
+        <ion-fab slot="fixed" vertical="bottom" horizontal="end" style="margin-bottom: 50px; margin-right: 50px;">
+          <ion-fab-button class="kiosk-fab" (click)="store.createTrip()">
             <ion-icon src="{{ 'add' | svgIcon }}" />
           </ion-fab-button>
         </ion-fab>
       }
     </ion-content>
   `,
+  styles: [`
+    .kiosk-fab {
+      --border-radius: 50%;
+      width: 96px;
+      height: 96px;
+    }
+    .kiosk-fab ion-icon {
+      font-size: 48px;
+    }
+  `],
 })
 export class TripList {
   protected readonly store = inject(TripStore);
