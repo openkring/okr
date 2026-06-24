@@ -5,7 +5,7 @@ import { IonBadge, IonButton, IonButtons, IonCard, IonCardHeader, IonCardTitle, 
 import { Spinner } from '@bk2/shared-ui';
 import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
 
-import { AocSessionStore, DateFilter } from './aoc-session.store';
+import { AocSessionStore } from './aoc-session.store';
 
 @Component({
   selector: 'bk-aoc-session',
@@ -22,9 +22,7 @@ import { AocSessionStore, DateFilter } from './aoc-session.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ sessions().length }} Sessions ({{ activeCount() }} active)</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="setFilter('today')" [color]="dateFilter() === 'today' ? 'primary' : 'medium'">Today</ion-button>
-          <ion-button (click)="setFilter('week')" [color]="dateFilter() === 'week' ? 'primary' : 'medium'">Week</ion-button>
-          <ion-button (click)="setFilter('all')" [color]="dateFilter() === 'all' ? 'primary' : 'medium'">All</ion-button>
+          <ion-button (click)="changeDuration()">Duration</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -75,14 +73,13 @@ export class AocSession {
   private readonly store = inject(AocSessionStore);
 
   protected readonly isLoading = this.store.isLoading;
-  protected readonly sessions = this.store.sessions;
+  protected readonly sessions = this.store.filteredSessions;
   protected readonly activeCount = this.store.activeCount;
   protected readonly uniqueUserCount = this.store.uniqueUserCount;
   protected readonly anonymousCount = this.store.anonymousCount;
-  protected readonly dateFilter = this.store.dateFilter;
 
-  protected setFilter(filter: DateFilter): void {
-    this.store.setDateFilter(filter);
+  protected changeDuration(): void {
+    this.store.changeDuration();
   }
 
   protected formatDate(sdt: string): string {
