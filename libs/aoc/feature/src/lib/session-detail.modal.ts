@@ -49,11 +49,18 @@ export class SessionDetailModal {
     const s = this.session();
     const i = this.i18n();
     const fmt = (sdt: string) => sdt ? convertDateFormatToString(sdt, DateFormat.StoreDateTime, DateFormat.ViewDateTime) : '';
+    const statusKey = getSessionStatus(s, Date.now());
+    const statusLabel = {
+      active: i.session_status_active(),
+      stale: i.session_status_stale(),
+      orphaned: i.session_status_orphaned(),
+      ended: i.session_status_ended(),
+    }[statusKey];
     return [
       { label: i.session_col_user(), value: s.userEmail || i.session_anonymous() },
       { label: i.session_col_browser(), value: s.browser },
       { label: i.session_col_os(), value: s.os },
-      { label: i.session_col_status(), value: getSessionStatus(s, Date.now()) },
+      { label: i.session_col_status(), value: statusLabel },
       { label: i.session_col_started(), value: fmt(s.startedAt) },
       { label: 'Last seen', value: fmt(s.lastSeenAt) },
       { label: 'Ended', value: fmt(s.endedAt) },
