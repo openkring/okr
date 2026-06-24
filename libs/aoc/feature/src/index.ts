@@ -18,3 +18,4 @@ export * from './lib/aoc-session.store';
 export * from './lib/aoc-website';
 export * from './lib/aoc-website-edit.modal';
 export * from './lib/aoc-website.store';
+export * from './lib/session-detail.modal';
