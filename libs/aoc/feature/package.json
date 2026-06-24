@@ -27,6 +27,7 @@
     "@bk2/subject-org-data-access": "*",
     "@bk2/subject-org-feature": "*",
     "@bk2/relationship-membership-data-access": "*",
-    "@bk2/relationship-membership-feature": "*"
+    "@bk2/relationship-membership-feature": "*",
+    "@bk2/session-util": "*"
   }
 }

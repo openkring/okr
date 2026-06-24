@@ -99,6 +99,9 @@
     },
     {
       "path": "../../relationship/membership/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../session/util/tsconfig.lib.json"
     }
   ]
 }

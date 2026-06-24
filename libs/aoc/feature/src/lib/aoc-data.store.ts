@@ -7,11 +7,11 @@ import { AlertController } from '@ionic/angular/standalone';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryCollection, CommentCollection, CommentModel, 
-  DocumentCollection, DocumentModel, GroupCollection, LocationCollection, LocationModel, LogInfo, MembershipCollection, MembershipModel, MenuItemCollection, 
-  MenuItemModel, OrgCollection, OrgModel, OwnershipCollection, OwnershipModel, PageCollection, PageModel, PersonalRelCollection, PersonalRelModel, PersonCollection, 
-  PersonModel, ReservationCollection, ReservationModel, TaskCollection, TransferCollection, UserCollection, 
-  WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel, 
+import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryCollection, CommentCollection, CommentModel,
+  DocumentCollection, DocumentModel, GroupCollection, LocationCollection, LocationModel, LogInfo, MembershipCollection, MembershipModel, MenuItemCollection,
+  MenuItemModel, OrgCollection, OrgModel, OwnershipCollection, OwnershipModel, PageCollection, PageModel, PersonalRelCollection, PersonalRelModel, PersonCollection,
+  PersonModel, ReservationCollection, ReservationModel, SessionCollection, SessionModel, TaskCollection, TransferCollection, UserCollection,
+  WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel,
   AvatarInfo, AVATAR_INFO_SHAPE, CategoryListModel, ResponsibilityModel, ResponsibilityCollection } from '@bk2/shared-models';
 import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
 import { confirm } from '@bk2/shared-util-angular';
@@ -39,6 +39,7 @@ import { getUserIndex, userValidations } from '@bk2/user-util';
 import { categoryListValidations } from '@bk2/category-util';
 import { getGroupIndex, groupValidations, isAdminMember } from '@bk2/subject-group-util';
 import { getResponsibilityIndex } from '@bk2/relationship-responsibility-util';
+import { getSessionIndex } from '@bk2/session-util';
 
 
 export interface FavMismatch {
@@ -616,7 +617,10 @@ export const AocDataStore = signalStore(
           case 'responsibility':
             this.createIndex<ResponsibilityModel>(ResponsibilityCollection, getResponsibilityIndex);
             break;
-          case 'account': 
+          case 'session':
+            this.createIndex<SessionModel>(SessionCollection, getSessionIndex, 'startedAt');
+            break;
+          case 'account':
             // this.createIndex<AccountModel>(AccountCollection, getAccountIndex, 'name');
           case 'avatar':
           case 'bill':
