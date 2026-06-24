@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
+import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonChip, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
 
 import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
@@ -23,7 +23,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
     Spinner, EmptyList, ListFilter, AvatarDisplay,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonMenuButton,
     IonIcon, IonContent, IonList, IonItem, IonLabel, IonItemDivider, IonPopover,
-    IonChip, IonBackdrop
+    IonChip, IonBackdrop, IonFab, IonFabButton
   ],
   providers: [TripStore],
   template: `
@@ -34,6 +34,11 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
           <ion-title>{{ store.i18n.list_title() }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="store.showInfo()">
+              <ion-icon slot="icon-only" src="{{'info-circle' | svgIcon}}" />
+            </ion-button>
+          </ion-buttons>
           @if (store.canWrite()) {  <!-- kiosk or admin -->
             <ion-buttons slot="end">
               <ion-button id="c-trip">
@@ -80,20 +85,6 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
         </ion-toolbar>
       }
 
-      @if(store.canWrite()) {
-        <!-- description -->
-        <ion-toolbar>
-          <ion-item lines="none">
-            <ion-label>{{ store.i18n.desc() }}</ion-label>
-          </ion-item>
-        </ion-toolbar>
-        <ion-toolbar color="light">
-          <ion-item lines="none" color="light">
-            <ion-label>{{ store.i18n.warning_note() }}</ion-label>
-          </ion-item>
-        </ion-toolbar>
-      }
-
       <ion-toolbar>
         <bk-list-filter 
           (searchTermChanged)="store.setSearchTerm($event)"
@@ -130,6 +121,13 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
             }
           }
         </ion-list>
+      }
+      @if (hasRole('kiosk')) {
+        <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+          <ion-fab-button (click)="store.createTrip()">
+            <ion-icon src="{{ 'add' | svgIcon }}" />
+          </ion-fab-button>
+        </ion-fab>
       }
     </ion-content>
   `,

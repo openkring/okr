@@ -331,5 +331,14 @@ export const TripStore = signalStore(
       await modal.present();
       await modal.onDidDismiss();
     },
+
+    async showInfo(): Promise<void> {
+      const { TripInfoModal } = await import('./trip-info.modal');
+      const modal = await store.modalController.create({
+        component: TripInfoModal,
+      });
+      await modal.present();
+      await modal.onDidDismiss();
+    },
   }))
 );
