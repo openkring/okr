@@ -5,6 +5,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { OsName, SessionCollection, SessionModel, UserModel } from '@bk2/shared-models';
 import { getBrowser, isBrowser, isIOS, isAndroid, isMacOS, isSafari } from '@bk2/shared-util-angular';
 import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
+import { getSessionIndex } from '@bk2/session-util';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -34,6 +35,7 @@ export class SessionService {
       session.browser = getBrowser();
       session.os = this.detectOs();
 
+      session.index = getSessionIndex(session);
       const key = await this.firestoreService.createModel<SessionModel>(SessionCollection, session, undefined, undefined);
       if (key) {
         session.bkey = key;
@@ -50,6 +52,7 @@ export class SessionService {
     if (this.session.userKey === user.bkey) return;  // already upgraded, skip redundant write
     this.session.userKey = user.bkey;
     this.session.userEmail = user.loginEmail;
+    this.session.index = getSessionIndex(this.session);
     await this.firestoreService.updateModel<SessionModel>(SessionCollection, this.session, undefined);
   }
 
@@ -63,6 +66,7 @@ export class SessionService {
     session.isActive = false;
     session.endedAt = endedAt;
     session.durationSeconds = this.calcDurationSeconds(session.startedAt, endedAt);
+    session.index = getSessionIndex(session);
 
     if (isSafari() || isIOS()) {
       this.sendBeacon(session);
