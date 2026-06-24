@@ -441,35 +441,35 @@
     },
     "view": {
       "label": "Bootsdaten anzeigen"
+    }
+  },
+  "boat_type": {
+    "all": {
+      "label": "Alle Bootstypen"
     },
-    "type": {
-      "all": {
-        "label": "Alle Bootstypen"
-      },
-      "motor": {
-        "label": "Motorboot",
-        "description": "Boot mit einem Motor"
-      },
-      "sail": {
-        "label": "Segelboot",
-        "description": "Boot mit einem Segel"
-      },
-      "pedalo": {
-        "label": "Pedaloboot",
-        "description": "Boot mit Fahrradantrieb"
-      },
-      "row": {
-        "label": "Ruderboot",
-        "description": "Ruderboot"
-      },
-      "inflate": {
-        "label": "Schlauchboot",
-        "description": "Aufblasbares Boot"
-      },
-      "sup": {
-        "label": "Sup / Surfbrett",
-        "description": "Sup oder Surfbrett"
-      }
+    "motor": {
+      "label": "Motorboot",
+      "description": "Boot mit einem Motor"
+    },
+    "sail": {
+      "label": "Segelboot",
+      "description": "Boot mit einem Segel"
+    },
+    "pedalo": {
+      "label": "Pedaloboot",
+      "description": "Boot mit Fahrradantrieb"
+    },
+    "row": {
+      "label": "Ruderboot",
+      "description": "Ruderboot"
+    },
+    "inflate": {
+      "label": "Schlauchboot",
+      "description": "Aufblasbares Boot"
+    },
+    "sup": {
+      "label": "Sup / Surfbrett",
+      "description": "Sup oder Surfbrett"
     }
   },
 
@@ -497,73 +497,73 @@
     },
     "view": {
       "label": "Daten des Ruderboots anzeigen"
+    }
+  },
+  "rboat_type": {
+    "all": {
+      "label": "Alle Bootstypen"
     },
-    "type": {
-      "all": {
-        "label": "Alle Bootstypen"
-      },
-      "b1x": {
-        "label": "1x",
-        "description": "Skiff"
-      },
-      "b2m": {
-        "label": "2-",
-        "description": "Zweier ohne"
-      },
-      "b2x": {
-        "label": "2x",
-        "description": "Doppelzweier"
-      },
-      "b2p": {
-        "label": "2+",
-        "description": "Zweier mit"
-      },
-      "b2mx": {
-        "label": "2-/2x",
-        "description": "Zweier umrüstbar"
-      },
-      "b3x": {
-        "label": "3x",
-        "description": "Doppeldreier"
-      },
-      "b4m": {
-        "label": "4-",
-        "description": "Vierer ohne"
-      },
-      "b4x": {
-        "label": "4x",
-        "description": "Doppelvierer"
-      },
-      "b5x": {
-        "label": "5x",
-        "description": "Doppelfünfer"
-      },
-      "b8p": {
-        "label": "8+",
-        "description": "Achter mit"
-      }
+    "b1x": {
+      "label": "1x",
+      "description": "Skiff"
     },
-    "usage": {
-      "kandidierende": {
-        "label": "Kandidierende",
-        "description": "Boote für Kandidierende (C-Gigs & Coastal)"
-      },
-      "breitensport": {
-        "label": "Breitensport",
-        "description": "Alle Aktivmitglieder in Abhängigkeit des jeweiligen Leistungsniveaus"
-      },
-      "routinierte": {
-        "label": "Routinierte",
-        "description": "Sehr routinierte Aktivmitglieder, Vorrang für Trainings und Regatten"
-      },
-      "leistungssport": {
-        "label": "Leistungssport",
-        "description": "Regattierende, Masters in Abstimmung mit Head Coach"
-      },
-      "private": {
-        "label": "Privatboot",
-        "description": "Das Boot ist im Privatbesitz eines Clubmitglieds und kann von Club-Mitgliedern nicht verwendet werden."
-      }
+    "b2m": {
+      "label": "2-",
+      "description": "Zweier ohne"
+    },
+    "b2x": {
+      "label": "2x",
+      "description": "Doppelzweier"
+    },
+    "b2p": {
+      "label": "2+",
+      "description": "Zweier mit"
+    },
+    "b2mx": {
+      "label": "2-/2x",
+      "description": "Zweier umrüstbar"
+    },
+    "b3x": {
+      "label": "3x",
+      "description": "Doppeldreier"
+    },
+    "b4m": {
+      "label": "4-",
+      "description": "Vierer ohne"
+    },
+    "b4x": {
+      "label": "4x",
+      "description": "Doppelvierer"
+    },
+    "b5x": {
+      "label": "5x",
+      "description": "Doppelfünfer"
+    },
+    "b8p": {
+      "label": "8+",
+      "description": "Achter mit"
+    }
+  },
+  "rboat_usage": {
+    "kandidierende": {
+      "label": "Kandidierende",
+      "description": "Boote für Kandidierende (C-Gigs & Coastal)"
+    },
+    "breitensport": {
+      "label": "Breitensport",
+      "description": "Alle Aktivmitglieder in Abhängigkeit des jeweiligen Leistungsniveaus"
+    },
+    "routinierte": {
+      "label": "Routinierte",
+      "description": "Sehr routinierte Aktivmitglieder, Vorrang für Trainings und Regatten"
+    },
+    "leistungssport": {
+      "label": "Leistungssport",
+      "description": "Regattierende, Masters in Abstimmung mit Head Coach"
+    },
+    "private": {
+      "label": "Privatboot",
+      "description": "Das Boot ist im Privatbesitz eines Clubmitglieds und kann von Club-Mitgliedern nicht verwendet werden."
     }
   },
   "locker": {
@@ -649,64 +649,64 @@
     },
     "view": {
       "label": "Auto anzeigen"
+    }
+  },
+  "car_type": {
+    "name": "Fahrzeugtyp",
+    "all": {
+      "label": "Alle"
     },
-    "type": {
-      "name": "Fahrzeugtyp",
-      "all": {
-        "label": "Alle"
-      },
-      "convertible": {
-        "label": "Cabrio",
-        "description": "Offenes Fahrzeug mit demontierbarem Dach"
-      },
-      "coupe": {
-        "label": "Coupé",
-        "description": "Zweitüriges Auto mit einem sportlichen Erscheinbungsbild."
-      },
-      "stationWagon": {
-        "label": "Kombi",
-        "description": "Verlängerte Limousine mit einem grösseren Kofferraum und Heckklappe."
-      },
-      "suv": {
-        "label": "Offroader (SUV)",
-        "description": "Sport Utility Vehicle für offroad und onroad"
-      },
-      "sedan": {
-        "label": "Limousine",
-        "description": "Viertüriges Fahrzeug mit einem Kofferraum, der vom Fahrgastraum getrennt ist."
-      },
-      "hatchback": {
-        "label": "Kompakt",
-        "description": "Viertüriges Fahrzeug mit Heckklappe, z.B. VW Golf"
-      },
-      "minivan": {
-        "label": "Minivan",
-        "description": "Viertürer mit mehr Personenladeraum"
-      },
-      "truck": {
-        "label": "Lastwagen",
-        "description": "Auto, Lastwagen, Bus"
-      },
-      "pickupTruck": {
-        "label": "Pickup",
-        "description": "Kleinlastwagen"
-      },
-      "sportsCar": {
-        "label": "Sportwagen",
-        "description": "Typischerweise zweiplätziges Fahrzeug mit einem sportlichen Erscheinungsbild."
-      },
-      "utility": {
-        "label": "Nutzfahrzeug",
-        "description": "Transporter für Gewerbe"
-      },
-      "camper": {
-        "label": "Camper",
-        "description": "Freizeitfahrzeug mit Uebernachtungsmöglichkeit"
-      },
-      "bus": {
-        "label": "Bus",
-        "description": "Gewerblicher Grosstransporter für viele Personen"
-      }
+    "convertible": {
+      "label": "Cabrio",
+      "description": "Offenes Fahrzeug mit demontierbarem Dach"
+    },
+    "coupe": {
+      "label": "Coupé",
+      "description": "Zweitüriges Auto mit einem sportlichen Erscheinbungsbild."
+    },
+    "stationWagon": {
+      "label": "Kombi",
+      "description": "Verlängerte Limousine mit einem grösseren Kofferraum und Heckklappe."
+    },
+    "suv": {
+      "label": "Offroader (SUV)",
+      "description": "Sport Utility Vehicle für offroad und onroad"
+    },
+    "sedan": {
+      "label": "Limousine",
+      "description": "Viertüriges Fahrzeug mit einem Kofferraum, der vom Fahrgastraum getrennt ist."
+    },
+    "hatchback": {
+      "label": "Kompakt",
+      "description": "Viertüriges Fahrzeug mit Heckklappe, z.B. VW Golf"
+    },
+    "minivan": {
+      "label": "Minivan",
+      "description": "Viertürer mit mehr Personenladeraum"
+    },
+    "truck": {
+      "label": "Lastwagen",
+      "description": "Auto, Lastwagen, Bus"
+    },
+    "pickupTruck": {
+      "label": "Pickup",
+      "description": "Kleinlastwagen"
+    },
+    "sportsCar": {
+      "label": "Sportwagen",
+      "description": "Typischerweise zweiplätziges Fahrzeug mit einem sportlichen Erscheinungsbild."
+    },
+    "utility": {
+      "label": "Nutzfahrzeug",
+      "description": "Transporter für Gewerbe"
+    },
+    "camper": {
+      "label": "Camper",
+      "description": "Freizeitfahrzeug mit Uebernachtungsmöglichkeit"
+    },
+    "bus": {
+      "label": "Bus",
+      "description": "Gewerblicher Grosstransporter für viele Personen"
     }
   },
   "realestate": {
@@ -726,84 +726,80 @@
       "label": "Immobilie anzeigen"
     }
   },
-  "legaldoc": {
-    "type": {
-      "license": {
-        "label": "Lizenz",
-        "description": "Ein Nutzungsrecht"
-      },
-      "permit": {
-        "label": "Erlaubnis",
-        "description": "Die Erlaubnis einer autorisierten Partei, dass die betroffene Partei etwas tun darf."
-      },
-      "certification": {
-        "label": "Zertifikat",
-        "description": "Eine schriftliche Bestätigung einer autorisierten Partei."
-      },
-      "passport": {
-        "label": "Pass",
-        "description": "Ausweis in Form eines Reisepasses"
-      },
-      "idcard": {
-        "label": "ID",
-        "description": "Ausweis in Form einer Identitätskarte"
-      },
-      "confirmation": {
-        "label": "Bestätigung",
-        "description": "Ein von einer autorisierten Partei herausgegebenes schriftliches Dokument, das für die Korrektheit und Existenz eines Fakts bürgt."
-      },
-      "diploma": {
-        "label": "Diplom",
-        "description": "Eine Bestätigung für einen Ausbildungs-Abschluss."
-      },
-      "contract": {
-        "label": "Vertrag",
-        "description": "Eine Vereinbarung zwischen mind. 2 Parteien."
-      },
-      "visa": {
-        "label": "Visum",
-        "description": "z.B. ein Reise-Visum für die Einreise in ein bestimmtes Land"
-      },
-      "policy": {
-        "label": "Police",
-        "description": "zB eine Versicherungspolice"
-      },
-      "other": {
-        "label": "Andere",
-        "description": "Eine andere Form eines Rechts-Dokumentes."
-      }
+  "legaldoc_type": {
+    "license": {
+      "label": "Lizenz",
+      "description": "Ein Nutzungsrecht"
+    },
+    "permit": {
+      "label": "Erlaubnis",
+      "description": "Die Erlaubnis einer autorisierten Partei, dass die betroffene Partei etwas tun darf."
+    },
+    "certification": {
+      "label": "Zertifikat",
+      "description": "Eine schriftliche Bestätigung einer autorisierten Partei."
+    },
+    "passport": {
+      "label": "Pass",
+      "description": "Ausweis in Form eines Reisepasses"
+    },
+    "idcard": {
+      "label": "ID",
+      "description": "Ausweis in Form einer Identitätskarte"
+    },
+    "confirmation": {
+      "label": "Bestätigung",
+      "description": "Ein von einer autorisierten Partei herausgegebenes schriftliches Dokument, das für die Korrektheit und Existenz eines Fakts bürgt."
+    },
+    "diploma": {
+      "label": "Diplom",
+      "description": "Eine Bestätigung für einen Ausbildungs-Abschluss."
+    },
+    "contract": {
+      "label": "Vertrag",
+      "description": "Eine Vereinbarung zwischen mind. 2 Parteien."
+    },
+    "visa": {
+      "label": "Visum",
+      "description": "z.B. ein Reise-Visum für die Einreise in ein bestimmtes Land"
+    },
+    "policy": {
+      "label": "Police",
+      "description": "zB eine Versicherungspolice"
+    },
+    "other": {
+      "label": "Andere",
+      "description": "Eine andere Form eines Rechts-Dokumentes."
     }
   },
-  "pet": {
-    "type": {
-      "cat": {
-        "label": "Katze",
-        "description": "Eine Katze als Haustier"
-      },
-      "dog": {
-        "label": "Hund",
-        "description": "Ein Hund als Haustier"
-      },
-      "bird": {
-        "label": "Vogel",
-        "description": "Ein Vogel als Haustier"
-      },
-      "sheep": {
-        "label": "Schaf",
-        "description": "Ein Schaf als Haustier"
-      },
-      "rabbit": {
-        "label": "Hase",
-        "description": "Ein Hase als Haustier"
-      },
-      "horse": {
-        "label": "Pferd",
-        "description": "Ein Pferd als Haustier"
-      },
-      "fish": {
-        "label": "Fisch",
-        "description": "Ein Fisch als Haustier"
-      }
+  "pet_type": {
+    "cat": {
+      "label": "Katze",
+      "description": "Eine Katze als Haustier"
+    },
+    "dog": {
+      "label": "Hund",
+      "description": "Ein Hund als Haustier"
+    },
+    "bird": {
+      "label": "Vogel",
+      "description": "Ein Vogel als Haustier"
+    },
+    "sheep": {
+      "label": "Schaf",
+      "description": "Ein Schaf als Haustier"
+    },
+    "rabbit": {
+      "label": "Hase",
+      "description": "Ein Hase als Haustier"
+    },
+    "horse": {
+      "label": "Pferd",
+      "description": "Ein Pferd als Haustier"
+    },
+    "fish": {
+      "label": "Fisch",
+      "description": "Ein Fisch als Haustier"
     }
   },
   "other": {
