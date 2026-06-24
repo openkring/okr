@@ -88,7 +88,7 @@ export const AocSessionStore = signalStore(
         if (s.userKey && hidden.has(s.userKey)) return false;
         if (status !== 'all' && getSessionStatus(s, now) !== status) return false;
         if (term) {
-          const idx = s.index || `${s.userEmail} ${s.browser} ${s.os}`.toLowerCase();
+          const idx = (s.index || `${s.userEmail} ${s.browser} ${s.os}`).toLowerCase();
           if (!idx.includes(term)) return false;
         }
         return true;
