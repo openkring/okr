@@ -24,7 +24,7 @@ export interface StringSelectI18n {
         interface="popover"
         [value]="selectedString()"
         (ionChange)="selectedString.set($event.detail.value)">
-        @for(stringValue of stringList(); track stringValue) {
+        @for(stringValue of stringList(); track $index) {
           <ion-select-option [value]="stringValue">{{ stringValue }}</ion-select-option>
         }
       </ion-select>
