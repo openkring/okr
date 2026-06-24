@@ -19,6 +19,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | `building-forms` | building/scaffolding a form (`FEATURE.form.ts` or a form-builder form) — Signal Forms + Vest validation, shared/ui field primitives, `valid`/`dirty` outputs, no submit button (parent drives saving via change-confirmation), i18n, autofocus/tab order, `ion-card`/`ion-grid size-md` layout, guarded chips/notes. |
 | `new-section` | creating a new CMS section type. |
 | `firebase-deploy` | deploying app/hosting, Cloud Functions, Firestore/Storage rules, or managing function secrets. |
+| `website` | editing/deploying/debugging the static marketing site (`scs-website`) served at `/web` — embedded-static pattern, self-hosted fonts + OFL licensing, the immutable-CSS cache-bust trap, the service-worker `connect-src` CSP gotcha, and why a `/web` change needs a hosting redeploy but no version bump. |
 | `eslint` | linting or fixing lint errors (and the `nx lint` heap-OOM workaround). |
 | `fix-types` | type-checking after editing TypeScript files. |
 | `testing` | writing or running tests — Vitest unit tests (only for util functions and services) or Playwright e2e; includes the `@angular/compiler` JIT-error fix. |
