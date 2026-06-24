@@ -239,6 +239,12 @@
         "label": "Aufgabe",
         "description": "Eine Aufgabe / ein Todo, die zu erledigen ist.",
         "placeholder": "Kurze Beschreibung der Aufgabe"
+      },
+      "session": {
+        "label": "Sessions",
+        "description": "Eine Session ist eine temporäre Interaktion zwischen dem Browser des Users und dem Web Server. Sie dauert von Login bis zum Logout (explizit oder implizit mit Timeout).",
+        "placeholder": "Name"
+
       }
     },
 
