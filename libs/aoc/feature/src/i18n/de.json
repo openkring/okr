@@ -426,6 +426,65 @@
     }
   },
 
+  "session": {
+    "title": "Sessions",
+    "empty": "Keine Sessions im gewählten Zeitraum",
+    "anonymous": "anonym",
+    "col": {
+      "user": "Benutzer",
+      "browser": "Browser",
+      "os": "OS",
+      "started": "Gestartet",
+      "duration": "Dauer",
+      "status": "Status"
+    },
+    "status": {
+      "all": "Alle",
+      "active": "aktiv",
+      "stale": "inaktiv",
+      "orphaned": "verwaist",
+      "ended": "beendet"
+    },
+    "menu": {
+      "export": "Rohdaten exportieren",
+      "statistics": "Statistik anzeigen",
+      "duration": "Zeitraum ändern"
+    },
+    "as": {
+      "title": "Session-Aktionen"
+    },
+    "view": "Session anzeigen",
+    "edit": {
+      "user": "Benutzer bearbeiten",
+      "person": "Person bearbeiten"
+    },
+    "hide": {
+      "user": "Diesen Benutzer ausblenden"
+    },
+    "export": {
+      "empty": "Keine Sessions zum Exportieren.",
+      "conf": "Die Sessions wurden exportiert."
+    },
+    "detail": {
+      "title": "Session-Details"
+    },
+    "stats": {
+      "title": "Session-Statistik",
+      "total": "Sessions total",
+      "users": "Eindeutige Benutzer",
+      "anonymous": "Anonyme Sessions",
+      "avgDuration": "Durchschnittliche Dauer",
+      "medianDuration": "Median-Dauer",
+      "byBrowser": "Nach Browser",
+      "byOs": "Nach OS"
+    },
+    "duration": {
+      "title": "Zeitraum wählen",
+      "from": "Von",
+      "to": "Bis"
+    }
+  },
+
   "srv": {
     "title": "Verwaltung der SRV / Regasoft Integration",
     "index": {
