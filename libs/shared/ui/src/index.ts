@@ -17,6 +17,8 @@ export * from './lib/date-input';
 export * from './lib/date-picker.modal';
 export * from './lib/date-select.modal';
 export * from './lib/date-time-select.modal';
+export * from './lib/duration-picker.modal';
+export * from './lib/duration-picker.validations';
 export * from './lib/editor';
 export * from './lib/editor-toolbar';
 export * from './lib/email-addresses.modal';

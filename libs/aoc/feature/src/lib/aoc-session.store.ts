@@ -151,15 +151,22 @@ export const AocSessionStore = signalStore(
     },
 
     async changeDuration(): Promise<void> {
-      const { SessionDurationModal } = await import('./session-duration.modal');
+      const { DurationPickerModal } = await import('@bk2/shared-ui');
       const modal = await store.modalController.create({
-        component: SessionDurationModal,
+        component: DurationPickerModal,
+        cssClass: 'duration-picker-modal',
         componentProps: {
           fromDateTime: store.fromDateTime(),
           toDateTime: store.toDateTime(),
-          title: store.i18n.session_duration_title(),
-          fromLabel: store.i18n.session_duration_from(),
-          toLabel: store.i18n.session_duration_to(),
+          showDate: true,
+          showTime: false,
+          i18n: {
+            title: store.i18n.session_duration_title(),
+            from: store.i18n.session_duration_from(),
+            to: store.i18n.session_duration_to(),
+            cancel: store.i18n.cancel(),
+            save: store.i18n.save(),
+          },
         },
       });
       await modal.present();

@@ -11,7 +11,7 @@ export enum DateFormat {
     StoreDate = 'yyyyMMdd',
     StoreDateTime = 'yyyyMMddHHmmss',
     IsoDate = 'yyyy-MM-dd',
-    IsoDateTime = 'yyyy-MM-ddTHH:mm:ss',
+    IsoDateTime = "yyyy-MM-dd'T'HH:mm:ss",
     Time = 'HH:mm',
     DDMM = 'd.M',
     SrvDate = 'd/M/yy',

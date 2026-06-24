@@ -20,4 +20,3 @@ export * from './lib/aoc-website-edit.modal';
 export * from './lib/aoc-website.store';
 export * from './lib/session-detail.modal';
 export * from './lib/session-statistics.modal';
-export * from './lib/session-duration.modal';

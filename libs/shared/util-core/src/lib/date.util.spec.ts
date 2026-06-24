@@ -61,6 +61,18 @@ describe('date.util', () => {
       expect(result).toEqual('2000-09-15');
     });
 
+    // regression: the 'T' in IsoDateTime must be escaped, otherwise date-fns treats it as the
+    // milliseconds-timestamp token (format yields garbage, parse throws a RangeError).
+    it('convertDateFormat(20000915123015 -> IsoDateTime)', () => {
+      const result = convertDateFormat('20000915123015', DateFormat.StoreDateTime, DateFormat.IsoDateTime);
+      expect(result).toEqual('2000-09-15T12:30:15');
+    });
+
+    it('convertDateFormat(IsoDateTime -> StoreDateTime) round-trips', () => {
+      const result = convertDateFormat('2000-09-15T12:30:15', DateFormat.IsoDateTime, DateFormat.StoreDateTime);
+      expect(result).toEqual('20000915123015');
+    });
+
     it('convertDateFormat(20000915123015 -> Time)', () => {
       const result = convertDateFormat('20000915123015', DateFormat.StoreDateTime, DateFormat.Time);
       expect(result).toEqual('12:30');
