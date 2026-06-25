@@ -332,7 +332,10 @@
       "placeholder": "Passwort"
     },
     "not_found": "Das Forms Template konnte nicht gefunden werden.",
-    "archived": "Das Forms Template ist archiviert."
+    "archived": "Das Forms Template ist archiviert.",
+    "advanced": {
+      "label": "Erweiterte Einstellungen anzeigen"
+    }
   },
   "hero": {
     "label": "Hero"
@@ -373,7 +376,17 @@
     "label": "Bild",
     "empty": "Kein Bild gefunden.",
     "delete": "Bild löschen",
-    "upload": "Bild hochladen",
+    "upload": {
+      "action": "Bild(er) hochladen",
+      "slot": {
+        "logo": "Logo hochladen",
+        "hero": "Hintergrundbild hochladen"
+      }
+    },
+    "overwrite": {
+      "title": "Bild ersetzen?",
+      "message": "Es ist bereits ein Bild vorhanden. Möchten Sie es ersetzen?"
+    },
     "config": {
       "title": "Konfiguration des Bildes (Datei)"
     },

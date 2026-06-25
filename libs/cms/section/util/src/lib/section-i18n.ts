@@ -221,10 +221,18 @@ export const SECTION_I18N_KEYS = {
   iframe_url_placeholder:                   PFX + 'iframe.url.placeholder',
   iframe_url_helper:                        PFX + 'iframe.url.helper',
 
+  // image upload / advanced toggle
+  form_advanced_label:                      PFX + 'form.advanced.label',
+  image_upload_action:                      PFX + 'image.upload.action',
+  image_upload_slot_logo:                   PFX + 'image.upload.slot.logo',
+  image_upload_slot_hero:                   PFX + 'image.upload.slot.hero',
+  image_overwrite_title:                    PFX + 'image.overwrite.title',
+  image_overwrite_message:                  PFX + 'image.overwrite.message',
+
   // image
   image_empty:                              PFX + 'image.empty',
   image_delete:                             PFX + 'image.delete',
-  image_upload:                             PFX + 'image.upload',
+  image_upload:                             PFX + 'image.upload.action',
   image_config_title:                       PFX + 'image.config.title',
   image_display_title:                      PFX + 'image.display.title',
   image_add_label:                          PFX + 'image.add.label',
