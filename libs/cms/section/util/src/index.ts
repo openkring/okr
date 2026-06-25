@@ -19,3 +19,4 @@ export * from './lib/table-section.validations';
 export * from './lib/tracker-section.validations';
 export * from './lib/video-section.validations';
 export * from './lib/section-i18n';
+export * from './lib/image-slots';
