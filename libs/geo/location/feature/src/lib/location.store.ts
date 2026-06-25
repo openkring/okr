@@ -162,12 +162,14 @@ export const LocationStore = signalStore(
             component: MapViewModal,
             componentProps: {
               title: location.name,
-              initialPosition: {
+              center: {
                 lat: location.latitude,
                 lng: location.longitude,
+                title: location.name,
+                what3words: location.what3words,
+                distance: location.distance,
               },
-              zoom: 15,
-              enableTrafficLayer: false
+              zoom: 15
             }
           });
           modal.present();
@@ -182,17 +184,17 @@ export const LocationStore = signalStore(
           const lngs = locations.map(l => l.longitude);
           const latSpan = Math.max(...lats) - Math.min(...lats);
           const lngSpan = Math.max(...lngs) - Math.min(...lngs);
-          const otherCoords = locations
+          const otherMarkers = locations
             .filter(l => l.bkey !== center.bkey)
-            .map(l => ({ lat: l.latitude, lng: l.longitude }));
+            .map(l => ({ lat: l.latitude, lng: l.longitude, title: l.name, what3words: l.what3words, distance: l.distance }));
 
           const modal = await store.modalController.create({
             component: MapViewModal,
             componentProps: {
-              initialPosition: { lat: center.latitude, lng: center.longitude },
-              coordinates: otherCoords,
-              zoom: zoomForBounds(latSpan, lngSpan),
-              enableTrafficLayer: false
+              title: store.i18n.locations(),
+              center: { lat: center.latitude, lng: center.longitude, title: center.name, what3words: center.what3words, distance: center.distance },
+              markers: otherMarkers,
+              zoom: zoomForBounds(latSpan, lngSpan)
             }
           });
           modal.present();

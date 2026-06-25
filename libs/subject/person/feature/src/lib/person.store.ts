@@ -380,7 +380,7 @@ export const PersonStore = signalStore(
                 component: MapViewModal,
                 componentProps: {
                 title: addressStr,
-                initialPosition: coordinates
+                center: { lat: coordinates.lat, lng: coordinates.lng, title: addressStr }
                 }
             });
             modal.present();
