@@ -5,8 +5,10 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { BkListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { sectionSupportsImages } from '@bk2/cms-section-util';
 
 import { SectionStore } from './section.store';
+import { SectionImageService, SectionImageUploadLabels } from './section-image.service';
 
 @Component({
   selector: 'bk-section-all-list',
@@ -94,6 +96,7 @@ import { SectionStore } from './section.store';
 export class SectionAllList {
   protected store = inject(SectionStore);
   private actionSheetController = inject(ActionSheetController);
+  private sectionImageService = inject(SectionImageService);
 
   // filters
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
@@ -151,6 +154,9 @@ export class SectionAllList {
     }
     if (!this.readOnly()) {
             actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.store.i18n.edit(), 'edit'));
+      if (sectionSupportsImages(section)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('section.upload', this.store.i18n.image_upload_action(), 'cloud-upload'));
+      }
     }
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('section.delete', this.store.i18n.delete(), 'trash'));
@@ -169,6 +175,9 @@ export class SectionAllList {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
+        case 'section.upload':
+          await this.uploadImages(section);
+          break;
         case 'section.delete':
           await this.store.delete(section, this.readOnly());
           break;
@@ -179,6 +188,23 @@ export class SectionAllList {
           await this.store.edit(section, true);
           break;
       }
+    }
+  }
+
+  private async uploadImages(section: SectionModel): Promise<void> {
+    const labels: SectionImageUploadLabels = {
+      slotLogo: this.store.i18n.image_upload_slot_logo(),
+      slotHero: this.store.i18n.image_upload_slot_hero(),
+      overwriteTitle: this.store.i18n.image_overwrite_title(),
+      overwriteMessage: this.store.i18n.image_overwrite_message(),
+      ok: this.store.i18n.ok(),
+      cancel: this.store.i18n.cancel(),
+      uploadTitle: this.store.i18n.image_upload(),
+      actionSheetTitle: this.store.i18n.as_title(),
+    };
+    const updated = await this.sectionImageService.uploadToSection(section, this.store.tenantId(), labels, this.currentUser());
+    if (updated) {
+      await this.store.save(updated);
     }
   }
 

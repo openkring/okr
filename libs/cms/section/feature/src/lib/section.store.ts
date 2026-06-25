@@ -259,6 +259,17 @@ export const _SectionStore = signalStore(
         }
       },
 
+      async save(section: SectionModel): Promise<void> {
+        store.clearError();
+        try {
+          await store.sectionService.update(section, store.currentUser());
+          this.reload();
+        } catch (error) {
+          store.setError(store.i18n.error_save());
+          throw error;
+        }
+      },
+
       async uploadImage(section?: ArticleSection): Promise<void> {
         if (!section) return;
         // 1) pick an image file
