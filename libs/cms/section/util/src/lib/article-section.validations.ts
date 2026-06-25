@@ -11,8 +11,10 @@ export const articleSectionValidations = staticSuite((model: ArticleSection, fie
   baseSectionValidations(model, field);
 
   // images: ImageConfig[]
+  // note: omitWhen always runs its callback (it only omits the tests inside), so the
+  // iterated value must be null-safe — older stored sections may lack `images`.
   omitWhen(!model.properties?.images?.length, () => {
-    each(model.properties.images, (image, index) => {
+    each(model.properties?.images ?? [], (image, index) => {
       stringValidations(`images[${index}].label`, image.label);
       categoryValidations(`images[${index}].type`, image.type, ImageType);
       urlValidations(`images[${index}].url`, image.url);
@@ -21,18 +23,19 @@ export const articleSectionValidations = staticSuite((model: ArticleSection, fie
   });
 
   // imageStyle: ImageStyle
+  // note: omitWhen always runs its callback, so guard every access with `?.`.
   omitWhen(!model.properties?.imageStyle, () => {
-    stringValidations('imgIxParams', model.properties?.imageStyle.imgIxParams);
-    stringValidations('width', model.properties?.imageStyle.width);
-    stringValidations('height', model.properties?.imageStyle.height);
-    stringValidations('sizes', model.properties?.imageStyle.sizes);
-    stringValidations('border', model.properties?.imageStyle.border);
-    stringValidations('borderRadius', model.properties?.imageStyle.borderRadius);
-    booleanValidations('isThumbnail', model.properties?.imageStyle.isThumbnail);
-    stringValidations('slot', model.properties?.imageStyle.slot);   // tbd: validate against Slot enum
-    booleanValidations('fill', model.properties?.imageStyle.fill);
-    booleanValidations('hasPriority', model.properties?.imageStyle.hasPriority);
-    categoryValidations('action', model.properties?.imageStyle.action, ImageActionType);
-    numberValidations('zoomFactor', model.properties?.imageStyle.zoomFactor, true, 0, 10);
+    stringValidations('imgIxParams', model.properties?.imageStyle?.imgIxParams);
+    stringValidations('width', model.properties?.imageStyle?.width);
+    stringValidations('height', model.properties?.imageStyle?.height);
+    stringValidations('sizes', model.properties?.imageStyle?.sizes);
+    stringValidations('border', model.properties?.imageStyle?.border);
+    stringValidations('borderRadius', model.properties?.imageStyle?.borderRadius);
+    booleanValidations('isThumbnail', model.properties?.imageStyle?.isThumbnail);
+    stringValidations('slot', model.properties?.imageStyle?.slot);   // tbd: validate against Slot enum
+    booleanValidations('fill', model.properties?.imageStyle?.fill);
+    booleanValidations('hasPriority', model.properties?.imageStyle?.hasPriority);
+    categoryValidations('action', model.properties?.imageStyle?.action, ImageActionType);
+    numberValidations('zoomFactor', model.properties?.imageStyle?.zoomFactor, true, 0, 10);
   });
 });

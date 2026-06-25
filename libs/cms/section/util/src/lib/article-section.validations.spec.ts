@@ -12,4 +12,10 @@ describe('articleSectionValidations', () => {
     const model = { ...ARTICLE_SECTION_SHAPE, title: 123 } as unknown as ArticleSection;
     expect(articleSectionValidations(model).hasErrors('title')).toBe(true);
   });
+
+  it('does not throw for a section whose properties lack images/imageStyle', () => {
+    // older stored article sections may not carry images[] or imageStyle at all
+    const model = { ...ARTICLE_SECTION_SHAPE, properties: {} } as unknown as ArticleSection;
+    expect(() => articleSectionValidations(model)).not.toThrow();
+  });
 });
