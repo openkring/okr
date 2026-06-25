@@ -58,8 +58,57 @@
   "type": {
     "graph": {
       "nomain": "Kein Hauptmenu gefunden.",
-      "description": "Die Sitemap gibt einen graphischen Überblick über die Struktur der App. Sie listet alle konfigurierten Menu, Seiten und Sektionen und zeigt ihre Abhängigkeiten.",
-      "description2": "Die Elemente in diesem Graph können selektiert und editiert werden."
+      "help": {
+        "title": "Sitemap – Hilfe",
+        "intro": "Die Sitemap gibt einen graphischen Überblick über die Struktur der App in Form einer Baumstruktur. Sie listet alle konfigurierten Menus, Seiten und Sektionen und zeigt ihre Abhängigkeiten. Vom Hauptmenü über Untermenüs und Seiten bis zu den einzelnen Sektionen. Jeder Knoten hat einen Typ, der durch Farbe und Bezeichnung gekennzeichnet ist.",
+        "types": {
+          "title": "Menü-Typen",
+          "main": {
+            "label": "Hauptmenü",
+            "content": "Die Wurzel der Navigation. Es bündelt die obersten Menüeinträge und wird beim Öffnen automatisch aufgeklappt."
+          },
+          "sub": {
+            "label": "Untermenü",
+            "content": "Ein aufklappbarer Eintrag, der weitere Menüeinträge gruppiert (im Menü als Akkordeon dargestellt)."
+          },
+          "navigate": {
+            "label": "Navigieren",
+            "content": "Führt zu einer internen Seite der App. Die verknüpfte Seite wird im Baum als Kindknoten angezeigt."
+          },
+          "browse": {
+            "label": "Browsen",
+            "content": "Öffnet eine externe Adresse (URL) in einem neuen Tab."
+          },
+          "context": {
+            "label": "Kontextmenü",
+            "content": "Das Menü auf der Seite oben rechts mit zusätzlichen Aktionen, die auf alle dargestellten Daten wirken."
+          },
+          "call": {
+            "label": "Aktion",
+            "content": "Löst eine Funktion oder einen Befehl aus, ohne zu navigieren (z. B. Datei hochladen)."
+          },
+          "divider": {
+            "label": "Trennlinie",
+            "content": "Ein rein visueller Trennstrich zur Gliederung des Menüs – ohne Funktion. Wird auch verwendet als Platzhalter für noch nicht implementierte Funktionen."
+          },
+          "page": {
+            "label": "Seite",
+            "content": "Eine CMS-Seite, die aus einer geordneten Liste von Sektionen besteht."
+          },
+          "section": {
+            "label": "Sektion",
+            "content": "Ein einzelner Inhaltsblock innerhalb einer Seite (z. B. Artikel, Galerie, Karte, Kalender)."
+          }
+        },
+        "usage": {
+          "title": "So verwendest du die Sitemap:",
+          "expand": "Klicke auf das Pfeil-Symbol, um einen Knoten auf- oder zuzuklappen und seine untergeordneten Elemente anzuzeigen.",
+          "label": "Pro Knoten wird der übersetzte Menütext angezeigt; darüber steht in kleinerer Schrift der technische Name des Eintrags.",
+          "edit": "Fahre mit der Maus über einen Knoten und klicke auf das Stift-Symbol, um das zugehörige Menü, die Seite oder die Sektion direkt zu bearbeiten.",
+          "export": "Über das Menü oben rechts kannst du die Struktur als Tabelle (raw) oder als Sitemap-XML exportieren.",
+          "roles": "Wichtig sind auch die angezeigten Rollen. Diese bestimmen, wer den jeweiligen Eintrag sehen kann. Du kannst die Rolle ändern, indem du auf das Stift-Symbol klickst."
+        }
+      }
     },
     "blog": {
       "label": "Blog Page",
