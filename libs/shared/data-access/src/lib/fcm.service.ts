@@ -2,7 +2,7 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -28,11 +28,18 @@ export class FcmService {
 
   constructor() {
     if (!isBrowser(this.platformId)) return;
-    try {
-      this.messaging = getMessaging(getApp());
-    } catch (error) {
-      console.error('FcmService: Failed to initialize Firebase Messaging', error);
-    }
+    // Firebase's own isSupported() is the precise check for the APIs getMessaging() needs.
+    // It returns false e.g. on iOS Safari in a regular browser tab (web push there only works
+    // for home-screen PWAs), so we skip getMessaging() rather than let it throw
+    // messaging/unsupported-browser and pollute error reporting.
+    isMessagingSupported().then((supported) => {
+      if (!supported) return;
+      try {
+        this.messaging = getMessaging(getApp());
+      } catch (error) {
+        console.error('FcmService: Failed to initialize Firebase Messaging', error);
+      }
+    });
   }
 
   /**
