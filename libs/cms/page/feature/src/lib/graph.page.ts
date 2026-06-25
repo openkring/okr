@@ -1,5 +1,5 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input } from '@angular/core';
+import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { MenuItemModel, PageModel, RoleName, SectionModel } from '@bk2/shared-models';
 import { Spinner } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
@@ -27,7 +27,7 @@ import { PageStore } from './page.store';
     SvgIconPipe,
     Spinner, MenuGraphNode, Menu,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonItem, IonLabel,
-    IonButton, IonIcon, IonPopover
+    IonButton, IonIcon, IonPopover, IonCheckbox
   ],
   providers: [MenuGraphStore],
   styles: [`
@@ -35,6 +35,13 @@ import { PageStore } from './page.store';
     .graph-container {
       padding: 16px;
       font-family: var(--ion-font-family);
+    }
+    .expand-all {
+      padding: 8px 16px 0;
+    }
+    .expand-all ion-checkbox {
+      --size: 16px;
+      font-size: 0.8rem;
     }
     .legend {
       display: flex;
@@ -68,6 +75,9 @@ import { PageStore } from './page.store';
           <ion-title>{{ store.page()?.title }}</ion-title>
           @if(hasRole('contentAdmin')) {
             <ion-buttons slot="end">
+              <ion-button id="help" (click)="showHelp()">
+                <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
+              </ion-button>
               <ion-button id="{{ popupId() }}">
                 <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
               </ion-button>
@@ -94,12 +104,13 @@ import { PageStore } from './page.store';
           <ion-label>{{ store.i18n.graph_nomain() }}</ion-label>
         </ion-item>
       } @else {
-        <ion-item lines="none">
-          <ion-label class="ion-text-wrap">{{ store.i18n.graph_description() }}</ion-label>
-        </ion-item>
-        <ion-item lines="none">
-          <ion-label class="ion-text-wrap">{{ store.i18n.graph_description2() }}</ion-label>
-        </ion-item>
+
+        <!-- Expand / collapse the whole sitemap -->
+        <div class="expand-all">
+          <ion-checkbox labelPlacement="end" [checked]="graphStore.allExpanded()" (ionChange)="onToggleExpandAll($event)">
+            Expand all
+          </ion-checkbox>
+        </div>
 
         <!-- Legend -->
         <div class="legend">
@@ -126,6 +137,7 @@ export class GraphPage {
   protected graphStore = inject(MenuGraphStore);
   private menuStore    = inject(MenuStore);
   private sectionStore = inject(SectionStore);
+  private readonly modalController = inject(ModalController);
 
   // inputs
   public contextMenuName = input<string>();
@@ -135,8 +147,37 @@ export class GraphPage {
   // derived signals
   protected popupId = computed(() => 'c_graphpage_' + this.store.page()?.bkey);
 
+  /** Expand the whole sitemap once, as soon as the tree has loaded. */
+  private hasAutoExpanded = false;
+
+  constructor() {
+    effect(() => {
+      const expandableIds = this.graphStore.allExpandableIds();
+      if (!this.hasAutoExpanded && expandableIds.length > 0) {
+        this.hasAutoExpanded = true;
+        this.graphStore.setAllExpanded(true);
+      }
+    });
+  }
 
   /******************************* actions *************************************** */
+  /** Expand or collapse every node of the sitemap. */
+  protected onToggleExpandAll(event: CustomEvent): void {
+    this.graphStore.setAllExpanded(event.detail.checked);
+  }
+
+  /** Open the help modal explaining the menu types and how to use the sitemap. */
+  protected async showHelp(): Promise<void> {
+    const { GraphHelpModal } = await import('./graph-help.modal');
+    const modal = await this.modalController.create({
+      component: GraphHelpModal,
+      componentProps: {
+        i18n: this.store.i18n
+      }
+    });
+    await modal.present();
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {

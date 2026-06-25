@@ -94,7 +94,7 @@ import { GraphPage } from "./graph.page";
                 }
                 @case ('graph') {
                     @defer (on idle) {
-                        <bk-graph-page [color]="color()" [showMenu]="showMenu()" />
+                        <bk-graph-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }

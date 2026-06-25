@@ -228,6 +228,14 @@ function flattenTree(node: DependencyNode, rows: string[][]): void {
   }
 }
 
+/** Recursively collect the ids of every node that has children (i.e. is expandable). */
+function collectExpandableIds(node: DependencyNode, ids: string[]): void {
+  if (node.children.length > 0) ids.push(node.id);
+  for (const child of node.children) {
+    collectExpandableIds(child, ids);
+  }
+}
+
 /** Walk the tree and collect all navigate menu items (they carry a page URL). */
 function collectNavigateUrls(node: DependencyNode, urls: string[]): void {
   if (node.nodeType === 'menu' && node.subType === 'navigate') {
@@ -311,6 +319,26 @@ export const MenuGraphStore = signalStore(
     }),
   })),
 
+  withComputed(state => ({
+    /** Ids of every node that can be expanded (i.e. has children). */
+    allExpandableIds: computed((): string[] => {
+      const tree = state.dependencyTree();
+      if (!tree) return [];
+      const ids: string[] = [];
+      collectExpandableIds(tree, ids);
+      return ids;
+    }),
+  })),
+
+  withComputed(state => ({
+    /** True when every expandable node is currently expanded. */
+    allExpanded: computed(() => {
+      const all = state.allExpandableIds();
+      const expanded = state.expandedIds();
+      return all.length > 0 && all.every(id => expanded.includes(id));
+    }),
+  })),
+
   withMethods(state => ({
     toggleExpanded(nodeId: string): void {
       const current = state.expandedIds();
@@ -322,6 +350,11 @@ export const MenuGraphStore = signalStore(
 
     isExpanded(nodeId: string): boolean {
       return state.expandedIds().includes(nodeId);
+    },
+
+    /** Expand all nodes, collapse all, or set explicitly. */
+    setAllExpanded(expand: boolean): void {
+      patchState(state, { expandedIds: expand ? [...state.allExpandableIds()] : [] });
     },
 
     async export(type: string): Promise<void> {
