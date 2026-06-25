@@ -49,13 +49,9 @@ interface ImagesConfigurationI18n {
           <ion-card-title>{{ i18n().image_edit_title_modal() }}</ion-card-title>
           @if(!readOnly()) {
             <ion-buttons>
-              <label style="display: flex; align-items: center;">
-                <input type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp"
-                       style="display: none;" (change)="onFilesSelected($event)">
-                <ion-button>
-                  <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
-                </ion-button>
-              </label>
+              <ion-button (click)="addImages()">
+                <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+              </ion-button>
             </ion-buttons>
           }
         </div>
@@ -121,17 +117,13 @@ export class ImagesConfiguration {
     this.images.set(ev.detail.complete(this.images()));
   }
 
-  protected async onFilesSelected(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-    input.value = ''; // allow re-selecting the same files next time
+  protected async addImages(): Promise<void> {
+    if (this.readOnly()) return;
+    const files = await this.uploadService.pickMultipleFiles(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
     if (!files.length) return;
 
     const basePath = this.storagePath();
-    const uploads: UploadEntry[] = files.map(f => ({
-      file: f,
-      fullPath: `${basePath}/${f.name}`,
-    }));
+    const uploads: UploadEntry[] = files.map(f => ({ file: f, fullPath: `${basePath}/${f.name}` }));
 
     const urls = await this.uploadService.uploadFiles(uploads, this.i18n().image_upload() ?? '');
     if (!urls) return;
