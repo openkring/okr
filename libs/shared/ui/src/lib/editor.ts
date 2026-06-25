@@ -8,7 +8,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { TranslatePipe } from '@bk2/shared-i18n';
 
-import { ButtonCopy, ButtonCopyI18n } from './button-copy';
+import { ButtonCopyI18n } from './button-copy';
 import { EditorToolbar } from './editor-toolbar';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 
@@ -18,24 +18,34 @@ import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
     NgxEditorModule, FormsModule,
-    IonItem, IonIcon, IonButton,
-    ButtonCopy
+    IonItem, IonIcon, IonButton
   ],
   styles: [`
-  ::ng-deep {
-    .NgxEditor { 
-      border: none !important; padding: 0;
-      @media (prefers-color-scheme: dark) { background-color: #333 !important; color: #fff !important; }
+    .editor {
+      border: 1px solid var(--ion-color-step-200, #ccc);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--ion-background-color, #fff);
     }
-  }
-  .content {
-    -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text;
-    h1 { line-height: 80px; color: #25265e;}
-    h2, h3 { color: #25265e; margin-bottom: 12px; }
-    p { margin-bottom: 24px; line-height: 24px; }
-    ul { list-style-position: inside; padding-left: 20px; margin-bottom: 12px;}
-  }
- `],
+    .editor:focus-within { border-color: var(--ion-color-primary, #3880ff); }
+    ::ng-deep .NgxEditor__MenuBar {
+      border-bottom: 1px solid var(--ion-color-step-150, #e0e0e0);
+      background: var(--ion-color-step-50, #f7f7f7);
+    }
+    ::ng-deep {
+      .NgxEditor {
+        border: none !important; padding: 12px; min-height: 120px;
+        @media (prefers-color-scheme: dark) { background-color: #2a2a2a !important; color: #fff !important; }
+      }
+    }
+    .content {
+      -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text;
+      h1 { line-height: 80px; color: #25265e;}
+      h2, h3 { color: #25265e; margin-bottom: 12px; }
+      p { margin-bottom: 24px; line-height: 24px; }
+      ul { list-style-position: inside; padding-left: 20px; margin-bottom: 12px;}
+    }
+  `],
   template: `
       <div class="editor">
         @if(!isReadOnly()) {   <!-- editing mode -->
@@ -43,13 +53,13 @@ import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
           <ngx-editor [editor]="editor!" [(ngModel)]="content" name="content" [disabled]=false [placeholder]="'Text...'" />
           <ion-item lines="none">
             @if (isClearable()) {
-              <ion-button fill="outline" (click)="content.set('<p></p>')" tabindex="-1">
+              <ion-button fill="clear" size="small" (click)="content.set('<p></p>')" tabindex="-1">
                 <ion-icon slot="start" src="{{'cancel' | svgIcon }}" />
                 {{ '@delete.label' | translate | async }}
               </ion-button>
             }
             @if (isCopyable()) {
-              <ion-button fill="outline" (click)="copy()" tabindex="-1">
+              <ion-button fill="clear" size="small" (click)="copy()" tabindex="-1">
                 <ion-icon slot="start" src="{{'copy' | svgIcon }}" />
                 {{ '@copy.label' | translate | async }}
               </ion-button>
