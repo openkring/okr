@@ -30,10 +30,10 @@ import { MemberCatSectionStore } from './member-cat-section.store';
         <ion-card-content>
           <ion-grid>
             <ion-row class="header-row">
-              <ion-col>{{ store.i18n.category() }}</ion-col>
-              <ion-col class="num">{{ store.i18n.male() }}</ion-col>
-              <ion-col class="num">{{ store.i18n.female() }}</ion-col>
-              <ion-col class="num">{{ store.i18n.total() }}</ion-col>
+              <ion-col>{{ store.i18n.member_cat_category() }}</ion-col>
+              <ion-col class="num">{{ store.i18n.member_cat_male() }}</ion-col>
+              <ion-col class="num">{{ store.i18n.member_cat_female() }}</ion-col>
+              <ion-col class="num">{{ store.i18n.member_cat_total() }}</ion-col>
             </ion-row>
             @for(row of store.rows(); track row.label; let last = $last) {
               <ion-row [class.total-row]="last">

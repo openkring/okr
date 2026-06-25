@@ -10,8 +10,6 @@ import { ContextDiagramConfig, ContextDiagramSection, GroupModelName, Membership
 import { getFullName, isPerson } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
-import { PFX } from './scope';
-
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { WorkrelService } from '@bk2/relationship-workrel-data-access';
 import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
@@ -21,7 +19,7 @@ import { PersonService } from '@bk2/subject-person-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
 import { OrgEditModal } from '@bk2/subject-org-feature';
-import { CONTEXT_SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
 // ---------------------------------------------------------------------------
 // Graph node / edge types
@@ -110,7 +108,7 @@ export const ContextDiagramStore = signalStore(
     groupEditModal: inject(GROUP_EDIT_MODAL),
     personService: inject(PersonService),
     responsibilityService: inject(ResponsibilityService),
-    i18n: inject(I18nService).translateAll(CONTEXT_SECTION_I18N_KEYS),
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
   })),
   withProps((store) => ({
     relationsResource: rxResource<RelationsData, { center: string; config: ContextDiagramConfig }>({

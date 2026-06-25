@@ -7,13 +7,10 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, ModelSelectService } from '@bk2/shared-feature';
 import { CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
 import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
-
 import { I18nService } from '@bk2/shared-i18n';
 
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 import { InvitationService } from '@bk2/relationship-invitation-data-access';
-
-import { INVITATION_STORE_I18N_KEYS, InvitationStoreI18n } from '@bk2/cms-section-util';
-export type { InvitationStoreI18n };
 
 
 export type InvitationSectionState = {
@@ -57,10 +54,7 @@ export const InvitationSectionStore = signalStore(
     modalController: inject(ModalController),
     modelSelectService: inject(ModelSelectService),
     alertController: inject(AlertController),
-    i18nService: inject(I18nService),
-  })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll(INVITATION_STORE_I18N_KEYS),
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
   })),
   withProps((store) => ({
     invitationsResource: rxResource({

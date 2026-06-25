@@ -45,10 +45,10 @@ type ViewMode = 'accordion' | 'chart';
         <ion-card-content>
           <ion-segment [(ngModel)]="viewMode">
             <ion-segment-button value="accordion">
-              <ion-label>{{ store.i18n.view_accordion() }}</ion-label>
+              <ion-label>{{ store.i18n.orgchart_accordion() }}</ion-label>
             </ion-segment-button>
             <ion-segment-button value="chart">
-              <ion-label>{{ store.i18n.view_chart() }}</ion-label>
+              <ion-label>{{ store.i18n.orgchart_chart() }}</ion-label>
             </ion-segment-button>
           </ion-segment>
 
@@ -155,11 +155,11 @@ export class OrgchartSectionComponent {
   protected async showActions(node: OrgchartTreeNode): Promise<void> {
     const options = createActionSheetOptions('@actionsheet.label.choose');
     options.buttons = [
-      createActionSheetButton('orgchart.addNewGroup', this.store.i18n.group_add_new(), this.imgixBaseUrl, 'add-circle'),
-      createActionSheetButton('orgchart.addExistingGroup', this.store.i18n.group_add_existing(), this.imgixBaseUrl, 'search'),
+      createActionSheetButton('orgchart.addNewGroup', this.store.i18n.orgchart_group_add_new(), this.imgixBaseUrl, 'add-circle'),
+      createActionSheetButton('orgchart.addExistingGroup', this.store.i18n.orgchart_group_add_existing(), this.imgixBaseUrl, 'search'),
       ...(node.modelType === 'group' ? [
-        createActionSheetButton('orgchart.editGroup', this.store.i18n.group_edit(), this.imgixBaseUrl, 'edit'),
-        createActionSheetButton('orgchart.removeGroup', this.store.i18n.group_remove_label(), this.imgixBaseUrl, 'trash'),
+        createActionSheetButton('orgchart.editGroup', this.store.i18n.orgchart_group_edit(), this.imgixBaseUrl, 'edit'),
+        createActionSheetButton('orgchart.removeGroup', this.store.i18n.orgchart_group_remove(), this.imgixBaseUrl, 'trash'),
       ] : []),
       createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'),
     ];

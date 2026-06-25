@@ -8,26 +8,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
 import { Avatars } from '@bk2/avatar-ui';
-
-interface PeopleConfigI18n {
-  people_edit:                        Signal<string>;
-  people_type:                        Signal<string>,
-  people_title_label:                 Signal<string>,
-  people_title_placeholder:           Signal<string>,
-  people_title_helper:                Signal<string>,
-  altText_label:                      Signal<string>,
-  altText_placeholder:                Signal<string>,
-  altText_helper:                     Signal<string>,
-  people_linkedSection_label:         Signal<string>,
-  people_linkedSection_placeholder:   Signal<string>,
-  people_linkedSection_helper:        Signal<string>,
-  people_color_label:                 Signal<string>,
-  people_nameDisplay_label:           Signal<string>,
-  people_show_name_label:             Signal<string>,
-  people_show_name_helper:            Signal<string>,
-  people_show_label_label:            Signal<string>,
-  people_show_label_helper:           Signal<string>,
-}
+import { SectionI18n } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-people-config',
@@ -65,13 +46,13 @@ interface PeopleConfigI18n {
                 @if(type() === 'group') {
                   <ion-button fill="outline" [disabled]="isReadOnly()" (click)="groupSelectClicked.emit()">
                     <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
-                    {{ groupId() || '@content.section.type.people.select.group' }}
+                    {{ groupId() || i18n().select_group() }}
                   </ion-button>
                 }
                 @if(type() === 'responsibility') {
                   <ion-button fill="outline" [disabled]="isReadOnly()" (click)="responsibilitySelectClicked.emit()">
                     <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
-                    {{ groupId() || '@content.section.type.people.select.responsibility' }}
+                    {{ groupId() || i18n().select_responsibility() }}
                   </ion-button>
                 }
               </ion-col>
@@ -95,8 +76,7 @@ interface PeopleConfigI18n {
             (avatarsChange)="onPersonsChange($event)"
             [readOnly]="readOnly()"
             [currentUser]="currentUser"
-            title="@content.section.type.people.label"
-            addLabel="@content.section.type.people.addLabel"
+            [title]="i18n().people_label()"
           />
         }
       }
@@ -108,7 +88,7 @@ export class PeopleConfiguration {
   public currentUser = input.required<UserModel | undefined>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  public readonly i18n = input.required<PeopleConfigI18n>();
+  public readonly i18n = input.required<SectionI18n>();
 
   public selectClicked = output<void>();
   public groupSelectClicked = output<void>();

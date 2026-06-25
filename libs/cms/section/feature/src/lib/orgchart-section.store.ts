@@ -12,9 +12,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { GroupService } from '@bk2/subject-group-data-access';
 import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
 import { OrgEditModal } from '@bk2/subject-org-feature';
-
-import { ORGCHART_SECTION_I18N_KEYS, OrgchartSectionI18n } from '@bk2/cms-section-util';
-export type { OrgchartSectionI18n };
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
 export interface OrgchartTreeNode {
   name: string;
@@ -64,11 +62,9 @@ export const OrgchartStore = signalStore(
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     groupEditModal: inject(GROUP_EDIT_MODAL),
-    i18nService: inject(I18nService)
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(ORGCHART_SECTION_I18N_KEYS),
-
     groupsResource: rxResource({
       stream: () => store.groupService.list(),
     }),
@@ -226,7 +222,7 @@ export const OrgchartStore = signalStore(
       if (node.modelType !== 'group') return;
       const group = store.allGroups().find(g => g.bkey === node.bkey);
       if (!group) return;
-      const ok = await confirm(store.alertController, store.i18n.group_remove_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      const ok = await confirm(store.alertController, store.i18n.orgchart_group_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (ok) {
         await store.groupService.update(
           { ...group, parentKey: DEFAULT_KEY, parentName: '' },

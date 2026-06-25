@@ -52,12 +52,12 @@ import { TripStatsSectionStore } from './trip-stats-section.store';
               <ion-card-content>
                 <ion-grid>
                   <ion-row class="header-row">
-                    <ion-col>{{ store.i18n.colName() }}</ion-col>
+                    <ion-col>{{ store.i18n.tripstats_col_name() }}</ion-col>
                     <ion-col class="num clickable" (click)="store.setSort('km')">
-                      {{ store.i18n.colKm() }}{{ sortIcon('km') }}
+                      {{ store.i18n.tripstats_col_km() }}{{ sortIcon('km') }}
                     </ion-col>
                     <ion-col class="num clickable" (click)="store.setSort('trips')">
-                      {{ store.i18n.colTrips() }}{{ sortIcon('trips') }}
+                      {{ store.i18n.tripstats_col_trips() }}{{ sortIcon('trips') }}
                     </ion-col>
                   </ion-row>
                   @for(row of store.listRows(); track row.key) {

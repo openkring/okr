@@ -170,7 +170,7 @@ export class UploadService {
     });
   }
 
-  public async showZoomedImage(url: string, title = '@content.type.article.zoomedImage', style = IMAGE_STYLE_SHAPE, altText = '', cssClass = 'zoom-modal'): Promise<void> {
+  public async showZoomedImage(url: string, title = 'Zoom', style = IMAGE_STYLE_SHAPE, altText = '', cssClass = 'zoom-modal'): Promise<void> {
     await showZoomedImage(this.modalController, url, title, style, altText, cssClass);     
   }
 }

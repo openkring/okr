@@ -1,4 +1,4 @@
-import { computed, inject, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController } from '@ionic/angular/standalone';
@@ -8,13 +8,12 @@ import { map } from 'rxjs/operators';
 import { AppStore } from '@bk2/shared-feature';
 import { ActivitiesConfig, ActivityCollection, ActivityModel } from '@bk2/shared-models';
 import { getSystemQuery } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { ActivityService } from '@bk2/activity-data-access';
 import { ActivityViewModal } from '@bk2/activity-feature';
-import { I18nService } from '@bk2/shared-i18n';
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
-import { ACTIVITIES_SECTION_I18N_KEYS, ActivitiesSectionI18n } from '@bk2/cms-section-util';
-export type { ActivitiesSectionI18n };
 
 export type ActivitiesSectionState = {
   maxItems: number | undefined;
@@ -30,11 +29,9 @@ export const ActivitiesSectionStore = signalStore(
     activityService: inject(ActivityService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
-    i18nService: inject(I18nService)
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(ACTIVITIES_SECTION_I18N_KEYS),
-
     activitiesResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),

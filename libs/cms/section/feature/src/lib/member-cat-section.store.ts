@@ -8,10 +8,9 @@ import { I18nService } from '@bk2/shared-i18n';
 import { AppStore } from '@bk2/shared-feature';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { MEMBER_CAT_SECTION_I18N_KEYS, MemberCatSectionI18n } from '@bk2/cms-section-util';
 import { applyCatRowConfig, buildCatRows, CatRow } from './member-cat-section.util';
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
-export type { MemberCatSectionI18n };
 export { buildCatRows, CatRow };
 
 type MemberCatSectionState = { orgId: string; categoryFilter: string; sortOrder: 'asc' | 'desc' };
@@ -22,11 +21,9 @@ export const MemberCatSectionStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     membershipService: inject(MembershipService),
-    i18nService: inject(I18nService),
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(MEMBER_CAT_SECTION_I18N_KEYS),
-
     membershipsResource: rxResource({
       params: () => ({ orgId: store.orgId() }),
       stream: ({ params }) => {

@@ -5,22 +5,9 @@ import { CategoryListModel, RoleName, SectionModel, UserModel } from '@bk2/share
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
+import { SectionI18n } from '@bk2/cms-section-util';
 
-interface SectionConfigI18n {
-    section_config_name_label:           Signal<string>;
-    section_config_name_placeholder:     Signal<string>;
-    section_config_name_helper:          Signal<string>;
-    section_config_title_label:          Signal<string>;
-    section_config_title_placeholder:    Signal<string>;
-    section_config_title_helper:         Signal<string>;
-    section_config_subTitle_label:       Signal<string>;
-    section_config_subTitle_placeholder: Signal<string>;
-    section_config_subTitle_helper:      Signal<string>;
-    section_config_colSize_label:        Signal<string>;
-    section_config_colSize_placeholder:  Signal<string>;
-    section_config_colSize_helper:       Signal<string>;
-    copy_conf:                           Signal<string>;
-}
+export const PFX = '@cms/section/feature.';
 
 @Component({
   selector: 'bk-section-config',
@@ -40,7 +27,7 @@ interface SectionConfigI18n {
             <ion-row>
               <ion-col size="6">
                 <ion-item lines="none">
-                  <ion-label>{{ '@content.section.default.type' }}: {{ type() }}</ion-label>
+                  <ion-label>{{ this.i18n().default_type() }}: {{ type() }}</ion-label>
                 </ion-item>
               </ion-col>
               @if(bkey(); as bkey) {
@@ -68,7 +55,7 @@ interface SectionConfigI18n {
           </ion-col>
           <ion-col size="6">
             <ion-item lines="none">
-              <ion-label>{{ '@content.section.forms.roleNeeded.title' }}</ion-label>
+              <ion-label>{{ this.i18n().form_roleNeeded() }}</ion-label>
             </ion-item>
           </ion-col>
           <ion-col size="6">
@@ -76,7 +63,7 @@ interface SectionConfigI18n {
           </ion-col>
           <ion-col size="6">
             <ion-item lines="none">
-              <ion-label>{{ '@content.section.forms.state.title' }}</ion-label>
+              <ion-label>{{ this.i18n().form_state() }}</ion-label>
             </ion-item>
           </ion-col>
           <ion-col size="6">
@@ -94,10 +81,10 @@ export class SectionConfiguration {
   public currentUser = input<UserModel | undefined>();
   public readonly roles = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
-  public readonly headerTitle = input('@content.section.forms.title');
+  public readonly headerTitle = input<string>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  public readonly i18n = input.required<SectionConfigI18n>();
+  public readonly i18n = input.required<SectionI18n>();
 
   // fields
   protected bkey = computed(() => this.formData().bkey ?? '');
@@ -108,6 +95,7 @@ export class SectionConfiguration {
   protected state = computed(() => this.formData().state);
   protected roleNeeded = linkedSignal(() => this.formData().roleNeeded ?? 'registered');
   protected colSize = linkedSignal(() => this.formData().colSize ?? '12');
+  protected headerTitle2 = computed(() => this.headerTitle() ?? this.i18n().form_title);
 
   protected maxLength = LONG_NAME_LENGTH;
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));

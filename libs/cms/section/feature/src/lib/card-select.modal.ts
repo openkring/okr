@@ -10,8 +10,9 @@ import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
 import { Header } from '@bk2/shared-ui';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { PFX } from './scope';
 import { AsyncPipe } from '@angular/common';
+
+const PFX = '@cms/section/feature.';
 
 const CardSelectStore = signalStore(
   withState({ 

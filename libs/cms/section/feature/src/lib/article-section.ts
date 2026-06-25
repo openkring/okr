@@ -1,11 +1,10 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, input } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ViewPosition } from '@bk2/shared-models';
-
 import { Img, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { replacePlaceholders } from '@bk2/shared-util-core';
-import { AppStore } from '@bk2/shared-feature';
+
+import { ArticleStore } from './article-section.store';
 
 @Component({
   selector: 'bk-article-section',
@@ -72,6 +71,7 @@ import { AppStore } from '@bk2/shared-feature';
     .carousel::scroll-button(left)  { content: "<"; left: 1.5rem; }
     .carousel::scroll-button(right) { content: ">"; right: 1.5rem; }
   `],
+  providers: [ArticleStore],
   template: `
     @if(section()) {
       <ion-card>
@@ -84,7 +84,7 @@ import { AppStore } from '@bk2/shared-feature';
                   <ion-row>
                     @if(image(); as image) {
                       <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" />
                       </ion-col>
                     }
                     <ion-col size="12" [sizeMd]="colSizeText()">
@@ -184,27 +184,16 @@ import { AppStore } from '@bk2/shared-feature';
   `
 })
 export class ArticleSectionComponent {
-  private appStore = inject(AppStore);
+  protected store = inject(ArticleStore);
 
   // inputs
   public section = input<ArticleSection>();
   public editMode = input<boolean>(false);
 
   // computed
-  protected images = computed((): ImageConfig[] => {
-    const props = this.section()?.properties as any;
-    if (!props) return [];
-    // backward compat: support legacy single-image field
-    if (Array.isArray(props.images) && props.images.length > 0) return props.images;
-    if (props.image) return [props.image];    // backward compatibility
-    return [];
-  });
-
+  protected images = computed((): ImageConfig[] => this.store.images());
   // Single image (only when exactly 1 image is configured)
-  protected image = computed(() => {
-    const imgs = this.images();
-    return imgs.length === 1 ? imgs[0] : undefined;
-  });
+  protected image = computed(() => this.store.image());
 
   protected position = computed((): ViewPosition => {
     const count = this.images().length;
@@ -217,8 +206,14 @@ export class ArticleSectionComponent {
   protected content = computed(() => this.section()?.content?.htmlContent ?? '<p></p>');
   protected colSizeImage = computed(() => this.section()?.content?.colSize ?? 6);
   protected colSizeText = computed(() => 12 - this.colSizeImage());
-  protected title = computed(() => this.appStore.replacePlaceholders(this.section()?.title ?? ''));
-  protected subTitle = computed(() => this.appStore.replacePlaceholders(this.section()?.subTitle ?? ''));
+  protected title = computed(() => this.store.appStore.replacePlaceholders(this.section()?.title ?? ''));
+  protected subTitle = computed(() => this.store.appStore.replacePlaceholders(this.section()?.subTitle ?? ''));
 
   public VP = ViewPosition;
+
+  constructor() {
+    effect(() => {
+      this.store.setConfig(this.section()?.properties);
+    });
+  }
 }

@@ -2,24 +2,21 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { rxResource } from '@angular/core/rxjs-interop';
 import { signalStore, withMethods, withProps } from '@ngrx/signals';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonNote } from '@ionic/angular/standalone';
+import { from, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { Spinner } from '@bk2/shared-ui';
-import { from, of } from 'rxjs';
 import { FormDefinitionModel, FormSection } from '@bk2/shared-models';
-import { FormRenderer } from '@bk2/forms-ui';
 
-import { FORMS_SECTION_I18N_KEYS, FormsSectionI18n } from '@bk2/cms-section-util';
-export type { FormsSectionI18n };
+import { FormRenderer } from '@bk2/forms-ui';
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+
 
 const FormSectionStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
-    i18nService: inject(I18nService),
-  })),
-  withProps(store => ({
-    i18n: store.i18nService.translateAll(FORMS_SECTION_I18N_KEYS),
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
   })),
   withMethods(store => ({
     // Public, anonymous gateway — reads the form definition server-side so it works
@@ -113,23 +110,23 @@ const FormSectionStore = signalStore(
         @if (definitionResource.isLoading()) {
           <bk-spinner />
         } @else if (submitted()) {
-          <ion-note color="success">{{ store.i18n.submit_conf() }}</ion-note>
+          <ion-note color="success">{{ store.i18n.form_submit_conf() }}</ion-note>
         } @else if (errorMsg()) {
           <ion-note color="danger">{{ errorMsg() }}</ion-note>
         } @else if (definition(); as def) {
           @if (def.isArchived) {
-            <ion-note color="warning">{{ store.i18n.archived() }}</ion-note>
+            <ion-note color="warning">{{ store.i18n.form_archived() }}</ion-note>
           } @else {
             <bk-form-renderer
               [definition]="def"
-              [submitLabel]="store.i18n.submit()"
+              [submitLabel]="store.i18n.form_submit()"
               [submitting]="submitting()"
               [jsToken]="jsToken()"
               (submitted)="onSubmit($event)"
             />
           }
         } @else {
-          <ion-note color="medium">{{ store.i18n.not_found() }}</ion-note>
+          <ion-note color="medium">{{ store.i18n.form_not_found() }}</ion-note>
         }
       </ion-card-content>
     </ion-card>
@@ -188,7 +185,7 @@ export class FormSectionComponent {
       );
       this.submitted.set(true);
     } catch {
-      this.errorMsg.set(this.store.i18n.submit_error());
+      this.errorMsg.set(this.store.i18n.form_submit_error());
     } finally {
       this.submitting.set(false);
     }
@@ -197,12 +194,12 @@ export class FormSectionComponent {
   private async promptEncryptionPassword(): Promise<string> {
     return new Promise(resolve => {
       this.alertController.create({
-        header: 'Datei-Verschlüsselung',
-        message: 'Bitte geben Sie das Verschlüsselungspasswort ein.',
-        inputs: [{ name: 'password', type: 'password', placeholder: 'Passwort' }],
+        header: this.store.i18n.form_encryption_header(),
+        message: this.store.i18n.form_encryption_message(),
+        inputs: [{ name: 'password', type: 'password', placeholder: this.store.i18n.form_encryption_placeholder() }],
         buttons: [
-          { text: 'Abbrechen', role: 'cancel', handler: () => resolve('') },
-          { text: 'OK', handler: (data: { password: string }) => resolve(data.password ?? '') },
+          { text: this.store.i18n.cancel(), role: 'cancel', handler: () => resolve('') },
+          { text: this.store.i18n.ok(), handler: (data: { password: string }) => resolve(data.password ?? '') },
         ],
       }).then(alert => alert.present());
     });

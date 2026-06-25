@@ -191,7 +191,7 @@ export class RagSectionComponent {
     protected searchTerm = signal('');
 
     // computed
-    protected placeholder = computed(() => this.store.i18n.placeholder());
+    protected placeholder = computed(() => this.store.i18n.rag_placeholder());
     protected isLoading = computed(() => this.store.isLoading());
     protected hasHistory = computed(() => this.store.hasHistory());
     protected documents = computed(() => this.store.ragDocuments());

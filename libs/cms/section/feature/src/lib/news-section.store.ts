@@ -8,9 +8,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { AppStore } from '@bk2/shared-feature';
 import { ArticleSection, PageCollection, PageModel, SectionCollection, SectionModel } from '@bk2/shared-models';
 import { I18nService } from '@bk2/shared-i18n';
-
-import { NEWS_SECTION_I18N_KEYS, NewsSectionI18n } from '@bk2/cms-section-util';
-export type { NewsSectionI18n };
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
 export type NewsState = {
   blogPageKey: string | undefined;
@@ -27,11 +25,9 @@ export const NewsStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     modalController: inject(ModalController),
-    i18nService: inject(I18nService)
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(NEWS_SECTION_I18N_KEYS),
-
     newsResource: rxResource({
       params: () => ({
         blogPageKey: store.blogPageKey(),

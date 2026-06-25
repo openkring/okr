@@ -6,11 +6,13 @@
   "noSuchSection": "Die Sektion {{ type }} existiert nicht. ev. wurde sie noch nicht implementiert oder falsch konfiguriert.",
   "select": {
     "label": "Sektion wählen",
-    "section": "Sektion wählen"
+    "section": "Sektion wählen",
+    "group": "Gruppe wählen",
+    "responsibility": "Verantwortlichkeit wählen"
   },
   "view": "Sektionskonfiguration anzeigen",
   "edit": "Sektion bearbeiten",
-  "create": "Sektion erstellen",
+  "create": "Sektion erstellen",  
   "delete": {
     "label": "Sektion löschen",
     "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
@@ -28,6 +30,9 @@
     "load": "Die Sektionen konnten nicht geladen werden. Bitte versuche es erneut.",
     "delete": "Die Sektion konnte nicht gelöscht werden. Bitte versuche es erneut."
   },
+  "default": {
+    "type": "Default Typ"
+  },
 
   "activity": {
     "empty": "Keine Aktivitäten vorhanden."
@@ -35,7 +40,9 @@
   "album": {
     "title": "Album",
     "label": "Album",
-    "zoomed": "Bild zoomen",
+    "empty": "Keine Bilder gefunden.",
+    "zoom": "Bild zoomen",
+    "zoomed": "Vergrössertes Bild",
     "edit": "Albumskonfiguration bearbeiten",
     "directory": {
       "label": "Verzeichnis",
@@ -72,7 +79,8 @@
     }
   },
   "article": {
-    "label": "Artikel"
+    "label": "Artikel",
+    "zoomed": "Vergrösserte Bildansicht"
   },
   "button": {
     "name": "Button",
@@ -135,6 +143,7 @@
   "calendar": {
     "calevents": "Ereignisse",
     "label": "Kalender",
+    "empty": "Keine Ereignisse gefunden.",
     "update": {
       "label": "Ereignis ändern",
       "conf": "Das Ereignis wurde geändert.",
@@ -316,6 +325,11 @@
       "label": "Speichern",
       "conf": "Die Aenderungen wurden gespeichert.",
       "error": "Die Aenderungen konnten nicht gespeichert werden."
+    },
+    "encryption": {
+      "header": "Datei-Verschlüsselung",
+      "message": "Bitte gib das Verschlüsselungspasswort ein.",
+      "placeholder": "Passwort"
     },
     "not_found": "Das Forms Template konnte nicht gefunden werden.",
     "archived": "Das Forms Template ist archiviert."
@@ -726,6 +740,7 @@
   },
   "table": {
     "label": "Tabelle",
+    "title": "Konfiguration der Tabelle",
     "edit": "Tabellen-Konfiguration ändern",
     "description": "Tabellarische Darstellung von Daten",
     "empty": "Die Tabelle ist leer - es wurden keine Daten gefunden.",
@@ -851,9 +866,11 @@
     "title": "Ausfahrten",
     "label": "Statistiken über Ausfahrten",
     "empty":    "Keine Statistiken für dieses Jahr gefunden.",
-    "colName":  "Name",
-    "colKm":    "km",
-    "colTrips": "Fahrten",
+    "col": {
+      "name": "Name",
+      "km": "km",
+      "trips": "Fahrten"
+    },
     "type": {
       "view": {
         "label": "Ansichtsart"

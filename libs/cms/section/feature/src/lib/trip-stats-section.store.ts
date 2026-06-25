@@ -7,10 +7,9 @@ import type { EChartsOption } from 'echarts';
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService } from '@bk2/shared-i18n';
 import { PersonModel, ResourceModel, TripStatsConfig } from '@bk2/shared-models';
-import { TripStatsService, YearStats } from '@bk2/trip-data-access';
 
-import { TRIP_STATS_I18N_KEYS, TripStatsI18n } from '@bk2/cms-section-util';
-export type { TripStatsI18n };
+import { TripStatsService, YearStats } from '@bk2/trip-data-access';
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
 export interface StatsRow {
   key: string;
@@ -45,7 +44,7 @@ export const TripStatsSectionStore = signalStore(
     i18nService:      inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(TRIP_STATS_I18N_KEYS),
+    i18n: store.i18nService.translateAll(SECTION_I18N_KEYS),
   })),
   withComputed(store => ({
     entityKeys: computed(() => {

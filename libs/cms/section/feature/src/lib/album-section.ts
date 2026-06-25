@@ -115,17 +115,17 @@ import { AlbumStore } from './album-section.store';
                         <div class="imgix-image">
                           @switch(image.type) {
                             @case(IT.Dir) {
-                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
+                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()" />
                               <ion-label>{{ image.label }}</ion-label>
                             } @case(IT.Image) {
-                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
+                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
                             } @case(IT.StreamingVideo) {
                               <bk-video [url]="image.url" />
                             } @case (IT.Pdf) {
                               <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
                             }
                             @default {
-                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
+                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
                               <ion-label>{{ image.label }}</ion-label>
                             }
                           }
@@ -172,7 +172,7 @@ import { AlbumStore } from './album-section.store';
                           <ion-col size="6" size-xl="3" size-md="4">
                             @switch(image.type) {
                               @case(IT.Dir) {
-                                <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
+                                <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
                                 <ion-label>{{ image.label }}</ion-label>
                               } @case(IT.Image) {
                                 <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, $index)"></div>
@@ -182,7 +182,7 @@ import { AlbumStore } from './album-section.store';
                                 <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, $index)"></div>
                               }
                               @default {
-                                <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
+                                <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
                                 <ion-label>{{ image.label }}</ion-label>
                               }
                             }
@@ -206,9 +206,11 @@ export class AlbumSectionComponent {
   protected store = inject(AlbumStore);
   private readonly platformId = inject(PLATFORM_ID);
 
+  // inputs
   public section = input<AlbumSection>();
   public editMode = input<boolean>(false);
 
+  // derived
   protected imgixBaseUrl = computed(() => this.store.imgixBaseUrl());
   protected imageContainer = viewChild('.imgix-image', { read: ElementRef });
   protected metaData = computed(() => this.store.metaData());
@@ -248,7 +250,7 @@ export class AlbumSectionComponent {
     // tbd: put the following into the store as a method, triggered by an effect each time the image changes
     switch (this.imageStyle().action) {
       case ImageActionType.Download: await downloadToBrowser(image.actionUrl); break;
-      case ImageActionType.Zoom: await showZoomedImage(this.modalController, image.url, this.store.i18n.zoomed(), this.imageStyle(), image.altText, 'full-modal'); break;
+      case ImageActionType.Zoom: await showZoomedImage(this.modalController, image.url, this.store.i18n.album_zoomed(), this.imageStyle(), image.altText, 'full-modal'); break;
       case ImageActionType.OpenSlider: this.store.openGallery(this.images(), this.title(), index); break;
       case ImageActionType.OpenDirectory: this.store.setDirectory(image.actionUrl); break;
       case ImageActionType.FollowLink: browse(image.actionUrl); break;

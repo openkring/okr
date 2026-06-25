@@ -1,30 +1,10 @@
-import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { TableStyle } from '@bk2/shared-models';
 
-interface TableStyleConfigI18n {
-  table_style_textAlign_label:         Signal<string>,
-  table_style_textAlign_placeholder:   Signal<string>,
-  table_style_textAlign_helper:        Signal<string>,
-  table_style_backgroundColor_label:       Signal<string>,
-  table_style_backgroundColor_placeholder: Signal<string>,
-  table_style_backgroundColor_helper:      Signal<string>,
-  table_style_fontSize_label:          Signal<string>,
-  table_style_fontSize_placeholder:    Signal<string>,
-  table_style_fontSize_helper:         Signal<string>,
-  table_style_padding_label:           Signal<string>,
-  table_style_padding_placeholder:     Signal<string>,
-  table_style_padding_helper:          Signal<string>,
-  table_style_textColor_label:         Signal<string>,
-  table_style_textColor_placeholder:   Signal<string>,
-  table_style_textColor_helper:        Signal<string>,
-  table_style_border_label:            Signal<string>,
-  table_style_border_placeholder:      Signal<string>,
-  table_style_border_helper:           Signal<string>,
-  table_style_fontWeight_label:        Signal<string>,
-}
+import { SectionI18n } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-table-style',
@@ -74,10 +54,10 @@ export class TableStyleConfiguration {
   public formData = model.required<TableStyle>();
   public name = input.required<'header' | 'body'>();
   public readonly readOnly = input(true);
-  public readonly i18n = input.required<TableStyleConfigI18n>();
+  public readonly i18n = input.required<SectionI18n>();
 
   // linked signals (fields)
-  protected cardTitle = computed(() => `@content.section.type.table.${this.name()}.title`);
+  protected cardTitle = computed(() => this.name() === 'header' ? this.i18n().table_header_title() : this.i18n().table_body_title());
   protected textAlign = linkedSignal(() => this.formData().textAlign ?? 'left');
   protected fontSize = linkedSignal(() => this.formData().fontSize ?? '0.8rem');
   protected fontWeight = linkedSignal(() => this.formData().fontWeight ?? 'normal');

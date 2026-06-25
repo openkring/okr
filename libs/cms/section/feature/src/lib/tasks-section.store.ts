@@ -9,12 +9,11 @@ import { TaskCollection, TaskModel } from '@bk2/shared-models';
 import { getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 import { TaskService } from '@bk2/task-data-access';
 import { TaskEditModal } from '@bk2/task-feature';
 import { isTask } from '@bk2/task-util';
 
-import { TASKS_SECTION_I18N_KEYS, TasksSectionI18n } from '@bk2/cms-section-util';
-export type { TasksSectionI18n };
 
 export type TasksState = {
   maxItems: number | undefined; // max items to show, undefined means all
@@ -30,11 +29,9 @@ export const TasksStore = signalStore(
     appStore: inject(AppStore),
     taskService: inject(TaskService),
     modalController: inject(ModalController),
-    i18nService: inject(I18nService)
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(TASKS_SECTION_I18N_KEYS),
-
     tasksForCurrentUserResource: rxResource({
       params: () => ({
         personKey: store.appStore.currentUser()?.personKey,

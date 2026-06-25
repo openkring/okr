@@ -9,10 +9,14 @@ export const SECTION_I18N_KEYS = {
   key:                       '@key',
   name:                      '@name.label',
   type:                      '@type',
+  more:                       '@more',
   no_images:                  PFX + 'noImages',
   no_such_section:            PFX + 'noSuchSection',
   select_label:               PFX + 'select.label',
   select_section:             PFX + 'select.section',
+  select_group:               PFX + 'select.group',
+  select_responsibility:      PFX + 'select.responsibility',
+
   view:                       PFX + 'view',
   edit:                       PFX + 'edit',
   create:                     PFX + 'create',
@@ -22,6 +26,7 @@ export const SECTION_I18N_KEYS = {
   send_confirm2:              PFX + 'send.confirm2',
   email_conf:                 PFX + 'email.conf',
   email_error:                PFX + 'email.error',
+  default_type:               PFX + 'default.type',
 
   // activity
   activity_empty:                           PFX + 'activity.empty',
@@ -29,6 +34,8 @@ export const SECTION_I18N_KEYS = {
   // album
   album_title:                              PFX + 'album.title',
   album_label:                              PFX + 'album.label',
+  album_empty:                              PFX + 'album.empty',
+  album_zoom:                               PFX + 'album.zoom',
   album_zoomed:                             PFX + 'album.zoomed',
   album_edit:                               PFX + 'album.edit',
   album_directory_label:                    PFX + 'album.directory.label',
@@ -46,6 +53,10 @@ export const SECTION_I18N_KEYS = {
   album_show_docs_helper:                   PFX + 'album.show.docs.helper',
   album_show_pdfs_label:                    PFX + 'album.show.pdfs.label',
   album_show_pdfs_helper:                   PFX + 'album.show.pdfs.helper',
+
+  // article
+  article_label:                            PFX + 'article.label',
+  article_zoomed:                           PFX + 'article.zoomed',
 
   // button
   button_name:                              PFX + 'button.name',
@@ -97,9 +108,12 @@ export const SECTION_I18N_KEYS = {
 
   // calendar
   calevents:                                PFX + 'calendar.calevents',
+  calevent_label:                           PFX + 'calendar.label',
+  calevent_empty:                           PFX + 'calendar.empty',
   calevent_update:                          PFX + 'calendar.update.label',
   calevent_update_conf:                     PFX + 'calendar.update.conf',
   calevent_update_error:                    PFX + 'calendar.update.error',
+
   calevent_subscribe:                       PFX + 'calendar.subscribe',
   calevent_unsubscribe:                     PFX + 'calendar.unsubscribe',
   calevent_edit:                            PFX + 'calendar.edit',
@@ -178,11 +192,14 @@ export const SECTION_I18N_KEYS = {
   form_image_style:                         PFX + 'form.image.style',
   form_roleNeeded:                          PFX + 'form.roleNeeded.title',
   form_state:                               PFX + 'form.state.title',
-  form_submit_label:                        PFX + 'form.submit.label',
+  form_submit:                              PFX + 'form.submit.label',
   form_submit_conf:                         PFX + 'form.submit.conf',
   form_submit_error:                        PFX + 'form.submit.error',
   form_not_found:                           PFX + 'form.not_found',
   form_archived:                            PFX + 'form.archived',
+  form_encryption_header:                   PFX + 'form.encryption.header',
+  form_encryption_message:                  PFX + 'form.encryption.message',
+  form_encryption_placeholder:              PFX + 'form.encryption.placeholder',
 
   // icon
   icon_title:                               PFX + 'icon.title',
@@ -340,7 +357,9 @@ export const SECTION_I18N_KEYS = {
   orgchart_group_confirm:                   PFX + 'orgchart.group.remove.confirm',
 
   // people
+  people_label:                             PFX + 'people.label',
   people_empty:                             PFX + 'people.empty',
+  people_add:                               PFX + 'people.add',
   people_edit:                              PFX + 'people.edit',
   people_type:                              PFX + 'people.type',
   people_title_label:                       PFX + 'people.title.label',
@@ -405,8 +424,14 @@ export const SECTION_I18N_KEYS = {
   section_config_colSize_placeholder:       PFX + 'section.config.colSize.placeholder',
   section_config_colSize_helper:            PFX + 'section.config.colSize.helper',
 
-  // table-body
+  // table
+  table_label:                              PFX + 'table.label',
+  table_title:                              PFX + 'table.title',
+  table_edit:                               PFX + 'table.edit',
+  table_description:                        PFX + 'table.description',
   table_empty:                              PFX + 'table.empty',
+
+  // table-body
   table_body_title:                         PFX + 'table.body.title',
   table_body_description:                   PFX + 'table.body.description',
   table_body_add:                           PFX + 'table.body.add',
@@ -452,6 +477,12 @@ export const SECTION_I18N_KEYS = {
   table_style_border_helper:                PFX + 'table.style.border.helper',
   table_style_fontWeight_label:             PFX + 'table.style.fontWeight.label',
 
+  // task
+  task_empty:                              PFX + 'task.empty',
+  task_complete:                           PFX + 'task.complete',
+  task_view:                               PFX + 'task.view',
+  task_edit:                               PFX + 'task.edit',
+
   // tracker
   tracker_title:                            PFX + 'tracker.title',
   tracker_intervalInSeconds_label:          PFX + 'tracker.intervalInSeconds.label',
@@ -468,8 +499,12 @@ export const SECTION_I18N_KEYS = {
 
   // trip-stats
   tripstats_title:                          PFX + 'tripstats.title',
+  tripstats_empty:                          PFX + 'tripstats.empty',
   tripstats_type_view_label:                PFX + 'tripstats.type.view.label',
   tripstats_type_content_label:             PFX + 'tripstats.type.content.label',
+  tripstats_col_name:                       PFX + 'tripstats.col.name',
+  tripstats_col_km:                         PFX + 'tripstats.col.km',
+  tripstats_col_trips:                      PFX + 'tripstats.col.trips',
 
   // video
   video_edit:                               PFX + 'video.edit',

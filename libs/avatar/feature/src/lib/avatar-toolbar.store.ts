@@ -3,14 +3,14 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Photo } from '@capacitor/camera';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
+import { ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { getImageDimensionsFromMetadata, showZoomedImage, updateImageDimensions } from '@bk2/shared-ui';
 import { getModelAndKey } from '@bk2/shared-util-core';
+import { CategoryItemModel, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
 
 import { AvatarService, UploadService } from '@bk2/avatar-data-access';
-import { CategoryItemModel, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
-import { ModalController } from '@ionic/angular/standalone';
 import { getDefaultIcon } from '@bk2/avatar-util';
 
 export interface AvatarToolbarState {
@@ -60,7 +60,6 @@ export const AvatarToolbarStore = signalStore(
 
   withComputed(state => {
     return {
-      //url: computed(() => getRelStorageUrl(state.imgixBaseUrl(), state.modelType(), state.relStorageUrl())),
       url: computed(() => state.avatarService.getAvatarUrl(state.key(), getDefaultIcon(state.modelType()))),
     };
   }),
@@ -94,12 +93,6 @@ export const AvatarToolbarStore = signalStore(
 
 
           }
-/*             const image = newImage('@content.type.article.zoomedImage', path, path);
-            image.width = parseInt(dimensions.width);
-            image.height = parseInt(dimensions.height);
-            image.imageAction = ImageAction.Zoom;
-            await store.uploadService.showZoomedImage(image, title ?? '');
-          } */
         }
       },
 
@@ -114,13 +107,3 @@ export const AvatarToolbarStore = signalStore(
     };
   })
 );
-
-
-function getRelStorageUrl(imgixBaseUrl: string, modelType: string, url?: string): string {
-  if (!url || url.length === 0) {
-    const defaultIcon = getDefaultIcon(modelType);
-    return `${imgixBaseUrl}/logo/icons/${defaultIcon}.svg`;
-  }
-  // now we are sure to have a valid url
-  return (url.startsWith(imgixBaseUrl) ? url : `${imgixBaseUrl}/${url}`)
-}

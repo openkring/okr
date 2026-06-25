@@ -1,22 +1,10 @@
-import { Component, computed, input, model, Signal } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ResponsibilityConfig, UserModel } from '@bk2/shared-models';
 import { Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
-
-interface ResponsibilityConfigI18n {
-  responsibility_edit:                    Signal<string>;
-  responsibility_bkey_label:              Signal<string>;
-  responsibility_bkey_placeholder:        Signal<string>;
-  responsibility_bkey_helper:             Signal<string>;
-  responsibility_show_avatar_label:        Signal<string>;
-  responsibility_show_avatar_helper:       Signal<string>;
-  responsibility_show_name_label:          Signal<string>;
-  responsibility_show_name_helper:         Signal<string>;
-  responsibility_show_description_label:   Signal<string>;
-  responsibility_show_description_helper:  Signal<string>;
-}
+import { SectionI18n } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-responsibility-config',
@@ -29,7 +17,7 @@ interface ResponsibilityConfigI18n {
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ '@content.section.type.responsibility.edit' }}</ion-card-title>
+        <ion-card-title>{{ i18n().responsibility_edit() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
@@ -58,7 +46,7 @@ export class ResponsibilityConfiguration {
   public currentUser = input.required<UserModel | undefined>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  public readonly i18n = input.required<ResponsibilityConfigI18n>();
+  public readonly i18n = input.required<SectionI18n>();
 
   protected bkey = computed(() => this.formData().bkey ?? '');
   protected showAvatar = computed(() => this.formData().showAvatar ?? true);

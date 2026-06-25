@@ -8,8 +8,7 @@ import { I18nService } from '@bk2/shared-i18n';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, AlbumStyle, ImageConfig, ImageType } from '@bk2/shared-models';
 import { debugMessage, die } from '@bk2/shared-util-core';
 
-import { ALBUM_SECTION_I18N_KEYS, AlbumSectionI18n, getImageMetaData, listAllFilesFromDirectory } from '@bk2/cms-section-util';
-export type { AlbumSectionI18n };
+import { getImageMetaData, listAllFilesFromDirectory, SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
 import { HttpClient } from '@angular/common/http';
 
@@ -32,7 +31,7 @@ export const AlbumStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     httpClient: inject(HttpClient),
-    i18n: inject(I18nService).translateAll(ALBUM_SECTION_I18N_KEYS),
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
   })),
 
   withComputed((state) => {

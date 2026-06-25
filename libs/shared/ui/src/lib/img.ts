@@ -139,6 +139,7 @@ export class Img {
   public image = input.required<ImageConfig>();
   public imageStyle = input.required<ImageStyle>();
   public editMode = input<boolean>(false);
+  public zoomTitle = input('Zoom');
 
   protected imageContainer = viewChild('.image-container', { read: ElementRef });
 
@@ -231,7 +232,7 @@ export class Img {
     if (this.editMode()) return;
     switch(this.actionType()) {
       case ImageActionType.Zoom:
-        await showZoomedImage(this.modalController, this.url(), '@content.type.article.zoomedImage', this.imageStyle(), this.altText(), 'full-modal');
+        await showZoomedImage(this.modalController, this.url(), this.zoomTitle(), this.imageStyle(), this.altText(), 'full-modal');
         break;
       case ImageActionType.FollowLink:
         await Browser.open({ url: this.actionUrl() });

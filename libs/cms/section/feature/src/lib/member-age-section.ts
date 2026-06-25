@@ -30,10 +30,10 @@ import { MemberAgeSectionStore } from './member-age-section.store';
         <ion-card-content>
           <ion-grid>
             <ion-row class="header-row">
-              <ion-col>{{ store.i18n.ageGroup() }}</ion-col>
-              <ion-col class="num">{{ store.i18n.male() }}</ion-col>
-              <ion-col class="num">{{ store.i18n.female() }}</ion-col>
-              <ion-col class="num">{{ store.i18n.total() }}</ion-col>
+              <ion-col>{{ store.i18n.member_age_group() }}</ion-col>
+              <ion-col class="num">{{ store.i18n.member_age_male() }}</ion-col>
+              <ion-col class="num">{{ store.i18n.member_age_female() }}</ion-col>
+              <ion-col class="num">{{ store.i18n.member_age_total() }}</ion-col>
             </ion-row>
             @for(row of store.rows(); track row.label; let last = $last) {
               <ion-row [class.total-row]="last">

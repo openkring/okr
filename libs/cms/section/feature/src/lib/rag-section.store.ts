@@ -14,9 +14,7 @@ import { UploadService } from '@bk2/avatar-data-access';
 import { DocumentService } from '@bk2/document-data-access';
 import { buildDocumentModel } from '@bk2/document-util';
 import { FolderService } from '@bk2/folder-data-access';
-
-import { RAG_SECTION_I18N_KEYS, RagSectionI18n } from '@bk2/cms-section-util';
-export type { RagSectionI18n };
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
 const RAG_FOLDER_KEY = 'rag';
 
@@ -62,11 +60,9 @@ export const RagStore = signalStore(
         uploadService: inject(UploadService),
         documentService: inject(DocumentService),
         folderService: inject(FolderService),
-        i18nService: inject(I18nService),
+        i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
     })),
     withProps((store) => ({
-        i18n: store.i18nService.translateAll(RAG_SECTION_I18N_KEYS),
-
         // Real-time list of documents in the 'rag' folder.
         // Firestore only allows one array-contains per query and getSystemQuery already
         // uses one on 'tenants', so we filter by folderKey client-side.
@@ -106,7 +102,7 @@ export const RagStore = signalStore(
             await store.folderService.ensureGroupFolder(RAG_FOLDER_KEY, 'RAG', tenantId, currentUser ?? undefined);
 
             const uploads = files.map(file => ({ file, fullPath: `${storagePath}/${file.name}` }));
-            const downloadUrls = await store.uploadService.uploadFiles(uploads, store.i18n.upload());
+            const downloadUrls = await store.uploadService.uploadFiles(uploads, store.i18n.rag_upload());
             if (!downloadUrls) return;
 
             await Promise.all(files.map(async (file, i) => {

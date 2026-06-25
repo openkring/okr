@@ -8,8 +8,7 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
 import { I18nService } from '@bk2/shared-i18n';
 
-import { PEOPLE_SECTION_I18N_KEYS, PeopleSectionI18n } from '@bk2/cms-section-util';
-export type { PeopleSectionI18n };
+import { SECTION_I18N_KEYS, SectionI18n } from '@bk2/cms-section-util';
 
 export type PeopleSectionState = {
   section: PeopleSection | undefined;
@@ -24,11 +23,10 @@ export const PeopleSectionStore = signalStore(
   withProps(() => ({
     membershipService: inject(MembershipService),
     responsibilityService: inject(ResponsibilityService),
-    i18nService: inject(I18nService)
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS) as SectionI18n
   })),
+  
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(PEOPLE_SECTION_I18N_KEYS),
-
     groupMembersResource: rxResource({
       params: () => ({ groupId: store.section()?.properties.groupId ?? '' }),
       stream: ({ params }) => store.membershipService.listMembersOfOrg(params.groupId),

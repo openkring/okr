@@ -1,19 +1,22 @@
-import { Component, OnDestroy, OnInit, computed, input, model } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonIcon, IonItem } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonItem, ToastController } from '@ionic/angular/standalone';
 import { Editor, NgxEditorModule } from 'ngx-editor';
+import { AsyncPipe } from '@angular/common';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
 import { EditorToolbar } from './editor-toolbar';
+import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-editor',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe,
     NgxEditorModule, FormsModule,
     IonItem, IonIcon, IonButton,
     ButtonCopy
@@ -40,13 +43,17 @@ import { EditorToolbar } from './editor-toolbar';
           <ngx-editor [editor]="editor!" [(ngModel)]="content" name="content" [disabled]=false [placeholder]="'Text...'" />
           <ion-item lines="none">
             @if (isClearable()) {
-              <ion-button fill="clear" (click)="content.set('<p></p>')">
+              <ion-button fill="outline" (click)="content.set('<p></p>')" tabindex="-1">
                 <ion-icon slot="start" src="{{'cancel' | svgIcon }}" />
-                {{ '@delete.label' }}
+                {{ '@delete.label' | translate | async }}
               </ion-button>
             }
             @if (isCopyable()) {
-              <bk-button-copy [i18n]="buttonCopyI18n()" [value]="content()" />
+              <ion-button fill="outline" (click)="copy()" tabindex="-1">
+                <ion-icon slot="start" src="{{'copy' | svgIcon }}" />
+                {{ '@copy.label' | translate | async }}
+              </ion-button>
+
             }
           </ion-item>
         } @else {           <!-- viewing mode -->
@@ -54,13 +61,14 @@ import { EditorToolbar } from './editor-toolbar';
             <ion-item lines="none">
               <div [innerHTML]="content()" class="content"></div>
             </ion-item>
-            <!-- <ngx-editor [editor]="editor!" [ngModel]="content" [disabled]="readOnly()" [placeholder]="'Text...'" /> -->
           }
         }
       </div>
   `
 })
 export class BkEditor implements OnInit, OnDestroy {
+  private toastController = inject(ToastController);
+
   // inputs
   public content = model('<p></p>'); // the HTML content
   public readOnly = input.required<boolean>();
@@ -86,5 +94,13 @@ export class BkEditor implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.editor?.destroy();
+  }
+
+  public copy(): void {
+    const value = this.content();
+    if (value !== undefined && value !== null) {
+      copyToClipboard(value);
+      showToast(this.toastController, this.buttonCopyI18n().copy_conf);  
+    }
   }
 }

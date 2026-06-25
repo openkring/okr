@@ -14,9 +14,7 @@ import { CalEventEditModal, CalEventViewModal } from '@bk2/calevent-feature';
 import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-
-import { CALENDAR_SECTION_I18N_KEYS, CalendarSectionI18n } from '@bk2/cms-section-util';
-export type { CalendarSectionI18n };
+import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
 
 export type CalendarState = {
   calendarName: string | undefined; // all, my, or specific calendar name
@@ -39,7 +37,7 @@ export const CalendarStore = signalStore(
     membershipService: inject(MembershipService),
     modalController: inject(ModalController),
     calEventService: inject(CalEventService),
-    i18n: inject(I18nService).translateAll(CALENDAR_SECTION_I18N_KEYS),
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
   })),
   withProps((store) => ({
     // returns a list of unigue organization keys for the current user
@@ -306,7 +304,7 @@ export const CalendarStore = signalStore(
           };
           calEvent.attendees.push(newAttendee);
         }
-        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, store.i18n.update_calevent_conf(), store.i18n.update_calevent_error(), currentUser);
+        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, store.i18n.calevent_update_conf(), store.i18n.calevent_update_error(), currentUser);
       },
 
       async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
@@ -314,7 +312,7 @@ export const CalendarStore = signalStore(
         if (!currentUser) return;
         invitation.state = newState;
         invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
-        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, store.i18n.update_invitation_conf(), store.i18n.update_invitation_error(), currentUser);
+        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, store.i18n.invitation_update_conf(), store.i18n.invitation_update_error(), currentUser);
         // this.reload();
       },
     }

@@ -6,11 +6,13 @@ import { I18nService } from '@bk2/shared-i18n';
 import { SectionModel } from '@bk2/shared-models';
 import { Spinner } from '@bk2/shared-ui';
 
+export const PFX = '@cms/section/feature.';
+
 const MissingSectionStore = signalStore(
   withProps(() => ({ i18nService: inject(I18nService) })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll({
-      no_such_section: '@content.section.error.noSuchSection',
+      no_such_section: PFX + 'no_such_section',
     }),
   })),
 );

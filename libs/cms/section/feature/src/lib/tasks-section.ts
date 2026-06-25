@@ -143,7 +143,7 @@ export class TasksSectionComponent implements OnInit {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
     if (hasRole('registered', this.currentUser())) {
         if (task.completionDate.length === 0) { // task is not yet completed.
-            actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.complete(), this.imgixBaseUrl, 'checkbox-circle'));
+            actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.task_complete(), this.imgixBaseUrl, 'checkbox-circle'));
         }
         actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }

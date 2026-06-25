@@ -1,22 +1,15 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
-import { Capacitor } from '@capacitor/core';
-import { Geolocation, Position } from '@capacitor/geolocation';
 import {} from '@capacitor/google-maps';
-import { firstValueFrom } from 'rxjs';
 
 import { ButtonSection, ViewPosition } from '@bk2/shared-models';
 import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { AppStore } from '@bk2/shared-feature';
-import { debugMessage } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
 
 import { ReservationApplyModal } from '@bk2/relationship-reservation-feature';
 import { isReservation } from '@bk2/relationship-reservation-util';
 import { ReservationService } from '@bk2/relationship-reservation-data-access';
 
 import { ButtonWidget, EmergencyButtonWidget } from '@bk2/cms-section-ui';
-import { MatrixChatService } from '@bk2/chat-data-access';
 import { SectionStore } from './section.store';
 
 

@@ -30,7 +30,7 @@ import { MessagesStore } from './messages-section.store';
         <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if(rooms().length === 0) {
-            <bk-empty-list [message]="store.i18n.messages_empty()" />
+            <bk-empty-list [message]="store.i18n.chat_empty()" />
           } @else {
             <ion-list lines="inset">
               @for(room of rooms(); track room.roomId) {

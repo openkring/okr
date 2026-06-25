@@ -18,42 +18,42 @@ import { ContextDiagramStore } from './context-diagram-section.store';
   ],
   providers: [ContextDiagramStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.title() }" [isModal]="true" />
+    <bk-header [i18n]="{ title: store.i18n.context_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showAvatar">
-          <ion-label>{{ store.i18n.show_avatar() }}</ion-label>
+          <ion-label>{{ store.i18n.context_show_avatar() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showName">
-          <ion-label>{{ store.i18n.show_name() }}</ion-label>
+          <ion-label>{{ store.i18n.context_show_name() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showMembers">
-          <ion-label>{{ store.i18n.show_member() }}</ion-label>
+          <ion-label>{{ store.i18n.context_show_member() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showMemberships">
-          <ion-label>{{ store.i18n.show_membership() }}</ion-label>
+          <ion-label>{{ store.i18n.context_show_membership() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showResponsibilities">
-          <ion-label>{{ store.i18n.show_responsibility() }}</ion-label>
+          <ion-label>{{ store.i18n.context_show_responsibility() }}</ion-label>
         </ion-toggle>
       </ion-item>
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showPersonalRels">
-          <ion-label>{{ store.i18n.show_personal() }}</ion-label>
+          <ion-label>{{ store.i18n.context_show_personal() }}</ion-label>
         </ion-toggle>
       </ion-item>
       @if (isMemberAdmin()) {
         <ion-item>
           <ion-toggle [(ngModel)]="cfg.showWorkRels">
-            <ion-label>{{ store.i18n.show_workrel() }}</ion-label>
+            <ion-label>{{ store.i18n.context_show_workrel() }}</ion-label>
           </ion-toggle>
         </ion-item>
         <ion-item>
