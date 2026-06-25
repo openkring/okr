@@ -17,4 +17,9 @@ describe('albumSectionValidations', () => {
     const model = { ...ALBUM_SECTION_SHAPE, properties: { ...ALBUM_SECTION_SHAPE.properties, directory: 123 } } as unknown as AlbumSection;
     expect(albumSectionValidations(model).hasErrors('directory')).toBe(true);
   });
+
+  it('does not throw for a section whose properties lack imageStyle', () => {
+    const model = { ...ALBUM_SECTION_SHAPE, properties: {} } as unknown as AlbumSection;
+    expect(() => albumSectionValidations(model)).not.toThrow();
+  });
 });

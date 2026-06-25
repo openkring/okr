@@ -17,4 +17,9 @@ describe('buttonSectionValidations', () => {
     const model = { ...BUTTON_SECTION_SHAPE, properties: { ...BUTTON_SECTION_SHAPE.properties, style: { ...BUTTON_SECTION_SHAPE.properties.style, label: 123 } } } as unknown as ButtonSection;
     expect(buttonSectionValidations(model).hasErrors('style.label')).toBe(true);
   });
+
+  it('does not throw for a section whose properties lack icon/style/action', () => {
+    const model = { ...BUTTON_SECTION_SHAPE, properties: {} } as unknown as ButtonSection;
+    expect(() => buttonSectionValidations(model)).not.toThrow();
+  });
 });

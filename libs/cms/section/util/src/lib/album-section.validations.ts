@@ -21,17 +21,17 @@ export const albumSectionValidations = staticSuite((model: AlbumSection, field?:
     booleanValidations('showPdfs', model.properties?.showPdfs, false);
     categoryValidations('effect', model.properties?.effect, GalleryEffect);
   
-    // ImageStyle
-    stringValidations('imgIxParams', model.properties?.imageStyle.imgIxParams);
-        stringValidations('width', model.properties?.imageStyle.width);
-    stringValidations('height', model.properties?.imageStyle.height);
-    stringValidations('sizes', model.properties?.imageStyle.sizes);
-    stringValidations('border', model.properties?.imageStyle.border);
-    stringValidations('borderRadius', model.properties?.imageStyle.borderRadius);
-    booleanValidations('isThumbnail', model.properties?.imageStyle.isThumbnail);
-    stringValidations('slot', model.properties?.imageStyle.slot);   // tbd: validate against Slot enum
-    booleanValidations('fill', model.properties?.imageStyle.fill);
-    booleanValidations('hasPriority', model.properties?.imageStyle.hasPriority);
-    categoryValidations('action', model.properties?.imageStyle.action, ImageActionType);
-    numberValidations('zoomFactor', model.properties?.imageStyle.zoomFactor, true, 0, 10);
+    // ImageStyle — guard with ?. as older stored sections may lack imageStyle
+    stringValidations('imgIxParams', model.properties?.imageStyle?.imgIxParams);
+    stringValidations('width', model.properties?.imageStyle?.width);
+    stringValidations('height', model.properties?.imageStyle?.height);
+    stringValidations('sizes', model.properties?.imageStyle?.sizes);
+    stringValidations('border', model.properties?.imageStyle?.border);
+    stringValidations('borderRadius', model.properties?.imageStyle?.borderRadius);
+    booleanValidations('isThumbnail', model.properties?.imageStyle?.isThumbnail);
+    stringValidations('slot', model.properties?.imageStyle?.slot);   // tbd: validate against Slot enum
+    booleanValidations('fill', model.properties?.imageStyle?.fill);
+    booleanValidations('hasPriority', model.properties?.imageStyle?.hasPriority);
+    categoryValidations('action', model.properties?.imageStyle?.action, ImageActionType);
+    numberValidations('zoomFactor', model.properties?.imageStyle?.zoomFactor, true, 0, 10);
 });
