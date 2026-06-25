@@ -62,9 +62,6 @@ interface ImageStyleConfigI18n {
         } }
         <ion-grid>
           <ion-row>
-            <ion-col size="12">
-              <bk-text-input [i18n]="imgIxParamsI18n()" [value]="imgIxParams()" (valueChange)="onFieldChange('imgIxParams', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>
             <ion-col size="12" size-md="6">
               <bk-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" />
             </ion-col>
@@ -72,32 +69,37 @@ interface ImageStyleConfigI18n {
               <bk-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="sizesI18n()" [value]="sizes()" (valueChange)="onFieldChange('sizes', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="borderI18n()" [value]="border()" (valueChange)="onFieldChange('border', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="borderRadiusI18n()" [value]="borderRadius()" (valueChange)="onFieldChange('borderRadius', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="isThumbnailI18n()" [checked]="isThumbnail()" (checkedChange)="onFieldChange('isThumbnail', $event)" [readOnly]="readOnly()" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-string-select [i18n]="slotI18n()" [selectedString]="slot()" (selectedStringChange)="onFieldChange('slot', $event)" [readOnly]="readOnly()" [stringList]="stringList" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
               <bk-checkbox [i18n]="fillI18n()" [checked]="fill()" (checkedChange)="onFieldChange('fill', $event)" [readOnly]="readOnly()" />
             </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="hasPriorityI18n()" [checked]="hasPriority()" (checkedChange)="onFieldChange('hasPriority', $event)" [readOnly]="readOnly()" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-category-old [i18n]="imageActionI18n()" [value]="action()" (valueChange)="onFieldChange('imageAction', $event)" [readOnly]="readOnly()" [categories]="imageActions" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-number-input [i18n]="zoomFactorI18n()" [value]="zoomFactor()" (valueChange)="onFieldChange('zoomFactor', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>
+            @if(showAdvanced()) {
+              <ion-col size="12">
+                <bk-text-input [i18n]="imgIxParamsI18n()" [value]="imgIxParams()" (valueChange)="onFieldChange('imgIxParams', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-text-input [i18n]="sizesI18n()" [value]="sizes()" (valueChange)="onFieldChange('sizes', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-text-input [i18n]="borderI18n()" [value]="border()" (valueChange)="onFieldChange('border', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-text-input [i18n]="borderRadiusI18n()" [value]="borderRadius()" (valueChange)="onFieldChange('borderRadius', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-checkbox [i18n]="isThumbnailI18n()" [checked]="isThumbnail()" (checkedChange)="onFieldChange('isThumbnail', $event)" [readOnly]="readOnly()" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-string-select [i18n]="slotI18n()" [selectedString]="slot()" (selectedStringChange)="onFieldChange('slot', $event)" [readOnly]="readOnly()" [stringList]="stringList" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-checkbox [i18n]="hasPriorityI18n()" [checked]="hasPriority()" (checkedChange)="onFieldChange('hasPriority', $event)" [readOnly]="readOnly()" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-category-old [i18n]="imageActionI18n()" [value]="action()" (valueChange)="onFieldChange('imageAction', $event)" [readOnly]="readOnly()" [categories]="imageActions" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-number-input [i18n]="zoomFactorI18n()" [value]="zoomFactor()" (valueChange)="onFieldChange('zoomFactor', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+              </ion-col>
+            }
           </ion-row>
         </ion-grid>
       </ion-card-content>
@@ -109,6 +111,7 @@ export class ImageStyleConfiguration {
   public formData = model.required<ImageStyle>();
   public intro = input<string>();
   public readonly readOnly = input(true);
+  public readonly showAdvanced = input(false);
   public readonly i18n = input.required<ImageStyleConfigI18n>();
 
   // fields

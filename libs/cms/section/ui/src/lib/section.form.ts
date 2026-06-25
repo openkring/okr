@@ -1,10 +1,13 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@bk2/shared-constants';
 import { ModelSelectService } from '@bk2/shared-feature';
+import { UploadService } from '@bk2/avatar-data-access';
+import { confirm } from '@bk2/shared-util-angular';
+import { AlertController, IonItem, IonLabel, IonToggle } from '@ionic/angular/standalone';
 import { ChartOption, SectionI18n, validateSection } from '@bk2/cms-section-util';
 
 import { SectionConfiguration } from './section-configuration';
@@ -37,17 +40,24 @@ import { TrackerConfiguration } from './tracker-configuration';
   selector: 'bk-section-form',
   standalone: true,
   imports: [
+    IonItem, IonLabel, IonToggle,
     Chips, ImageConfigEdit, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
-    IframeConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration, 
-    ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration, 
-    MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader, 
+    IframeConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
+    ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
+    MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
     MemberConfiguration, RagConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
+      <ion-item lines="none">
+        <ion-toggle [checked]="showAdvanced()" (ionChange)="showAdvanced.set($event.detail.checked)" [disabled]="isReadOnly()">
+          {{ i18n().form_advanced_label() }}
+        </ion-toggle>
+      </ion-item>
+
       <bk-section-config
         [(formData)]="formData"
         [currentUser]="currentUser()"
@@ -55,6 +65,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         [states]="states()"
         [readOnly]="isReadOnly()"
         [i18n]="i18n()"
+        [showAdvanced]="showAdvanced()"
       />
 
       @switch (formData().type) {
@@ -88,6 +99,7 @@ import { TrackerConfiguration } from './tracker-configuration';
               [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [showAdvanced]="showAdvanced()"
             />
           }
         }
@@ -126,6 +138,7 @@ import { TrackerConfiguration } from './tracker-configuration';
               [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [showAdvanced]="showAdvanced()"
             />
           }
         }
@@ -177,16 +190,22 @@ import { TrackerConfiguration } from './tracker-configuration';
         @case('hero') {
           @if(logoConfig(); as logoConfig) {
             <bk-image-config
-              [formData]="logoConfig" (formDataChange)="onImageConfigChange($event)"
+              [formData]="logoConfig" (formDataChange)="onLogoConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="imageConfigI18n()"
+              [storagePath]="storagePath()"
+              [showAdvanced]="showAdvanced()"
+              (uploadRequested)="onHeroImageUpload('logo')"
             />
           }
           @if(heroConfig(); as heroConfig) {
             <bk-image-config
-              [formData]="heroConfig" (formDataChange)="onImageConfigChange($event)"
+              [formData]="heroConfig" (formDataChange)="onHeroConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="imageConfigI18n()"
+              [storagePath]="storagePath()"
+              [showAdvanced]="showAdvanced()"
+              (uploadRequested)="onHeroImageUpload('hero')"
             />
           }
           @if(imageStyle(); as imageStyle) {
@@ -194,9 +213,9 @@ import { TrackerConfiguration } from './tracker-configuration';
               [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [showAdvanced]="showAdvanced()"
             />
           }
-
         }
         @case('iframe') {
           @if(iframeConfig(); as iframeConfig) {
@@ -253,6 +272,7 @@ import { TrackerConfiguration } from './tracker-configuration';
               [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
+              [showAdvanced]="showAdvanced()"
             />
           }
         }
@@ -361,6 +381,8 @@ import { TrackerConfiguration } from './tracker-configuration';
  */
 export class SectionForm {
   private readonly modelSelectService = inject(ModelSelectService);
+  private readonly uploadService = inject(UploadService);
+  private readonly alertController = inject(AlertController);
 
   // outputs
   public readonly valid = output<boolean>();
@@ -445,6 +467,7 @@ export class SectionForm {
   protected videoConfig = linkedSignal(() => this.getVideoConfig());
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected showAdvanced = signal(false);
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | AvatarInfo[]): void {
@@ -656,16 +679,30 @@ export class SectionForm {
     }
   }
 
-  protected onImageConfigChange(image: ImageConfig): void {
+  protected async onHeroImageUpload(field: 'logo' | 'hero'): Promise<void> {
+    if (this.isReadOnly()) return;
     const section = this.formData();
-    if (section.type === 'article') {
-      this.formData.set({
-        ...section,
-        properties: { ...section.properties, image }
-      } as ArticleSection);
+    if (section.type !== 'hero') return;
+    const current = field === 'logo' ? section.properties.logo : section.properties.hero;
+    if (current?.url) {
+      const ok = await confirm(this.alertController, this.i18n().image_overwrite_message(), this.i18n().ok(), this.i18n().cancel(), true);
+      if (ok !== true) return;
     }
+    const file = await this.uploadService.pickFile(IMAGE_MIMETYPES);
+    if (!file) return;
+    const fullPath = `${this.storagePath()}/${file.name}`;
+    const downloadUrl = await this.uploadService.uploadFile(file, fullPath, this.i18n().image_upload());
+    if (!downloadUrl) return;
+    await this.uploadService.createAndSaveDocument(file, this.tenantId(), fullPath, downloadUrl, this.currentUser());
+    const newImage: ImageConfig = {
+      ...(current ?? IMAGE_CONFIG_SHAPE),
+      url: fullPath,
+      label: file.name.replace(/\.[^.]+$/, ''),
+      altText: file.name.replace(/\.[^.]+$/, ''),
+      type: ImageType.Image,
+    };
+    if (field === 'logo') this.onLogoConfigChange(newImage); else this.onHeroConfigChange(newImage);
   }
-
 
   protected onLogoConfigChange(image: ImageConfig): void {
     const section = this.formData();

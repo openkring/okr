@@ -54,6 +54,9 @@
     },
     {
       "path": "../../../avatar/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../avatar/data-access/tsconfig.lib.json"
     }
   ]
 }

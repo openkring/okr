@@ -41,18 +41,22 @@ export const PFX = '@cms/section/feature.';
             </ion-row>
           }
         <ion-row>
-          <ion-col size="12">
-            <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="isReadOnly()" />
-          </ion-col>
+          @if(showAdvanced()) {
+            <ion-col size="12">
+              <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="isReadOnly()" />
+            </ion-col>
+          }
           <ion-col size="12">
             <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
           </ion-col>
           <ion-col size="12">
             <bk-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
           </ion-col>
-          <ion-col size="12">
-            <bk-text-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
-          </ion-col>
+          @if(showAdvanced()) {
+            <ion-col size="12">
+              <bk-text-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
+            </ion-col>
+          }
           <ion-col size="6">
             <ion-item lines="none">
               <ion-label>{{ this.i18n().form_roleNeeded() }}</ion-label>
@@ -84,6 +88,7 @@ export class SectionConfiguration {
   public readonly headerTitle = input<string>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  public readonly showAdvanced = input(false);
   public readonly i18n = input.required<SectionI18n>();
 
   // fields
