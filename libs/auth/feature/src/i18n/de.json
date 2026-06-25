@@ -67,6 +67,10 @@
     "admin": {
       "label": "admin",
       "description": "Superuser"
+    },
+    "tester": {
+      "label": "tester",
+      "description": "Tester"
     }
   }
 }
