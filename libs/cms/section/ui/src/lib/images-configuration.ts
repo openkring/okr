@@ -7,6 +7,7 @@ import {
 } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
+import { IMAGE_MIMETYPES } from '@bk2/shared-constants';
 import { ImageConfig, ImageType, UserModel } from '@bk2/shared-models';
 import { UploadEntry } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
@@ -119,7 +120,7 @@ export class ImagesConfiguration {
 
   protected async addImages(): Promise<void> {
     if (this.readOnly()) return;
-    const files = await this.uploadService.pickMultipleFiles(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+    const files = await this.uploadService.pickMultipleFiles(IMAGE_MIMETYPES);
     if (!files.length) return;
 
     const basePath = this.storagePath();

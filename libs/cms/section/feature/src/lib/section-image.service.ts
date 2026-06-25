@@ -79,9 +79,9 @@ export class SectionImageService {
     const options = createActionSheetOptions(labels.actionSheetTitle);
     for (const slot of slots) {
       const label = slot.field === 'logo' ? labels.slotLogo : labels.slotHero;
-      options.buttons.push(createActionSheetButton(`slot.${slot.field}`, label, '', 'image'));
+      options.buttons.push(createActionSheetButton(`slot.${slot.field}`, label, ''));
     }
-    options.buttons.push(createActionSheetButton('cancel', labels.cancel, '', 'cancel'));
+    options.buttons.push(createActionSheetButton('cancel', labels.cancel, ''));
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
     const { data } = await sheet.onDidDismiss();
