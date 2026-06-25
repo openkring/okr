@@ -1,7 +1,13 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs/operators';
 import { IonBadge, IonButton, IonIcon } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { MenuItemModel } from '@bk2/shared-models';
+import { I18nService } from '@bk2/shared-i18n';
+import { VersionCheckService } from '@bk2/shared-util-angular';
+import { expandMenuTokens } from '@bk2/cms-menu-util';
 import { DependencyNode, MenuGraphStore } from './menu-graph.store';
 
 /**
@@ -38,6 +44,20 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
       font-size: 0.65rem;
       padding: 2px 5px;
       flex-shrink: 0;
+    }
+    .node-labels {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      line-height: 1.15;
+    }
+    .node-sublabel {
+      font-size: 0.65rem;
+      color: var(--ion-color-medium);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .node-name {
       font-size: 0.9rem;
@@ -84,8 +104,15 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
         <!-- Type badge -->
         <ion-badge [color]="node().color">{{ node().subType }}</ion-badge>
 
-        <!-- Node name -->
-        <span class="node-name" [title]="node().name">{{ node().name }}</span>
+        <!-- Node label: translated menu label on top, raw name above it in a smaller font -->
+        <div class="node-labels">
+          @if (translatedLabel(); as label) {
+            <span class="node-sublabel" [title]="node().name">{{ node().name }}</span>
+            <span class="node-name" [title]="label">{{ label }}</span>
+          } @else {
+            <span class="node-name" [title]="node().name">{{ node().name }}</span>
+          }
+        </div>
 
         <span class="node-name">{{node().state}}</span>
         <span class="node-name">{{node().roleNeeded}}</span>
@@ -108,7 +135,26 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
 })
 export class MenuGraphNode {
   protected store = inject(MenuGraphStore);
+  private readonly i18nService = inject(I18nService);
+  private readonly versionService = inject(VersionCheckService);
 
   public node = input.required<DependencyNode>();
   public nodeEdit = output<DependencyNode>();
+
+  /** The i18n key of the menu item's label, expanded and scoped like the live menu does. */
+  private readonly labelKey = computed(() => {
+    const node = this.node();
+    if (node.nodeType !== 'menu') return '';
+    const rawLabel = (node.model as MenuItemModel).label ?? '';
+    const expanded = expandMenuTokens(rawLabel, { version: this.versionService.getCurrentVersion() });
+    if (expanded !== rawLabel) return expanded;            // a dynamic token (e.g. @VERSION@) was expanded
+    if (rawLabel.startsWith('@')) return '@cms/menu/feature.' + rawLabel.substring(1);
+    return rawLabel;
+  });
+
+  /** The translated menu label shown as the main node label (empty for non-menu nodes or label-less items). */
+  protected readonly translatedLabel = toSignal(
+    toObservable(this.labelKey).pipe(switchMap(key => this.i18nService.translate(key))),
+    { initialValue: '' }
+  );
 }

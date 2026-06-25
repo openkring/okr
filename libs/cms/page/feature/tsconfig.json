@@ -47,6 +47,12 @@
       "path": "../../../cms/menu/feature/tsconfig.lib.json"
     },
     {
+      "path": "../../../cms/menu/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/util-angular/tsconfig.lib.json"
+    },
+    {
       "path": "../../../cms/page/data-access/tsconfig.lib.json"
     },
     {
