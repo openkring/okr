@@ -7,7 +7,7 @@ import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@bk
 import { ModelSelectService } from '@bk2/shared-feature';
 import { UploadService } from '@bk2/avatar-data-access';
 import { confirm } from '@bk2/shared-util-angular';
-import { AlertController, IonItem, IonLabel, IonToggle } from '@ionic/angular/standalone';
+import { AlertController, IonItem, IonToggle } from '@ionic/angular/standalone';
 import { ChartOption, SectionI18n, validateSection } from '@bk2/cms-section-util';
 
 import { SectionConfiguration } from './section-configuration';
@@ -40,7 +40,7 @@ import { TrackerConfiguration } from './tracker-configuration';
   selector: 'bk-section-form',
   standalone: true,
   imports: [
-    IonItem, IonLabel, IonToggle,
+    IonItem, IonToggle,
     Chips, ImageConfigEdit, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
     IframeConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
