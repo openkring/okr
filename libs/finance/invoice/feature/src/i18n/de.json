@@ -141,33 +141,21 @@
     "all": {
       "label": "Alle Stati"
     },
-    "created": {
-      "label": "Erstellt",
-      "description": "Die Rechnungs wurde erstellt."
+    "draft": {
+      "label": "Entwurf",
+      "description": "Die Rechnung ist ein Entwurf und wurde noch nicht versendet."
     },
-    "synched": {
-      "label": "Synchronisiert",
-      "description": "Die Rechnung wurde mit Bexio synchronisiert."
-    },
-    "free": {
-      "label": "Gratis",
-      "description": "Die Rechnung muss nicht bezahlt werden."
-    },
-    "billed": {
-      "label": "Verrechnet",
-      "description": "Die Rechnung wurde versendet."
-    },
-    "reminded": {
-      "label": "Gemahnt",
-      "description": "Die Zahlungs erfolgte nicht rechtzeitig, die Rechnung wurde gemahnt."
+    "pending": {
+      "label": "Offen",
+      "description": "Die Rechnung wurde versendet und ist noch nicht bezahlt."
     },
     "paid": {
       "label": "Bezahlt",
-      "description": "Die Rechnung wurde bezahlt"
+      "description": "Die Rechnung wurde bezahlt."
     },
-    "closed": {
-      "label": "Abgeschlossen",
-      "description": "Die Rechnung ist abgeschlossen und archiviert."
+    "overdue": {
+      "label": "Überfällig",
+      "description": "Die Zahlungsfrist ist überschritten, die Rechnung ist überfällig."
     },
     "cancelled": {
       "label": "Storniert",

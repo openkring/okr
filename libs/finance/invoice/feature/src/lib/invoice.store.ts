@@ -130,7 +130,6 @@ export const InvoiceStore = signalStore(
     },
 
     setSelectedState(selectedState: string): void {
-      console.log('InvoiceStore.set state to ' + selectedState);
       patchState(store, { selectedState });
     },
 

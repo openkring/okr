@@ -67,7 +67,7 @@ import { InvoiceStore } from './invoice.store';
       </ion-toolbar>
       <bk-list-filter
         (searchTermChanged)="onSearchTermChange($event)"
-        (stateChanged)="onStateSelected($event)" [types]="states()"
+        (stateChanged)="onStateSelected($event)" [states]="states()"
         (yearChanged)="onYearSelected($event)" [years]="years()"
       />
     </ion-header>
@@ -145,7 +145,6 @@ export class InvoiceList {
   }
 
   protected onStateSelected(state: string): void {
-    console.log('InvoiceList set state to ' + state);
     this.store.setSelectedState(state);
   }
 
@@ -164,7 +163,9 @@ export class InvoiceList {
     switch(state) {
       case 'paid': return 'success';
       case 'overdue': return 'danger';
-      case 'draft': return 'warning';
+      case 'pending': return 'warning';
+      case 'draft': return 'medium';
+      case 'cancelled': return 'medium';
     }
     return '';
   }

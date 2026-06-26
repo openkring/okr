@@ -24,7 +24,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       interface="popover"
       [compareWith]="compareWith">
       @if(shouldShowAllYears()) {
-        <ion-select-option value=99>{{ '@allYears' | translate | async }}</ion-select-option>
+        <ion-select-option [value]="99">{{ '@allYears' | translate | async }}</ion-select-option>
       }
       @for(year of years(); track year) {
         <ion-select-option [value]=year>{{ year }}</ion-select-option>
