@@ -13,8 +13,8 @@ import { createComment } from '@bk2/comment-util';
 
 import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipIndex, getRelLogEntry } from '@bk2/relationship-membership-util';
 import { ActivityService } from '@bk2/activity-data-access';
-import { PFX } from './scope';
 
+const PFX = '@relationship/membership/data-access.';
 
 @Injectable({
   providedIn: 'root'

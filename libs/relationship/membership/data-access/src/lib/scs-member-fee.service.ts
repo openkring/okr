@@ -8,7 +8,8 @@ import { CategoryListModel, MembershipModel, ScsMemberFeesCollection, ScsMemberF
 import { getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat, getYear } from '@bk2/shared-util-core';
 import { ActivityService } from '@bk2/activity-data-access';
 import { BEXIO_INVOICE_TEMPLATES } from '@bk2/relationship-membership-util';
-import { PFX } from './scope';
+
+const PFX = '@relationship/membership/data-access.';
 
 @Injectable({
   providedIn: 'root'
