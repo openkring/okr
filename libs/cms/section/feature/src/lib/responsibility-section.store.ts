@@ -27,9 +27,11 @@ export const ResponsibilitySectionStore = signalStore(
   })),
   withProps((store) => ({
     responsibilityResource: rxResource({
-      params: () => ({ bkey: store.bkey() }),
+      // gate on currentUser: the responsibilities collection requires an authenticated tenant user (tenantRead).
+      // Firing before auth is restored (notably mobile Safari) yields "Missing or insufficient permissions".
+      params: () => ({ bkey: store.bkey(), currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
-        if (!params.bkey) return of(undefined);
+        if (!params.currentUser || !params.bkey) return of(undefined);
         return store.responsibilityService.read(params.bkey);
       },
     }),

@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -58,7 +59,11 @@ export const InvitationSectionStore = signalStore(
   })),
   withProps((store) => ({
     invitationsResource: rxResource({
-      stream: () => {
+      // gate on currentUser: the invitations collection requires an authenticated tenant user (tenantRead).
+      // Firing before auth is restored (notably mobile Safari) yields "Missing or insufficient permissions".
+      params: () => ({ currentUser: store.appStore.currentUser() }),
+      stream: ({ params }) => {
+        if (!params.currentUser) return of([] as InvitationModel[]);
         return store.firestoreService.searchData<InvitationModel>(InvitationCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
       }
     })

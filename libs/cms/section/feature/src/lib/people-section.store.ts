@@ -1,9 +1,10 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { map } from 'rxjs';
+import { map, of } from 'rxjs';
 
 import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, PeopleSection } from '@bk2/shared-models';
+import { AppStore } from '@bk2/shared-feature';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
 import { I18nService } from '@bk2/shared-i18n';
@@ -21,19 +22,26 @@ const initialState: PeopleSectionState = {
 export const PeopleSectionStore = signalStore(
   withState(initialState),
   withProps(() => ({
+    appStore: inject(AppStore),
     membershipService: inject(MembershipService),
     responsibilityService: inject(ResponsibilityService),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS) as SectionI18n
   })),
-  
+
   withProps((store) => ({
+    // gate on currentUser: memberships/responsibilities require an authenticated tenant user (tenantRead).
+    // Firing before auth is restored (notably mobile Safari) yields "Missing or insufficient permissions".
     groupMembersResource: rxResource({
-      params: () => ({ groupId: store.section()?.properties.groupId ?? '' }),
-      stream: ({ params }) => store.membershipService.listMembersOfOrg(params.groupId),
+      params: () => ({ groupId: store.section()?.properties.groupId ?? '', currentUser: store.appStore.currentUser() }),
+      stream: ({ params }) => {
+        if (!params.currentUser) return of([]);
+        return store.membershipService.listMembersOfOrg(params.groupId);
+      },
     }),
     responsibilityResource: rxResource({
-      params: () => ({ responsibilityId: store.section()?.properties.responsibilityId ?? '' }),
+      params: () => ({ responsibilityId: store.section()?.properties.responsibilityId ?? '', currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
+        if (!params.currentUser) return of(undefined);
         if (!params.responsibilityId) return store.responsibilityService.list().pipe(map(() => undefined));
         return store.responsibilityService.read(params.responsibilityId);
       },

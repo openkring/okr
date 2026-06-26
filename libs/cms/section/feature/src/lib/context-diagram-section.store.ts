@@ -111,11 +111,13 @@ export const ContextDiagramStore = signalStore(
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
   })),
   withProps((store) => ({
-    relationsResource: rxResource<RelationsData, { center: string; config: ContextDiagramConfig }>({
-      params: () => ({ center: store.currentCenter(), config: store.config() }),
+    relationsResource: rxResource<RelationsData, { center: string; config: ContextDiagramConfig; currentUser: ReturnType<typeof store.appStore.currentUser> }>({
+      // gate on currentUser: the relationship collections require an authenticated tenant user (tenantRead).
+      // Firing before auth is restored (notably mobile Safari) yields "Missing or insufficient permissions".
+      params: () => ({ center: store.currentCenter(), config: store.config(), currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
-        const { center, config } = params;
-        if (!center) return of({} as RelationsData);
+        const { center, config, currentUser } = params;
+        if (!currentUser || !center) return of({} as RelationsData);
 
         return loadNodeRelations(center, config, store).pipe(
           switchMap(centerRelations => {

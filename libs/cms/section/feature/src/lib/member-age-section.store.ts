@@ -66,9 +66,11 @@ export const MemberAgeSectionStore = signalStore(
   })),
   withProps((store) => ({
     membershipsResource: rxResource({
-      params: () => ({ orgId: store.orgId() }),
+      // gate on currentUser: the memberships collection requires an authenticated tenant user (tenantRead).
+      // Firing before auth is restored (notably mobile Safari) yields "Missing or insufficient permissions".
+      params: () => ({ orgId: store.orgId(), currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
-        if (!params.orgId) return of([]);
+        if (!params.currentUser || !params.orgId) return of([]);
         return store.membershipService.listMembersOfOrg(params.orgId);
       },
     }),

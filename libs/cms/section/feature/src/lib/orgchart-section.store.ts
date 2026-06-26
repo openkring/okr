@@ -8,6 +8,7 @@ import { DEFAULT_KEY } from '@bk2/shared-constants';
 import { GroupModel, GroupModelName } from '@bk2/shared-models';
 import { confirm } from '@bk2/shared-util-angular';
 import { I18nService } from '@bk2/shared-i18n';
+import { of } from 'rxjs';
 
 import { GroupService } from '@bk2/subject-group-data-access';
 import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
@@ -66,7 +67,13 @@ export const OrgchartStore = signalStore(
   })),
   withProps((store) => ({
     groupsResource: rxResource({
-      stream: () => store.groupService.list(),
+      // gate on currentUser: the groups collection requires an authenticated tenant user (tenantRead).
+      // Firing before auth is restored (notably mobile Safari) yields "Missing or insufficient permissions".
+      params: () => ({ currentUser: store.appStore.currentUser() }),
+      stream: ({ params }) => {
+        if (!params.currentUser) return of([]);
+        return store.groupService.list();
+      },
     }),
   })),
   withComputed((state) => ({
