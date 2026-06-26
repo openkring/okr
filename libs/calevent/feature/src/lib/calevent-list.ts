@@ -1,4 +1,4 @@
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 import { format } from 'date-fns';
@@ -200,6 +200,7 @@ export class CalEventList implements OnInit {
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
   private isSettingQuickEntryValue = false;
   private readonly matrixChatService = inject(MatrixChatService);
+  private readonly injector = inject(Injector);
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
 
   protected readonly getCalEventCssClass = getCalEventCssClass;
@@ -653,6 +654,7 @@ export class CalEventList implements OnInit {
     const modal = await this.modalController.create({
       component: ScheduleTableModal,
       componentProps: { seriesId: calevent.seriesId },
+      injector: this.injector,   // share CalEventList's CalEventStore instance with the root-injected modal
     });
     await modal.present();
     await modal.onDidDismiss();

@@ -157,7 +157,7 @@ export class AttendeesAccordion {
     const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
     const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm') {
-      if (isPerson(data, this.tenantId())) {
+      if (data && isPerson(data, this.tenantId())) {
         const calevent = this.calevent();
         if (calevent.attendees.find(att => att.person.key === data.bkey)) {
           error(this.toastController, this.i18n.attendance_exists());

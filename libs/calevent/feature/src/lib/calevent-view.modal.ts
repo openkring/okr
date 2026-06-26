@@ -6,14 +6,16 @@ import { Header } from '@bk2/shared-ui';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@bk2/shared-util-core';
 import { addTime } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { InviteesAccordion } from '@bk2/relationship-invitation-feature';
 import { DocumentsAccordion } from '@bk2/document-feature';
 import { CommentsAccordion } from '@bk2/comment-feature';
 import { AvatarDisplay } from '@bk2/avatar-ui';
 
+import { CALEVENT_I18N_KEYS, CaleventI18n } from '@bk2/calevent-util';
+
 import { AttendeesAccordion } from './attendees-accordion';
-import { CalEventStore } from './calevent.store';
 
 function storeToView(d: string): string {
   return convertDateFormatToString(d, DateFormat.StoreDate, DateFormat.ViewDate, false);
@@ -133,7 +135,7 @@ function storeToView(d: string): string {
 })
 export class CalEventViewModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(CalEventStore);
+  protected readonly i18n = inject(I18nService).translateAll(CALEVENT_I18N_KEYS) as CaleventI18n;
 
   // inputs (keep signature identical so all callers continue to work unchanged)
   public calevent = input.required<CalEventModel>();
@@ -142,29 +144,27 @@ export class CalEventViewModal {
 
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().bkey}`);
 
-  protected get i18n() { return this.store.i18n; }
-
   private get wdAbbr() {
     return {
-      monday:    this.store.i18n.wda_monday,
-      tuesday:   this.store.i18n.wda_tuesday,
-      wednesday: this.store.i18n.wda_wednesday,
-      thursday:  this.store.i18n.wda_thursday,
-      friday:    this.store.i18n.wda_friday,
-      saturday:  this.store.i18n.wda_saturday,
-      sunday:    this.store.i18n.wda_sunday,
+      monday:    this.i18n.wda_monday,
+      tuesday:   this.i18n.wda_tuesday,
+      wednesday: this.i18n.wda_wednesday,
+      thursday:  this.i18n.wda_thursday,
+      friday:    this.i18n.wda_friday,
+      saturday:  this.i18n.wda_saturday,
+      sunday:    this.i18n.wda_sunday,
     };
   }
 
   private get periodicity() {
     return {
-      daily:     this.store.i18n.periodicity_daily,
-      workday:   this.store.i18n.periodicity_workday,
-      weekly:    this.store.i18n.periodicity_weekly,
-      biweekly:  this.store.i18n.periodicity_biweekly,
-      monthly:   this.store.i18n.periodicity_monthly,
-      quarterly: this.store.i18n.periodicity_quarterly,
-      yearly:    this.store.i18n.periodicity_yearly,
+      daily:     this.i18n.periodicity_daily,
+      workday:   this.i18n.periodicity_workday,
+      weekly:    this.i18n.periodicity_weekly,
+      biweekly:  this.i18n.periodicity_biweekly,
+      monthly:   this.i18n.periodicity_monthly,
+      quarterly: this.i18n.periodicity_quarterly,
+      yearly:    this.i18n.periodicity_yearly,
     };
   }
 
