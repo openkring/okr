@@ -31,23 +31,21 @@
     "address": "Adressliste",
     "title": "Listenart für Export wählen"
   },
-  "finance": {
-    "scsMemberFee": {
-      "update": {
-        "label": "Rechnung ändern",
-        "error": "Die Aenderungen konnten nicht gespeichert werden",
-        "conf": "Die Aenderungen wurden gespeichert."
-      },
-      "create": {
-        "label": "Rechnung hinzufügen",
-        "error": "Die Rechnung konnte nicht erstellt werden.",
-        "conf": "Die Rechnung wurde erstellt."
-      },
-      "delete": {
-        "label": "Rechnung löschen",
-        "error": "Die Rechnung konnte nicht gelöscht werden",
-        "conf": "Die Rechnung wurde gelöscht"
-      }
+  "fee": {
+    "update": {
+      "label": "Rechnung ändern",
+      "error": "Die Aenderungen konnten nicht gespeichert werden",
+      "conf": "Die Aenderungen wurden gespeichert."
+    },
+    "create": {
+      "label": "Rechnung hinzufügen",
+      "error": "Die Rechnung konnte nicht erstellt werden.",
+      "conf": "Die Rechnung wurde erstellt."
+    },
+    "delete": {
+      "label": "Rechnung löschen",
+      "error": "Die Rechnung konnte nicht gelöscht werden",
+      "conf": "Die Rechnung wurde gelöscht"
     }
   }
 }
