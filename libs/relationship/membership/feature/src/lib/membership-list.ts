@@ -141,7 +141,7 @@ export class MembershipList {
 
   // computed
   protected hasYearFilter = computed(() => this.listId() === 'entries' || this.listId() === 'exits' || this.listId() === 'deceased'); 
-  protected membershipCategory = linkedSignal(() => this.hasYearFilter() ? undefined : this.store.membershipCategory());
+  protected membershipCategory = linkedSignal(() => this.hasYearFilter() || this.listId() !== 'active' ? undefined : this.store.membershipCategory());
   protected genders = computed(() => this.store.genders());
   protected orgTypes = computed(() => this.store.orgTypes());
   protected readonly popupId = crypto.randomUUID();
