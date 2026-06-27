@@ -5,7 +5,6 @@ import { ModalController } from '@ionic/angular/standalone';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { firstValueFrom } from 'rxjs';
 
 import { isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -284,9 +283,7 @@ export const AocSrvStore = signalStore(
       const postalQuery = getSystemQuery(store.tenantId());
       postalQuery.push({ key: 'addressChannel', operator: '==', value: 'postal' });
       postalQuery.push({ key: 'isFavorite', operator: '==', value: true });
-      const allPostalAddresses = await firstValueFrom(
-        store.firestoreService.searchData<AddressModel>(AddressCollection, postalQuery)
-      );
+      const allPostalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, postalQuery, 'none');
       const postalByPersonKey = new Map<string, AddressModel>();
       for (const a of allPostalAddresses) {
         if (a.parentKey?.startsWith('person.')) {
@@ -513,11 +510,11 @@ export const AocSrvStore = signalStore(
       }
       const fn = httpsCallable<object, { id: string }>(functions, 'createSrvContact');
       const p = store.appStore.getPerson(item.personKey);
-      const srvPostalAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, [
+      const srvPostalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
         { key: 'parentKey', operator: '==', value: 'person.' + item.personKey },
         { key: 'addressChannel', operator: '==', value: 'postal' },
         { key: 'isFavorite', operator: '==', value: true }
-      ]));
+      ], 'none');
       const srvPostal = srvPostalAddresses[0];
       let srvId: string;
       try {

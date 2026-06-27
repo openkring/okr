@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, Observable, of, take } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { StaticSuite } from 'vest';
 import { AlertController } from '@ionic/angular/standalone';
 
@@ -148,9 +148,7 @@ export const AocDataStore = signalStore(
 
         // reading the collection and iterating over all documents
         console.log(`AocDataStore.fixModels: fixing all documents of collection ${collectionName}...`);
-        const rawData$ = store.appStore.firestoreService.listAllObjects<any>(collectionName, true);
-        rawData$
-          .pipe(take(1))
+        from(store.appStore.firestoreService.getDataOnce<any>(collectionName, [], 'none'))
           .subscribe(async (documents) => {
             let processed = 0;
             for (const doc of documents) {
@@ -465,8 +463,7 @@ export const AocDataStore = signalStore(
        */
       executeValidation<T>(collection: string, suite: StaticSuite, tenants: string, tags: string, orderBy = 'name'): void {
         const dbQuery = getSystemQuery(store.appStore.tenantId());
-        store.appStore.firestoreService.searchData<T>(collection, dbQuery, orderBy, 'asc')
-          .pipe(take(1))
+        from(store.appStore.firestoreService.getDataOnce<T>(collection, dbQuery, orderBy, 'asc'))
           .subscribe(async (data) => {
             for (const model of data) {
               console.log(`Validating model ${collection}/${(model as any).bkey}...`);
@@ -490,8 +487,8 @@ export const AocDataStore = signalStore(
         const dbQuery = getSystemQuery(tenantId);
 
         const [persons, addresses] = await Promise.all([
-          firstValueFrom(store.appStore.firestoreService.searchData<PersonModel>(PersonCollection, dbQuery, 'lastName', 'asc')),
-          firstValueFrom(store.appStore.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery, 'parentKey', 'asc')),
+          store.appStore.firestoreService.getDataOnce<PersonModel>(PersonCollection, dbQuery, 'lastName', 'asc'),
+          store.appStore.firestoreService.getDataOnce<AddressModel>(AddressCollection, dbQuery, 'parentKey', 'asc'),
         ]);
 
         if (!persons || !addresses) return;
@@ -640,8 +637,7 @@ export const AocDataStore = signalStore(
 
       createIndex<T extends BkModel>(collection: string, generateIndexFn: (model: T) => string, orderBy = 'none'): void {
         const dbQuery = getSystemQuery(store.appStore.tenantId());
-        store.appStore.firestoreService.searchData<T>(collection, dbQuery, orderBy, 'asc')
-          .pipe(take(1))
+        from(store.appStore.firestoreService.getDataOnce<T>(collection, dbQuery, orderBy, 'asc'))
           .subscribe(async (data) => {
             for (const model of data) {
               const oldIndex = (model as any).index;

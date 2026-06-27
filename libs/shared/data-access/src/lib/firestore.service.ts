@@ -23,7 +23,7 @@
  */
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
-import { collection, deleteDoc, doc, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
 import { firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 
@@ -447,6 +447,40 @@ export class FirestoreService {
     }
   }
 
+  /**
+   * One-shot, consistent read of a collection — the Promise-returning counterpart to {@link searchData}.
+   *
+   * Use this for "load once, then process" reads (building an index, an export, a migration step):
+   * anywhere you would otherwise write `firstValueFrom(searchData(...))` or `searchData(...).pipe(take(1))`.
+   *
+   * Why it exists: searchData returns a real-time onSnapshot stream whose FIRST emission can be an
+   * empty/partial snapshot served from the local cache (metadata.fromCache) before the server snapshot
+   * arrives — always so on Safari/Firefox, which use memoryLocalCache and are cold on every reload.
+   * Taking that first emission (firstValueFrom/take(1)/first()) intermittently yields incomplete data.
+   * getDocs returns a single consistent snapshot (server when online) and never hands back a cache-first
+   * partial. Same query construction as searchData, so filters/ordering are identical.
+   */
+  public async getDataOnce<T>(
+    collectionName: string,
+    dbQuery: DbQuery[],
+    orderByParam = 'name',
+    sortOrderParam = 'asc'
+  ): Promise<T[]> {
+    if (!isBrowser(this.platformId)) return [];
+    if (!isFirestoreInitializedCheck()) return [];
+
+    try {
+      const queries = orderByParam === 'none' ? getQuery(dbQuery, 'none') : getQuery(dbQuery, orderByParam, sortOrderParam);
+      const collectionRef = collection(this.firestore, collectionName);
+      const queryRef = query(collectionRef, ...queries);
+      const snapshot = await getDocs(queryRef);
+      return snapshot.docs.map(d => ({ ...d.data(), bkey: d.id })) as T[];
+    } catch (err) {
+      console.error('FirestoreService.getDataOnce error:', err);
+      return [];
+    }
+  }
+
   public listAllObjects<T>(collectionName: string, addBkey = false): Observable<T[]> {
     const collectionRef = collection(this.firestore, collectionName);
     const queryRef = query(collectionRef);
@@ -480,7 +514,7 @@ export class FirestoreService {
     try {
       const query = getSystemQuery(this.env.tenantId);
       query.push({ key: 'personKey', operator: '==', value: personKey});
-      const user = await firstValueFrom(this.searchData<UserModel>(UserCollection, query, 'none'));
+      const user = await this.getDataOnce<UserModel>(UserCollection, query, 'none');
       if (user.length === 1) {
         return true;
       }

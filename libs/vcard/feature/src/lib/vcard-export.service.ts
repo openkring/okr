@@ -122,11 +122,11 @@ export class VcardExportService {
     // PersonalRelService — we read the tenant-scoped list and filter in memory by key.
     const subjectKey = `${kind}.${target.bkey}`;
     const [addresses, avatar, workrels, personalRels] = await Promise.all([
-      firstValueFrom(this.firestoreService.searchData<AddressModel>(AddressCollection, [...getSystemQuery(tenantId), { key: 'parentKey', operator: '==', value: subjectKey }], 'none')),
+      this.firestoreService.getDataOnce<AddressModel>(AddressCollection, [...getSystemQuery(tenantId), { key: 'parentKey', operator: '==', value: subjectKey }], 'none'),
       firstValueFrom(this.firestoreService.readModel<AvatarModel>(AvatarCollection, subjectKey)),
-      firstValueFrom(this.firestoreService.searchData<WorkrelModel>(WorkrelCollection, getSystemQuery(tenantId))),
+      this.firestoreService.getDataOnce<WorkrelModel>(WorkrelCollection, getSystemQuery(tenantId)),
       kind === 'person'
-        ? firstValueFrom(this.firestoreService.searchData<PersonalRelModel>(PersonalRelCollection, getSystemQuery(tenantId)))
+        ? this.firestoreService.getDataOnce<PersonalRelModel>(PersonalRelCollection, getSystemQuery(tenantId))
         : Promise.resolve<PersonalRelModel[]>([]),
     ]);
 

@@ -57,6 +57,15 @@ export class VatCodeService {
     return this.firestoreService.searchData<VatCodeModel>(VatCodeCollection, query, orderBy, sortOrder);
   }
 
+  /** One-shot, consistent read (no cache-first race). Promise counterpart to {@link list}. */
+  public listOnce(accountingTenantId: string, orderBy = 'code', sortOrder = 'asc'): Promise<VatCodeModel[]> {
+    const query = [
+      ...getSystemQuery(this.tenantId),
+      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
+    ];
+    return this.firestoreService.getDataOnce<VatCodeModel>(VatCodeCollection, query, orderBy, sortOrder);
+  }
+
   public async seedStandardCodes(tenantId: string, accountingTenantId: string, currentUser?: UserModel): Promise<void> {
     for (const template of CH_STANDARD_VAT_CODES) {
       const code = new VatCodeModel(tenantId, accountingTenantId);

@@ -97,6 +97,11 @@ export class DocumentService {
     return this.firestoreService.searchData<DocumentModel>(DocumentCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
   }
 
+  /** One-shot, consistent read (no cache-first race). Promise counterpart to {@link list}. */
+  public listOnce(orderBy = 'dateOfDocLastUpdate', sortOrder = 'asc'): Promise<DocumentModel[]> {
+    return this.firestoreService.getDataOnce<DocumentModel>(DocumentCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+  }
+
   public listDocumentsByStorageDirectory(modelType: string, key: string): Observable<DocumentModel[]> {
     const dir = getDocumentStoragePath(this.tenantId, modelType, key);
     return dir ? this.listDocumentsByDirectory(dir) : of<DocumentModel[]>([]);

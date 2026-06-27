@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ModalController, Platform, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, of } from 'rxjs';
+import { of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getDownloadURL, ref } from 'firebase/storage';
@@ -250,7 +250,7 @@ export const AddressStore = signalStore(
           dbQuery.push({ key: 'parentKey', operator: '==', value: pk });
           dbQuery.push({ key: 'addressChannel', operator: '==', value: 'postal' });
           dbQuery.push({ key: 'isFavorite', operator: '==', value: true });
-          const addrs = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery));
+          const addrs = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, dbQuery, 'none');
           return addrs[0];
         };
 

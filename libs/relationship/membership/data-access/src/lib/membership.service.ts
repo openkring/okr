@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom, map, Observable, of } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
@@ -232,7 +232,7 @@ export class MembershipService {
     query.push({ key: 'orgModelType', operator: '==', value: org.modelType });
     query.push({ key: 'orgKey', operator: '==', value: org.key });
     query.push({ key: 'relIsLast', operator: '==', value: true });
-    const memberships = await firstValueFrom(this.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc'));
+    const memberships = await this.firestoreService.getDataOnce<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc');
     const result = memberships.filter(m => isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? [];
     return result.length > 0;
   }

@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
-import { firstValueFrom, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -749,7 +749,7 @@ export const _MembershipStore = signalStore(
         const postalQuery = getSystemQuery(store.tenantId());
         postalQuery.push({ key: 'addressChannel', operator: '==', value: 'postal' });
         postalQuery.push({ key: 'isFavorite', operator: '==', value: true });
-        const allPostal = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, postalQuery));
+        const allPostal = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, postalQuery, 'none');
         const postalByPersonKey = new Map<string, AddressModel>();
         for (const a of allPostal) {
           if (a.parentKey?.startsWith('person.')) {
@@ -860,7 +860,7 @@ export const _MembershipStore = signalStore(
         const ccQuery = getSystemQuery(store.tenantId());
         ccQuery.push({ key: 'addressChannel', operator: '==', value: 'email' });
         ccQuery.push({ key: 'isCc', operator: '==', value: true });
-        const allCcAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, ccQuery, 'none'));
+        const allCcAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, ccQuery, 'none');
         const ccEmails = getCcEmailAddresses(filteredPersons, allCcAddresses);
 
         const modal = await store.modalController.create({

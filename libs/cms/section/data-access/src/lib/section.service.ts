@@ -68,6 +68,11 @@ export class SectionService {
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<SectionModel[]> {
     return this.firestoreService.searchData<SectionModel>(SectionCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
+
+  /** One-shot, consistent read (no cache-first race). Promise counterpart to {@link list}. */
+  public listOnce(orderBy = 'name', sortOrder = 'asc'): Promise<SectionModel[]> {
+    return this.firestoreService.getDataOnce<SectionModel>(SectionCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
+  }
   /**
    * Query the database for sections based on a DbQuery array.
    * @param dbQuery the DbQuery array to filter the sections

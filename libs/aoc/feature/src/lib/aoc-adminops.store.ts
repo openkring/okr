@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, of, take } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
@@ -68,8 +68,7 @@ export const AocAdminOpsStore = signalStore(
       async listIban(): Promise<void> {
         const query = getSystemQuery(store.appStore.env.tenantId);
         query.push({ key: 'addressChannel', operator: '==', value: 'bankaccount' });
-        store.firestoreService.searchData<AddressModel>( AddressCollection, query, 'none')
-        .pipe(take(1))
+        from(store.firestoreService.getDataOnce<AddressModel>(AddressCollection, query, 'none'))
         .subscribe((addresses) => {
           const log: LogInfo[] = [];
           addresses.forEach((address) => {

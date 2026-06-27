@@ -1,6 +1,5 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
@@ -293,7 +292,7 @@ export const PersonStore = signalStore(
             const ccQuery = getSystemQuery(store.tenantId());
             ccQuery.push({ key: 'addressChannel', operator: '==', value: 'email' });
             ccQuery.push({ key: 'isCc', operator: '==', value: true });
-            const allCcAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, ccQuery, 'none'));
+            const allCcAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, ccQuery, 'none');
             const ccEmails = getCcEmailAddresses(persons, allCcAddresses);
 
             const modal = await store.modalController.create({
@@ -365,11 +364,11 @@ export const PersonStore = signalStore(
         
         async showOnMap(person?: PersonModel): Promise<void> {
             if (!person) return;
-            const postalAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, [
+            const postalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
               { key: 'parentKey', operator: '==', value: 'person.' + person.bkey },
               { key: 'addressChannel', operator: '==', value: 'postal' },
               { key: 'isFavorite', operator: '==', value: true }
-            ]));
+            ], 'none');
             const postalAddress = postalAddresses[0];
             if (!postalAddress) return;
             const addressStr = stringifyPostalAddress(postalAddress, Languages[DefaultLanguage].abbreviation ?? 'de');

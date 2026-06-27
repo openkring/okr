@@ -302,7 +302,7 @@ export class ApplicationService {
 
   private async resolveApplicationApprover(): Promise<AvatarInfo | undefined> {
     const today          = getTodayStr();
-    const responsibilities = await firstValueFrom(this.responsibilityService.list());
+    const responsibilities = await this.responsibilityService.listOnce();
     const resp = responsibilities.find(r =>
       r.name === 'application' &&
       isValidAt(r.validFrom, r.validTo, today)

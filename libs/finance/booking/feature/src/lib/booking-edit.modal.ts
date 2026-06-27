@@ -2,7 +2,6 @@ import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ModalController, IonButton, IonButtons, IonContent, IonHeader,
   IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { firstValueFrom } from 'rxjs';
 
 import { AvatarInfo, BookingLineModel, BookingModel, UserModel, VatCodeModel } from '@bk2/shared-models';
 import { ModelSelectService } from '@bk2/shared-feature';
@@ -116,9 +115,7 @@ export class BookingEditModal implements OnInit {
       amountFx:     l.amountFx    ?? { amount: 0, currency: 'EUR' as const, periodicity: 'one-time' as const },
     }));
     if (this.editBooking.accountingTenantId) {
-      this.vatCodes = await firstValueFrom(
-        this.vatCodeService.list(this.editBooking.accountingTenantId)
-      );
+      this.vatCodes = await this.vatCodeService.listOnce(this.editBooking.accountingTenantId);
     }
   }
 

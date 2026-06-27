@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, first, forkJoin, of } from 'rxjs';
+import { Observable, forkJoin, from, of } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -105,10 +105,9 @@ export const AocContentStore = signalStore(
       findOrphanedSections(): void {
         const tenantId = store.appStore.env.tenantId;
 
-        const sections$ = store.sectionService.list().pipe(first());
-        const pages$ = store.firestoreService
-          .searchData<PageModel>(PageCollection, getSystemQuery(tenantId), 'name', 'asc')
-          .pipe(first());
+        const sections$ = from(store.sectionService.listOnce());
+        const pages$ = from(store.firestoreService
+          .getDataOnce<PageModel>(PageCollection, getSystemQuery(tenantId), 'name', 'asc'));
 
         forkJoin([sections$, pages$]).subscribe(([sections, pages]) => {
           // Collect every section key referenced by at least one page
@@ -187,10 +186,9 @@ export const AocContentStore = signalStore(
 
       findMissingSections(): void {
         const tenantId = store.appStore.env.tenantId;
-        const sections$ = store.sectionService.list().pipe(first());
-        const pages$ = store.firestoreService
-          .searchData<PageModel>(PageCollection, getSystemQuery(tenantId), 'name', 'asc')
-          .pipe(first());
+        const sections$ = from(store.sectionService.listOnce());
+        const pages$ = from(store.firestoreService
+          .getDataOnce<PageModel>(PageCollection, getSystemQuery(tenantId), 'name', 'asc'));
 
         forkJoin([sections$, pages$]).subscribe(([sections, pages]) => {
           const existingKeys = new Set(sections.map(s => s.bkey).filter(Boolean));
@@ -208,7 +206,7 @@ export const AocContentStore = signalStore(
       },
 
       findOrphanedMenus(): void {
-        store.menuService.list().pipe(first()).subscribe(menuItems => {
+        from(store.menuService.listOnce()).subscribe(menuItems => {
           // Collect every menu item key referenced as a sub-item by any parent
           const referencedKeys = new Set<string>();
           for (const item of menuItems) {
@@ -258,7 +256,7 @@ export const AocContentStore = signalStore(
       },
 
       findMissingMenus(): void {
-        store.menuService.list().pipe(first()).subscribe(menuItems => {
+        from(store.menuService.listOnce()).subscribe(menuItems => {
           const existingNames = new Set(menuItems.map(m => m.name).filter(Boolean));
           const refs: MissingMenuRef[] = [];
           for (const item of menuItems) {

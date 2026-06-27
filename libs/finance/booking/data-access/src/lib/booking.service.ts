@@ -75,8 +75,17 @@ export class BookingService {
     return this.firestoreService.searchData<BookingModel>(BookingCollection, query, orderBy, sortOrder);
   }
 
+  /** One-shot, consistent read (no cache-first race). Promise counterpart to {@link list}. */
+  public listOnce(accountingTenantId: string, orderBy = 'date', sortOrder = 'desc'): Promise<BookingModel[]> {
+    const query = [
+      ...getSystemQuery(this.tenantId),
+      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
+    ];
+    return this.firestoreService.getDataOnce<BookingModel>(BookingCollection, query, orderBy, sortOrder);
+  }
+
   public async nextSequence(year: number, accountingTenantId: string): Promise<number> {
-    const bookings = await firstValueFrom(this.list(accountingTenantId));
+    const bookings = await this.listOnce(accountingTenantId);
     const yearStr = String(year);
     const maxNo = bookings
       .filter(b => b.date?.startsWith(yearStr))

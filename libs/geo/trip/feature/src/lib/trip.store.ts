@@ -2,7 +2,6 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ActionSheetController, ModalController, Platform } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom } from 'rxjs';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 
@@ -296,7 +295,7 @@ export const TripStore = signalStore(
       photoUrl: string | undefined,
       currentUser: UserModel | undefined,
     ): Promise<void> {
-      const responsibilities = await firstValueFrom(store.responsibilityService.list());
+      const responsibilities = await store.responsibilityService.listOnce();
       const responsibility = responsibilities.find(r => r.name === responsibilityName);
       if (!responsibility?.responsibleAvatar) return;
 

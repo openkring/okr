@@ -2,7 +2,6 @@ import { computed, inject } from '@angular/core';
 import { FirebaseStorage, StorageReference, deleteObject, getDownloadURL, getMetadata, listAll, ref } from 'firebase/storage';
 import { AlertController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom } from 'rxjs';
 
 import { STORAGE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -71,7 +70,7 @@ export const AocDocStore = signalStore(
       patchState(store, { isChecking: true, missingDocs: [] });
 
       // Load all existing Firestore document fullPaths
-      const allDocs = await firstValueFrom(store.documentService.list());
+      const allDocs = await store.documentService.listOnce();
       const existingPaths = new Set(allDocs.map(d => d.fullPath).filter(Boolean));
 
       // Recursively list all files in storage under tenant/${tenantId}

@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -55,7 +55,7 @@ export class AccountService {
    * @param currentUser 
    */
   public async deleteTree(rootKey: string, accountingTenantId: string, currentUser?: UserModel): Promise<void> {
-    const all = await firstValueFrom(this.list(accountingTenantId));
+    const all = await this.listOnce(accountingTenantId);
     const subtree = this.collectSubtree(all, rootKey);
     for (const account of subtree) {
       await this.delete(account, currentUser);
@@ -83,5 +83,14 @@ export class AccountService {
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
     return this.firestoreService.searchData<AccountModel>(AccountCollection, query, orderBy, sortOrder);
+  }
+
+  /** One-shot, consistent read (no cache-first race). Promise counterpart to {@link list}. */
+  public listOnce(accountingTenantId: string, orderBy = 'id', sortOrder = 'asc'): Promise<AccountModel[]> {
+    const query = [
+      ...getSystemQuery(this.tenantId),
+      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
+    ];
+    return this.firestoreService.getDataOnce<AccountModel>(AccountCollection, query, orderBy, sortOrder);
   }
 }

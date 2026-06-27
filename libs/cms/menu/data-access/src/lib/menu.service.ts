@@ -72,6 +72,11 @@ export class MenuService {
     return this.firestoreService.searchData<MenuItemModel>(MenuItemCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
+  /** One-shot, consistent read (no cache-first race). Promise counterpart to {@link list}. */
+  public listOnce(orderBy = 'name', sortOrder = 'asc'): Promise<MenuItemModel[]> {
+    return this.firestoreService.getDataOnce<MenuItemModel>(MenuItemCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
+  }
+
   /*-------------------------- OTHER --------------------------------*/
   /**
    * Remove the sub-menu-item itemId from the menu menuItem

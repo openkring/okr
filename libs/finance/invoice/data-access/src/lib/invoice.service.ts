@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -52,7 +52,7 @@ export class InvoiceService {
   }
 
   public async nextInvoiceNo(year: number, accountingTenantId: string): Promise<number> {
-    const all = await firstValueFrom(this.list());
+    const all = await this.firestoreService.getDataOnce<InvoiceModel>(InvoiceCollection, getSystemQuery(this.env.tenantId), 'invoiceDate', 'desc');
     const maxNo = all
       .filter(inv => inv.accountingTenantId === accountingTenantId)
       .map(inv => inv.invoiceNo ?? 0)

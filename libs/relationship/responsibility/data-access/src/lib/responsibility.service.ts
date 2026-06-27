@@ -62,6 +62,13 @@ export class ResponsibilityService {
     );
   }
 
+  /** One-shot, consistent read (no cache-first race). Promise counterpart to {@link list}. */
+  public listOnce(orderBy = 'validFrom', sortOrder = 'asc'): Promise<ResponsibilityModel[]> {
+    return this.firestoreService.getDataOnce<ResponsibilityModel>(
+      ResponsibilityCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder
+    );
+  }
+
   public listForParent(parentKey: string): Observable<ResponsibilityModel[]> {
     if (!parentKey) return of([]);
     return this.list().pipe(
