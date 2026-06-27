@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AddressModel } from '@bk2/shared-models';
 import { getCountryName } from '@bk2/shared-util-core';
-import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, normalizeAddressValue, stringifyAddress, stringifyPostalAddress } from './address.util';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
+import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, getWebUrl, normalizeAddressValue, openExternalUrl, stringifyAddress, stringifyPostalAddress } from './address.util';
 
 // Mock all external dependencies
-vi.mock('@capacitor/browser');
+vi.mock('@capacitor/browser', () => ({ Browser: { open: vi.fn() } }));
+vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: vi.fn(() => false) } }));
 // ToastController (used by copyAddress) pulls in @ionic/core ESM that fails to resolve under Vitest;
 // stub it without importing the real module so collection can proceed.
 vi.mock('@ionic/angular', () => ({ ToastController: class {} }));
@@ -22,6 +25,100 @@ describe('Address Utils', () => {
   beforeEach(() => {
     vi.resetAllMocks();  // reset return values too (clearAllMocks leaves getCountryName's mockReturnValue leaking between tests)
     address = new AddressModel(tenantId);
+  });
+
+  describe('browseUrl', () => {
+    const mockBrowserOpen = vi.mocked(Browser.open);
+
+    beforeEach(() => {
+      // jsdom blocks assigning to window.location.href; replace it with a writable stub.
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { href: '' },
+      });
+    });
+
+    it('navigates the top frame for mailto: (no popup/new tab)', async () => {
+      await browseUrl('mailto:member@example.org');
+
+      expect(window.location.href).toBe('mailto:member@example.org');
+      expect(mockBrowserOpen).not.toHaveBeenCalled();
+    });
+
+    it('navigates the top frame for tel:', async () => {
+      await browseUrl('tel:+41441234567');
+
+      expect(window.location.href).toBe('tel:+41441234567');
+      expect(mockBrowserOpen).not.toHaveBeenCalled();
+    });
+
+    it('applies the prefix before scheme detection', async () => {
+      await browseUrl('member@example.org', 'mailto:');
+
+      expect(window.location.href).toBe('mailto:member@example.org');
+      expect(mockBrowserOpen).not.toHaveBeenCalled();
+    });
+
+    it('uses Browser.open for http(s) URLs', async () => {
+      mockBrowserOpen.mockResolvedValue(undefined);
+
+      await browseUrl('https://example.org');
+
+      expect(mockBrowserOpen).toHaveBeenCalledWith({ url: 'https://example.org' });
+      expect(window.location.href).toBe('');
+    });
+  });
+
+  describe('getWebUrl', () => {
+    it('keeps an https web url as-is', () => {
+      address.addressChannel = 'web';
+      address.url = 'https://example.org';
+      expect(getWebUrl(address)).toBe('https://example.org');
+    });
+
+    it('prepends https:// to a bare web url', () => {
+      address.addressChannel = 'web';
+      address.url = 'example.org';
+      expect(getWebUrl(address)).toBe('https://example.org');
+    });
+
+    it('applies the social-network prefix', () => {
+      address.addressChannel = 'twitter';
+      address.url = 'handle';
+      expect(getWebUrl(address)).toBe('https://twitter.com/handle');
+    });
+
+    it('returns undefined for non-web channels', () => {
+      address.addressChannel = 'email';
+      address.url = 'x@y.org';
+      expect(getWebUrl(address)).toBeUndefined();
+    });
+  });
+
+  describe('openExternalUrl', () => {
+    const mockBrowserOpen = vi.mocked(Browser.open);
+    const mockIsNative = vi.mocked(Capacitor.isNativePlatform);
+
+    it('opens a new tab via window.open on the web', () => {
+      mockIsNative.mockReturnValue(false);
+      const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
+
+      openExternalUrl('https://example.org');
+
+      expect(windowOpen).toHaveBeenCalledWith('https://example.org', '_blank');
+      expect(mockBrowserOpen).not.toHaveBeenCalled();
+    });
+
+    it('uses the in-app Browser on native', () => {
+      mockIsNative.mockReturnValue(true);
+      mockBrowserOpen.mockResolvedValue(undefined);
+      const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
+
+      openExternalUrl('https://example.org');
+
+      expect(mockBrowserOpen).toHaveBeenCalledWith({ url: 'https://example.org' });
+      expect(windowOpen).not.toHaveBeenCalled();
+    });
   });
 
   describe('stringifyPostalAddress', () => {

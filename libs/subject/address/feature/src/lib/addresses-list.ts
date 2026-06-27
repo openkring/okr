@@ -261,8 +261,13 @@ export class AddressesList {
           options.buttons.push(createActionSheetButton('file.upload', this.store.i18n.upload_file(), this.imgixBaseUrl, 'upload'));
         }
         break;
-      case 'web':
-          options.buttons.push(createActionSheetButton('web.open', this.store.i18n.open_web(), this.imgixBaseUrl, 'link'));
+      case 'web': {
+          // Open the link from the synchronous tap handler (not the post-dismiss switch) so the
+          // user gesture survives — Safari blocks window.open once the ActionSheet has dismissed.
+          const webButton = createActionSheetButton('web.open', this.store.i18n.open_web(), this.imgixBaseUrl, 'link');
+          webButton.handler = () => { this.store.openWeb(address); };
+          options.buttons.push(webButton);
+        }
         break;
     }
     options.buttons.push(createActionSheetDivider());
@@ -318,9 +323,7 @@ export class AddressesList {
         case 'file.upload':
           await this.store.uploadFile(address);
           break;
-        case 'web.open':
-          await this.store.openUrl(address);
-          break;
+        // 'web.open' is handled synchronously by the button handler (Safari popup blocker).
       }
     }
   }

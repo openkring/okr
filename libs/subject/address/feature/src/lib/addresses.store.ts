@@ -22,7 +22,7 @@ import { DocumentService } from '@bk2/document-data-access';
 import { FolderService } from '@bk2/folder-data-access';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
-import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, isAddress, stringifyPostalAddress } from '@bk2/subject-address-util';
+import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, getWebUrl, isAddress, openExternalUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
@@ -339,6 +339,16 @@ export const AddressStore = signalStore(
 
       async openUrl(address: AddressModel): Promise<void> {
         await this.use(address);
+      },
+
+      /**
+       * Open a web/social link. Synchronous on purpose: it must run inside the ActionSheet button's
+       * user-gesture handler, otherwise Safari blocks window.open (popup blocker) after the overlay
+       * dismisses. Do NOT route this through openUrl/use (those run after onDidDismiss).
+       */
+      openWeb(address: AddressModel): void {
+        const url = getWebUrl(address);
+        if (url) openExternalUrl(url);
       },
 
       /***************************  use an address *************************** */

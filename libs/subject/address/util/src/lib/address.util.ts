@@ -1,4 +1,5 @@
 import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import { ToastController } from '@ionic/angular';
 
 import { AddressModel } from '@bk2/shared-models';
@@ -218,7 +219,19 @@ export function stringifyPostalAddress(address: AddressModel, lang: string): str
  */
 export async function browseUrl(url: string, prefix = ''): Promise<void> {
   const fullUrl = prefix + url;
-  
+
+  // mailto:/tel:/sms: are handled by the OS (Mail, phone/FaceTime), not an in-app or new-tab
+  // browser. Routing them through Browser.open → window.open('_blank') opens a blank tab and,
+  // on Safari, is silently popup-blocked when invoked outside a user gesture (e.g. after an
+  // ActionSheet dismiss), so the action does nothing. Navigate the top frame instead — Safari
+  // and the Capacitor webview both hand these schemes to the OS without a popup.
+  if (/^(mailto|tel|sms):/i.test(fullUrl)) {
+    if (typeof window !== 'undefined') {
+      window.location.href = fullUrl;
+    }
+    return;
+  }
+
   try {
     await Browser.open({ url: fullUrl });
   } catch (err) {
@@ -228,6 +241,38 @@ export async function browseUrl(url: string, prefix = ''): Promise<void> {
     } else {
       throw err;
     }
+  }
+}
+
+/**
+ * Resolve the external http(s) URL for a web/social address channel (the same mapping
+ * that {@link browseUrl} is called with in the store). Returns undefined for non-web channels.
+ */
+export function getWebUrl(address: AddressModel): string | undefined {
+  switch (address.addressChannel) {
+    case 'web':       return address.url.startsWith('https://') ? address.url : 'https://' + address.url;
+    case 'twitter':   return 'https://twitter.com/' + address.url;
+    case 'xing':      return 'https://www.xing.com/profile/' + address.url;
+    case 'facebook':  return 'https://www.facebook.com/' + address.url;
+    case 'linkedin':  return 'https://www.linkedin.com/in/' + address.url;
+    case 'instagram': return 'https://www.instagram.com/' + address.url;
+    default:          return undefined;
+  }
+}
+
+/**
+ * Open an external http(s) URL. On the web this MUST be called synchronously from a user-gesture
+ * handler (e.g. an ActionSheet button handler): Safari blocks window.open outside transient
+ * activation, so calling it after an overlay dismiss silently does nothing. On native there is no
+ * popup restriction, so the in-app browser is used.
+ */
+export function openExternalUrl(fullUrl: string): void {
+  if (Capacitor.isNativePlatform()) {
+    void Browser.open({ url: fullUrl });
+    return;
+  }
+  if (typeof window !== 'undefined') {
+    window.open(fullUrl, '_blank');
   }
 }
 

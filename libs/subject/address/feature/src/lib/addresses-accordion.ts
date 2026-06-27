@@ -169,9 +169,14 @@ export class AddressesAccordion {
           actionSheetOptions.buttons.push(createActionSheetButton('file.upload', this.store.i18n.upload_file(), this.imgixBaseUrl, 'qrcode'));
         }
         break;
-      case 'web':
-        actionSheetOptions.buttons.push(createActionSheetButton('web.open', this.store.i18n.open_web(), this.imgixBaseUrl, 'link'));
+      case 'web': {
+        // Open the link from the synchronous tap handler (not the post-dismiss switch) so the
+        // user gesture survives — Safari blocks window.open once the ActionSheet has dismissed.
+        const webButton = createActionSheetButton('web.open', this.store.i18n.open_web(), this.imgixBaseUrl, 'link');
+        webButton.handler = () => { this.store.openWeb(address); };
+        actionSheetOptions.buttons.push(webButton);
         break;
+      }
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -222,9 +227,7 @@ export class AddressesAccordion {
         case 'file.upload':
           await this.store.uploadFile(address);
           break;
-        case 'web.open':
-          await this.store.openUrl(address);
-          break;
+        // 'web.open' is handled synchronously by the button handler (Safari popup blocker).
       }
     }
   }
