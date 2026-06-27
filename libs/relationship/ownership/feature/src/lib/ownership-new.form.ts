@@ -106,8 +106,8 @@ export class OwnershipNewForm {
   protected validFrom = linkedSignal(() => this.formData().validFrom ?? getTodayStr());
   protected locale = computed(() => this.appStore.appConfig().locale);
 
-  private rboatTypes = this.appStore.getCategory('rboat_type');
-  private resourceTypes = this.appStore.getCategory('resource_type');
+  private rboatTypes = computed(() => this.appStore.tryGetCategory('rboat_type'));
+  private resourceTypes = computed(() => this.appStore.tryGetCategory('resource_type'));
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));
@@ -215,9 +215,9 @@ export class OwnershipNewForm {
 
   protected getIcon(ownership: OwnershipModel): string {
     if (ownership.resourceType === 'rboat') {
-      return getCategoryIcon(this.rboatTypes, ownership.resourceSubType);
+      return getCategoryIcon(this.rboatTypes(), ownership.resourceSubType);
     } else {
-      return getCategoryIcon(this.resourceTypes, ownership.resourceType);
+      return getCategoryIcon(this.resourceTypes(), ownership.resourceType);
     }
   }
 }

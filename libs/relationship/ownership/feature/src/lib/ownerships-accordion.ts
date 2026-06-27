@@ -65,7 +65,7 @@ export class OwnershipAccordion {
   // derived fields
   protected ownerships = computed(() => this.store.ownerships());
   private readonly currentUser = computed(() => this.store.currentUser());
-  protected readonly resourceTypes = this.store.appStore.getCategory('resource_type');
+  protected readonly resourceTypes = computed(() => this.store.appStore.tryGetCategory('resource_type'));
   protected accordionTitle = computed(() => this.title() ?? this.store.i18n.ownerships());
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
@@ -151,6 +151,6 @@ export class OwnershipAccordion {
   }
 
   protected getIcon(resourceType: string): string {
-    return getCategoryIcon(this.resourceTypes, resourceType);
+    return getCategoryIcon(this.resourceTypes(), resourceType);
   }
 }

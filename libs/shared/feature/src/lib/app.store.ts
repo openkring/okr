@@ -212,6 +212,10 @@ export const AppStore = signalStore(
     firebaseUid: computed(() => state.fbUser()?.uid ?? undefined),
     loginEmail: computed(() => state.fbUser()?.email ?? undefined),
     roles: computed(() => state.currentUser()?.roles ?? []),
+    // System reference data (categories) is read synchronously via getCategory();
+    // feature components must not render until it has loaded. True once the resource
+    // has settled (loaded or errored), so the app never hangs on a failed load.
+    areCategoriesReady: computed(() => !state.categoriesResource.isLoading()),
     showDebugInfo: computed(() => state.currentUser()?.showDebugInfo ?? state.appConfig().showDebugInfo ?? false),
     isLoading: computed(() => state.currentUserResource.isLoading() || state.personsResource.isLoading() || state.orgsResource.isLoading() || 
         state.resourcesResource.isLoading() || state.tagsResource.isLoading()),

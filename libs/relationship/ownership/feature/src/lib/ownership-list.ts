@@ -182,8 +182,8 @@ export class OwnershipList {
   protected popupId = computed(() => 'c_ownerships_' + this.listId());
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
-  private rboatTypes = this.store.appStore.getCategory('rboat_type');
-  private resourceTypes = this.store.appStore.getCategory('resource_type');
+  private rboatTypes = computed(() => this.store.appStore.tryGetCategory('rboat_type'));
+  private resourceTypes = computed(() => this.store.appStore.tryGetCategory('resource_type'));
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -290,9 +290,9 @@ export class OwnershipList {
 
   protected getIcon(ownership: OwnershipModel): string {
     if (ownership.resourceType === 'rboat') {
-      return getCategoryIcon(this.rboatTypes, ownership.resourceSubType);
+      return getCategoryIcon(this.rboatTypes(), ownership.resourceSubType);
     } else {
-      return getCategoryIcon(this.resourceTypes, ownership.resourceType);
+      return getCategoryIcon(this.resourceTypes(), ownership.resourceType);
     }
   }
 }
