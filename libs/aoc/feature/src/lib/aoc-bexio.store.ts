@@ -130,17 +130,20 @@ export const AocBexioStore = signalStore(
       const persons = store.appStore.allPersons();
       const orgs = store.appStore.allOrgs();
 
-      // 2. Load memberships for the default org (orgKey === tenantId)
-      const allMemberships = await firstValueFrom(
-        store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.tenantId()), 'memberName2', 'asc')
-      );
+      // 2. Load memberships and addresses with one-shot getDataOnce reads (NOT firstValueFrom(searchData)).
+      //    searchData returns a real-time onSnapshot stream: its first emission can be an empty/partial
+      //    cache snapshot (fromCache) before the server snapshot arrives — always so on Safari/Firefox,
+      //    which use memoryLocalCache and are therefore cold on every reload. firstValueFrom would grab
+      //    that partial snapshot, leaving addresses empty -> every row flagged as an address mismatch.
+      //    getDataOnce returns a consistent server snapshot when online, so the index is built once, correctly.
+
+      // 2a. Load memberships for the default org (orgKey === tenantId)
+      const allMemberships = await store.firestoreService.getDataOnce<MembershipModel>(MembershipCollection, getSystemQuery(store.tenantId()), 'none');
       const memberships = allMemberships.filter(m => m.orgKey === store.tenantId()); // only members of defaultOrg
 
       // 2b. Load favorite postal addresses (street/number/zip/city are no longer cached on person/org,
       //     they live in the separate address collection). Map them by parentKey (person.{bkey} / org.{bkey}).
-      const allAddresses = await firstValueFrom(
-        store.firestoreService.searchData<AddressModel>(AddressCollection, getSystemQuery(store.tenantId()), 'parentKey', 'asc')
-      );
+      const allAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, getSystemQuery(store.tenantId()), 'none');
       const favPostalByParent = new Map<string, AddressModel>();
       for (const address of allAddresses) {
         if (address.addressChannel === 'postal' && address.isFavorite) {
@@ -411,9 +414,7 @@ export const AocBexioStore = signalStore(
 
       // also update the membership.memberBexioId if a membership exists
       if (item.mkey) {
-        const allMemberships = await firstValueFrom(
-          store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.tenantId()), 'memberName2', 'asc')
-        );
+        const allMemberships = await store.firestoreService.getDataOnce<MembershipModel>(MembershipCollection, getSystemQuery(store.tenantId()), 'memberName2', 'asc');
         const membership = allMemberships.find(m => m.bkey === item.mkey);
         if (membership) {
           await store.firestoreService.updateModel<MembershipModel>(MembershipCollection, { ...membership, memberBexioId: bxid }, false, undefined, undefined, currentUser);
@@ -551,7 +552,7 @@ export const AocBexioStore = signalStore(
       // load this contact's addresses
       const query = getSystemQuery(store.tenantId());
       query.push({ key: 'parentKey', operator: '==', value: avatarKey });
-      const addresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, query));
+      const addresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, query, 'none');
 
       // postal: update the favorite postal address, or create one if none exists yet
       const postal = addresses.find(a => a.addressChannel === 'postal' && a.isFavorite);
@@ -609,15 +610,22 @@ export const AocBexioStore = signalStore(
     },
 
     async loadInvoiceStats(): Promise<void> {
-      const db = getFirestore(getApp());
-      const [snap, configDoc] = await Promise.all([
-        getCountFromServer(query(collection(db, InvoiceCollection), where('tenants', 'array-contains', store.tenantId()))),
-        getDoc(doc(db, 'config', 'bexioSync')),
-      ]);
-      patchState(store, {
-        invoiceCount: snap.data().count,
-        lastSyncedAt: configDoc.data()?.['lastSyncedAt'] ?? '',
-      });
+      try {
+        const db = getFirestore(getApp());
+        const [snap, configDoc] = await Promise.all([
+          getCountFromServer(query(collection(db, InvoiceCollection), where('tenants', 'array-contains', store.tenantId()))),
+          getDoc(doc(db, 'config', 'bexioSync')),
+        ]);
+        patchState(store, {
+          invoiceCount: snap.data().count,
+          lastSyncedAt: configDoc.data()?.['lastSyncedAt'] ?? '',
+        });
+      } catch (e) {
+        // Transient on Safari: a request aborted mid-load (reload/navigate-away/bfcache) returns an
+        // empty body that the Firebase SDK JSON-parses → "Unexpected EOF". ngOnInit calls this
+        // fire-and-forget, so an unguarded rejection becomes an unhandled rejection (Sentry noise).
+        console.warn('loadInvoiceStats failed (transient, ignored):', e);
+      }
     },
 
     async linkInvoiceReceivers(): Promise<void> {
@@ -706,15 +714,19 @@ export const AocBexioStore = signalStore(
     },
 
     async loadBillStats(): Promise<void> {
-      const db = getFirestore(getApp());
-      const [snap, configDoc] = await Promise.all([
-        getCountFromServer(query(collection(db, 'bills'), where('tenants', 'array-contains', store.tenantId()))),
-        getDoc(doc(db, 'config', 'bexioSync')),
-      ]);
-      patchState(store, {
-        billCount: snap.data().count,
-        lastBillSyncedAt: configDoc.data()?.['lastBillSyncedAt'] ?? '',
-      });
+      try {
+        const db = getFirestore(getApp());
+        const [snap, configDoc] = await Promise.all([
+          getCountFromServer(query(collection(db, 'bills'), where('tenants', 'array-contains', store.tenantId()))),
+          getDoc(doc(db, 'config', 'bexioSync')),
+        ]);
+        patchState(store, {
+          billCount: snap.data().count,
+          lastBillSyncedAt: configDoc.data()?.['lastBillSyncedAt'] ?? '',
+        });
+      } catch (e) {
+        console.warn('loadBillStats failed (transient, ignored):', e);
+      }
     },
 
     async syncBills(fromDate?: string): Promise<{ count: number }> {
@@ -728,16 +740,20 @@ export const AocBexioStore = signalStore(
     },
 
     async loadJournalStats(): Promise<void> {
-      const db = getFirestore(getApp());
-      // Bexio journal entries are synced into the native `bookings` collection (the legacy `journallogs` collection was retired).
-      const [snap, configDoc] = await Promise.all([
-        getCountFromServer(query(collection(db, 'bookings'), where('tenants', 'array-contains', store.tenantId()))),
-        getDoc(doc(db, 'config', 'bexioSync')),
-      ]);
-      patchState(store, {
-        journalCount: snap.data().count,
-        lastJournalSyncedAt: configDoc.data()?.['lastJournalSyncedAt'] ?? '',
-      });
+      try {
+        const db = getFirestore(getApp());
+        // Bexio journal entries are synced into the native `bookings` collection (the legacy `journallogs` collection was retired).
+        const [snap, configDoc] = await Promise.all([
+          getCountFromServer(query(collection(db, 'bookings'), where('tenants', 'array-contains', store.tenantId()))),
+          getDoc(doc(db, 'config', 'bexioSync')),
+        ]);
+        patchState(store, {
+          journalCount: snap.data().count,
+          lastJournalSyncedAt: configDoc.data()?.['lastJournalSyncedAt'] ?? '',
+        });
+      } catch (e) {
+        console.warn('loadJournalStats failed (transient, ignored):', e);
+      }
     },
 
     async syncJournal(): Promise<{ count: number }> {
