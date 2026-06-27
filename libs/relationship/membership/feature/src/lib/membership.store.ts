@@ -143,7 +143,7 @@ export const _MembershipStore = signalStore(
       allMemberships: computed(() => state.showOnlyCurrent() ? 
         state.allMembershipsResource.value()?.filter(m => isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? [] : 
         state.allMembershipsResource.value()?.filter(m => m.relIsLast === true) ?? []),
-      defaultMcat: computed(() => state.appStore.getCategory('mcat_default')),
+      defaultMcat: computed(() => state.appStore.tryGetCategory('mcat_default')),
       ownershipsOfMember: computed(() => state.ownershipsOfMemberResource.value() ?? []),
     };
   }),
@@ -230,17 +230,22 @@ export const _MembershipStore = signalStore(
 
   withComputed((state) => {
     return {
-      membershipCategory: computed<CategoryListModel>(() => {
+      // Resilient lookup: returns undefined while the categories resource is still
+      // loading (or if the configured category is missing) instead of crashing via
+      // AppStore.getCategory's die(). Consumers in the template guard on isLoading();
+      // action methods only run once data is loaded.
+      membershipCategory: computed<CategoryListModel | undefined>(() => {
         const key = state.membershipCategoryKey();
-        return key ? (state.appStore.getCategory(key) ?? state.defaultMcat()) : state.defaultMcat();
+        return state.appStore.tryGetCategory(key) ?? state.defaultMcat();
       }),
       groupsCount: computed(() => state.groupsOfMember().length),
       defaultOrg: computed(() => state.org()),
       currentPerson : computed(() => state.appStore.currentPerson()),
       
-      isLoading: computed(() => 
-        state.allMembershipsResource.isLoading() || 
-        state.appStore.orgsResource.isLoading()
+      isLoading: computed(() =>
+        state.allMembershipsResource.isLoading() ||
+        state.appStore.orgsResource.isLoading() ||
+        state.appStore.categoriesResource.isLoading()
       ),
 
       // all members (= orgs and persons)

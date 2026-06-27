@@ -73,7 +73,7 @@ export const PersonStore = signalStore(
       tenantId: computed(() => state.appStore.tenantId()),
       membershipCategoryKey: computed(() => state.appStore.getOrg(state.orgId())?.membershipCategoryKey ?? 'mcat_default'),
       defaultResource : computed(() => state.appStore.defaultResource() ?? new ResourceModel(state.appStore.env.tenantId)),
-      defaultMcat: computed(() => state.appStore.getCategory('mcat_default'))
+      defaultMcat: computed(() => state.appStore.tryGetCategory('mcat_default'))
     };
   }),
 
@@ -112,7 +112,7 @@ export const PersonStore = signalStore(
           nameMatches(person.gender, state.selectedGender(), true) &&
           chipMatches(person.tags, state.selectedTag())) ?? []
       ),
-      membershipCategory: computed<CategoryListModel>(() => state.appStore.getCategory(state.membershipCategoryKey()) ?? state.defaultMcat()),
+      membershipCategory: computed<CategoryListModel | undefined>(() => state.appStore.tryGetCategory(state.membershipCategoryKey()) ?? state.defaultMcat()),
       isLoading: computed(() => state.personResource.isLoading()),
 
       // edit person

@@ -141,7 +141,7 @@ export class MembershipList {
 
   // computed
   protected hasYearFilter = computed(() => this.listId() === 'entries' || this.listId() === 'exits' || this.listId() === 'deceased'); 
-  protected membershipCategory = linkedSignal(() => this.hasYearFilter() || this.listId() !== 'active' ? undefined : this.store.membershipCategory());
+  protected membershipCategory = linkedSignal(() => this.hasYearFilter() || this.listId() !== 'active' || this.store.isLoading() ? undefined : this.store.membershipCategory());
   protected genders = computed(() => this.store.genders());
   protected orgTypes = computed(() => this.store.orgTypes());
   protected readonly popupId = crypto.randomUUID();
@@ -339,8 +339,6 @@ export class MembershipList {
 
     // contact operations
     actionSheetOptions.buttons.push(createActionSheetButton('download.vcard', this.store.i18n.download_vcard(), this.imgixBaseUrl, 'download'));
-    if (await this.store.isPersonUser(membership.memberKey)) {
-    }
     const email = this.store.getEmail(membership);
     if (email) {
       // handler fires synchronously within the tap gesture — required for iOS clipboard access

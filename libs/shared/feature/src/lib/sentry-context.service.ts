@@ -15,17 +15,23 @@ export class SentryContextService {
   constructor() {
     effect(() => {
       const uid = this.appStore.fbUser()?.uid;
-      if (uid) {
-        const rolesOrEmpty = this.appStore.roles();
-        const roleNames: string[] = Array.isArray(rolesOrEmpty)
-          ? rolesOrEmpty
-          : (Object.keys(rolesOrEmpty) as (keyof Roles)[]).filter(
-              (k) => rolesOrEmpty[k] === true,
-            );
-        setSentryUser(uid, this.appStore.tenantId(), roleNames);
-      } else {
+      if (!uid) {
         clearSentryUser();
+        return;
       }
+      // The UserModel (and therefore the roles) loads from Firestore a moment after
+      // fbUser is set. Pushing during that gap would emit an empty 'role' tag, which
+      // looks like a bogus "role unset" event in Sentry. Wait until currentUser has
+      // resolved; the effect re-runs and pushes the real roles once it does.
+      const currentUser = this.appStore.currentUser();
+      if (!currentUser) return;
+      const rolesOrEmpty = this.appStore.roles();
+      const roleNames: string[] = Array.isArray(rolesOrEmpty)
+        ? rolesOrEmpty
+        : (Object.keys(rolesOrEmpty) as (keyof Roles)[]).filter(
+            (k) => rolesOrEmpty[k] === true,
+          );
+      setSentryUser(uid, this.appStore.tenantId(), roleNames);
     });
   }
 }
