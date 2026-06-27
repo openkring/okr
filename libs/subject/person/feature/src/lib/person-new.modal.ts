@@ -25,21 +25,23 @@ import { PersonStore } from './person.store';
       <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      @if(formData(); as formData) {
-        <bk-person-new-form
-          [i18n]="store.i18n"
-          [formData]="formData"
-          (formDataChange)="onFormDataChange($event)"
-          [currentUser]="currentUser()"
-          [genders]="genders()"
-          [allTags]="tags()"
-          [tenantId]="tenantId()"
-          [readOnly]="false"
-          [membershipCategories]="mcat()"
-          (selectClicked)="selectOrg()"
-          (dirty)="formDirty.set($event)"
-          (valid)="formValid.set($event)"
-        />
+      @if(mcat(); as mcat) {
+        @if(formData(); as formData) {
+          <bk-person-new-form
+            [i18n]="store.i18n"
+            [formData]="formData"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser()"
+            [genders]="genders()"
+            [allTags]="tags()"
+            [tenantId]="tenantId()"
+            [readOnly]="false"
+            [membershipCategories]="mcat"
+            (selectClicked)="selectOrg()"
+            (dirty)="formDirty.set($event)"
+            (valid)="formValid.set($event)"
+          />
+        }
       }
     </ion-content>
   `
