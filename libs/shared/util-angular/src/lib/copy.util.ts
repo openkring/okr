@@ -52,13 +52,21 @@ export async function copyToClipboard(content: string | string[] | number | bool
     return;
   }
 
-  // Web/PWA: navigator.clipboard must be called before any await to stay within the user gesture context
-  if (typeof navigator !== 'undefined' && navigator.clipboard) {
-    await navigator.clipboard.writeText(_content);
-    return;
+  // Web/PWA: prefer the async Clipboard API, called before any await to stay within the
+  // user-gesture context. On macOS/iOS Safari it can still reject with NotAllowedError when
+  // invoked from an Ionic overlay handler (transient activation / document focus is lost on
+  // dismiss). In that case fall through to the synchronous execCommand path below, which is
+  // not subject to those restrictions.
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(_content);
+      return;
+    } catch {
+      // Safari NotAllowedError (or unsupported) → try the execCommand fallback.
+    }
   }
 
-  // Last resort fallback for old browsers
+  // Fallback for old browsers and the Safari NotAllowedError case above.
   if (typeof document !== 'undefined') {
     const textArea = document.createElement('textarea');
     textArea.value = _content;
@@ -71,7 +79,10 @@ export async function copyToClipboard(content: string | string[] | number | bool
     if (!success) {
       throw new Error('execCommand copy failed');
     }
+    return;
   }
+
+  throw new Error('copyToClipboard: no clipboard mechanism available');
 }
 
 /**

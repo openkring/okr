@@ -1,4 +1,5 @@
 import { Clipboard } from '@capacitor/clipboard';
+import { Capacitor } from '@capacitor/core';
 import { ToastController } from '@ionic/angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as alertUtil from './alert.util';
@@ -184,6 +185,57 @@ describe('copy.util', () => {
       mockClipboard.write.mockRejectedValue(error);
       
       await expect(copyToClipboard('test')).rejects.toThrow('Clipboard write failed');
+    });
+  });
+
+  // Web/PWA path: Capacitor reports non-native, so copyToClipboard uses the browser APIs.
+  // Regression coverage for the macOS/iOS Safari NotAllowedError fallback.
+  describe('copyToClipboard (web/PWA fallback)', () => {
+    const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    let writeText: ReturnType<typeof vi.fn>;
+    let execCommand: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(false);
+      writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
+      });
+      execCommand = vi.fn().mockReturnValue(true);
+      (document as unknown as { execCommand: unknown }).execCommand = execCommand;
+    });
+
+    afterEach(() => {
+      if (originalClipboard) {
+        Object.defineProperty(navigator, 'clipboard', originalClipboard);
+      } else {
+        delete (navigator as unknown as { clipboard?: unknown }).clipboard;
+      }
+      delete (document as unknown as { execCommand?: unknown }).execCommand;
+    });
+
+    it('uses navigator.clipboard.writeText when allowed (no execCommand fallback)', async () => {
+      await copyToClipboard('hello');
+
+      expect(writeText).toHaveBeenCalledWith('hello');
+      expect(execCommand).not.toHaveBeenCalled();
+    });
+
+    it('falls back to execCommand when writeText rejects (Safari NotAllowedError)', async () => {
+      writeText.mockRejectedValue(new DOMException('not allowed', 'NotAllowedError'));
+
+      await copyToClipboard('member@example.org');
+
+      expect(writeText).toHaveBeenCalledWith('member@example.org');
+      expect(execCommand).toHaveBeenCalledWith('copy');
+    });
+
+    it('throws when both writeText and execCommand fail', async () => {
+      writeText.mockRejectedValue(new DOMException('not allowed', 'NotAllowedError'));
+      execCommand.mockReturnValue(false);
+
+      await expect(copyToClipboard('x')).rejects.toThrow('execCommand copy failed');
     });
   });
 
