@@ -18,6 +18,13 @@ vi.mock('@capacitor/clipboard', () => ({
   }
 }));
 
+// Mock Capacitor core. jsdom is not a native platform, so without this the web/PWA
+// branch of copyToClipboard runs; these tests exercise the native pasteboard path.
+// The web-path branch is covered explicitly below (it overrides isNativePlatform to false).
+vi.mock('@capacitor/core', () => ({
+  Capacitor: { isNativePlatform: vi.fn(() => true) }
+}));
+
 // Mock alert utility functions
 vi.mock('./alert.util', () => ({
   showToast: vi.fn().mockResolvedValue(undefined),
@@ -38,6 +45,8 @@ describe('copy.util', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default to the native pasteboard path; the web-path block overrides this.
+    vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -196,7 +205,7 @@ describe('copy.util', () => {
     let execCommand: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-      vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(false);
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
       writeText = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'clipboard', {
         value: { writeText },
@@ -320,7 +329,7 @@ describe('copy.util', () => {
       await Promise.resolve(); // allow .then() to flush
 
       expect(mockClipboard.write).toHaveBeenCalledWith({ string: content });
-      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@general.operation.copy.conf');
+      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@copy.conf');
     });
 
     it('should handle number content', async () => {
@@ -359,7 +368,7 @@ describe('copy.util', () => {
       await Promise.resolve(); // allow .then() to flush
 
       expect(mockClipboard.write).toHaveBeenCalledWith({ string: '' });
-      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@general.operation.copy.conf');
+      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@copy.conf');
     });
 
     it('should handle zero as content', async () => {
@@ -369,7 +378,7 @@ describe('copy.util', () => {
       await Promise.resolve(); // allow .then() to flush
 
       expect(mockClipboard.write).toHaveBeenCalledWith({ string: '0' });
-      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@general.operation.copy.conf');
+      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@copy.conf');
     });
 
     it('should handle very long content', async () => {
@@ -379,7 +388,7 @@ describe('copy.util', () => {
       await Promise.resolve(); // allow .then() to flush
 
       expect(mockClipboard.write).toHaveBeenCalledWith({ string: content });
-      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@general.operation.copy.conf');
+      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@copy.conf');
     });
 
     it('should handle special characters in content', async () => {
@@ -389,7 +398,7 @@ describe('copy.util', () => {
       await Promise.resolve(); // allow .then() to flush
 
       expect(mockClipboard.write).toHaveBeenCalledWith({ string: content });
-      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@general.operation.copy.conf');
+      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@copy.conf');
     });
 
     it('should handle clipboard write timeout error', async () => {
@@ -530,7 +539,7 @@ describe('copy.util', () => {
       await new Promise(setImmediate); // flush all microtasks
 
       expect(mockClipboard.write).toHaveBeenCalledWith({ string: content });
-      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@general.operation.copy.conf');
+      expect(mockShowToast).toHaveBeenCalledWith(mockToastController, '@copy.conf');
     });
 
     it('should demonstrate times function with clipboard operations', async () => {
