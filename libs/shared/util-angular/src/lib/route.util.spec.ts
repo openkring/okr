@@ -9,20 +9,22 @@ import {
     navigateByUrl
 } from './route.util';
 
+// die() returns `never` and throws in production; navigateByUrl relies on that to
+// short-circuit before dereferencing router. The mock must throw too.
 vi.mock('@bk2/shared-util-core', () => ({
-  die: vi.fn()
+  die: vi.fn((message: string) => { throw new Error(message); })
 }));
 
 describe('route.util', () => {
   describe('navigateByUrl', () => {
     it('should call router.navigateByUrl when queryParams is undefined', async () => {
-      const router = { navigateByUrl: vi.fn().mockResolvedValue(undefined) };
+      const router = { url: '/current', navigateByUrl: vi.fn().mockResolvedValue(undefined) };
       await navigateByUrl(router as any, '/test');
       expect(router.navigateByUrl).toHaveBeenCalledWith('/test');
     });
 
     it('should call router.navigate with queryParams object', async () => {
-      const router = { navigate: vi.fn().mockResolvedValue(undefined) };
+      const router = { url: '/current', navigate: vi.fn().mockResolvedValue(undefined) };
       const queryParams = { foo: 'bar' };
       await navigateByUrl(router as any, '/test', queryParams);
       expect(router.navigate).toHaveBeenCalledWith(['/test'], { queryParams });
@@ -43,18 +45,18 @@ describe('route.util', () => {
     });
 
     it('should call die if url is missing', async () => {
-      const router = { navigateByUrl: vi.fn(), navigate: vi.fn() };
-      await navigateByUrl(router as any, '');
+      const router = { url: '/current', navigateByUrl: vi.fn(), navigate: vi.fn() };
+      await expect(navigateByUrl(router as any, '')).rejects.toThrow();
       expect(die).toHaveBeenCalledWith(expect.stringContaining('url is mandatory'));
     });
 
     it('should call die if router is missing', async () => {
-      await navigateByUrl(undefined as any, '/test');
+      await expect(navigateByUrl(undefined as any, '/test')).rejects.toThrow();
       expect(die).toHaveBeenCalledWith(expect.stringContaining('router is mandatory'));
     });
 
     it('should catch and log errors', async () => {
-      const router = { navigateByUrl: vi.fn().mockRejectedValue(new Error('fail')) };
+      const router = { url: '/current', navigateByUrl: vi.fn().mockRejectedValue(new Error('fail')) };
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       await navigateByUrl(router as any, '/fail');
 /*       expect(spy).toHaveBeenCalledWith(
@@ -103,7 +105,7 @@ describe('route.util', () => {
     });
 
     it('should call die if parameter is mandatory and no defaultValue', () => {
-      getDefaultValue('param');
+      expect(() => getDefaultValue('param')).toThrow();
       expect(die).toHaveBeenCalledWith(expect.stringContaining('parameter param is mandatory'));
     });
   });

@@ -80,8 +80,8 @@ describe('AlertService', () => {
 
     it('should call i18n.translateAll with ok and cancel keys', () => {
       expect(mockI18nService.translateAll).toHaveBeenCalledWith({
-        ok: '@general.operation.change.ok',
-        cancel: '@general.operation.change.cancel',
+        ok: '@ok',
+        cancel: '@cancel',
       });
     });
   });
