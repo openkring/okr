@@ -71,6 +71,10 @@ export const CalendarStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
+        // `calendars` is tenantRead-protected: gate on an authenticated user, or the
+        // read fires unauthenticated during the auth-restore window (e.g. a calendar
+        // section on the public /welcome landing) → "Missing or insufficient permissions".
+        if (!params.currentUser) return of([]);
         return store.appStore.firestoreService.searchData<CalendarModel>(CalendarCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
       }
     }),

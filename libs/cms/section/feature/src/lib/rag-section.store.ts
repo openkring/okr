@@ -3,6 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { AppStore } from '@bk2/shared-feature';
@@ -67,10 +68,15 @@ export const RagStore = signalStore(
         // Firestore only allows one array-contains per query and getSystemQuery already
         // uses one on 'tenants', so we filter by folderKey client-side.
         ragDocumentsResource: rxResource({
-            params: () => ({}),
-            stream: () => store.documentService.list('title', 'asc').pipe(
-                map(docs => docs.filter(d => d.folderKeys.includes(RAG_FOLDER_KEY))),
-            ),
+            params: () => ({ currentUser: store.appStore.currentUser() }),
+            // `docs` is tenantRead-protected: gate on an authenticated user, or the read
+            // fires unauthenticated during the auth-restore window → permission denied.
+            stream: ({ params }) => {
+                if (!params.currentUser) return of([]);
+                return store.documentService.list('title', 'asc').pipe(
+                    map(docs => docs.filter(d => d.folderKeys.includes(RAG_FOLDER_KEY))),
+                );
+            },
         }),
     })),
     withComputed((state) => ({
