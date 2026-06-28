@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { MembershipCollection, MembershipModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
 import { DateFormat, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 import { AUTH } from '@bk2/shared-config';
@@ -73,9 +73,11 @@ export const AocUserAccountStore = signalStore(
       // the resource will reload whenever the fbUser changes (login/logout).
       params: () => store.fbUser(),
       stream: () => {
-        // we are querying for the users of all tenants in order to be able to filter out fbUsers of other tenants later
-        const query =  [{ key: 'isArchived', operator: '==', value: false }];
-        return store.firestoreService.searchData<UserModel>(UserCollection, query, 'loginEmail', 'asc');
+        // We need the users of ALL tenants here (to tell "no BK account anywhere" apart from
+        // "BK account in another tenant"). A client-side cross-tenant list on /users is denied by
+        // the Firestore rules, so we read them through an admin-only Cloud Function (Admin SDK).
+        const fn = httpsCallable<void, { users: UserModel[] }>(getFunctions(getApp(), 'europe-west6'), 'listBkUsers');
+        return from(fn().then(result => result.data.users));
       }
     }),
     activeMembersResource: rxResource({

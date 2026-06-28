@@ -3,6 +3,7 @@ import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
+import { getFirestore } from 'firebase-admin/firestore';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/shared-util-functions';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
@@ -357,6 +358,34 @@ export const listFirebaseUsers = functions.onCall(
       }
       pageToken = result.pageToken;
     } while (pageToken);
+
+    logger.info(`${CF_NAME}: returned ${users.length} users`);
+    return { users };
+  }
+);
+
+/**
+ * List all non-archived BK user documents across ALL tenants (Admin SDK bypasses
+ * Firestore rules). The AOC user-account view needs this cross-tenant set to tell
+ * "no BK account anywhere" apart from "BK account in another tenant"; a client-side
+ * cross-tenant `list` on /users is (correctly) denied by the rules. Admin-only.
+ */
+export const listBkUsers = functions.onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true,
+  },
+  async (request: functions.CallableRequest): Promise<{ users: any[] }> => {
+    const CF_NAME = 'listBkUsers';
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+    await checkAdminRole(request as any, CF_NAME);
+
+    const snap = await getFirestore()
+      .collection('users')
+      .where('isArchived', '==', false)
+      .get();
+    const users = snap.docs.map(doc => ({ bkey: doc.id, ...doc.data() }));
 
     logger.info(`${CF_NAME}: returned ${users.length} users`);
     return { users };
