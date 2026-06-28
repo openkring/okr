@@ -101,10 +101,15 @@ export class MemberNewModal {
         const selectedOrg = this.appStore.getOrg(data.bkey);
         const membershipCategoryKey = selectedOrg?.membershipCategoryKey;
 
-        // Get the CategoryListModel using AppStore.getCategory
+        // Resilient lookup: tryGetCategory returns undefined (instead of crashing
+        // via AppStore.getCategory's die()) when the org's configured category is
+        // missing — e.g. the org.model default 'mcat_default', for which no DB
+        // category exists. In that case we keep the current default (this.mcat()).
         if (membershipCategoryKey) {
-          const membershipCategory = this.appStore.getCategory(membershipCategoryKey);
-          this.selectedMembershipCategory.set(membershipCategory);
+          const membershipCategory = this.appStore.tryGetCategory(membershipCategoryKey);
+          if (membershipCategory) {
+            this.selectedMembershipCategory.set(membershipCategory);
+          }
         }
 
         this.formData.update((vm) => ({
