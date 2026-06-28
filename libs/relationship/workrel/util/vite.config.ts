@@ -13,6 +13,7 @@ const libraryConfig = defineConfig({
       reportsDirectory: '../../../../coverage/libs/relationship/workrel/util',
       provider: 'v8' as const,
     },
+    setupFiles: ['./test-setup.ts'],
   },
 });
 
