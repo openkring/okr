@@ -12,7 +12,7 @@
     "deploy:functions": "node scripts/deploy-functions.mjs",
     "serve": "nx serve",
     "test": "nx test",
-    "testlibs": "NODE_OPTIONS='--max-old-space-size=8192' pnpm nx run-many --target=test --all",
+    "testlibs": "NODE_OPTIONS='--max-old-space-size=8192' pnpm nx run-many --target=test --all --exclude=bk2monorepo,scs-app",
     "lint": "NODE_OPTIONS='--max-old-space-size=8192' nx lint",
     "e2e": "nx e2e",
     "dev": "nx serve test-app",
