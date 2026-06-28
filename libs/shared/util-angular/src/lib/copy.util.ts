@@ -67,14 +67,28 @@ export async function copyToClipboard(content: string | string[] | number | bool
   }
 
   // Fallback for old browsers and the Safari NotAllowedError case above.
+  // iOS Safari/WebKit ignores textArea.select() on an off-screen field, so execCommand('copy')
+  // would copy nothing and return false. Select via a Range + setSelectionRange instead — the
+  // technique WebKit honours (mirrors copyHtmlViaExecCommand in profile/signature.service.ts).
   if (typeof document !== 'undefined') {
     const textArea = document.createElement('textarea');
     textArea.value = _content;
+    textArea.readOnly = false;
+    textArea.contentEditable = 'true';
     textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
+    textArea.style.left = '-9999px';
+    textArea.style.top = '0';
     document.body.appendChild(textArea);
-    textArea.select();
+
+    const range = document.createRange();
+    range.selectNodeContents(textArea);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    textArea.setSelectionRange(0, _content.length);
+
     const success = document.execCommand('copy');
+    selection?.removeAllRanges();
     document.body.removeChild(textArea);
     if (!success) {
       throw new Error('execCommand copy failed');

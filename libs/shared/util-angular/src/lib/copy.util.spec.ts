@@ -240,6 +240,19 @@ describe('copy.util', () => {
       expect(execCommand).toHaveBeenCalledWith('copy');
     });
 
+    // Regression: iOS Safari ignores textarea.select() on an off-screen field, so the
+    // fallback must select via a Range + setSelectionRange (the technique WebKit honours).
+    // Without it execCommand('copy') copies nothing and returns false → "execCommand copy failed".
+    it('selects via Range + setSelectionRange before execCommand (iOS-robust)', async () => {
+      writeText.mockRejectedValue(new DOMException('not allowed', 'NotAllowedError'));
+      const setSelectionRange = vi.spyOn(HTMLTextAreaElement.prototype, 'setSelectionRange');
+
+      await copyToClipboard('member@example.org');
+
+      expect(setSelectionRange).toHaveBeenCalled();
+      expect(execCommand).toHaveBeenCalledWith('copy');
+    });
+
     it('throws when both writeText and execCommand fail', async () => {
       writeText.mockRejectedValue(new DOMException('not allowed', 'NotAllowedError'));
       execCommand.mockReturnValue(false);
