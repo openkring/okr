@@ -5,7 +5,8 @@ import { createComment, getCommentIndex } from './comment.util';
 
 vi.mock('@bk2/shared-util-core', () => ({
   getTodayStr: vi.fn(() => '20240117'),
-  DateFormat: { StoreDate: 'YYYYMMDD' }
+  generateRandomString: vi.fn(() => 'random12345678901234'),
+  DateFormat: { StoreDate: 'YYYYMMDD', StoreDateTime: 'YYYYMMDDHHmmss' }
 }));
 
 describe('comment.util', () => {
@@ -20,7 +21,7 @@ describe('comment.util', () => {
       const comment = createComment(authorKey, authorName, commentStr, parentKey, tenant);
 
       expect(comment).toBeInstanceOf(CommentModel);
-      expect(comment.bkey).toBe('');
+      expect(comment.bkey).toBe('random12345678901234');
       expect(comment.authorKey).toBe(authorKey);
       expect(comment.authorName).toBe(authorName);
       expect(comment.creationDateTime).toBe('20240117');
@@ -36,29 +37,29 @@ describe('comment.util', () => {
       expect(comment.tenants).toEqual(['tnt']);
     });
 
-    it('should call getTodayStr with DateFormat.StoreDate', () => {
+    it('should call getTodayStr with DateFormat.StoreDateTime', () => {
       createComment('a', 'b', 'c', 'd', 'e');
-      expect(getTodayStr).toHaveBeenCalledWith(DateFormat.StoreDate);
+      expect(getTodayStr).toHaveBeenCalledWith(DateFormat.StoreDateTime);
     });
   });
 
   describe('getCommentIndex', () => {
     it('should return correct index string', () => {
       const comment = new CommentModel();
-      comment.authorName = 'Bob';
+      comment.authorKey = 'user123';
       comment.creationDateTime = '20240117';
       comment.parentKey = 'articles.art789';
       const index = getCommentIndex(comment);
-      expect(index).toBe('an:Bob, cd:20240117, pk:articles.art789');
+      expect(index).toBe('ak:user123, d:20240117, pk:articles.art789');
     });
 
     it('should handle empty fields', () => {
       const comment = new CommentModel();
-      comment.authorName = '';
+      comment.authorKey = '';
       comment.creationDateTime = '';
       comment.parentKey = '';
       const index = getCommentIndex(comment);
-      expect(index).toBe('an:, cd:, pk:');
+      expect(index).toBe('ak:, d:, pk:');
     });
   });
 });

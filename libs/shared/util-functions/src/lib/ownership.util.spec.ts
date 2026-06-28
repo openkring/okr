@@ -25,7 +25,7 @@ describe('Ownership Utils', () => {
 
       await getAllOwnershipsOfOwner(mockFirestore, ownerId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, OwnershipCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, OwnershipCollection, expectedQuery, 'resourceName', 'asc');
     });
 
     it('should return the ownerships found by searchData', async () => {
@@ -47,7 +47,7 @@ describe('Ownership Utils', () => {
 
       await getAllOwnershipsOfResource(mockFirestore, resourceId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, OwnershipCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, OwnershipCollection, expectedQuery, 'ownerName2', 'asc');
     });
 
     it('should return the ownerships found by searchData', async () => {

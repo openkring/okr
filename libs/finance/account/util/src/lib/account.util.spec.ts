@@ -23,7 +23,7 @@ describe('Account Utils', () => {
     account.name = 'Assets';
     account.id = '1000';
     account.type = 'root';
-    account.parentId = '';
+    account.parentKey = '';
   });
 
   describe('isAccount', () => {
@@ -59,19 +59,19 @@ describe('Account Utils', () => {
       root.bkey = 'root-1';
       root.name = 'Root';
       root.type = 'root';
-      root.parentId = '';
+      root.parentKey = '';
 
       const group = new AccountModel(tenantId);
       group.bkey = 'group-1';
       group.name = 'Group';
       group.type = 'group';
-      group.parentId = 'root-1';
+      group.parentKey = 'root-1';
 
       const leaf = new AccountModel(tenantId);
       leaf.bkey = 'leaf-1';
       leaf.name = 'Leaf';
       leaf.type = 'leaf';
-      leaf.parentId = 'group-1';
+      leaf.parentKey = 'group-1';
 
       accounts = [root, group, leaf];
     });

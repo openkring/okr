@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MembershipModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
+import { getMembershipIndex, getMembershipIndexInfo } from './membership.util';
 
 // Mock shared utility functions
 vi.mock('@bk2/shared-util-core', async importOriginal => {
@@ -36,5 +37,22 @@ describe('Membership Utils', () => {
     membership.category = 'active';
     membership.price = 100;
     membership.periodicity = 'yearly';
+  });
+
+  describe('getMembershipIndex', () => {
+    it('builds the index from member and org fields', () => {
+      expect(getMembershipIndex(membership)).toBe('mn:John Doe mk:person-1 ok:org-1 on:Test Club');
+    });
+
+    it('appends the nickname when present', () => {
+      membership.memberNickName = 'Johnny';
+      expect(getMembershipIndex(membership)).toBe('mn:John Doe mk:person-1 ok:org-1 on:Test Club nn:Johnny');
+    });
+  });
+
+  describe('getMembershipIndexInfo', () => {
+    it('describes the index structure', () => {
+      expect(getMembershipIndexInfo()).toBe('mn:memberName mk:memberKey ok:orgKey on:orgName [nn:nickName]');
+    });
   });
 });

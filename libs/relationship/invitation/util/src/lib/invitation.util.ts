@@ -2,7 +2,12 @@ import { AvatarInfo, InvitationModel } from '@bk2/shared-models';
 import { addIndexElement, isType } from '@bk2/shared-util-core';
 
 export function isInvitation(invitation: unknown, tenantId: string): invitation is InvitationModel {
-  return isType(invitation, new InvitationModel(tenantId));
+  if (isType<InvitationModel>(invitation, new InvitationModel(tenantId))) {
+    if (invitation.tenants) {
+      return invitation.tenants.includes(tenantId);
+    }
+  }
+  return false;
 }
 
 export function createPersonAvatar(key: string, name1: string, name2: string): AvatarInfo {
@@ -13,7 +18,7 @@ export function createPersonAvatar(key: string, name1: string, name2: string): A
     modelType: 'person',
     type: '',
     subType: '',
-    label: `${name1} ${name2}`.trim(),
+    label: `${name1.trim()} ${name2.trim()}`.trim(),
   } as AvatarInfo;
 }
 

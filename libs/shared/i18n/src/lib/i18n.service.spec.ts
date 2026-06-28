@@ -84,13 +84,16 @@ describe('I18nService', () => {
   it('should translate scoped key by loading the scope file first', () => {
     const results: string[] = [];
     service.translate('@chat/feature.fields.reconnecting').subscribe(v => results.push(v));
-    expect(results).toEqual(['translated:chat/feature.fields.reconnecting']);
+    // The scope prefix is stripped from the key and passed as the 3rd selectTranslate arg (scope);
+    // the no-argument call passes {} as params, which the mock serialises after the key.
+    expect(results).toEqual(['translated:fields.reconnecting:{}']);
   });
 
   it('should translate scoped key with argument', () => {
     const results: string[] = [];
     service.translate('@chat/feature.fields.count', { n: 3 }).subscribe(v => results.push(v));
-    expect(results).toEqual(['translated:chat/feature.fields.count:{"n":3}']);
+    // The scope prefix (chat/feature) is stripped from the key and passed as scope.
+    expect(results).toEqual(['translated:fields.count:{"n":3}']);
   });
 
   it('should not call load for legacy root keys', () => {

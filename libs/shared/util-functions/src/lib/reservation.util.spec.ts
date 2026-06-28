@@ -25,7 +25,7 @@ describe('Reservation Utils', () => {
 
       await getAllReservationsOfReserver(mockFirestore, reserverId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery, 'resourceName', 'asc');
     });
 
     it('should return the reservations found by searchData', async () => {
@@ -47,7 +47,7 @@ describe('Reservation Utils', () => {
 
       await getAllReservationsOfResource(mockFirestore, resourceId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery, 'reserverName2', 'asc');
     });
 
     it('should return the reservations found by searchData', async () => {

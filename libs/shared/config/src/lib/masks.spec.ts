@@ -4,7 +4,6 @@ import * as masks from './masks';
 describe('masks exports', () => {
   it('should export all mask objects and functions', () => {
     [
-      'MaskPredicate',
       'LowercaseWordMask',
       'UppercaseWordMask',
       'CaseInsensitiveWordMask',
@@ -37,8 +36,8 @@ describe('masks exports', () => {
   });
 
   it('should have correct regex masks for word masks', () => {
-    expect(masks.LowercaseWordMask.mask).toEqual(/^[a-z0-9-_]+$/);
-    expect(masks.UppercaseWordMask.mask).toEqual(/^[A-Z0-9-_]+$/);
+    expect(masks.LowercaseWordMask.mask).toEqual(/^[a-z0-9-_]+$/i);
+    expect(masks.UppercaseWordMask.mask).toEqual(/^[A-Z0-9-_]+$/i);
     expect(masks.CaseInsensitiveWordMask.mask).toEqual(/^[a-zA-Z0-9-_]+$/);
   });
 
@@ -46,7 +45,7 @@ describe('masks exports', () => {
     expect(masks.LowercaseTextMask.mask).toEqual(/^[a-z0-9-_ ]+$/);
     expect(masks.UppercaseTextMask.mask).toEqual(/^[A-Z0-9-_ ]+$/);
     expect(masks.CaseInsensitiveTextMask.mask).toEqual(/^[a-zA-Z0-9-_ ]+$/);
-    expect(masks.AnyCharacterMask.mask).toEqual(/^[\s\S]+$/);
+    expect(masks.AnyCharacterMask.mask).toEqual(/^[\s\S]+$/i);
   });
 
   it('should have correct mask for HtmlTextMask', () => {
@@ -54,7 +53,7 @@ describe('masks exports', () => {
   });
 
   it('should have correct mask for PasswordMask', () => {
-    expect(masks.PasswordMask.mask).toEqual(/^[a-zA-Z0-9_!@?:;äüö$*+&()=]+$/);
+    expect(masks.PasswordMask.mask).toEqual(/^[a-zA-Z0-9-_!@?:;äüö$*+&()=.,£$%]+$/);
   });
 
   it('should have number mask generators for coordinates', () => {

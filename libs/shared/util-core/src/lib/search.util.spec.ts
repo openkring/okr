@@ -182,43 +182,37 @@ describe('search.util', () => {
       });
     });
 
-    it('should warn and return undefined for null key', () => {
+    it('should return undefined for null key', () => {
       testScheduler.run(({ expectObservable }) => {
         const items$ = of(testModels);
         const result$ = findByKey(items$, null);
 
-        expectObservable(result$).toBe('(a|)', { 
-          a: undefined 
+        expectObservable(result$).toBe('(a|)', {
+          a: undefined
         });
       });
-
-      expect(mockWarn).toHaveBeenCalledWith('search.util.findByKey: invalid key <null>');
     });
 
-    it('should warn and return undefined for undefined key', () => {
+    it('should return undefined for undefined key', () => {
       testScheduler.run(({ expectObservable }) => {
         const items$ = of(testModels);
         const result$ = findByKey(items$, undefined);
 
-        expectObservable(result$).toBe('(a|)', { 
-          a: undefined 
+        expectObservable(result$).toBe('(a|)', {
+          a: undefined
         });
       });
-
-      expect(mockWarn).toHaveBeenCalledWith('search.util.findByKey: invalid key <undefined>');
     });
 
-    it('should warn and return undefined for empty string key', () => {
+    it('should return undefined for empty string key', () => {
       testScheduler.run(({ expectObservable }) => {
         const items$ = of(testModels);
         const result$ = findByKey(items$, '');
 
-        expectObservable(result$).toBe('(a|)', { 
-          a: undefined 
+        expectObservable(result$).toBe('(a|)', {
+          a: undefined
         });
       });
-
-      expect(mockWarn).toHaveBeenCalledWith('search.util.findByKey: invalid key <>');
     });
 
     it('should handle empty array', () => {

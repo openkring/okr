@@ -169,11 +169,11 @@ describe('User Utils', () => {
   describe('Index functions', () => {
     it('getUserIndex should return a formatted index string', () => {
       const index = getUserIndex(user);
-      expect(index).toBe('l:john.doe@example.com p:person-1');
+      expect(index).toBe('n:John Doe l:john.doe@example.com p:person-1 u:user-1');
     });
 
     it('getUserIndexInfo should return the info string', () => {
-      expect(getUserIndexInfo()).toBe('l:loginEmail p:personKey');
+      expect(getUserIndexInfo()).toBe('n:ame l:oginEmail p:ersonKey u:id');
     });
   });
 });

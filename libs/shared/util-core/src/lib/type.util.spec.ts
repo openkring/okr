@@ -135,14 +135,14 @@ describe('type.util', () => {
     });
 
     describe('getModelAndKey', () => {
-      it('should convert first part to ModelType and return key', () => {
+      it('should return the model type (string) and key', () => {
         const result = getModelAndKey('123.userKey');
-        expect(result).toEqual([123, 'userKey']);
+        expect(result).toEqual(['123', 'userKey']);
       });
 
-      it('should handle numeric strings as ModelType', () => {
+      it('should return string model types as-is', () => {
         const result = getModelAndKey('0.testKey');
-        expect(result).toEqual([0, 'testKey']);
+        expect(result).toEqual(['0', 'testKey']);
       });
     });
 

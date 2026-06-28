@@ -25,7 +25,7 @@ describe('Membership Utils', () => {
 
       await getAllMembershipsOfMember(mockFirestore, memberId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, MembershipCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, MembershipCollection, expectedQuery, 'orgName', 'asc');
     });
 
     it('should return the memberships found by searchData', async () => {
@@ -47,7 +47,7 @@ describe('Membership Utils', () => {
 
       await getAllMembershipsOfOrg(mockFirestore, orgId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, MembershipCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, MembershipCollection, expectedQuery, 'memberName2', 'asc');
     });
 
     it('should return the memberships found by searchData', async () => {

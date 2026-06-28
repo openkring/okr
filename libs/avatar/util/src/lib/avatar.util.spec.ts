@@ -1,4 +1,3 @@
-import { ModelType } from '@bk2/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mocks for external dependencies
@@ -17,14 +16,14 @@ describe('newAvatarModel', () => {
   it('should create a new AvatarModel with correct properties', async () => {
     const { newAvatarModel } = await import('./avatar.util');
     const tenantIds = ['tenant1', 'tenant2'];
-    const modelType = ModelType.Person;
+    const modelType = 'person';
     const key = 'abc123';
     const fileName = 'avatar.png';
     const result = newAvatarModel(tenantIds, modelType, key, fileName);
 
-    expect(result.bkey).toBe(ModelType.Person + '.abc123');
+    expect(result.bkey).toBe('person.abc123');
     expect(result.tenants).toEqual(['tenant1', 'tenant2']);
-    expect(result.storagePath).toContain('tenant/tenant1/slug-' + ModelType.Person + '/abc123/');
+    expect(result.storagePath).toContain('tenant/tenant1/person/abc123/');
     expect(result.isArchived).toBe(false);
   });
 });

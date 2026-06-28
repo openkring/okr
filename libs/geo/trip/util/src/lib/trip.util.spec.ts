@@ -28,7 +28,8 @@ describe('newTrip', () => {
     expect(trip.state).toBe('draft');
     expect(trip.tenants).toContain(TENANT);
     expect(trip.startDate).toMatch(/^\d{8}$/);
-    expect(trip.startTime).toMatch(/^\d{4}$/);
+    // newTrip stores the current time via getCurrentTime() in HH:mm format (DateFormat.Time)
+    expect(trip.startTime).toMatch(/^\d{2}:\d{2}$/);
   });
 });
 

@@ -35,7 +35,7 @@ describe('newCategoryAll', () => {
     expect(result.id).toEqual(AllCategories);
     expect(result.abbreviation).toEqual('ALL');
     expect(result.name).toEqual('all');
-    expect(result.i18nBase).toEqual('general.category.all');
+    expect(result.i18nBase).toEqual('category.all');
     expect(result.icon).toEqual('radio-button-on');
   });
 });

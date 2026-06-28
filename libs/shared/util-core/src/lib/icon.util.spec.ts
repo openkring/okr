@@ -51,8 +51,9 @@ describe('icon.util', () => {
       });
 
       it('should format key for Resource with non-RowingBoat resourceType even with subType', () => {
-        const result = getAvatarKey('resource', 'locker123', 'locker', 'male'); // Assuming 4 is a locker type
-        expect(result).toBe('resource.locker_male:locker123');
+        const result = getAvatarKey('resource', 'locker123', 'locker', 'male');
+        // only 'rboat' resources carry the subType suffix; all others drop it
+        expect(result).toBe('resource.locker:locker123');
       });
 
       it('should format key for Resource with resourceType but undefined subType', () => {
@@ -146,7 +147,8 @@ describe('icon.util', () => {
     describe('Edge cases with numeric parameters', () => {
       it('should handle zero values for resourceType and subType', () => {
         const result = getAvatarKey('resource', 'zero123', '0', '0');
-        expect(result).toBe('resource.0_0:zero123');
+        // '0' is not the 'rboat' resourceType, so the subType is dropped
+        expect(result).toBe('resource.0:zero123');
       });
 
       it('should handle negative resourceType (if possible)', () => {
@@ -160,8 +162,8 @@ describe('icon.util', () => {
       });
 
       it('should handle large numeric values (it is a RowingBoat)', () => {
-        const result = getAvatarKey('resource', 'large123', '0', '8888');
-        expect(result).toBe('resource.0_8888:large123');
+        const result = getAvatarKey('resource', 'large123', 'rboat', '8888');
+        expect(result).toBe('resource.rboat_8888:large123');
       });
 
       it('should handle RowingBoat with zero subType', () => {
@@ -205,16 +207,16 @@ describe('icon.util', () => {
 
         modelTypes.forEach(modelType => {
           const result = getAvatarKey(modelType, key);
-          expect(result).toMatch(/^\d+\.test-key$/);
+          expect(result).toMatch(/^[a-z]+\.test-key$/);
           expect(result).toContain(key);
         });
       });
 
       it('should maintain consistent format across different parameter combinations', () => {
-        // Test format consistency
-        expect(getAvatarKey('resource', 'key1', '5')).toMatch(/^\d+\.\d+:key1$/);
-        expect(getAvatarKey('resource', 'key2', 'rboat', '3')).toMatch(/^\d+\.\d+_\d+:key2$/);
-        expect(getAvatarKey('person', 'key3')).toMatch(/^\d+\.key3$/);
+        // Test format consistency (modelType/resourceType are now readable strings)
+        expect(getAvatarKey('resource', 'key1', '5')).toMatch(/^[a-z]+\.\w+:key1$/);
+        expect(getAvatarKey('resource', 'key2', 'rboat', '3')).toMatch(/^[a-z]+\.\w+_\w+:key2$/);
+        expect(getAvatarKey('person', 'key3')).toMatch(/^[a-z]+\.key3$/);
       });
 
       it('should handle ResourceType enum values', () => {
@@ -228,9 +230,9 @@ describe('icon.util', () => {
       it('should work in avatar generation workflow', () => {
         // Simulate typical usage in avatar/icon generation
         const scenarios = [
-          { modelType: 'person', key: 'person-123', expected: /^\d+\.person-123$/ },
-          { modelType: 'resource', key: 'resource-456', resourceType: '5', expected: /^\d+\.\d+:resource-456$/ },
-          { modelType: 'resource', key: 'boat-789', resourceType: 'rboat', subType: '2', expected: /^\d+\.\d+_\d+:boat-789$/ }
+          { modelType: 'person', key: 'person-123', expected: /^[a-z]+\.person-123$/ },
+          { modelType: 'resource', key: 'resource-456', resourceType: '5', expected: /^[a-z]+\.\w+:resource-456$/ },
+          { modelType: 'resource', key: 'boat-789', resourceType: 'rboat', subType: '2', expected: /^[a-z]+\.\w+_\w+:boat-789$/ }
         ];
 
         scenarios.forEach(scenario => {

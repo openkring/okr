@@ -8,6 +8,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    // Many libs (per-module i18n maps, validation-only, barrel-only) have no unit-testable
+    // code; the convention is to test util functions/services where they exist. Don't fail
+    // the suite for a lib that legitimately has no spec files.
+    passWithNoTests: true,
     reporters: ['default'],
   },
 });

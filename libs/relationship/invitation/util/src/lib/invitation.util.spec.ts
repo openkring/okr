@@ -33,9 +33,14 @@ describe('invitation.util', () => {
       expect(isInvitation(mockInvitation, tenantId)).toBe(true);
     });
 
-    it('should return false for missing properties', () => {
-      const invalid = { ...mockInvitation, inviteeFirstName: undefined };
+    it('should return false for an object that does not belong to the tenant', () => {
+      const invalid = { ...mockInvitation, tenants: ['other-tenant'] };
       expect(isInvitation(invalid, tenantId)).toBe(false);
+    });
+
+    it('should return false for a non-model value', () => {
+      expect(isInvitation(undefined, tenantId)).toBe(false);
+      expect(isInvitation('not-an-object', tenantId)).toBe(false);
     });
 
     it('should return false for wrong tenantId', () => {
@@ -69,10 +74,11 @@ describe('invitation.util', () => {
       const index = getInvitationIndex(mockInvitation);
 
       // Expected format: d:<date> ir:<inviter name> ie:<invitee name>
-      expect(index).toContain('d:20251201'); 
+      expect(index).toContain('d:20251201');
       expect(index).toContain('ir:John Smith');
       expect(index).toContain('ie:Jane Doe');
-      expect(index.split(' ')).toHaveLength(3);
+      // index has 3 prefixed segments (d / ir / ie); names contain spaces, so don't split on whitespace
+      expect(index).toBe('d:20251201 ir:John Smith ie:Jane Doe');
     });
   });
 

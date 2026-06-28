@@ -5,6 +5,7 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
+import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
 import { mockCollection, mockError } from '@bk2/shared-feature/testing';
 import { I18nService } from '@bk2/shared-i18n';
@@ -43,6 +44,7 @@ function makeStore(pageService = pageServiceMock()): PageStore {
     providers: [
       PageStore,
       { provide: AppStore, useValue: appStoreMock() },
+      { provide: ENV, useValue: { tenantId: 'p13', useEmulators: false } },
       { provide: PageService, useValue: pageService },
       { provide: SectionService, useValue: { read: vi.fn(() => of(undefined)), searchByKeys: vi.fn(() => of([])) } },
       { provide: ModalController, useValue: {} },

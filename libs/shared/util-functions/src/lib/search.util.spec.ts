@@ -53,14 +53,15 @@ describe('searchData', () => {
     expect(mockWhere).toHaveBeenCalledWith('status', '!=', 'archived');
   });
 
-  it('should use the default orderBy parameter', async () => {
+  it('should not order when no orderBy parameter is provided', async () => {
+    // orderByParam no longer has a default ('name' was removed); callers must pass it
+    // explicitly. Without it, the orderBy call is skipped (guarded by `if (orderByParam)`).
     const dbQuery: DbQuery[] = [];
     mockGet.mockResolvedValue({ empty: true, docs: [] });
 
     await searchData(mockFirestore, 'test-collection', dbQuery);
 
-    expect(mockOrderBy).toHaveBeenCalledTimes(1);
-    expect(mockOrderBy).toHaveBeenCalledWith('name', 'asc');
+    expect(mockOrderBy).not.toHaveBeenCalled();
   });
 
   it('should use the provided orderBy and sortOrder parameters', async () => {

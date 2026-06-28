@@ -5,7 +5,12 @@ import { addIndexElement, isType } from '@bk2/shared-util-core';
 /*-------------------------- type guard --------------------------------*/
 
 export function isActivity(obj: unknown, tenantId: string): obj is ActivityModel {
-  return isType(obj, new ActivityModel(tenantId));
+  if (isType<ActivityModel>(obj, new ActivityModel(tenantId))) {
+    if (obj.tenants) {
+      return obj.tenants.includes(tenantId);
+    }
+  }
+  return false;
 }
 
 /*-------------------------- search index --------------------------------*/

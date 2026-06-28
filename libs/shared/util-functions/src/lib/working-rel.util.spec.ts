@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAllWorkingRelsOfSubject, getAllWorkingRelsOfObject } from './working-rel.util';
+import { getAllWorkrelsOfSubject, getAllWorkrelsOfObject } from './working-rel.util';
 import { searchData } from './search.util';
-import { WorkingRelCollection, WorkingRelModel } from '@bk2/shared-models';
+import { WorkrelCollection, WorkrelModel } from '@bk2/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 
 // Mock the searchData utility
@@ -18,44 +18,44 @@ describe('WorkingRel Utils', () => {
     mockSearchData.mockClear();
   });
 
-  describe('getAllWorkingRelsOfSubject', () => {
+  describe('getAllWorkrelsOfSubject', () => {
     it('should call searchData with the correct query for a subjectId', async () => {
       const subjectId = 'person-123';
       const expectedQuery = [{ key: 'subjectKey', operator: '==', value: subjectId }];
 
-      await getAllWorkingRelsOfSubject(mockFirestore, subjectId);
+      await getAllWorkrelsOfSubject(mockFirestore, subjectId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, WorkingRelCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, WorkrelCollection, expectedQuery, 'objectName', 'asc');
     });
 
     it('should return the working relations found by searchData', async () => {
       const subjectId = 'person-123';
-      const mockWorkingRels: WorkingRelModel[] = [{ subjectKey: subjectId, objectKey: 'org-1' } as WorkingRelModel, { subjectKey: subjectId, objectKey: 'org-2' } as WorkingRelModel];
+      const mockWorkingRels: WorkrelModel[] = [{ subjectKey: subjectId, objectKey: 'org-1' } as WorkrelModel, { subjectKey: subjectId, objectKey: 'org-2' } as WorkrelModel];
       mockSearchData.mockResolvedValue(mockWorkingRels);
 
-      const result = await getAllWorkingRelsOfSubject(mockFirestore, subjectId);
+      const result = await getAllWorkrelsOfSubject(mockFirestore, subjectId);
 
       expect(result).toEqual(mockWorkingRels);
       expect(result.length).toBe(2);
     });
   });
 
-  describe('getAllWorkingRelsOfObject', () => {
+  describe('getAllWorkrelsOfObject', () => {
     it('should call searchData with the correct query for an objectId', async () => {
       const objectId = 'org-456';
       const expectedQuery = [{ key: 'objectKey', operator: '==', value: objectId }];
 
-      await getAllWorkingRelsOfObject(mockFirestore, objectId);
+      await getAllWorkrelsOfObject(mockFirestore, objectId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, WorkingRelCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, WorkrelCollection, expectedQuery, 'subjectName2', 'asc');
     });
 
     it('should return the working relations found by searchData', async () => {
       const objectId = 'org-456';
-      const mockWorkingRels: WorkingRelModel[] = [{ subjectKey: 'person-1', objectKey: objectId } as WorkingRelModel, { subjectKey: 'person-2', objectKey: objectId } as WorkingRelModel];
+      const mockWorkingRels: WorkrelModel[] = [{ subjectKey: 'person-1', objectKey: objectId } as WorkrelModel, { subjectKey: 'person-2', objectKey: objectId } as WorkrelModel];
       mockSearchData.mockResolvedValue(mockWorkingRels);
 
-      const result = await getAllWorkingRelsOfObject(mockFirestore, objectId);
+      const result = await getAllWorkrelsOfObject(mockFirestore, objectId);
 
       expect(result).toEqual(mockWorkingRels);
       expect(result.length).toBe(2);

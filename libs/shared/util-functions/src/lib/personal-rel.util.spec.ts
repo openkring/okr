@@ -25,7 +25,7 @@ describe('PersonalRel Utils', () => {
 
       await getAllPersonalRelsOfSubject(mockFirestore, subjectId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, PersonalRelCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, PersonalRelCollection, expectedQuery, 'objectLastName', 'asc');
     });
 
     it('should return the personal relations found by searchData', async () => {
@@ -47,7 +47,7 @@ describe('PersonalRel Utils', () => {
 
       await getAllPersonalRelsOfObject(mockFirestore, objectId);
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, PersonalRelCollection, expectedQuery);
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, PersonalRelCollection, expectedQuery, 'subjectLastName', 'asc');
     });
 
     it('should return the personal relations found by searchData', async () => {

@@ -233,28 +233,28 @@ describe('convert.util', () => {
             appName: 'TestApp',
         };
 
-        it('replaces //now with datetime in dd.mm.yyyy hh:mm format', () => {
-            expect(replacePlaceholders('Event at //now', ctx, fixedDate))
+        it('replaces @NOW@ with datetime in dd.mm.yyyy hh:mm format', () => {
+            expect(replacePlaceholders('Event at @NOW@', ctx, fixedDate))
                 .toBe('Event at 30.05.2026 14:05');
         });
 
-        it('replaces //today with date in dd.mm.yyyy format', () => {
-            expect(replacePlaceholders('Date: //today', ctx, fixedDate))
+        it('replaces @TODAY@ with date in dd.mm.yyyy format', () => {
+            expect(replacePlaceholders('Date: @TODAY@', ctx, fixedDate))
                 .toBe('Date: 30.05.2026');
         });
 
-        it('replaces //tomorrow with next day in dd.mm.yyyy format', () => {
-            expect(replacePlaceholders('Due: //tomorrow', ctx, fixedDate))
+        it('replaces @TOMORROW@ with next day in dd.mm.yyyy format', () => {
+            expect(replacePlaceholders('Due: @TOMORROW@', ctx, fixedDate))
                 .toBe('Due: 31.05.2026');
         });
 
-        it('replaces //yesterday with previous day in dd.mm.yyyy format', () => {
-            expect(replacePlaceholders('Since: //yesterday', ctx, fixedDate))
+        it('replaces @YESTERDAY@ with previous day in dd.mm.yyyy format', () => {
+            expect(replacePlaceholders('Since: @YESTERDAY@', ctx, fixedDate))
                 .toBe('Since: 29.05.2026');
         });
 
-        it('replaces //year with current year in yyyy format', () => {
-            expect(replacePlaceholders('Year: //year', ctx, fixedDate))
+        it('replaces @YEAR@ with current year in yyyy format', () => {
+            expect(replacePlaceholders('Year: @YEAR@', ctx, fixedDate))
                 .toBe('Year: 2026');
         });
 
@@ -284,13 +284,13 @@ describe('convert.util', () => {
         });
 
         it('replaces multiple different placeholders in one string', () => {
-            expect(replacePlaceholders('@TID@-@DOMAIN@-//today', ctx, fixedDate))
+            expect(replacePlaceholders('@TID@-@DOMAIN@-@TODAY@', ctx, fixedDate))
                 .toBe('test-tenant-example.com-30.05.2026');
         });
 
         it('pads single-digit day and month with leading zero', () => {
             const jan1 = new Date(2026, 0, 1, 9, 5); // 2026-01-01 09:05
-            expect(replacePlaceholders('//today //now', ctx, jan1))
+            expect(replacePlaceholders('@TODAY@ @NOW@', ctx, jan1))
                 .toBe('01.01.2026 01.01.2026 09:05');
         });
 
@@ -308,11 +308,11 @@ describe('convert.util', () => {
 
         it('covers all supported placeholder tokens', () => {
             const tokens = getPlaceholderHelp().map(e => e.placeholder);
-            expect(tokens).toContain('//now');
-            expect(tokens).toContain('//today');
-            expect(tokens).toContain('//tomorrow');
-            expect(tokens).toContain('//yesterday');
-            expect(tokens).toContain('//year');
+            expect(tokens).toContain('@NOW@');
+            expect(tokens).toContain('@TODAY@');
+            expect(tokens).toContain('@TOMORROW@');
+            expect(tokens).toContain('@YESTERDAY@');
+            expect(tokens).toContain('@YEAR@');
             expect(tokens).toContain('@TID@');
             expect(tokens).toContain('@DOMAIN@');
             expect(tokens).toContain('@VERSION@');

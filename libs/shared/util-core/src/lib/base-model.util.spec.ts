@@ -134,7 +134,8 @@ describe('base-model.util', () => {
 
       const result = addIndexElement(index, key, value);
 
-      expect(result).toBe(' category:test');
+      // an empty index produces no leading space
+      expect(result).toBe('category:test');
     });
 
     it('should handle numeric values', () => {
@@ -281,13 +282,13 @@ describe('base-model.util', () => {
       let index = '';
       
       index = addIndexElement(index, 'name', 'test');
-      expect(index).toBe(' name:test');
-      
+      expect(index).toBe('name:test');
+
       index = addIndexElement(index, 'category', 'important');
-      expect(index).toBe(' name:test category:important');
-      
+      expect(index).toBe('name:test category:important');
+
       index = addIndexElement(index, 'count', 5);
-      expect(index).toBe(' name:test category:important count:5');
+      expect(index).toBe('name:test category:important count:5');
     });
   });
 });

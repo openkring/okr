@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { initializeAgeByGenderStatistics, updateAgeByGenderStats, initializeCategoryByGenderStatistics, GenderRow } from './statistics.util';
-import { GenderType } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 
 // Mock the getAge function from the core utilities
@@ -49,21 +48,21 @@ describe('Statistics Utils', () => {
 
     it('should not update stats if dateOfBirth is undefined', () => {
       const initialStats = JSON.parse(JSON.stringify(ageByGenderStats));
-      updateAgeByGenderStats(ageByGenderStats, GenderType.Male, undefined);
+      updateAgeByGenderStats(ageByGenderStats, 'male', undefined);
       expect(ageByGenderStats).toEqual(initialStats);
     });
 
     it('should not update stats if getAge returns -1', () => {
       mockGetAge.mockReturnValue(-1);
       const initialStats = JSON.parse(JSON.stringify(ageByGenderStats));
-      updateAgeByGenderStats(ageByGenderStats, GenderType.Male, '2000-01-01');
+      updateAgeByGenderStats(ageByGenderStats, 'male', '2000-01-01');
       expect(ageByGenderStats).toEqual(initialStats);
     });
 
     it('should correctly update stats for a male', () => {
       // Corresponds to '20-29' age bracket
       mockGetAge.mockReturnValue(2);
-      updateAgeByGenderStats(ageByGenderStats, GenderType.Male, '2000-01-01');
+      updateAgeByGenderStats(ageByGenderStats, 'male', '2000-01-01');
 
       // Check the specific age bracket
       expect(ageByGenderStats[2].m).toBe(1);
@@ -80,7 +79,7 @@ describe('Statistics Utils', () => {
     it('should correctly update stats for a female', () => {
       // Corresponds to '30-39' age bracket
       mockGetAge.mockReturnValue(3);
-      updateAgeByGenderStats(ageByGenderStats, GenderType.Female, '1990-01-01');
+      updateAgeByGenderStats(ageByGenderStats, 'female', '1990-01-01');
 
       // Check the specific age bracket
       expect(ageByGenderStats[3].f).toBe(1);
@@ -96,7 +95,7 @@ describe('Statistics Utils', () => {
     it('should correctly update stats for "other" gender', () => {
       // Corresponds to '40-49' age bracket
       mockGetAge.mockReturnValue(4);
-      updateAgeByGenderStats(ageByGenderStats, GenderType.Other, '1980-01-01');
+      updateAgeByGenderStats(ageByGenderStats, 'other', '1980-01-01');
 
       // Check the specific age bracket
       expect(ageByGenderStats[4].d).toBe(1);
@@ -112,7 +111,7 @@ describe('Statistics Utils', () => {
     it('should not update stats for an unknown gender type', () => {
       mockGetAge.mockReturnValue(5);
       const initialStats = JSON.parse(JSON.stringify(ageByGenderStats));
-      updateAgeByGenderStats(ageByGenderStats, 99, '1970-01-01');
+      updateAgeByGenderStats(ageByGenderStats, 'unknown', '1970-01-01');
       expect(ageByGenderStats).toEqual(initialStats);
     });
   });

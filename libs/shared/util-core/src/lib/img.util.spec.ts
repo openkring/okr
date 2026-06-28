@@ -1,5 +1,5 @@
 import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
-import { Image, ImageType } from '@bk2/shared-models';
+import { ImageType } from '@bk2/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fileUtil from './file.util';
 import {
@@ -13,7 +13,6 @@ import {
     getImgixPdfUrl,
     getImgixThumbnailUrl,
     getImgixUrl,
-    getImgixUrlFromImage,
     getImgixUrlWithAutoParams,
     getSizedImgixParamsByExtension,
     getThumbnailUrl,
@@ -51,7 +50,6 @@ describe('img.util', () => {
   const mockIsDocument = vi.mocked(fileUtil.isDocument);
   const mockFileExtension = vi.mocked(fileUtil.fileExtension);
   const mockFileLogo = vi.mocked(fileUtil.fileLogo);
-  const mockDie = vi.mocked(logUtil.die);
   const mockWarn = vi.mocked(logUtil.warn);
 
   beforeEach(() => {
@@ -214,7 +212,9 @@ describe('img.util', () => {
     it('should handle edge cases', () => {
       expect(checkUrlType('assets-similar')).toBe('key');
       expect(checkUrlType('https-similar')).toBe('key');
-      expect(checkUrlType('path/with/multiple/slashes')).toBe('storage');
+      // only paths starting with 'tenant' are classified as storage
+      expect(checkUrlType('path/with/multiple/slashes')).toBe('key');
+      expect(checkUrlType('tenant/with/multiple/slashes')).toBe('storage');
     });
   });
 
@@ -442,20 +442,6 @@ describe('img.util', () => {
       const result = addImgixParams('tenant/docs/document.docx', 100);
       
       expect(result).toBe('tenant/docs/document.docx?');
-    });
-  });
-
-    it('should call die when width or height is missing', () => {
-      const image: Image = {
-        url: 'tenant/images/photo.jpg',
-        width: undefined,
-        height: 600,
-        imageLabel: 'photo_without_width.jpg',
-      };
-      
-      getImgixUrlFromImage(image);
-      
-      expect(mockDie).toHaveBeenCalledWith('img.util.getImgixUrlFromImage -> image width and height must be set');
     });
   });
 
