@@ -50,6 +50,12 @@ describe('matchActions', () => {
 });
 
 describe('buildReceiptPayload', () => {
+  // Intl.NumberFormat('de-CH') renders the thousands separator with a codepoint that varies
+  // by ICU/CLDR version (U+0027 ' vs U+2019 ’ vs NBSP), and nx may run test tasks under
+  // different Node versions. Normalize the separator before asserting — the glyph is a
+  // presentation detail, not business logic — so the test is deterministic across runtimes.
+  const normSep = (s: string) => s.replace(/[\u2019\u00A0\u202F\u2009]/g, "'");
+
   it('builds a female person payload with "Liebe" greeting and formatted amount', () => {
     const p = new PersonModel('gss');
     p.firstName = 'Anna'; p.lastName = 'Muster'; p.gender = 'female';
@@ -61,8 +67,8 @@ describe('buildReceiptPayload', () => {
       firstName: 'Anna', lastName: 'Muster',
       streetName: 'Seestrasse', streetNumber: '12', zipCode: '8712', city: 'Stäfa',
       date: '07.05.2026',
-      amount: "1'000.00",
     });
+    expect(normSep(payload.amount)).toBe("1'000.00");
   });
 
   it('uses "Lieber" for a male person', () => {
@@ -80,7 +86,7 @@ describe('buildReceiptPayload', () => {
     expect(payload).toMatchObject({
       greeting: 'Sehr geehrte Damen und Herren',
       firstName: '', lastName: 'Stiftung Test',
-      amount: "2'500.00",
     });
+    expect(normSep(payload.amount)).toBe("2'500.00");
   });
 });
