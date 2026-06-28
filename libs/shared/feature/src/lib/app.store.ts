@@ -88,53 +88,63 @@ export const AppStore = signalStore(
         return store.firestoreService.readModel<UserModel>(UserCollection, uid);
       }
     }),
+  })),
+
+  withProps((store) => ({
+    // These collections are tenantRead-protected (rule: userExists() && belongsToTenant).
+    // Gate them on the LOADED UserModel (currentUserResource), not merely on fbUser:
+    // fbUser turns truthy the instant Firebase auth resolves, but the users/{uid} doc the
+    // rule reads server-side may not have resolved yet. Firing the query in that window
+    // (e.g. the auth-restore window on the public /welcome landing) is denied with
+    // "Missing or insufficient permissions". currentUser being set proves users/{uid}
+    // exists and resolved, so the rule's userExists()/belongsToTenant can pass.
     personsResource: rxResource({
-      params: () => ({ 
-        fbUser: store.fbUser(), 
-        tenantId: store.tenantId() 
+      params: () => ({
+        currentUser: store.currentUserResource.value(),
+        tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.fbUser || !params.tenantId) return of([]);
+        if (!params.currentUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(params.tenantId), 'lastName', 'asc');
       }
     }),
     orgsResource: rxResource({
-      params: () => ({ 
-        fbUser: store.fbUser(), 
-        tenantId: store.tenantId() 
+      params: () => ({
+        currentUser: store.currentUserResource.value(),
+        tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.fbUser || !params.tenantId) return of([]);
+        if (!params.currentUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     groupsResource: rxResource({
-      params: () => ({ 
-        fbUser: store.fbUser(), 
-        tenantId: store.tenantId() 
+      params: () => ({
+        currentUser: store.currentUserResource.value(),
+        tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.fbUser || !params.tenantId) return of([]);
+        if (!params.currentUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     resourcesResource: rxResource({
-      params: () => ({ 
-        fbUser: store.fbUser(), 
-        tenantId: store.tenantId() 
+      params: () => ({
+        currentUser: store.currentUserResource.value(),
+        tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.fbUser || !params.tenantId) return of([]);
+        if (!params.currentUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     tagsResource: rxResource({
-      params: () => ({ 
-        fbUser: store.fbUser(), 
-        tenantId: store.tenantId() 
+      params: () => ({
+        currentUser: store.currentUserResource.value(),
+        tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.fbUser || !params.tenantId) return of([]);
+        if (!params.currentUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<TagModel>(TagCollection, getSystemQuery(params.tenantId), 'tagModel', 'asc');
       }
     }),
