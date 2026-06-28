@@ -15,7 +15,7 @@
 //   FUNCTIONS_PNPM=10.33.2    # force a buildpack pin instead of root packageManager
 //   FUNCTIONS_CANARY=getEcho  # override the canary function (default: getEcho)
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -29,6 +29,12 @@ const abort = (msg) => { console.error(`\n✖ ${msg}`); process.exit(1); };
 function tryCapture(cmd, args) {
   try { return execFileSync(cmd, args, { cwd: repoRoot, encoding: 'utf8' }).trim(); }
   catch { return '?'; }
+}
+// Idempotently ensure an .npmrc contains `line`, preserving any existing content.
+function ensureNpmrcLine(path, line) {
+  const existing = existsSync(path) ? readFileSync(path, 'utf8') : '';
+  if (existing.split('\n').some((l) => l.trim() === line)) return;
+  writeFileSync(path, (existing && !existing.endsWith('\n') ? existing + '\n' : existing) + line + '\n');
 }
 
 // Buildpack pin: FUNCTIONS_PNPM override, else the pnpm version from root packageManager.
@@ -84,6 +90,12 @@ const distPkgPath = join(distDir, 'package.json');
 const distPkg = JSON.parse(readFileSync(distPkgPath, 'utf8'));
 distPkg.packageManager = `pnpm@${pin}`;
 writeFileSync(distPkgPath, JSON.stringify(distPkg, null, 2));
+
+// pnpm 10+/11 treats ignored dependency build scripts as a FATAL error
+// (ERR_PNPM_IGNORED_BUILDS, e.g. @firebase/util, protobufjs). Functions have always deployed
+// with those scripts skipped, so disable the strict check via an .npmrc that ships in the
+// deployed dir — it fixes both this local prune AND the Cloud Build buildpack's own install.
+ensureNpmrcLine(join(distDir, '.npmrc'), 'strict-dep-builds=false');
 run('pnpm', ['install', '--prod', '--ignore-workspace', '--no-frozen-lockfile'], { cwd: distDir });
 
 // Canary: only when the pin changed since it last deployed successfully.
