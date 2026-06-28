@@ -1,4 +1,4 @@
 {
   "pnpm": "10.33.2",
-  "_comment": "Last pnpm version that successfully deployed Cloud Functions through the Cloud Build buildpack. scripts/deploy-functions.mjs canary-deploys one function when the buildpack pin (root package.json packageManager, or FUNCTIONS_PNPM) differs from this value, then updates it. Commit changes to this file."
+  "_comment": "Last pnpm version that successfully deployed Cloud Functions through the Cloud Build buildpack. This IS the buildpack pin scripts/deploy-functions.mjs uses by default (decoupled from local dev pnpm / root packageManager). To try a newer version set FUNCTIONS_PNPM=<v>; the script canary-deploys one function first and, on success, updates this file. Commit changes here. NB: pnpm 11+ makes ERR_PNPM_IGNORED_BUILDS fatal and the buildpack can't ignore it, so 10.33.2 remains the known-good."
 }

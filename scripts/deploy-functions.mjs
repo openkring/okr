@@ -1,21 +1,27 @@
 #!/usr/bin/env node
 // Deploy Cloud Functions through the Cloud Build buildpack, with a pnpm-pin safety canary.
 //
-// The buildpack installs prod deps with the pnpm version pinned in the deployed
-// package.json. A pin the buildpack can't activate (corepack signature mismatch) or that
-// can't read the lockfile fails the build for ALL functions. So when the pin changes vs the
-// last-verified value, we deploy ONE trivial function first (a canary) — its Cloud Build
-// exercises the exact buildpack+pnpm path with minimal blast radius. Only on success do we
-// record the new verified pin and deploy the rest.
+// The buildpack installs prod deps with the pnpm version pinned in the deployed package.json.
+// That pin is DECOUPLED from your local dev pnpm (root packageManager): it defaults to the last
+// version that deployed successfully (scripts/functions-pnpm-verified.json), overridable with
+// FUNCTIONS_PNPM. To move functions to a new pnpm version, set FUNCTIONS_PNPM=<v>; the script
+// deploys ONE trivial function (canary) first to prove the buildpack accepts it, then records it
+// as verified and deploys the rest.
+//
+// Why decoupled: pnpm 11 made "ignored build scripts" a FATAL error (ERR_PNPM_IGNORED_BUILDS —
+// e.g. @firebase/util, protobufjs), which the buildpack can't be told to ignore (a project
+// .npmrc doesn't take for this setting; only a CLI flag / env var do, neither of which the
+// buildpack exposes). pnpm 10.33.2 only warns and exits 0. So functions stay on a known-good
+// pin regardless of what local dev uses.
 //
 // Usage:
-//   node scripts/deploy-functions.mjs                 # deploy ALL functions
-//   node scripts/deploy-functions.mjs fnA fnB         # deploy only these (still canary-gated)
+//   node scripts/deploy-functions.mjs            # deploy ALL functions
+//   node scripts/deploy-functions.mjs fnA fnB    # deploy only these
 // Env:
-//   FUNCTIONS_PNPM=10.33.2    # force a buildpack pin instead of root packageManager
+//   FUNCTIONS_PNPM=11.9.0     # try a different buildpack pin (canary-gated)
 //   FUNCTIONS_CANARY=getEcho  # override the canary function (default: getEcho)
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -26,63 +32,24 @@ const verifiedPath = join(repoRoot, 'scripts/functions-pnpm-verified.json');
 const run = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, { stdio: 'inherit', cwd: repoRoot, ...opts });
 const abort = (msg) => { console.error(`\n✖ ${msg}`); process.exit(1); };
-function tryCapture(cmd, args) {
-  try { return execFileSync(cmd, args, { cwd: repoRoot, encoding: 'utf8' }).trim(); }
-  catch { return '?'; }
-}
-// Idempotently ensure an .npmrc contains `line`, preserving any existing content.
-function ensureNpmrcLine(path, line) {
-  const existing = existsSync(path) ? readFileSync(path, 'utf8') : '';
-  if (existing.split('\n').some((l) => l.trim() === line)) return;
-  writeFileSync(path, (existing && !existing.endsWith('\n') ? existing + '\n' : existing) + line + '\n');
-}
 
-// Buildpack pin: FUNCTIONS_PNPM override, else the pnpm version from root packageManager.
-// `source` matters for recovery: 'packageManager' also drives local pnpm via corepack.
-function resolvePin() {
-  if (process.env.FUNCTIONS_PNPM) return { pin: process.env.FUNCTIONS_PNPM, source: 'env' };
-  const pm = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')).packageManager || '';
-  if (!pm.startsWith('pnpm@')) abort(`root packageManager is "${pm}" — expected "pnpm@<version>". Set FUNCTIONS_PNPM to override.`);
-  return { pin: pm.slice('pnpm@'.length), source: 'packageManager' };
-}
-
-const { pin, source: pinSource } = resolvePin();
 const verified = JSON.parse(readFileSync(verifiedPath, 'utf8')).pnpm;
+// Buildpack pin: FUNCTIONS_PNPM override, else the last-verified known-good (NOT packageManager).
+const pin = process.env.FUNCTIONS_PNPM || verified;
 const canary = process.env.FUNCTIONS_CANARY || 'getEcho';
-
-// Recovery guidance printed when the canary build fails.
-function recoveryHelp() {
-  const localPnpm = tryCapture('pnpm', ['--version']);
-  const lines = [
-    `Canary deploy of '${canary}' FAILED with pnpm@${pin}.`,
-    `  The Cloud Build buildpack could not build with this pnpm version (see the log above).`,
-    `  This is usually a buildpack-environment issue (its corepack rejecting the newer pnpm's`,
-    `  signature, or lockfile format) — it does NOT necessarily mean pnpm@${pin} is broken for`,
-    `  LOCAL dev (your local pnpm is ${localPnpm}). No other functions were deployed.`,
-    ``,
-    `  To get functions deploying again, pick one:`,
-    ``,
-    `  Option 1 — keep your setup, pin ONLY the buildpack back to the known-good version:`,
-    `      FUNCTIONS_PNPM=${verified} pnpm run deploy:functions`,
-    `      (nothing else changes; local dev stays as-is)`,
-    ``,
-    `  Option 2 — roll the whole project back to pnpm@${verified}:`,
-  ];
-  if (pinSource === 'packageManager') {
-    lines.push(
-      `      • set "packageManager": "pnpm@${verified}" in package.json`,
-      `      • resync your local pnpm too (packageManager drives it via corepack):`,
-      `          corepack install      # if you use corepack — it then auto-uses pnpm@${verified}`,
-      `          # or, for a standalone pnpm:  corepack prepare pnpm@${verified} --activate`,
-      `      • then: pnpm run deploy:functions`);
-  } else {
-    lines.push(
-      `      • the failing pin came from FUNCTIONS_PNPM, so your package.json / local dev are`,
-      `        already untouched — just set FUNCTIONS_PNPM=${verified} (or unset it) and re-run.`);
-  }
-  return lines.join('\n');
-}
 const targets = process.argv.slice(2).flatMap((a) => a.split(',')).map((s) => s.trim()).filter(Boolean);
+
+// Guidance when a FUNCTIONS_PNPM upgrade attempt fails (local prune or canary build).
+function upgradeFailedHelp(stage) {
+  return [
+    `${stage} FAILED with pnpm@${pin} (set via FUNCTIONS_PNPM).`,
+    `  pnpm 11+ makes ignored build scripts fatal (ERR_PNPM_IGNORED_BUILDS) and the buildpack`,
+    `  can't be told to ignore them, so this version likely isn't usable for functions yet.`,
+    `  The last known-good pin is pnpm@${verified}.`,
+    `  Recover: unset FUNCTIONS_PNPM (or set FUNCTIONS_PNPM=${verified}) and re-run.`,
+    `  Your local dev pnpm is unaffected — the functions pin is independent of root packageManager.`,
+  ].join('\n');
+}
 
 // Build + write the pin into the deployed package.json + prune to a matching prod lockfile.
 run('pnpm', ['run', 'build:functions']);
@@ -90,21 +57,20 @@ const distPkgPath = join(distDir, 'package.json');
 const distPkg = JSON.parse(readFileSync(distPkgPath, 'utf8'));
 distPkg.packageManager = `pnpm@${pin}`;
 writeFileSync(distPkgPath, JSON.stringify(distPkg, null, 2));
+try {
+  run('pnpm', ['install', '--prod', '--ignore-workspace', '--no-frozen-lockfile'], { cwd: distDir });
+} catch (e) {
+  if (pin !== verified) abort(upgradeFailedHelp('Local prune'));
+  throw e;
+}
 
-// pnpm 10+/11 treats ignored dependency build scripts as a FATAL error
-// (ERR_PNPM_IGNORED_BUILDS, e.g. @firebase/util, protobufjs). Functions have always deployed
-// with those scripts skipped, so disable the strict check via an .npmrc that ships in the
-// deployed dir — it fixes both this local prune AND the Cloud Build buildpack's own install.
-ensureNpmrcLine(join(distDir, '.npmrc'), 'strict-dep-builds=false');
-run('pnpm', ['install', '--prod', '--ignore-workspace', '--no-frozen-lockfile'], { cwd: distDir });
-
-// Canary: only when the pin changed since it last deployed successfully.
+// Canary: only when trying a pin other than the last-verified one.
 if (pin !== verified) {
-  console.log(`\n⚠ Buildpack pnpm pin changed: ${verified} → ${pin}. Canary-deploying '${canary}' to verify the buildpack…`);
+  console.log(`\n⚠ Trying buildpack pnpm pin ${verified} → ${pin}. Canary-deploying '${canary}' to verify the buildpack…`);
   try {
     run('firebase', ['deploy', '--only', `functions:${canary}`]);
   } catch {
-    abort(recoveryHelp());
+    abort(upgradeFailedHelp('Canary build'));
   }
   writeFileSync(verifiedPath, JSON.stringify(
     { pnpm: pin, _comment: JSON.parse(readFileSync(verifiedPath, 'utf8'))._comment }, null, 2) + '\n');
@@ -113,6 +79,6 @@ if (pin !== verified) {
 
 // Deploy the requested functions (or all).
 const only = targets.length ? targets.map((n) => `functions:${n}`).join(',') : 'functions';
-console.log(`\nDeploying ${targets.length ? only : 'ALL functions'}…`);
+console.log(`\nDeploying ${targets.length ? only : 'ALL functions'} (buildpack pnpm@${pin})…`);
 run('firebase', ['deploy', '--only', only]);
 console.log('\n✔ Functions deployed.');
