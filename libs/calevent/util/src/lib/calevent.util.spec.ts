@@ -67,12 +67,11 @@ describe('CalEvent Utils', () => {
       baseCalEvent.startTime = '';
       baseCalEvent.startDate = '2025-01-01';
       const fcEvent = convertCalEventToFullCalendar(baseCalEvent);
-      // The model refactor (commit 3c049427) dropped endDate; a full-day event now
-      // maps end to startDate (single-day event).
+      // Single-day all-day event: `end` is omitted (FullCalendar's all-day end is exclusive,
+      // so end === start would render zero-length; no end defaults to a 1-day span).
       expect(fcEvent).toEqual({
         title: 'Test Event',
         start: '2025-01-01',
-        end: '2025-01-01',
         allDay: true,
       });
     });

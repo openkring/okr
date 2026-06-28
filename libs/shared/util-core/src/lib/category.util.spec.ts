@@ -104,8 +104,8 @@ describe('category.util', () => {
       const itemName = 'red';
       
       const result = getItemLabel(category, itemName);
-      
-      expect(result).toBe('general.categories.colors.red.label');
+
+      expect(result).toBe('@general.categories.colors.red.label');
     });
 
     it('should handle category names with special characters', () => {
@@ -114,7 +114,7 @@ describe('category.util', () => {
       
       const result = getItemLabel(category, itemName);
       
-      expect(result).toBe('admin.categories.user-types.super-admin.label');
+      expect(result).toBe('@admin.categories.user-types.super-admin.label');
     });
 
     it('should handle item names with special characters', () => {
@@ -123,7 +123,7 @@ describe('category.util', () => {
       
       const result = getItemLabel(category, itemName);
       
-      expect(result).toBe('app.states.status.in_progress.label');
+      expect(result).toBe('@app.states.status.in_progress.label');
     });
 
     it('should handle nested i18n base paths', () => {
@@ -132,7 +132,7 @@ describe('category.util', () => {
       
       const result = getItemLabel(category, itemName);
       
-      expect(result).toBe('ui.components.forms.priorities.high.label');
+      expect(result).toBe('@ui.components.forms.priorities.high.label');
     });
 
     it('should handle single character names', () => {
@@ -141,7 +141,7 @@ describe('category.util', () => {
       
       const result = getItemLabel(category, itemName);
       
-      expect(result).toBe('x.a.b.label');
+      expect(result).toBe('@x.a.b.label');
     });
 
     it('should handle numeric names as strings', () => {
@@ -150,7 +150,7 @@ describe('category.util', () => {
       
       const result = getItemLabel(category, itemName);
       
-      expect(result).toBe('numeric.123.456.label');
+      expect(result).toBe('@numeric.123.456.label');
     });
 
     it('should handle whitespace in names', () => {
@@ -159,7 +159,7 @@ describe('category.util', () => {
       
       const result = getItemLabel(category, itemName);
       
-      expect(result).toBe('base.path.my category.my item.label');
+      expect(result).toBe('@base.path.my category.my item.label');
     });
 
     it('should return itemName when i18nBase has value but translateItems is false', () => {
@@ -186,7 +186,7 @@ describe('category.util', () => {
       
       const result = getItemLabel(category, itemName);
       
-      expect(result).toBe('business.admin.categories.document-types.invoice-template-v2.label');
+      expect(result).toBe('@business.admin.categories.document-types.invoice-template-v2.label');
     });
 
     it('should handle edge case with just spaces in itemName', () => {
@@ -195,7 +195,7 @@ describe('category.util', () => {
       
       const result = getItemLabel(category, itemName);
       
-      expect(result).toBe('base.test.   .label');
+      expect(result).toBe('@base.test.   .label');
     });
 
     it('should handle case where all conditions fail', () => {

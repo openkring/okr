@@ -159,10 +159,20 @@ describe('User Utils', () => {
   });
 
   describe('isUser', () => {
-    it('should use the isType utility to check the object type', () => {
+    it('returns true when the type matches and the tenant is included', () => {
       mockIsType.mockReturnValue(true);
-      expect(isUser({}, tenantId)).toBe(true);
-      expect(mockIsType).toHaveBeenCalledWith({}, expect.any(UserModel));
+      const u = { tenants: [tenantId] };
+      expect(isUser(u, tenantId)).toBe(true);
+      expect(mockIsType).toHaveBeenCalledWith(u, expect.any(UserModel));
+    });
+    it('returns false when the tenant is not included', () => {
+      mockIsType.mockReturnValue(true);
+      expect(isUser({ tenants: ['other-tenant'] }, tenantId)).toBe(false);
+      expect(isUser({}, tenantId)).toBe(false);
+    });
+    it('returns false when the type does not match', () => {
+      mockIsType.mockReturnValue(false);
+      expect(isUser({ tenants: [tenantId] }, tenantId)).toBe(false);
     });
   });
 

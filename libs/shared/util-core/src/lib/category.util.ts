@@ -11,7 +11,10 @@ import { addIndexElement } from "./base-model.util";
 export function getItemLabel(category: CategoryListModel, itemName?: string): string {
   if (!itemName) return '';
   if (!category.i18n || category.i18n.length === 0 || !category.translateItems) return itemName;
-  return `${category.i18n}.${category.name}.${itemName}.label`;
+  // Prefix with '@': consumers resolve this via I18nService.translate (directly or through
+  // TranslatePipe), which only translates keys starting with '@' — a bare key is returned
+  // as-is (shown untranslated). See i18n.service.ts.
+  return `@${category.i18n}.${category.name}.${itemName}.label`;
 }
 
 /**

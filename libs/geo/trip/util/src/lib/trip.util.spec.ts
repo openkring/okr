@@ -138,6 +138,13 @@ describe('isTripEditable', () => {
     expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '1155' }), now)).toBe(true);
   });
 
+  it('handles HH:mm endTime (the format getCurrentTime emits)', () => {
+    // ended at 11:55, 5 min ago — same instant, but colon-separated
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '11:55' }), now)).toBe(true);
+    // ended at 11:40, 20 min ago — outside the 15 min window
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '11:40' }), now)).toBe(false);
+  });
+
   it('is editable exactly at the 15 min window boundary', () => {
     const endMs = now - TRIP_EDIT_WINDOW_MS;
     const end = new Date(endMs);

@@ -26,10 +26,11 @@ export function convertCalEventToFullCalendar(calevent: CalEventModel): EventInp
 }
 
 export function convertFullDayCalEventToFullCalendar(calevent: CalEventModel): EventInput {
+  // Single-day all-day event: omit `end`. FullCalendar's all-day `end` is EXCLUSIVE, so
+  // end === start would render a zero-length event; with no end it defaults to a 1-day span.
   return {
     title: calevent.name,
     start: calevent.startDate,
-    end: calevent.startDate,
     allDay: true,
   };
 }

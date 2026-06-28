@@ -21,7 +21,10 @@ export function newTrip(tenantId: string): TripModel {
  */
 export function isTripEditable(trip: TripModel, now: number = Date.now()): boolean {
   if (!trip.endDate || !trip.endTime) return true;
-  const endDate = parseDate(`${trip.endDate}${trip.endTime.padStart(4, '0')}00`, DateFormat.StoreDateTime, false);
+  // endTime may be 'HH:mm' (DateFormat.Time, what getCurrentTime emits) or legacy 'HHmm';
+  // strip non-digits so both yield the 'HHmm' StoreDateTime expects.
+  const endHHmm = trip.endTime.replace(/\D/g, '').padStart(4, '0');
+  const endDate = parseDate(`${trip.endDate}${endHHmm}00`, DateFormat.StoreDateTime, false);
   if (!endDate) return true;
   return now - endDate.getTime() <= TRIP_EDIT_WINDOW_MS;
 }

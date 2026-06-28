@@ -150,7 +150,12 @@ export function convertPrivacyFormToUser(vm: UserPrivacyFormModel, user?: UserMo
 }
 
 export function isUser(user: unknown, tenantId: string): user is UserModel {
-  return isType(user, new UserModel(tenantId));
+  if (isType<UserModel>(user, new UserModel(tenantId))) {
+    if (user.tenants) {
+      return user.tenants.includes(tenantId);
+    }
+  }
+  return false;
 }
 
   /*-------------------------- search index --------------------------------*/

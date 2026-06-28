@@ -217,7 +217,8 @@ export const TripStore = signalStore(
       const recentTrips = (store.tripsResource.value() ?? []).filter(t => {
         if (!t.startDate || !t.startTime) return false;
         const dateStr = t.startDate;
-        const timeStr = t.startTime.padStart(4, '0');
+        // startTime may be 'HH:mm' (getCurrentTime) or legacy 'HHmm'; strip non-digits.
+        const timeStr = t.startTime.replace(/\D/g, '').padStart(4, '0');
         const tripMs = new Date(
           `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}T${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:00`
         ).getTime();
