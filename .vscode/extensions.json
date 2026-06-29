@@ -1,4 +1,16 @@
 {
-  "recommendations": ["WebNative.webnative", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "nrwl.angular-console", "angular.ng-template", "firebase.firebase"],
-  "unwantedRecommendations": ["ms-vscode.vscode-typescript-next"]
+  // Workspace extension recommendations. Note: do NOT add
+  // "ms-vscode.vscode-typescript-next" (TS nightly / 6.0) — it breaks the
+  // Angular 21 language service. Keep angular.ng-template pinned to 21.x.
+  "recommendations": [
+    "WebNative.webnative",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "nrwl.angular-console",
+    "angular.ng-template",
+    "firebase.firebase"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript-next"
+  ]
 }

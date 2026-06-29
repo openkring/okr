@@ -130,7 +130,6 @@
     "@sentry/cli": "3.5.0",
     "@svgr/webpack": "^8.1.0",
     "@swc-node/register": "~1.9.2",
-    "@swc/cli": "~0.6.0",
     "@swc/core": "~1.5.29",
     "@swc/helpers": "~0.5.18",
     "@testing-library/angular": "18.0.0",
