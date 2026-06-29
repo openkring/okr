@@ -20,15 +20,18 @@ const ALLOWED_ROLES = ['admin', 'memberAdmin'];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FsData = Record<string, any>;
 
-/** Throw unless the caller has admin or memberAdmin in their users/{uid}.roles. */
-async function requireMemberAdmin(uid: string | undefined, fnName: string): Promise<void> {
+/** Throw unless the caller has admin or memberAdmin in their users/{uid}.roles.
+ *  Returns the caller's tenants array (from users/{uid}.tenants). */
+async function requireMemberAdmin(uid: string | undefined, fnName: string): Promise<string[]> {
   if (!uid) throw new HttpsError('unauthenticated', 'Not authenticated.');
   const snap = await getFirestore().collection(UserCollection).doc(uid).get();
-  const roles = (snap.data()?.roles ?? {}) as Record<string, boolean>;
+  const data = snap.data() ?? {};
+  const roles = (data.roles ?? {}) as Record<string, boolean>;
   if (!ALLOWED_ROLES.some((r) => roles[r] === true)) {
     logger.error(`${fnName}: uid ${uid} lacks required role(s): ${ALLOWED_ROLES.join(', ')}`);
     throw new HttpsError('permission-denied', `Requires one of roles: ${ALLOWED_ROLES.join(', ')}.`);
   }
+  return Array.isArray(data.tenants) ? data.tenants : [];
 }
 
 /** Mirror of getPersonIndex (subject-person-util) — keep field order in sync. */
@@ -114,12 +117,26 @@ export const mergePersonIntoTenant = onCall(
   async (request): Promise<MergePersonIntoTenantResponse> => {
     checkAppCheckToken(request, 'mergePersonIntoTenant');
     checkAuthentication(request, 'mergePersonIntoTenant');
-    await requireMemberAdmin(request.auth?.uid, 'mergePersonIntoTenant');
+    const callerTenants = await requireMemberAdmin(request.auth?.uid, 'mergePersonIntoTenant');
 
     const { personKey, tenantId, resolvedFields } =
       (request.data ?? {}) as MergePersonIntoTenantRequest;
     if (!personKey || !tenantId) {
       throw new HttpsError('invalid-argument', 'personKey and tenantId are required.');
+    }
+    if (!callerTenants.includes(tenantId)) {
+      throw new HttpsError('permission-denied', 'Caller does not belong to the target tenant.');
+    }
+
+    const ALLOWED_FIELDS = [
+      'firstName', 'lastName', 'gender', 'dateOfBirth', 'dateOfDeath',
+      'ssnId', 'favEmail', 'favPhone', 'favZipCode',
+    ];
+    const safeFields: FsData = {};
+    for (const key of ALLOWED_FIELDS) {
+      if (resolvedFields && key in resolvedFields) {
+        safeFields[key] = String(resolvedFields[key]);
+      }
     }
 
     const db = getFirestore();
@@ -127,9 +144,9 @@ export const mergePersonIntoTenant = onCall(
     const snap = await ref.get();
     if (!snap.exists) throw new HttpsError('not-found', `Person ${personKey} not found.`);
 
-    const merged: FsData = { ...snap.data(), ...(resolvedFields ?? {}) };
+    const merged: FsData = { ...snap.data(), ...safeFields };
     await ref.update({
-      ...(resolvedFields ?? {}),
+      ...safeFields,
       tenants: FieldValue.arrayUnion(tenantId),
       index: buildPersonIndex(merged),
     });
