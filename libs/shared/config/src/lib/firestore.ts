@@ -32,6 +32,22 @@ export function isFirefox(): boolean {
   return /firefox|fxios/i.test(navigator.userAgent);
 }
 
+// Detects ANY browser running on iOS/iPadOS. Apple mandates the WebKit engine for every iOS
+// browser — Chrome (CriOS), Edge (EdgiOS), Firefox (FxiOS), Opera (OPiOS) all render with WebKit,
+// so they share Safari's exact WebChannel/IndexedDB-under-ITP sensitivities and need the SAME
+// long-polling + memory-cache treatment — not just the Safari-branded browser. isSafari() excludes
+// crios/etc. by design, so without this check Chrome-on-iOS silently took the persistentLocalCache +
+// WebChannel auto-detect path and hung (menuItems read never resolved -> "Missing: main_<tenant>";
+// session create stalled -> "Could not create model sessions/...").
+export function isIos(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  // Classic iPhone/iPod/iPad UA, plus iPadOS 13+ which masquerades as desktop 'Macintosh'
+  // (distinguished from a real Mac by having touch points).
+  return /iP(hone|od|ad)/i.test(ua)
+    || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+}
+
 /**
  * Firestore initialization.
  *
@@ -59,8 +75,9 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
     const app = getApp();
     const isSafariBrowser = isSafari();
     const isFirefoxBrowser = isFirefox();
-    // Safari and Firefox both need long polling (WebChannel reliability issue).
-    const useLongPolling = isSafariBrowser || isFirefoxBrowser;
+    const isIosDevice = isIos();
+    // Safari, Firefox, and every iOS browser (all WebKit) need long polling (WebChannel reliability issue).
+    const useLongPolling = isSafariBrowser || isFirefoxBrowser || isIosDevice;
 
     if (typeof navigator !== 'undefined' && navigator.storage?.persist) {
       navigator.storage.persist()
@@ -80,7 +97,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
     // hang under Safari ITP / Firefox ETP / private mode escapes the try/catch below (which only
     // catches a synchronous throw) and stalls the first snapshot forever (e.g. the side-menu
     // spinner never clears). Memory cache avoids that; offline persistence is dropped.
-    if (isFirefoxBrowser || isSafariBrowser) {
+    if (isFirefoxBrowser || isSafariBrowser || isIosDevice) {
       firestore = initializeFirestore(app, {
         ...baseOptions,
         localCache: memoryLocalCache(),
@@ -115,6 +132,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
     console.log('Firestore initialized:', {
       isSafari: isSafariBrowser,
       isFirefox: isFirefoxBrowser,
+      isIos: isIosDevice,
       longPolling: useLongPolling,
       cache: cacheMode,
       emulator: _env.useEmulators,
