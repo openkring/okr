@@ -88,7 +88,7 @@ export const findPersonDuplicates = onCall(
       snap.forEach((doc) => found.set(doc.id, doc.data()));
     }
 
-    if (lastName) {
+    if (lastName && firstName) {
       const snap = await db.collection(PersonCollection).where('lastName', '==', lastName).get();
       const wantFirst = (firstName ?? '').trim().toLowerCase();
       snap.forEach((doc) => {
