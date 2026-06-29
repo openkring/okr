@@ -8,3 +8,4 @@ export * from './lib/person-label.pipe';
 export * from './lib/ssn.validations';
 export * from './lib/person-i18n';
 export * from './lib/person-duplicate.model';
+export * from './lib/person-field-diff.util';
