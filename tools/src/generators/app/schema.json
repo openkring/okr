@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "AppGenerator",
+  "title": "Scaffold a new tenant app",
+  "type": "object",
+  "properties": {
+    "tenantId": {
+      "type": "string",
+      "description": "Lowercase tenant id, e.g. 'acme'. Becomes apps/<tenantId>-app.",
+      "pattern": "^[a-z][a-z0-9-]+$",
+      "x-prompt": "Tenant id (lowercase, e.g. acme)?"
+    },
+    "appName": {
+      "type": "string",
+      "description": "Human-readable app display name, e.g. 'Acme'.",
+      "x-prompt": "App display name?"
+    },
+    "force": {
+      "type": "boolean",
+      "description": "Overwrite an existing apps/<tenantId>-app directory.",
+      "default": false
+    }
+  },
+  "required": ["tenantId", "appName"]
+}
