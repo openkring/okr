@@ -1,13 +1,24 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, of, take } from 'rxjs';
 
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
 import { getFullName, getSystemQuery } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
-import {getPersonIndex} from '@bk2/subject-person-util';
+import {
+  getPersonIndex,
+  FindPersonDuplicatesRequest,
+  FindPersonDuplicatesResponse,
+  MergePersonIntoTenantRequest,
+  MergePersonIntoTenantResponse,
+  PersonDuplicateCandidate,
+  ReconcilableField,
+} from '@bk2/subject-person-util';
 import { ActivityService } from '@bk2/activity-data-access';
 import { PFX } from './scope';
 
@@ -19,6 +30,7 @@ export class PersonService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
   private i18nService = inject(I18nService);
+  private readonly functions = getFunctions(getApp(), 'europe-west6');
 
   // i18n
   protected readonly i18n = this.i18nService.translateAll({
@@ -97,23 +109,34 @@ export class PersonService {
   }
 
   /**
-   * Checks if a person with the given first and last name already exists.
-   * @param persons the list of persons to check
-   * @param firstName the first name to check
-   * @param lastName the last name to check
-   * @returns true if the person exists, false otherwise
+   * Cross-tenant duplicate search via the findPersonDuplicates callable.
+   * Matches on name / dateOfBirth / favEmail / ssnId. Returns [] on any error.
    */
-  public checkIfExists(persons?: PersonModel[], firstName?: string, lastName?: string): boolean {
-    if (!persons || persons.length === 0) {
-      return false;
+  public async findDuplicates(req: FindPersonDuplicatesRequest): Promise<PersonDuplicateCandidate[]> {
+    try {
+      const fn = httpsCallable<FindPersonDuplicatesRequest, FindPersonDuplicatesResponse>(
+        this.functions, 'findPersonDuplicates');
+      const result = await fn(req);
+      return result.data.candidates ?? [];
+    } catch (error) {
+      console.error('PersonService.findDuplicates failed', error);
+      return [];
     }
-    const searchFirstName = !firstName ? '' : firstName.trim().toLowerCase();
-    const searchLastName = !lastName ? '' : lastName.trim().toLowerCase();
+  }
 
-    return persons.some(person =>
-      person.firstName?.trim().toLowerCase() === searchFirstName &&
-      person.lastName?.trim().toLowerCase() === searchLastName
-    );
+  /**
+   * Shares an existing person into the given tenant and applies the resolved scalar fields,
+   * via the mergePersonIntoTenant callable. Returns the merged person key.
+   */
+  public async mergeIntoTenant(
+    personKey: string,
+    tenantId: string,
+    resolvedFields: Partial<Record<ReconcilableField, string>>,
+  ): Promise<string> {
+    const fn = httpsCallable<MergePersonIntoTenantRequest, MergePersonIntoTenantResponse>(
+      this.functions, 'mergePersonIntoTenant');
+    const result = await fn({ personKey, tenantId, resolvedFields });
+    return result.data.bkey;
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/
