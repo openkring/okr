@@ -13,7 +13,6 @@ import { ExportFormats } from '@bk2/shared-categories';
 
 import { UserService } from '@bk2/user-data-access';
 import { USER_I18N_KEYS, UserI18n } from '@bk2/user-util';
-import { mirrorPrivacyUsageToPerson } from '@bk2/subject-person-util';
 
 export type { UserI18n };
 
@@ -104,18 +103,6 @@ export const UserStore = signalStore(
         return store.appStore.getTags('user');
       },
 
-      /**
-       * Mirror a user's privacy preferences (usage*) onto the linked person, which is the
-       * tenant-readable source for AppStore.getPersonPrivacySettings. No-op if there is no
-       * linked person in the cache.
-       */
-      async mirrorPrivacyToPerson(user: UserModel): Promise<void> {
-        const person = store.appStore.getPerson(user.personKey);
-        if (!person) return;
-        const updated = mirrorPrivacyUsageToPerson(person, user);
-        await store.firestoreService.updateModel<PersonModel>(PersonCollection, updated, false, undefined, undefined, store.currentUser());
-      },
-
       /******************************* actions *************************************** */
       async add(): Promise<void> {
         // not sure whether we should implement this
@@ -129,15 +116,20 @@ export const UserStore = signalStore(
           component: UserEditModal,
           componentProps: {
             user,
+            person: store.appStore.getPerson(user.personKey),
             readOnly
           }
         });
         modal.present();
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data) {
-          if (isUser(data, store.appStore.tenantId())) {
-            await store.userService.update(data, store.currentUser());
-            await this.mirrorPrivacyToPerson(data);
+          const { user: editedUser, person } = data as { user: UserModel; person?: PersonModel };
+          if (isUser(editedUser, store.appStore.tenantId())) {
+            await store.userService.update(editedUser, store.currentUser());
+            // Persist the usage* privacy preferences directly onto the linked person.
+            if (person) {
+              await store.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, undefined, store.currentUser());
+            }
           }
         }
         this.reload();
@@ -177,7 +169,6 @@ export const UserStore = signalStore(
         await (!user.bkey ?
           store.userService.create(user, store.currentUser()) :
           store.userService.update(user, store.currentUser()));
-        await this.mirrorPrivacyToPerson(user);
         store.appNavigationService.back();
       },
 

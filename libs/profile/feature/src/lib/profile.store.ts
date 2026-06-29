@@ -14,7 +14,6 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 
 import { PersonService } from '@bk2/subject-person-data-access';
-import { mirrorPrivacyUsageToPerson } from '@bk2/subject-person-util';
 import { PROFILE_I18N_KEYS, ProfileI18n } from '@bk2/profile-util';
 
 /**
@@ -93,11 +92,10 @@ export const ProfileStore = signalStore(
      */
       async save(person?: PersonModel, user?: UserModel): Promise<void> {
         if (person) {
-          let newPerson = structuredClone(person);
+          const newPerson = structuredClone(person);
           newPerson.ssnId = formatAhv(newPerson.ssnId ?? '', AhvFormat.Electronic);
-          // Mirror the user's privacy preferences (usage*, edited in the privacy accordion)
-          // onto the person, which is the tenant-readable source for getPersonPrivacySettings.
-          newPerson = mirrorPrivacyUsageToPerson(newPerson, user);
+          // The privacy preferences (usage*) are edited directly on the person in the privacy
+          // accordion — the person is the tenant-readable source for getPersonPrivacySettings.
           await store.firestoreService.updateModel<PersonModel>(PersonCollection, newPerson, false, undefined, undefined, user);
         }
         if (user) {

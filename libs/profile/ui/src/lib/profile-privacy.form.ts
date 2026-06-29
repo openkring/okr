@@ -2,11 +2,11 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
 import { PrivacyUsages } from "@bk2/shared-categories";
-import { PrivacyUsage, UserModel } from "@bk2/shared-models";
+import { PersonModel, PrivacyUsage, UserModel } from "@bk2/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
 import { coerceBoolean } from "@bk2/shared-util-core";
 
-import { userValidations } from "@bk2/user-util";
+import { personValidations } from "@bk2/subject-person-util";
 import { ProfileI18n } from "@bk2/profile-util";
 
 @Component({
@@ -39,22 +39,22 @@ import { ProfileI18n } from "@bk2/profile-util";
             </ion-row>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <bk-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onUsageChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <bk-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onUsageChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usagePostalAddressI18n()" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <bk-category-old [i18n]="usagePostalAddressI18n()" [value]="usagePostalAddress()" (valueChange)="onUsageChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageEmailI18n()" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <bk-category-old [i18n]="usageEmailI18n()" [value]="usageEmail()" (valueChange)="onUsageChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usagePhoneI18n()" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <bk-category-old [i18n]="usagePhoneI18n()" [value]="usagePhone()" (valueChange)="onUsageChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageNameI18n()" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <bk-category-old [i18n]="usageNameI18n()" [value]="usageName()" (valueChange)="onUsageChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -67,7 +67,7 @@ import { ProfileI18n } from "@bk2/profile-util";
               </ion-row>
               <ion-row>
                 <ion-col>
-                  <bk-checkbox [i18n]="srvEmailI18n()" [checked]="srvEmail()" (checkedChange)="onFieldChange('srvEmail', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <bk-checkbox [i18n]="srvEmailI18n()" [checked]="srvEmail()" (checkedChange)="onSrvEmailChange($event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
@@ -89,6 +89,10 @@ export class ProfilePrivacyAccordion {
 
   // inputs
   public readonly i18n = input.required<ProfileI18n>();
+  // the privacy preferences (usage*) live on the person, which is the tenant-readable
+  // source for AppStore.getPersonPrivacySettings — edit them directly here.
+  public personFormData = model.required<PersonModel>();
+  // the user still carries the legacy srvEmail flag (not present on the person).
   public formData = model.required<UserModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
@@ -102,16 +106,16 @@ export class ProfilePrivacyAccordion {
   public dirty = output<boolean>();
   public valid = output<boolean>();
 
-  // validation and errors
-  private readonly validationResult = computed(() => userValidations(this.formData(), this.tenantId(), this.tags()));
+  // validation and errors (usage* validity comes from the person)
+  private readonly validationResult = computed(() => personValidations(this.personFormData(), this.tenantId(), this.tags()));
 
   // fields
-  protected usageImages = linkedSignal(() => this.formData().usageImages ?? PrivacyUsage.Public);
-  protected usageDateOfBirth = linkedSignal(() => this.formData().usageDateOfBirth ?? PrivacyUsage.Restricted);
-  protected usagePostalAddress = linkedSignal(() => this.formData().usagePostalAddress ?? PrivacyUsage.Restricted);
-  protected usageEmail = linkedSignal(() => this.formData().usageEmail ?? PrivacyUsage.Restricted);
-  protected usagePhone = linkedSignal(() => this.formData().usagePhone ?? PrivacyUsage.Restricted);
-  protected usageName = linkedSignal(() => this.formData().usageName ?? PrivacyUsage.Restricted);
+  protected usageImages = linkedSignal(() => this.personFormData().usageImages ?? PrivacyUsage.Public);
+  protected usageDateOfBirth = linkedSignal(() => this.personFormData().usageDateOfBirth ?? PrivacyUsage.Restricted);
+  protected usagePostalAddress = linkedSignal(() => this.personFormData().usagePostalAddress ?? PrivacyUsage.Restricted);
+  protected usageEmail = linkedSignal(() => this.personFormData().usageEmail ?? PrivacyUsage.Restricted);
+  protected usagePhone = linkedSignal(() => this.personFormData().usagePhone ?? PrivacyUsage.Restricted);
+  protected usageName = linkedSignal(() => this.personFormData().usageName ?? PrivacyUsage.Restricted);
   protected isScs = computed(() => this.currentUser()?.tenants.includes('scs') || this.currentUser()?.tenants.includes('test'));
   protected srvEmail = linkedSignal(() => this.formData().srvEmail ?? true);
   protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
@@ -124,8 +128,15 @@ export class ProfilePrivacyAccordion {
   }
 
   /******************************* actions *************************************** */
-  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+  /** usage* privacy preferences are written directly onto the person. */
+  protected onUsageChange(fieldName: string, fieldValue: number): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    this.personFormData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /** srvEmail is a legacy user-only flag. */
+  protected onSrvEmailChange(checked: boolean): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, srvEmail: checked }));
   }
 }

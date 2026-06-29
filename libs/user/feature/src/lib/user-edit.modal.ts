@@ -2,9 +2,10 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { Photo } from '@capacitor/camera';
 import { IonContent, ModalController, Platform } from '@ionic/angular/standalone';
 
-import { UserModel, UserModelName } from '@bk2/shared-models';
+import { PersonModel, UserModel, UserModelName } from '@bk2/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@bk2/shared-ui';
 import { getFullName } from '@bk2/shared-util-core';
+import { mirrorPrivacyUsageToPerson } from '@bk2/subject-person-util';
 
 import { AvatarService, UploadService } from '@bk2/avatar-data-access';
 import { AvatarToolbar } from '@bk2/avatar-feature';
@@ -60,13 +61,16 @@ export class UserEditModal {
 
   // inputs
   protected user = input.required<UserModel>();
+  // the linked person carries the authoritative usage* privacy preferences (tenant-readable
+  // source for getPersonPrivacySettings); the user keeps a legacy copy only.
+  protected person = input<PersonModel | undefined>();
   public readOnly = input<boolean>(true);
 
   // formData
   protected userAuthVm = linkedSignal(() => convertUserToAuthForm(this.user()));
   protected userDisplayVm = linkedSignal(() => convertUserToDisplayForm(this.user()));
   protected userModelVm = linkedSignal(() => convertUserToModelForm(this.user()));
-  protected userPrivacyVm = linkedSignal(() => convertUserToPrivacyForm(this.user()));
+  protected userPrivacyVm = linkedSignal(() => this.buildPrivacyVm());
   protected userNotificationVm = linkedSignal(() => convertUserToNotificationForm(this.user()));
 
   // signals
@@ -93,7 +97,11 @@ export class UserEditModal {
   /******************************* actions *************************************** */
   protected async save(): Promise<void> {
     const user = convertFormsToUser(this.userAuthVm(), this.userDisplayVm(), this.userModelVm(), this.userNotificationVm(), this.userPrivacyVm(), this.user());
-    await this.modalController.dismiss(user, 'confirm');
+    // Write the usage* privacy preferences directly onto the linked person (the authoritative
+    // source). The user keeps a legacy copy via convertFormsToUser.
+    const person = this.person();
+    const updatedPerson = person ? mirrorPrivacyUsageToPerson(person, this.userPrivacyVm()) : undefined;
+    await this.modalController.dismiss({ user, person: updatedPerson }, 'confirm');
   }
 
   public async cancel(): Promise<void> {
@@ -102,8 +110,27 @@ export class UserEditModal {
     this.userModelVm.set(convertUserToModelForm(this.user()));
     this.userDisplayVm.set(convertUserToDisplayForm(this.user()));
     this.userNotificationVm.set(convertUserToNotificationForm(this.user()));
-    this.userPrivacyVm.set(convertUserToPrivacyForm(this.user()));
+    this.userPrivacyVm.set(this.buildPrivacyVm());
     this.userAuthVm.set(convertUserToAuthForm(this.user()));
+  }
+
+  /**
+   * Build the privacy sub-form: usage* preferences come from the linked person (authoritative,
+   * with the user's values as fallback during the transition), srvEmail stays on the user.
+   */
+  private buildPrivacyVm(): UserPrivacyFormModel {
+    const vm = convertUserToPrivacyForm(this.user());
+    const person = this.person();
+    if (!person) return vm;
+    return {
+      ...vm,
+      usageImages:        person.usageImages        ?? vm.usageImages,
+      usageDateOfBirth:   person.usageDateOfBirth    ?? vm.usageDateOfBirth,
+      usagePostalAddress: person.usagePostalAddress  ?? vm.usagePostalAddress,
+      usageEmail:         person.usageEmail          ?? vm.usageEmail,
+      usagePhone:         person.usagePhone          ?? vm.usagePhone,
+      usageName:          person.usageName           ?? vm.usageName,
+    };
   }
 
   public async onImageSelected(photo: Photo): Promise<void> {
