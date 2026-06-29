@@ -14,6 +14,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | --- | --- |
 | `new-feature` | scaffolding a brand-new feature/entity — shared model (`FEATUREModelName`/`FEATURECollection`), the four layer libs (data-access/feature/ui/util), list + optional detail-page route, and the navigate/call/context `menuItems`. |
 | `provision-tenant` | spinning up a brand-new tenant app — new Firebase Web App + AppCheck, `app-config/{tenantId}` doc, `@bk2/tools:app` scaffold, starter CMS content, git-ignored `.env`, and the first admin user (shared Firebase project). |
+| `tenant-model` | reasoning about multi-tenancy — the `tenants[]` isolation field, tenant-scoped queries, `app-config`, persons shared across tenants vs. single-tenant `users/{uid}`, and the roles model. |
 | `i18n` | adding/translating/wiring any i18n string (keys, store wiring, labels to forms/ui, new-lib `de.json`, tenant overrides). |
 | `icons` | rendering or choosing an icon, the `svgIcon` pipe, icon sets, or an icon shows blank. |
 | `generating-lists` | scaffolding a new feature list view (`FEATURE-list.ts`) — header, filters, list/grid, per-item ActionSheet actions. |
