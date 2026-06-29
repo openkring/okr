@@ -77,6 +77,15 @@
           ]
         },
         {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
           "source": "/@(ngsw-worker.js|ngsw.json|safety-worker.js|firebase-messaging-sw.js|firebase-config.js|manifest.webmanifest)",
           "headers": [
             {
