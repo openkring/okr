@@ -19,6 +19,12 @@ export const AppVersionCollection = 'app-version';  // same for collection and d
 /** How often to ask the service worker to check the server for a new deployment. */
 const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 
+/**
+ * Minimum spacing between checks triggered by foreground/visibility events, so
+ * rapid tab/app switches don't hammer the server with hash-manifest requests.
+ */
+const MIN_FOREGROUND_CHECK_INTERVAL_MS = 60 * 1000; // 1 minute
+
 @Injectable({ providedIn: 'root' })
 export class VersionCheckService {
   private readonly alertController = inject(AlertController);
@@ -29,6 +35,7 @@ export class VersionCheckService {
   private readonly currentVersion = packageJson.version;
   private versionConfig: AppVersionConfig | undefined;
   private alertShown = false;
+  private lastCheckAt = 0;
 
   getCurrentVersion(): string {
     return this.currentVersion;
@@ -84,13 +91,30 @@ export class VersionCheckService {
       }
     });
 
-    // Periodically ask the SW to look for a new deployment, so long-lived sessions
-    // get notified without needing a manual reload.
-    setInterval(() => {
-      this.swUpdate.checkForUpdate().catch((error) => {
-        console.error('VersionCheckService: checkForUpdate failed:', error);
-      });
-    }, UPDATE_CHECK_INTERVAL_MS);
+    // Check immediately on startup. On iOS the home-screen PWA is suspended/killed
+    // while backgrounded, so the periodic interval below almost never ticks; the
+    // launch + foreground checks are what actually surface a new deployment there.
+    this.checkForUpdate();
+
+    // Re-check whenever the app returns to the foreground (tab focus / PWA resume).
+    // This is the reliable trigger on iOS, where each relaunch fires visibilitychange.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') this.checkForUpdate();
+    });
+
+    // Still poll periodically so long-lived foreground sessions get notified too.
+    setInterval(() => this.checkForUpdate(), UPDATE_CHECK_INTERVAL_MS);
+  }
+
+  /** Ask the SW to look for a new deployment, throttled to avoid request storms. */
+  private checkForUpdate(): void {
+    if (!this.swUpdate.isEnabled) return;
+    const now = Date.now();
+    if (now - this.lastCheckAt < MIN_FOREGROUND_CHECK_INTERVAL_MS) return;
+    this.lastCheckAt = now;
+    this.swUpdate.checkForUpdate().catch((error) => {
+      console.error('VersionCheckService: checkForUpdate failed:', error);
+    });
   }
 
   private compareVersions(v1: string, v2: string): number {
