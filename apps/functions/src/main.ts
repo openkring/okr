@@ -23,6 +23,7 @@ import * as Pdf from './pdf';
 import * as Esign from './esign';
 import * as Forms from './forms';
 import * as Vcard from './vcard';
+import * as Person from './person';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -198,6 +199,10 @@ export const getFormDefinition = Forms.getFormDefinition;
 
 // vCard export (spec 17)
 export const vcardExport = Vcard.vcardExport;
+
+// person duplicate detection + cross-tenant merge
+export const findPersonDuplicates = Person.findPersonDuplicates;
+export const mergePersonIntoTenant = Person.mergePersonIntoTenant;
 
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';
