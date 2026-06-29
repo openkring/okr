@@ -32,7 +32,13 @@ export type AppState = {
     nxCloudAccessToken: string;
     imgixBaseUrl: string;
   };
+  // Watchdog flag: set true when an authenticated user's UserModel hasn't loaded within
+  // READINESS_TIMEOUT_MS, so navigation is unblocked instead of hanging on the spinner.
+  readinessTimedOut: boolean;
 };
+
+/** Grace period for an authenticated user's UserModel to load before we stop blocking. */
+const READINESS_TIMEOUT_MS = 10_000;
 
 const initialState: AppState = {
   tenantId: '',
@@ -52,7 +58,8 @@ const initialState: AppState = {
     gmapKey: '',
     nxCloudAccessToken: '',
     imgixBaseUrl: ''
-  }
+  },
+  readinessTimedOut: false
 };
 
 export const AppStore = signalStore(
@@ -234,22 +241,33 @@ export const AppStore = signalStore(
       if (fbUser === null) return true;
       return !!fbUser && !!state.currentUser();
     }),
-    // The single source of truth for "may feature routes activate". Logged-out users
-    // are ready immediately (public routes); logged-in users wait until the UserModel
-    // AND categories (read synchronously via getCategory) have loaded. Used both by the
-    // app-ready route guard and by the root spinner overlay. NOTE: this is intentionally
+    // The data-driven readiness (excludes the timeout fallback so the watchdog can depend
+    // on it without a feedback loop). Logged-out users are ready immediately. For an
+    // authenticated user it is ready when the UserModel AND categories have loaded, OR
+    // when the user-doc read has settled WITHOUT yielding a model (doc missing / read
+    // denied) — in that broken-session case we stop blocking rather than hang forever.
+    isDataReady: computed(() => {
+      const fbUser = state.fbUser();
+      if (fbUser === null) return true;
+      if (!fbUser) return false; // auth still restoring
+      if (state.currentUser()) return !state.categoriesResource.isLoading();
+      // authenticated but no UserModel: ready only once the read has definitively settled
+      return !state.currentUserResource.isLoading();
+    }),
+    showDebugInfo: computed(() => state.currentUser()?.showDebugInfo ?? state.appConfig().showDebugInfo ?? false),
+    isLoading: computed(() => state.currentUserResource.isLoading() || state.personsResource.isLoading() || state.orgsResource.isLoading() ||
+        state.resourcesResource.isLoading() || state.tagsResource.isLoading()),
+  })),
+
+  withComputed((store) => ({
+    // The single source of truth for "may feature routes activate". Used both by the
+    // app-ready route guard and by the root spinner overlay. Ready when the data is
+    // ready, or when the readiness watchdog has timed out (so a perpetually-loading
+    // users/{uid} read never strands the user on the spinner). NOTE: this is intentionally
     // a gate on NAVIGATION (via the guard), never on the presence of <ion-router-outlet>
     // in the DOM — destroying the outlet mid-transition crashes Ionic's StackController
     // ("can't access property 'commit'").
-    isAppReady: computed(() => {
-      const fbUser = state.fbUser();
-      if (fbUser === null) return true;
-      if (!fbUser || !state.currentUser()) return false;
-      return !state.categoriesResource.isLoading();
-    }),
-    showDebugInfo: computed(() => state.currentUser()?.showDebugInfo ?? state.appConfig().showDebugInfo ?? false),
-    isLoading: computed(() => state.currentUserResource.isLoading() || state.personsResource.isLoading() || state.orgsResource.isLoading() || 
-        state.resourcesResource.isLoading() || state.tagsResource.isLoading()),
+    isAppReady: computed(() => store.isDataReady() || store.readinessTimedOut()),
   })),
 
   withMethods((store) => {
@@ -411,6 +429,22 @@ export const AppStore = signalStore(
         if (fbUser === null) {
           store.sessionService.endSession();
         }
+      });
+
+      // Readiness watchdog: if an authenticated user's UserModel hasn't loaded within
+      // READINESS_TIMEOUT_MS (e.g. a hung users/{uid} read), stop blocking navigation so
+      // they don't sit on the spinner forever. Fast missing-doc / permission-denied cases
+      // are already handled synchronously by isDataReady. The effect intentionally does
+      // NOT read readinessTimedOut, so setting it does not re-trigger this effect.
+      effect((onCleanup) => {
+        const authed = !!store.fbUser();
+        const dataReady = store.isDataReady();
+        if (!authed || dataReady) {
+          patchState(store, { readinessTimedOut: false });
+          return;
+        }
+        const handle = setTimeout(() => patchState(store, { readinessTimedOut: true }), READINESS_TIMEOUT_MS);
+        onCleanup(() => clearTimeout(handle));
       });
 
       // End session when tab is hidden; restart when visible again
