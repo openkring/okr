@@ -231,10 +231,10 @@ export const PersonStore = signalStore(
 
             // Non-destructive: add contact channels not already represented by the person's fav fields.
             const avatarKey = `person.${candidate.bkey}`;
-            if ((p.email ?? '').length > 0 && p.email !== candidate.favEmail) this.saveAddress(convertNewPersonFormToEmailAddress(p, store.tenantId()), avatarKey);
-            if ((p.phone ?? '').length > 0 && p.phone !== candidate.favPhone) this.saveAddress(convertNewPersonFormToPhoneAddress(p, store.tenantId()), avatarKey);
-            if ((p.web ?? '').length > 0) this.saveAddress(convertNewPersonFormToWebAddress(p, store.tenantId()), avatarKey);
-            if ((p.city ?? '').length > 0) this.saveAddress(convertNewPersonFormToPostalAddress(p, store.tenantId()), avatarKey);
+            if ((p.email ?? '').length > 0 && p.email !== candidate.favEmail) this.saveSecondaryAddress(convertNewPersonFormToEmailAddress(p, store.tenantId()), avatarKey);
+            if ((p.phone ?? '').length > 0 && p.phone !== candidate.favPhone) this.saveSecondaryAddress(convertNewPersonFormToPhoneAddress(p, store.tenantId()), avatarKey);
+            if ((p.web ?? '').length > 0) this.saveSecondaryAddress(convertNewPersonFormToWebAddress(p, store.tenantId()), avatarKey);
+            if ((p.city ?? '').length > 0) this.saveSecondaryAddress(convertNewPersonFormToPostalAddress(p, store.tenantId()), avatarKey);
             if (p.shouldAddMembership && (p.orgKey ?? '').length > 0 && (p.membershipCategory ?? '').length > 0) {
                 await this.saveMembership(p, candidate.bkey);
             }
@@ -267,6 +267,12 @@ export const PersonStore = signalStore(
         saveAddress(address: AddressModel, avatarKey: string): void {
             address.parentKey = avatarKey;
             store.addressService.create(address, store.currentUser());
+        },
+
+        /** Saves an address as NON-favorite (used when reusing an existing person who may already have favorites). */
+        saveSecondaryAddress(address: AddressModel, avatarKey: string): void {
+            address.isFavorite = false;
+            this.saveAddress(address, avatarKey);
         },
 
         async saveAvatar(photo: Photo, bkey: string): Promise<void> {
