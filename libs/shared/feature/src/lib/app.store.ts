@@ -226,6 +226,27 @@ export const AppStore = signalStore(
     // feature components must not render until it has loaded. True once the resource
     // has settled (loaded or errored), so the app never hangs on a failed load.
     areCategoriesReady: computed(() => !state.categoriesResource.isLoading()),
+    // True once the auth state is settled: either logged out (fbUser === null) or
+    // logged in with the UserModel loaded. Undefined fbUser (auth still restoring) or
+    // a set fbUser without currentUser yet (post-login load window) → not ready.
+    isUserSessionReady: computed(() => {
+      const fbUser = state.fbUser();
+      if (fbUser === null) return true;
+      return !!fbUser && !!state.currentUser();
+    }),
+    // The single source of truth for "may feature routes activate". Logged-out users
+    // are ready immediately (public routes); logged-in users wait until the UserModel
+    // AND categories (read synchronously via getCategory) have loaded. Used both by the
+    // app-ready route guard and by the root spinner overlay. NOTE: this is intentionally
+    // a gate on NAVIGATION (via the guard), never on the presence of <ion-router-outlet>
+    // in the DOM — destroying the outlet mid-transition crashes Ionic's StackController
+    // ("can't access property 'commit'").
+    isAppReady: computed(() => {
+      const fbUser = state.fbUser();
+      if (fbUser === null) return true;
+      if (!fbUser || !state.currentUser()) return false;
+      return !state.categoriesResource.isLoading();
+    }),
     showDebugInfo: computed(() => state.currentUser()?.showDebugInfo ?? state.appConfig().showDebugInfo ?? false),
     isLoading: computed(() => state.currentUserResource.isLoading() || state.personsResource.isLoading() || state.orgsResource.isLoading() || 
         state.resourcesResource.isLoading() || state.tagsResource.isLoading()),
