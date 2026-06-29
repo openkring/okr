@@ -96,7 +96,7 @@ export const AvatarToolbarStore = signalStore(
         }
       },
 
-      async uploadPhoto(): Promise<Photo> {
+      async uploadPhoto(): Promise<Photo | undefined> {
         return await store.uploadService.takePhoto();
       },
 

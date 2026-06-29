@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { baseName, dirName, fileExtension, fileName, fileSizeUnit } from './file.util';
+import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation } from './file.util';
 
 describe('file.util', () => {
 
@@ -125,5 +125,27 @@ describe('file.util', () => {
     it('fileSizeUnit(1073741924, 6) should be 1 GB.', () => {
         const result = fileSizeUnit(1073741824, 6);
         expect(result).toEqual('1.000000 GB');
+    });
+
+    // isPhotoCancellation
+    it('isPhotoCancellation detects the native iOS cancel message.', () => {
+        expect(isPhotoCancellation({ message: 'User cancelled photos app' })).toBe(true);
+    });
+    it('isPhotoCancellation is case-insensitive.', () => {
+        expect(isPhotoCancellation({ message: 'User Cancelled Photos App' })).toBe(true);
+    });
+    it('isPhotoCancellation handles an Error instance.', () => {
+        expect(isPhotoCancellation(new Error('User cancelled photos app'))).toBe(true);
+    });
+    it('isPhotoCancellation handles a plain string.', () => {
+        expect(isPhotoCancellation('User cancelled photos app')).toBe(true);
+    });
+    it('isPhotoCancellation returns false for a genuine error.', () => {
+        expect(isPhotoCancellation({ message: 'No camera available' })).toBe(false);
+    });
+    it('isPhotoCancellation returns false for undefined / null / non-message objects.', () => {
+        expect(isPhotoCancellation(undefined)).toBe(false);
+        expect(isPhotoCancellation(null)).toBe(false);
+        expect(isPhotoCancellation({})).toBe(false);
     });
 });

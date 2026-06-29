@@ -38,6 +38,11 @@ export function buildSentryOptions(
 
     integrations,
 
+    // Benign noise we never want as issues. Backstop only — the source helpers
+    // (takePhoto/pickPhoto) already swallow camera cancellations; this guards any
+    // call site that bypasses them. The Capacitor cancel message is "User cancelled photos app".
+    ignoreErrors: [/User cancelled photos app/i],
+
     tracesSampleRate: cfg.tracesSampleRate,
     tracePropagationTargets: [
       /^https:\/\/[^/]*\.cloudfunctions\.net/,

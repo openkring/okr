@@ -127,7 +127,7 @@ export class ExpenseNewModal {
 
   protected async onTakePhoto(): Promise<void> {
     const photo = await this.uploadService.takePhoto();
-    if (photo.webPath) {
+    if (photo?.webPath) {
       const response = await fetch(photo.webPath);
       const blob = await response.blob();
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });

@@ -2,7 +2,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
 import { DOCUMENT_DIR, DocumentModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, checkUrlType, getFileHash, getFullName, getTodayStr, warn } from '@bk2/shared-util-core';
+import { addIndexElement, checkUrlType, getFileHash, getFullName, getTodayStr, isPhotoCancellation, warn } from '@bk2/shared-util-core';
 
 import { readAsFile } from '@bk2/avatar-util';
 
@@ -13,12 +13,19 @@ import { readAsFile } from '@bk2/avatar-util';
  * @returns the image taken or selected
  */
 export async function pickPhoto(platform: Platform): Promise<File | undefined> {
-  const photo = await Camera.getPhoto({
-    quality: 90,
-    allowEditing: false,
-    resultType: CameraResultType.Uri,
-    source: platform.is('mobile') ? CameraSource.Prompt : CameraSource.Photos,
-  });
+  let photo;
+  try {
+    photo = await Camera.getPhoto({
+      quality: 90,
+      allowEditing: false,
+      resultType: CameraResultType.Uri,
+      source: platform.is('mobile') ? CameraSource.Prompt : CameraSource.Photos,
+    });
+  } catch (ex) {
+    // user cancelling the picker is normal control flow, not an error
+    if (isPhotoCancellation(ex)) return undefined;
+    throw ex;
+  }
   return await readAsFile(photo, platform);
 }
 
