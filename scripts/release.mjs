@@ -91,8 +91,12 @@ async function releaseApp(app) {
 
   try {
     // 3. prod build (source .env so FIREBASE_WEBAPP_CONFIG is set for the prod config target)
-    console.log(`\n[3/7] Building ${app} (production)…`);
-    run('bash', ['-c', `set -a; source ./apps/${app}/.env; set +a; pnpm nx build ${app} --configuration production`]);
+    //    --skip-nx-cache is mandatory: a version bump is meant to bust the cache via the config
+    //    target's input hash, but that has proven unreliable (the nx Cloud remote cache restored
+    //    a prior dist/, shipping the OLD version — v6.4.64 went out as 6.4.63). A clean build is
+    //    cheap insurance against silently deploying stale code. The post-deploy check below verifies.
+    console.log(`\n[3/7] Building ${app} (production, --skip-nx-cache)…`);
+    run('bash', ['-c', `rm -rf dist/apps/${app}; set -a; source ./apps/${app}/.env; set +a; pnpm nx build ${app} --configuration production --skip-nx-cache`]);
 
     // 4. Sentry source maps — MUST run before deploy (injects debug IDs into the built JS,
     //    uploads maps, finalizes the scs@<version> release). Skipped if SENTRY_* not exported.
@@ -110,6 +114,25 @@ async function releaseApp(app) {
     // 5. deploy hosting (confirm — outward-facing)
     if (!(await confirm(`\n[5/7] Deploy ${app} to hosting:${site}?`, true))) abort('Aborted before deploy.');
     run('firebase', ['deploy', '--only', `hosting:${site}`]);
+
+    // 5b. verify the LIVE bundle actually carries the new version — the only proof the deploy
+    //     shipped fresh code (see the --skip-nx-cache note above). Fetch index.html, find the
+    //     main-*.js it references, and confirm the version string is present.
+    console.log(`\n     Verifying https://${site}.web.app serves v${next}…`);
+    try {
+      const base = `https://${site}.web.app`;
+      const html = capture('curl', ['-fsS', `${base}/index.html?_cb=${next}`]);
+      const mainJs = (html.match(/main-[A-Z0-9]+\.js/i) || [])[0];
+      if (!mainJs) throw new Error('could not find main-*.js in index.html');
+      const bundle = capture('curl', ['-fsS', `${base}/${mainJs}?_cb=${next}`]);
+      if (!bundle.includes(next))
+        throw new Error(`live bundle ${mainJs} does NOT contain "${next}" — a stale build was deployed`);
+      console.log(`     ✓ ${mainJs} contains v${next}.`);
+    } catch (e) {
+      console.error(`\n     ⚠ Post-deploy verification FAILED: ${e.message ?? e}`);
+      if (!(await confirm('     Continue anyway (tag/push the release)?', false)))
+        abort('Aborted after deploy: live site did not verify. Investigate before tagging.');
+    }
   } catch (e) {
     run('git', ['checkout', '--', 'package.json']);
     abort(`Build/deploy failed — reverted version bump. ${e.message ?? ''}`);
