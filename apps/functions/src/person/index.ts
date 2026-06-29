@@ -87,12 +87,12 @@ export const findPersonDuplicates = onCall(
     ];
     for (const [field, value] of equalityFields) {
       if (!value) continue;
-      const snap = await db.collection(PersonCollection).where(field, '==', value).get();
+      const snap = await db.collection(PersonCollection).where(field, '==', value).limit(50).get();
       snap.forEach((doc) => found.set(doc.id, doc.data()));
     }
 
     if (lastName && firstName) {
-      const snap = await db.collection(PersonCollection).where('lastName', '==', lastName).get();
+      const snap = await db.collection(PersonCollection).where('lastName', '==', lastName).limit(50).get();
       const wantFirst = (firstName ?? '').trim().toLowerCase();
       snap.forEach((doc) => {
         const data = doc.data();
