@@ -8,7 +8,7 @@
   "display_override": ["fullscreen", "minimal-ui"],
   "display": "standalone",
   "orientation": "any",
-  "description": "Application to administer the members of rowing club Seeclub STäfa (SCS)",
+  "description": "<%= appName %>",
   "categories": ["productivity", "utilities", "photo"],
   "lang": "de",
   "icons": [
