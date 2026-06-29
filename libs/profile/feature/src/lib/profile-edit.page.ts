@@ -77,18 +77,22 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
               />
             }
             @if(userFormData(); as userFormData) {
-              <bk-profile-privacy-accordion
-                [formData]="userFormData"
-                (formDataChange)="onUserChange($event)"
-                [currentUser]="currentUser()"
-                [showForm]="showForm()"
-                [readOnly]="false"
-                [tags]="tags()"
-                [tenantId]="tenantId()"
-                [i18n]="store.i18n"
-                (valid)="formValid.set($event)"
-                (dirty)="formDirty.set($event)"
-              />
+              @if(personFormData(); as personFormData) {
+                <bk-profile-privacy-accordion
+                  [formData]="userFormData"
+                  (formDataChange)="onUserChange($event)"
+                  [personFormData]="personFormData"
+                  (personFormDataChange)="onPersonChange($event)"
+                  [currentUser]="currentUser()"
+                  [showForm]="showForm()"
+                  [readOnly]="false"
+                  [tags]="tags()"
+                  [tenantId]="tenantId()"
+                  [i18n]="store.i18n"
+                  (valid)="formValid.set($event)"
+                  (dirty)="formDirty.set($event)"
+                />
+              }
             }
             <bk-email-signature-accordion [i18n]="store.i18n" />
           </ion-accordion-group>
