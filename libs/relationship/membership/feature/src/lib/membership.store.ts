@@ -517,7 +517,7 @@ export const _MembershipStore = signalStore(
             (p.firstName ?? '').trim().toLowerCase() === searchFirst &&
             (p.lastName ?? '').trim().toLowerCase() === searchLast);
           if (alreadyExists) {
-            if (!confirm(store.alertController, store.i18n.create_alreadyMember(), store.i18n.ok(), store.i18n.cancel(), true)) return;
+            if (!await confirm(store.alertController, store.i18n.create_alreadyMember(), store.i18n.ok(), store.i18n.cancel(), true)) return;
           }
 
           const personKey = await store.personService.create(convertFormToNewPerson(newMember, tenantId), store.currentUser());
