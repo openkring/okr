@@ -509,6 +509,17 @@ export const _MembershipStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data) {
           const newMember = data as MemberNewFormModel;
+          // Lightweight name-only duplicate warning (restored after checkIfExists was removed
+          // from PersonService). Full cross-tenant duplicate detection lives in PersonStore.add().
+          const searchFirst = (newMember.firstName ?? '').trim().toLowerCase();
+          const searchLast = (newMember.lastName ?? '').trim().toLowerCase();
+          const alreadyExists = store.appStore.allPersons().some((p) =>
+            (p.firstName ?? '').trim().toLowerCase() === searchFirst &&
+            (p.lastName ?? '').trim().toLowerCase() === searchLast);
+          if (alreadyExists) {
+            if (!confirm(store.alertController, store.i18n.create_alreadyMember(), store.i18n.ok(), store.i18n.cancel(), true)) return;
+          }
+
           const personKey = await store.personService.create(convertFormToNewPerson(newMember, tenantId), store.currentUser());
           const avatarKey = `person.${personKey}`;
           if (newMember.email.length > 0) {
