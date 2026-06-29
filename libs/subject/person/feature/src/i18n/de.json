@@ -172,6 +172,18 @@
     }
   },
 
+  "duplicate": {
+    "title": "Mögliche Duplikate gefunden",
+    "intro": "Es gibt bereits Personen, die zu den eingegebenen Daten passen. Wähle eine bestehende Person aus oder erstelle trotzdem eine neue.",
+    "createNew": "Trotzdem neu erstellen",
+    "tenants": "Mandanten"
+  },
+  "reconcile": {
+    "title": "Felder abgleichen",
+    "intro": "Die markierten Felder unterscheiden sich. Wähle pro Feld den zu übernehmenden Wert.",
+    "keepExisting": "Bestehend",
+    "useNew": "Neu"
+  },
   "validation": {
     "lastNameRequired": "Die Eingabe eines Nachnamens ist obligatorisch.",
     "validSSN": "Bitte eine gültige AHV-Nummer eingeben."

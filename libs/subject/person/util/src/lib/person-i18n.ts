@@ -82,6 +82,15 @@ export const PERSON_I18N_KEYS = {
     add_membership_helper:      PFX + 'add.membership.helper',
     add_membership_exists:      PFX + 'add.membership.exists',
 
+    duplicate_title:            PFX + 'duplicate.title',
+    duplicate_intro:            PFX + 'duplicate.intro',
+    duplicate_create_new:       PFX + 'duplicate.createNew',
+    duplicate_tenants:          PFX + 'duplicate.tenants',
+    reconcile_title:            PFX + 'reconcile.title',
+    reconcile_intro:            PFX + 'reconcile.intro',
+    reconcile_keep_existing:    PFX + 'reconcile.keepExisting',
+    reconcile_use_new:          PFX + 'reconcile.useNew',
+
     call_phone:                 PFX + 'call.phone',
     copy_email:                 PFX + 'copy.email.label',
     copy_email_conf:            PFX + 'copy.email.conf',
