@@ -26,6 +26,11 @@ const SITES = {
 };
 const PROD_APP = 'scs-app'; // only this app's users see the in-app update prompt
 
+// Silence the DEP0040 "punycode is deprecated" warning emitted by firebase-tools (a transitive
+// dep using Node's built-in punycode). Scoped to this run's child processes; preserves any
+// existing NODE_OPTIONS. Node >= 21.3 supports --disable-warning.
+process.env.NODE_OPTIONS = ['--disable-warning=DEP0040', process.env.NODE_OPTIONS].filter(Boolean).join(' ');
+
 // ---- small helpers -------------------------------------------------------
 const run = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, { stdio: 'inherit', cwd: repoRoot, ...opts });

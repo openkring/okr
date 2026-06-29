@@ -29,6 +29,10 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const distDir = join(repoRoot, 'dist/apps/functions');
 const verifiedPath = join(repoRoot, 'scripts/functions-pnpm-verified.json');
 
+// Silence the DEP0040 "punycode is deprecated" warning from firebase-tools (a transitive dep
+// using Node's built-in punycode). Preserves any existing NODE_OPTIONS. Node >= 21.3.
+process.env.NODE_OPTIONS = ['--disable-warning=DEP0040', process.env.NODE_OPTIONS].filter(Boolean).join(' ');
+
 const run = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, { stdio: 'inherit', cwd: repoRoot, ...opts });
 const abort = (msg) => { console.error(`\n✖ ${msg}`); process.exit(1); };
