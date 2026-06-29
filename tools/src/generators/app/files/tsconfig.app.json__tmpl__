@@ -5,11 +5,11 @@
     "outDir": "../../dist/out-tsc/apps/<%= tenantId %>-app",
     "module": "preserve",
     "target": "es2022",
-    "types": ["node", "vitest"],
+    "types": ["node"],
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "lib": ["dom", "es2022"]
   },
-  "include": ["src/**/*.ts", "server.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "vite.config.ts", "**/<%= tenantId %>-setup.ts", "node_modules"]
 }

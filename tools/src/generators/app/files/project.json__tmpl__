@@ -514,11 +514,6 @@
           "apps/<%= tenantId %>-app/src/firebase-messaging-sw.js",
           "apps/<%= tenantId %>-app/src/firebase-config.js",
           {
-            "glob": "manifest.webmanifest",
-            "input": "apps/<%= tenantId %>-app/src",
-            "output": "."
-          },
-          {
             "glob": "robots.txt",
             "input": "apps/<%= tenantId %>-app/src",
             "output": "."
@@ -598,7 +593,6 @@
       },
       "defaultConfiguration": "development",
       "options": {
-        "port": 4201,
         "headers": {
           "Content-Security-Policy": "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com https://cdn.tailwindcss.com https://www.googletagmanager.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; connect-src 'self' blob: https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://*.imgix.net https://matrix.bkchat.etke.host https://europe-west6-bkaiser-org.cloudfunctions.net https://cdn.jsdelivr.net https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com;"
         }
@@ -612,15 +606,6 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint"
-    },
-    "test": {
-      "executor": "@nx/vite:test",
-      "outputs": [
-        "{workspaceRoot}/coverage/apps/<%= tenantId %>-app"
-      ],
-      "options": {
-        "configFile": "apps/<%= tenantId %>-app/vite.config.ts"
-      }
     },
     "serve-static": {
       "executor": "@nx/web:file-server",
