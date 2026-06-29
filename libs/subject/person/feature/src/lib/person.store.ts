@@ -16,7 +16,7 @@ import { I18nService } from '@bk2/shared-i18n';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n } from '@bk2/subject-person-util';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@bk2/subject-person-util';
 import { browseUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
 
 import { MatrixChatService } from '@bk2/chat-data-access';
@@ -164,39 +164,81 @@ export const PersonStore = signalStore(
             const { PersonNewModal } = await import('./person-new.modal');
             const modal = await store.modalController.create({
                 component: PersonNewModal,
-                componentProps: {
-                    org: store.appStore.defaultOrg()
-                }
+                componentProps: { org: store.appStore.defaultOrg() }
             });
             modal.present();
             const { data, role } = await modal.onWillDismiss();
-            if (role === 'confirm' && data) {
-                const p = data as PersonNewFormModel;
+            if (role !== 'confirm' || !data) return;
+            const p = data as PersonNewFormModel;
 
-                if (store.personService.checkIfExists(store.persons(), p.firstName, p.lastName)) {
-                if (!await store.alertService.confirm(store.i18n.add_membership_exists(), true)) return;           
-                }
+            // Cross-tenant duplicate search (callable; memberAdmin-gated server-side).
+            const candidates = await store.personService.findDuplicates({
+                firstName: p.firstName, lastName: p.lastName, dateOfBirth: p.dateOfBirth,
+                favEmail: p.email, ssnId: p.ssnId,
+            });
 
-                const personKey = await store.personService.create(convertFormToNewPerson(p, store.tenantId()), store.currentUser());
-                const avatarKey = `person.${personKey}`;
-                if ((p.email ?? '').length > 0) {
-                this.saveAddress(convertNewPersonFormToEmailAddress(p, store.tenantId()), avatarKey);
-                }
-                if ((p.phone ?? '').length > 0) {
-                this.saveAddress(convertNewPersonFormToPhoneAddress(p, store.tenantId()), avatarKey);
-                }
-                if ((p.web ?? '').length > 0) {
-                this.saveAddress(convertNewPersonFormToWebAddress(p, store.tenantId()), avatarKey);
-                }
-                if ((p.city ?? '').length > 0) {
-                this.saveAddress(convertNewPersonFormToPostalAddress(p, store.tenantId()), avatarKey);
-                }
-                if (p.shouldAddMembership) {
-                if ((p.orgKey ?? '').length > 0 && (p.membershipCategory ?? '').length > 0) {
-                    await this.saveMembership(p, personKey);
-                }
-                }
+            if (candidates.length === 0) {
+                await this.createNewPerson(p);
+                return;
             }
+
+            const { PersonDuplicateModal } = await import('./person-duplicate.modal');
+            const dupModal = await store.modalController.create({
+                component: PersonDuplicateModal,
+                cssClass: 'list-modal',
+                componentProps: { candidates, i18n: store.i18n }
+            });
+            dupModal.present();
+            const { data: chosen, role: dupRole } = await dupModal.onWillDismiss();
+
+            if (dupRole === 'create') {
+                await this.createNewPerson(p);
+            } else if (dupRole === 'select' && chosen) {
+                await this.reusePerson(chosen as PersonDuplicateCandidate, p);
+            }
+        },
+
+        /** Creates a brand-new person plus its address records and optional membership. */
+        async createNewPerson(p: PersonNewFormModel): Promise<void> {
+            const personKey = await store.personService.create(convertFormToNewPerson(p, store.tenantId()), store.currentUser());
+            const avatarKey = `person.${personKey}`;
+            if ((p.email ?? '').length > 0) this.saveAddress(convertNewPersonFormToEmailAddress(p, store.tenantId()), avatarKey);
+            if ((p.phone ?? '').length > 0) this.saveAddress(convertNewPersonFormToPhoneAddress(p, store.tenantId()), avatarKey);
+            if ((p.web ?? '').length > 0) this.saveAddress(convertNewPersonFormToWebAddress(p, store.tenantId()), avatarKey);
+            if ((p.city ?? '').length > 0) this.saveAddress(convertNewPersonFormToPostalAddress(p, store.tenantId()), avatarKey);
+            if (p.shouldAddMembership && (p.orgKey ?? '').length > 0 && (p.membershipCategory ?? '').length > 0) {
+                await this.saveMembership(p, personKey);
+            }
+        },
+
+        /**
+         * Reuses an existing person: reconcile differing fields, share into the current tenant,
+         * add any new contact channels, and optionally create a membership.
+         */
+        async reusePerson(candidate: PersonDuplicateCandidate, p: PersonNewFormModel): Promise<void> {
+            const { PersonReconcileModal } = await import('./person-reconcile.modal');
+            const recModal = await store.modalController.create({
+                component: PersonReconcileModal,
+                componentProps: { existing: candidate, form: p, i18n: store.i18n }
+            });
+            recModal.present();
+            const { data: resolved, role } = await recModal.onWillDismiss();
+            if (role !== 'confirm') return;
+
+            await store.personService.mergeIntoTenant(
+                candidate.bkey, store.tenantId(),
+                (resolved ?? {}) as Partial<Record<ReconcilableField, string>>);
+
+            // Non-destructive: add contact channels not already represented by the person's fav fields.
+            const avatarKey = `person.${candidate.bkey}`;
+            if ((p.email ?? '').length > 0 && p.email !== candidate.favEmail) this.saveAddress(convertNewPersonFormToEmailAddress(p, store.tenantId()), avatarKey);
+            if ((p.phone ?? '').length > 0 && p.phone !== candidate.favPhone) this.saveAddress(convertNewPersonFormToPhoneAddress(p, store.tenantId()), avatarKey);
+            if ((p.web ?? '').length > 0) this.saveAddress(convertNewPersonFormToWebAddress(p, store.tenantId()), avatarKey);
+            if ((p.city ?? '').length > 0) this.saveAddress(convertNewPersonFormToPostalAddress(p, store.tenantId()), avatarKey);
+            if (p.shouldAddMembership && (p.orgKey ?? '').length > 0 && (p.membershipCategory ?? '').length > 0) {
+                await this.saveMembership(p, candidate.bkey);
+            }
+            this.reload();
         },
 
         /**

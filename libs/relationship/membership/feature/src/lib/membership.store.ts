@@ -509,10 +509,6 @@ export const _MembershipStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data) {
           const newMember = data as MemberNewFormModel;
-          if (store.personService.checkIfExists(store.appStore.allPersons(), newMember.firstName, newMember.lastName)) {
-            if (!confirm(store.alertController, store.i18n.create_alreadyMember(), store.i18n.ok(), store.i18n.cancel(), true)) return;           
-          }
-
           const personKey = await store.personService.create(convertFormToNewPerson(newMember, tenantId), store.currentUser());
           const avatarKey = `person.${personKey}`;
           if (newMember.email.length > 0) {
