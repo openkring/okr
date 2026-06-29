@@ -1,0 +1,81 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "es2022",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "../../libs/auth/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/auth/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/category/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/cms/page/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/cms/menu/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/cms/section/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/subject/person/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/subject/org/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/subject/group/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/profile/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/user/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/resource/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/geo/location/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/calevent/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/aoc/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/task/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/quiz/feature/tsconfig.lib.json"
+    }
+  ],
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "typeCheckHostBindings": true,
+    "strictTemplates": true
+  }
+}

@@ -1,0 +1,44 @@
+# Firebase Service Worker Configuration
+
+The `firebase-messaging-sw.js` file requires Firebase configuration to initialize the Firebase app in the service worker context.
+
+## Security Approach
+
+To avoid hardcoding sensitive Firebase credentials directly in the service worker file, we use a dynamic configuration approach:
+
+1. **Build-time Generation**: During the build process, the `set-env.js` script generates a `firebase-config.js` file that contains the Firebase configuration loaded from environment variables.
+
+2. **Service Worker Import**: The `firebase-messaging-sw.js` file imports this generated configuration using `importScripts('./firebase-config.js')`.
+
+3. **Gitignore**: The `firebase-config.js` file is excluded from version control via `.gitignore` to prevent sensitive data from being committed.
+
+## How It Works
+
+1. When you run the build or the `set-env` target, the script:
+   - Reads Firebase configuration from `FIREBASE_WEBAPP_CONFIG` environment variable
+   - Generates `apps/{app-name}/src/firebase-config.js` with the configuration
+   - This file is then available to the service worker at runtime
+
+2. The service worker loads this configuration:
+   ```javascript
+   importScripts('./firebase-config.js');
+   firebase.initializeApp(firebaseConfig);
+   ```
+
+3. The generated `firebase-config.js` is automatically copied to the build output and served alongside other static assets.
+
+## Local Development
+
+The `firebase-config.js` files are generated automatically when you run:
+- `nx run test-app:set-env`
+- `nx run <%= tenantId %>-app:set-env`
+- Or any build command that depends on these targets
+
+Make sure your environment variables are properly set (either in `.env` file or as environment variables) before running the build.
+
+## Important Notes
+
+- **Never commit** `firebase-config.js` files to version control
+- The files are regenerated on each build with current environment configuration
+- In production, the configuration comes from Cloud Secrets via `FIREBASE_WEBAPP_CONFIG`
+- The same Firebase configuration is used for both the main app and the service worker

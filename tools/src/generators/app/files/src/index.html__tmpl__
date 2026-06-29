@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title><%= appName %></title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="<%= appName %>" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://firebase.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+    <link rel="preconnect" href="https://bkaiser.imgix.net" crossorigin />
+    <link rel="icon" href="https://bkaiser.imgix.net/tenant/<%= tenantId %>/logo/favicon.svg" />
+    <link rel="mask-icon" href="https://bkaiser.imgix.net/tenant/<%= tenantId %>/logo/mask-icon.svg" color="#000000" />
+    <link rel="apple-touch-icon" href="https://bkaiser.imgix.net/tenant/<%= tenantId %>/logo/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  </head>
+  <body>
+    <bk-root ngSkipHydration>
+      <!-- App shell: visible instantly while Angular bootstraps; replaced by the app on mount. -->
+      <style>
+        .bk-shell {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: #ffffff;
+          gap: 24px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+        }
+        .bk-shell__logo {
+          width: 96px;
+          height: 96px;
+        }
+        .bk-shell__spinner {
+          width: 36px;
+          height: 36px;
+          border: 3px solid #e0e0e0;
+          border-top-color: #3880ff;
+          border-radius: 50%;
+          animation: bk-spin 0.75s linear infinite;
+        }
+        @keyframes bk-spin { to { transform: rotate(360deg); } }
+        .bk-shell__label {
+          font-size: 0.875rem;
+          color: #92949c;
+          margin: 0;
+        }
+      </style>
+      <div class="bk-shell">
+        <img class="bk-shell__logo"
+             src="https://bkaiser.imgix.net/tenant/<%= tenantId %>/logo/favicon.svg"
+             alt="<%= appName %>" />
+        <div class="bk-shell__spinner"></div>
+        <p class="bk-shell__label">Bitte warten…</p>
+      </div>
+    </bk-root>
+    <noscript>Please enable JavaScript to continue using this application.</noscript>
+    <!-- ix-player is loaded lazily by Video component only when an album/video section is rendered -->
+  </body>
+</html>

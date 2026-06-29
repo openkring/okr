@@ -1,0 +1,9 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'org.bkaiser.<%= tenantId %>',
+  appName: '<%= appName %>',
+  webDir: '../../dist/apps/<%= tenantId %>-app/browser'
+};
+
+export default config;

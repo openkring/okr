@@ -1,0 +1,326 @@
+// to use custom properties from variables.scss
+// @import './theme/variables.scss';
+
+
+/* You can add global styles to this file, and also import other style files */
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import '@ionic/angular/css/core.css';
+
+/* Basic CSS for apps built with Ionic */
+@import '@ionic/angular/css/normalize.css';
+@import '@ionic/angular/css/structure.css';
+@import '@ionic/angular/css/typography.css';
+
+/* Optional CSS utils that can be commented out */
+@import '@ionic/angular/css/padding.css';
+@import '@ionic/angular/css/float-elements.css';
+@import '@ionic/angular/css/text-alignment.css';
+@import '@ionic/angular/css/text-transformation.css';
+@import '@ionic/angular/css/flex-utils.css';
+@import '@ionic/angular/css/display.css';
+
+/**
+ * Ionic Dark Palette
+ * -----------------------------------------------------
+ * For more information, please see:
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+
+@import '@ionic/angular/css/palettes/dark.system.css';
+
+/********************* custom style extensions *****************************/
+
+ion-content {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+ion-modal {
+  --background: rgba(44, 39, 45, 0.2);
+
+  &::part(content) {
+    backdrop-filter: blur(6px);
+  }
+
+  &::part(backdrop) {
+    background-color: rgba(209, 213, 219);
+    opacity: 1;
+  }
+}
+
+ion-modal ion-toolbar {
+  --background: rgba(14, 116, 144, 0.239);
+  --color: white;
+}
+
+.full-modal {
+  --height: 100%;
+  --width: 100%;
+}
+
+.upload-modal {
+  --height: 200px;
+  z-index: 100;
+}
+
+.wide-modal {
+  --height: 80%;
+  --width: 80%;
+  --border-radius: 10px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.map-modal {
+  --height: 70%;
+  --width: 70%;
+  --border-color: black;
+  --border_style: solid;
+  --border-width: 1px;
+  --border-radius: 10px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.small-modal {
+  --height: 50%;
+  --width: 50%;
+  z-index: 100;
+  --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.list-modal {
+  --height: 66%;
+  --width: 300px;
+  z-index: 101;
+  --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.list-modal-wide {
+  --height: 66%;
+  --width: 600px;
+  z-index: 101;
+  --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.zoom-modal {
+  --height: 600px;
+  --width: 600px;
+  z-index: 100;
+  --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --backdrop-opacity: var(--ion-backdrop-opacity, 0.32);
+}
+
+.login-modal {
+  --height: 300px;
+  --width: 400px;
+  z-index: 100;
+  --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --backdrop-opacity: var(--ion-backdrop-opacity, 0.32);
+}
+
+.date-modal {
+  --height: 480px;
+  --width: 400px;
+  z-index: 100;
+  --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --backdrop-opacity: var(--ion-backdrop-opacity, 0.32);
+}
+
+.date-modal2 {
+  --height: 550px;
+  --width: 400px;
+  z-index: 100;
+  --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --backdrop-opacity: var(--ion-backdrop-opacity, 0.32);
+}
+
+// Generic from/to duration picker (bk-duration-picker-modal): two calendars side by side.
+.duration-picker-modal {
+  --height: 600px;
+  --width: 800px;
+  z-index: 100;
+  --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --backdrop-opacity: var(--ion-backdrop-opacity, 0.32);
+
+  // left-aligned modal title (matches other forms)
+  ion-title {
+    text-align: start;
+    padding-inline-start: 16px;
+  }
+
+  // prominent "Von" / "Bis" headers above each calendar
+  .duration-header {
+    background: var(--ion-color-light);
+    color: var(--ion-color-light-contrast);
+    font-weight: 600;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+
+  ion-datetime {
+    margin-inline: auto;
+  }
+
+  // stack the two calendars on narrow screens
+  @media (width <= 700px) {
+    --width: 96%;
+    --height: 90%;
+  }
+}
+
+.time-modal {
+  --height: 330px;
+  --width: 250px;
+  z-index: 100;
+  --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --backdrop-opacity: var(--ion-backdrop-opacity, 0.32);
+}
+
+.tag-modal {
+  --height: 480px;
+  --width: 400px;
+  z-index: 100;
+  --border-radius: 10px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+}
+
+.color-modal {
+  --height: 430px;
+  --width: 230px;
+  z-index: 100;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
+  --border-radius: 10px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+ion-modal.stack-modal {
+  --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.4);
+  --backdrop-opacity: var(--ion-backdrop-opacity, 0.32);
+}
+
+/* Force hover & activated states in ALL popovers, e.g. bk-cat-select */
+.raw-message-alert .alert-message {
+  text-align: left;
+}
+
+.bk-prompt-alert {
+  --width: min(92vw, 560px);
+
+  .alert-input-group textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+}
+
+.custom-action-sheet {
+  .action-sheet-divider {
+    height: 4px !important;           // or 1px for thin line
+    background: var(--ion-color-light) !important;
+    pointer-events: none;
+    min-height: 4px !important;
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+
+  .action-sheet-group button.action-sheet-divider {
+    border-top: none !important;
+    border-bottom: none !important;
+  }
+}
+
+ion-popover ion-item {
+  --ion-item-background-hover: var(--ion-color-light) !important;
+  --ion-item-color-hover: var(--ion-color-primary) !important;
+}
+
+ion-popover ion-item.active,
+ion-popover ion-item[button]:active {
+  --ion-item-background: var(--ion-color-primary) !important;
+  --ion-item-color: var(--ion-color-primary-contrast) !important;
+}
+
+ion-popover ion-item.hover {
+  --ion-item-background: var(--ion-color-light) !important;
+  --ion-item-color: var(--ion-color-primary) !important;
+}
+
+.fullscreen-modal {
+  --width: 100%;
+  --height: 100%;
+  --border-radius: 0;
+}
+
+// CDK drag-and-drop appends the drag preview to document.body, which sits behind
+// Ionic modals (z-index ~20000). Lift it above so dragging inside a modal is visible.
+.cdk-drag-preview {
+  z-index: 100000 !important;
+}
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}

@@ -1,0 +1,11 @@
+{
+  "language": {
+    "label": "Idioma",
+    "select": "Seleccionar idioma",
+    "de": "Alemán",
+    "en": "Inglés",
+    "fr": "Francés",
+    "es": "Español",
+    "it": "Italiano"
+  }
+}
