@@ -19,7 +19,6 @@ const pkgPath = join(repoRoot, 'package.json');
 // app -> hosting site id (from firebase.json). Keep in sync with the firebase-deploy skill.
 const SITES = {
   'scs-app': 'scs-app-54aef',
-  'test-app': 'test-app-54aef',
   'okr-website': 'okr-website-54aef',
   'kring-website': 'kring-website-54aef',
   'p13-website': 'p13-website-54aef',

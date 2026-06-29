@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "nx run test-app:build:production",
+    "build": "nx run scs-app:build:production",
     "build:affected": "nx affected -t build",
     "build:functions": "nx build functions",
     "build:web-css": "tailwindcss -c apps/scs-website/tailwind.config.js -i apps/scs-website/tailwind.input.css -o apps/scs-website/assets/tailwind.css --minify",
@@ -15,7 +15,7 @@
     "testlibs": "NODE_OPTIONS='--max-old-space-size=8192' pnpm nx run-many --target=test --all --exclude=bk2monorepo,scs-app",
     "lint": "NODE_OPTIONS='--max-old-space-size=8192' nx lint",
     "e2e": "nx e2e",
-    "dev": "nx serve test-app",
+    "dev": "nx serve scs-app",
     "release": "node scripts/release.mjs",
     "format": "nx run-many --target=format --all",
     "format:check": "nx run-many --target=format:check --all",

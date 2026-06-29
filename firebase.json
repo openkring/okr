@@ -106,51 +106,6 @@
       ]
     },
     {
-      "site": "test-app-54aef",
-      "public": "dist/apps/test-app/browser",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**",
-        "**/*.map"
-      ],
-      "rewrites": [
-        {
-          "source": "**",
-          "destination": "/index.html"
-        }
-      ],
-      "headers": [
-        {
-          "source": "**/*.@(js|css)",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "public, max-age=31536000, immutable"
-            }
-          ]
-        },
-        {
-          "source": "**/*.html",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "public, max-age=0, must-revalidate"
-            }
-          ]
-        },
-        {
-          "source": "**",
-          "headers": [
-            {
-              "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' blob:; connect-src 'self' blob: https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://maps.gstatic.com https://*.imgix.net https://matrix.bkchat.etke.host https://europe-west6-bkaiser-org.cloudfunctions.net https://cdn.jsdelivr.net; frame-src https://recaptcha.google.com https://www.google.com https://*.firebaseapp.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "site": "okr-website-54aef",
       "public": "dist/apps/okr-website",
       "cleanUrls": true,
