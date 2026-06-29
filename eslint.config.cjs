@@ -5,6 +5,15 @@ const prettierConfig = require('eslint-config-prettier');
 
 module.exports = [
   {
+    files: ['**/*.json'],
+    // Override or add rules here
+    rules: {},
+    languageOptions: {
+      parser: require('jsonc-eslint-parser'),
+    },
+  },
+
+  {
     plugins: {
       '@nx': nx,
       prettier,
@@ -22,8 +31,8 @@ module.exports = [
       },
     },
     rules: {
-   //   ...prettierConfig.rules, // Disable conflicting ESLint rules
-   //   'prettier/prettier': ['error', {}, { usePrettierrc: true }], // Run Prettier as ESLint rule
+      //   ...prettierConfig.rules, // Disable conflicting ESLint rules
+      //   'prettier/prettier': ['error', {}, { usePrettierrc: true }], // Run Prettier as ESLint rule
       '@nx/enforce-module-boundaries': [
         'error',
         {
@@ -59,29 +68,11 @@ module.exports = [
   {
     files: ['**/*.js', '**/*.jsx'],
     rules: {
-   //   ...prettierConfig.rules,
-   //   'prettier/prettier': ['error', {}, { usePrettierrc: true }],
+      //   ...prettierConfig.rules,
+      //   'prettier/prettier': ['error', {}, { usePrettierrc: true }],
     },
   },
   {
-    ignores: [
-      'node_modules/',
-      'dist/',
-      'coverage/',
-      'apps/*/node_modules/',
-      'libs/*/dist/',
-      '.angular',
-      '.github',
-      '.idx',
-      '.nx',
-      '.vscode',
-      'tmp',
-      '**/android',
-      '**/ios',
-      '**/web',
-      '**/test-setup.ts',
-      '**/vite.config.*.timestamp*',
-      '**/vitest.config.*.timestamp*'
-    ],
+    ignores: ['node_modules/', 'dist/', 'coverage/', 'apps/*/node_modules/', 'libs/*/dist/', '.angular', '.github', '.idx', '.nx', '.vscode', 'tmp', '**/android', '**/ios', '**/web', '**/test-setup.ts', '**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
   },
 ];
