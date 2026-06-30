@@ -29,15 +29,13 @@ export const esignWebhook = onRequest(
       return;
     }
 
+    // DeepSign CallbackInfo body (confirmed via int callback): event-based, not status-based.
     const payload = req.body as {
+      eventType?: 'signee-completed' | 'document-completed';
       documentId?: string;
-      documentStatus?: string;
-      signStatus?: string;
       signeeId?: string;
-      viewedTime?: string;
-      signedTime?: string;
-      completionTime?: string;
-      signeeComment?: string;
+      signeeType?: string;
+      timestamp?: string;
     };
 
     const db = getFirestore();
@@ -51,47 +49,40 @@ export const esignWebhook = onRequest(
     }
 
     const record = snap.data() as { documentStatus: string };
-    const newDocStatus = payload.documentStatus;
 
-    // Idempotency: ignore if already terminal with same status
-    if (TERMINAL_STATUSES.includes(record.documentStatus) && newDocStatus === record.documentStatus) {
+    // Idempotency: nothing more to do once the document is in a terminal state.
+    if (TERMINAL_STATUSES.includes(record.documentStatus)) {
       res.status(200).send('OK');
       return;
     }
 
-    const now = Timestamp.now();
-    const update: Record<string, unknown> = {
-      updatedAt: FieldValue.serverTimestamp(),
-      events: FieldValue.arrayUnion({ type: newDocStatus, at: now, payload }),
-    };
+    const eventTime = payload.timestamp ? Timestamp.fromDate(new Date(payload.timestamp)) : Timestamp.now();
+    const update: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
 
-    if (newDocStatus) update['documentStatus'] = newDocStatus;
-    if (payload.signStatus) update['signStatus'] = payload.signStatus;
-
-    // Update matching signee entry
-    if (payload.signeeId) {
+    if (payload.eventType === 'signee-completed' && payload.signeeId) {
+      // Mark the matching signee as signed.
       const currentSignees = (snap.data()?.['signees'] ?? []) as Array<Record<string, unknown>>;
-      const updatedSignees = currentSignees.map(s => {
-        if (s['signeeId'] !== payload.signeeId) return s;
-        return {
-          ...s,
-          ...(payload.signStatus   ? { signStatus:      payload.signStatus   } : {}),
-          ...(payload.viewedTime   ? { viewedTime:      Timestamp.fromDate(new Date(payload.viewedTime))   } : {}),
-          ...(payload.signedTime   ? { signedTime:      Timestamp.fromDate(new Date(payload.signedTime))   } : {}),
-          ...(payload.completionTime ? { completionTime: Timestamp.fromDate(new Date(payload.completionTime)) } : {}),
-          ...(payload.signeeComment ? { signeeComment:  payload.signeeComment  } : {}),
-        };
-      });
-      update['signees'] = updatedSignees;
-    }
-
-    // Set completionTime if terminal
-    if (newDocStatus && TERMINAL_STATUSES.includes(newDocStatus)) {
-      update['completionTime'] = now;
+      update['signees'] = currentSignees.map(s =>
+        s['signeeId'] === payload.signeeId
+          ? { ...s, signStatus: 'signed', signedTime: eventTime, completionTime: eventTime }
+          : s,
+      );
+      update['events'] = FieldValue.arrayUnion({ type: 'signee-signed', at: eventTime, signeeId: payload.signeeId });
+    } else if (payload.eventType === 'document-completed') {
+      // Whole document signed → terminal. esignArchiveSigned picks this up to archive the PDF.
+      update['documentStatus'] = 'signed';
+      update['signStatus'] = 'signed';
+      update['completionTime'] = eventTime;
+      update['events'] = FieldValue.arrayUnion({ type: 'completed', at: eventTime });
+    } else {
+      // Unknown / unhandled event — acknowledge so DeepSign doesn't retry.
+      logger.warn('esignWebhook: unhandled eventType', { esignId, eventType: payload.eventType });
+      res.status(200).send('OK');
+      return;
     }
 
     await docRef.update(update);
-    logger.info('esignWebhook: updated', { esignId, newDocStatus });
+    logger.info('esignWebhook: updated', { esignId, eventType: payload.eventType });
     res.status(200).send('OK');
   },
 );

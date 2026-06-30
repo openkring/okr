@@ -5,10 +5,8 @@ import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import axios from 'axios';
 import {
-  ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken, assertEsignAccess,
-  deepsignClientId, deepsignClientSecret,
-  deepsignServiceUsername, deepsignServicePassword,
+  ALL_ESIGN_SECRETS, REGION,
+  getDeepSignAccessToken, getEsignApiBase, assertEsignAccess,
 } from './shared';
 import { EsignCollection, EsignAuditCollection } from '@bk2/shared-models';
 
@@ -38,24 +36,22 @@ export const esignDelete = onCall<{ esignId: string; reason?: string }>(
     const status = record.documentStatus;
     let token: string | null = null;
 
+    const apiBase = getEsignApiBase();
     const needsToken = !['uploading', 'error'].includes(status);
     if (needsToken) {
-      token = await getDeepSignAccessToken(
-        deepsignClientId.value(), deepsignClientSecret.value(),
-        deepsignServiceUsername.value(), deepsignServicePassword.value(),
-      );
+      token = await getDeepSignAccessToken();
     }
 
     // Status-dependent cleanup on DeepSign side
     if (status === 'in-progress' && token) {
       await axios.put(
-        `${DEEPSIGN_API_BASE}/documents/${record.deepsignDocumentId}/withdraw`,
+        `${apiBase}/documents/${record.deepsignDocumentId}/withdraw`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
       // Poll once to confirm withdrawn
       await axios.get(
-        `${DEEPSIGN_API_BASE}/documents/${record.deepsignDocumentId}`,
+        `${apiBase}/documents/${record.deepsignDocumentId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
     }
@@ -63,7 +59,7 @@ export const esignDelete = onCall<{ esignId: string; reason?: string }>(
     if (!['uploading', 'error'].includes(status) && token) {
       try {
         await axios.delete(
-          `${DEEPSIGN_API_BASE}/documents/${record.deepsignDocumentId}`,
+          `${apiBase}/documents/${record.deepsignDocumentId}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
       } catch (err) {

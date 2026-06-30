@@ -1,7 +1,7 @@
 // libs/esign/feature/src/lib/esign-delete-confirm.modal.ts
 import { ChangeDetectionStrategy, Component, inject, input, computed } from '@angular/core';
 import {
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
+  IonHeader, IonFooter, IonToolbar, IonTitle, IonButtons, IonButton,
   IonContent, ModalController,
 } from '@ionic/angular/standalone';
 
@@ -18,7 +18,7 @@ interface DeleteConfig {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
+    IonHeader, IonFooter, IonToolbar, IonTitle, IonButtons, IonButton,
     IonContent,
   ],
   styles: [`
@@ -27,7 +27,7 @@ interface DeleteConfig {
   `],
   template: `
     <ion-header>
-      <ion-toolbar>
+      <ion-toolbar color="secondary">
         <ion-title>{{ cfg().title }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="cancel()">Abbrechen</ion-button>
@@ -39,12 +39,14 @@ interface DeleteConfig {
       <p class="body" [innerHTML]="cfg().body"></p>
     </ion-content>
 
-    <ion-toolbar>
-      <ion-buttons slot="end">
-        <ion-button (click)="cancel()">Abbrechen</ion-button>
-        <ion-button color="danger" (click)="confirm()">{{ cfg().confirmLabel }}</ion-button>
-      </ion-buttons>
-    </ion-toolbar>
+    <ion-footer>
+      <ion-toolbar color="light">
+        <ion-buttons slot="end">
+          <ion-button (click)="cancel()">Abbrechen</ion-button>
+          <ion-button color="danger" (click)="confirm()">{{ cfg().confirmLabel }}</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-footer>
   `
 })
 export class EsignDeleteConfirmModal {

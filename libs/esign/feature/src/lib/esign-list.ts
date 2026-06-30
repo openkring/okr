@@ -1,5 +1,6 @@
 // libs/esign/feature/src/lib/esign-list.ts
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { ActionSheetController, ActionSheetOptions, ModalController, ToastController } from '@ionic/angular/standalone';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
@@ -21,13 +22,14 @@ import { EsignStore } from './esign.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [EsignStore],
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, DatePipe,
     Spinner, ListFilter, EmptyList,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonMenuButton,
     IonContent, IonLabel, IonGrid, IonRow, IonCol, IonChip,
   ],
   styles: [`
     .e-name  { font-size: 1rem; }
+    .e-date  { color: var(--ion-color-medium); font-weight: 600; margin-right: 6px; }
     .e-meta  { font-size: 0.8rem; color: var(--ion-color-medium); }
     ion-chip { font-size: 0.75rem; height: 20px; }
     .filter-row { display: flex; gap: 4px; padding: 4px 8px; overflow-x: auto; }
@@ -67,7 +69,10 @@ import { EsignStore } from './esign.store';
             <ion-row (click)="showActions(esign)">
               <ion-col size="6">
                 <ion-label>
-                  <p class="e-name">{{ esign.documentName }}</p>
+                  <p class="e-name">
+                    <span class="e-date">{{ esign.createdAt.toDate() | date:'dd.MM.yy' }}</span>
+                    {{ esign.documentName }}
+                  </p>
                   <p class="e-meta">{{ subtitle(esign) }}</p>
                 </ion-label>
               </ion-col>

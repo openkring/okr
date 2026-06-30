@@ -5,10 +5,8 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import axios from 'axios';
 import {
-  ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken,
-  deepsignClientId, deepsignClientSecret,
-  deepsignServiceUsername, deepsignServicePassword,
+  ALL_ESIGN_SECRETS, REGION,
+  getDeepSignAccessToken, getEsignApiBase,
 } from './shared';
 import { EsignCollection } from '@bk2/shared-models';
 
@@ -31,13 +29,10 @@ export const esignArchiveSigned = onDocumentUpdated(
     const { esignId } = event.params;
 
     try {
-      const token = await getDeepSignAccessToken(
-        deepsignClientId.value(), deepsignClientSecret.value(),
-        deepsignServiceUsername.value(), deepsignServicePassword.value(),
-      );
+      const token = await getDeepSignAccessToken();
 
       const detailsResponse = await axios.get(
-        `${DEEPSIGN_API_BASE}/documents/${after.deepsignDocumentId}`,
+        `${getEsignApiBase()}/documents/${after.deepsignDocumentId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
 

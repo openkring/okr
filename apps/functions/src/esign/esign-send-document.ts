@@ -4,10 +4,9 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import axios from 'axios';
 import {
-  ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken, downloadFromStorage, computeWebhookToken, getCallerTenants,
-  deepsignClientId, deepsignClientSecret,
-  deepsignServiceUsername, deepsignServicePassword, webhookSecret,
+  ALL_ESIGN_SECRETS, REGION,
+  getDeepSignAccessToken, getEsignApiBase, downloadFromStorage, computeWebhookToken, getCallerTenants,
+  mapDeepSignSignees, webhookSecret,
 } from './shared';
 import { EsignCollection } from '@bk2/shared-models';
 
@@ -74,11 +73,9 @@ export const esignSendDocument = onCall<EsignSendDocumentRequest>(
       // Download PDF and acquire token in parallel
       const [buffer, token] = await Promise.all([
         downloadFromStorage(storagePath),
-        getDeepSignAccessToken(
-          deepsignClientId.value(), deepsignClientSecret.value(),
-          deepsignServiceUsername.value(), deepsignServicePassword.value(),
-        ),
+        getDeepSignAccessToken(),
       ]);
+      const apiBase = getEsignApiBase();
 
       const webhookToken = computeWebhookToken(esignId, webhookSecret.value());
       const projectId = process.env['GCLOUD_PROJECT'] ?? '';
@@ -92,7 +89,11 @@ export const esignSendDocument = onCall<EsignSendDocumentRequest>(
         signatureMode,
         jurisdiction,
         scanPredefined: true,
-        callbacks: { documentStatusUrl: webhookUrl, signeeStatusUrl: webhookUrl },
+        // DeepSign callback registration (per int OpenAPI: AddDocumentFile schema).
+        // `callbacks`/`documentStatusUrl` are NOT real fields — DeepSign silently drops them.
+        callbackUrl: webhookUrl,
+        callbackEventTypes: ['signee-completed', 'document-completed'],
+        callbackSecret: webhookSecret.value(),
       };
 
       const formData = new FormData();
@@ -107,25 +108,29 @@ export const esignSendDocument = onCall<EsignSendDocumentRequest>(
         signeesOrdered: boolean;
         creationTime: string;
       }>(
-        `${DEEPSIGN_API_BASE}/documents/file`,
+        `${apiBase}/documents/file`,
         formData,
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      const { documentId, documentStatus, signees, signeesOrdered, creationTime } = uploadResponse.data;
+      const { documentId, signees, creationTime } = uploadResponse.data;
+      // DeepSign's raw signees carry nested-array properties Firestore rejects; project
+      // onto our flat EsignSignee shape before persisting/returning.
+      const mappedSignees = mapDeepSignSignees(signees);
 
+      // NB: do NOT persist DeepSign's raw `signeesOrdered` — it is not part of EsignRecord
+      // and DeepSign returns it as a nested-array ordering structure, which Firestore rejects.
       await docRef.update({
         deepsignDocumentId: documentId,
         documentStatus: 'draft',
-        signees,
-        signeesOrdered,
-        deepsignCreationTime: creationTime,
+        signees: mappedSignees,
+        deepsignCreationTime: String(creationTime ?? ''),
         updatedAt: FieldValue.serverTimestamp(),
       });
 
       // Start the signing process
       await axios.put(
-        `${DEEPSIGN_API_BASE}/documents/${documentId}/start`,
+        `${apiBase}/documents/${documentId}/start`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -139,10 +144,13 @@ export const esignSendDocument = onCall<EsignSendDocumentRequest>(
       });
 
       logger.info('esignSendDocument: started', { esignId, documentId });
-      return { esignId, documentId, signees };
+      return { esignId, documentId, signees: mappedSignees };
 
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
+      // Surface DeepSign's actual error body (axios only exposes "status code NNN" in .message).
+      const message = axios.isAxiosError(err) && err.response
+        ? `HTTP ${err.response.status}: ${JSON.stringify(err.response.data)}`
+        : err instanceof Error ? err.message : String(err);
       await docRef.update({
         documentStatus: 'error',
         errorMessage: message,

@@ -2,10 +2,8 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import {
-  ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken, downloadFromStorage, getCallerTenants,
-  deepsignClientId, deepsignClientSecret,
-  deepsignServiceUsername, deepsignServicePassword,
+  ALL_ESIGN_SECRETS, REGION,
+  getDeepSignAccessToken, getEsignApiBase, downloadFromStorage, getCallerTenants,
 } from './shared';
 
 interface ScanPredefinedRequest { storagePath: string }
@@ -26,10 +24,7 @@ export const esignScanPredefined = onCall<ScanPredefinedRequest>(
     );
     if (!inTenant) throw new HttpsError('permission-denied', 'storagePath is outside your tenant.');
 
-    const token = await getDeepSignAccessToken(
-      deepsignClientId.value(), deepsignClientSecret.value(),
-      deepsignServiceUsername.value(), deepsignServicePassword.value(),
-    );
+    const token = await getDeepSignAccessToken();
 
     const buffer = await downloadFromStorage(storagePath);
     const filename = storagePath.split('/').pop() ?? 'document.pdf';
@@ -38,7 +33,7 @@ export const esignScanPredefined = onCall<ScanPredefinedRequest>(
     formData.set('file', new Blob([buffer], { type: 'application/pdf' }), filename);
 
     const response = await axios.post(
-      `${DEEPSIGN_API_BASE}/documents/file/scan-predefined`,
+      `${getEsignApiBase()}/documents/file/scan-predefined`,
       formData,
       { headers: { Authorization: `Bearer ${token}` } },
     );

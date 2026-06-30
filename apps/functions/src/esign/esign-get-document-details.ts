@@ -3,10 +3,8 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 import axios from 'axios';
 import {
-  ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken, assertEsignAccess,
-  deepsignClientId, deepsignClientSecret,
-  deepsignServiceUsername, deepsignServicePassword,
+  ALL_ESIGN_SECRETS, REGION,
+  getDeepSignAccessToken, getEsignApiBase, assertEsignAccess,
 } from './shared';
 import { EsignCollection } from '@bk2/shared-models';
 
@@ -25,13 +23,10 @@ export const esignGetDocumentDetails = onCall<{ esignId: string }>(
     const record = snap.data() as { deepsignDocumentId: string; tenantId?: string; ownerUserId?: string };
     await assertEsignAccess(request.auth.uid, record);
 
-    const token = await getDeepSignAccessToken(
-      deepsignClientId.value(), deepsignClientSecret.value(),
-      deepsignServiceUsername.value(), deepsignServicePassword.value(),
-    );
+    const token = await getDeepSignAccessToken();
 
     const response = await axios.get(
-      `${DEEPSIGN_API_BASE}/documents/${record.deepsignDocumentId}`,
+      `${getEsignApiBase()}/documents/${record.deepsignDocumentId}`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
 

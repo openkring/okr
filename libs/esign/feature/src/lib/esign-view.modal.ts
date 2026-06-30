@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angu
 import { DatePipe } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+  IonHeader, IonFooter, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
   IonContent, IonGrid, IonRow, IonCol, IonLabel, IonChip,
   IonList, IonItem, IonNote, ModalController, ToastController,
 } from '@ionic/angular/standalone';
@@ -19,7 +19,7 @@ import { EsignService } from '@bk2/esign-data-access';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     SvgIconPipe,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+    IonHeader, IonFooter, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
     IonContent, IonGrid, IonRow, IonCol, IonLabel, IonChip,
     IonList, IonItem, IonNote,
     DatePipe,
@@ -35,18 +35,12 @@ import { EsignService } from '@bk2/esign-data-access';
   `],
   template: `
     <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
+      <ion-toolbar color="secondary">
+        <ion-title>{{ esign().documentName }}</ion-title>
+        <ion-buttons slot="end">
           <ion-button (click)="close()">
             <ion-icon src="{{ 'cancel' | svgIcon }}" slot="icon-only" />
           </ion-button>
-        </ion-buttons>
-        <ion-title>{{ esign().documentName }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-chip [outline]="true" size="small"
-            [color]="esignService.statusColor(esign().documentStatus)">
-            {{ esignService.statusLabel(esign().documentStatus) }}
-          </ion-chip>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -67,6 +61,15 @@ import { EsignService } from '@bk2/esign-data-access';
           <ion-col>
             <p class="section-title">Details</p>
             <ion-list lines="none">
+              <ion-item>
+                <ion-label>
+                  <p class="meta-label">Status</p>
+                  <ion-chip [outline]="true" size="small"
+                    [color]="esignService.statusColor(esign().documentStatus)">
+                    {{ esignService.statusLabel(esign().documentStatus) }}
+                  </ion-chip>
+                </ion-label>
+              </ion-item>
               <ion-item>
                 <ion-label>
                   <p class="meta-label">Initiator</p>
@@ -130,23 +133,25 @@ import { EsignService } from '@bk2/esign-data-access';
     </ion-content>
 
     <!-- Footer -->
-    <ion-toolbar>
-      <ion-buttons slot="start">
-        <ion-button (click)="refresh()">
-          <ion-icon src="{{ 'reload' | svgIcon }}" slot="icon-only" />
-        </ion-button>
-        @if(esign().documentStatus === 'signed') {
-          <ion-button (click)="downloadSigned()">
-            <ion-icon src="{{ 'download' | svgIcon }}" slot="icon-only" />
+    <ion-footer>
+      <ion-toolbar color="light">
+        <ion-buttons slot="start">
+          <ion-button (click)="refresh()" title="Vorschau aktualisieren">
+            <ion-icon src="{{ 'reload' | svgIcon }}" slot="icon-only" />
           </ion-button>
-        }
-      </ion-buttons>
-      <ion-buttons slot="end">
-        <ion-button color="danger" (click)="requestDelete()">
-          <ion-icon src="{{ 'trash' | svgIcon }}" slot="icon-only" />
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
+          @if(esign().documentStatus === 'signed') {
+            <ion-button (click)="downloadSigned()" title="Signiertes PDF herunterladen">
+              <ion-icon src="{{ 'download' | svgIcon }}" slot="icon-only" />
+            </ion-button>
+          }
+        </ion-buttons>
+        <ion-buttons slot="end">
+          <ion-button color="danger" (click)="requestDelete()" title="Löschen">
+            <ion-icon src="{{ 'trash' | svgIcon }}" slot="icon-only" />
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-footer>
   `
 })
 export class EsignViewModal {

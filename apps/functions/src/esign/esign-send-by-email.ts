@@ -6,10 +6,8 @@ import { defineSecret } from 'firebase-functions/params';
 import axios from 'axios';
 import { sendEmailViaProvider } from '../auth/email-transport';
 import {
-  ALL_ESIGN_SECRETS, DEEPSIGN_API_BASE, REGION,
-  getDeepSignAccessToken,
-  deepsignClientId, deepsignClientSecret,
-  deepsignServiceUsername, deepsignServicePassword,
+  ALL_ESIGN_SECRETS, REGION,
+  getDeepSignAccessToken, getEsignApiBase,
 } from './shared';
 import { EsignCollection } from '@bk2/shared-models';
 
@@ -45,12 +43,9 @@ export const esignSendByEmail = onCall<{
     const emailHtml = body ?? `<p>Bitte finden Sie das Dokument <strong>${record.documentName}</strong> im Anhang.</p>`;
 
     if (includeSignedPdf) {
-      const token = await getDeepSignAccessToken(
-        deepsignClientId.value(), deepsignClientSecret.value(),
-        deepsignServiceUsername.value(), deepsignServicePassword.value(),
-      );
+      const token = await getDeepSignAccessToken();
       const detailsResponse = await axios.get(
-        `${DEEPSIGN_API_BASE}/documents/${record.deepsignDocumentId}`,
+        `${getEsignApiBase()}/documents/${record.deepsignDocumentId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const documentUrl: string = detailsResponse.data.documentUrl;
