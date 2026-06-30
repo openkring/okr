@@ -3,7 +3,6 @@
   "result": {
     "title": "Resultate"
   },
-
   "account": {
     "title": "User Accounts",
     "plural": "Konti",
@@ -23,19 +22,18 @@
     },
     "fbuser": {
       "delete": {
-          "label": "Firebase User löschen",
-          "error": "Der Firebase User konnte nicht gelöscht werden.",
-          "conf": "Der Firebase User wurde gelöscht.",
-          "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
+        "label": "Firebase User löschen",
+        "error": "Der Firebase User konnte nicht gelöscht werden.",
+        "conf": "Der Firebase User wurde gelöscht.",
+        "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
       }
     },
     "email": {
       "label": "Login E-Mail",
       "placeholder": "name@domain.com"
     },
-    
     "membership": {
-      "edit":  "Mitgliedschaft ändern"
+      "edit": "Mitgliedschaft ändern"
     },
     "copy": {
       "email": "E-Mail kopieren",
@@ -43,7 +41,6 @@
       "pkey": "Person-Key kopieren"
     }
   },
-
   "adminops": {
     "title": "Admin Operationen",
     "debug": {
@@ -71,8 +68,12 @@
       "nodob": "Kein Geburtsdatum",
       "description": "Die unten aufgelisteten Mitglieder sind in der Datenbank aktull noch als Junioren geführt und müssen auf Aktive umgeteilt werden, weil sie vor {{ refYear }} geboren sind."
     },
-    "club": { "label": "Verein" },
-    "year": { "label": "Jahr" },
+    "club": {
+      "label": "Verein"
+    },
+    "year": {
+      "label": "Jahr"
+    },
     "membership": {
       "prices": {
         "title": "Jahresbeiträge aktualisieren",
@@ -94,7 +95,6 @@
       "description": "Die unten aufgelisteten Mitglieder sind in der Datenbank mit Eintritt als Aktivmitglied geführt, sie sollten anfänglich auf Jugendliche umgeteilt werden."
     }
   },
-
   "bexio": {
     "title": "Verwaltung der Bexio Integration",
     "invoices": {
@@ -129,7 +129,9 @@
       "title": "Bexio Kontakte synchronisieren",
       "content": "Es werden alle Personen, Organisationen und ihre Mitgliedschaften mit der Default Organisation geladen. Die BexioID in diesen Entitäten wird abgeglichen. Dann werden alle Kontakte von Bexio geladen und in die gleiche Liste eingefügt und geprüft. Bei fehlenden Einträgen erscheint ein add Button für den Abgleich.",
       "button": "Sync",
-      "contactFilter": { "label": "Kontakt-Filter" }
+      "contactFilter": {
+        "label": "Kontakt-Filter"
+      }
     },
     "edit": {
       "person": "Person bearbeiten",
@@ -159,7 +161,6 @@
       "link": "Verknüpfen"
     }
   },
-
   "chat": {
     "title": "Chat Admin (Matrix)",
     "rooms": "Räume",
@@ -247,7 +248,6 @@
       }
     }
   },
-
   "content": {
     "content": "Inhalte (Pages, Sections, Menus) verwalten.",
     "title": "Content-Management",
@@ -280,7 +280,24 @@
       },
       "create": "Sektion erstellen",
       "edit": "Sektion bearbeiten",
-      "removeRef": "Referenz von Seite entfernen"
+      "removeRef": "Referenz von Seite entfernen",
+      "images": {
+        "title": "Bilder mit fehlendem Doc prüfen",
+        "content": "Prüft pro Sektion, ob im Storage hochgeladene Bilder einen Eintrag in der docs-Kollektion haben. Beim Erstellen wird das Bild zusätzlich der Sektion zugeordnet (Artikel/Slider).",
+        "hide": "Ausblenden",
+        "show": "Anzeigen",
+        "detail": "Bild anzeigen",
+        "download": "Bild herunterladen",
+        "create": {
+          "label": "Dokument erstellen & Bild der Sektion zuordnen",
+          "conf": "Das Dokument wurde erstellt.",
+          "error": "Das Dokument konnte nicht erstellt werden."
+        },
+        "delete": {
+          "label": "Bild löschen",
+          "confirm": "Soll diese Bilddatei aus dem Firebase Storage gelöscht werden?"
+        }
+      }
     },
     "menu": {
       "delete": {
@@ -312,7 +329,6 @@
       "edit": "Website bearbeiten"
     }
   },
-
   "data": {
     "title": "Daten",
     "content": "Daten validieren und korrigieren",
@@ -348,11 +364,9 @@
       "nomismatches": "Keine Abweichungen gefunden."
     }
   },
-
   "doc": {
     "title": "Dokumente prüfen",
     "content": "Prüft ob alle Dateien in Firebase Storage einen entsprechenden Eintrag in der Datenbank haben.",
-
     "copy": {
       "path": "Speicherpfad kopieren",
       "url": "Download-URL kopieren"
@@ -380,7 +394,6 @@
       "button": "Prüfen"
     }
   },
-
   "roles": {
     "title": "Autorisierung und Rollen",
     "personSelect": {
@@ -425,7 +438,6 @@
       "reset": "Sende eine Passwort-Reset Email an den ausgewählten User."
     }
   },
-
   "session": {
     "title": "Sessions",
     "empty": "Keine Sessions im gewählten Zeitraum",
@@ -484,7 +496,6 @@
       "to": "Bis"
     }
   },
-
   "srv": {
     "title": "Verwaltung der SRV / Regasoft Integration",
     "index": {
@@ -534,9 +545,6 @@
       }
     }
   },
-
-
-
   "statistics": {
     "header": "AOC Statistiken",
     "content": "Gewisse Statistiken können hier aus den aktuellen Daten neu berechnet werden. Diese Berechnung sollte nur durchgeführt werden, wenn die Datenbank in einem stabilen Zustand ist. Die Berechnung kann einige Zeit in Anspruch nehmen. Die Statistiken sollten anschliessend überprüft werden und allenfalls manuell korrigiert werden.",
@@ -578,7 +586,6 @@
       "button": "Ausführen"
     }
   },
-
   "storage": {
     "title": "Firebase Storage",
     "content": "Operationen, um die Dateien und Bilder im Firebase Storage zu verwalten.",
@@ -593,7 +600,6 @@
       "buttonLabel": "Grösse berechnen"
     }
   },
-
   "tag": {
     "title": "Tag-Verwaltung",
     "add": {
@@ -642,7 +648,6 @@
       "empty": "Keine TagList ausgewählt"
     }
   },
-
   "website": {
     "title": "Website Texte",
     "key": "ID",

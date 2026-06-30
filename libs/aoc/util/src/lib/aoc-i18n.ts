@@ -239,6 +239,18 @@ export const AOC_I18N_KEYS = {
   content_copy_bkey:                        PFX + 'content.copy.bkey',
   content_page_edit:                        PFX + 'content.page.edit',
 
+  content_section_images_title:             PFX + 'content.section.images.title',
+  content_section_images_content:           PFX + 'content.section.images.content',
+  content_section_images_hide:              PFX + 'content.section.images.hide',
+  content_section_images_show:              PFX + 'content.section.images.show',
+  content_image_create:                     PFX + 'content.section.images.create.label',
+  content_image_create_conf:                PFX + 'content.section.images.create.conf',
+  content_image_create_error:               PFX + 'content.section.images.create.error',
+  content_image_delete:                     PFX + 'content.section.images.delete.label',
+  content_image_delete_confirm:             PFX + 'content.section.images.delete.confirm',
+  content_image_detail:                     PFX + 'content.section.images.detail',
+  content_image_download:                   PFX + 'content.section.images.download',
+
   // data
   data_title:                               PFX + 'data.title',
   data_content:                             PFX + 'data.content',

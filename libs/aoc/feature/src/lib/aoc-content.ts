@@ -1,22 +1,22 @@
 import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, ToastController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, ToastController } from '@ionic/angular/standalone';
 
 import { MenuItemModel, SectionModel } from '@bk2/shared-models';
 import { Button, Header, ResultLog } from '@bk2/shared-ui';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
-import { AocContentStore, MissingMenuRef, MissingSectionRef } from './aoc-content.store';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { AocContentStore, MissingMenuRef, MissingSectionRef, SectionImageRef } from './aoc-content.store';
+import { SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-aoc-content',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, ThumbnailUrlPipe,
     FormsModule, Header, Button, ResultLog,
     IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol,
-    IonList, IonItem, IonLabel, IonIcon,
+    IonList, IonItem, IonLabel, IonIcon, IonThumbnail,
   ],
   providers: [AocContentStore],
   template: `
@@ -84,6 +84,38 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
                   <ion-label>
                     <h3>{{ ref.resolvedKey }}</h3>
                     <p>{{ ref.page.name }} ({{ ref.page.bkey }})</p>
+                  </ion-label>
+                </ion-item>
+              }
+            </ion-list>
+          }
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Section images with a missing docs entry -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.content_section_images_title() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="6">{{ store.i18n.content_section_images_content() }}</ion-col>
+              <ion-col size="6">
+                <bk-button [label]="sectionImagesLabel()" [iconName]="sectionImagesIcon()" (click)="toggleSectionImages()" />
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+          @if(sectionImages().length > 0) {
+            <ion-list lines="inset">
+              @for(image of sectionImages(); track image.fullPath) {
+                <ion-item (click)="showSectionImageActions(image)" button>
+                  <ion-thumbnail slot="start">
+                    <img [src]="image.fullPath | thumbnailUrl" [alt]="fileName(image.fullPath)" />
+                  </ion-thumbnail>
+                  <ion-label>
+                    <h3>{{ fileName(image.fullPath) }}</h3>
+                    <p>{{ image.section.name }} ({{ image.section.bkey }})</p>
                   </ion-label>
                 </ion-item>
               }
@@ -197,8 +229,16 @@ export class AocContent {
   protected readonly missingMenusLabel = computed(() => this.missingMenus().length > 0 ? this.store.i18n.content_menu_missing_hide() : this.store.i18n.content_menu_missing_show());
   protected readonly missingMenusIcon = computed(() => this.missingMenus().length > 0 ? 'eye-off' : 'eye-on');
 
+  protected readonly sectionImages = computed(() => this.store.sectionImagesMissingDoc());
+  protected readonly sectionImagesLabel = computed(() => this.sectionImages().length > 0 ? this.store.i18n.content_section_images_hide() : this.store.i18n.content_section_images_show());
+  protected readonly sectionImagesIcon = computed(() => this.sectionImages().length > 0 ? 'eye-off' : 'eye-on');
+
   // constants
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+
+  protected fileName(fullPath: string): string {
+    return fullPath.split('/').pop() ?? fullPath;
+  }
 
   public toggleOrphanedSections(): void {
     if (this.orphanedSections().length > 0) {
@@ -229,6 +269,43 @@ export class AocContent {
       this.store.clearMissingMenus();
     } else {
       this.store.findMissingMenus();
+    }
+  }
+
+  public toggleSectionImages(): void {
+    if (this.sectionImages().length > 0) {
+      this.store.clearSectionImagesMissingDoc();
+    } else {
+      this.store.findSectionImagesWithMissingDoc();
+    }
+  }
+
+  protected async showSectionImageActions(image: SectionImageRef): Promise<void> {
+    const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    options.buttons.push(createActionSheetButton('content.actionsheet.image.create', this.store.i18n.content_image_create(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.image.detail', this.store.i18n.content_image_detail(), this.imgixBaseUrl, 'eye-on'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.image.download', this.store.i18n.content_image_download(), this.imgixBaseUrl, 'download'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.image.delete', this.store.i18n.content_image_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    if (!data) return;
+
+    switch (data.action) {
+      case 'content.actionsheet.image.create':
+        await this.store.createDocumentForImage(image);
+        break;
+      case 'content.actionsheet.image.detail':
+        await this.store.showImageDetail(image);
+        break;
+      case 'content.actionsheet.image.download':
+        await this.store.downloadImage(image);
+        break;
+      case 'content.actionsheet.image.delete':
+        await this.store.deleteImage(image);
+        break;
     }
   }
 

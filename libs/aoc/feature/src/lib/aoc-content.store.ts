@@ -2,16 +2,20 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, forkJoin, from, of } from 'rxjs';
+import { Observable, firstValueFrom, forkJoin, from, of } from 'rxjs';
 import { Router } from '@angular/router';
+import { StorageReference, deleteObject, getDownloadURL, getMetadata, listAll, ref } from 'firebase/storage';
 
+import { STORAGE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AccordionSection, BkModel, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, UserModel } from '@bk2/shared-models';
-import { confirm, navigateByUrl } from '@bk2/shared-util-angular';
-import { getSystemQuery, replaceSubstring, safeStructuredClone } from '@bk2/shared-util-core';
+import { AccordionSection, ArticleSection, BkModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, SliderSection, UserModel } from '@bk2/shared-models';
+import { confirm, downloadToBrowser, navigateByUrl } from '@bk2/shared-util-angular';
+import { DateFormat, convertDateFormatToString, getFullName, getSystemQuery, getTodayStr, replaceSubstring, safeStructuredClone } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
+import { DocumentService } from '@bk2/document-data-access';
+import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@bk2/document-util';
 import { MenuService } from '@bk2/cms-menu-data-access';
 import { MenuModal } from '@bk2/cms-menu-feature';
 import { PageService } from '@bk2/cms-page-data-access';
@@ -19,6 +23,7 @@ import { SectionService } from '@bk2/cms-section-data-access';
 import { SectionEditModal } from '@bk2/cms-section-feature';
 
 import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { SectionImageDetailModal } from './section-image-detail.modal';
 
 export type MissingMenuRef = {
   parent: MenuItemModel;   // menu item that contains the broken reference
@@ -31,6 +36,18 @@ export type MissingSectionRef = {
   resolvedKey: string;     // fully resolved bkey
 };
 
+/** A section image file that exists in Firebase Storage but has no docs DB entry. */
+export type SectionImageRef = {
+  section: SectionModel;   // the section the image was uploaded for
+  fullPath: string;        // storage path, e.g. tenant/<tid>/section/<key>/file.jpg
+  downloadUrl: string;
+  size: number;
+  contentType: string;
+  timeCreated: string;     // ISO 8601 from storage metadata
+  updated: string;         // ISO 8601 from storage metadata
+  md5Hash: string;         // base64-encoded MD5 from storage metadata
+};
+
 export type AocContentState = {
   modelType: string | undefined;
   log: LogInfo[];
@@ -39,6 +56,7 @@ export type AocContentState = {
   orphanedMenus: MenuItemModel[];
   missingMenuRefs: MissingMenuRef[];
   missingSectionRefs: MissingSectionRef[];
+  sectionImagesMissingDoc: SectionImageRef[];
 };
 
 export const initialState: AocContentState = {
@@ -49,15 +67,32 @@ export const initialState: AocContentState = {
   orphanedMenus: [],
   missingMenuRefs: [],
   missingSectionRefs: [],
+  sectionImagesMissingDoc: [],
 };
+
+/** List all (non-recursive) file refs directly under a storage directory; [] if the dir does not exist. */
+async function listStorageImages(storage: import('firebase/storage').FirebaseStorage, dir: string): Promise<StorageReference[]> {
+  try {
+    return (await listAll(ref(storage, dir))).items;
+  } catch {
+    return [];
+  }
+}
+
+/** Convert an ISO 8601 date string from Firebase Storage metadata to the app's store date format. */
+function isoToStoreDate(iso: string): string {
+  return convertDateFormatToString(iso.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
+}
 
 export const AocContentStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
     router: inject(Router),
+    storage: inject(STORAGE),
     firestoreService: inject(FirestoreService),
     sectionService: inject(SectionService),
+    documentService: inject(DocumentService),
     menuService: inject(MenuService),
     pageService: inject(PageService),
     modalController: inject(ModalController),
@@ -333,6 +368,135 @@ export const AocContentStore = signalStore(
 
       async editPage(page: PageModel): Promise<void> {
         await navigateByUrl(store.router, `/private/${page.bkey}/c-contentpage`, { readOnly: false });
+      },
+
+      /******************************** section images without a docs entry ******************************************* */
+      // For each section, list its uploaded images in storage (tenant/<tid>/section/<key>)
+      // and report those for which no docs Firestore entry exists.
+      async findSectionImagesWithMissingDoc(): Promise<void> {
+        const tenantId = store.appStore.env.tenantId;
+        const [allDocs, sections] = await Promise.all([
+          store.documentService.listOnce(),
+          store.sectionService.listOnce(),
+        ]);
+        const existingPaths = new Set(allDocs.map(d => d.fullPath).filter(Boolean));
+
+        const refs: SectionImageRef[] = [];
+        await Promise.all(sections.map(async (section) => {
+          if (!section.bkey) return;
+          const dir = `tenant/${tenantId}/section/${section.bkey}`;
+          const items = await listStorageImages(store.storage, dir);
+          await Promise.all(items
+            .filter(item => !existingPaths.has(item.fullPath))
+            .map(async (item) => {
+              try {
+                const [metadata, downloadUrl] = await Promise.all([getMetadata(item), getDownloadURL(item)]);
+                if (!(metadata.contentType ?? '').startsWith('image/')) return; // images only
+                refs.push({
+                  section,
+                  fullPath: item.fullPath,
+                  downloadUrl,
+                  size: metadata.size,
+                  contentType: metadata.contentType ?? '',
+                  timeCreated: metadata.timeCreated,
+                  updated: metadata.updated,
+                  md5Hash: metadata.md5Hash ?? '',
+                });
+              } catch {
+                // skip inaccessible files
+              }
+            }));
+        }));
+        patchState(store, { sectionImagesMissingDoc: refs });
+      },
+
+      clearSectionImagesMissingDoc(): void {
+        patchState(store, { sectionImagesMissingDoc: [] });
+      },
+
+      async showImageDetail(image: SectionImageRef): Promise<void> {
+        const modal = await store.modalController.create({
+          component: SectionImageDetailModal,
+          componentProps: { image },
+        });
+        await modal.present();
+        await modal.onWillDismiss();
+      },
+
+      async downloadImage(image: SectionImageRef): Promise<void> {
+        await downloadToBrowser(image.downloadUrl);
+      },
+
+      async deleteImage(image: SectionImageRef): Promise<void> {
+        const ok = await confirm(store.alertController, store.i18n.content_image_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        if (!ok) return;
+        await deleteObject(ref(store.storage, image.fullPath));
+        patchState(store, { sectionImagesMissingDoc: store.sectionImagesMissingDoc().filter(r => r.fullPath !== image.fullPath) });
+      },
+
+      async createDocumentForImage(image: SectionImageRef): Promise<void> {
+        const currentUser = store.currentUser();
+        const tenantId = store.appStore.env.tenantId;
+
+        const rawFileName = image.fullPath.split('/').pop() ?? '';
+        const fileNameDate = extractDateFromFileName(rawFileName);
+        const creationDate = fileNameDate ?? (image.timeCreated ? isoToStoreDate(image.timeCreated) : getTodayStr());
+        const updateDate = fileNameDate ?? (image.updated ? isoToStoreDate(image.updated) : creationDate);
+        const title = extractTitleFromFileName(rawFileName) || rawFileName;
+        const tags = extractTagsFromStoragePath(image.fullPath);
+
+        const document = new DocumentModel(tenantId);
+        document.title = title;
+        document.altText = title;
+        document.fullPath = image.fullPath;
+        document.url = image.downloadUrl;
+        document.mimeType = image.contentType;
+        document.size = image.size;
+        document.source = 'storage';
+        document.hash = image.md5Hash;
+        document.dateOfDocCreation = creationDate;
+        document.dateOfDocLastUpdate = updateDate;
+        document.version = creationDate;
+        document.folderKeys = [];
+        document.tags = tags;
+        document.authorKey = currentUser?.personKey ?? '';
+        document.authorName = getFullName(currentUser?.firstName, currentUser?.lastName);
+        document.index = getDocumentIndex(document);
+        await store.firestoreService.createModel<DocumentModel>(
+          DocumentCollection, document, store.i18n.content_image_create_conf(), store.i18n.content_image_create_error(), currentUser
+        );
+
+        // Creating the docs record alone does NOT make the image visible: the section
+        // detail list and slider render section.properties.images. So also link the
+        // image into its section (article/slider) unless it is already referenced.
+        await this.linkImageToSection(image, title);
+
+        patchState(store, { sectionImagesMissingDoc: store.sectionImagesMissingDoc().filter(r => r.fullPath !== image.fullPath) });
+      },
+
+      // Append an ImageConfig (pointing at the storage file) to the section's images
+      // array so it shows up in the section detail list and the rendered slider.
+      // Only article and slider sections expose a properties.images list.
+      async linkImageToSection(image: SectionImageRef, label: string): Promise<void> {
+        const key = image.section.bkey;
+        if (!key) return;
+        const fresh = await firstValueFrom(store.sectionService.read(key));
+        if (!fresh || (fresh.type !== 'article' && fresh.type !== 'slider')) return;
+
+        const section = fresh as ArticleSection | SliderSection;
+        const images = section.properties.images ?? [];
+        if (images.some(img => img.url === image.fullPath)) return; // already linked
+
+        const newImage: ImageConfig = {
+          label,
+          type: ImageType.Image,
+          url: image.fullPath,
+          actionUrl: '',
+          altText: label,
+          overlay: '',
+        };
+        const updated = { ...section, properties: { ...section.properties, images: [...images, newImage] } } as SectionModel;
+        await store.sectionService.update(updated, store.currentUser());
       },
 
       checkLinks(): void {
