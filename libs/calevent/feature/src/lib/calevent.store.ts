@@ -350,8 +350,8 @@ export const CalEventStore = signalStore(
       },
 
       /******************************* CRUD on single event  *************************************** */
-      async add(readOnly = true, startDate?: string, startTime?: string, skipReload = false): Promise<void> {
-        if (readOnly) return;
+      async add(readOnly = true, startDate?: string, startTime?: string, skipReload = false): Promise<CalEventModel | undefined> {
+        if (readOnly) return undefined;
         const newCalevent = new CalEventModel(store.tenantId());
         newCalevent.startDate = startDate ?? getTodayStr();
         newCalevent.startTime = startTime ?? '09:00';
@@ -360,7 +360,7 @@ export const CalEventStore = signalStore(
         newCalevent.isOpen = store.calendar()?.defaultIsOpen ?? true;
         const untilDate = addMonths(new Date(), 3);
         newCalevent.repeatUntilDate = format(untilDate, DateFormat.StoreDate);
-        await this.edit(newCalevent, true, readOnly, false, skipReload);
+        return await this.edit(newCalevent, true, readOnly, false, skipReload);
       },
 
       async schedule(): Promise<void> {
@@ -417,7 +417,7 @@ export const CalEventStore = signalStore(
         await batch.commit();
       },
 
-      async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false, skipReload = false): Promise<boolean> {
+      async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false, skipReload = false): Promise<CalEventModel | undefined> {
         const { CalEventEditModal } = await import('./calevent-edit.modal');
         const modal = await store.modalController.create({
           component: CalEventEditModal,
@@ -446,7 +446,7 @@ export const CalEventStore = signalStore(
                 await this.createNewEventSeries(data);
               } else {  // editing existing series
                 const regressionType = await this.askForRegressionType();
-                if (!regressionType) return false;
+                if (!regressionType) return undefined;
                 if (regressionType === 'current') {
                   await this.decoupleEventFromSeries(data);
                 } else { // future or all
@@ -455,10 +455,10 @@ export const CalEventStore = signalStore(
               }
             }
             if (!skipReload) this.reload();
-            return true;
+            return data;
           }
         }
-        return false;
+        return undefined;
       },
 
       async view(calevent: CalEventModel): Promise<void> {

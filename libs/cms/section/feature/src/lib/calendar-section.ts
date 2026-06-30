@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 
 import { CalendarSection, CalEventModel } from '@bk2/shared-models';
 import { Spinner } from '@bk2/shared-ui';
-import { DateFormat, debugData, debugMessage } from '@bk2/shared-util-core';
+import { DateFormat, debugData, debugMessage, parseDate } from '@bk2/shared-util-core';
 import { isBrowser } from '@bk2/shared-util-angular';
 
 import { convertCalEventToFullCalendar } from '@bk2/calevent-util';
@@ -148,13 +148,22 @@ export class CalendarSectionComponent implements OnInit {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected onDateClick(arg: any): void {
-    console.log('CalendarSection.onDateClick: ', arg);
+  protected async onDateClick(arg: any): Promise<void> {
     if (this.editMode()) return;
     const date = arg.date as Date;
     const startDate = format(date, DateFormat.StoreDate);
     const startTime = format(date, 'HH:mm');
-    this.calEventStore.add(false, startDate, startTime);
+    const created = await this.calEventStore.add(false, startDate, startTime);
+    // after creating a new event, jump to the weekly view of that event's start date
+    if (created) this.gotoWeekOf(created.startDate);
+  }
+
+  /** Switch the calendar to the weekly view focused on the given store date (yyyyMMdd). */
+  private gotoWeekOf(storeDate: string): void {
+    const api = this.fullCalendar()?.getApi();
+    const date = parseDate(storeDate, DateFormat.StoreDate, false);
+    if (!api || !date) return;
+    api.changeView('timeGridWeek', date);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
