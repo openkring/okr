@@ -1,6 +1,7 @@
 // libs/esign/feature/src/lib/esign-view.modal.ts
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
   IonContent, IonGrid, IonRow, IonCol, IonLabel, IonChip,
@@ -37,7 +38,7 @@ import { EsignService } from '@bk2/esign-data-access';
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button (click)="close()">
-            <ion-icon src="{{ 'close' | svgIcon }}" slot="icon-only" />
+            <ion-icon src="{{ 'cancel' | svgIcon }}" slot="icon-only" />
           </ion-button>
         </ion-buttons>
         <ion-title>{{ esign().documentName }}</ion-title>
@@ -154,8 +155,9 @@ export class EsignViewModal {
   protected readonly esignService   = inject(EsignService);
   private readonly modalController  = inject(ModalController);
   private readonly toastController  = inject(ToastController);
+  private readonly sanitizer        = inject(DomSanitizer);
 
-  protected readonly previewUrl     = signal<string>('');
+  protected readonly previewUrl     = signal<SafeResourceUrl | null>(null);
   protected readonly showEvents     = signal(false);
   protected readonly loading        = signal(false);
 
@@ -168,7 +170,7 @@ export class EsignViewModal {
     try {
       const details = await this.esignService.getDocumentDetails(this.esign().esignId);
       const url = (details['previewUrl'] ?? details['documentUrl']) as string | undefined;
-      if (url) this.previewUrl.set(url);
+      if (url) this.previewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
     } catch {
       const toast = await this.toastController.create({
         message: 'Vorschau konnte nicht geladen werden.',
