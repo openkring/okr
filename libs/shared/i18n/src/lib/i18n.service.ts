@@ -1,8 +1,8 @@
-import { Injectable, Signal } from '@angular/core';
+import { Injectable, Signal, isDevMode } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HashMap, TranslocoService, getBrowserLang } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 import { selectLanguage } from './i18n.util';
 
 import { AvailableLanguages } from '@bk2/shared-models';
@@ -52,7 +52,16 @@ export class I18nService {
       return this.translocoService.load(`${prefix}/${lang}`).pipe(
         switchMap(() => argument
           ? this.translocoService.selectTranslate(scopeKey, argument, prefix)
-          : this.translocoService.selectTranslate(scopeKey, {}, prefix))
+          : this.translocoService.selectTranslate(scopeKey, {}, prefix)),
+        // A scope's de.json fetch can fail transiently — most often because Safari aborts the
+        // in-flight request on reload/navigation. Without this, Transloco throws "Unable to load
+        // translation and all the fallback languages…" as an uncaught error that pollutes Sentry.
+        // Degrade gracefully to an empty string instead (the load usually succeeds on the real,
+        // non-aborted attempt); keep dev visibility via a warning.
+        catchError((err) => {
+          if (isDevMode()) console.warn(`I18nService.translate: failed to load i18n scope '${prefix}'`, err);
+          return of('');
+        })
       );
     }
 
