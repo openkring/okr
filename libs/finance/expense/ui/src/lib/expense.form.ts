@@ -96,7 +96,7 @@ export interface ExpenseFormI18n {
                 <ion-item>
                   <ion-label>{{ f.name }}</ion-label>
                   <ion-button slot="end" fill="clear" (click)="removeFile(i)">
-                    <ion-icon src="{{ 'close' | svgIcon }}" slot="icon-only" />
+                    <ion-icon src="{{ 'cancel' | svgIcon }}" slot="icon-only" />
                   </ion-button>
                 </ion-item>
               }

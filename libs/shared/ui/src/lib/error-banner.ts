@@ -21,7 +21,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
         <ion-icon slot="start" src="{{ 'alert-circle' | svgIcon }}" />
         <ion-label class="ion-text-wrap">{{ message }}</ion-label>
         <ion-button slot="end" fill="clear" color="light" (click)="dismiss.emit()">
-          <ion-icon slot="icon-only" src="{{ 'close' | svgIcon }}" />
+          <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
         </ion-button>
       </ion-item>
     }
