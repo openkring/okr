@@ -13,6 +13,7 @@ import { AccordionSection, ArticleSection, BkModel, DocumentCollection, Document
 import { confirm, downloadToBrowser, navigateByUrl } from '@bk2/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getFullName, getSystemQuery, getTodayStr, replaceSubstring, safeStructuredClone } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
+import { ImageDetailModal } from '@bk2/shared-ui';
 
 import { DocumentService } from '@bk2/document-data-access';
 import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@bk2/document-util';
@@ -23,7 +24,6 @@ import { SectionService } from '@bk2/cms-section-data-access';
 import { SectionEditModal } from '@bk2/cms-section-feature';
 
 import { AOC_I18N_KEYS } from '@bk2/aoc-util';
-import { SectionImageDetailModal } from './section-image-detail.modal';
 
 export type MissingMenuRef = {
   parent: MenuItemModel;   // menu item that contains the broken reference
@@ -416,8 +416,14 @@ export const AocContentStore = signalStore(
 
       async showImageDetail(image: SectionImageRef): Promise<void> {
         const modal = await store.modalController.create({
-          component: SectionImageDetailModal,
-          componentProps: { image },
+          component: ImageDetailModal,
+          componentProps: {
+            fullPath: image.fullPath,
+            extraRows: [
+              { label: 'Sektion', value: `${image.section.name} (${image.section.bkey})` },
+              { label: 'Typ', value: image.section.type },
+            ],
+          },
         });
         await modal.present();
         await modal.onWillDismiss();

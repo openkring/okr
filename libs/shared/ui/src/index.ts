@@ -33,6 +33,7 @@ export * from './lib/iban-input';
 export * from './lib/icon-input';
 export * from './lib/icon-toolbar';
 export * from './lib/image-config';
+export * from './lib/image-detail.modal';
 export * from './lib/image-url-input';
 export * from './lib/image-view.modal';
 export * from './lib/img';

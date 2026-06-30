@@ -232,6 +232,8 @@ export const SECTION_I18N_KEYS = {
   // image
   image_empty:                              PFX + 'image.empty',
   image_delete:                             PFX + 'image.delete',
+  image_detail:                             PFX + 'image.detail',
+  image_download:                           PFX + 'image.download',
   image_upload:                             PFX + 'image.upload.action',
   image_config_title:                       PFX + 'image.config.title',
   image_display_title:                      PFX + 'image.display.title',

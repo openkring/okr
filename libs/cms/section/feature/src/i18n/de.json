@@ -376,6 +376,8 @@
     "label": "Bild",
     "empty": "Kein Bild gefunden.",
     "delete": "Bild löschen",
+    "detail": "Bild Details anzeigen",
+    "download": "Bild herunterladen",
     "upload": {
       "action": "Bild(er) hochladen",
       "slot": {

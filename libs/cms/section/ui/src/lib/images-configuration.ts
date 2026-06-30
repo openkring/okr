@@ -6,11 +6,13 @@ import {
   ItemReorderEventDetail, ModalController
 } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
+import { getDownloadURL, ref } from 'firebase/storage';
+
+import { ENV, STORAGE } from '@bk2/shared-config';
 import { IMAGE_MIMETYPES } from '@bk2/shared-constants';
 import { ImageConfig, ImageType, UserModel } from '@bk2/shared-models';
-import { UploadEntry } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { ImageDetailModal, UploadEntry } from '@bk2/shared-ui';
+import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from '@bk2/shared-util-angular';
 import { IMGIX_THUMBNAIL_PARAMS } from '@bk2/shared-util-core';
 import { UploadService } from '@bk2/avatar-data-access';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -23,6 +25,8 @@ interface ImagesConfigurationI18n {
   image_edit_title:         Signal<string>;
   image_edit_title_modal:   Signal<string>;
   image_delete:             Signal<string>;
+  image_detail:             Signal<string>;
+  image_download:           Signal<string>;
   image_upload:             Signal<string>;
   cancel:                   Signal<string>;
 }
@@ -89,6 +93,7 @@ interface ImagesConfigurationI18n {
 })
 export class ImagesConfiguration {
   private readonly env = inject(ENV);
+  private readonly storage = inject(STORAGE);
   private readonly uploadService = inject(UploadService);
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
@@ -161,6 +166,8 @@ export class ImagesConfiguration {
     if (this.readOnly()) return;
     const i18n = this.i18n();
     const options: ActionSheetOptions = createActionSheetOptions(i18n.as_title());
+    options.buttons.push(createActionSheetButton('image.detail', i18n.image_detail(), this.imgixBaseUrl, 'eye-on'));
+    options.buttons.push(createActionSheetButton('image.download', i18n.image_download(), this.imgixBaseUrl, 'download'));
     options.buttons.push(createActionSheetButton('image.edit', i18n.image_edit_title(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('image.delete', i18n.image_delete(), this.imgixBaseUrl, 'trash'));
     options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
@@ -171,6 +178,12 @@ export class ImagesConfiguration {
     if (!data) return;
 
     switch (data.action) {
+      case 'image.detail':
+        await this.showImageDetail(img);
+        break;
+      case 'image.download':
+        await this.downloadImage(img);
+        break;
       case 'image.edit':
         await this.editImage(img, index);
         break;
@@ -178,6 +191,24 @@ export class ImagesConfiguration {
         this.images.update(imgs => imgs.filter((_, idx) => idx !== index));
         break;
     }
+  }
+
+  private async showImageDetail(img: ImageConfig): Promise<void> {
+    const modal = await this.modalController.create({
+      component: ImageDetailModal,
+      componentProps: {
+        fullPath: img.url,
+        title: img.label || (img.url.split('/').pop() ?? ''),
+      },
+    });
+    await modal.present();
+    await modal.onWillDismiss();
+  }
+
+  private async downloadImage(img: ImageConfig): Promise<void> {
+    // img.url is normally a relative storage path; resolve it to a download URL.
+    const url = img.url.startsWith('http') ? img.url : await getDownloadURL(ref(this.storage, img.url));
+    await downloadToBrowser(url);
   }
 
   private async editImage(img: ImageConfig, index: number): Promise<void> {

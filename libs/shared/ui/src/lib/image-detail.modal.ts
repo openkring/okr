@@ -1,20 +1,21 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonSpinner, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
 import exifr from 'exifr';
 
+import { STORAGE } from '@bk2/shared-config';
 import { fileSizeUnit } from '@bk2/shared-util-core';
 
-import { SectionImageRef } from './aoc-content.store';
-
-interface DetailRow { label: string; value: string; }
+export interface ImageDetailRow { label: string; value: string; }
 
 /**
- * Read-only detail view for a section image that lives in Firebase Storage.
- * Shows the storage metadata (path, name, section, mime type, size, dates, hash)
- * plus EXIF metadata parsed from the file bytes via the exifr library.
+ * Read-only detail view for an image stored in Firebase Storage.
+ * Given a storage path it loads the download URL, the storage metadata
+ * (mime, size, dates, md5) and the EXIF tags parsed from the file bytes
+ * (via exifr). Callers may pass extra context rows (e.g. the owning section).
  */
 @Component({
-  selector: 'bk-section-image-detail-modal',
+  selector: 'bk-image-detail-modal',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonSpinner,
@@ -22,7 +23,7 @@ interface DetailRow { label: string; value: string; }
   ],
   styles: [`
     ion-row { border-bottom: 1px solid var(--ion-color-light); }
-    .preview { display: flex; justify-content: center; margin-bottom: 1rem; }
+    .preview { display: flex; justify-content: center; margin-bottom: 1rem; min-height: 60px; }
     .preview img { max-width: 100%; max-height: 240px; border-radius: 8px; }
     .value { word-break: break-all; }
     .section-title { margin: 1.25rem 0 0.5rem; font-weight: 600; color: var(--ion-color-medium); }
@@ -39,7 +40,11 @@ interface DetailRow { label: string; value: string; }
     </ion-header>
     <ion-content class="ion-padding">
       <div class="preview">
-        <img [src]="image().downloadUrl" [alt]="fileName()" />
+        @if (downloadUrl(); as url) {
+          <img [src]="url" [alt]="fileName()" />
+        } @else {
+          <ion-spinner name="dots" />
+        }
       </div>
 
       <ion-grid>
@@ -69,41 +74,58 @@ interface DetailRow { label: string; value: string; }
     </ion-content>
   `,
 })
-export class SectionImageDetailModal implements OnInit {
+export class ImageDetailModal implements OnInit {
   private readonly modalController = inject(ModalController);
+  private readonly storage = inject(STORAGE);
 
-  public image = input.required<SectionImageRef>();
+  /** Full storage path of the image, e.g. tenant/<tid>/section/<key>/file.jpg */
+  public fullPath = input.required<string>();
+  /** Optional extra context rows shown above the storage metadata. */
+  public extraRows = input<ImageDetailRow[]>([]);
   public title = input('Bild-Details');
   public closeLabel = input('Schliessen');
 
+  protected readonly downloadUrl = signal<string | undefined>(undefined);
+  protected readonly rows = signal<ImageDetailRow[]>([]);
   protected readonly exifLoading = signal(true);
-  protected readonly exifRows = signal<DetailRow[]>([]);
+  protected readonly exifRows = signal<ImageDetailRow[]>([]);
   protected readonly exifHint = signal('Keine EXIF-Daten vorhanden.');
 
-  protected readonly fileName = computed(() => this.image().fullPath.split('/').pop() ?? this.image().fullPath);
-
-  protected readonly rows = computed<DetailRow[]>(() => {
-    const img = this.image();
-    return [
-      { label: 'Name', value: this.fileName() },
-      { label: 'Sektion', value: `${img.section.name} (${img.section.bkey})` },
-      { label: 'Typ', value: img.section.type },
-      { label: 'Speicherpfad', value: img.fullPath },
-      { label: 'MIME-Typ', value: img.contentType },
-      { label: 'Grösse', value: fileSizeUnit(img.size) },
-      { label: 'Erstellt', value: this.formatIso(img.timeCreated) },
-      { label: 'Geändert', value: this.formatIso(img.updated) },
-      { label: 'MD5 (Base64)', value: img.md5Hash },
-      { label: 'Download-URL', value: img.downloadUrl },
-    ];
-  });
+  protected fileName(): string {
+    const p = this.fullPath();
+    return p.split('/').pop() ?? p;
+  }
 
   public async ngOnInit(): Promise<void> {
+    const fullPath = this.fullPath();
+    const sref = ref(this.storage, fullPath);
+
+    // storage metadata + download URL
+    let url: string | undefined;
     try {
-      const exif = await exifr.parse(this.image().downloadUrl, true);
+      const [metadata, downloadUrl] = await Promise.all([getMetadata(sref), getDownloadURL(sref)]);
+      url = downloadUrl;
+      this.downloadUrl.set(downloadUrl);
+      this.rows.set([
+        ...this.extraRows(),
+        { label: 'Name', value: this.fileName() },
+        { label: 'Speicherpfad', value: fullPath },
+        { label: 'MIME-Typ', value: metadata.contentType ?? '' },
+        { label: 'Grösse', value: fileSizeUnit(metadata.size) },
+        { label: 'Erstellt', value: this.formatIso(metadata.timeCreated) },
+        { label: 'Geändert', value: this.formatIso(metadata.updated) },
+        { label: 'MD5 (Base64)', value: metadata.md5Hash ?? '' },
+        { label: 'Download-URL', value: downloadUrl },
+      ]);
+    } catch {
+      this.rows.set([...this.extraRows(), { label: 'Speicherpfad', value: fullPath }]);
+    }
+
+    // EXIF parsed from the original bytes (NOT the imgix-transformed image)
+    try {
+      const exif = url ? await exifr.parse(url, true) : undefined;
       this.exifRows.set(exif ? this.toExifRows(exif as Record<string, unknown>) : []);
     } catch {
-      // CORS, unsupported format, or no EXIF segment — treat as "no data"
       this.exifHint.set('EXIF-Daten konnten nicht gelesen werden.');
       this.exifRows.set([]);
     } finally {
@@ -111,7 +133,7 @@ export class SectionImageDetailModal implements OnInit {
     }
   }
 
-  private toExifRows(exif: Record<string, unknown>): DetailRow[] {
+  private toExifRows(exif: Record<string, unknown>): ImageDetailRow[] {
     return Object.entries(exif)
       .filter(([, v]) => v !== undefined && v !== null && v !== '')
       .map(([label, v]) => ({ label, value: this.formatExifValue(v) }))
