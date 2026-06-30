@@ -140,12 +140,16 @@ async function releaseApp(app) {
 
   // 6. app-version doc — ask each release (default yes only for the prod app)
   console.log('\n[6/7] app-version update');
+  let appVersionPending = false;
   if (await confirm(`Update app-version.latestVersion to ${next}? (triggers the in-app update prompt)`, app === PROD_APP)) {
     const minAns = await ask('  minVersion — leave blank to keep unchanged, or enter a value to force-update older clients: ');
-    console.log('\n  → Apply this to Firestore doc  app-version/app-version  (default database):');
+    appVersionPending = true;
+    console.log('\n  ⚠ ACTION REQUIRED — this script does NOT write Firestore. YOU must apply this manually:');
+    console.log('     Firestore doc  app-version/app-version  (default database):');
     console.log(`        latestVersion: "${next}"`);
     console.log(`        minVersion:    ${minAns ? `"${minAns}"  (CHANGED — forces update below this)` : '(keep current)'}`);
     console.log('     via the Firebase console, the Firebase MCP firestore_update_document tool, or firebase-admin.');
+    console.log('     Until you do this, deployed clients will NOT see the update prompt.');
   } else {
     console.log('  Skipped app-version update.');
   }
@@ -161,6 +165,8 @@ async function releaseApp(app) {
     console.log(`  Not pushed. Push later with:  git push origin main --follow-tags`);
 
   console.log(`\n✔ ${app} released as v${next}.`);
+  if (appVersionPending)
+    console.log(`  ⚠ REMINDER: you still need to set app-version/app-version → latestVersion "${next}" in Firestore yourself (not done by this script).`);
 }
 
 // ---- functions -----------------------------------------------------------
