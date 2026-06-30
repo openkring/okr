@@ -555,7 +555,13 @@ export const _MembershipStore = signalStore(
         const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), vm.category);
         const membership = convertNewMemberFormToMembership(vm, personKey, store.tenantId(), mcatAbbreviation);
         membership.index = 'mn:' + membership.memberName1 + ' ' + membership.memberName2 + ' mk:' + membership.memberKey + ' ok:' + membership.orgKey;
-        return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, store.i18n.create_conf(), store.i18n.create_error(), store.appStore.currentUser());
+        const key = await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, store.i18n.create_conf(), store.i18n.create_error(), store.appStore.currentUser());
+        if (membership.orgModelType === OrgModelName) { // do not add a task for a group membership
+          // create a task for the treasurer (this triggers the onTaskWritten CF which notifies the assignee)
+          const memberName = getFullName(membership.memberName1, membership.memberName2);
+          await this.addTask(membership, store.appStore.getGroup('treasurer'), `Neumitglied ${memberName} -> bitte Gebühren prüfen.`);
+        }
+        return key;
       },
 
       saveAddress(address: AddressModel, avatarKey: string): void {
