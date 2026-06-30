@@ -12,9 +12,12 @@ vi.mock('@bk2/shared-util-core', async importOriginal => {
   };
 });
 
-// Proactively mock shared-i18n to prevent Angular compiler errors
+// Proactively mock shared-i18n to prevent Angular compiler errors.
+// membership.util imports @bk2/shared-util-angular, whose barrel pulls in
+// country-name.pipe — that needs I18nService, so it must be on the mock too.
 vi.mock('@bk2/shared-i18n', () => ({
   bkTranslate: vi.fn(),
+  I18nService: class {},
 }));
 
 describe('Membership Utils', () => {
