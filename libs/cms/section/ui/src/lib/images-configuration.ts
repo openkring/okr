@@ -129,7 +129,11 @@ export class ImagesConfiguration {
     const urls = await this.uploadService.uploadFiles(uploads, this.i18n().image_upload() ?? '');
     if (!urls) return;
 
-    const newImages: ImageConfig[] = files.map(f => ({
+    // only keep files whose upload to storage actually succeeded
+    const uploaded = files.filter((_, idx) => !!urls[idx]);
+    if (!uploaded.length) return;
+
+    const newImages: ImageConfig[] = uploaded.map(f => ({
       label: f.name.replace(/\.[^.]+$/, ''),
       type: ImageType.Image,
       url: `${basePath}/${f.name}`,
@@ -138,13 +142,19 @@ export class ImagesConfiguration {
       overlay: '',
     }));
 
+    // Adding the images to the section is the primary result and must not be lost
+    // if the secondary DocumentModel bookkeeping fails. Update the model first.
+    this.images.update(imgs => [...imgs, ...newImages]);
+
+    // Best-effort: persist a DocumentModel record per uploaded file. A failure
+    // here (permission, offline, …) is logged but never discards the images above.
     await Promise.all(files.map((f, idx) => {
       const downloadUrl = urls[idx];
-      if (!downloadUrl) return Promise.resolve();
-      return this.uploadService.createAndSaveDocument(f, this.env.tenantId, `${basePath}/${f.name}`, downloadUrl, this.currentUser());
+      if (!downloadUrl) return Promise.resolve(undefined);
+      return this.uploadService
+        .createAndSaveDocument(f, this.env.tenantId, `${basePath}/${f.name}`, downloadUrl, this.currentUser())
+        .catch((ex: unknown) => { console.error('ImagesConfiguration.addImages: createAndSaveDocument failed', ex); return undefined; });
     }));
-
-    this.images.update(imgs => [...imgs, ...newImages]);
   }
 
   protected async showActions(img: ImageConfig, index: number): Promise<void> {

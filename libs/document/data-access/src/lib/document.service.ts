@@ -42,8 +42,16 @@ export class DocumentService {
   public async create(document: DocumentModel, currentUser?: UserModel): Promise<string | undefined> {
     document.index = getDocumentIndex(document);
     if (document.bkey) {
-      const existing = await firstValueFrom(this.firestoreService.readModel<DocumentModel>(DocumentCollection, document.bkey));
-      if (existing) return document.bkey;
+      // Dedup by hash: skip creation if a doc with this key already exists.
+      // A read of a not-yet-existing, tenant-scoped doc is denied by the rules
+      // (resource is null → tenantRead() fails), which rejects firstValueFrom.
+      // Treat any read failure as "does not exist" and proceed to create.
+      try {
+        const existing = await firstValueFrom(this.firestoreService.readModel<DocumentModel>(DocumentCollection, document.bkey));
+        if (existing) return document.bkey;
+      } catch {
+        // not found / not readable → fall through to create
+      }
     }
     return await this.firestoreService.createModel<DocumentModel>(DocumentCollection, document, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
