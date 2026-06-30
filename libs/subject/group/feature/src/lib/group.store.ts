@@ -67,11 +67,18 @@ export const GroupStore = signalStore(
     }),
     groupResource: rxResource({
       params: () => ({
-        groupKey: store.groupKey()
+        groupKey: store.groupKey(),
+        currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
+        // Gate on currentUser so the read() collection query only fires once the
+        // UserModel (and therefore the auth token) is loaded. Without this, a cold
+        // deep-link/reload to /group-view/<key> on slow connections (iOS Safari
+        // long-polling) sends the query before request.auth is attached → the
+        // tenantRead() rule denies it with "Missing or insufficient permissions".
+        if (!params.currentUser || !params.groupKey) return of(undefined);
         return store.groupService.read(params.groupKey).pipe(
-          debugItemLoaded('GroupStore.group', store.appStore.currentUser())
+          debugItemLoaded('GroupStore.group', params.currentUser)
         );
       }
     }),
