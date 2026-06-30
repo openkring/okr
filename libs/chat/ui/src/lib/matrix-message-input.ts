@@ -559,42 +559,42 @@ export class MatrixMessageInput {
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
+   *
+   * The actions are dispatched via each button's `handler` rather than a post-dismiss
+   * `switch (data.action)`. The handler runs synchronously inside the tap event, so the
+   * user-activation context is still live — this is mandatory for the native browser APIs
+   * (file picker `input.click()` and geolocation `getCurrentPosition`) which are silently
+   * blocked when invoked after `await actionSheet.onDidDismiss()`.
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.image', this.i18n().attach_image(), this.imgixBaseUrl, 'image'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.file', this.i18n().attach_file(), this.imgixBaseUrl, 'document'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.position', this.i18n().attach_position(), this.imgixBaseUrl, 'location'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.survey', this.i18n().attach_survey(), this.imgixBaseUrl, 'help-circle'));
+    const imageBtn = createActionSheetButton('chat.attachment.image', this.i18n().attach_image(), this.imgixBaseUrl, 'image');
+    imageBtn.handler = () => this.selectFile('image/*,video/*');
+    actionSheetOptions.buttons.push(imageBtn);
+
+    const fileBtn = createActionSheetButton('chat.attachment.file', this.i18n().attach_file(), this.imgixBaseUrl, 'document');
+    fileBtn.handler = () => this.selectFile('*/*');
+    actionSheetOptions.buttons.push(fileBtn);
+
+    const positionBtn = createActionSheetButton('chat.attachment.position', this.i18n().attach_position(), this.imgixBaseUrl, 'location');
+    positionBtn.handler = () => this.locationSent.emit();
+    actionSheetOptions.buttons.push(positionBtn);
+
+    const surveyBtn = createActionSheetButton('chat.attachment.survey', this.i18n().attach_survey(), this.imgixBaseUrl, 'help-circle');
+    surveyBtn.handler = () => this.surveyRequested.emit();
+    actionSheetOptions.buttons.push(surveyBtn);
+
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.i18n().cancel(), this.imgixBaseUrl, 'cancel'));
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
   }
 
   /**
-   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * Displays the ActionSheet. The selected action is executed by the button's own `handler`
+   * (see addActionSheetButtons) to preserve the user-activation context for native APIs.
    * @param actionSheetOptions
    */
   private async executeActions(actionSheetOptions: ActionSheetOptions): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
-      const { data } = await actionSheet.onDidDismiss();
-      if (!data) return;
-      switch (data.action) {
-        case 'chat.attachment.image':
-          this.selectFile('image/*,video/*');
-          break;
-        case 'chat.attachment.file':
-          this.selectFile('*/*');
-          break;
-        case 'chat.attachment.position':
-          this.locationSent.emit();
-          break;
-        case 'chat.attachment.survey':
-          this.surveyRequested.emit();
-          break;
-      }
     }
   }
 
