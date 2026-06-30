@@ -380,14 +380,13 @@
     "download": "Bild herunterladen",
     "upload": {
       "action": "Bild(er) hochladen",
-      "slot": {
-        "logo": "Logo hochladen",
-        "hero": "Hintergrundbild hochladen"
-      }
+      "logo": "Logo hochladen",
+      "hero": "Hintergrundbild hochladen"
     },
     "overwrite": {
-      "title": "Bild ersetzen?",
-      "message": "Es ist bereits ein Bild vorhanden. Möchten Sie es ersetzen?"
+      "label": "Bild ersetzen",
+      "confirm": "Es ist bereits ein Bild vorhanden. Möchten Sie es ersetzen?",
+      "conf": "Das Bild wurde ersetzt"
     },
     "config": {
       "title": "Konfiguration des Bildes (Datei)"

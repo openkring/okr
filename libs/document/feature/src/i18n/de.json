@@ -156,6 +156,10 @@
     "all": {
       "label": "Alle Arten"
     },
+    "accounting": {
+      "label": "Buchhaltung",
+      "description": "Buchhaltung-relevante Dokument, z.B. Bilanz, ER, Jahresabschluss, Journal, Kontoübersicht, Kontoplan etc."
+    },
     "marketing": {
       "label": "Marketing",
       "description": "Flyer, Prospekt, Präsentation, Banner"
@@ -203,6 +207,24 @@
     "media": {
       "label": "Medien",
       "description": "Video, Audio, Graphics, Comics, Visual, Illustration, Design, Icon, Font."
+    }
+  },
+  "document_source": {
+    "name": "Dokumentenherkunft",
+    "all": {
+      "label": "Alle Quellen"
+    },
+    "local": {
+      "label": "Lokal",
+      "description": "Die Datei ist Teil der Applikation (asset)"
+    },
+    "storage": {
+      "label": "Storage",
+      "description": "Die Datei ist in Firebase Storage gespeichert (Relative URL)."
+    },
+    "external": {
+      "label": "Extern",
+      "description": "Die Datei ist ausserhalb der Applikation gespeichert (Absolute URL auf einen File Share, z.B. Google Drive, Dropbox)."
     }
   }
 }
