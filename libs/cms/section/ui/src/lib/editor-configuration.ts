@@ -39,12 +39,14 @@ interface EditorConfigI18n {
                 <bk-editor [content]="htmlContent()" (contentChange)="onFieldChange('htmlContent', $event)" [readOnly]="readOnly()" [buttonCopyI18n]="buttonCopyI18n()" />
               }
             </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-category-old [i18n]="positionI18n()" [value]="position()" (valueChange)="onFieldChange('position', $event)" [readOnly]="readOnly()" [categories]="positions" />
-            </ion-col>  
-            <ion-col size="12" size-md="6">
-              <bk-number-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>  
+            @if(showAdvanced()) {
+              <ion-col size="12" size-md="6">
+                <bk-category-old [i18n]="positionI18n()" [value]="position()" (valueChange)="onFieldChange('position', $event)" [readOnly]="readOnly()" [categories]="positions" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-number-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+              </ion-col>
+            }
           </ion-row>
         </ion-grid>
       </ion-card-content>
@@ -56,6 +58,7 @@ export class EditorConfiguration {
   public formData = model.required<EditorConfig>();
   public intro = input<string>();
   public readonly readOnly = input(true);
+  public readonly showAdvanced = input(false);
   public readonly i18n = input.required<EditorConfigI18n>();
 
   // derived

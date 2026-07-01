@@ -85,6 +85,7 @@ import { TrackerConfiguration } from './tracker-configuration';
               [formData]="content" (formDataChange)="onContentChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [showAdvanced]="showAdvanced()"
             />
           }
           <bk-images-config
@@ -94,13 +95,15 @@ import { TrackerConfiguration } from './tracker-configuration';
             [readOnly]="isReadOnly()"
             [i18n]="i18n()"
           />
-          @if(imageStyle(); as imageStyle) {
-            <bk-image-style
-              [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
-              [readOnly]="isReadOnly()"
-              [i18n]="i18n()"
-              [showAdvanced]="showAdvanced()"
-            />
+          @if(showAdvanced()) {
+            @if(imageStyle(); as imageStyle) {
+              <bk-image-style
+                [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [showAdvanced]="showAdvanced()"
+              />
+            }
           }
         }
 
@@ -110,36 +113,39 @@ import { TrackerConfiguration } from './tracker-configuration';
               [formData]="content" (formDataChange)="onContentChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
-            />
-          } 
-          @if(buttonActionConfig(); as buttonActionConfig) {
-            <bk-button-action
-              [formData]="buttonActionConfig" (formDataChange)="onButtonActionChange($event)"
-              [readOnly]="isReadOnly()"
-              [i18n]="i18n()"
-            />
-          }
-          @if(iconConfig(); as iconConfig) {
-            <bk-icon-config
-              [formData]="iconConfig" (formDataChange)="onIconConfigChange($event)"
-              [readOnly]="isReadOnly()"
-              [i18n]="i18n()"
-            />
-          }
-          @if(buttonStyle(); as buttonStyle) {
-            <bk-button-style
-              [formData]="buttonStyle" (formDataChange)="onButtonStyleChange($event)"
-              [readOnly]="isReadOnly()"
-              [i18n]="i18n()"
-            />
-          }
-          @if(imageStyle(); as imageStyle) {
-            <bk-image-style
-              [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
-              [readOnly]="isReadOnly()"
-              [i18n]="i18n()"
               [showAdvanced]="showAdvanced()"
             />
+          } 
+          @if(showAdvanced()) {
+            @if(buttonActionConfig(); as buttonActionConfig) {
+              <bk-button-action
+                [formData]="buttonActionConfig" (formDataChange)="onButtonActionChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+              />
+            }
+            @if(iconConfig(); as iconConfig) {
+              <bk-icon-config
+                [formData]="iconConfig" (formDataChange)="onIconConfigChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+              />
+            }
+            @if(buttonStyle(); as buttonStyle) {
+              <bk-button-style
+                [formData]="buttonStyle" (formDataChange)="onButtonStyleChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+              />
+            }
+            @if(imageStyle(); as imageStyle) {
+              <bk-image-style
+                [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [showAdvanced]="showAdvanced()"
+              />
+            }
           }
         }
         @case('cal') {
@@ -208,13 +214,15 @@ import { TrackerConfiguration } from './tracker-configuration';
               (uploadRequested)="onHeroImageUpload('hero')"
             />
           }
-          @if(imageStyle(); as imageStyle) {
-            <bk-image-style
-              [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
-              [readOnly]="isReadOnly()"
-              [i18n]="i18n()"
-              [showAdvanced]="showAdvanced()"
-            />
+          @if(showAdvanced()) {
+            @if(imageStyle(); as imageStyle) {
+              <bk-image-style
+                [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [showAdvanced]="showAdvanced()"
+              />
+            }
           }
         }
         @case('iframe') {
@@ -267,13 +275,15 @@ import { TrackerConfiguration } from './tracker-configuration';
               [i18n]="i18n()"
               [readOnly]="isReadOnly()" />
           }
-          @if(imageStyle(); as imageStyle) {
-            <bk-image-style
-              [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
-              [i18n]="i18n()"
-              [readOnly]="isReadOnly()"
-              [showAdvanced]="showAdvanced()"
-            />
+          @if(showAdvanced()) {
+            @if(imageStyle(); as imageStyle) {
+              <bk-image-style
+                [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+                [i18n]="i18n()"
+                [readOnly]="isReadOnly()"
+                [showAdvanced]="showAdvanced()"
+              />
+            }
           }
         }
         @case('table') {
@@ -365,11 +375,13 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
       }
 
-      @if(hasRole('privileged')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
-      }
-      @if(hasRole('admin')) {
-        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+      @if(showAdvanced()) {
+        @if(hasRole('privileged')) {
+          <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
+        }
+        @if(hasRole('admin')) {
+          <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        }
       }
     }
   `

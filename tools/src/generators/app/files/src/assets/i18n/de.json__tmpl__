@@ -385,6 +385,7 @@
     "validTenant": "Der Mandant muss einen gültigen Wert aufweisen.",
     "notNull": "Wert darf nicht null sein",
     "notUndefined": "Wert darf nicht undefined sein",
+    "notString": "Wert muss eine Zeichenkette (String) sein",
     "booleanMandatory": "Wert muss ein Boolean sein",
     "numberMandatory": "Wert muss eine Zahl sein",
     "integerMandatory": "Wert muss eine ganze Zahl sein",

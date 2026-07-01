@@ -113,7 +113,7 @@ export function stringsValidations(fieldName: string, value: unknown, validValue
   test(fieldName, 'notUndefined', () => {
     enforce(value).isNotUndefined();
   });
-  test(fieldName, 'notString', () => {
+  test(fieldName, '@validation.notString', () => {
     enforce(value).isString();
   });
   test(fieldName, 'invalidValue', () => {
@@ -133,7 +133,7 @@ export function stringArrayValidations(fieldName: string, values: unknown, valid
   });
   omitWhen(!Array.isArray(values), () => {
     (values as unknown[]).forEach(values => {
-      test(fieldName, 'notString', () => {
+      test(fieldName, '@validation.notString', () => {
         enforce(values).isString();
       });
     });
@@ -163,7 +163,7 @@ export function stringArrayContainsValidation(
 
   omitWhen(!Array.isArray(values), () => {
     (values as unknown[]).forEach(values => {
-      test(fieldName, 'notString', () => {
+      test(fieldName, '@validation.notString', () => {
         enforce(values).isString();
       });
     });
@@ -264,7 +264,7 @@ export function stringValidations(fieldName: string, value: unknown, maxLength?:
   test(fieldName, 'notUndefined', () => {
     enforce(value).isNotUndefined();
   });
-  test(fieldName, 'notString', () => {
+  test(fieldName, '@validation.notString', () => {
     enforce(value).isString();
   });
   omitWhen(isMandatory === false, () => {
