@@ -1,7 +1,7 @@
 import { only, staticSuite } from 'vest';
 
 import { ButtonAction, ButtonSection, ColorIonic } from '@bk2/shared-models';
-import { categoryValidations, stringValidations } from '@bk2/shared-util-core';
+import { categoryValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
 import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
 
 import { baseSectionValidations } from './base-section.validations';
@@ -13,7 +13,7 @@ export const buttonSectionValidations = staticSuite((model: ButtonSection, field
 
     // guard nested config objects with ?. — older stored sections may lack icon/style/action
     stringValidations('icon.name', model.properties?.icon?.name, SHORT_NAME_LENGTH);
-    stringValidations('icon.size', model.properties?.icon?.size, WORD_LENGTH);   // tbd check icon.size for small, default, large
+    numberValidations('icon.size', model.properties?.icon?.size, true, 0);   // icon size in px (IconConfig.size is a number)
     stringValidations('icon.slot', model.properties?.icon?.slot, WORD_LENGTH);   // tbd check icon.slot for start, end, icon-only
 
     stringValidations('style.label', model.properties?.style?.label, LONG_NAME_LENGTH);
