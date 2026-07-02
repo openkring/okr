@@ -270,7 +270,7 @@ export const TripStore = signalStore(
 
     /******************************* other actions *************************************** */
     async reportDamage(currentUser?: UserModel, trip?: TripModel): Promise<void> {
-      const message = await store.alertService.bkPrompt(store.i18n.report_damage(), store.i18n.report_damage_prompt());
+      const message = await store.alertService.okrPrompt(store.i18n.report_damage(), store.i18n.report_damage_prompt());
       if (message === undefined) return;
       const user = currentUser ? getFullName(currentUser.firstName, currentUser.lastName) : 'undefined';
       const taskName = trip ?
@@ -280,7 +280,7 @@ export const TripStore = signalStore(
     },
 
     async reportBug(currentUser?: UserModel, trip?: TripModel): Promise<void> {
-      const message = await store.alertService.bkPrompt(store.i18n.report_bug(), store.i18n.report_bug_prompt());
+      const message = await store.alertService.okrPrompt(store.i18n.report_bug(), store.i18n.report_bug_prompt());
       if (message === undefined) return;
       const user = currentUser ? getFullName(currentUser.firstName, currentUser.lastName) : 'undefined';
       const taskName = trip ?

@@ -29,7 +29,7 @@ vi.mock('./alert.util', async (importOriginal) => {
     ...actual,
     initAlertTranslation: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
-    bkPrompt: vi.fn().mockResolvedValue('typed'),
+    okrPrompt: vi.fn().mockResolvedValue('typed'),
     error: vi.fn().mockReturnValue(undefined),
   };
 });
@@ -38,7 +38,7 @@ import { inject } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular/standalone';
 import { TranslocoService } from '@jsverse/transloco';
 import { I18nService } from '@okr/shared-i18n';
-import { initAlertTranslation, confirm, bkPrompt, showToast, error } from './alert.util';
+import { initAlertTranslation, confirm, okrPrompt, showToast, error } from './alert.util';
 import { AlertService } from './alert.service';
 
 describe('AlertService', () => {
@@ -114,11 +114,11 @@ describe('AlertService', () => {
     });
   });
 
-  describe('bkPrompt', () => {
-    it('should delegate to bkPrompt util with correct arguments', async () => {
-      (bkPrompt as any).mockResolvedValue('typed');
-      const result = await service.bkPrompt('Enter name', 'Your name');
-      expect(bkPrompt).toHaveBeenCalledWith(
+  describe('okrPrompt', () => {
+    it('should delegate to okrPrompt util with correct arguments', async () => {
+      (okrPrompt as any).mockResolvedValue('typed');
+      const result = await service.okrPrompt('Enter name', 'Your name');
+      expect(okrPrompt).toHaveBeenCalledWith(
         mockAlertController,
         'Enter name',
         'Your name',
@@ -129,14 +129,14 @@ describe('AlertService', () => {
       expect(result).toBe('typed');
     });
 
-    it('should return undefined when bkPrompt util returns undefined', async () => {
-      (bkPrompt as any).mockResolvedValue(undefined);
-      expect(await service.bkPrompt('h', 'p')).toBeUndefined();
+    it('should return undefined when okrPrompt util returns undefined', async () => {
+      (okrPrompt as any).mockResolvedValue(undefined);
+      expect(await service.okrPrompt('h', 'p')).toBeUndefined();
     });
 
-    it('should pass value to bkPrompt util', async () => {
-      await service.bkPrompt('header', 'placeholder', 'existing');
-      expect(bkPrompt).toHaveBeenCalledWith(
+    it('should pass value to okrPrompt util', async () => {
+      await service.okrPrompt('header', 'placeholder', 'existing');
+      expect(okrPrompt).toHaveBeenCalledWith(
         mockAlertController, 'header', 'placeholder', 'OK', 'Abbrechen', 'existing'
       );
     });

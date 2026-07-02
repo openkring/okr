@@ -54,13 +54,13 @@ export class FirestoreService {
     comment_update_conf: PFX + 'comment.update.conf',
   })
   
-  private bkError(toastController: ToastController | undefined, message: string, isDebugMode = false): undefined {
+  private okrError(toastController: ToastController | undefined, message: string, isDebugMode = false): undefined {
     if (isDebugMode) console.error(message);
-    if (toastController) this.bkShowToast(toastController, message);
+    if (toastController) this.okrShowToast(toastController, message);
     return undefined;
   }
 
-  private async bkShowToast(toastController: ToastController, message: string): Promise<void> {
+  private async okrShowToast(toastController: ToastController, message: string): Promise<void> {
     const _toast = await toastController.create({ message, duration: TOAST_LENGTH });
     _toast.present();
   }
@@ -84,11 +84,11 @@ export class FirestoreService {
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
     if (!isBrowser(this.platformId)) {
-      return this.bkError(undefined, 'FirestoreService.createModel: This method can only be called in the browser context.', true);
+      return this.okrError(undefined, 'FirestoreService.createModel: This method can only be called in the browser context.', true);
     }
 
     if (!model) {
-      return this.bkError(undefined, 'FirestoreService.createModel: model is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.createModel: model is mandatory.', true);
     }
       
     let key = model.okey;
@@ -105,7 +105,7 @@ export class FirestoreService {
       // we need to convert the custom object to a pure JavaScript object (e.g. arrays)
       await setDoc(ref, structuredClone(persistedModel));
       if (confirmMessage) {
-        await this.bkShowToast(this.toastController, confirmMessage);
+        await this.okrShowToast(this.toastController, confirmMessage);
       }
       if (currentUser) {
         debugMessage(`FirestoreService.createModel(${collectionName}/${ref.id}) -> OK`, currentUser);
@@ -117,7 +117,7 @@ export class FirestoreService {
     catch (ex) {
       console.error(`FirestoreService.createModel(${collectionName}/${ref.id}) -> ERROR:`, ex);
       const message = errorMessage ? errorMessage : `Could not create model ${collectionName}/${ref.id} in the database.`;      
-      return this.bkError(this.toastController, message);
+      return this.okrError(this.toastController, message);
     }
   }
 
@@ -140,10 +140,10 @@ export class FirestoreService {
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
     if (!isBrowser(this.platformId)) {
-      return this.bkError(undefined, 'FirestoreService.createObject: This method can only be called in the browser context.', true);
+      return this.okrError(undefined, 'FirestoreService.createObject: This method can only be called in the browser context.', true);
     }
     if (collectionName?.length === 0) {
-      return this.bkError(undefined, 'FirestoreService.createObject: collectionName is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.createObject: collectionName is mandatory.', true);
     }
     // if key is not set, we auto-generate a random key for the document ID in firestore.
     if (key?.length === 0) key = generateRandomString(20);
@@ -154,14 +154,14 @@ export class FirestoreService {
       // we need to convert the custom object to a pure JavaScript object (e.g. arrays)
       await setDoc(ref, JSON.parse(JSON.stringify(data)));
       if (confirmMessage) {
-        await this.bkShowToast(this.toastController, confirmMessage);
+        await this.okrShowToast(this.toastController, confirmMessage);
       }
       return Promise.resolve(ref.id);
     }
     catch (ex) {
       console.error(`FirestoreService.createObject(${collectionName}/${ref.id}) -> ERROR:`, ex);
       const message = errorMessage ? errorMessage : `Could not create object ${collectionName}/${ref.id} in the database.`;      
-      return this.bkError(this.toastController, message);
+      return this.okrError(this.toastController, message);
     }
   }
 
@@ -174,13 +174,13 @@ export class FirestoreService {
   public readModel<T extends OkrModel>(collectionName: string, key: string | undefined): Observable<T | undefined> {
     // ensure that the method is only called in the browser context; return undefined in SSR context
     if (!isBrowser(this.platformId)) {
-      return of(this.bkError(undefined, 'FirestoreService.readModel: This method can only be called in the browser context.', true));
+      return of(this.okrError(undefined, 'FirestoreService.readModel: This method can only be called in the browser context.', true));
     }
     if (collectionName?.length === 0) {
-      return of(this.bkError(undefined, 'FirestoreService.readModel: collectionName is mandatory.', true));
+      return of(this.okrError(undefined, 'FirestoreService.readModel: collectionName is mandatory.', true));
     }
     if (!key) {
-      return of(this.bkError(undefined, 'FirestoreService.readModel: key is mandatory.', true));
+      return of(this.okrError(undefined, 'FirestoreService.readModel: key is mandatory.', true));
     }
     try {
       // we need to add the firestore document id as okey into the model
@@ -188,7 +188,7 @@ export class FirestoreService {
     }
     catch (ex) {
       console.error(`FirestoreService.readModel(${collectionName}/${key}) -> ERROR: `, ex);
-      return of(this.bkError(this.toastController, `Could not read model ${collectionName}/${key} from the database.`));
+      return of(this.okrError(this.toastController, `Could not read model ${collectionName}/${key} from the database.`));
     }
   }
 
@@ -201,20 +201,20 @@ export class FirestoreService {
   public readObject<T>(collectionName: string, key: string | undefined): Observable<T | undefined> {
     // ensure that the method is only called in the browser context; return undefined in SSR context
     if (!isBrowser(this.platformId)) {
-      return of(this.bkError(undefined, 'FirestoreService.readObject: This method can only be called in the browser context.', true));
+      return of(this.okrError(undefined, 'FirestoreService.readObject: This method can only be called in the browser context.', true));
     }
     if (collectionName?.length === 0) {
-      return of(this.bkError(undefined, 'FirestoreService.readObject: collectionName is mandatory.', true));
+      return of(this.okrError(undefined, 'FirestoreService.readObject: collectionName is mandatory.', true));
     }
     if (!key) {
-      return of(this.bkError(undefined, 'FirestoreService.readObject: key is mandatory.', true));
+      return of(this.okrError(undefined, 'FirestoreService.readObject: key is mandatory.', true));
     }
     try {
       return docData(doc(this.firestore, `${collectionName}/${key}`)) as Observable<T>;
     }
     catch (ex) {
       console.error(`FirestoreService.readObject(${collectionName}/${key}) -> ERROR: `, ex);
-      return of(this.bkError(this.toastController, `Could not read object ${collectionName}/${key} from the database.`));
+      return of(this.okrError(this.toastController, `Could not read object ${collectionName}/${key} from the database.`));
     }
   }
 
@@ -238,20 +238,20 @@ export class FirestoreService {
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
     if (!isBrowser(this.platformId)) {
-      return this.bkError(undefined, 'FirestoreService.updateModel: This method can only be called in the browser context.', true);
+      return this.okrError(undefined, 'FirestoreService.updateModel: This method can only be called in the browser context.', true);
     }
     if (collectionName?.length === 0) {
-      return this.bkError(undefined, 'FirestoreService.updateModel: collectionName is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.updateModel: collectionName is mandatory.', true);
     }
     if (!model) {
-      return this.bkError(undefined, 'FirestoreService.updateModel: model is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.updateModel: model is mandatory.', true);
     }
     if (!model.tenants || model.tenants.length === 0) {
-      return this.bkError(undefined, 'FirestoreService.updateModel: model.tenants is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.updateModel: model.tenants is mandatory.', true);
     }
     const key = model.okey;
     if (!key || key.length === 0) {
-      return this.bkError(undefined, 'FirestoreService.updateModel: model.okey is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.updateModel: model.okey is mandatory.', true);
     }
 
     // we delete attribute okey from the model because we don't want to store it in the database (_ref.id is available instead)
@@ -266,7 +266,7 @@ export class FirestoreService {
         await updateDoc(doc(this.firestore, `${collectionName}/${key}`), { ...updateModel });
       }
       if (confirmMessage) {
-        await this.bkShowToast(this.toastController, confirmMessage);
+        await this.okrShowToast(this.toastController, confirmMessage);
       }
       if (currentUser) {
         debugMessage(`FirestoreService.updateModel(${collectionName}/${key}) -> OK`, currentUser);
@@ -278,7 +278,7 @@ export class FirestoreService {
     catch (ex) {
       console.error(`FirestoreService.updateModel(${collectionName}/${key}) -> ERROR: `, ex);
       const message = errorMessage ? errorMessage : `Could not update model ${collectionName}/${key} in the database.`;      
-      return this.bkError(this.toastController, message);
+      return this.okrError(this.toastController, message);
     }
   }
 
@@ -304,16 +304,16 @@ export class FirestoreService {
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
     if (!isBrowser(this.platformId)) {
-      return this.bkError(undefined, 'FirestoreService.updateObject: This method can only be called in the browser context.', true);
+      return this.okrError(undefined, 'FirestoreService.updateObject: This method can only be called in the browser context.', true);
     }
     if (collectionName?.length === 0) {
-      return this.bkError(undefined, 'FirestoreService.updateObject: collectionName is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.updateObject: collectionName is mandatory.', true);
     }
     if (key?.length === 0) {
-      return this.bkError(undefined, 'FirestoreService.updateObject: object.key is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.updateObject: object.key is mandatory.', true);
     }
     if (!object) {
-      return this.bkError(undefined, 'FirestoreService.updateObject: object is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.updateObject: object is mandatory.', true);
     }
     try {
       // spread operator ensures that the object is a pure JavaScript object (e.g. arrays)
@@ -325,13 +325,13 @@ export class FirestoreService {
         await updateDoc(doc(this.firestore, `${collectionName}/${key}`), { ...object });  
       }
       if (confirmMessage) {
-        await this.bkShowToast(this.toastController, confirmMessage);
+        await this.okrShowToast(this.toastController, confirmMessage);
       }
       return Promise.resolve(key);
     }
     catch (ex) {
       console.error(`FirestoreService.updateObject(${collectionName}/${key}) -> ERROR: `, ex);
-      return this.bkError(this.toastController, `Could not update object ${collectionName}/${key}.`);
+      return this.okrError(this.toastController, `Could not update object ${collectionName}/${key}.`);
     }
   }
 
@@ -374,24 +374,24 @@ export class FirestoreService {
   public async deleteObject(collectionName: string, key: string, confirmMessage?: string): Promise<string | undefined> {
     // ensure that the method is only called in the browser context; return undefined in SSR context
     if (!isBrowser(this.platformId)) {
-      return this.bkError(undefined, 'FirestoreService.deleteObject: This method can only be called in the browser context.', true);
+      return this.okrError(undefined, 'FirestoreService.deleteObject: This method can only be called in the browser context.', true);
     }
     if (collectionName?.length === 0) {
-      return this.bkError(undefined, 'FirestoreService.deleteObject: collectionName is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.deleteObject: collectionName is mandatory.', true);
     }
     if (key?.length === 0) {
-      return this.bkError(undefined, 'FirestoreService.deleteObject: object.key is mandatory.', true);
+      return this.okrError(undefined, 'FirestoreService.deleteObject: object.key is mandatory.', true);
     }
     try {
       await deleteDoc(doc(this.firestore, `${collectionName}/${key}`));
       if (confirmMessage) {
-        await this.bkShowToast(this.toastController, confirmMessage);
+        await this.okrShowToast(this.toastController, confirmMessage);
       }
       return Promise.resolve(key);
     }
     catch (ex) {
       console.error(`FirestoreService.deleteObject(${collectionName}/${key}) -> ERROR: `, ex);
-      return this.bkError(this.toastController, `Could not delete object ${collectionName}/${key}.`);
+      return this.okrError(this.toastController, `Could not delete object ${collectionName}/${key}.`);
     }
   }
 

@@ -13,7 +13,7 @@ vi.mock('@okr/shared-util-core', async importOriginal => {
 });
 
 vi.mock('@okr/shared-i18n', () => ({
-  bkTranslate: vi.fn(),
+  okrTranslate: vi.fn(),
 }));
 vi.mock('@okr/shared-util-angular', () => ({
   copyToClipboard: vi.fn(),

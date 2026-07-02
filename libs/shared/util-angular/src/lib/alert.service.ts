@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular/standalone';
 import { TranslocoService } from '@jsverse/transloco';
 import { I18nService } from '@okr/shared-i18n';
-import { bkPrompt, confirm, error, initAlertTranslation, showToast } from './alert.util';
+import { okrPrompt, confirm, error, initAlertTranslation, showToast } from './alert.util';
 
 @Injectable({ providedIn: 'root' })
 export class AlertService {
@@ -21,8 +21,8 @@ export class AlertService {
     return confirm(this.alertController, message, this.i18n.ok(), this.i18n.cancel(), isCancellable, cssClass);
   }
 
-  public async bkPrompt(header: string, placeholder: string, value?: string): Promise<string | undefined> {
-    return bkPrompt(this.alertController, header, placeholder, this.i18n.ok(), this.i18n.cancel(), value);
+  public async okrPrompt(header: string, placeholder: string, value?: string): Promise<string | undefined> {
+    return okrPrompt(this.alertController, header, placeholder, this.i18n.ok(), this.i18n.cancel(), value);
   }
 
   public async showToast(message: string): Promise<void> {

@@ -129,7 +129,7 @@ export class Avatars {
   }
 
   public async edit(avatar: AvatarInfo, index: number): Promise<void> {
-    const changedName = await this.alertService.bkPrompt('@input.avatar.edit', '', this.getAvatarName(avatar));
+    const changedName = await this.alertService.okrPrompt('@input.avatar.edit', '', this.getAvatarName(avatar));
     if (changedName) {
       // do not use set here, because the set on an array would not be signalled to the parent component
       this.avatars.update(arr => {  

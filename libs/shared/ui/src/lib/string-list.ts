@@ -8,7 +8,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
 import { NAME_LENGTH } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { bkPrompt, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
+import { okrPrompt, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
@@ -181,7 +181,7 @@ export class StringList {
   }
 
   public async edit(text: string, index: number): Promise<void> {
-    const changedText = await bkPrompt(this.alertController, this.i18n.string_edit(), '', this.i18n.ok(), this.i18n.cancel(), text);
+    const changedText = await okrPrompt(this.alertController, this.i18n.string_edit(), '', this.i18n.ok(), this.i18n.cancel(), text);
     if (changedText) {
       this.strings.update(arr => arr.map((t, i) => i === index ? changedText : t));
     }

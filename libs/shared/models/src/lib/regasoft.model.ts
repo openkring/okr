@@ -176,6 +176,6 @@ export interface SrvIndex {
 
 export interface SrvMismatch {
   field: string;
-  bkValue: string;
+  okrValue: string;
   rValue: string;
 }

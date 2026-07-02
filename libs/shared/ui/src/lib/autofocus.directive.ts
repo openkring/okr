@@ -8,10 +8,10 @@ import { AfterViewInit, Directive, ElementRef, input } from '@angular/core';
  * is an alternative implementation that can be used in Angular applications.
  * source: https://medium.com/netanelbasal/autofocus-that-works-anytime-in-angular-apps-68cb89a3f057  
  * 
- * Usage: <input bkAutofocus>
+ * Usage: <input okrAutofocus>
  */
 @Directive({
-  selector: '[bkFocus]',
+  selector: '[okrFocus]',
   standalone: true
 })
 export class AutofocusDirective implements AfterViewInit {

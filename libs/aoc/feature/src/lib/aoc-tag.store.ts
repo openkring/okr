@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { OkrModel, TagCollection, TagModel } from '@okr/shared-models';
-import { bkPrompt, confirm } from '@okr/shared-util-angular';
+import { okrPrompt, confirm } from '@okr/shared-util-angular';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
@@ -89,7 +89,7 @@ export const AocTagStore = signalStore(
 
     async createTagDocument(): Promise<void> {
       const tenantId = store.appStore.env.tenantId;
-      const modelName = await bkPrompt(store.alertController, store.i18n.tag_create(), store.i18n.tag_create_placeholder(), store.i18n.ok(), store.i18n.cancel());
+      const modelName = await okrPrompt(store.alertController, store.i18n.tag_create(), store.i18n.tag_create_placeholder(), store.i18n.ok(), store.i18n.cancel());
       if (!modelName?.trim()) return;
       const tag = new TagModel(tenantId);
       tag.tagModel = modelName.trim();
@@ -107,7 +107,7 @@ export const AocTagStore = signalStore(
     },
 
     async addTagString(tag: TagItem): Promise<void> {
-      const newStr = await bkPrompt(store.alertController, store.i18n.tag_add(), store.i18n.tag_add_placeholder(), store.i18n.ok(), store.i18n.cancel());
+      const newStr = await okrPrompt(store.alertController, store.i18n.tag_add(), store.i18n.tag_add_placeholder(), store.i18n.ok(), store.i18n.cancel());
       if (!newStr?.trim()) return;
       const existing = tag.tags ? tag.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
       const updated = [...existing, newStr.trim()].join(',');
@@ -121,7 +121,7 @@ export const AocTagStore = signalStore(
     },
 
     async editTagString(tag: TagItem, tagStr: string): Promise<void> {
-      const edited = await bkPrompt(store.alertController, store.i18n.tag_update(), store.i18n.tag_update_placeholder(), store.i18n.ok(), store.i18n.cancel(), tagStr);
+      const edited = await okrPrompt(store.alertController, store.i18n.tag_update(), store.i18n.tag_update_placeholder(), store.i18n.ok(), store.i18n.cancel(), tagStr);
       if (!edited?.trim() || edited.trim() === tagStr) return;
       const existing = tag.tags ? tag.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
       const updated = existing.map(s => (s === tagStr ? edited.trim() : s)).join(',');

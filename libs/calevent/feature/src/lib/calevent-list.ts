@@ -99,9 +99,9 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         <!-- quick entry -->
         @if(canChange() && expertMode()) {
           <ion-item lines="none">
-            <ion-textarea #bkQuickEntry
-              (keyup.enter)="quickEntry(bkQuickEntry)"
-              (ionInput)="onQuickEntryInput(bkQuickEntry)"
+            <ion-textarea #okrQuickEntry
+              (keyup.enter)="quickEntry(okrQuickEntry)"
+              (ionInput)="onQuickEntryInput(okrQuickEntry)"
               [label] = "store.i18n.quick_entry_label()"
               labelPlacement = "floating"
               [placeholder] = "store.i18n.quick_entry_placeholder()"
@@ -113,7 +113,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
               type="text"
               [autoGrow]="true">
             </ion-textarea>
-            <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
+            <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(okrQuickEntry)" />
           </ion-item>
         }
 
@@ -414,7 +414,7 @@ export class CalEventList implements OnInit {
    * This is the quick entry. It just takes the name of the event together with a date and optional time and adds it to the list.
    * @param eventName 
    */
-  protected async quickEntry(bkQuickEntry: IonTextarea): Promise<void> {
+  protected async quickEntry(okrQuickEntry: IonTextarea): Promise<void> {
     const calevent = new CalEventModel(this.store.tenantId());
     const calname = this.store.calendarName();
     if (!calname || calname === '') {
@@ -422,7 +422,7 @@ export class CalEventList implements OnInit {
       return;
     }
     calevent.calendars = [calname];
-    const parts = parseEventString(bkQuickEntry.value?.trim() ?? '');
+    const parts = parseEventString(okrQuickEntry.value?.trim() ?? '');
     if (!parts.startDate || parts.startDate === '') {
       error(undefined, 'CalEventList.quickEntry: startDate is mandatory in quick entry');
       return;
@@ -448,12 +448,12 @@ export class CalEventList implements OnInit {
       this.selectedQuickEntryPerson.set(null);
     }
     await this.store.quickEntry(calevent);
-    bkQuickEntry.value = '';
+    okrQuickEntry.value = '';
     if (!this.isListView()) this.navigateCalendarTo(calevent.startDate);
   }
 
-  protected clear(bkQuickEntry: IonTextarea): void {
-    bkQuickEntry.value = '';
+  protected clear(okrQuickEntry: IonTextarea): void {
+    okrQuickEntry.value = '';
     this.selectedQuickEntryPerson.set(null);
   }
 

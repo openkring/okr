@@ -571,7 +571,7 @@ export const _MatrixChatStore = signalStore(
       async replyInThread(message: MatrixMessage): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) return;
-        const text = await store.alertService.bkPrompt(store.i18n.thread_reply_header(), store.i18n.thread_reply_placeholder());
+        const text = await store.alertService.okrPrompt(store.i18n.thread_reply_header(), store.i18n.thread_reply_placeholder());
         if (!text?.trim()) return;
         try {
           await store.matrixService.sendMessage(roomId, text.trim(), message.eventId);
@@ -586,7 +586,7 @@ export const _MatrixChatStore = signalStore(
        * Ask for a comment and send a report to the support channel.
        */
       async reportMessage(message: MatrixMessage): Promise<void> {
-        const comment = await store.alertService.bkPrompt(store.i18n.msg_report_header(), store.i18n.msg_report_placeholder());
+        const comment = await store.alertService.okrPrompt(store.i18n.msg_report_header(), store.i18n.msg_report_placeholder());
         if (!comment?.trim()) return;
         const rooms = store.matrixService.roomsCurrentValue;
         // C-7: identify the support room by its immutable canonical alias
@@ -658,7 +658,7 @@ export const _MatrixChatStore = signalStore(
       async editMessage(message: MatrixMessage): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) return;
-        const newText = await store.alertService.bkPrompt(store.i18n.msg_update_header(), store.i18n.msg_update_placeholder(), message.body);
+        const newText = await store.alertService.okrPrompt(store.i18n.msg_update_header(), store.i18n.msg_update_placeholder(), message.body);
         if (!newText?.trim() || newText.trim() === message.body) return;
         try {
           await store.matrixService.editMessage(roomId, message.eventId, newText.trim());

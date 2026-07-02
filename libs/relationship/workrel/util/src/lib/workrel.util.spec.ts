@@ -19,7 +19,7 @@ vi.mock('@okr/shared-util-core', async importOriginal => {
 
 // Proactively mock shared-i18n to prevent Angular compiler errors
 vi.mock('@okr/shared-i18n', () => ({
-  bkTranslate: vi.fn(),
+  okrTranslate: vi.fn(),
 }));
 
 describe('Workrel Utils', () => {

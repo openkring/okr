@@ -8,7 +8,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { I18nDefaultCollection, I18nDefaultModel } from '@okr/shared-models';
-import { bkPrompt } from '@okr/shared-util-angular';
+import { okrPrompt } from '@okr/shared-util-angular';
 
 import { PFX } from './scope';
 
@@ -92,9 +92,9 @@ export const I18nDefaultStore = signalStore(
     },
 
     async createItem(): Promise<void> {
-      const module = await bkPrompt(store.alertController, store.i18n.module_prompt(), '', store.i18n.ok(), store.i18n.cancel());
+      const module = await okrPrompt(store.alertController, store.i18n.module_prompt(), '', store.i18n.ok(), store.i18n.cancel());
       if (!module) return;
-      const key = await bkPrompt(store.alertController, store.i18n.key_prompt(), '', store.i18n.ok(), store.i18n.cancel());
+      const key = await okrPrompt(store.alertController, store.i18n.key_prompt(), '', store.i18n.ok(), store.i18n.cancel());
       if (!key) return;
       const item = new I18nDefaultModel();
       item.module = module.trim();

@@ -16,7 +16,7 @@ vi.mock('@okr/shared-util-core', async importOriginal => {
 // membership.util imports @okr/shared-util-angular, whose barrel pulls in
 // country-name.pipe — that needs I18nService, so it must be on the mock too.
 vi.mock('@okr/shared-i18n', () => ({
-  bkTranslate: vi.fn(),
+  okrTranslate: vi.fn(),
   I18nService: class {},
 }));
 

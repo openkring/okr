@@ -15,7 +15,7 @@ vi.mock('@okr/shared-util-core', async importOriginal => {
   };
 });
 
-vi.mock('@okr/shared-i18n', () => ({ bkTranslate: vi.fn() }));
+vi.mock('@okr/shared-i18n', () => ({ okrTranslate: vi.fn() }));
 
 const TENANT = 'tenant-1';
 

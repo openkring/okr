@@ -8,7 +8,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { WebsiteContentCollection, WebsiteContentModel } from '@okr/shared-models';
-import { bkPrompt } from '@okr/shared-util-angular';
+import { okrPrompt } from '@okr/shared-util-angular';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
@@ -66,7 +66,7 @@ export const AocWebsiteStore = signalStore(
     },
 
     async createItem(): Promise<void> {
-      const key = await bkPrompt(store.alertController, store.i18n.website_key(), '', store.i18n.ok(), store.i18n.cancel());
+      const key = await okrPrompt(store.alertController, store.i18n.website_key(), '', store.i18n.ok(), store.i18n.cancel());
       if (!key) return;
       const item = new WebsiteContentModel(store.appStore.env.tenantId);
       item.key = key.trim();

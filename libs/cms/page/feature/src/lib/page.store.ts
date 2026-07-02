@@ -9,7 +9,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@okr/shared-models';
 import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData, getTodayStr, DateFormat } from '@okr/shared-util-core';
-import { bkPrompt, confirm, downloadTextFile, error, exportCsv, getExportFileName, navigateByUrl } from '@okr/shared-util-angular';
+import { okrPrompt, confirm, downloadTextFile, error, exportCsv, getExportFileName, navigateByUrl } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { PageService } from '@okr/cms-page-data-access';
@@ -234,7 +234,7 @@ export const _PageStore = signalStore(
        */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
-        const pageName = await bkPrompt(store.alertController, store.i18n.add_label(), store.i18n.add_placeholder(), store.i18n.ok(), store.i18n.cancel());
+        const pageName = await okrPrompt(store.alertController, store.i18n.add_label(), store.i18n.add_placeholder(), store.i18n.ok(), store.i18n.cancel());
         if (pageName) {
           const page = new PageModel(store.tenantId());
           page.name = pageName;

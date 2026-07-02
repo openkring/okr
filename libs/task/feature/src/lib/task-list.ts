@@ -65,9 +65,9 @@ import { TaskStore } from './task.store';
       <!-- quick entry -->
       @if(canChange()) {
         <ion-item lines="none">
-          <ion-textarea #bkQuickEntry
-            (keyup.enter)="quickEntry(bkQuickEntry)"
-            (ionInput)="onQuickEntryInput(bkQuickEntry)"
+          <ion-textarea #okrQuickEntry
+            (keyup.enter)="quickEntry(okrQuickEntry)"
+            (ionInput)="onQuickEntryInput(okrQuickEntry)"
             label = "{{ store.i18n.quick_entry_label() }}"
             labelPlacement = "floating"
             placeholder = "{{ store.i18n.quick_entry_placeholder() }}"
@@ -79,7 +79,7 @@ import { TaskStore } from './task.store';
             [autoGrow]="true"
           >
           </ion-textarea>
-          <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
+          <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(okrQuickEntry)" />
         </ion-item>
       }
 
@@ -206,9 +206,9 @@ export class TaskList {
    * This is the quick entry. It just takes the name of the task and adds it to the list.
    * @param taskName 
    */
-  protected async quickEntry(bkQuickEntry: IonTextarea): Promise<void> {
+  protected async quickEntry(okrQuickEntry: IonTextarea): Promise<void> {
     const task = new TaskModel(this.store.tenantId());
-    const rawValue = bkQuickEntry.value?.trim() ?? '';
+    const rawValue = okrQuickEntry.value?.trim() ?? '';
     const tagMatch = rawValue.match(/:(\S+)/);
     task.tags = tagMatch ? tagMatch[1] : '';
     const dateMatch = rawValue.match(/\b(\d{2}\.\d{2}\.\d{4})(?:,\d{4})?\b/);
@@ -227,7 +227,7 @@ export class TaskList {
       this.selectedQuickEntryPerson.set(null);
     }
     await this.store.quickEntry(task);
-    bkQuickEntry.value = '';
+    okrQuickEntry.value = '';
   }
 
   protected async onQuickEntryInput(textarea: IonTextarea): Promise<void> {
@@ -354,8 +354,8 @@ export class TaskList {
     await this.store.setCompleted(task);
   }
 
-  protected clear(bkQuickEntry: IonTextarea): void {
-    bkQuickEntry.value = '';
+  protected clear(okrQuickEntry: IonTextarea): void {
+    okrQuickEntry.value = '';
     this.selectedQuickEntryPerson.set(null);
   }
 

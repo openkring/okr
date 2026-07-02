@@ -62,7 +62,7 @@ export const CommentListStore = signalStore(
       /******************************* actions *************************************** */
       async add(comment?: string): Promise<void> {
         if (!comment || comment.length === 0) {
-          comment = await store.alertService.bkPrompt(store.i18n.add_title(), store.i18n.add_placeholder());
+          comment = await store.alertService.okrPrompt(store.i18n.add_title(), store.i18n.add_placeholder());
         }
         if (!comment || comment.length === 0) return;
         await store.commentService.create(store.parentKey(), comment, store.currentUser());

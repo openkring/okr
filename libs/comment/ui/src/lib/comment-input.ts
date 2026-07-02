@@ -10,9 +10,9 @@ import { IonCol, IonRow, IonTextarea } from '@ionic/angular/standalone';
   template: `
     <ion-row>
       <ion-col size="11">
-        <ion-textarea #bkComment 
+        <ion-textarea #okrComment 
           [value]="value()"
-          (keyup.enter)="changed.emit(bkComment.value?.trim() ?? '')"
+          (keyup.enter)="changed.emit(okrComment.value?.trim() ?? '')"
           label = "{{label() }}"
           labelPlacement = "floating"
           placeholder = "{{placeholder() }}"

@@ -22,14 +22,14 @@ export function getMismatches(item: SrvIndex): SrvMismatch[] {
   const result: SrvMismatch[] = [];
 
   const chk = (field: string, bk: string, r: string) => {
-    if (r && bk !== r) result.push({ field, bkValue: bk, rValue: r });
+    if (r && bk !== r) result.push({ field, okrValue: bk, rValue: r });
   };
   const chkPhone = (field: string, bk: string, r: string) => {
     const norm = (s: string) => s.replace(/\s/g, '');
-    if (r && norm(bk) !== norm(r)) result.push({ field, bkValue: bk, rValue: r });
+    if (r && norm(bk) !== norm(r)) result.push({ field, okrValue: bk, rValue: r });
   };
   const chkCI = (field: string, bk: string, r: string) => {
-    if (r && bk.toLowerCase() !== r.toLowerCase()) result.push({ field, bkValue: bk, rValue: r });
+    if (r && bk.toLowerCase() !== r.toLowerCase()) result.push({ field, okrValue: bk, rValue: r });
   };
 
   chk('firstName',   item.firstName,   item.rFirstName);
@@ -45,7 +45,7 @@ export function getMismatches(item: SrvIndex): SrvMismatch[] {
   if (item.pKey) {
     const expectedCat = item.mainClub ? item.rCategory : 'D';
     if (expectedCat && item.pCategory !== expectedCat) {
-      result.push({ field: 'pCategory', bkValue: item.pCategory, rValue: expectedCat });
+      result.push({ field: 'pCategory', okrValue: item.pCategory, rValue: expectedCat });
     }
   }
 

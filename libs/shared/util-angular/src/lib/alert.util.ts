@@ -62,7 +62,7 @@ export async function confirm(
 
 export type PromptInputType = 'text' | 'number' | 'password';
 
-export async function bkPrompt(
+export async function okrPrompt(
   alertController: AlertController,
   header: string,
   placeholder: string,

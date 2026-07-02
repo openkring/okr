@@ -39,7 +39,7 @@ export class Searchbar implements OnInit {
   protected isDisabled = computed(() => coerceBoolean(this.disabled()));
 
   // view children
-  protected bkSearch = viewChild<IonSearchbar>('bksearch');
+  protected okrSearch = viewChild<IonSearchbar>('bksearch');
 
   // fires ionInput event for every change of the value
   // fires ionChange event when the value has been committed by the user, i.e. element loses focus or the 'enter' key is pressed.
@@ -50,7 +50,7 @@ export class Searchbar implements OnInit {
    */
   ngOnInit() {
     setTimeout(() => {
-      if (this.bkSearch()) this.bkSearch()?.setFocus();
+      if (this.okrSearch()) this.okrSearch()?.setFocus();
     }, 500);
   }
 }

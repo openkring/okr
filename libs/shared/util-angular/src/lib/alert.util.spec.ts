@@ -2,7 +2,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 import { AlertController, ToastController } from '@ionic/angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bkPrompt, confirm, error, initAlertTranslation, PromptInputType, showToast } from './alert.util';
+import { okrPrompt, confirm, error, initAlertTranslation, PromptInputType, showToast } from './alert.util';
 
 vi.mock('@ionic/angular', () => ({
   AlertController: vi.fn(),
@@ -161,7 +161,7 @@ describe('alert.util', () => {
     });
   });
 
-  describe('bkPrompt', () => {
+  describe('okrPrompt', () => {
     beforeEach(() => {
       mockAlert.onWillDismiss.mockResolvedValue({
         role: 'confirm',
@@ -170,7 +170,7 @@ describe('alert.util', () => {
     });
 
     it('should create alert with header, okLabel, cancelLabel and textarea input', async () => {
-      await bkPrompt(mockAlertController, 'Header', 'Placeholder', 'OK', 'Cancel');
+      await okrPrompt(mockAlertController, 'Header', 'Placeholder', 'OK', 'Cancel');
       expect(mockAlertController.create).toHaveBeenCalledWith({
         header: 'Header',
         cssClass: 'okr-prompt-alert',
@@ -183,23 +183,23 @@ describe('alert.util', () => {
     });
 
     it('should pass value when provided', async () => {
-      await bkPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel', 'existing');
+      await okrPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel', 'existing');
       const call = (mockAlertController.create as any).mock.calls[0][0];
       expect(call.inputs[0].value).toBe('existing');
     });
 
     it('should return user input when confirmed', async () => {
-      expect(await bkPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel')).toBe('user input');
+      expect(await okrPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel')).toBe('user input');
     });
 
     it('should return undefined when cancelled', async () => {
       mockAlert.onWillDismiss.mockResolvedValue({ role: 'cancel', data: { values: ['x'] } });
-      expect(await bkPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel')).toBeUndefined();
+      expect(await okrPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel')).toBeUndefined();
     });
 
     it('should return undefined for empty values array', async () => {
       mockAlert.onWillDismiss.mockResolvedValue({ role: 'confirm', data: { values: [] } });
-      expect(await bkPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel')).toBeUndefined();
+      expect(await okrPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel')).toBeUndefined();
     });
   });
 });

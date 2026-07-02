@@ -18,7 +18,7 @@ import { SwissCitiesSearchStore } from './swisscity-search.store';
   template: `
     <ion-row>
       <ion-col size="12">
-      <ion-searchbar  #bkSearchCity (ionInput)="onSearchtermChange($event)"
+      <ion-searchbar  #okrSearchCity (ionInput)="onSearchtermChange($event)"
           type="search" 
           inputmode="search"
           [debounce]="debounce()"
@@ -62,7 +62,7 @@ export class SwissCitySearch implements OnInit {
   public citySelected = output<SwissCity>();
   protected isPopoverOpen = signal(false);
 
-  protected bkSearchCity = viewChild<IonSearchbar>('bkSearchCity');
+  protected okrSearchCity = viewChild<IonSearchbar>('okrSearchCity');
   // fires ionInput event for every change of the value
   // fires ionChange event when the value has been committed by the user, i.e. element loses focus or the 'enter' key is pressed.
 
@@ -74,7 +74,7 @@ export class SwissCitySearch implements OnInit {
   ngOnInit() {
     if (this.setFocus()) {
       setTimeout(() => {
-        if (this.bkSearchCity()) this.bkSearchCity()?.setFocus();
+        if (this.okrSearchCity()) this.okrSearchCity()?.setFocus();
       }, 500);
     }
   }
