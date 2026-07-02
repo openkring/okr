@@ -18,10 +18,10 @@ export interface ViewDateInputI18n {
 /**
  * This ui component enables to input a date in ViewDate format (dd.MM.yyyy) in a text input field.
  * The input field is masked to accept only valid dates.
- * The idea is to use this component embedded with bk-date-input (together with a date picker) to provide a date input field.
+ * The idea is to use this component embedded with okr-date-input (together with a date picker) to provide a date input field.
  */
 @Component({
-  selector: 'bk-viewdate-input',
+  selector: 'okr-viewdate-input',
   standalone: true,
   imports: [
     FormsModule, MaskitoDirective,

@@ -44,7 +44,7 @@ if (typeof window !== 'undefined') {
 }
 
 @Component({
-  selector: 'bk-map-section',
+  selector: 'okr-map-section',
   standalone: true,
   styles: [`
     ion-card-content { padding: 0px; }
@@ -67,7 +67,7 @@ if (typeof window !== 'undefined') {
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <ion-card>
-      <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
         @if(locationError) {
           <div class="error-message">
@@ -108,7 +108,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   private resizeObserver: ResizeObserver | undefined;
 
   constructor() {
-    this.mapId = `bk-map-${Math.random().toString(36).substring(2)}`; // Unique per instance
+    this.mapId = `okr-map-${Math.random().toString(36).substring(2)}`; // Unique per instance
     
     // Watch for editMode changes and update map configuration
     effect(() => {

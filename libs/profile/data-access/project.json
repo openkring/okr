@@ -2,7 +2,7 @@
   "name": "profile-data-access",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/profile/data-access/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:data-access", "scope:profile", "platform:mobile", "platform:web"],
   "targets": {

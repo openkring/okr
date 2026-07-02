@@ -10,14 +10,14 @@ export interface TimeSelectModalI18n {
 }
 
 @Component({
-  selector: 'bk-time-select-modal',
+  selector: 'okr-time-select-modal',
   standalone: true,
   imports: [
     Header,
     IonContent, IonDatetime
   ],
   template: `
-      <bk-header [i18n]="{ title: i18n().title }" [isModal]="true" />
+      <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
       <ion-content class="ion-no-padding">
         <ion-datetime
             [value]="time()"

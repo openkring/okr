@@ -21,7 +21,7 @@ interface TrackerConfigI18n {
 }
 
 @Component({
-  selector: 'bk-tracker-config',
+  selector: 'okr-tracker-config',
   standalone: true,
   imports: [
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
@@ -37,19 +37,19 @@ interface TrackerConfigI18n {
           <ion-grid>
             <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox [i18n]="autostartI18n()" [checked]="autostart()" (checkedChange)="onFieldChange('autostart', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  <okr-checkbox [i18n]="autostartI18n()" [checked]="autostart()" (checkedChange)="onFieldChange('autostart', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-number-input [i18n]="intervalInSecondsI18n()" [value]="intervalInSeconds()" (valueChange)="onFieldChange('intervalInSeconds', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-number-input [i18n]="intervalInSecondsI18n()" [value]="intervalInSeconds()" (valueChange)="onFieldChange('intervalInSeconds', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox [i18n]="enableHighAccuracyI18n()" [checked]="enableHighAccuracy()" (checkedChange)="onFieldChange('enableHighAccuracy', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  <okr-checkbox [i18n]="enableHighAccuracyI18n()" [checked]="enableHighAccuracy()" (checkedChange)="onFieldChange('enableHighAccuracy', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-number-input [i18n]="maximumAgeI18n()" [value]="maximumAge()" (valueChange)="onFieldChange('maximumAge', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-number-input [i18n]="maximumAgeI18n()" [value]="maximumAge()" (valueChange)="onFieldChange('maximumAge', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-string-select [i18n]="exportFormatI18n()" [selectedString]="exportFormat()" (selectedStringChange)="onFieldChange('exportFormat', $event)" [readOnly]="readOnly()" [stringList]="['kmz', 'json', 'csv']" />
+                  <okr-string-select [i18n]="exportFormatI18n()" [selectedString]="exportFormat()" (selectedStringChange)="onFieldChange('exportFormat', $event)" [readOnly]="readOnly()" [stringList]="['kmz', 'json', 'csv']" />
                 </ion-col>
             </ion-row>
           </ion-grid>

@@ -29,7 +29,7 @@ export interface IconEditFormI18n {
 }
 
 @Component({
-  selector: 'bk-icon-edit-form',
+  selector: 'okr-icon-edit-form',
   standalone: true,
   imports: [
     DecimalPipe,
@@ -47,26 +47,26 @@ export interface IconEditFormI18n {
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               }
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" [readOnly]="true" [copyable]="true" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" [readOnly]="true" [copyable]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="typeI18n()" [value]="type()" [readOnly]="true" [copyable]="true" />
+                <okr-text-input [i18n]="typeI18n()" [value]="type()" [readOnly]="true" [copyable]="true" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input [i18n]="fullPathI18n()" [value]="fullPath()" [readOnly]="true" [copyable]="true" />
-                <bk-error-note [errors]="fullPathErrors()" />
+                <okr-text-input [i18n]="fullPathI18n()" [value]="fullPath()" [readOnly]="true" [copyable]="true" />
+                <okr-error-note [errors]="fullPathErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12">
                 <!-- index: editable list of words, e.g. 'create edit new' -->
-                <bk-text-input [i18n]="indexI18n()" [value]="index()" (valueChange)="onFieldChange('index', $event)"
+                <okr-text-input [i18n]="indexI18n()" [value]="index()" (valueChange)="onFieldChange('index', $event)"
                   [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
@@ -87,11 +87,11 @@ export interface IconEditFormI18n {
       </ion-card>
 
       @if(hasRole('privileged')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
       @if(hasRole('admin')) {
-        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }

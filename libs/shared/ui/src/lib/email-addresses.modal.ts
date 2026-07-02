@@ -32,7 +32,7 @@ const EmailAddressStore = signalStore(
 );
 
 @Component({
-  selector: 'bk-email-addresses-modal',
+  selector: 'okr-email-addresses-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [EmailAddressStore],
@@ -44,7 +44,7 @@ const EmailAddressStore = signalStore(
     IonList, IonItem, IonNote,
   ],
   template: `
-    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content>
       <ion-segment [(ngModel)]="activeSegment">
         <ion-segment-button value="main">

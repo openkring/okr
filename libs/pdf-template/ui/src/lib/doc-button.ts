@@ -11,7 +11,7 @@ import {
 import { PdfPreviewModal } from './pdf-preview.modal';
 
 @Component({
-  selector: 'bk-doc-button',
+  selector: 'okr-doc-button',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SvgIconPipe, IonButton, IonIcon, IonSpinner],

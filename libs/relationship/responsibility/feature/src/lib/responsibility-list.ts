@@ -13,7 +13,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 import { ResponsibilityStore } from './responsibility.store';
 
 @Component({
-  selector: 'bk-responsibility-list',
+  selector: 'okr-responsibility-list',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -39,14 +39,14 @@ import { ResponsibilityStore } from './responsibility.store';
             </ion-button>
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
-                <ion-content><bk-menu [menuName]="contextMenuName()" /></ion-content>
+                <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
               </ng-template>
             </ion-popover>
           </ion-buttons>
         </ion-toolbar>
       }
 
-      <bk-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
+      <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
       <ion-toolbar color="light">
         <ion-grid>
           <ion-row>
@@ -66,10 +66,10 @@ import { ResponsibilityStore } from './responsibility.store';
 
     <ion-content>
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @if(store.filteredResponsibilities().length === 0) {
-          <bk-empty-list [message]="store.i18n.empty()" />
+          <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-grid>
             @for(r of store.filteredResponsibilities(); track r.okey) {
@@ -82,12 +82,12 @@ import { ResponsibilityStore } from './responsibility.store';
                 </ion-col>
                 <ion-col size="4">
                   @if(r.responsibleAvatar; as resp) {
-                    <ion-label><bk-avatar-display [avatars]="[resp]" [showName]="true" /></ion-label>
+                    <ion-label><okr-avatar-display [avatars]="[resp]" [showName]="true" /></ion-label>
                   }
                 </ion-col>
                 <ion-col size="4">
                   @if(r.delegateAvatar; as del) {
-                    <ion-label><bk-avatar-display [avatars]="[del]" [showName]="true" /></ion-label>
+                    <ion-label><okr-avatar-display [avatars]="[del]" [showName]="true" /></ion-label>
                   }
                 </ion-col>
               </ion-row>

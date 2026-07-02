@@ -9,7 +9,7 @@ import { hasRole } from '@okr/shared-util-core';
 import { ContextDiagramStore } from './context-diagram-section.store';
 
 @Component({
-  selector: 'bk-context-diagram-config-modal',
+  selector: 'okr-context-diagram-config-modal',
   standalone: true,
   imports: [
     FormsModule,
@@ -18,7 +18,7 @@ import { ContextDiagramStore } from './context-diagram-section.store';
   ],
   providers: [ContextDiagramStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.context_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.context_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-toggle [(ngModel)]="cfg.showAvatar">

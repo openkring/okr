@@ -15,7 +15,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 import { AocRolesStore } from './aoc-roles.store';
 
 @Component({
-  selector: 'bk-aoc-roles',
+  selector: 'okr-aoc-roles',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -25,7 +25,7 @@ import { AocRolesStore } from './aoc-roles.store';
   ],
   providers: [AocRolesStore],
   template: `
-    <bk-header [i18n]="{ title: aocRolesStore.i18n.roles_title() }" />
+    <okr-header [i18n]="{ title: aocRolesStore.i18n.roles_title() }" />
     <ion-content>
       <ion-card>
         <ion-card-header>
@@ -39,7 +39,7 @@ import { AocRolesStore } from './aoc-roles.store';
             <ion-row>
               @if(avatar(); as avatar) {
               <ion-label>
-                <bk-avatar-display [avatars]="[avatar]" [showName]="true" />
+                <okr-avatar-display [avatars]="[avatar]" [showName]="true" />
                 <ion-icon src="{{ 'cancel' | svgIcon }}" slot="end" (click)="clearPerson()" />
               </ion-label>
               } @else {
@@ -214,8 +214,8 @@ import { AocRolesStore } from './aoc-roles.store';
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-chips chipName="role" [storedChips]="roles()" (storedChipsChange)="onRoleChange($event)" [allChips]="allRoleNames()" [readOnly]="false" />
-      <bk-result-log [title]="logTitle()"  cardTitle="Resultat" [log]="logInfo()" />
+      <okr-chips chipName="role" [storedChips]="roles()" (storedChipsChange)="onRoleChange($event)" [allChips]="allRoleNames()" [readOnly]="false" />
+      <okr-result-log [title]="logTitle()"  cardTitle="Resultat" [log]="logInfo()" />
     </ion-content>
   `,
 })

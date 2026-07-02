@@ -12,7 +12,7 @@ import { OwnershipStore } from './ownership.store';
 
 
 @Component({
-  selector: 'bk-ownership-new-form',
+  selector: 'okr-ownership-new-form',
   standalone: true,
   providers: [OwnershipStore],
   imports: [
@@ -65,7 +65,7 @@ import { OwnershipStore } from './ownership.store';
             </ion-row>
             <ion-row>
               <ion-col size="12">
-                <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>

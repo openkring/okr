@@ -16,7 +16,7 @@ if (typeof window !== 'undefined') {
 }
 
 @Component({
-  selector: 'bk-location-select',
+  selector: 'okr-location-select',
   standalone: true,
   imports: [
     IonSegment, IonSegmentButton, IonLabel,

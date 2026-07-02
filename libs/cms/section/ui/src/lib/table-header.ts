@@ -9,14 +9,14 @@ export interface TableHeaderI18n {
 }
 
 @Component({
-  selector: 'bk-table-header',
+  selector: 'okr-table-header',
   standalone: true,
   imports: [
     TextList
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-text-list
+    <okr-text-list
         [(texts)]="formData"
         [maxLength]="maxLength()"
         [title]="i18n().table_header_title()"

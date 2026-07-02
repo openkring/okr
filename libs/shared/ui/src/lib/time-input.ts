@@ -20,7 +20,7 @@ export interface TimeInputI18n {
 }
 
 @Component({
-  selector: 'bk-time-input',
+  selector: 'okr-time-input',
   standalone: true,
   imports: [
     SvgIconPipe,

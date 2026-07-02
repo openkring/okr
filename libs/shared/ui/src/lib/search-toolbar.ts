@@ -4,7 +4,7 @@ import { IonCol, IonGrid, IonRow, IonToolbar } from '@ionic/angular/standalone';
 import { Searchbar } from './searchbar';
 
 @Component({
-  selector: 'bk-search-toolbar',
+  selector: 'okr-search-toolbar',
   standalone: true,
   imports: [
     Searchbar, 
@@ -15,7 +15,7 @@ import { Searchbar } from './searchbar';
       <ion-grid>
         <ion-row class="ion-align-items-center">
           <ion-col class="ion-no-padding" size="12">
-            <bk-searchbar [searchTerm]="searchTerm()" (ionInput)="onSearchTermChange($event)" />
+            <okr-searchbar [searchTerm]="searchTerm()" (ionInput)="onSearchTermChange($event)" />
           </ion-col>
         </ion-row>
       </ion-grid>

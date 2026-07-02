@@ -10,7 +10,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
 
 @Component({
-  selector: 'bk-aoc-doc',
+  selector: 'okr-aoc-doc',
   standalone: true,
   imports: [
     ThumbnailUrlPipe, FileLogoPipe,
@@ -20,7 +20,7 @@ import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
   ],
   providers: [AocDocStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.doc_title() }" />
+    <okr-header [i18n]="{ title: store.i18n.doc_title() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>
@@ -42,7 +42,7 @@ import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
             <ion-row>
               <ion-col size="6">{{ store.i18n.doc_check_content() }}</ion-col>
               <ion-col size="6">
-                <bk-button
+                <okr-button
                   [label]="missingDocs().length > 0 ? store.i18n.doc_hide() : store.i18n.doc_check_button()"
                   iconName="checkbox-circle"
                   [disabled]="isChecking()"

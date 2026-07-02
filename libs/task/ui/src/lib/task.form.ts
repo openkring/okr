@@ -8,7 +8,7 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { TaskI18n, taskValidations } from '@okr/task-util';
 
 @Component({
-  selector: 'bk-task-form',
+  selector: 'okr-task-form',
   standalone: true,
   imports: [
     DateInput, CategorySelect, Chips, NotesInput,
@@ -26,27 +26,27 @@ import { TaskI18n, taskValidations } from '@okr/task-util';
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
             <ion-row>
               <ion-col size="12">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [autofocus]="true" [readOnly]="isReadOnly()" [copyable]="true" />
-                <bk-error-note [errors]="nameErrors()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [autofocus]="true" [readOnly]="isReadOnly()" [copyable]="true" />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="completionDateI18n()" [storeDate]="completionDate()" (storeDateChange)="onFieldChange('completionDate', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="completionDateI18n()" [storeDate]="completionDate()" (storeDateChange)="onFieldChange('completionDate', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
                   <ion-label>{{ i18n().state_label() }}:</ion-label>
-                  <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                  <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -54,13 +54,13 @@ import { TaskI18n, taskValidations } from '@okr/task-util';
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
                   <ion-label>{{ i18n().priority() }}:</ion-label>
-                  <bk-cat-select [category]="priorities()!" [selectedItemName]="priority()" (selectedItemNameChange)="onFieldChange('priority', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                  <okr-cat-select [category]="priorities()!" [selectedItemName]="priority()" (selectedItemNameChange)="onFieldChange('priority', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <ion-item lines="none">
                   <ion-label>{{ i18n().importance() }}:</ion-label>
-                  <bk-cat-select [category]="importances()!" [selectedItemName]="importance()" (selectedItemNameChange)="onFieldChange('importance', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                  <okr-cat-select [category]="importances()!" [selectedItemName]="importance()" (selectedItemNameChange)="onFieldChange('importance', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -69,11 +69,11 @@ import { TaskI18n, taskValidations } from '@okr/task-util';
       </ion-card>
 
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
       @if(hasRole('admin')) {
-        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }

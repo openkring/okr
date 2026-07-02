@@ -14,7 +14,7 @@ import { LoginForm } from '@okr/auth-ui';
 import { AuthStore } from './auth.store';
 
 @Component({
-  selector: 'bk-login-page',
+  selector: 'okr-login-page',
   standalone: true,
   providers: [AuthStore],
   imports: [
@@ -36,14 +36,14 @@ import { AuthStore } from './auth.store';
    }
   `,
   template: `
-    <bk-header [i18n]="{ title: store.i18n.title() }" [showCloseButton]="false" />
+    <okr-header [i18n]="{ title: store.i18n.title() }" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
           <ion-label class="title"><strong>{{ store.i18n.title() }}</strong></ion-label>
-          <bk-login-form context="login"
+          <okr-login-form context="login"
             [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
             [i18n]="store.i18n"
           />

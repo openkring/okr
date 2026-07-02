@@ -17,7 +17,7 @@ import { AocWebsiteStore } from './aoc-website.store';
 import { AocWebsiteEditModal } from './aoc-website-edit.modal';
 
 @Component({
-  selector: 'bk-aoc-website',
+  selector: 'okr-aoc-website',
   standalone: true,
   imports: [
     SlicePipe, FormsModule, SvgIconPipe,
@@ -28,7 +28,7 @@ import { AocWebsiteEditModal } from './aoc-website-edit.modal';
   ],
   providers: [AocWebsiteStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.title()}" />
+    <okr-header [i18n]="{ title: store.i18n.title()}" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar

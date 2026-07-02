@@ -13,7 +13,7 @@ import { MENU_I18N_KEYS, MenuI18n } from '@okr/cms-menu-util';
 import { MenuStore } from './menu.store';
 
 @Component({
-  selector: 'bk-menu-modal',
+  selector: 'okr-menu-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, ErrorBanner, MenuForm,
@@ -21,14 +21,14 @@ import { MenuStore } from './menu.store';
   ],
   providers: [MenuStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
-    <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+    <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-menu-item-form
+        <okr-menu-item-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"

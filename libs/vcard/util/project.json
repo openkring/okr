@@ -2,7 +2,7 @@
   "name": "vcard-util",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/vcard/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:vcard", "platform:mobile", "platform:web"],
   "targets": {

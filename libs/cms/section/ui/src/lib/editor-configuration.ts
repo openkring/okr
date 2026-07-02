@@ -15,7 +15,7 @@ interface EditorConfigI18n {
 }
 
 @Component({
-  selector: 'bk-editor-config',
+  selector: 'okr-editor-config',
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote,
@@ -36,15 +36,15 @@ interface EditorConfigI18n {
           <ion-row>
             <ion-col size="12">
               @defer (on idle) {
-                <bk-editor [content]="htmlContent()" (contentChange)="onFieldChange('htmlContent', $event)" [readOnly]="readOnly()" [buttonCopyI18n]="buttonCopyI18n()" />
+                <okr-editor [content]="htmlContent()" (contentChange)="onFieldChange('htmlContent', $event)" [readOnly]="readOnly()" [buttonCopyI18n]="buttonCopyI18n()" />
               }
             </ion-col>
             @if(showAdvanced()) {
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="positionI18n()" [value]="position()" (valueChange)="onFieldChange('position', $event)" [readOnly]="readOnly()" [categories]="positions" />
+                <okr-category-old [i18n]="positionI18n()" [value]="position()" (valueChange)="onFieldChange('position', $event)" [readOnly]="readOnly()" [categories]="positions" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-number-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                <okr-number-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="readOnly()" [showHelper]="true" />
               </ion-col>
             }
           </ion-row>

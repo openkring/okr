@@ -17,7 +17,7 @@ import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser
 import { UserStore } from './user.store';
 
 @Component({
-  selector: 'bk-user-edit-page',
+  selector: 'okr-user-edit-page',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, AvatarToolbar, Chips, CommentsCard,
@@ -26,21 +26,21 @@ import { UserStore } from './user.store';
   ],
   providers: [UserStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [showCloseButton]="false" />
+    <okr-header [i18n]="{ title: headerTitle() }" [showCloseButton]="false" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
     <ion-content>
-      <bk-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
+      <okr-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
       @if(user(); as user) {
-        <bk-user-model-form [i18n]="store.i18n" [formData]="userModelVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
-        <bk-user-auth-form [i18n]="store.i18n" [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
-        <bk-user-display-form [i18n]="store.i18n" [formData]="userDisplayVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
-        <bk-user-privacy-form [i18n]="store.i18n" [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (onFormDataChange)="log($event)" />
-        <bk-user-notification-form [i18n]="store.i18n" [formData]="userNotificationVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onTagsChanged($event)" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" />
+        <okr-user-model-form [i18n]="store.i18n" [formData]="userModelVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <okr-user-auth-form [i18n]="store.i18n" [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <okr-user-display-form [i18n]="store.i18n" [formData]="userDisplayVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <okr-user-privacy-form [i18n]="store.i18n" [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (onFormDataChange)="log($event)" />
+        <okr-user-notification-form [i18n]="store.i18n" [formData]="userNotificationVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onTagsChanged($event)" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" />
       }
-      <bk-comments-card [parentKey]="parentKey()" />
+      <okr-comments-card [parentKey]="parentKey()" />
     </ion-content>
   `
 })

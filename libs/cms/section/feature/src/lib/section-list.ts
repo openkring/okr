@@ -11,7 +11,7 @@ import { SectionStore } from './section.store';
 import { SectionImageService, SectionImageUploadLabels } from './section-image.service';
 
 @Component({
-  selector: 'bk-section-all-list',
+  selector: 'okr-section-all-list',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -42,7 +42,7 @@ import { SectionImageService, SectionImageUploadLabels } from './section-image.s
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
+    <okr-list-filter 
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -69,15 +69,15 @@ import { SectionImageService, SectionImageUploadLabels } from './section-image.s
     </ion-toolbar>
   </ion-header>
 
-  <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+  <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
 
   <!-- Data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-list-skeleton [rows]="6" />
+      <okr-list-skeleton [rows]="6" />
     } @else {
       @if (filteredSections().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(section of filteredSections(); track section.okey) {

@@ -8,7 +8,7 @@ import { Header } from '@okr/shared-ui';
 import { DocumentStore } from './document.store';
 
 @Component({
-  selector: 'bk-document-revisions-modal',
+  selector: 'okr-document-revisions-modal',
   standalone: true,
   imports: [
     FileNamePipe, PrettyDatePipe,
@@ -17,7 +17,7 @@ import { DocumentStore } from './document.store';
   ],
   providers: [DocumentStore],
   template: `
-    <bk-header [i18n]="{ title: 'store.i18n.revisions()' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: 'store.i18n.revisions()' }" [isModal]="true" />
     <ion-content>
       <ion-list>
         @for (doc of revisions(); track doc.okey) {

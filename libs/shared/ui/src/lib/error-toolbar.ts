@@ -6,7 +6,7 @@ import { ColorIonic } from '@okr/shared-models';
 import { CategoryPlainNamePipe } from '@okr/shared-pipes';
 
 @Component({
-  selector: 'bk-error-toolbar',
+  selector: 'okr-error-toolbar',
   standalone: true,
   imports: [
     CategoryPlainNamePipe,

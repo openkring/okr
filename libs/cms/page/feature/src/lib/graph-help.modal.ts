@@ -10,7 +10,7 @@ import { PageI18n } from '@okr/cms-page-util';
  * Receives the already-resolved page i18n signals via the [i18n] input (no own store).
  */
 @Component({
-  selector: 'bk-graph-help-modal',
+  selector: 'okr-graph-help-modal',
   standalone: true,
   imports: [
     Header,
@@ -35,7 +35,7 @@ import { PageI18n } from '@okr/cms-page-util';
     .subtitle     { font-size: 1.2rem; font-weight: bold; }
   `],
   template: `
-    <bk-header [i18n]="{ title: i18n().graph_help_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n().graph_help_title() }" [isModal]="true" />
     <ion-content>
       <p class="intro ion-text-wrap">{{ i18n().graph_help_intro() }}</p>
       <ion-grid>

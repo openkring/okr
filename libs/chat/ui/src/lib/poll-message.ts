@@ -9,7 +9,7 @@ import { hashUserIdToColor, MatrixChatI18n } from '@okr/chat-util';
 import { PollDetailModal } from './poll-detail.modal';
 
 @Component({
-  selector: 'bk-poll-message',
+  selector: 'okr-poll-message',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [],

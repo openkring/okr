@@ -11,7 +11,7 @@ import { TransferStore } from './transfer.store';
 
 
 @Component({
-  selector: 'bk-transfer-edit-modal',
+  selector: 'okr-transfer-edit-modal',
   standalone: true,
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   imports: [
@@ -20,13 +20,13 @@ import { TransferStore } from './transfer.store';
   ],
   providers: [TransferStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-transfer-form
+        <okr-transfer-form
           [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
@@ -50,7 +50,7 @@ import { TransferStore } from './transfer.store';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="comments">
-              <bk-comments-accordion [parentKey]="parentKey()" />
+              <okr-comments-accordion [parentKey]="parentKey()" />
             </ion-accordion-group>
           </ion-card-content>
         </ion-card>

@@ -16,7 +16,7 @@ import { PFX } from './scope';
  */
 
 @Component({
-  selector: 'bk-text-list',
+  selector: 'okr-text-list',
   standalone: true,
   imports: [
     SvgIconPipe,

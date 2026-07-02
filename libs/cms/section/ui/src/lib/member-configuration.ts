@@ -23,7 +23,7 @@ interface MemberConfigI18n {
  * `showCategoryFilter=false`.
  */
 @Component({
-  selector: 'bk-member-config',
+  selector: 'okr-member-config',
   standalone: true,
   imports: [
     TextInput, StringSelect,
@@ -40,18 +40,18 @@ interface MemberConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input [i18n]="orgIdI18n()" [value]="orgId()" (valueChange)="onFieldChange('orgId', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="orgIdI18n()" [value]="orgId()" (valueChange)="onFieldChange('orgId', $event)" [readOnly]="readOnly()" />
             </ion-col>
             @if(showCategoryFilter()) {
               <ion-col size="12">
-                <bk-text-input [i18n]="categoryFilterI18n()" [value]="categoryFilter()" (valueChange)="onFieldChange('categoryFilter', $event)" [readOnly]="readOnly()" />
+                <okr-text-input [i18n]="categoryFilterI18n()" [value]="categoryFilter()" (valueChange)="onFieldChange('categoryFilter', $event)" [readOnly]="readOnly()" />
               </ion-col>
             }
             <ion-col size="12" size-md="6">
-              <bk-string-select [i18n]="chartTypeI18n()" [selectedString]="chartType()" (selectedStringChange)="onFieldChange('chartType', $event)" [readOnly]="readOnly()" [stringList]="chartTypes" />
+              <okr-string-select [i18n]="chartTypeI18n()" [selectedString]="chartType()" (selectedStringChange)="onFieldChange('chartType', $event)" [readOnly]="readOnly()" [stringList]="chartTypes" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-string-select [i18n]="sortOrderI18n()" [selectedString]="sortOrder()" (selectedStringChange)="onFieldChange('sortOrder', $event)" [readOnly]="readOnly()" [stringList]="sortOrders" />
+              <okr-string-select [i18n]="sortOrderI18n()" [selectedString]="sortOrder()" (selectedStringChange)="onFieldChange('sortOrder', $event)" [readOnly]="readOnly()" [stringList]="sortOrders" />
             </ion-col>
           </ion-row>
         </ion-grid>

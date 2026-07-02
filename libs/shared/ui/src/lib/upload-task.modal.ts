@@ -28,7 +28,7 @@ interface UploadState {
 }
 
 @Component({
-  selector: 'bk-upload-task-modal',
+  selector: 'okr-upload-task-modal',
   standalone: true,
   imports: [
     DecimalPipe, SvgIconPipe,
@@ -49,7 +49,7 @@ interface UploadState {
     .status-error { color: var(--ion-color-danger); }
   `],
   template: `
-    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content>
       <ion-list lines="none">
         @for(item of uploadStates(); track item.name + $index) {

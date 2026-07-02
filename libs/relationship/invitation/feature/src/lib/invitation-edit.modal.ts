@@ -13,7 +13,7 @@ import { InvitationStore } from './invitation.store';
 
 
 @Component({
-  selector: 'bk-invitation-edit-modal',
+  selector: 'okr-invitation-edit-modal',
   standalone: true,
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   imports: [
@@ -22,14 +22,14 @@ import { InvitationStore } from './invitation.store';
   ],
   providers: [InvitationStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
-          <bk-invitation-form
+          <okr-invitation-form
             [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
@@ -49,7 +49,7 @@ import { InvitationStore } from './invitation.store';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="comments">
-              <bk-comments-accordion [parentKey]="parentKey()" />
+              <okr-comments-accordion [parentKey]="parentKey()" />
             </ion-accordion-group>
           </ion-card-content>
         </ion-card>

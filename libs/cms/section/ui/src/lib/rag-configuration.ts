@@ -25,7 +25,7 @@ interface RagConfigI18n {
 }
 
 @Component({
-  selector: 'bk-rag-config',
+  selector: 'okr-rag-config',
   standalone: true,
   imports: [
     TextInput, NumberInput,
@@ -42,19 +42,19 @@ interface RagConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="modelI18n()" [value]="model_()" (valueChange)="onFieldChange('model', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="modelI18n()" [value]="model_()" (valueChange)="onFieldChange('model', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="storeNameI18n()" [value]="storeName()" (valueChange)="onFieldChange('storeName', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="storeNameI18n()" [value]="storeName()" (valueChange)="onFieldChange('storeName', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="systemPromptI18n()" [value]="systemPrompt()" (valueChange)="onFieldChange('systemPrompt', $event)" [readOnly]="readOnly()" [maxLength]="2000" />
+              <okr-text-input [i18n]="systemPromptI18n()" [value]="systemPrompt()" (valueChange)="onFieldChange('systemPrompt', $event)" [readOnly]="readOnly()" [maxLength]="2000" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="documentScopeI18n()" [value]="documentScope()" (valueChange)="onFieldChange('documentScope', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="documentScopeI18n()" [value]="documentScope()" (valueChange)="onFieldChange('documentScope', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-number-input [i18n]="maxTokensI18n()" [value]="maxTokens() ?? 0" (valueChange)="onNumberChange('maxTokens', $event)" [readOnly]="readOnly()" />
+              <okr-number-input [i18n]="maxTokensI18n()" [value]="maxTokens() ?? 0" (valueChange)="onNumberChange('maxTokens', $event)" [readOnly]="readOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>

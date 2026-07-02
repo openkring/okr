@@ -15,7 +15,7 @@ export interface HeaderI18n {
 }
 
 @Component({
-  selector: 'bk-header',
+  selector: 'okr-header',
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
@@ -48,7 +48,7 @@ export interface HeaderI18n {
       </ion-toolbar>
       @if(isSearchablePage()) {
         <ion-toolbar color="light">
-          <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ i18n().placeholder ?? ('@search.placeholder' | translate | async) }}" />
+          <okr-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ i18n().placeholder ?? ('@search.placeholder' | translate | async) }}" />
         </ion-toolbar>
       }
     </ion-header>

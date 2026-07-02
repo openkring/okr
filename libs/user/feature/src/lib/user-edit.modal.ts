@@ -18,7 +18,7 @@ import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, Use
 import { convertFormsToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, USER_I18N_KEYS, UserAuthFormModel, UserDisplayFormModel, UserI18n, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@okr/user-util';
 
 @Component({
-  selector: 'bk-user-edit-modal',
+  selector: 'okr-user-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, AvatarToolbar, Chips, CommentsCard,
@@ -26,14 +26,14 @@ import { convertFormsToUser, convertUserToAuthForm, convertUserToDisplayForm, co
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
+      <okr-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
       @if(user(); as user) {
-        <bk-user-model-form
+        <okr-user-model-form
             [i18n]="i18n"
             [formData]="userModelVm()"
             (formDataChange)="onFormDataChange('model', $event)"
@@ -41,13 +41,13 @@ import { convertFormsToUser, convertUserToAuthForm, convertUserToDisplayForm, co
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
         />
-        <bk-user-auth-form [i18n]="i18n" [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('auth', $event)" />
-        <bk-user-display-form [i18n]="i18n" [formData]="userDisplayVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('display', $event)" />
-        <bk-user-privacy-form [i18n]="i18n" [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (formDataChange)="onFormDataChange('privacy', $event)" />
-        <bk-user-notification-form [i18n]="i18n" [formData]="userNotificationVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('notification', $event)" />
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onTagsChanged($event)" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" />
+        <okr-user-auth-form [i18n]="i18n" [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('auth', $event)" />
+        <okr-user-display-form [i18n]="i18n" [formData]="userDisplayVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('display', $event)" />
+        <okr-user-privacy-form [i18n]="i18n" [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (formDataChange)="onFormDataChange('privacy', $event)" />
+        <okr-user-notification-form [i18n]="i18n" [formData]="userNotificationVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('notification', $event)" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onTagsChanged($event)" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" />
       }
-      <bk-comments-card [parentKey]="parentKey()" />
+      <okr-comments-card [parentKey]="parentKey()" />
     </ion-content>
   `
 })

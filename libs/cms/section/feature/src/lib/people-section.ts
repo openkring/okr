@@ -13,7 +13,7 @@ import { SectionService } from '@okr/cms-section-data-access';
 import { PeopleSectionStore } from './people-section.store';
 
 @Component({
-  selector: 'bk-people-section',
+  selector: 'okr-people-section',
   standalone: true,
   imports: [
     Spinner, PersonsWidget,
@@ -37,7 +37,7 @@ import { PeopleSectionStore } from './people-section.store';
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="9">
-                  <bk-persons-widget 
+                  <okr-persons-widget 
                     [persons]="store.persons()"
                     [avatarConfig]="store.avatarConfig()"
                     [editMode]="editMode()"
@@ -47,7 +47,7 @@ import { PeopleSectionStore } from './people-section.store';
                 </ion-col>
               } @else {
                 <ion-col size="12">
-                  <bk-persons-widget
+                  <okr-persons-widget
                     [persons]="store.persons()"
                     [avatarConfig]="store.avatarConfig()"
                     [editMode]="editMode()"
@@ -61,7 +61,7 @@ import { PeopleSectionStore } from './people-section.store';
         </ion-card-content>
       </ion-card>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

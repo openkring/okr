@@ -10,7 +10,7 @@ import { OWNERSHIP_I18N_KEYS, OwnershipI18n } from '@okr/relationship-ownership-
 import { OwnershipNewForm } from './ownership-new.form';
 
 @Component({
-  selector: 'bk-ownership-new-modal',
+  selector: 'okr-ownership-new-modal',
   standalone: true,
   imports: [
     Header, OwnershipNewForm,
@@ -18,13 +18,13 @@ import { OwnershipNewForm } from './ownership-new.form';
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: i18n.create() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.create() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(formData(); as formData) {
-        <bk-ownership-new-form
+        <okr-ownership-new-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"

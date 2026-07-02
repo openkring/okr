@@ -20,7 +20,7 @@ interface ButtonActionI18n {
 }
 
 @Component({
-  selector: 'bk-button-action',
+  selector: 'okr-button-action',
   standalone: true,
   imports: [
     FormsModule,
@@ -44,15 +44,15 @@ interface ButtonActionI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-category-old [i18n]="buttonActionI18n()" [value]="type()" (valueChange)="onFieldChange('type', $event)" [categories]="buttonActions" [readOnly]="readOnly()" />
+              <okr-category-old [i18n]="buttonActionI18n()" [value]="type()" (valueChange)="onFieldChange('type', $event)" [categories]="buttonActions" [readOnly]="readOnly()" />
             </ion-col>
             @if(type() !== BA.None) {
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="actionUrlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]=400 />
+                <okr-text-input [i18n]="actionUrlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]=400 />
               </ion-col>
             }
             <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [maxLength]=400 />
+              <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [maxLength]=400 />
             </ion-col>
           </ion-row>
         </ion-grid>

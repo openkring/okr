@@ -7,7 +7,7 @@ import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 import { InvoiceStore } from './invoice.store';
 
 @Component({
-  selector: 'bk-invoice-accordion',
+  selector: 'okr-invoice-accordion',
   standalone: true,
   providers: [InvoiceStore],
   imports: [

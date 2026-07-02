@@ -2,7 +2,7 @@
   "name": "folder-util",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/folder/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:folder", "platform:mobile", "platform:web"],
   "targets": {

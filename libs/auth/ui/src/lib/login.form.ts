@@ -23,7 +23,7 @@ export interface LoginFormI18n {
  * This way, we can make sure that we always apply the same input and validation rules (consistency).
  */
 @Component({
-  selector: 'bk-login-form',
+  selector: 'okr-login-form',
   standalone: true,
   imports: [
     EmailInput, PasswordInput, ErrorNote,
@@ -36,7 +36,7 @@ export interface LoginFormI18n {
           @if (context === 'login' || context === 'email') {
             <ion-row>
               <ion-col size="12">
-                <bk-email
+                <okr-email
                   [i18n]="loginEmailI18n()"
                   [value]="loginEmail()"
                   (valueChange)="onEmailChange($event)"
@@ -46,19 +46,19 @@ export interface LoginFormI18n {
                   [readOnly]="false"
                   autocomplete="username email"
                 />
-                <bk-error-note [errors]="emailErrors()" />
+                <okr-error-note [errors]="emailErrors()" />
               </ion-col>
             </ion-row>
           }
           @if (context === 'login' || context === 'password') {
             <ion-row>
               <ion-col size="12">
-                <bk-password-input
+                <okr-password-input
                   [i18n]="loginPasswordI18n()"
                   [value]="loginPassword()"
                   (valueChange)="onPasswordChange($event)"
                 />
-                <bk-error-note [errors]="passwordErrors()" />
+                <okr-error-note [errors]="passwordErrors()" />
               </ion-col>
             </ion-row>
           }

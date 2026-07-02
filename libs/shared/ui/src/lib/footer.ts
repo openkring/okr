@@ -9,7 +9,7 @@ import { Button } from './button';
 
 
 @Component({
-  selector: 'bk-footer',
+  selector: 'okr-footer',
   standalone: true,
   imports: [
     Button,
@@ -42,20 +42,20 @@ import { Button } from './button';
     @if(isMobileDevice()) {
       <ion-buttons slot="start">
         @if (twitterUrl()) {
-          <bk-button iconName="twitter" fill="clear" size="small" (click)="callTwitter()" />
+          <okr-button iconName="twitter" fill="clear" size="small" (click)="callTwitter()" />
         }
         @if (emailUrl()) {
-          <bk-button iconName="send" fill="clear" size="small" (click)="callEmail()" />
+          <okr-button iconName="send" fill="clear" size="small" (click)="callEmail()" />
         }
       </ion-buttons>
       <ion-title>&copy; 2023/<a href="{{ authorUrl() }}">{{author()}}</a></ion-title>
     } @else {
       <ion-buttons>
         @if (twitterUrl().length > 0) {
-          <bk-button label="@ui.twitter" iconName="twitter" fill="clear" size="small" (click)="callTwitter()" />
+          <okr-button label="@ui.twitter" iconName="twitter" fill="clear" size="small" (click)="callTwitter()" />
         }
         @if (emailUrl().length > 0) {
-          <bk-button label="@ui.email" iconName="send" fill="clear" size="small" (click)="callEmail()" />
+          <okr-button label="@ui.email" iconName="send" fill="clear" size="small" (click)="callEmail()" />
         }
       </ion-buttons>
       <ion-title>&copy; 2024/<a href="{{ authorUrl() }}">{{author()}}</a></ion-title>

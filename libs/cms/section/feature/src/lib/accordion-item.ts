@@ -24,7 +24,7 @@ import { SliderSectionComponent } from './slider-section';
  * This avoids circular dependency by not importing AccordionSectionComponent or SectionComponent.
  */
 @Component({
-  selector: 'bk-accordion-item-content',
+  selector: 'okr-accordion-item-content',
   standalone: true,
   imports: [
     ArticleSectionComponent, TableSectionComponent, VideoSectionComponent,
@@ -37,32 +37,32 @@ import { SliderSectionComponent } from './slider-section';
   template: `
     @if(store.section(); as section) {
       @switch (section.type) {
-        @case('article') { <bk-article-section [section]="section" /> }
-        @case('table') { <bk-table-section [section]="section" /> }
-        @case('video') { <bk-video-section [section]="section" /> }
-        @case('iframe') { <bk-iframe-section [section]="section" /> }
-        @case('map') { <bk-map-section [section]="section" /> }
-        @case('album') { <bk-album-section [section]="section" /> }
-        @case('button') { <bk-button-section [section]="section" /> }
+        @case('article') { <okr-article-section [section]="section" /> }
+        @case('table') { <okr-table-section [section]="section" /> }
+        @case('video') { <okr-video-section [section]="section" /> }
+        @case('iframe') { <okr-iframe-section [section]="section" /> }
+        @case('map') { <okr-map-section [section]="section" /> }
+        @case('album') { <okr-album-section [section]="section" /> }
+        @case('button') { <okr-button-section [section]="section" /> }
         @case('cal') {
           @defer (on viewport) {
-            <bk-calendar-section [section]="section" />
+            <okr-calendar-section [section]="section" />
           } @placeholder {
-            <bk-spinner />
+            <okr-spinner />
           }
         }
-        @case('people') { <bk-people-section [section]="section" /> }
-        @case('tracker') { <bk-tracker-section [section]="section" [buttonCopyI18n]="buttonCopyI18n()" /> }
-        @case('hero') { <bk-hero-section [section]="section" /> }
-        @case('slider') { <bk-slider-section [section]="section" /> }
+        @case('people') { <okr-people-section [section]="section" /> }
+        @case('tracker') { <okr-tracker-section [section]="section" [buttonCopyI18n]="buttonCopyI18n()" /> }
+        @case('hero') { <okr-hero-section [section]="section" /> }
+        @case('slider') { <okr-slider-section [section]="section" /> }
         @case('chart') {
           @defer (on viewport) {
-            <bk-chart-section [section]="section" />
+            <okr-chart-section [section]="section" />
           } @placeholder {
-            <bk-spinner />
+            <okr-spinner />
           }
         }
-        @default { <bk-missing-section [section]="section" /> }
+        @default { <okr-missing-section [section]="section" /> }
       }
     }
   `

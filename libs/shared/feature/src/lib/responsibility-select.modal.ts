@@ -7,7 +7,7 @@ import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 import { ResponsibilitySelectStore } from './responsibility-select.store';
 
 @Component({
-  selector: 'bk-responsibility-select-modal',
+  selector: 'okr-responsibility-select-modal',
   standalone: true,
   imports: [
     Header, Spinner, EmptyList,
@@ -19,7 +19,7 @@ import { ResponsibilitySelectStore } from './responsibility-select.store';
     ion-list { padding: 0px; }
   `],
   template: `
-    <bk-header
+    <okr-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
       [i18n]="{ title: store.i18n.responsibility_select()}"
@@ -27,10 +27,10 @@ import { ResponsibilitySelectStore } from './responsibility-select.store';
     />
     <ion-content>
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @if(count() === 0) {
-          <bk-empty-list [message]="store.i18n.responsibility_empty()" />
+          <okr-empty-list [message]="store.i18n.responsibility_empty()" />
         } @else {
           <ion-list lines="none">
             @for(responsibility of filteredResponsibilities(); track responsibility.okey) {

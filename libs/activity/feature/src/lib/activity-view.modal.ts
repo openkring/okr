@@ -9,7 +9,7 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { ActivityStore } from './activity.store';
 
 @Component({
-  selector: 'bk-activity-view-modal',
+  selector: 'okr-activity-view-modal',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -23,7 +23,7 @@ import { ActivityStore } from './activity.store';
     ion-item { --padding-start: 0; --inner-padding-end: 0; }
   `],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.view_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.view_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
 
       <ion-item lines="none">

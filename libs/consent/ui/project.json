@@ -2,7 +2,7 @@
   "name": "consent-ui",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/consent/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:consent", "platform:mobile", "platform:web"],
   "targets": {

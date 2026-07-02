@@ -37,7 +37,7 @@ import { TableHeader } from './table-header';
 import { TrackerConfiguration } from './tracker-configuration';
 
 @Component({
-  selector: 'bk-section-form',
+  selector: 'okr-section-form',
   standalone: true,
   imports: [
     IonItem, IonToggle,
@@ -58,7 +58,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         </ion-toggle>
       </ion-item>
 
-      <bk-section-config
+      <okr-section-config
         [(formData)]="formData"
         [currentUser]="currentUser()"
         [roles]="roles()"
@@ -71,7 +71,7 @@ import { TrackerConfiguration } from './tracker-configuration';
       @switch (formData().type) {
         @case('album') {
           @if(albumConfig(); as albumConfig) {
-            <bk-album-config
+            <okr-album-config
               [formData]="albumConfig" (formDataChange)="onAlbumConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -81,14 +81,14 @@ import { TrackerConfiguration } from './tracker-configuration';
 
         @case('article') {
           @if(content(); as content) {
-            <bk-editor-config
+            <okr-editor-config
               [formData]="content" (formDataChange)="onContentChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
               [showAdvanced]="showAdvanced()"
             />
           }
-          <bk-images-config
+          <okr-images-config
             [images]="images()" (imagesChange)="onImagesChange($event)"
             [storagePath]="storagePath()"
             [currentUser]="currentUser()"
@@ -97,7 +97,7 @@ import { TrackerConfiguration } from './tracker-configuration';
           />
           @if(showAdvanced()) {
             @if(imageStyle(); as imageStyle) {
-              <bk-image-style
+              <okr-image-style
                 [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
@@ -109,7 +109,7 @@ import { TrackerConfiguration } from './tracker-configuration';
 
         @case('button') {
           @if(content(); as content) {
-            <bk-editor-config
+            <okr-editor-config
               [formData]="content" (formDataChange)="onContentChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -118,28 +118,28 @@ import { TrackerConfiguration } from './tracker-configuration';
           } 
           @if(showAdvanced()) {
             @if(buttonActionConfig(); as buttonActionConfig) {
-              <bk-button-action
+              <okr-button-action
                 [formData]="buttonActionConfig" (formDataChange)="onButtonActionChange($event)"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
               />
             }
             @if(iconConfig(); as iconConfig) {
-              <bk-icon-config
+              <okr-icon-config
                 [formData]="iconConfig" (formDataChange)="onIconConfigChange($event)"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
               />
             }
             @if(buttonStyle(); as buttonStyle) {
-              <bk-button-style
+              <okr-button-style
                 [formData]="buttonStyle" (formDataChange)="onButtonStyleChange($event)"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
               />
             }
             @if(imageStyle(); as imageStyle) {
-              <bk-image-style
+              <okr-image-style
                 [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
@@ -150,7 +150,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('cal') {
           @if(calendarConfig(); as calendarConfig) {
-            <bk-calendar-config
+            <okr-calendar-config
               [formData]="calendarConfig" (formDataChange)="onCalendarConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -159,7 +159,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('chart') {
           @if(chartConfig(); as chartConfig) {
-            <bk-chart-config
+            <okr-chart-config
               [formData]="chartConfig" (formDataChange)="onChartConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -168,7 +168,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('chat') {
           @if(chatConfig(); as chatConfig) {
-            <bk-chat-config
+            <okr-chat-config
               [formData]="chatConfig" (formDataChange)="onChatConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -177,7 +177,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('events') {
           @if(eventsConfig(); as eventsConfig) {
-            <bk-events-config
+            <okr-events-config
               [formData]="eventsConfig" (formDataChange)="onEventsConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -186,7 +186,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('invitations') {
           @if(invitationsConfig(); as invitationsConfig) {
-            <bk-invitations-config
+            <okr-invitations-config
               [formData]="invitationsConfig" (formDataChange)="onInvitationsConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -195,7 +195,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('hero') {
           @if(logoConfig(); as logoConfig) {
-            <bk-image-config
+            <okr-image-config
               [formData]="logoConfig" (formDataChange)="onLogoConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="imageConfigI18n()"
@@ -205,7 +205,7 @@ import { TrackerConfiguration } from './tracker-configuration';
             />
           }
           @if(heroConfig(); as heroConfig) {
-            <bk-image-config
+            <okr-image-config
               [formData]="heroConfig" (formDataChange)="onHeroConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="imageConfigI18n()"
@@ -216,7 +216,7 @@ import { TrackerConfiguration } from './tracker-configuration';
           }
           @if(showAdvanced()) {
             @if(imageStyle(); as imageStyle) {
-              <bk-image-style
+              <okr-image-style
                 [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
@@ -227,7 +227,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('iframe') {
           @if(iframeConfig(); as iframeConfig) {
-            <bk-iframe-config
+            <okr-iframe-config
               [formData]="iframeConfig" (formDataChange)="onIframeConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -236,7 +236,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('map') {
           @if(mapConfig(); as mapConfig) {
-            <bk-map-config
+            <okr-map-config
               [formData]="mapConfig" (formDataChange)="onMapConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -245,7 +245,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('people') {
           @if(peopleConfig(); as peopleConfig) {
-              <bk-people-config
+              <okr-people-config
                 [formData]="peopleConfig" (formDataChange)="onPeopleConfigChange($event)"
                 [currentUser]="currentUser()"
                 [readOnly]="isReadOnly()"
@@ -258,7 +258,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('responsibility') {
           @if(responsibilityConfig(); as responsibilityConfig) {
-            <bk-responsibility-config
+            <okr-responsibility-config
               [formData]="responsibilityConfig" (formDataChange)="onResponsibilityConfigChange($event)"
               [currentUser]="currentUser()"
               [i18n]="i18n()"
@@ -268,7 +268,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('slider') {
           @if(images(); as images) {
-            <bk-images-config
+            <okr-images-config
               [images]="images" (imagesChange)="onImagesChange($event)"
               [storagePath]="storagePath()"
               [currentUser]="currentUser()"
@@ -277,7 +277,7 @@ import { TrackerConfiguration } from './tracker-configuration';
           }
           @if(showAdvanced()) {
             @if(imageStyle(); as imageStyle) {
-              <bk-image-style
+              <okr-image-style
                 [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
                 [i18n]="i18n()"
                 [readOnly]="isReadOnly()"
@@ -288,32 +288,32 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('table') {
           @if(tableGrid(); as tableGrid) {
-            <bk-table-grid
+            <okr-table-grid
               [formData]="tableGrid" (formDataChange)="onTableGridChange($event)"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
             />
           }
           @if(headerStyle(); as headerStyle) {
-            <bk-table-style name="header"
+            <okr-table-style name="header"
               [formData]="headerStyle" (formDataChange)="onHeaderStyleChange($event)"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
             />
           }
           @if(bodyStyle(); as bodyStyle) {
-            <bk-table-style name="body"
+            <okr-table-style name="body"
               [formData]="bodyStyle" (formDataChange)="onBodyStyleChange($event)"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
             />
           }
-          <bk-table-header
+          <okr-table-header
             [formData]="headerData()" (formDataChange)="onTableHeaderChange($event)"
             [i18n]="i18n()"
             [readOnly]="isReadOnly()"
           />
-          <bk-table-body
+          <okr-table-body
             [formData]="bodyData()" (formDataChange)="onTableBodyChange($event)"
             [i18n]="i18n()"
             [readOnly]="isReadOnly()"
@@ -321,7 +321,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('tracker') {
           @if(trackerConfig(); as trackerConfig) {
-            <bk-tracker-config
+            <okr-tracker-config
               [formData]="trackerConfig" (formDataChange)="onTrackerConfigChange($event)"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
@@ -330,7 +330,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('video') {
           @if(videoConfig(); as videoConfig) {
-            <bk-video-config
+            <okr-video-config
               [formData]="videoConfig" (formDataChange)="onVideoConfigChange($event)"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"
@@ -339,7 +339,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('member-age') {
           @if(memberConfig(); as memberConfig) {
-            <bk-member-config
+            <okr-member-config
               [formData]="memberConfig" (formDataChange)="onMemberConfigChange($event)"
               [showCategoryFilter]="false"
               [readOnly]="isReadOnly()"
@@ -349,7 +349,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('member-cat') {
           @if(memberConfig(); as memberConfig) {
-            <bk-member-config
+            <okr-member-config
               [formData]="memberConfig" (formDataChange)="onMemberConfigChange($event)"
               [showCategoryFilter]="true"
               [readOnly]="isReadOnly()"
@@ -359,7 +359,7 @@ import { TrackerConfiguration } from './tracker-configuration';
         }
         @case('rag') {
           @if(ragConfig(); as ragConfig) {
-            <bk-rag-config
+            <okr-rag-config
               [formData]="ragConfig" (formDataChange)="onRagConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
@@ -371,16 +371,16 @@ import { TrackerConfiguration } from './tracker-configuration';
       <!-- validation errors (per-type vest suite); shown only for invalid fields -->
       @if(!isReadOnly() && validationErrors().length > 0) {
         @for(error of validationErrors(); track error.field) {
-          <bk-error-note [errors]="error.messages" />
+          <okr-error-note [errors]="error.messages" />
         }
       }
 
       @if(showAdvanced()) {
         @if(hasRole('privileged')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
+          <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
         }
         @if(hasRole('admin')) {
-          <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       }
     }
@@ -389,7 +389,7 @@ import { TrackerConfiguration } from './tracker-configuration';
 /**
  * Generic form for all section union types. Validation is type-specific: the active vest
  * suite is picked at runtime from `formData().type` via the section validation registry.
- * Invalid fields surface through `<bk-error-note>` and the form emits its `valid` state.
+ * Invalid fields surface through `<okr-error-note>` and the form emits its `valid` state.
  */
 export class SectionForm {
   private readonly modelSelectService = inject(ModelSelectService);

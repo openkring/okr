@@ -2,7 +2,7 @@
   "name": "cms-menu-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/cms/menu/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:menu", "platform:mobile", "platform:web"],
   "targets": {

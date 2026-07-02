@@ -16,7 +16,7 @@ import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
 import { AttendeesAccordion } from './attendees-accordion';
 
 @Component({
-  selector: 'bk-calevent-edit-modal',
+  selector: 'okr-calevent-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation,
@@ -26,13 +26,13 @@ import { AttendeesAccordion } from './attendees-accordion';
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-calevent-form
+        <okr-calevent-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n"
@@ -54,13 +54,13 @@ import { AttendeesAccordion } from './attendees-accordion';
             <ion-card-content class="ion-no-padding">
               <ion-accordion-group value="invitees">
                 @if(calevent().isOpen) {
-                  <bk-attendees-accordion [calevent]="formData" [currentUser]="currentUser()" [tenantId]="tenantId()" [readOnly]="isReadOnly()" />
+                  <okr-attendees-accordion [calevent]="formData" [currentUser]="currentUser()" [tenantId]="tenantId()" [readOnly]="isReadOnly()" />
                 } 
                 @else {
-                  <bk-invitees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
+                  <okr-invitees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
                 }
-                <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
-                <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+                <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+                <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
               </ion-accordion-group>
             </ion-card-content>
           </ion-card>

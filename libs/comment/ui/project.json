@@ -2,7 +2,7 @@
   "name": "comment-ui",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/comment/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:comment", "platform:mobile", "platform:web"],
   "targets": {

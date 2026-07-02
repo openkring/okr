@@ -16,7 +16,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { getIndexOfKey } from '@okr/shared-util-core';
 
 @Component({
-  selector: 'bk-property-list',
+  selector: 'okr-property-list',
   standalone: true,
   imports: [
     SvgIconPipe,

@@ -12,7 +12,7 @@ import { ExpenseNewModal } from './expense-new.modal';
 import { ExpenseStore } from './expense.store';
 
 @Component({
-  selector: 'bk-expense-list',
+  selector: 'okr-expense-list',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel,

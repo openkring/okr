@@ -7,7 +7,7 @@ import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 import { CalendarSelectStore } from './calendar-select.store';
 
 @Component({
-  selector: 'bk-calendar-select-modal',
+  selector: 'okr-calendar-select-modal',
   standalone: true,
   imports: [
     Header, Spinner, EmptyList,
@@ -20,7 +20,7 @@ import { CalendarSelectStore } from './calendar-select.store';
     .key { font-size: 0.75rem; color: var(--ion-color-medium); }
   `],
   template: `
-    <bk-header
+    <okr-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
       [i18n]="{ title: store.i18n.calendar_select()}"
@@ -28,9 +28,9 @@ import { CalendarSelectStore } from './calendar-select.store';
     />
     <ion-content>
       @if (isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if (filteredCount() === 0) {
-        <bk-empty-list [message]="store.i18n.calendar_empty()" />
+        <okr-empty-list [message]="store.i18n.calendar_empty()" />
       } @else {
         <ion-list lines="full">
           @for (calendar of filteredCalendars(); track calendar.okey) {

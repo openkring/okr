@@ -25,7 +25,7 @@ import { DocEmailService, InlineAttachment } from '@okr/pdf-template-data-access
 const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
 
 @Component({
-  selector: 'bk-email-composer-modal',
+  selector: 'okr-email-composer-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -52,7 +52,7 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
     </ion-header>
 
     @if (showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n" (saveClicked)="send()" (cancelClicked)="revert()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n" (saveClicked)="send()" (cancelClicked)="revert()" />
     }
 
     <ion-content class="ion-no-padding">
@@ -63,12 +63,12 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="toI18n" [value]="toField()"
+                    <okr-text-input [i18n]="toI18n" [value]="toField()"
                       (valueChange)="onFieldChange('to', $event)"
                       [autofocus]="true" [maxLength]="200" [readOnly]="false" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-email [i18n]="fromI18n" [value]="from()"
+                    <okr-email [i18n]="fromI18n" [value]="from()"
                       (valueChange)="onFieldChange('from', $event)" [readOnly]="false" />
                     @if (fromWarning(); as warning) {
                       <ion-note color="warning" class="attachment">{{ warning }}</ion-note>
@@ -77,17 +77,17 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
                 </ion-row>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="ccI18n" [value]="cc()"
+                    <okr-text-input [i18n]="ccI18n" [value]="cc()"
                       (valueChange)="onFieldChange('cc', $event)" [maxLength]="200" [readOnly]="false" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="bccI18n" [value]="bcc()"
+                    <okr-text-input [i18n]="bccI18n" [value]="bcc()"
                       (valueChange)="onFieldChange('bcc', $event)" [maxLength]="200" [readOnly]="false" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-text-input [i18n]="subjectI18n" [value]="subject()"
+                    <okr-text-input [i18n]="subjectI18n" [value]="subject()"
                       (valueChange)="onFieldChange('subject', $event)" [maxLength]="100" [readOnly]="false" />
                   </ion-col>
                 </ion-row>
@@ -115,11 +115,11 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-editor [content]="body()" (contentChange)="onFieldChange('body', $event)"
+                    <okr-editor [content]="body()" (contentChange)="onFieldChange('body', $event)"
                       [readOnly]="false" [clearable]="false" [copyable]="false"
                       [buttonCopyI18n]="buttonCopyI18n" />
                     <div class="editor-actions">
-                      <bk-button-copy [i18n]="buttonCopyI18n" [value]="body()" />
+                      <okr-button-copy [i18n]="buttonCopyI18n" [value]="body()" />
                       <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="clearBody()" tabindex="-1" />
                     </div>
                   </ion-col>

@@ -8,7 +8,7 @@ import { hasRole } from '@okr/shared-util-core';
 import { ResponsibilityStore } from './responsibility.store';
 
 @Component({
-  selector: 'bk-responsibilities-accordion',
+  selector: 'okr-responsibilities-accordion',
   standalone: true,
   imports: [
     SvgIconPipe,

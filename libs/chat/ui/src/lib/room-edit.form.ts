@@ -38,7 +38,7 @@ export interface RoomEditFormI18n {
 }
 
 @Component({
-  selector: 'bk-room-edit-form',
+  selector: 'okr-room-edit-form',
   standalone: true,
   imports: [
     TextInput, ErrorNote, NotesInput, Checkbox, UrlInput, NumberInput,
@@ -53,27 +53,27 @@ export interface RoomEditFormI18n {
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="roomIdI18n()" [value]="roomId()" (valueChange)="onFieldChange('roomId', $event)" [readOnly]="true" />
+                <okr-text-input [i18n]="roomIdI18n()" [value]="roomId()" (valueChange)="onFieldChange('roomId', $event)" [readOnly]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="false" [autofocus]="true" [maxLength]=30 />
-                <bk-error-note [errors]="nameErrors()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="false" [autofocus]="true" [maxLength]=30 />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="isDirectI18n()" [checked]="isDirect()" (checkedChange)="onFieldChange('isDirect', $event)" [showHelper]="true" [readOnly]="false" />
+                <okr-checkbox [i18n]="isDirectI18n()" [checked]="isDirect()" (checkedChange)="onFieldChange('isDirect', $event)" [showHelper]="true" [readOnly]="false" />
               </ion-col>
               <ion-col size="12">
-                <bk-url [i18n]="avatarI18n()" [value]="avatar()" (valueChange)="onFieldChange('avatar', $event)" [readOnly]="false" />
-                <bk-error-note [errors]="urlErrors()" />
+                <okr-url [i18n]="avatarI18n()" [value]="avatar()" (valueChange)="onFieldChange('avatar', $event)" [readOnly]="false" />
+                <okr-error-note [errors]="urlErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-number-input [i18n]="unreadCountI18n()" [value]="unreadCount()" (valueChange)="onFieldChange('unreadCount', $event)" [readOnly]="true" />
+                <okr-number-input [i18n]="unreadCountI18n()" [value]="unreadCount()" (valueChange)="onFieldChange('unreadCount', $event)" [readOnly]="true" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-notes-input [i18n]="topicI18n()" [value]="topic()" (valueChange)="onFieldChange('topic', $event)" [readOnly]="false" />
+      <okr-notes-input [i18n]="topicI18n()" [value]="topic()" (valueChange)="onFieldChange('topic', $event)" [readOnly]="false" />
     </form>
   `
 })

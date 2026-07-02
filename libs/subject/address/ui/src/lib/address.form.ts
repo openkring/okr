@@ -10,7 +10,7 @@ import { SwissCitySearch } from '@okr/subject-swisscities-ui';
 import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
 
 @Component({
-  selector: 'bk-address-form',
+  selector: 'okr-address-form',
   standalone: true,
   imports: [
     CategorySelect, TextInput, SwissCitySearch, NotesInput, Checkbox,
@@ -28,7 +28,7 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
           @if(hasRole('admin')) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
               </ion-col>
             </ion-row>
           }
@@ -37,26 +37,26 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
             --------------------------------------------------->
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="addressChannels()!" [selectedItemName]="addressChannel()" (selectedItemNameChange)="onFieldChange('addressChannel', $event)" [withAll]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
+              <okr-cat-select [category]="addressChannels()!" [selectedItemName]="addressChannel()" (selectedItemNameChange)="onFieldChange('addressChannel', $event)" [withAll]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
             </ion-col>
 
             @if(addressChannel() === 'custom') {
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="addressChannelLabelI18n()" [value]="addressChannelLabel()" (valueChange)="onFieldChange('addressChannelLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="channelLabelError()" />                                                                                                                     
+                <okr-text-input [i18n]="addressChannelLabelI18n()" [value]="addressChannelLabel()" (valueChange)="onFieldChange('addressChannelLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="channelLabelError()" />                                                                                                                     
               </ion-col>
             }
           </ion-row>
 
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="addressUsages()!" [selectedItemName]="addressUsage()" (selectedItemNameChange)="onFieldChange('addressUsage', $event)" [withAll]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
+              <okr-cat-select [category]="addressUsages()!" [selectedItemName]="addressUsage()" (selectedItemNameChange)="onFieldChange('addressUsage', $event)" [withAll]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
             </ion-col>
 
             @if(addressUsage() === 'custom') {
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="addressUsageLabelI18n()" [value]="addressUsageLabel()" (valueChange)="onFieldChange('addressUsageLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="usageLabelError()" />                                                                                                                     
+                <okr-text-input [i18n]="addressUsageLabelI18n()" [value]="addressUsageLabel()" (valueChange)="onFieldChange('addressUsageLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="usageLabelError()" />                                                                                                                     
               </ion-col>
             }
           </ion-row>
@@ -65,65 +65,65 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
             @case ('email') {
               <ion-row>
                 <ion-col size="12">
-                  <bk-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="emailError()" />                                                                                                                     
+                  <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="emailError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
             }
             @case ('phone') {
               <ion-row>
                 <ion-col size="12"> 
-                  <bk-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="phoneError()" />                                                                                                                     
+                  <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="phoneError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
             }
             @case ('postal') {
               <ion-row>
                 <ion-col size="8" size-md="9">
-                  <bk-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" [readOnly]="isReadOnly()" autocomplete="street-address" />
-                  <bk-error-note [errors]="streetNameError()" />                                                                                                                     
+                  <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" [readOnly]="isReadOnly()" autocomplete="street-address" />
+                  <okr-error-note [errors]="streetNameError()" />                                                                                                                     
                 </ion-col>
                 <ion-col size="4" size-md="3">
-                  <bk-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="streetNumberError()" />                                                                                                                     
+                  <okr-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="streetNumberError()" />                                                                                                                     
                 </ion-col>
 
                 <ion-col size="12">
-                  <bk-text-input [i18n]="addressValue2I18n()" [value]="addressValue2()" (valueChange)="onFieldChange('addressValue2', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="addressValue2I18n()" [value]="addressValue2()" (valueChange)="onFieldChange('addressValue2', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               
               @if(!isReadOnly()) {
-                <bk-swisscity-search (citySelected)="onCitySelected($event)" />
+                <okr-swisscity-search (citySelected)="onCitySelected($event)" />
               }
 
               <ion-row>
                 <ion-col size="12" size-md="3">
-                <bk-text-input [i18n]="countryCodeI18n()" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="countryCodeI18n()" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
         
                 <ion-col size="12" size-md="3">
-                  <bk-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
             @case ('bankaccount') {
               <ion-row>
                 <ion-col size="12">
-                  <bk-iban [i18n]="ibanI18n()" [value]="iban()" (valueChange)="onFieldChange('iban', $event)" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="ibanError()" />                                                                                                                     
+                  <okr-iban [i18n]="ibanI18n()" [value]="iban()" (valueChange)="onFieldChange('iban', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="ibanError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12">
-                    <bk-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
-                    <bk-error-note [errors]="urlError()" />                                                                                                                     
+                    <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="urlError()" />                                                                                                                     
                   </ion-col>
                 </ion-row>
               }
@@ -131,8 +131,8 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
             @default {
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="urlError()" />                                                                                                                     
+                  <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="urlError()" />                                                                                                                     
                 </ion-col>
               </ion-row>
             }
@@ -144,13 +144,13 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
           <ion-row>
             @if(isFavorable()) {
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="isFavoriteI18n()" [checked]="isFavorite()" (checkedChange)="onFieldChange('isFavorite', $event)" [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="isFavoriteI18n()" [checked]="isFavorite()" (checkedChange)="onFieldChange('isFavorite', $event)" [readOnly]="isReadOnly()" />
               </ion-col>  
             }
 
             @if(isFavorite() === false && addressChannel() === 'email') {
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="isCcI18n()" [checked]="isCc()" (checkedChange)="onFieldChange('isCc', $event)" [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="isCcI18n()" [checked]="isCc()" (checkedChange)="onFieldChange('isCc', $event)" [readOnly]="isReadOnly()" />
               </ion-col>  
             }
           </ion-row>
@@ -159,11 +159,11 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
     </ion-card>
 
     @if(hasRole('privileged') || hasRole('memberAdmin')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (storedChipsChange)="onFieldChange('tags', $event)"  [readOnly]="isReadOnly()" />
+      <okr-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (storedChipsChange)="onFieldChange('tags', $event)"  [readOnly]="isReadOnly()" />
     }
     
     @if(hasRole('admin')) {
-      <bk-notes-input [i18n]="notesI18n()" [value]="notes()" [readOnly]="isReadOnly()" />
+      <okr-notes-input [i18n]="notesI18n()" [value]="notes()" [readOnly]="isReadOnly()" />
     }
   </form>
   }

@@ -17,7 +17,7 @@ import { InvitationStore } from './invitation.store';
  * Users can accept or deny new invitations or manage existing ones through action sheets.
  */
 @Component({
-  selector: 'bk-invitees-accordion',
+  selector: 'okr-invitees-accordion',
   standalone: true,
   imports: [
     SvgIconPipe, AvatarPipe, PrettyDatePipe, FullNamePipe,
@@ -40,7 +40,7 @@ import { InvitationStore } from './invitation.store';
     </ion-item>
     <div slot="content">
         @if(invitees().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(invitee of invitees(); track $index) {

@@ -16,7 +16,7 @@ export interface BexioPosition {
 const DEFAULT_FOOTER = '<span>Vielen Dank f&uuml;r die Bezahlung der Rechnung innert 30 Tagen auf unser Konto bei der Z&uuml;rcher Kantonalbank IBAN CH67 0070 0110 4044 7417 6.<br /><br />Bitte verwende den QR-Code Einzahlungsschein auf der n&auml;chste Seite oder &uuml;berweise direkt auf die IBAN Nummer.<br /><br />Herzliche Gr&uuml;sse<br /><br />Seeclub St&auml;fa, Finanzen<br />Bruno Kaiser</span>';
 
 @Component({
-  selector: 'bk-scs-member-fee-upload-modal',
+  selector: 'okr-scs-member-fee-upload-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -33,7 +33,7 @@ const DEFAULT_FOOTER = '<span>Vielen Dank f&uuml;r die Bezahlung der Rechnung in
     ion-textarea { --padding-top: 6px; }
   `],
   template: `
-    <bk-header [i18n]="{ title: '@finance.scsMemberFee.operation.upload.label' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: '@finance.scsMemberFee.operation.upload.label' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
         <ion-row>

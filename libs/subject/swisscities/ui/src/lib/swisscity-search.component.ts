@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { SwissCitiesSearchStore } from './swisscity-search.store';
 
 @Component({
-  selector: 'bk-swisscity-search',
+  selector: 'okr-swisscity-search',
   standalone: true,
   imports: [
     SvgIconPipe,

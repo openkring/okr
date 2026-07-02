@@ -11,7 +11,7 @@ import { RelationshipToolbar } from '@okr/avatar-ui';
 import { ReservationStore } from './reservation.store';
 
 @Component({
-  selector: 'bk-reservation-edit-modal',
+  selector: 'okr-reservation-edit-modal',
   standalone: true,
   imports: [
     CommentsAccordion, RelationshipToolbar, Header, ChangeConfirmation, ReservationForm,
@@ -20,15 +20,15 @@ import { ReservationStore } from './reservation.store';
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   providers: [ReservationStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
         @if(reserverAvatar(); as reserver) {
           @if(resourceAvatar(); as resource) {
-            <bk-relationship-toolbar
+            <okr-relationship-toolbar
               relType="reservation"
               [subjectAvatar]="resource"
               [subjectDefaultIcon]="subjectDefaultIcon()"
@@ -41,7 +41,7 @@ import { ReservationStore } from './reservation.store';
         }
 
         @if(formData(); as formData) {
-          <bk-reservation-form
+          <okr-reservation-form
             [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
@@ -66,7 +66,7 @@ import { ReservationStore } from './reservation.store';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="comments">
-              <bk-comments-accordion [parentKey]="parentKey()" />
+              <okr-comments-accordion [parentKey]="parentKey()" />
             </ion-accordion-group>
           </ion-card-content>
         </ion-card>

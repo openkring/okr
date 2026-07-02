@@ -9,7 +9,7 @@ import { AocI18n } from '@okr/aoc-util';
 interface DetailRow { label: string; value: string; }
 
 @Component({
-  selector: 'bk-session-detail-modal',
+  selector: 'okr-session-detail-modal',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,

@@ -26,7 +26,7 @@ interface ChatConfigI18n {
 }
 
 @Component({
-  selector: 'bk-chat-config',
+  selector: 'okr-chat-config',
   standalone: true,
   imports: [
     TextInput, Checkbox, StringSelect,
@@ -50,25 +50,25 @@ interface ChatConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input [i18n]="idI18n()" [value]="id()" (valueChange)="onFieldChange('id', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="idI18n()" [value]="id()" (valueChange)="onFieldChange('id', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-string-select [i18n]="typeI18n()" [selectedString]="type()" (selectedStringChange)="onFieldChange('type', $event)" [readOnly]="readOnly()" [stringList]="['messaging', 'ai', 'livestream', 'team', 'gaming']" />
+              <okr-string-select [i18n]="typeI18n()" [selectedString]="type()" (selectedStringChange)="onFieldChange('type', $event)" [readOnly]="readOnly()" [stringList]="['messaging', 'ai', 'livestream', 'team', 'gaming']" />
               <small>
                 <div [innerHTML]="typeDescription"></div>
               </small>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showChannelListI18n()" [checked]="showChannelList()" (checkedChange)="onFieldChange('showChannelList', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showChannelListI18n()" [checked]="showChannelList()" (checkedChange)="onFieldChange('showChannelList', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]="400" />
+              <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [maxLength]="400" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="400" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="400" [readOnly]="readOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>

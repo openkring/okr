@@ -22,7 +22,7 @@ export interface NotesInputI18n {
  * But for the actions on the buttons (clear, d/encrypt) we need to additionally signal the changed result.
  */
 @Component({
-  selector: 'bk-notes-input',
+  selector: 'okr-notes-input',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -72,7 +72,7 @@ export interface NotesInputI18n {
             <ion-icon src="{{'cancel' | svgIcon }}" (click)="clearValue()" tabindex="-1" />
           }
           @if (isCopyable()) {
-            <bk-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
+            <okr-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
           }
           @if (isEncryptable()) {
             <ion-icon src="{{ 'key' | svgIcon }}" (click)="dencrypt()" tabindex="-1" />

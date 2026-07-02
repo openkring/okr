@@ -8,7 +8,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { TextInput, TextInputI18n } from './text-input';
 
 @Component({
-  selector: 'bk-icon-input',
+  selector: 'okr-icon-input',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -17,11 +17,11 @@ import { TextInput, TextInputI18n } from './text-input';
   ],
   styles: [`
     ion-item.helper { --min-height: 0; }
-    bk-viewdate-input { width: 100%; }
+    okr-viewdate-input { width: 100%; }
   `],
   template: `
     <ion-item lines="none" class="ion-no-padding">
-      <bk-text-input [i18n]="i18n()" [value]="icn()" (valueChange)="iconChange.emit($event)" [maxLength]="30" [showHelper]=true [readOnly]="isReadOnly()" />
+      <okr-text-input [i18n]="i18n()" [value]="icn()" (valueChange)="iconChange.emit($event)" [maxLength]="30" [showHelper]=true [readOnly]="isReadOnly()" />
       <ion-icon src="{{'search' | svgIcon }}" slot="end" (click)="selectClicked.emit()" />
     </ion-item>
   `

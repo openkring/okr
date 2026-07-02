@@ -2,7 +2,7 @@
   "name": "relationship-reservation-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/reservation/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:reservation", "platform:mobile", "platform:web"],
   "targets": {

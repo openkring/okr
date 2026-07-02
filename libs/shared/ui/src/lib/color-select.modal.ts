@@ -20,7 +20,7 @@ export interface ColorSelectI18n {
 }
 
 @Component({
-  selector: 'bk-color-select-modal',
+  selector: 'okr-color-select-modal',
   standalone: true,
   imports: [
     

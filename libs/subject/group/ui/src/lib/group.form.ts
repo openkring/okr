@@ -11,7 +11,7 @@ import { Avatars } from '@okr/avatar-ui';
 import { groupValidations, GroupI18n } from '@okr/subject-group-util';
 
 @Component({
-  selector: 'bk-group-form',
+  selector: 'okr-group-form',
   standalone: true,
   imports: [
     TextInput, Chips, NotesInput, Checkbox, ButtonCopy, StringSelect, Avatars,
@@ -36,7 +36,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()"
+                  <okr-text-input [i18n]="bkeyI18n()"
                     [value]="okey()"
                     [readOnly]="true"
                     [copyable]="true"
@@ -45,7 +45,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
               }
               <ion-col size="12" size-md="6">
                 @if(isNew()) {
-                  <bk-text-input [i18n]="groupIdI18n()"
+                  <okr-text-input [i18n]="groupIdI18n()"
                     [value]="okey()" (valueChange)="onFieldChange('okey', $event)"
                     [maxLength]="maxWordLength"
                     [mask]="mask"
@@ -55,12 +55,12 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
                 } @else {
                   <ion-item lines="none">
                     <ion-label>{{ i18n().id_label() }}: {{ okey() }}</ion-label>
-                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="okey()" />
+                    <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey()" />
                   </ion-item>
                 }                                     
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input
+                <okr-text-input
                   [i18n]="nameI18n()"
                   [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=50
                   [readOnly]="isReadOnly()"
@@ -68,7 +68,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="iconI18n()"
+                <okr-text-input [i18n]="iconI18n()"
                   [value]="icon()" (valueChange)="onFieldChange('icon', $event)"
                   [maxLength]=20
                   [readOnly]="isReadOnly()"
@@ -81,7 +81,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
       </ion-card>
 
       @if(currentUser(); as currentUser) {
-        <bk-avatars name="groupAdmins"
+        <okr-avatars name="groupAdmins"
           [avatars]="admins()" (avatarsChange)="onFieldChange('admins', $event)"
           (selectClicked)="selectPerson.emit()"
           [currentUser]="currentUser"
@@ -100,49 +100,49 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
           <ion-grid>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="hasContentI18n()"
+                <okr-checkbox [i18n]="hasContentI18n()"
                   [checked]="hasContent()" (checkedChange)="onFieldChange('hasContent', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="hasChatI18n()"
+                <okr-checkbox [i18n]="hasChatI18n()"
                   [checked]="hasChat()" (checkedChange)="onFieldChange('hasChat', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="hasCalendarI18n()"
+                <okr-checkbox [i18n]="hasCalendarI18n()"
                   [checked]="hasCalendar()" (checkedChange)="onFieldChange('hasCalendar', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="hasTasksI18n()"
+                <okr-checkbox [i18n]="hasTasksI18n()"
                   [checked]="hasTasks()" (checkedChange)="onFieldChange('hasTasks', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="hasFilesI18n()"
+                <okr-checkbox [i18n]="hasFilesI18n()"
                   [checked]="hasFiles()" (checkedChange)="onFieldChange('hasFiles', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="hasAlbumI18n()"
+                <okr-checkbox [i18n]="hasAlbumI18n()"
                   [checked]="hasAlbum()" (checkedChange)="onFieldChange('hasAlbum', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="hasMembersI18n()"
+                <okr-checkbox [i18n]="hasMembersI18n()"
                   [checked]="hasMembers()" (checkedChange)="onFieldChange('hasMembers', $event)"
                   [showHelper]="true"
                   [readOnly]="isReadOnly()"
@@ -164,7 +164,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
             <ion-grid>
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input [i18n]="visibilityI18n()"
+                  <okr-text-input [i18n]="visibilityI18n()"
                     [value]="visibility()" (valueChange)="onFieldChange('visibility', $event)"
                     [maxLength]=100
                     [readOnly]="isReadOnly()"
@@ -172,7 +172,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
                   />
                 </ion-col>
                 <ion-col size="12">
-                  <bk-string-select [i18n]="notifyTypeI18n()"
+                  <okr-string-select [i18n]="notifyTypeI18n()"
                     [selectedString]="notifyType()" (selectedStringChange)="onFieldChange('notifyType', $event)"
                     [stringList]="notifyTypeOptions"
                     [readOnly]="isReadOnly()"
@@ -185,7 +185,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
       }
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
-        <bk-chips chipName="tag"
+        <okr-chips chipName="tag"
           [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)"
           [allChips]="allTags()"
           [readOnly]="isReadOnly()"
@@ -193,7 +193,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
       }
 
       @if(hasRole('admin')) { 
-        <bk-notes-input [i18n]="notesI18n()"
+        <okr-notes-input [i18n]="notesI18n()"
           [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
           [readOnly]="isReadOnly()"
         />

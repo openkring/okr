@@ -10,21 +10,21 @@ import { AddressForm } from "@okr/subject-address-ui";
 import { ADDRESSES_I18N_KEYS, AddressesI18n } from "@okr/subject-address-util";
 
 @Component({
-  selector: 'bk-address-edit-modal',
+  selector: 'okr-address-edit-modal',
   standalone: true,
   imports: [
     AddressForm, Header, ChangeConfirmation,
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
-          <bk-address-form
+          <okr-address-form
             [i18n]="i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"

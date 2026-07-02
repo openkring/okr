@@ -36,7 +36,7 @@ interface CalendarConfigI18n {
 export const CALENDAR_VIEWS = ['dayGridMonth', 'timeGridWeek', 'timeGridDay'];
 
 @Component({
-  selector: 'bk-calendar-config',
+  selector: 'okr-calendar-config',
   standalone: true,
   imports: [
     TextInput, Checkbox, StringSelect,
@@ -59,19 +59,19 @@ export const CALENDAR_VIEWS = ['dayGridMonth', 'timeGridWeek', 'timeGridDay'];
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-string-select [i18n]="viewI18n()" [selectedString]="initialView()" (selectedStringChange)="onFieldChange('initialView', $event)" [readOnly]="readOnly()" [stringList]="views" />
+              <okr-string-select [i18n]="viewI18n()" [selectedString]="initialView()" (selectedStringChange)="onFieldChange('initialView', $event)" [readOnly]="readOnly()" [stringList]="views" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="slotMinTimeI18n()" [value]="slotMinTime()" (valueChange)="onFieldChange('slotMinTime', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="slotMinTimeI18n()" [value]="slotMinTime()" (valueChange)="onFieldChange('slotMinTime', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="slotMaxTimeI18n()" [value]="slotMaxTime()" (valueChange)="onFieldChange('slotMaxTime', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="slotMaxTimeI18n()" [value]="slotMaxTime()" (valueChange)="onFieldChange('slotMaxTime', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="weekNumbersI18n()" [checked]="weekNumbers()" (checkedChange)="onFieldChange('weekNumbers', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="weekNumbersI18n()" [checked]="weekNumbers()" (checkedChange)="onFieldChange('weekNumbers', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="editableI18n()" [checked]="editable()" (checkedChange)="onFieldChange('editable', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="editableI18n()" [checked]="editable()" (checkedChange)="onFieldChange('editable', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>

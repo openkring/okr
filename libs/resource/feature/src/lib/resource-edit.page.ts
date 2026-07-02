@@ -15,7 +15,7 @@ import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservab
 import { ResourceStore } from './resource.store';
 
 @Component({
-  selector: 'bk-resource-edit-page',
+  selector: 'okr-resource-edit-page',
   standalone: true,
   imports: [
     Header, ChangeConfirmation,
@@ -25,24 +25,24 @@ import { ResourceStore } from './resource.store';
   ],
   providers: [ResourceStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" />
+    <okr-header [i18n]="{ title: headerTitle() }" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-icon-toolbar icon="{{icon()}}" [title]="toolbarTitle()"/>
+      <okr-icon-toolbar icon="{{icon()}}" [title]="toolbarTitle()"/>
       @if(isTypeEditable() === true && types()) {
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onTypeChange($event)" [withAll]="false" [readOnly]="isReadOnly()" />
+              <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onTypeChange($event)" [withAll]="false" [readOnly]="isReadOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>
       }
       {{ readOnly()}}
       @if(formData(); as formData) {
-        <bk-resource-form
+        <okr-resource-form
           [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
@@ -60,10 +60,10 @@ import { ResourceStore } from './resource.store';
       @if(resource(); as resource) {
         <ion-accordion-group [multiple]="true">
           @if (isReservable(resource.type)) {
-            <bk-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
+            <okr-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
           }
           @if(hasRole('privileged') || hasRole('resourceAdmin')) {
-              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
           }
         </ion-accordion-group>
       }

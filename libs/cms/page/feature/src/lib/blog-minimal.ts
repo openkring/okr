@@ -9,7 +9,7 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
  * One centered column, vertical whitespace, focus on reading (Substack / Ghost style).
  */
 @Component({
-  selector: 'bk-blog-minimal',
+  selector: 'okr-blog-minimal',
   standalone: true,
   imports: [
     SectionDispatcher,
@@ -33,10 +33,10 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
             <ion-col size="12" [id]="section.okey" (click)="sectionClick.emit(section.okey)">
               @if (editMode()) {
                 <div class="section-wrapper editable">
-                  <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+                  <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
                 </div>
               } @else {
-                <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+                <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
               }
             </ion-col>
           </ion-row>

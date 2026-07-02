@@ -7,7 +7,7 @@ import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 @Component({
-  selector: 'bk-button',
+  selector: 'okr-button',
   standalone: true,
   imports: [
     CategoryPlainNamePipe, SvgIconPipe,

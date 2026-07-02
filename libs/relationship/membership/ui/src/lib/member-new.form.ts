@@ -13,7 +13,7 @@ import { SwissCitySearch } from '@okr/subject-swisscities-ui';
 import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@okr/relationship-membership-util';
 
 @Component({
-  selector: 'bk-member-new-form',
+  selector: 'okr-member-new-form',
   standalone: true,
   imports: [
     AvatarPipe,
@@ -35,29 +35,29 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
           <ion-grid>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [readOnly]="isReadOnly()" [autofocus]="true" [maxLength]=30 />
-                <bk-error-note [errors]="firstNameErrors()" />
+                <okr-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [readOnly]="isReadOnly()" [autofocus]="true" [maxLength]=30 />
+                <okr-error-note [errors]="firstNameErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [readOnly]="isReadOnly()" [maxLength]=30 />
-                <bk-error-note [errors]="lastNameErrors()" />
-              </ion-col>
-            </ion-row>
-
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="genders()!" [selectedItemName]="gender()" (selectedItemNameChange)="onFieldChange('gender', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [readOnly]="isReadOnly()" [maxLength]=30 />
+                <okr-error-note [errors]="lastNameErrors()" />
               </ion-col>
             </ion-row>
 
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" [locale]="locale()" [readOnly]="isReadOnly()" autocomplete="bday" />
+                <okr-cat-select [category]="genders()!" [selectedItemName]="gender()" (selectedItemNameChange)="onFieldChange('gender', $event)" [readOnly]="isReadOnly()" />
+              </ion-col>
+            </ion-row>
+
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" [locale]="locale()" [readOnly]="isReadOnly()" autocomplete="bday" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -74,43 +74,43 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
             <ion-grid>
               <ion-row>
                 <ion-col size="9">
-                  <bk-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="streetNameErrors()" />
+                  <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="streetNameErrors()" />
                 </ion-col>
                 <ion-col size="3">
-                  <bk-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="streetNumberErrors()" />
+                  <okr-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="streetNumberErrors()" />
                 </ion-col>
               </ion-row>
 
-              <bk-swisscity-search (citySelected)="onCitySelected($event)" [setFocus]="false" />
+              <okr-swisscity-search (citySelected)="onCitySelected($event)" [setFocus]="false" />
 
               <ion-row>
                 <ion-col size="12" size-md="3">
-                  <bk-text-input [i18n]="countryCodeI18n()" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="countryCodeI18n()" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="3">
-                  <bk-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
 
               <ion-row>
                 <ion-col size="12" size-md="6"> 
-                  <bk-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="phoneErrors()" />
+                  <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="phoneErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="emailErrors()" />                                                                                                                     
+                  <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="emailErrors()" />                                                                                                                     
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="webI18n()" [value]="web()" (valueChange)="onFieldChange('web', $event)" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="webErrors()" />                                                                                                                     
+                  <okr-text-input [i18n]="webI18n()" [value]="web()" (valueChange)="onFieldChange('web', $event)" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="webErrors()" />                                                                                                                     
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -127,10 +127,10 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="ssnIdI18n()" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [readOnly]="isReadOnly()" [copyable]=true />
+                <okr-text-input [i18n]="ssnIdI18n()" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -161,19 +161,19 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
+                  <okr-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12">
-                  <bk-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>      
               </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
     
-      <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+      <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       @if(hasRole('admin')) {
-        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   `

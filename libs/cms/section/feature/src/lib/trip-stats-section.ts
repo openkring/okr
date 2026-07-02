@@ -14,7 +14,7 @@ import { EmptyList, ListFilter, OptionalCardHeader, Spinner } from '@okr/shared-
 import { TripStatsSectionStore } from './trip-stats-section.store';
 
 @Component({
-  selector: 'bk-trip-stats-section',
+  selector: 'okr-trip-stats-section',
   standalone: true,
   imports: [
     Spinner, EmptyList, OptionalCardHeader, ListFilter, NgxEchartsDirective,
@@ -34,21 +34,21 @@ import { TripStatsSectionStore } from './trip-stats-section.store';
   `],
   template: `
     @if(store.isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
-      <bk-list-filter
+      <okr-list-filter
         [years]="store.viewType() === 'list' ? availableYears : undefined"
         [selectedYear]="store.selectedYear()"
         (yearChanged)="store.setYear($event)"
         (searchTermChanged)="store.setSearchTerm($event)"
       />
       @if(store.listRows().length === 0 && store.viewType() === 'list') {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         @switch(store.viewType()) {
           @case('list') {
             <ion-card>
-              <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+              <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
               <ion-card-content>
                 <ion-grid>
                   <ion-row class="header-row">
@@ -74,13 +74,13 @@ import { TripStatsSectionStore } from './trip-stats-section.store';
           @case('graph') {
             @if(store.echartsOption(); as opt) {
               <ion-card>
-                <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+                <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
                 <ion-card-content>
                   <div echarts [options]="opt" class="chart"></div>
                 </ion-card-content>
               </ion-card>
             } @else {
-              <bk-empty-list [message]="store.i18n.empty()" />
+              <okr-empty-list [message]="store.i18n.empty()" />
             }
           }
         }

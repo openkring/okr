@@ -22,7 +22,7 @@ import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
 type ViewMode = 'accordion' | 'chart';
 
 @Component({
-  selector: 'bk-orgchart-section',
+  selector: 'okr-orgchart-section',
   standalone: true,
   providers: [provideEchartsCore({ echarts }), OrgchartStore],
   imports: [
@@ -38,10 +38,10 @@ type ViewMode = 'accordion' | 'chart';
   `],
   template: `
     @if (isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-segment [(ngModel)]="viewMode">
             <ion-segment-button value="accordion">
@@ -54,7 +54,7 @@ type ViewMode = 'accordion' | 'chart';
 
           @if (viewMode() === 'accordion') {
             @if (rootNode(); as root) {
-              <bk-orgchart-node
+              <okr-orgchart-node
                 [node]="root"
                 [depth]="0"
                 [showName]="showName()"

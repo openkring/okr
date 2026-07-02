@@ -2,7 +2,7 @@
   "name": "relationship-personal-rel-feature",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/personal-rel/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:personal-rel", "platform:mobile", "platform:web"],
   "targets": {

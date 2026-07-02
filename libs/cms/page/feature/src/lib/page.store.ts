@@ -424,7 +424,7 @@ export const _PageStore = signalStore(
       /**
        * Generate a PDF of the current page via the page-print template, using
        * client-side DOM capture of the rendered sections. `root` is the page
-       * content element holding the rendered <bk-section-dispatcher> hosts;
+       * content element holding the rendered <okr-section-dispatcher> hosts;
        * `visibleSections` is exactly the list the page component rendered (already
        * filtered for accordion-nesting + state), so it lines up 1:1 with the
        * top-level hosts. On any failure, falls back to the native print dialog.

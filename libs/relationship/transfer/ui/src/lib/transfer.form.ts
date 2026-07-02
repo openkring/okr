@@ -9,7 +9,7 @@ import { Avatars } from '@okr/avatar-ui';
 import { transferValidations, TransferI18n } from '@okr/relationship-transfer-util';
 
 @Component({
-  selector: 'bk-transfer-form',
+  selector: 'okr-transfer-form',
   standalone: true,
   imports: [
     DateInput, TextInput, NotesInput, NumberInput, Avatars, CategorySelect, Chips,
@@ -21,7 +21,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
       <form novalidate>
         @if(currentUser(); as currentUser) {
           <!-- subjects -->
-          <bk-avatars
+          <okr-avatars
             (selectClicked)="selectSubject.emit(true)"
             name="subjects"
             [avatars]="subjects()"
@@ -33,7 +33,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
           />
 
           <!-- objects -->
-          <bk-avatars
+          <okr-avatars
             (selectClicked)="selectObject.emit(true)"
             name="objects"
             [avatars]="objects()"
@@ -65,25 +65,25 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   @if(type() === 'custom') {
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                   </ion-col>
                   }
 
                   <ion-col size="12" size-md="6">
-                    <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-date-input [i18n]="dateOfTransferI18n()" [storeDate]="dateOfTransfer()" (storeDateChange)="onFieldChange('dateOfTransfer', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                    <okr-date-input [i18n]="dateOfTransferI18n()" [storeDate]="dateOfTransfer()" (storeDateChange)="onFieldChange('dateOfTransfer', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -98,15 +98,15 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-number-input [i18n]="priceI18n()" [value]="price()" (valueChange)="onFieldChange('price', $event)" [maxLength]="6" [readOnly]="isReadOnly()" />
+                    <okr-number-input [i18n]="priceI18n()" [value]="price()" (valueChange)="onFieldChange('price', $event)" [maxLength]="6" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]="20" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]="20" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    <okr-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -114,11 +114,11 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
           </ion-card>
 
           @if(hasRole('privileged') || hasRole('resourceAdmin')) {
-            <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+            <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
           } 
           
           @if(hasRole('admin')) {
-            <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
           }
         }
       </form>

@@ -95,7 +95,7 @@ const FormSectionStore = signalStore(
 );
 
 @Component({
-  selector: 'bk-form-section',
+  selector: 'okr-form-section',
   standalone: true,
   imports: [Spinner, FormRenderer, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonNote],
   providers: [FormSectionStore],
@@ -108,7 +108,7 @@ const FormSectionStore = signalStore(
       }
       <ion-card-content>
         @if (definitionResource.isLoading()) {
-          <bk-spinner />
+          <okr-spinner />
         } @else if (submitted()) {
           <ion-note color="success">{{ store.i18n.form_submit_conf() }}</ion-note>
         } @else if (errorMsg()) {
@@ -117,7 +117,7 @@ const FormSectionStore = signalStore(
           @if (def.isArchived) {
             <ion-note color="warning">{{ store.i18n.form_archived() }}</ion-note>
           } @else {
-            <bk-form-renderer
+            <okr-form-renderer
               [definition]="def"
               [submitLabel]="store.i18n.form_submit()"
               [submitting]="submitting()"

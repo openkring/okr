@@ -2,7 +2,7 @@
   "name": "relationship-personal-rel-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/personal-rel/data-access/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:data-access", "scope:personal-rel", "platform:mobile", "platform:web"],
   "targets": {

@@ -2,7 +2,7 @@
   "name": "pdf-template-util",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/pdf-template/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:pdf-template", "platform:mobile", "platform:web"],
   "targets": {

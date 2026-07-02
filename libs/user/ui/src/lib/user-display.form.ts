@@ -9,7 +9,7 @@ import { coerceBoolean } from "@okr/shared-util-core";
 import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations, UserI18n } from "@okr/user-util";
 
 @Component({
-  selector: 'bk-user-display-form',
+  selector: 'okr-user-display-form',
   standalone: true,
   imports: [
     CategoryOld, Checkbox,
@@ -27,25 +27,25 @@ import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidatio
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">                                                             
-                <bk-category-old [i18n]="avatarUsageI18n()" [value]="avatarUsage()" (valueChange)="onFieldChange('avatarUsage', $event)" [categories]="avatarUsages" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="avatarUsageI18n()" [value]="avatarUsage()" (valueChange)="onFieldChange('avatarUsage', $event)" [categories]="avatarUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="personSortCriteriaI18n()" [value]="personSortCriteria()" (valueChange)="onFieldChange('personSortCriteria', $event)" [categories]="personSortCriterias"  [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="personSortCriteriaI18n()" [value]="personSortCriteria()" (valueChange)="onFieldChange('personSortCriteria', $event)" [categories]="personSortCriterias"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="userLanguageI18n()" [value]="userLanguage()" (valueChange)="onFieldChange('userLanguage', $event)" [categories]="languages" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="userLanguageI18n()" [value]="userLanguage()" (valueChange)="onFieldChange('userLanguage', $event)" [categories]="languages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="nameDisplayI18n()" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [categories]="nameDisplays" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="nameDisplayI18n()" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [categories]="nameDisplays" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="showArchivedDataI18n()" [checked]="showArchivedData()" (checkedChange)="onFieldChange('showArchivedData', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="showArchivedDataI18n()" [checked]="showArchivedData()" (checkedChange)="onFieldChange('showArchivedData', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="showDebugInfoI18n()" [checked]="showDebugInfo()" (checkedChange)="onFieldChange('showDebugInfo', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="showDebugInfoI18n()" [checked]="showDebugInfo()" (checkedChange)="onFieldChange('showDebugInfo', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="showHelpersI18n()" [checked]="showHelpers()" (checkedChange)="onFieldChange('showHelpers', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="showHelpersI18n()" [checked]="showHelpers()" (checkedChange)="onFieldChange('showHelpers', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>

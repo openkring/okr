@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { LogInfo } from '@okr/shared-models';
 
 @Component({
-  selector: 'bk-result-log',
+  selector: 'okr-result-log',
   standalone: true,
   imports: [
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,

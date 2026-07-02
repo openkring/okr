@@ -20,7 +20,7 @@ interface InvitationsConfigI18n {
 }
 
 @Component({
-  selector: 'bk-invitations-config',
+  selector: 'okr-invitations-config',
   standalone: true,
   imports: [
     TextInput, Checkbox, NumberInput,
@@ -44,16 +44,16 @@ interface InvitationsConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input [i18n]="moreUrlI18n()" [value]="moreUrl()" (valueChange)="onFieldChange('moreUrl', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="moreUrlI18n()" [value]="moreUrl()" (valueChange)="onFieldChange('moreUrl', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-number-input [i18n]="maxItemsI18n()" [value]="maxItems()" (valueChange)="onFieldChange('maxItems', $event)" [readOnly]="readOnly()" />
+              <okr-number-input [i18n]="maxItemsI18n()" [value]="maxItems()" (valueChange)="onFieldChange('maxItems', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showPastItemsI18n()" [checked]="showPastItems()" (checkedChange)="onFieldChange('showPastItems', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showPastItemsI18n()" [checked]="showPastItems()" (checkedChange)="onFieldChange('showPastItems', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showUpcomingItemsI18n()" [checked]="showUpcomingItems()" (checkedChange)="onFieldChange('showUpcomingItems', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showUpcomingItemsI18n()" [checked]="showUpcomingItems()" (checkedChange)="onFieldChange('showUpcomingItems', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>

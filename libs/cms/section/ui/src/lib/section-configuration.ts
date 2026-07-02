@@ -10,7 +10,7 @@ import { SectionI18n } from '@okr/cms-section-util';
 export const PFX = '@cms/section/feature.';
 
 @Component({
-  selector: 'bk-section-config',
+  selector: 'okr-section-config',
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem,
@@ -34,7 +34,7 @@ export const PFX = '@cms/section/feature.';
                 <ion-col size="6">
                   <ion-item lines="none">
                     <ion-label>Section Key: {{ okey }}</ion-label>
-                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
+                    <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
                   </ion-item>
                 </ion-col>
               }
@@ -43,18 +43,18 @@ export const PFX = '@cms/section/feature.';
         <ion-row>
           @if(showAdvanced()) {
             <ion-col size="12">
-              <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="isReadOnly()" />
+              <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="isReadOnly()" />
             </ion-col>
           }
           <ion-col size="12">
-            <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
+            <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
           </ion-col>
           <ion-col size="12">
-            <bk-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
+            <okr-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
           </ion-col>
           @if(showAdvanced()) {
             <ion-col size="12">
-              <bk-text-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
+              <okr-text-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
             </ion-col>
           }
           <ion-col size="6">
@@ -63,7 +63,7 @@ export const PFX = '@cms/section/feature.';
             </ion-item>
           </ion-col>
           <ion-col size="6">
-            <bk-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+            <okr-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
           </ion-col>
           <ion-col size="6">
             <ion-item lines="none">
@@ -71,7 +71,7 @@ export const PFX = '@cms/section/feature.';
             </ion-item>
           </ion-col>
           <ion-col size="6">
-            <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+            <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
           </ion-col>
         </ion-row>
         </ion-grid>

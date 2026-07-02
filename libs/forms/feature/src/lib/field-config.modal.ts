@@ -12,14 +12,14 @@ import { safeStructuredClone } from '@okr/shared-util-core';
 import { isDisplayField } from '@okr/forms-util';
 
 @Component({
-  selector: 'bk-field-config-modal',
+  selector: 'okr-field-config-modal',
   standalone: true,
   imports: [
     FormsModule, Header,
     IonContent, IonList, IonItem, IonLabel, IonInput, IonToggle, IonSelect, IonSelectOption, IonButton,
   ],
   template: `
-    <bk-header [i18n]="{ title: 'Feld konfigurieren' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: 'Feld konfigurieren' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-list lines="full">
 

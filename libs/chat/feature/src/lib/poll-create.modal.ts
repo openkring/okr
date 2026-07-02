@@ -9,19 +9,19 @@ import { PollCreateForm } from '@okr/chat-ui';
 import { MatrixChatStore } from './matrix-chat.store';
 
 @Component({
-  selector: 'bk-poll-create-modal',
+  selector: 'okr-poll-create-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, PollCreateForm,
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.survey_title()}" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.survey_title()}" [isModal]="true" />
     @if (formValid()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-poll-create-form
+      <okr-poll-create-form
         [formData]="formData()"
         [i18n]="store.i18n"
         (formDataChange)="onFormDataChange($event)"

@@ -18,7 +18,7 @@ interface ChartConfigI18n {
 }
 
 @Component({
-  selector: 'bk-chart-config',
+  selector: 'okr-chart-config',
   standalone: true,
   imports: [
     FormsModule,
@@ -46,10 +46,10 @@ interface ChartConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-string-select [i18n]="typeI18n()" [selectedString]="chartType()" (selectedStringChange)="onTypeChange($event)" [readOnly]="readOnly()" [stringList]="chartTypes" />
+              <okr-string-select [i18n]="typeI18n()" [selectedString]="chartType()" (selectedStringChange)="onTypeChange($event)" [readOnly]="readOnly()" [stringList]="chartTypes" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-text-input [i18n]="titleTextI18n()" [value]="titleText()" (valueChange)="onTitleChange($event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="titleTextI18n()" [value]="titleText()" (valueChange)="onTitleChange($event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
               <ion-item lines="none">

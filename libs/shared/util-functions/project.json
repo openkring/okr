@@ -2,7 +2,7 @@
   "name": "shared-util-functions",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/util-functions/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:shared", "platform:node"],
   "targets": {

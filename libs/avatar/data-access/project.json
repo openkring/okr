@@ -2,7 +2,7 @@
   "name": "avatar-data-access",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/avatar/data-access/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:data-access", "scope:avatar", "platform:mobile", "platform:web"],
   "targets": {

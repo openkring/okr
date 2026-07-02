@@ -15,7 +15,7 @@ import { EsignScanPredefinedResponse, EsignService } from '@okr/esign-data-acces
 type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' | 'error';
 
 @Component({
-  selector: 'bk-esign-send-document-modal',
+  selector: 'okr-esign-send-document-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -92,7 +92,7 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
             @if (status() === 'ready' || status() === 'sending') {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="initiatorI18n" [value]="formData().initiatorAliasName"
+                  <okr-text-input [i18n]="initiatorI18n" [value]="formData().initiatorAliasName"
                     (valueChange)="onFieldChange('initiatorAliasName', $event)"
                     [readOnly]="false" [autofocus]="true" [maxLength]="30" />
                 </ion-col>
@@ -126,7 +126,7 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
                   </ion-item>
                 </ion-col>
                 <ion-col size="12">
-                  <bk-notes-input [i18n]="commentI18n" [value]="formData().comment"
+                  <okr-notes-input [i18n]="commentI18n" [value]="formData().comment"
                     (valueChange)="onFieldChange('comment', $event)" [readOnly]="false" />
                 </ion-col>
               </ion-row>

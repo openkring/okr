@@ -17,7 +17,7 @@ import { AsyncPipe } from '@angular/common';
 export type MultiSelectSegment = 'org' | 'group' | 'person';
 
 @Component({
-  selector: 'bk-multi-select-modal',
+  selector: 'okr-multi-select-modal',
   standalone: true,
   imports: [
     FormsModule,
@@ -34,7 +34,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
     ion-segment { margin: 8px 0; }
   `],
   template: `
-    <bk-header
+    <okr-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
       [i18n]="{ title: ('@sselect.label' | translate | async) ?? 'select' }"
@@ -53,9 +53,9 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
 
       @if(activeSegment() === 'org') {
         @if(orgIsLoading()) {
-          <bk-spinner />
+          <okr-spinner />
         } @else if(filteredOrgs().length === 0) {
-          <bk-empty-list [message]="orgSelectStore.i18n.org_empty()" />
+          <okr-empty-list [message]="orgSelectStore.i18n.org_empty()" />
         } @else {
           <ion-list lines="none">
             @for(org of filteredOrgs(); track $index) {
@@ -72,9 +72,9 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
 
       @if(activeSegment() === 'group') {
         @if(groupIsLoading()) {
-          <bk-spinner />
+          <okr-spinner />
         } @else if(filteredGroups().length === 0) {
-          <bk-empty-list [message]="groupSelectStore.i18n.group_empty()" />
+          <okr-empty-list [message]="groupSelectStore.i18n.group_empty()" />
         } @else {
           <ion-list lines="none">
             @for(group of filteredGroups(); track $index) {
@@ -91,9 +91,9 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
 
       @if(activeSegment() === 'person') {
         @if(personIsLoading()) {
-          <bk-spinner />
+          <okr-spinner />
         } @else if(filteredPersons().length === 0) {
-          <bk-empty-list [message]="personSelectStore.i18n.person_empty()" />
+          <okr-empty-list [message]="personSelectStore.i18n.person_empty()" />
         } @else {
           <ion-list lines="none">
             @for(person of filteredPersons(); track $index) {

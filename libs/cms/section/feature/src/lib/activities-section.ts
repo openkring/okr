@@ -9,7 +9,7 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { ActivitiesSectionStore } from './activities-section.store';
 
 @Component({
-  selector: 'bk-activities-section',
+  selector: 'okr-activities-section',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -27,13 +27,13 @@ import { ActivitiesSectionStore } from './activities-section.store';
   `],
   template: `
     @if(store.isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if(store.activities().length === 0) {
-            <bk-empty-list [message]="store.i18n.empty()" />
+            <okr-empty-list [message]="store.i18n.empty()" />
           } @else {
             <ion-list lines="inset">
               @for(activity of store.activities(); track activity.okey) {
@@ -46,7 +46,7 @@ import { ActivitiesSectionStore } from './activities-section.store';
                 </ion-item>
               }
               @if(showMoreButton()) {
-                <bk-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
+                <okr-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
               }
             </ion-list>
           }

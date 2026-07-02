@@ -11,22 +11,22 @@ import { I18nService } from '@okr/shared-i18n';
 import { RelationshipToolbar } from '@okr/avatar-ui';
 
 @Component({
-  selector: 'bk-category-change-modal',
+  selector: 'okr-category-change-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, CategoryChangeForm, RelationshipToolbar,
     IonContent
 ],
   template: `
-    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if (currentUser(); as currentUser) {
         @if (memberAvatar(); as memberAvatar) {
           @if (orgAvatar(); as orgAvatar) {
-            <bk-relationship-toolbar
+            <okr-relationship-toolbar
               relType="membership"
               [subjectAvatar]="memberAvatar"
               [objectAvatar]="orgAvatar"
@@ -34,7 +34,7 @@ import { RelationshipToolbar } from '@okr/avatar-ui';
               [currentUser]="currentUser"
             />
 
-            <bk-category-change-form
+            <okr-category-change-form
               [formData]="formData()"
               [membershipCategory]="membershipCategory()"
               [readOnly]=false

@@ -10,7 +10,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-u
 import { OwnershipStore } from './ownership.store';
 
 @Component({
-  selector: 'bk-ownerships-accordion',
+  selector: 'okr-ownerships-accordion',
   standalone: true,
   imports: [
     DurationPipe, SvgIconPipe, EmptyList,
@@ -32,7 +32,7 @@ import { OwnershipStore } from './ownership.store';
       </ion-item>
       <div slot="content">
         @if(ownerships().length === 0) {
-          <bk-empty-list [message]="store.i18n.empty()" />
+          <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
             @for(ownership of ownerships(); track $index) {

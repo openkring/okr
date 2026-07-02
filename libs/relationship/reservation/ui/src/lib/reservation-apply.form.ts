@@ -8,7 +8,7 @@ import { getAvatarName, hasRole } from '@okr/shared-util-core';
 import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-reservation-util';
 
 @Component({
-  selector: 'bk-reservation-apply-form',
+  selector: 'okr-reservation-apply-form',
   standalone: true,
   imports: [
     TextInput,
@@ -30,28 +30,28 @@ import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="fullDayI18n()" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="false" />
+                <okr-checkbox [i18n]="fullDayI18n()" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="false" />
               </ion-col>
             </ion-row>
             @if(!fullDay()) {
               <ion-row>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-number-input [i18n]="durationMinutesI18n()" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="false" />
+                  <okr-number-input [i18n]="durationMinutesI18n()" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="false" />
                 </ion-col>
               </ion-row>
             } @else {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
               </ion-row>
             }
@@ -67,26 +67,26 @@ import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="false" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="false" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="reasons()" [selectedItemName]="reason()" (selectedItemNameChange)="onFieldChange('reason', $event)" [withAll]=false [readOnly]="false" />
+                <okr-cat-select [category]="reasons()" [selectedItemName]="reason()" (selectedItemNameChange)="onFieldChange('reason', $event)" [withAll]=false [readOnly]="false" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="participantsI18n()" [value]="participants()" (valueChange)="onFieldChange('participants', $event)" [readOnly]="false" />
+                <okr-text-input [i18n]="participantsI18n()" [value]="participants()" (valueChange)="onFieldChange('participants', $event)" [readOnly]="false" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="areaI18n()" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]=20 [readOnly]="false" />
+                <okr-text-input [i18n]="areaI18n()" [value]="area()" (valueChange)="onFieldChange('area', $event)" [maxLength]=20 [readOnly]="false" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="false" />
+      <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="false" />
 
       <ion-card>
         <ion-card-header>
@@ -161,7 +161,7 @@ zukünftige Veranstaltungen zu sperren.
             <ion-card-title>Bestätigung</ion-card-title>
             </ion-card-header>
         <ion-card-content class="ion-no-padding">
-          <bk-checkbox [i18n]="isConfirmedI18n()" [checked]="isConfirmed()" (checkedChange)="onFieldChange('isConfirmed', $event)" [showHelper]="false" [readOnly]="false" />
+          <okr-checkbox [i18n]="isConfirmedI18n()" [checked]="isConfirmed()" (checkedChange)="onFieldChange('isConfirmed', $event)" [showHelper]="false" [readOnly]="false" />
         </ion-card-content>
       </ion-card>
 

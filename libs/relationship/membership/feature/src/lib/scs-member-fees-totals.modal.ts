@@ -9,7 +9,7 @@ import { ScsMemberFeesStore } from './scs-member-fees.store';
 const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 @Component({
-  selector: 'bk-scs-member-fees-totals-modal',
+  selector: 'okr-scs-member-fees-totals-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ScsMemberFeesStore],
@@ -25,7 +25,7 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
     .divider ion-label { border-top: 2px solid var(--ion-color-medium); padding-top: 4px; }
   `],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.scsMemberFee_totals_label() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.scsMemberFee_totals_label() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
         <ion-row>

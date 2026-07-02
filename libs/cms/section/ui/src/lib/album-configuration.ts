@@ -8,7 +8,7 @@ import { GalleryEffects } from '@okr/shared-categories';
 import { AlbumStyles, SectionI18n } from '@okr/cms-section-util';
 
 @Component({
-  selector: 'bk-album-config',
+  selector: 'okr-album-config',
   standalone: true,
   imports: [
     TextInput, CategoryOld, Checkbox,
@@ -29,28 +29,28 @@ import { AlbumStyles, SectionI18n } from '@okr/cms-section-util';
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input [i18n]="directoryI18n()" [value]="directory()" (valueChange)="onFieldChange('directory', $event)"  [readOnly]="readOnly()" [showHelper]=true />
+              <okr-text-input [i18n]="directoryI18n()" [value]="directory()" (valueChange)="onFieldChange('directory', $event)"  [readOnly]="readOnly()" [showHelper]=true />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-category-old [i18n]="albumStyleI18n()" [value]="albumStyle()" (valueChange)="onFieldChange('albumStyle', $event)" [categories]="albumStyles" [readOnly]="readOnly()" />
+              <okr-category-old [i18n]="albumStyleI18n()" [value]="albumStyle()" (valueChange)="onFieldChange('albumStyle', $event)" [categories]="albumStyles" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="recursiveI18n()" [checked]="recursive()" (checkedChange)="onFieldChange('recursive', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="recursiveI18n()" [checked]="recursive()" (checkedChange)="onFieldChange('recursive', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showVideosI18n()" [checked]="showVideos()" (checkedChange)="onFieldChange('showVideos', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showVideosI18n()" [checked]="showVideos()" (checkedChange)="onFieldChange('showVideos', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showStreamingVideosI18n()" [checked]="showStreamingVideos()" (checkedChange)="onFieldChange('showStreamingVideos', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showStreamingVideosI18n()" [checked]="showStreamingVideos()" (checkedChange)="onFieldChange('showStreamingVideos', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showDocsI18n()" [checked]="showDocs()" (checkedChange)="onFieldChange('showDocs', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showDocsI18n()" [checked]="showDocs()" (checkedChange)="onFieldChange('showDocs', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showPdfsI18n()" [checked]="showPdfs()" (checkedChange)="onFieldChange('showPdfs', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showPdfsI18n()" [checked]="showPdfs()" (checkedChange)="onFieldChange('showPdfs', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-category-old [i18n]="effectI18n()" [value]="effect()" (valueChange)="onFieldChange('effect', $event)" [categories]="galleryEffects" [readOnly]="readOnly()" />
+              <okr-category-old [i18n]="effectI18n()" [value]="effect()" (valueChange)="onFieldChange('effect', $event)" [categories]="galleryEffects" [readOnly]="readOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>

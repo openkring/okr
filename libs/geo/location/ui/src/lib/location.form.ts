@@ -44,7 +44,7 @@ export interface LocationFormI18n {
 }
 
 @Component({
-  selector: 'bk-location-form',
+  selector: 'okr-location-form',
   standalone: true,
   imports: [
     CategorySelect, TextInput, NumberInput, Chips, NotesInput, ErrorNote,
@@ -61,7 +61,7 @@ export interface LocationFormI18n {
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                    <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                   </ion-col>
                 </ion-row>
               }
@@ -70,35 +70,35 @@ export interface LocationFormI18n {
                 --------------------------------------------------->
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="nameErrors()" />
+                  <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-cat-select [category]="types()!" [selectedItemName]="locationType()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]=false />
+                  <okr-cat-select [category]="types()!" [selectedItemName]="locationType()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]=false />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="latitudeI18n()" [value]="latitude()" (valueChange)="onFieldChange('latitude', $event)" [mask]="latitudeMask" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="latitudeI18n()" [value]="latitude()" (valueChange)="onFieldChange('latitude', $event)" [mask]="latitudeMask" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="longitudeI18n()" [value]="longitude()" (valueChange)="onFieldChange('longitude', $event)" [mask]="longitudeMask" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="longitudeI18n()" [value]="longitude()" (valueChange)="onFieldChange('longitude', $event)" [mask]="longitudeMask" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="placeIdI18n()" [value]="placeId()" (valueChange)="onFieldChange('placeId', $event)" [copyable]="true" [mask]="caseInsensitiveWordMask" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-text-input [i18n]="placeIdI18n()" [value]="placeId()" (valueChange)="onFieldChange('placeId', $event)" [copyable]="true" [mask]="caseInsensitiveWordMask" [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="what3wordsI18n()" [value]="what3words()" (valueChange)="onFieldChange('what3words', $event)" [copyable]="true" [mask]="what3wordMask" [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-text-input [i18n]="what3wordsI18n()" [value]="what3words()" (valueChange)="onFieldChange('what3words', $event)" [copyable]="true" [mask]="what3wordMask" [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-number-input [i18n]="seaLevelI18n()" [value]="seaLevel()" [maxLength]=4 [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-number-input [i18n]="seaLevelI18n()" [value]="seaLevel()" [maxLength]=4 [showHelper]=true [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-number-input [i18n]="speedI18n()" [value]="speed()" [maxLength]=5 [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-number-input [i18n]="speedI18n()" [value]="speed()" [maxLength]=5 [showHelper]=true [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-number-input [i18n]="directionI18n()" [value]="direction()" (valueChange)="onFieldChange('direction', $event)" [maxLength]=4 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-number-input [i18n]="directionI18n()" [value]="direction()" (valueChange)="onFieldChange('direction', $event)" [maxLength]=4 [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [maxLength]=6 [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -109,11 +109,11 @@ export interface LocationFormI18n {
           TAG, NOTES
           --------------------------------------------------->
         @if(hasRole('privileged')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+          <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
 
         @if(hasRole('admin')) {
-          <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }

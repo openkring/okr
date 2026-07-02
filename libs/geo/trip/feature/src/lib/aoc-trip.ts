@@ -98,7 +98,7 @@ const AocTripStore = signalStore(
 );
 
 @Component({
-  selector: 'bk-aoc-trip',
+  selector: 'okr-aoc-trip',
   standalone: true,
   imports: [
     SvgIconPipe, Spinner,
@@ -117,7 +117,7 @@ const AocTripStore = signalStore(
 
     <ion-content class="ion-padding">
       @if (store.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         <ion-accordion-group [multiple]="true">
 

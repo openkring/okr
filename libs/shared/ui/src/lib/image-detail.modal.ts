@@ -15,7 +15,7 @@ export interface ImageDetailRow { label: string; value: string; }
  * (via exifr). Callers may pass extra context rows (e.g. the owning section).
  */
 @Component({
-  selector: 'bk-image-detail-modal',
+  selector: 'okr-image-detail-modal',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonSpinner,

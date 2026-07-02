@@ -6,7 +6,7 @@ import { Button, Header, ResultLog } from '@okr/shared-ui';
 import { AocStatisticsStore } from './aoc-statistics.store';
 
 @Component({
-  selector: 'bk-aoc-statistics',
+  selector: 'okr-aoc-statistics',
   standalone: true,
   imports: [
     FormsModule, Header, ResultLog, Button,
@@ -14,7 +14,7 @@ import { AocStatisticsStore } from './aoc-statistics.store';
   ],
   providers: [AocStatisticsStore],
   template: `
-    <bk-header [i18n]="{ title: aocStatisticsStore.i18n.statistics_header() }" />
+    <okr-header [i18n]="{ title: aocStatisticsStore.i18n.statistics_header() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>
@@ -35,42 +35,42 @@ import { AocStatisticsStore } from './aoc-statistics.store';
             <ion-row>
               <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_cl_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.statistics_cl_button()" iconName="checkbox-circle" (click)="updateCompetitionLevels()" />
+                <okr-button [label]="aocStatisticsStore.i18n.statistics_cl_button()" iconName="checkbox-circle" (click)="updateCompetitionLevels()" />
               </ion-col>
             </ion-row>
             <!-- Update Competition Levels statistics -->
             <ion-row>
               <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_cl_stats_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.statistics_cl_stats_button()" iconName="checkbox-circle" (click)="updateCLStatistics()" />
+                <okr-button [label]="aocStatisticsStore.i18n.statistics_cl_stats_button()" iconName="checkbox-circle" (click)="updateCLStatistics()" />
               </ion-col>
             </ion-row>
             <!-- Update Age by Gender -->
             <ion-row>
               <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_age_by_gender_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.statistics_age_by_gender_button()" iconName="checkbox-circle" (click)="updateAgeByGender()" />
+                <okr-button [label]="aocStatisticsStore.i18n.statistics_age_by_gender_button()" iconName="checkbox-circle" (click)="updateAgeByGender()" />
               </ion-col>
             </ion-row>
             <!-- Update Category by Gender -->
             <ion-row>
               <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_cat_by_gender_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.statistics_cat_by_gender_button()" iconName="checkbox-circle" (click)="updateCategoryByGender()" />
+                <okr-button [label]="aocStatisticsStore.i18n.statistics_cat_by_gender_button()" iconName="checkbox-circle" (click)="updateCategoryByGender()" />
               </ion-col>
             </ion-row>
             <!-- Update Member Location -->
             <ion-row>
               <ion-col size="6">{{ aocStatisticsStore.i18n.statistics_member_location_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="aocStatisticsStore.i18n.statistics_member_location_button()" iconName="checkbox-circle" (click)="updateMemberLocation()" />
+                <okr-button [label]="aocStatisticsStore.i18n.statistics_member_location_button()" iconName="checkbox-circle" (click)="updateMemberLocation()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
 
-      <bk-result-log [title]="logTitle()" cardTitle="Resultat" [log]="logInfo()" />
+      <okr-result-log [title]="logTitle()" cardTitle="Resultat" [log]="logInfo()" />
     </ion-content>
   `,
 })

@@ -19,7 +19,7 @@ import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
  * See Documentation: https://generic-ui.com/guide/nx-angular-cli
  */
 @Component({
-  selector: 'bk-chart-section',
+  selector: 'okr-chart-section',
   standalone: true,
   imports: [
     Spinner,
@@ -39,7 +39,7 @@ import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
   template: `
   @if(section(); as section) {
     <ion-card>
-      <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+      <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
         @if(content(); as content) {
           <div [innerHTML]="content"></div>
@@ -50,7 +50,7 @@ import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
       </ion-card-content>
     </ion-card>
   } @else {
-    <bk-spinner />
+    <okr-spinner />
   }
 `
 })

@@ -2,7 +2,7 @@
   "name": "subject-address-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/subject/address/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:address", "platform:mobile", "platform:web"],
   "targets": {

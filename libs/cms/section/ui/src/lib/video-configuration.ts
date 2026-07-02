@@ -7,7 +7,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { SectionI18n } from '@okr/cms-section-util';
 
 @Component({
-  selector: 'bk-video-config',
+  selector: 'okr-video-config',
   standalone: true,
   imports: [
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
@@ -23,19 +23,19 @@ import { SectionI18n } from '@okr/cms-section-util';
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input [i18n]="youtubeIdI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-text-input [i18n]="youtubeIdI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [maxLength]=11 [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="frameborderI18n()" [value]="frameborder()" (valueChange)="onFieldChange('frameborder', $event)" [maxLength]=4 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-text-input [i18n]="frameborderI18n()" [value]="frameborder()" (valueChange)="onFieldChange('frameborder', $event)" [maxLength]=4 [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="baseUrlI18n()" [value]="baseUrl()" (valueChange)="onFieldChange('baseUrl', $event)" [maxLength]=100 [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-text-input [i18n]="baseUrlI18n()" [value]="baseUrl()" (valueChange)="onFieldChange('baseUrl', $event)" [maxLength]=100 [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
             </ion-row>
           </ion-grid>

@@ -8,7 +8,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInvoicePositions, bexioInvoiceValidations, defaultInvoicePositionToBexio, InvoiceI18n } from '@okr/finance-invoice-util';
 
 @Component({
-  selector: 'bk-bexio-invoice-new-form',
+  selector: 'okr-bexio-invoice-new-form',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -26,31 +26,31 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
             <ion-grid>
               <ion-row>
                 <ion-col size="8">
-                  <bk-text-input [i18n]="titleI18n()" [value]="title()"
+                  <okr-text-input [i18n]="titleI18n()" [value]="title()"
                     (valueChange)="onFieldChange('title', $event)"
                     [maxLength]="100" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="4">
-                  <bk-text-input [i18n]="bexioIdI18n()" [value]="bexioId()"
+                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()"
                     (valueChange)="onFieldChange('bexioId', $event)"
                     [maxLength]="30" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
-                  <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()"
+                  <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()"
                     (storeDateChange)="onFieldChange('validFrom', $event)"
                     [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="6">
-                  <bk-date-input [i18n]="validToI18n()" [storeDate]="validTo()"
+                  <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()"
                     (storeDateChange)="onFieldChange('validTo', $event)"
                     [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-string-select [i18n]="templateI18n()"
+                  <okr-string-select [i18n]="templateI18n()"
                     [stringList]="templateNames"
                     [selectedString]="selectedTemplateName()"
                     (selectedStringChange)="onTemplateChange($event)"
@@ -59,7 +59,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes-input [i18n]="headerI18n()" [value]="header()"
+                  <okr-notes-input [i18n]="headerI18n()" [value]="header()"
                     (valueChange)="onFieldChange('header', $event)"
                     [title]="i18n().header_title()" [showTitle]="true"
                     [readOnly]="isReadOnly()" />
@@ -67,7 +67,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes-input [i18n]="footerI18n()" [value]="footer()"
+                  <okr-notes-input [i18n]="footerI18n()" [value]="footer()"
                     (valueChange)="onFieldChange('footer', $event)"
                     [title]="i18n().footer_title()" [showTitle]="true"
                     [readOnly]="isReadOnly()" />
@@ -87,22 +87,22 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
                 <ion-grid>
                   <ion-row>
                     <ion-col size="5">
-                      <bk-text-input [i18n]="positionTextI18n()" [value]="pos.text"
+                      <okr-text-input [i18n]="positionTextI18n()" [value]="pos.text"
                         (valueChange)="onPositionFieldChange($index, 'text', $event)"
                         [maxLength]="200" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="2">
-                      <bk-number-input [i18n]="unitPriceI18n()" [value]="toNumber(pos.unit_price)"
+                      <okr-number-input [i18n]="unitPriceI18n()" [value]="toNumber(pos.unit_price)"
                         (valueChange)="onPositionPriceChange($index, $event)"
                         [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="2">
-                      <bk-number-input [i18n]="posAmountI18n()" [value]="toNumber(pos.amount)"
+                      <okr-number-input [i18n]="posAmountI18n()" [value]="toNumber(pos.amount)"
                         (valueChange)="onPositionAmountChange($index, $event)"
                         [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="2">
-                      <bk-number-input [i18n]="accountIdI18n()" [value]="pos.account_id"
+                      <okr-number-input [i18n]="accountIdI18n()" [value]="pos.account_id"
                         (valueChange)="onPositionFieldChange($index, 'account_id', $event + '')"
                         [readOnly]="isReadOnly()" />
                     </ion-col>
@@ -122,7 +122,7 @@ import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInv
             <ion-grid>
               <ion-row class="ion-align-items-center">
                 <ion-col size="9">
-                  <bk-string-select [i18n]="defaultPositionI18n()"
+                  <okr-string-select [i18n]="defaultPositionI18n()"
                     [stringList]="defaultPositionNames"
                     [selectedString]="selectedDefaultName()"
                     (selectedStringChange)="selectedDefaultName.set($event)"

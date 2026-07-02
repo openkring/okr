@@ -2,7 +2,7 @@
   "name": "aoc-util",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/aoc/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:aoc", "platform:mobile", "platform:web"],
   "targets": {

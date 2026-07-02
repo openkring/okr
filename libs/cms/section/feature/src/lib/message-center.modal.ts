@@ -26,7 +26,7 @@ import { UserService } from '@okr/user-data-access';
 const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtrap_test'] as const;
 
 @Component({
-  selector: 'bk-message-center-modal',
+  selector: 'okr-message-center-modal',
   standalone: true,
   providers: [MessageCenterStore],
   imports: [
@@ -152,7 +152,7 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
               [checked]="checkedKeys().has(user.okey) && (user.newsDelivery === DT.EmailAttachment || user.newsDelivery === DT.EmailNotification)"
               (ionChange)="toggle(user.okey, $any($event).detail.checked)" />
             @if(currentUser(); as cu) {
-              <bk-avatar [avatarInfo]="toAvatarInfo(user)" [currentUser]="cu" layout="horizontal" />
+              <okr-avatar [avatarInfo]="toAvatarInfo(user)" [currentUser]="cu" layout="horizontal" />
             }
             <ion-icon slot="end" src="{{ deliveryIcon(user.newsDelivery) | svgIcon }}" />
           </ion-item>

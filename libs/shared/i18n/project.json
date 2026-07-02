@@ -2,7 +2,7 @@
   "name": "shared-i18n",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/i18n/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:shared", "platform:mobile", "platform:web"],
   "targets": {

@@ -13,7 +13,7 @@ const PAGE_SIZE = 10;
  * Sticky filter bar (search + category chips) + endless loading of articles.
  */
 @Component({
-  selector: 'bk-blog-stream',
+  selector: 'okr-blog-stream',
   standalone: true,
   providers: [PageStore],
   imports: [
@@ -62,10 +62,10 @@ const PAGE_SIZE = 10;
         <div [id]="section.okey" (click)="sectionClick.emit(section.okey)">
           @if (editMode()) {
             <div class="section-wrapper editable">
-              <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+              <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
             </div>
           } @else {
-            <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+            <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
           }
         </div>
       }

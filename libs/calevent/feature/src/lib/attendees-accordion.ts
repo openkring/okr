@@ -20,7 +20,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
  * Users can subscribe or unsubscribe to the CalEvent.
  */
 @Component({
-  selector: 'bk-attendees-accordion',
+  selector: 'okr-attendees-accordion',
   standalone: true,
   imports: [
     AvatarPipe, FullNamePipe, SvgIconPipe,
@@ -42,7 +42,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
     </ion-item>
     <div slot="content">
         @if(attendees().length === 0) {
-        <bk-empty-list [message]="i18n.attendance_empty()" />
+        <okr-empty-list [message]="i18n.attendance_empty()" />
       } @else {
         <ion-list lines="inset">
           @for(attendee of attendees(); track $index) {

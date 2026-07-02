@@ -19,7 +19,7 @@ import { CalEventStore } from '@okr/calevent-feature';
 import { CalendarStore } from './calendar-section.store';
 
 @Component({
-  selector: 'bk-calendar-section',
+  selector: 'okr-calendar-section',
   standalone: true,
   styles: [`
     ion-card-content { padding: 0px; }
@@ -42,10 +42,10 @@ import { CalendarStore } from './calendar-section.store';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     @if(isLoading()) {
-    <bk-spinner />
+    <okr-spinner />
     } @else {
     <ion-card>
-      <!-- <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" /> -->
+      <!-- <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" /> -->
       <ion-card-content>
         <div [style.display]="'block'">
           {{ filteredEvents().length }} {{ calendarStore.i18n.calevents() }}

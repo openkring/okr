@@ -10,7 +10,7 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
  * Using scroll-button for the arrow navigation, scroll-state queries and scroll-markers.
  */
 @Component({
-  selector: 'bk-slider-section',
+  selector: 'okr-slider-section',
   standalone: true,
   imports: [
     Spinner, Img, OptionalCardHeader,
@@ -60,9 +60,9 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
     container-name: slide;
     }
 
-    /* bk-img is the host element — reachable from parent CSS unlike the img inside it.
+    /* okr-img is the host element — reachable from parent CSS unlike the img inside it.
        position: absolute + inset: 0 fills the slide reliably without a height: 100% chain. */
-    .carousel-slide bk-img {
+    .carousel-slide okr-img {
     position: absolute;
     inset: 0;
     display: block;
@@ -72,7 +72,7 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
     }
 
     @container slide scroll-state(snapped: x) {
-    .carousel-slide bk-img {
+    .carousel-slide okr-img {
         opacity: 1;
         scale: 1;
     }
@@ -142,13 +142,13 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
   template: `
     @if(section(); as section) {
       <ion-card>
-        <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content background="black">
             <div class="carousel-container">
                 <div class="carousel" #carouselEl>
                     @for(image of images(); track image.url) {
                         <div class="carousel-slide">
-                            <bk-img [image]="image" [imageStyle]="carouselImageStyle()" />
+                            <okr-img [image]="image" [imageStyle]="carouselImageStyle()" />
                         </div>
                     }
                 </div>
@@ -156,7 +156,7 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
         </ion-card-content>
       </ion-card>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

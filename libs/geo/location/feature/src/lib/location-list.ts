@@ -11,7 +11,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { LocationStore } from './location.store';
 
 @Component({
-  selector: 'bk-location-all-list',
+  selector: 'okr-location-all-list',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -35,7 +35,7 @@ import { LocationStore } from './location.store';
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
-                <bk-menu [menuName]="contextMenuName()"/>
+                <okr-menu [menuName]="contextMenuName()"/>
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -51,7 +51,7 @@ import { LocationStore } from './location.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter
+    <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -77,11 +77,11 @@ import { LocationStore } from './location.store';
   <!-- Data -->
 <ion-content #content>
   @if(isLoading()) {
-    <bk-spinner />
+    <okr-spinner />
     <ion-backdrop />
   } @else {
     @if (selectedLocationsCount() === 0) {
-      <bk-empty-list [message]="store.i18n.empty()" />
+      <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
         @for(location of filteredLocations(); track location.okey) {

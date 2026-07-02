@@ -12,7 +12,7 @@ import { BexioInvoiceNewForm } from '@okr/finance-invoice-ui';
 import { InvoiceStore } from './invoice.store';
 
 @Component({
-  selector: 'bk-invoice-new-modal',
+  selector: 'okr-invoice-new-modal',
   standalone: true,
   providers: [InvoiceStore],
   imports: [
@@ -21,12 +21,12 @@ import { InvoiceStore } from './invoice.store';
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
-    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-bexio-invoice-new-form
+      <okr-bexio-invoice-new-form
         [formData]="formData()"
         (formDataChange)="onFormDataChange($event)"
         [readOnly]="false"

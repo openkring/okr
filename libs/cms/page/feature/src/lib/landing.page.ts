@@ -17,7 +17,7 @@ import { PFX } from './scope';
  * The page also includes a background image and help text for user assistance.
  */
 @Component({
-  selector: 'bk-landing-page',
+  selector: 'okr-landing-page',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -78,7 +78,7 @@ import { PFX } from './scope';
 }
   `],
   template: `
-    <bk-header [i18n]="{ title: title() }" [isRoot]="true" />
+    <okr-header [i18n]="{ title: title() }" [isRoot]="true" />
     <ion-content>
       <div class="landing-container">
         <img class="background-image" [src]="bannerUrl()" alt="Background" fetchpriority="high" />

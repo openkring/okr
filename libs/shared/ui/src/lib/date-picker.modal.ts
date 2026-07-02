@@ -9,7 +9,7 @@ export interface DatePickerModalI18n {
 }
 
 @Component({
-  selector: 'bk-date-picker-modal',
+  selector: 'okr-date-picker-modal',
   standalone: true,
   imports: [IonModal, IonContent, IonDatetime],
   template: `

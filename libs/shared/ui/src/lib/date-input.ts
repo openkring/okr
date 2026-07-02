@@ -18,7 +18,7 @@ export interface DateInputI18n {
 }
 
 @Component({
-  selector: 'bk-date-input',
+  selector: 'okr-date-input',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -27,14 +27,14 @@ export interface DateInputI18n {
   ],
   styles: [`
     ion-item.helper { --min-height: 0; }
-    bk-viewdate-input { width: 100%; }
+    okr-viewdate-input { width: 100%; }
   `],
   template: `
     <ion-item lines="none">
       @if(shouldShowDateSelect() && !isReadOnly()) {
         <ion-icon src="{{'calendar' | svgIcon }}" slot="start" (click)="datePicker.open()" />
       }
-      <bk-viewdate-input
+      <okr-viewdate-input
         [viewDate]="viewDate()"
         (viewDateChange)="onViewDateChange($event)"
         [i18n]="viewDateI18n()"
@@ -47,7 +47,7 @@ export interface DateInputI18n {
       />
     </ion-item>
 
-    <bk-date-picker-modal #datePicker
+    <okr-date-picker-modal #datePicker
       [isoDate]="isoDate()"
       (dateSelected)="updateStoreDate($event, isoFormat)"
     />

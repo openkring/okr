@@ -13,7 +13,7 @@ import { createPersonAvatar } from '@okr/relationship-invitation-util';
 import { InvitationStore } from './invitation.store';
 
 @Component({
-  selector: 'bk-invitation-list',
+  selector: 'okr-invitation-list',
   standalone: true,
   imports: [
     SvgIconPipe, PrettyDatePipe,
@@ -37,7 +37,7 @@ import { InvitationStore } from './invitation.store';
             <ion-popover trigger="c-invitations" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -46,7 +46,7 @@ import { InvitationStore } from './invitation.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
+    <okr-list-filter 
         (searchTermChanged)="onSearchtermChange($event)"
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         (stateChanged)="onStateSelected($event)" [states]="states()"
@@ -67,15 +67,15 @@ import { InvitationStore } from './invitation.store';
   <!-- list data -->
   <ion-content #content>
     @if(selectedInvitationsCount() === 0) {
-      <bk-empty-list [message]="store.i18n.empty()" />
+      <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
         @for(invitation of filteredInvitations(); track $index) {
           <ion-item (click)="showActions(invitation)" detail="false">
             <ion-label >{{invitation.date | prettyDate}}</ion-label>
             <ion-label class="ion-hide-md-down">{{invitation.name}}</ion-label>
-            <ion-label><bk-avatar-display [avatars]="[getAvatar(invitation.inviteeKey, invitation.inviteeFirstName, invitation.inviteeLastName)]" /></ion-label>
-            <ion-label class="ion-hide-lg-down"><bk-avatar-display [avatars]="[getAvatar(invitation.inviterKey, invitation.inviterFirstName, invitation.inviterLastName)]" /></ion-label>
+            <ion-label><okr-avatar-display [avatars]="[getAvatar(invitation.inviteeKey, invitation.inviteeFirstName, invitation.inviteeLastName)]" /></ion-label>
+            <ion-label class="ion-hide-lg-down"><okr-avatar-display [avatars]="[getAvatar(invitation.inviterKey, invitation.inviterFirstName, invitation.inviterLastName)]" /></ion-label>
             <ion-label class="ion-hide-md-down">{{invitation.state}}</ion-label>
           </ion-item>
         }

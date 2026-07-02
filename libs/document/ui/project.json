@@ -2,7 +2,7 @@
   "name": "document-ui",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/document/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:document", "platform:mobile", "platform:web"],
   "targets": {

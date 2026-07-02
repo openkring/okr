@@ -2,7 +2,7 @@
   "name": "finance-period-util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/finance/period/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:finance", "platform:mobile", "platform:web"],
   "targets": {

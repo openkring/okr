@@ -15,7 +15,7 @@ export interface MetaTagListI18n {
 }
 
 @Component({
-  selector: 'bk-meta-tag-list',
+  selector: 'okr-meta-tag-list',
   standalone: true,
   imports: [
     SvgIconPipe,

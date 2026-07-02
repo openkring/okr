@@ -12,7 +12,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { MembershipStore } from './membership.store';
 
 @Component({
-  selector: 'bk-members',
+  selector: 'okr-members',
   standalone: true,
   imports: [
     RellogPipe, AvatarPipe, FullNamePipe,
@@ -26,7 +26,7 @@ import { MembershipStore } from './membership.store';
   template: `
     <ion-content>
       @if(members().length === 0) {
-        <bk-empty-list [message]="store.i18n.no_data_members()" />
+        <okr-empty-list [message]="store.i18n.no_data_members()" />
       } @else {
         <ion-list lines="inset">
           @for(member of members(); track $index) {

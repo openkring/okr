@@ -24,7 +24,7 @@ const DEFAULT_DETAIL_I18N: MapMarkerDetailI18n = {
  * Ionic modal) to avoid stacking conflicts with the live WebGL map. Emits `closed` when dismissed.
  */
 @Component({
-  selector: 'bk-map-marker-detail',
+  selector: 'okr-map-marker-detail',
   standalone: true,
   imports: [
     SvgIconPipe,

@@ -5,7 +5,7 @@ import { FolderModel } from '@okr/shared-models';
 import { FolderService } from '@okr/folder-data-access';
 
 @Component({
-  selector: 'bk-folder-breadcrumb',
+  selector: 'okr-folder-breadcrumb',
   standalone: true,
   imports: [IonBreadcrumbs, IonBreadcrumb],
   template: `

@@ -10,7 +10,7 @@ import { DocumentStore } from './document.store';
 
 
 @Component({
-  selector: 'bk-document-edit-page',
+  selector: 'okr-document-edit-page',
   standalone: true,
   imports: [
     Header, ChangeConfirmation,
@@ -20,13 +20,13 @@ import { DocumentStore } from './document.store';
   providers: [DocumentStore],
     styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" />
+    <okr-header [i18n]="{ title: headerTitle() }" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-document-form
+        <okr-document-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [i18n]="store.i18n"

@@ -12,7 +12,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { ResourceStore } from './resource.store';
 
 @Component({
-  selector: 'bk-key-list',
+  selector: 'okr-key-list',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -35,7 +35,7 @@ import { ResourceStore } from './resource.store';
           <ion-popover trigger="c_key" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
-                <bk-menu [menuName]="contextMenuName()"/>
+                <okr-menu [menuName]="contextMenuName()"/>
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -44,7 +44,7 @@ import { ResourceStore } from './resource.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter
+    <okr-list-filter
         (searchTermChanged)="onSearchtermChange($event)"
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
      />
@@ -61,10 +61,10 @@ import { ResourceStore } from './resource.store';
 <!-- list data -->
 <ion-content #content>
   @if(isLoading()) {
-    <bk-spinner />
+    <okr-spinner />
   } @else {
     @if(selectedKeysCount() === 0) {
-      <bk-empty-list [message]="store.i18n.key_empty()" />
+      <okr-empty-list [message]="store.i18n.key_empty()" />
     } @else {
       <ion-list lines="full">
         @for(key of filteredKeys(); track $index) {

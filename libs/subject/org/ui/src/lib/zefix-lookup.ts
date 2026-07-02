@@ -9,7 +9,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { ZefixCompanyDetails, ZefixSearchResult, ZefixService } from '@okr/subject-org-data-access';
 
 @Component({
-  selector: 'bk-zefix-lookup',
+  selector: 'okr-zefix-lookup',
   standalone: true,
   imports: [
     SvgIconPipe,

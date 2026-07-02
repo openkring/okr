@@ -12,7 +12,7 @@ import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
 import { RagStore } from './rag-section.store';
 
 @Component({
-    selector: 'bk-rag-section',
+    selector: 'okr-rag-section',
     standalone: true,
     providers: [RagStore],
     styles: [`
@@ -73,7 +73,7 @@ import { RagStore } from './rag-section.store';
     template: `
         @if (section(); as section) {
             <ion-card>
-                <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+                <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
                 <ion-card-content>
 
                     <div class="toolbar">
@@ -176,7 +176,7 @@ import { RagStore } from './rag-section.store';
                 </ion-card-content>
             </ion-card>
         } @else {
-            <bk-spinner />
+            <okr-spinner />
         }
     `,
 })

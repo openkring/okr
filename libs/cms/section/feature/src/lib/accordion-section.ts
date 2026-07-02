@@ -11,7 +11,7 @@ import { TranslatePipe } from '@okr/shared-i18n';
 import { AccordionItemContentComponent } from './accordion-item';
 
 @Component({
-  selector: 'bk-accordion-section',
+  selector: 'okr-accordion-section',
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, CategoryPlainNamePipe,
@@ -26,7 +26,7 @@ import { AccordionItemContentComponent } from './accordion-item';
   template: `
     @if(section()) {
       <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-accordion-group [value]="value()">
             @for(item of items(); track item.value; let idx = $index) {
@@ -35,7 +35,7 @@ import { AccordionItemContentComponent } from './accordion-item';
                   <ion-label>{{item.label | translate | async}}</ion-label>
                 </ion-item>
                 <div class="ion-padding" slot="content">
-                  <bk-accordion-item-content [sectionId]="item.key" />
+                  <okr-accordion-item-content [sectionId]="item.key" />
                 </div>
               </ion-accordion>
             }
@@ -43,7 +43,7 @@ import { AccordionItemContentComponent } from './accordion-item';
         </ion-card-content>
       </ion-card>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

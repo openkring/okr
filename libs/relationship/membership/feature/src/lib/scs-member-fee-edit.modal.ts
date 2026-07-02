@@ -12,7 +12,7 @@ import { ScsMemberFeesStore } from './scs-member-fees.store';
 
 
 @Component({
-  selector: 'bk-scs-member-fee-edit-modal',
+  selector: 'okr-scs-member-fee-edit-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ScsMemberFeesStore],
@@ -22,18 +22,18 @@ import { ScsMemberFeesStore } from './scs-member-fees.store';
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if (showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-avatar-toolbar
+      <okr-avatar-toolbar
         key="{{parentKey()}}"
         [title]="memberName()"
         modelType="person"
         [readOnly]="true"
       />
-      <bk-scs-member-fee-edit-form
+      <okr-scs-member-fee-edit-form
         [formData]="formData()"
         [currentUser]="currentUser()"
         [membershipCategories]="mcat()"

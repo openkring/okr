@@ -5,7 +5,7 @@ import { SocialPostModel } from "@okr/shared-models";
 import { SvgIconPipe } from "@okr/shared-pipes";
 
 @Component({
-  selector: 'bk-social-post',
+  selector: 'okr-social-post',
   standalone: true,
   imports: [
     IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon,

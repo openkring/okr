@@ -15,7 +15,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { ApplicationStore } from './application.store';
 
 @Component({
-  selector: 'bk-application-list',
+  selector: 'okr-application-list',
   standalone: true,
   imports: [
     DatePipe, SvgIconPipe,
@@ -30,14 +30,14 @@ import { ApplicationStore } from './application.store';
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
       <ion-title>{{ store.filteredApplications().length }} {{ store.i18n.list_title() }}</ion-title>
     </ion-toolbar>
-    <bk-list-filter
+    <okr-list-filter
       (searchTermChanged)="store.setSearchTerm($event)"
     />
   </ion-header>
 
   <ion-content>
     @if(store.filteredApplications().length === 0) {
-      <bk-empty-list [message]="store.i18n.list_empty()" />
+      <okr-empty-list [message]="store.i18n.list_empty()" />
     } @else {
       <ion-list lines="inset">
         @for(app of store.filteredApplications(); track app.okey) {

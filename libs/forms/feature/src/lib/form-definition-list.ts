@@ -11,7 +11,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { FormDefinitionStore } from './form-definition.store';
 
 @Component({
-  selector: 'bk-form-definition-list',
+  selector: 'okr-form-definition-list',
   standalone: true,
   imports: [
     SvgIconPipe, Spinner, EmptyList, ListFilter, Menu,
@@ -34,20 +34,20 @@ import { FormDefinitionStore } from './form-definition.store';
             <ion-popover trigger="c-forms" triggerAction="click" [showBackdrop]="true"
               [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
-                <ion-content><bk-menu [menuName]="contextMenuName()" /></ion-content>
+                <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
               </ng-template>
             </ion-popover>
           </ion-buttons>
         }
       </ion-toolbar>
-      <bk-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
+      <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
     </ion-header>
 
     <ion-content>
       @if (store.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if (store.filteredForms().length === 0) {
-        <bk-empty-list [message]="store.i18n.list_empty()" />
+        <okr-empty-list [message]="store.i18n.list_empty()" />
       } @else {
         <ion-list lines="inset">
           @for (form of store.filteredForms(); track form.okey) {

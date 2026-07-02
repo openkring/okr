@@ -7,7 +7,7 @@ import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 import { BillStore } from './bill.store';
 
 @Component({
-  selector: 'bk-bill-accordion',
+  selector: 'okr-bill-accordion',
   standalone: true,
   providers: [BillStore],
   imports: [

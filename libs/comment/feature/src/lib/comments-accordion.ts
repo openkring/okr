@@ -9,7 +9,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 @Component({
-  selector: 'bk-comments-accordion',
+  selector: 'okr-comments-accordion',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -29,7 +29,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
       </ion-item>
     <div slot="content">
       <ion-grid style="width: 100%; height: 100%;">
-        <bk-comments-list [comments]="comments()" [empty]="store.i18n.empty()" />
+        <okr-comments-list [comments]="comments()" [empty]="store.i18n.empty()" />
       </ion-grid>
     </div>
   `

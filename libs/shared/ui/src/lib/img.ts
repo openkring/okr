@@ -59,7 +59,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
  */
 
 @Component({
-  selector: 'bk-img',
+  selector: 'okr-img',
   standalone: true,
   imports: [
     NgOptimizedImage, NgStyle,

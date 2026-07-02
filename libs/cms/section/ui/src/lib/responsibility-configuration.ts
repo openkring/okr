@@ -7,7 +7,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { SectionI18n } from '@okr/cms-section-util';
 
 @Component({
-  selector: 'bk-responsibility-config',
+  selector: 'okr-responsibility-config',
   standalone: true,
   imports: [
     Checkbox, TextInput,
@@ -23,16 +23,16 @@ import { SectionI18n } from '@okr/cms-section-util';
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
+              <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
             </ion-col>
             <ion-col size="12" size-md="4">
-              <bk-checkbox [i18n]="showAvatarI18n()" [checked]="showAvatar()" (checkedChange)="onFieldChange('showAvatar', $event)" [readOnly]="isReadOnly()" />
+              <okr-checkbox [i18n]="showAvatarI18n()" [checked]="showAvatar()" (checkedChange)="onFieldChange('showAvatar', $event)" [readOnly]="isReadOnly()" />
             </ion-col>
             <ion-col size="12" size-md="4">
-              <bk-checkbox [i18n]="showNameI18n()" [checked]="showName()" (checkedChange)="onFieldChange('showName', $event)" [readOnly]="isReadOnly()" />
+              <okr-checkbox [i18n]="showNameI18n()" [checked]="showName()" (checkedChange)="onFieldChange('showName', $event)" [readOnly]="isReadOnly()" />
             </ion-col>
             <ion-col size="12" size-md="4">
-              <bk-checkbox [i18n]="showDescriptionI18n()" [checked]="showDescription()" (checkedChange)="onFieldChange('showDescription', $event)" [readOnly]="isReadOnly()" />
+              <okr-checkbox [i18n]="showDescriptionI18n()" [checked]="showDescription()" (checkedChange)="onFieldChange('showDescription', $event)" [readOnly]="isReadOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>

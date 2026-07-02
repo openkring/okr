@@ -17,7 +17,7 @@ import { getMainContact, isAdminMember } from '@okr/subject-group-util';
 import { MembershipStore } from './membership.store';
 
 @Component({
-  selector: 'bk-membership-list',
+  selector: 'okr-membership-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -49,7 +49,7 @@ import { MembershipStore } from './membership.store';
             <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
+                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -59,12 +59,12 @@ import { MembershipStore } from './membership.store';
 
     <!-- search and filters -->
     @if(view() === 'group') {
-      <bk-list-filter
+      <okr-list-filter
         (searchTermChanged)="onSearchtermChange($event)"
         (typeChanged)="onTypeSelected($event)" [types]="types()"
       />
      } @else {
-      <bk-list-filter
+      <okr-list-filter
         (searchTermChanged)="onSearchtermChange($event)"
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -91,10 +91,10 @@ import { MembershipStore } from './membership.store';
   <!-- list data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(filteredMemberships().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(membership of filteredMemberships(); track membership.okey) {

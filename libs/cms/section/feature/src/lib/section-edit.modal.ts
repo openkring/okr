@@ -16,7 +16,7 @@ import { SectionStore } from './section.store';
  * The save action is only offered when the form is both dirty and valid.
  */
 @Component({
-    selector: 'bk-section-edit-modal',
+    selector: 'okr-section-edit-modal',
     standalone: true,
     imports: [
       ChangeConfirmation, Header, ErrorBanner, SectionForm,
@@ -24,14 +24,14 @@ import { SectionStore } from './section.store';
     ],
     providers: [SectionStore],
     template: `
-      <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+      <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
       @if(formDirty() && formValid() && formData()) {
-        <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+        <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
-      <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+      <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
       <ion-content class="ion-no-padding">
         @if(formData(); as formData) {
-          <bk-section-form
+          <okr-section-form
             [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"

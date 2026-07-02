@@ -15,7 +15,7 @@ export interface MatrixRoomListI18n {
 }
 
 @Component({
-  selector: 'bk-matrix-room-list',
+  selector: 'okr-matrix-room-list',
   standalone: true,
   imports: [
     MultiAvatarPipe,

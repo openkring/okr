@@ -11,7 +11,7 @@ export interface ChangeConfirmationI18n {
 }
 
 @Component({
-  selector: 'bk-change-confirmation',
+  selector: 'okr-change-confirmation',
   standalone: true,
   imports: [
     CategoryPlainNamePipe,

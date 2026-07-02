@@ -21,7 +21,7 @@ import { PageStore } from './page.store';
  * Page type: 'graph'
  */
 @Component({
-  selector: 'bk-graph-page',
+  selector: 'okr-graph-page',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -85,7 +85,7 @@ import { PageStore } from './page.store';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <bk-menu [menuName]="contextMenuName"/>
+                      <okr-menu [menuName]="contextMenuName"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -98,7 +98,7 @@ import { PageStore } from './page.store';
 
     <ion-content>
       @if (graphStore.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if (!graphStore.dependencyTree()) {
         <ion-item lines="none">
           <ion-label>{{ store.i18n.graph_nomain() }}</ion-label>
@@ -123,7 +123,7 @@ import { PageStore } from './page.store';
 
         <!-- Dependency tree -->
         <div class="graph-container">
-          <bk-menu-graph-node
+          <okr-menu-graph-node
             [node]="graphStore.dependencyTree()!"
             (nodeEdit)="onNodeEdit($event)"
           />

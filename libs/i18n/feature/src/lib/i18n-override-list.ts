@@ -17,7 +17,7 @@ import { I18nOverrideStore } from './i18n-override.store';
 import { I18nOverrideEditModal } from './i18n-override-edit.modal';
 
 @Component({
-  selector: 'bk-i18n-override-list',
+  selector: 'okr-i18n-override-list',
   standalone: true,
   imports: [
     SlicePipe, FormsModule, SvgIconPipe,
@@ -28,7 +28,7 @@ import { I18nOverrideEditModal } from './i18n-override-edit.modal';
   ],
   providers: [I18nOverrideStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.override_title() }" />
+    <okr-header [i18n]="{ title: store.i18n.override_title() }" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar

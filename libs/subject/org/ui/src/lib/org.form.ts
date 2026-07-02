@@ -9,7 +9,7 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { OrgI18n, orgValidations } from '@okr/subject-org-util';
 
 @Component({
-  selector: 'bk-org-form',
+  selector: 'okr-org-form',
   standalone: true,
   imports: [
     CategorySelect, DateInput, TextInput, Chips, NotesInput,
@@ -26,38 +26,38 @@ import { OrgI18n, orgValidations } from '@okr/subject-org-util';
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
             @if(isOrgTypeVisible()) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isOrgTypeReadOnly()" />
+                  <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isOrgTypeReadOnly()" />
                 </ion-col>
               </ion-row>
             }
             <ion-row> 
               <ion-col size="12">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               @if(hasRole('admin')) { 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
                 </ion-col>
               }
             </ion-row>
@@ -66,11 +66,11 @@ import { OrgI18n, orgValidations } from '@okr/subject-org-util';
       </ion-card>
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
       @if(hasRole('admin')) { 
-        <bk-notes-input [i18n]="notesI18n()" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
+        <okr-notes-input [i18n]="notesI18n()" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
       }
     </form>
   }

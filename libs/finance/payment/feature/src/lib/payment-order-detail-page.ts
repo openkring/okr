@@ -9,7 +9,7 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
 
 @Component({
-  selector: 'bk-payment-order-detail-page',
+  selector: 'okr-payment-order-detail-page',
   standalone: true,
   imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton],
   template: `

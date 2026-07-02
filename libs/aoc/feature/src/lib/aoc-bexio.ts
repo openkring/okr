@@ -14,7 +14,7 @@ export const CONTACT_FILTERS = ['Alle', 'Nur Personen', 'Nur Mitglieder', 'Nur O
 import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
 @Component({
-  selector: 'bk-aoc-bexio',
+  selector: 'okr-aoc-bexio',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -30,7 +30,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
     .bexio-only ion-item { --background: transparent; --color: var(--ion-color-danger-contrast); }
   `],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.title() }" />
+    <okr-header [i18n]="{ title: store.i18n.title() }" />
     <ion-content>
       <ion-card>
         <ion-card-header>
@@ -279,7 +279,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-string-select [i18n]="contactFilterI18n()" [selectedString]="contactFilter()" (selectedStringChange)="contactFilter.set($event)" [stringList]="contactFilters" [readOnly]="false" />
+                <okr-string-select [i18n]="contactFilterI18n()" [selectedString]="contactFilter()" (selectedStringChange)="contactFilter.set($event)" [stringList]="contactFilters" [readOnly]="false" />
               </ion-col>
             </ion-row>
             @if(filteredIndex().length > 0) {
@@ -298,7 +298,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 <ion-row style="cursor: pointer" (click)="edit(item)">
                   <ion-col size="5" [class.bexio-only]="!item.okey">
                     @if(item.okey) {
-                      <bk-avatar-label
+                      <okr-avatar-label
                         [key]="avatarKey(item)"
                         [label]="displayName(item)"
                         [color]="avatarColor(item)"

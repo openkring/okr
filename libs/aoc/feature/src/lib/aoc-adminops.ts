@@ -7,7 +7,7 @@ import { Button, Header, ResultLog, StringSelect, StringSelectI18n } from '@okr/
 import { AocAdminOpsStore } from './aoc-adminops.store';
 
 @Component({
-  selector: 'bk-aoc-adminops',
+  selector: 'okr-aoc-adminops',
   standalone: true,
   imports: [
     Header, Button, ResultLog, StringSelect,
@@ -16,7 +16,7 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
   ],
   providers: [AocAdminOpsStore],
   template: `
-    <bk-header [i18n]="{ title: adminOpsTitle() }" />
+    <okr-header [i18n]="{ title: adminOpsTitle() }" />
     <ion-content>
       <!-- Debug Card -->
       <ion-card>
@@ -47,14 +47,14 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
             <ion-row>
               <ion-col size="6">{{ store.i18n.adminops_iban_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ store.i18n.adminops_iban_button() }}" iconName="checkbox-circle" (click)="listIban()" />
+                <okr-button label=" {{ store.i18n.adminops_iban_button() }}" iconName="checkbox-circle" (click)="listIban()" />
               </ion-col>
             </ion-row>
             <!-- Old Juniors -->
             <ion-row>
               <ion-col size="6">{{ store.i18n.adminops_oldJuniors_label() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ store.i18n.adminops_oldJuniors_button() }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
+                <okr-button label=" {{ store.i18n.adminops_oldJuniors_button() }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -62,15 +62,15 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-string-select [i18n]="clubI18n()" [selectedString]="club()" (selectedStringChange)="onFieldChange('club', $event)" [readOnly]="false" [stringList]="['scs', 'srv']" />
+                <okr-string-select [i18n]="clubI18n()" [selectedString]="club()" (selectedStringChange)="onFieldChange('club', $event)" [readOnly]="false" [stringList]="['scs', 'srv']" />
               </ion-col>
               <ion-col size="6">      
-                <bk-string-select [i18n]="yearI18n()" [selectedString]="year()" (selectedStringChange)="onFieldChange('year', $event)" [readOnly]="false" [stringList]="['2026', '2025', '2024', '2023', '2022', '2021']" />           
+                <okr-string-select [i18n]="yearI18n()" [selectedString]="year()" (selectedStringChange)="onFieldChange('year', $event)" [readOnly]="false" [stringList]="['2026', '2025', '2024', '2023', '2022', '2021']" />           
               </ion-col>
               <ion-col size="6">
               </ion-col>
               <ion-col size="6">
-                <bk-button [label]="store.i18n.adminops_mcatchange_button()" iconName="checkbox-circle" (click)="showMembershipCategoryChanges()" />
+                <okr-button [label]="store.i18n.adminops_mcatchange_button()" iconName="checkbox-circle" (click)="showMembershipCategoryChanges()" />
               </ion-col>
             </ion-row>
             <!-- Find orphaned sections -->
@@ -78,7 +78,7 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
         </ion-card-content>
       </ion-card>
 
-      <bk-result-log [cardTitle]="store.i18n.result_title()" [title]="logTitle()" [log]="logInfo()" />
+      <okr-result-log [cardTitle]="store.i18n.result_title()" [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
   `,
 })

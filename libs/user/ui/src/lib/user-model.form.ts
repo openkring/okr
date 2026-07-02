@@ -8,7 +8,7 @@ import { coerceBoolean, hasRole } from "@okr/shared-util-core";
 import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations } from "@okr/user-util";
 
 @Component({
-  selector: 'bk-user-model-form',
+  selector: 'okr-user-model-form',
   standalone: true,
   imports: [
     EmailInput, NotesInput, TextInput,
@@ -26,32 +26,32 @@ import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [readOnly]="true" [copyable]=true />
+                <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [readOnly]="true" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="personKeyI18n()" [value]="personKey()" (valueChange)="onFieldChange('personKey', $event)" [readOnly]="isReadOnly()" [copyable]=true />
+                <okr-text-input [i18n]="personKeyI18n()" [value]="personKey()" (valueChange)="onFieldChange('personKey', $event)" [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" [copyable]=true [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="firstNameI18n()" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" [copyable]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" [copyable]=true [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="lastNameI18n()" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" [copyable]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email [i18n]="loginEmailI18n()" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [readOnly]="isReadOnly()" />
+                <okr-email [i18n]="loginEmailI18n()" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [readOnly]="isReadOnly()" />
+                <okr-email [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="tenantsI18n()" [value]="tenants()" (valueChange)="onFieldChange('tenants', $event)" [readOnly]="isReadOnly()" [copyable]=true />
+                <okr-text-input [i18n]="tenantsI18n()" [value]="tenants()" (valueChange)="onFieldChange('tenants', $event)" [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
       @if(hasRole('admin')) {
-        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   `

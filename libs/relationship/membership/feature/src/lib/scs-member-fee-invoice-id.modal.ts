@@ -6,7 +6,7 @@ import { ScsMemberFeesModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 
 @Component({
-  selector: 'bk-scs-member-fee-invoice-id-modal',
+  selector: 'okr-scs-member-fee-invoice-id-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -15,7 +15,7 @@ import { Header } from '@okr/shared-ui';
     IonContent, IonFooter, IonToolbar, IonButtons, IonButton, IonItem, IonInput,
   ],
   template: `
-    <bk-header [i18n]="{ title: '@finance.scsMemberFee.operation.download.enterInvoiceId' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: '@finance.scsMemberFee.operation.download.enterInvoiceId' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item lines="none">
         <ion-input

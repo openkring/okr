@@ -2,7 +2,7 @@
   "name": "trip-util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/geo/trip/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:trip", "platform:mobile", "platform:web"],
   "targets": {

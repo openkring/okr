@@ -8,7 +8,7 @@ import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
 @Component({
-  selector: 'bk-category-list-form',
+  selector: 'okr-category-list-form',
   standalone: true,
   imports: [
     Chips, NotesInput, TextInput, ErrorNote, CategoryItems, Checkbox,
@@ -25,39 +25,39 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               }
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="nameErrors()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="i18nBaseI18n()" [value]="i18nBase()" (valueChange)="onFieldChange('i18nBase', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="i18nBaseErrors()" />
+                <okr-text-input [i18n]="i18nBaseI18n()" [value]="i18nBase()" (valueChange)="onFieldChange('i18nBase', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="i18nBaseErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="translateItemsI18n()" [checked]="translateItems()" (checkedChange)="onFieldChange('translateItems', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="translateItemsI18n()" [checked]="translateItems()" (checkedChange)="onFieldChange('translateItems', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
 
-      <bk-category-items
+      <okr-category-items
         [items]="items()"
         [hasAbbreviation]="hasAbbreviation()"
         (changed)="onFieldChange('items', $event)"
       />
 
       @if(hasRole('privileged')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
       @if(hasRole('admin')) {
-        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }

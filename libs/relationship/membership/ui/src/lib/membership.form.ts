@@ -12,7 +12,7 @@ import { MembershipI18n, membershipValidations } from '@okr/relationship-members
 import { AvatarPipe } from '@okr/avatar-ui';
 
 @Component({
-  selector: 'bk-membership-form',
+  selector: 'okr-membership-form',
   standalone: true,
   imports: [
     AvatarPipe,
@@ -69,10 +69,10 @@ import { AvatarPipe } from '@okr/avatar-ui';
                   </ion-row>
                   <ion-row>
                     <ion-col size="12">
-                      <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
+                      <okr-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12">
-                      <bk-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                      <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -82,18 +82,18 @@ import { AvatarPipe } from '@okr/avatar-ui';
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12" size-md="6">
-                      <bk-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
+                      <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
                     </ion-col>
 
                     @if(dateOfExit() && dateOfExit().length > 0 && dateOfExit() !== endFutureDate) {
                       <ion-col size="12" size-md="6">
-                        <bk-date-input [i18n]="dateOfExitI18n()" [storeDate]="dateOfExit()" (storeDateChange)="onFieldChange('dateOfExit', $event)" [readOnly]="isReadOnly()" />
+                        <okr-date-input [i18n]="dateOfExitI18n()" [storeDate]="dateOfExit()" (storeDateChange)="onFieldChange('dateOfExit', $event)" [readOnly]="isReadOnly()" />
                       </ion-col>
                     }
                   </ion-row>
@@ -118,10 +118,10 @@ import { AvatarPipe } from '@okr/avatar-ui';
                     </ion-col>
 
                     <ion-col size="12" size-md="6">
-                      <bk-number-input [i18n]="rebateI18n()" [value]="rebate()" (valueChange)="onFieldChange('rebate', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
+                      <okr-number-input [i18n]="rebateI18n()" [value]="rebate()" (valueChange)="onFieldChange('rebate', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-string-select [i18n]="rebateReasonI18n()" [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" />
+                      <okr-string-select [i18n]="rebateReasonI18n()" [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -131,24 +131,24 @@ import { AvatarPipe } from '@okr/avatar-ui';
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="memberIdI18n()" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="memberIdI18n()" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="memberBexioIdI18n()" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]=6 [mask]="bexioMask" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="memberBexioIdI18n()" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]=6 [mask]="bexioMask" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="memberAbbreviationI18n()" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="memberAbbreviationI18n()" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   @if(hasRole('memberAdmin')) {
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="memberNickNameI18n()" [value]="memberNickName()" (valueChange)="onFieldChange('memberNickName', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="memberNickNameI18n()" [value]="memberNickName()" (valueChange)="onFieldChange('memberNickName', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="orgFunctionI18n()" [value]="orgFunction()" (valueChange)="onFieldChange('orgFunction', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="orgFunctionI18n()" [value]="orgFunction()" (valueChange)="onFieldChange('orgFunction', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
                   </ion-col>
                   }
                 </ion-row>
@@ -157,11 +157,11 @@ import { AvatarPipe } from '@okr/avatar-ui';
           </ion-card>
 
           @if(areTagsVisible()) {
-            <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+            <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
           }
 
           @if(hasRole('admin')) {
-            <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
           }
         </form>
       }

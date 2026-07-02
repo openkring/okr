@@ -5,7 +5,7 @@ import { IonButton, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonList,
 import { AssetStore } from './asset.store';
 
 @Component({
-  selector: 'bk-depreciation-run-page',
+  selector: 'okr-depreciation-run-page',
   standalone: true,
   imports: [
     FormsModule, 

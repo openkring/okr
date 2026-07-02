@@ -11,7 +11,7 @@ interface TripStatsConfigI18n {
 }
 
 @Component({
-  selector: 'bk-trip-stats-config',
+  selector: 'okr-trip-stats-config',
   standalone: true,
   imports: [
     StringSelect,
@@ -27,7 +27,7 @@ interface TripStatsConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-string-select
+              <okr-string-select
                 [i18n]="viewTypeI18n()"
                 [selectedString]="viewType()"
                 (selectedStringChange)="onViewTypeChange($event)"
@@ -36,7 +36,7 @@ interface TripStatsConfigI18n {
               />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-string-select
+              <okr-string-select
                 [i18n]="contentTypeI18n()"
                 [selectedString]="contentType()"
                 (selectedStringChange)="onContentTypeChange($event)"

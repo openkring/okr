@@ -9,20 +9,20 @@ import { I18nService } from '@okr/shared-i18n';
 import { ORG_I18N_KEYS, ORG_NEW_FORM_SHAPE, OrgI18n, OrgNewFormModel } from '@okr/subject-org-util';
 
 @Component({
-  selector: 'bk-org-new-modal',
+  selector: 'okr-org-new-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, OrgNewForm,
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: '@subject.org.operation.create.label' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: '@subject.org.operation.create.label' }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
-        <bk-org-new-form
+        <okr-org-new-form
           [formData]="formData()"
           (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n"

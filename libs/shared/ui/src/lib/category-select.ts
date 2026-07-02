@@ -22,10 +22,10 @@ let id = 0;
  * 
  * Usage example:
  *  typically, the CategoryListModel is first read from the database. -> cat
- *  <bk-cat-select selectedItemName="all" [category]="cat" [withAll]="true" (changed)="onChange($event)" />
+ *  <okr-cat-select selectedItemName="all" [category]="cat" [withAll]="true" (changed)="onChange($event)" />
  */
 @Component({
-  selector: 'bk-cat-select',
+  selector: 'okr-cat-select',
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe,

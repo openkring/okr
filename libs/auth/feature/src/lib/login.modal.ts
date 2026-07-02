@@ -10,7 +10,7 @@ import { LoginForm } from '@okr/auth-ui';
 import { AuthStore } from './auth.store';
 
 @Component({
-  selector: 'bk-login-modal',
+  selector: 'okr-login-modal',
   standalone: true,
   providers: [AuthStore],
   imports: [
@@ -18,9 +18,9 @@ import { AuthStore } from './auth.store';
     IonContent, IonButton, IonItem
   ],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.title() }" [isModal]="true" />
     <ion-content>
-      <bk-login-form context="login"
+      <okr-login-form context="login"
         [(vm)]="currentCredentials" (validChange)="formIsValid = $event"
         [i18n]="store.i18n"
       />

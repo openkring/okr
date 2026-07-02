@@ -6,7 +6,7 @@ import { BkModel } from './base.model';
 export type ExchangeRateSource = 'snb' | 'manual';
 export type ExchangeRateType = 'daily' | 'monthly_avg' | 'yearly_avg';
 
-// Exchange rates are shared across all accounting tenants within a bk-tenant.
+// Exchange rates are shared across all accounting tenants within a okr-tenant.
 // toCurrency is always the functional currency of the tenant (typically 'CHF').
 // SNB rates are written by the fetchSnbRates Cloud Function; manual entries override for a specific date.
 export class ExchangeRateModel implements BkModel {

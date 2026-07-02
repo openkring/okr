@@ -2,7 +2,7 @@
   "name": "relationship-reservation-feature",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/reservation/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:reservation", "platform:mobile", "platform:web"],
   "targets": {

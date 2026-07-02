@@ -20,7 +20,7 @@ export interface PasswordInputI18n {
 }
 
 @Component({
-  selector: 'bk-password-input',
+  selector: 'okr-password-input',
   standalone: true,
   imports: [
     FormsModule,
@@ -51,7 +51,7 @@ export interface PasswordInputI18n {
           <ion-input-password-toggle slot="end" tabindex="-1"></ion-input-password-toggle>
         </ion-input>
         @if (isCopyable()) {
-          <bk-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
+          <okr-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
         }
       }
     </ion-item>

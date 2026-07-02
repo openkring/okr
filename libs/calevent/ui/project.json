@@ -2,7 +2,7 @@
   "name": "calevent-ui",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/calevent/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:calevent", "platform:mobile", "platform:web"],
   "targets": {

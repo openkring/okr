@@ -9,7 +9,7 @@ import { TranslatePipe } from '@okr/shared-i18n';
 import { ChipSelectModal } from './chip-select.modal';
 
 @Component({
-  selector: 'bk-single-tag',
+  selector: 'okr-single-tag',
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,

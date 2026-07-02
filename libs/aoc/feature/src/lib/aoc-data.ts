@@ -10,7 +10,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AocDataStore, FavMismatch } from './aoc-data.store';
 
 @Component({
-  selector: 'bk-aoc-data',
+  selector: 'okr-aoc-data',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -20,7 +20,7 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
   ],
   providers: [AocDataStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.title() }" />
+    <okr-header [i18n]="{ title: store.i18n.title() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>
@@ -41,7 +41,7 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
             <ion-row>
               <ion-col>{{ store.i18n.data_fix_content() }}</ion-col>
               <ion-col>
-                <bk-button label=" {{ store.i18n.data_fix_button() }}" iconName="warning" (click)="fixModels()" />
+                <okr-button label=" {{ store.i18n.data_fix_button() }}" iconName="warning" (click)="fixModels()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -60,11 +60,11 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
             <ion-row>
               <ion-col>
                 <ion-item lines="none">
-                  <bk-cat-select [category]="types()!" [selectedItemName]="modelType()" (selectedItemNameChange)="store.setModelType($event)" [withAll]="false" [readOnly]="readOnly()" />
+                  <okr-cat-select [category]="types()!" [selectedItemName]="modelType()" (selectedItemNameChange)="store.setModelType($event)" [withAll]="false" [readOnly]="readOnly()" />
                 </ion-item>
               </ion-col>
               <ion-col>
-                <bk-button label=" {{ store.i18n.data_validate_button() }}" iconName="info-circle" (click)="validateModels()" />
+                <okr-button label=" {{ store.i18n.data_validate_button() }}" iconName="info-circle" (click)="validateModels()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -83,17 +83,17 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
             <ion-row>
               <ion-col>
                 <ion-item lines="none">
-                  <bk-cat-select [category]="types()!" [selectedItemName]="modelType()" (selectedItemNameChange)="store.setModelType($event)" [withAll]="false" [readOnly]="readOnly()" />
+                  <okr-cat-select [category]="types()!" [selectedItemName]="modelType()" (selectedItemNameChange)="store.setModelType($event)" [withAll]="false" [readOnly]="readOnly()" />
                 </ion-item>
               </ion-col>
               <ion-col>
-                <bk-button label=" {{ store.i18n.data_index_button() }}" iconName="warning" (click)="createIndexesOnCollection()" />
+                <okr-button label=" {{ store.i18n.data_index_button() }}" iconName="warning" (click)="createIndexesOnCollection()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-result-log [title]="logTitle()"  cardTitle="Resultat" [log]="logInfo()" />
+      <okr-result-log [title]="logTitle()"  cardTitle="Resultat" [log]="logInfo()" />
 
       <ion-card>
         <ion-card-header>
@@ -104,7 +104,7 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
             <ion-row>
               <ion-col>{{ store.i18n.data_fav_description() }}</ion-col>
               <ion-col>
-                <bk-button 
+                <okr-button 
                   [label]="favMismatches().length > 0 ? store.i18n.data_fav_hide() : store.i18n.data_fav_validate()"
                   iconName="info-circle" 
                   [disabled]="isLoading()"

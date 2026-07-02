@@ -18,7 +18,7 @@ interface IconConfigI18n {
 }
 
 @Component({
-  selector: 'bk-icon-config',
+  selector: 'okr-icon-config',
   standalone: true,
   imports: [
     TextInput, NumberInput, StringSelect,
@@ -36,13 +36,13 @@ interface IconConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12"> <!-- todo: icon selector -->
-              <bk-text-input [i18n]="iconNameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="iconNameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-number-input [i18n]="iconSizeI18n()" [value]="size()" (valueChange)="onFieldChange('size', $event)" [readOnly]="readOnly()" />
+              <okr-number-input [i18n]="iconSizeI18n()" [value]="size()" (valueChange)="onFieldChange('size', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-string-select [i18n]="iconSlotI18n()" [selectedString]="slot()" (selectedStringChange)="onFieldChange('slot', $event)" [readOnly]="readOnly()" [stringList]="['start', 'end', 'icon-only']" />
+              <okr-string-select [i18n]="iconSlotI18n()" [selectedString]="slot()" (selectedStringChange)="onFieldChange('slot', $event)" [readOnly]="readOnly()" [stringList]="['start', 'end', 'icon-only']" />
             </ion-col>
           </ion-row>
         </ion-grid>

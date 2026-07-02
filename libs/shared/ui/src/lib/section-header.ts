@@ -5,7 +5,7 @@ import { IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular/standalo
  * A section header consist of a toolbar with a title followed by a description text.
  */
 @Component({
-  selector: 'bk-section-header',
+  selector: 'okr-section-header',
   standalone: true,
   imports: [
     IonToolbar, IonTitle, IonItem, IonLabel

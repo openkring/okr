@@ -9,7 +9,7 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
  * Premium / startup-brand feeling.
  */
 @Component({
-  selector: 'bk-blog-bento',
+  selector: 'okr-blog-bento',
   standalone: true,
   imports: [
     SectionDispatcher
@@ -42,10 +42,10 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
         <div class="bento-item" [id]="section.okey" [class.featured]="i === 0" (click)="sectionClick.emit(section.okey)">
           @if (editMode()) {
             <div class="section-wrapper editable">
-              <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+              <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
             </div>
           } @else {
-            <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+            <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
           }
         </div>
       }

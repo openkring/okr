@@ -21,7 +21,7 @@ export interface MapMarker extends GeoCoordinates {
 const SWISSTOPO_TILES = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
 const FIT_PADDING: [number, number] = [40, 40];
 const MAX_FIT_ZOOM = 16;
-const PIN_STYLE_ID = 'bk-map-view-pin-styles';
+const PIN_STYLE_ID = 'okr-map-view-pin-styles';
 
 const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 function escapeHtml(value: string): string {
@@ -29,24 +29,24 @@ function escapeHtml(value: string): string {
 }
 
 @Component({
-  selector: 'bk-map-view-modal',
+  selector: 'okr-map-view-modal',
   standalone: true,
   styles: [`
     .map-wrap { position: relative; width: 100%; height: 100%; }
-    #bk-map-view-map { width: 100%; height: 100%; }
-    bk-map-marker-detail { position: absolute; inset: 0; z-index: 1000; }
+    #okr-map-view-map { width: 100%; height: 100%; }
+    okr-map-marker-detail { position: absolute; inset: 0; z-index: 1000; }
   `],
   imports: [
     Header, MapMarkerDetail,
     IonContent
   ],
   template: `
-      <bk-header [i18n]="{ title: title() }" [isModal]="true" />
+      <okr-header [i18n]="{ title: title() }" [isModal]="true" />
       <ion-content [scrollY]="false">
         <div class="map-wrap">
-          <div id="bk-map-view-map"></div>
+          <div id="okr-map-view-map"></div>
           @if (selectedMarker(); as marker) {
-            <bk-map-marker-detail [marker]="marker" [i18n]="detailLabels()" (closed)="closeDetail()" />
+            <okr-map-marker-detail [marker]="marker" [i18n]="detailLabels()" (closed)="closeDetail()" />
           }
         </div>
       </ion-content>
@@ -82,7 +82,7 @@ export class MapViewModal implements AfterViewInit, OnDestroy {
 
   private async initMap(): Promise<void> {
     const L = this.leaflet ??= await import('leaflet');
-    const _container = this.el.nativeElement.querySelector('#bk-map-view-map') as HTMLElement | null;
+    const _container = this.el.nativeElement.querySelector('#okr-map-view-map') as HTMLElement | null;
     if (!_container) return;
 
     this.injectPinStyles();
@@ -104,8 +104,8 @@ export class MapViewModal implements AfterViewInit, OnDestroy {
     for (const _marker of _all) {
       const _label = escapeHtml(_marker.title ?? this.title());
       const _icon = L.divIcon({
-        className: 'bk-pin-icon',
-        html: `<div class="bk-pin"><div class="bk-pin-marker"></div><div class="bk-pin-label">${_label}</div></div>`,
+        className: 'okr-pin-icon',
+        html: `<div class="okr-pin"><div class="okr-pin-marker"></div><div class="okr-pin-label">${_label}</div></div>`,
         iconSize: [140, 52],
         iconAnchor: [70, 24], // pin tip (centre-x, ~bottom of the 24px marker) sits on the coordinate
       });
@@ -140,10 +140,10 @@ export class MapViewModal implements AfterViewInit, OnDestroy {
     const _style = document.createElement('style');
     _style.id = PIN_STYLE_ID;
     _style.textContent = [
-      '.bk-pin { display: flex; flex-direction: column; align-items: center; }',
-      '.bk-pin-marker { position: relative; width: 22px; height: 22px; background: var(--ion-color-primary, #3880ff); border: 2.5px solid #fff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 6px rgba(0,0,0,0.45); }',
-      '.bk-pin-marker::after { content: ""; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); }',
-      '.bk-pin-label { margin-top: 5px; font-size: 12px; font-weight: 600; color: #222; white-space: nowrap; text-align: center; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }',
+      '.okr-pin { display: flex; flex-direction: column; align-items: center; }',
+      '.okr-pin-marker { position: relative; width: 22px; height: 22px; background: var(--ion-color-primary, #3880ff); border: 2.5px solid #fff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 6px rgba(0,0,0,0.45); }',
+      '.okr-pin-marker::after { content: ""; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); }',
+      '.okr-pin-label { margin-top: 5px; font-size: 12px; font-weight: 600; color: #222; white-space: nowrap; text-align: center; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }',
     ].join('\n');
     document.head.appendChild(_style);
   }

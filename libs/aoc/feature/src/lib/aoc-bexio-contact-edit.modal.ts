@@ -12,7 +12,7 @@ import { getFullName } from "@okr/shared-util-core";
 type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
 
 @Component({
-  selector: 'bk-aoc-bexio-contact-edit-modal',
+  selector: 'okr-aoc-bexio-contact-edit-modal',
   standalone: true,
   imports: [
     Header, Spinner,
@@ -25,7 +25,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
     .sync-row { margin-top: 1rem; }
   `],
   template: `
-    <bk-header [i18n]="{ title: i18n.title()}" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.title()}" [isModal]="true" />
     <ion-content class="ion-no-padding">
       @if(bexioIndex(); as bx) {
       <ion-grid>
@@ -140,7 +140,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
         }
       </ion-grid>
       } @else {
-        <bk-spinner />
+        <okr-spinner />
       }
     </ion-content>
   `

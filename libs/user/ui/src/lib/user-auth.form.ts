@@ -8,7 +8,7 @@ import { coerceBoolean, getCategoryItemNames } from "@okr/shared-util-core";
 import { flattenRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } from "@okr/user-util";
 
 @Component({
-  selector: 'bk-user-auth-form',
+  selector: 'okr-user-auth-form',
   standalone: true,
   imports: [
     Checkbox, Chips,
@@ -28,10 +28,10 @@ import { flattenRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } fr
             <ion-grid>
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox [i18n]="useTouchIdI18n()" [checked]="useTouchId()" (checkedChange)="onFieldChange('useTouchId', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-checkbox [i18n]="useTouchIdI18n()" [checked]="useTouchId()" (checkedChange)="onFieldChange('useTouchId', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox [i18n]="useFaceIdI18n()" [checked]="useFaceId()" (checkedChange)="onFieldChange('useFaceId', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-checkbox [i18n]="useFaceIdI18n()" [checked]="useFaceId()" (checkedChange)="onFieldChange('useFaceId', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -39,7 +39,7 @@ import { flattenRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } fr
             </ion-grid>
           </ion-card-content>
         </ion-card>
-        <bk-chips chipName="role" [storedChips]="roles()" (storedChipsChange)="onFieldChange('roles', $event)" [allChips]="allRoleNames()" [readOnly]="isReadOnly()" />
+        <okr-chips chipName="role" [storedChips]="roles()" (storedChipsChange)="onFieldChange('roles', $event)" [allChips]="allRoleNames()" [readOnly]="isReadOnly()" />
       </form>
     }
   `

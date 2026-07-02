@@ -10,7 +10,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-u
 import { DocumentStore } from './document.store';
 
 @Component({
-  selector: 'bk-documents-accordion',
+  selector: 'okr-documents-accordion',
   standalone: true,
   imports: [
     FileLogoPipe, PrettyDatePipe, FileSizePipe, SvgIconPipe, FileNamePipe,
@@ -35,7 +35,7 @@ import { DocumentStore } from './document.store';
     <div slot="content">
       @if((documents()); as documents) {
         @if(documents.length === 0) {
-          <bk-empty-list [message]="store.i18n.empty()" />
+          <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="none">
             @for(document of documents; track document.okey) {
@@ -50,7 +50,7 @@ import { DocumentStore } from './document.store';
           </ion-list>
         }
       } @else {
-        <bk-spinner />
+        <okr-spinner />
       }
     </div>
   </ion-accordion>

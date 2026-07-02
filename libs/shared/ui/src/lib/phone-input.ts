@@ -20,7 +20,7 @@ export interface PhoneInputI18n {
 }
 
 @Component({
-  selector: 'bk-phone',
+  selector: 'okr-phone',
   standalone: true,
   imports: [
     FormsModule, MaskitoDirective,
@@ -48,7 +48,7 @@ export interface PhoneInputI18n {
       [maskitoElement]="maskPredicate"
     />
     @if (isCopyable()) {
-      <bk-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
+      <okr-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
     }
   </ion-item>
   @if(i18n().helper) {

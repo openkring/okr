@@ -6,7 +6,7 @@ import { ModalController, IonButton, IonButtons, IonContent, IonHeader,
 import { PaymentOrderModel, UserModel } from '@okr/shared-models';
 
 @Component({
-  selector: 'bk-payment-order-edit-modal',
+  selector: 'okr-payment-order-edit-modal',
   standalone: true,
   imports: [FormsModule, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption],
   template: `

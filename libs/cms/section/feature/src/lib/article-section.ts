@@ -7,7 +7,7 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { ArticleStore } from './article-section.store';
 
 @Component({
-  selector: 'bk-article-section',
+  selector: 'okr-article-section',
   standalone: true,
   imports: [
     Spinner, Img, OptionalCardHeader,
@@ -75,7 +75,7 @@ import { ArticleStore } from './article-section.store';
   template: `
     @if(section()) {
       <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (images().length > 0 || (content() && content()!.length > 7)) {
             @switch(position()) {
@@ -84,7 +84,7 @@ import { ArticleStore } from './article-section.store';
                   <ion-row>
                     @if(image(); as image) {
                       <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" />
+                        <okr-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" />
                       </ion-col>
                     }
                     <ion-col size="12" [sizeMd]="colSizeText()">
@@ -105,7 +105,7 @@ import { ArticleStore } from './article-section.store';
                     </ion-col>
                     @if(image(); as image) {
                       <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <okr-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
                       </ion-col>
                     }
                   </ion-row>
@@ -120,7 +120,7 @@ import { ArticleStore } from './article-section.store';
                           <div class="carousel">
                             @for(img of images(); track img.url) {
                               <div class="carousel-slide">
-                                <bk-img [image]="img" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                                <okr-img [image]="img" [imageStyle]="imageStyle()" [editMode]="editMode()" />
                               </div>
                             }
                           </div>
@@ -130,7 +130,7 @@ import { ArticleStore } from './article-section.store';
                   } @else if(image(); as image) {
                     <ion-row>
                       <ion-col size="12">
-                        <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <okr-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
                       </ion-col>
                     </ion-row>
                   }
@@ -163,7 +163,7 @@ import { ArticleStore } from './article-section.store';
                   @if(image(); as image) {
                     <ion-row>
                       <ion-col size="12">
-                        <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <okr-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
                       </ion-col>
                     </ion-row>
                   }
@@ -179,7 +179,7 @@ import { ArticleStore } from './article-section.store';
         </ion-card-content>
       </ion-card>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

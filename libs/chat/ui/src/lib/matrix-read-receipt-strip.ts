@@ -5,7 +5,7 @@ import { MatrixReadReceipt } from '@okr/shared-models';
 import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime } from '@okr/chat-util';
 
 @Component({
-  selector: 'bk-matrix-read-receipt-strip',
+  selector: 'okr-matrix-read-receipt-strip',
   standalone: true,
   imports: [IonPopover, IonList, IonItem, IonLabel, IonAvatar],
   host: {

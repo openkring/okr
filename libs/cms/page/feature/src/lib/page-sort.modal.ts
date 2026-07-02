@@ -11,7 +11,7 @@ import { PageStore } from './page.store';
  * Modal to sort the sections of a page.
  */
 @Component({
-  selector: 'bk-page-sort-modal',
+  selector: 'okr-page-sort-modal',
   standalone: true,
   imports: [ 
     Spinner, Header,
@@ -19,7 +19,7 @@ import { PageStore } from './page.store';
   ],
   providers: [PageStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.sort_label() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
+    <okr-header [i18n]="{ title: store.i18n.sort_label() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
     <ion-content>
       @if (sections(); as sections) {
         <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -32,7 +32,7 @@ import { PageStore } from './page.store';
           }
         </ion-reorder-group>
       } @else {
-        <bk-spinner />
+        <okr-spinner />
       }
     </ion-content>
   `

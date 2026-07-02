@@ -12,7 +12,7 @@ const INVOICE_STATES = ['draft', 'pending', 'paid', 'cancelled'];
 const VAT_TYPES = ['included', 'excluded', 'exempt'];
 
 @Component({
-  selector: 'bk-invoice-edit-form',
+  selector: 'okr-invoice-edit-form',
   standalone: true,
   imports: [
     TextInput, DateInput, NumberInput,
@@ -29,50 +29,50 @@ const VAT_TYPES = ['included', 'excluded', 'exempt'];
             <ion-grid>
               <ion-row>
                 <ion-col size="4">
-                  <bk-text-input [i18n]="invoiceIdI18n()" [value]="invoiceId()" (valueChange)="onFieldChange('invoiceId', $event)"
+                  <okr-text-input [i18n]="invoiceIdI18n()" [value]="invoiceId()" (valueChange)="onFieldChange('invoiceId', $event)"
                     [maxLength]="30" [readOnly]="isReadOnly() || !isNew()" />
                 </ion-col>
                 <ion-col size="8">
-                  <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
+                  <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
                     [maxLength]="100" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
-                  <bk-date-input [i18n]="invoiceDateI18n()" [storeDate]="invoiceDate()" (storeDateChange)="onFieldChange('invoiceDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="invoiceDateI18n()" [storeDate]="invoiceDate()" (storeDateChange)="onFieldChange('invoiceDate', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="6">
-                  <bk-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
-                  <bk-number-input [i18n]="amountI18n()" [value]="amountInCHF()" (valueChange)="onAmountChange($event)"
+                  <okr-number-input [i18n]="amountI18n()" [value]="amountInCHF()" (valueChange)="onAmountChange($event)"
                     [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="6">
-                  <bk-string-select [i18n]="vatTypeI18n()" [stringList]="vatTypes" [selectedString]="vatType()"
+                  <okr-string-select [i18n]="vatTypeI18n()" [stringList]="vatTypes" [selectedString]="vatType()"
                     (selectedStringChange)="onFieldChange('vatType', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6">
-                  <bk-string-select [i18n]="stateI18n()" [stringList]="states" [selectedString]="state()"
+                  <okr-string-select [i18n]="stateI18n()" [stringList]="states" [selectedString]="state()"
                     (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="6">
-                  <bk-date-input [i18n]="paymentDateI18n()" [storeDate]="paymentDate()" (storeDateChange)="onFieldChange('paymentDate', $event)" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="paymentDateI18n()" [storeDate]="paymentDate()" (storeDateChange)="onFieldChange('paymentDate', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)"
+                  <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)"
                     [allChips]="allTags()" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+                  <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>

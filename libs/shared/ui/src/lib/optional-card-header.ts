@@ -2,7 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { IonBadge, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular/standalone';
 
 @Component({
-  selector: 'bk-optional-card-header',
+  selector: 'okr-optional-card-header',
   standalone: true,
   imports: [
     IonCardHeader, IonCardTitle, IonCardSubtitle, IonBadge

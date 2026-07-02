@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AssetStore } from './asset.store';
 
 @Component({
-  selector: 'bk-asset-list',
+  selector: 'okr-asset-list',
   standalone: true,
   imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, SvgIconPipe],
   providers: [AssetStore],

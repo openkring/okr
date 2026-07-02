@@ -9,7 +9,7 @@ import { SectionStore } from './section.store';
  * Modal to sort the sections of a page.
  */
 @Component({
-  selector: 'bk-section-select',
+  selector: 'okr-section-select',
   standalone: true,
   imports: [ 
     Spinner, Header,
@@ -17,7 +17,7 @@ import { SectionStore } from './section.store';
   ],
   providers: [SectionStore],
   template: `
-    <bk-header
+    <okr-header
       [searchTerm]="searchTerm()"
       (searchTermChange)="store.setSelSearchTerm($event)"
       [isSearchable]="true"
@@ -26,7 +26,7 @@ import { SectionStore } from './section.store';
     />
     <ion-content>
       @if (isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @for (section of filteredSections(); track section.okey) {
           <ion-list>

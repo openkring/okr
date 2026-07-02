@@ -9,7 +9,7 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
 
 @Component({
-  selector: 'bk-menu-item-form',
+  selector: 'okr-menu-item-form',
   standalone: true,
   imports: [
     TextInput, UrlInput, CategorySelect, Chips, NotesInput, StringList, ErrorNote,
@@ -26,32 +26,32 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" [showHelper]=true />
-                <bk-error-note [errors]="nameErrors()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="types()!" [selectedItemName]="menuAction()" (selectedItemNameChange)="onFieldChange('action', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                <okr-cat-select [category]="types()!" [selectedItemName]="menuAction()" (selectedItemNameChange)="onFieldChange('action', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
 
             @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call') {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-icon-input [i18n]="iconI18n()" [icon]="icon()" (iconChange)="onFieldChange('icon', $event)" (selectClicked)="iconSelectClicked.emit()" [readOnly]="isReadOnly()" />
+                  <okr-icon-input [i18n]="iconI18n()" [icon]="icon()" (iconChange)="onFieldChange('icon', $event)" (selectClicked)="iconSelectClicked.emit()" [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="labelErrors()" />
+                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
 
                 <ion-col size="12">
-                  <bk-url [i18n]="urlI18n()"
+                  <okr-url [i18n]="urlI18n()"
                     [value]="url()" (valueChange)="onFieldChange('url', $event)"
                     [readOnly]="isReadOnly()"
                   />
-                  <bk-error-note [errors]="urlErrors()" />
+                  <okr-error-note [errors]="urlErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -59,8 +59,8 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
             @if(menuAction() === 'sub') {
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="labelErrors()" />
+                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
               </ion-row>
             }
@@ -68,7 +68,7 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
             @if(menuAction() !== 'main') {
               <ion-row>
                 <ion-col size="12">
-                  <bk-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                  <okr-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
@@ -79,12 +79,12 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
 <!--
       currently not needed
       @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call') {
-        <bk-property-list [properties]="data()" (propertiesChange)="onFieldChange('data', $event)" />
+        <okr-property-list [properties]="data()" (propertiesChange)="onFieldChange('data', $event)" />
       } -->
 
       <!-- sub-/context-menus -->
       @if(menuAction() === 'main' || menuAction() === 'context' || menuAction() === 'sub') {
-        <bk-strings
+        <okr-strings
           [strings]="menuItems()" (stringsChange)="onFieldChange('menuItems', $event)"
           [title]="i18n().submenus()"
           [add]="i18n().add_submenu()"
@@ -93,11 +93,11 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
       }
 
       @if(hasRole('contentAdmin')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
       @if(hasRole('contentAdmin')) {
-        <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }

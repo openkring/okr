@@ -9,7 +9,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmailComposerModal } from './email-composer.modal';
 
 @Component({
-  selector: 'bk-pdf-preview-modal',
+  selector: 'okr-pdf-preview-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [

@@ -6,7 +6,7 @@ import { AssetCategoryModel, AssetModel, UserModel } from '@okr/shared-models';
 import { AssetStore } from './asset.store';
 
 @Component({
-  selector: 'bk-asset-edit-modal',
+  selector: 'okr-asset-edit-modal',
   standalone: true,
   imports: [FormsModule, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption],
   providers: [AssetStore],

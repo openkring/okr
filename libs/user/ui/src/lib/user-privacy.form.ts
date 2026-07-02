@@ -9,7 +9,7 @@ import { coerceBoolean } from "@okr/shared-util-core";
 import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFormValidations } from "@okr/user-util";
 
 @Component({
-  selector: 'bk-user-privacy-form',
+  selector: 'okr-user-privacy-form',
   standalone: true,
   imports: [
     CategoryOld, Checkbox,
@@ -28,22 +28,22 @@ import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFor
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usagePostalAddressI18n()" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-category-old [i18n]="usagePostalAddressI18n()" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageEmailI18n()" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-category-old [i18n]="usageEmailI18n()" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usagePhoneI18n()" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-category-old [i18n]="usagePhoneI18n()" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageNameI18n()" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-category-old [i18n]="usageNameI18n()" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -56,7 +56,7 @@ import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFor
               </ion-row>
               <ion-row>
                 <ion-col>
-                  <bk-checkbox [i18n]="srvEmailI18n()" [checked]="srvEmail()" (checkedChange)="onFieldChange('srvEmail', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  <okr-checkbox [i18n]="srvEmailI18n()" [checked]="srvEmail()" (checkedChange)="onFieldChange('srvEmail', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                 </ion-col>
               </ion-row>
             }

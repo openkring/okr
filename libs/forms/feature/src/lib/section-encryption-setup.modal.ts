@@ -9,7 +9,7 @@ import { FormDefinitionService } from '@okr/forms-data-access';
 import { AppStore } from '@okr/shared-feature';
 
 @Component({
-  selector: 'bk-section-encryption-setup-modal',
+  selector: 'okr-section-encryption-setup-modal',
   standalone: true,
   imports: [
     FormsModule, Header, SvgIconPipe,
@@ -17,7 +17,7 @@ import { AppStore } from '@okr/shared-feature';
     IonInput, IonCheckbox, IonButton,
   ],
   template: `
-    <bk-header [i18n]="{ title: 'Verschlüsselung aktivieren' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: 'Verschlüsselung aktivieren' }" [isModal]="true" />
     <ion-content class="ion-padding">
 
       <ion-note color="warning" style="display:block; margin-bottom:16px; padding:12px; border-radius:8px;">

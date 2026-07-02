@@ -11,7 +11,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { FolderStore } from './folder.store';
 
 @Component({
-  selector: 'bk-folder-list',
+  selector: 'okr-folder-list',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -36,7 +36,7 @@ import { FolderStore } from './folder.store';
               <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                 <ng-template>
                   <ion-content>
-                    <bk-menu [menuName]="contextMenuName()" />
+                    <okr-menu [menuName]="contextMenuName()" />
                   </ion-content>
                 </ng-template>
               </ion-popover>
@@ -44,15 +44,15 @@ import { FolderStore } from './folder.store';
           }
         </ion-toolbar>
       }
-      <bk-list-filter (searchTermChanged)="onSearchTermChange($event)" />
+      <okr-list-filter (searchTermChanged)="onSearchTermChange($event)" />
     </ion-header>
 
     <ion-content>
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @if(filteredFoldersCount() === 0) {
-          <bk-empty-list [message]="store.i18n.empty()" />
+          <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list>
             @for(folder of filteredFolders(); track folder.okey) {

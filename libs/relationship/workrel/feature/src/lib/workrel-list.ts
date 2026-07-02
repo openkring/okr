@@ -14,7 +14,7 @@ import { WorkrelNamePipe } from '@okr/relationship-workrel-util';
 import { WorkrelStore } from './workrel.store';
 
 @Component({
-  selector: 'bk-workrel-list',
+  selector: 'okr-workrel-list',
   standalone: true,
   imports: [
     SvgIconPipe, AvatarPipe, FullNamePipe, WorkrelNamePipe, AsyncPipe,
@@ -38,7 +38,7 @@ import { WorkrelStore } from './workrel.store';
               <ion-popover trigger="c-wrel" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                 <ng-template>
                   <ion-content>
-                    <bk-menu [menuName]="contextMenuName()"/>
+                    <okr-menu [menuName]="contextMenuName()"/>
                   </ion-content>
                 </ng-template>
               </ion-popover>
@@ -47,7 +47,7 @@ import { WorkrelStore } from './workrel.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter
+    <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -68,10 +68,10 @@ import { WorkrelStore } from './workrel.store';
   <!-- list data -->
   <ion-content #content>
     @if(isLoading() === true) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(selectedWorkRelsCount() === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(workrel of filteredWorkRels(); track $index) {

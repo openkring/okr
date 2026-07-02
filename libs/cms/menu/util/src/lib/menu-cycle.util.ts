@@ -1,5 +1,5 @@
 /**
- * Helpers that protect the recursive `<bk-menu>` renderer against circular menu
+ * Helpers that protect the recursive `<okr-menu>` renderer against circular menu
  * references (Menu A → Menu B → Menu A) and runaway nesting depth.
  */
 

@@ -16,7 +16,7 @@ import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
 
 @Component({
-  selector: 'bk-matrix-chat-overview',
+  selector: 'okr-matrix-chat-overview',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -81,13 +81,13 @@ import { PollCreateModal } from './poll-create.modal';
     }
 
     /* Message list fills remaining space; input is pushed to bottom */
-    bk-matrix-message-list {
+    okr-matrix-message-list {
       flex: 1;
       min-height: 0;
       overflow: hidden;
     }
 
-    bk-matrix-message-input {
+    okr-matrix-message-input {
       flex-shrink: 0;
     }
 
@@ -305,7 +305,7 @@ import { PollCreateModal } from './poll-create.modal';
                 </ion-toolbar>
               </ion-header>
 
-              <bk-matrix-room-list
+              <okr-matrix-room-list
                 [rooms]="rooms()"
                 [selectedRoomId]="currentRoomId()"
                 [i18n]="store.i18n"
@@ -352,10 +352,10 @@ import { PollCreateModal } from './poll-create.modal';
                 <!-- Message List or Loading Spinner -->
                 @if (isMessagesLoading()) {
                   <div class="messages-loading">
-                    <bk-spinner />
+                    <okr-spinner />
                   </div>
                 } @else {
-                  <bk-matrix-message-list
+                  <okr-matrix-message-list
                     [messages]="messages()"
                     [currentUserId]="matrixUserId()"
                     [homeserverUrl]="homeserverUrl()"
@@ -373,7 +373,7 @@ import { PollCreateModal } from './poll-create.modal';
                 }
 
                 <!-- Message Input -->
-                <bk-matrix-message-input
+                <okr-matrix-message-input
                   [i18n]="store.i18n"
                   [roomId]="currentRoomId()"
                   [typingUsers]="typingUsers()"
@@ -438,7 +438,7 @@ import { PollCreateModal } from './poll-create.modal';
                 @if (threadMessages().length === 0) {
                   <div class="thread-empty">{{ store.i18n.thread_empty() }}</div>
                 } @else {
-                  <bk-matrix-message-list
+                  <okr-matrix-message-list
                     [messages]="threadMessages()"
                     [currentUserId]="matrixUserId()"
                     [homeserverUrl]="homeserverUrl()"
@@ -453,7 +453,7 @@ import { PollCreateModal } from './poll-create.modal';
                   />
                 }
 
-                <bk-matrix-message-input
+                <okr-matrix-message-input
                   [i18n]="store.i18n"
                   [typingUsers]="[]"
                   (messageSent)="onThreadMessageSent($event)"
@@ -495,7 +495,7 @@ import { PollCreateModal } from './poll-create.modal';
         }
       </ion-card>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { BookingStore } from './booking.store';
 
 @Component({
-  selector: 'bk-booking-list',
+  selector: 'okr-booking-list',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent,

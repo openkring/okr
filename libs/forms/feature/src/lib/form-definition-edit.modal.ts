@@ -10,7 +10,7 @@ import { FormDefinitionService } from '@okr/forms-data-access';
 import { FORM_MAPPINGS, getPrefillFields } from '@okr/forms-util';
 
 @Component({
-  selector: 'bk-form-definition-edit-modal',
+  selector: 'okr-form-definition-edit-modal',
   standalone: true,
   imports: [
     FormsModule, Header,
@@ -19,7 +19,7 @@ import { FORM_MAPPINGS, getPrefillFields } from '@okr/forms-util';
     IonSelect, IonSelectOption, IonButton, IonNote,
   ],
   template: `
-    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-list lines="full">
 

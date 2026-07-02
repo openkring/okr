@@ -16,7 +16,7 @@ export type LocationSelectResult =
   | { kind: 'custom'; label: string };
 
 @Component({
-  selector: 'bk-location-select-modal',
+  selector: 'okr-location-select-modal',
   standalone: true,
   imports: [
     Header, Spinner,
@@ -32,7 +32,7 @@ export type LocationSelectResult =
     #location-map { width: 100%; height: 100%; }
   `],
   template: `
-    <bk-header
+    <okr-header
       [searchTerm]="searchTerm()"
       (searchTermChange)="onSearchTermChange($event)"
       [isSearchable]="true"
@@ -53,7 +53,7 @@ export type LocationSelectResult =
     }
     <ion-content [scrollY]="store.viewMode() !== 'map'">
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @if(store.viewMode() === 'list') {
           @if(store.showCustomEntry()) {
@@ -68,7 +68,7 @@ export type LocationSelectResult =
             </ion-list>
           }
           @if(selectedLocationsCount() === 0 && !store.showCustomEntry()) {
-            <bk-empty-list [message]="store.i18n.location_empty()" />
+            <okr-empty-list [message]="store.i18n.location_empty()" />
           } @else {
             @for(location of filteredLocations(); track $index) {
               <ion-list lines="none">
@@ -83,7 +83,7 @@ export type LocationSelectResult =
           }
         } @else {
           @if(store.mappableLocations().length === 0) {
-            <bk-empty-list [message]="store.i18n.location_empty()" />
+            <okr-empty-list [message]="store.i18n.location_empty()" />
           }
           <div id="location-map"></div>
         }
@@ -179,9 +179,9 @@ export class LocationSelectModal implements OnDestroy {
   }
 
   private injectPopupStyles(): void {
-    if (document.getElementById('bk-location-popup-styles')) return;
+    if (document.getElementById('okr-location-popup-styles')) return;
     const style = document.createElement('style');
-    style.id = 'bk-location-popup-styles';
+    style.id = 'okr-location-popup-styles';
     style.textContent = [
       /* tile layer — muted so markers stand out */
       '.leaflet-tile-pane { filter: grayscale(30%) brightness(1.08) saturate(0.6); opacity: 0.88; }',

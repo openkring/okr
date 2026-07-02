@@ -16,7 +16,7 @@ import { AppStore } from '@okr/shared-feature';
 import { TemplateStore } from './template.store';
 
 @Component({
-  selector: 'bk-template-list',
+  selector: 'okr-template-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [TemplateStore],
@@ -42,14 +42,14 @@ import { TemplateStore } from './template.store';
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
-      <bk-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
+      <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
     </ion-header>
 
     <ion-content>
       @if(store.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if(store.filteredTemplates().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
           @for(tmpl of store.filteredTemplates(); track tmpl.okey) {

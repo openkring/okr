@@ -5,11 +5,11 @@ import { Header } from '@okr/shared-ui';
 import { PersonDuplicateCandidate, PersonI18n } from '@okr/subject-person-util';
 
 @Component({
-  selector: 'bk-person-duplicate-modal',
+  selector: 'okr-person-duplicate-modal',
   standalone: true,
   imports: [Header, IonContent, IonList, IonItem, IonLabel, IonButton, IonFooter, IonToolbar],
   template: `
-    <bk-header [i18n]="{ title: i18n().duplicate_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n().duplicate_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <p>{{ i18n().duplicate_intro() }}</p>
       <ion-list>

@@ -20,7 +20,7 @@ export interface TextInputI18n {
 }
 
 @Component({
-  selector: 'bk-text-input',
+  selector: 'okr-text-input',
   standalone: true,
   imports: [
     ButtonCopy,
@@ -48,7 +48,7 @@ export interface TextInputI18n {
         [attr.dir]="dir()"
       />
       @if (isCopyable()) {
-        <bk-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
+        <okr-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
       }
     </ion-item>
     @if(shouldShowHelper()) {

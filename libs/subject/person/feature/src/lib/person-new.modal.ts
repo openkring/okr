@@ -12,7 +12,7 @@ import { PersonNewForm } from '@okr/subject-person-ui';
 import { PersonStore } from './person.store';
 
 @Component({
-  selector: 'bk-person-new-modal',
+  selector: 'okr-person-new-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, PersonNewForm,
@@ -20,14 +20,14 @@ import { PersonStore } from './person.store';
   ],
   providers: [PersonStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.create()}" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.create()}" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(mcat(); as mcat) {
         @if(formData(); as formData) {
-          <bk-person-new-form
+          <okr-person-new-form
             [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"

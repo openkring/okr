@@ -12,7 +12,7 @@ import {
 
 /**
  * Builds the page-print payload from the already-rendered page DOM (Approach A).
- * It walks the rendered `bk-section-dispatcher` hosts inside `root`, pairs them
+ * It walks the rendered `okr-section-dispatcher` hosts inside `root`, pairs them
  * with the ordered visible sections, captures each printable section's markup
  * (computed styles inlined, canvases converted to images, scripts stripped),
  * and assembles the pre-formatted payload for the `page-print` template.
@@ -26,11 +26,11 @@ export class PagePrintService {
     ctx: PagePrintContext,
   ): PagePrintPayload {
     // Only top-level section hosts: a nested accordion section renders as a
-    // <bk-section-dispatcher> inside its parent's host, so we exclude any host
+    // <okr-section-dispatcher> inside its parent's host, so we exclude any host
     // that has an ancestor host. The remaining top-level hosts line up 1:1 with
     // `visibleSections` (which the caller already filtered for nesting + state).
-    const hosts = Array.from(root.querySelectorAll('bk-section-dispatcher'))
-      .filter(h => h.parentElement?.closest('bk-section-dispatcher') == null);
+    const hosts = Array.from(root.querySelectorAll('okr-section-dispatcher'))
+      .filter(h => h.parentElement?.closest('okr-section-dispatcher') == null);
     const sections: PagePrintSection[] = [];
 
     hosts.forEach((host, i) => {

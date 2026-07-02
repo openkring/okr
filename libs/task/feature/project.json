@@ -2,7 +2,7 @@
   "name": "task-feature",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/task/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:task", "platform:mobile", "platform:web"],
   "targets": {

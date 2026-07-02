@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { PeriodStore } from './period.store';
 
 @Component({
-  selector: 'bk-period-list',
+  selector: 'okr-period-list',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent,

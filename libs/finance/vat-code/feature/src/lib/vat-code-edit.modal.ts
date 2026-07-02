@@ -6,7 +6,7 @@ import { ModalController, IonButton, IonButtons, IonContent, IonHeader,
 import { VatCodeModel, UserModel } from '@okr/shared-models';
 
 @Component({
-  selector: 'bk-vat-code-edit-modal',
+  selector: 'okr-vat-code-edit-modal',
   standalone: true,
   imports: [
     FormsModule,

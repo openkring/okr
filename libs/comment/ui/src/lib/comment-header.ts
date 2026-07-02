@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { IonCol, IonRow } from '@ionic/angular/standalone';
 
 @Component({
-  selector: 'bk-comment-header',
+  selector: 'okr-comment-header',
   standalone: true,
   imports: [
     IonRow, IonCol

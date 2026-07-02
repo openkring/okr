@@ -14,7 +14,7 @@ import { generateRandomString, newAvatarInfo } from '@okr/shared-util-core';
  */
 
 @Component({
-  selector: 'bk-avatar-input',
+  selector: 'okr-avatar-input',
   standalone: true,
   imports: [
     IonItem, IonButton

@@ -12,7 +12,7 @@ import { patchState, signalStoreFeature, withComputed, withMethods, withState } 
  * - `clearError()`: clears the error
  *
  * Mutations that can fail (Firestore writes, stream errors) call `setError()` with an
- * already-translated message; UI surfaces it via `<bk-error-banner>`.
+ * already-translated message; UI surfaces it via `<okr-error-banner>`.
  */
 export type ErrorState = {
   error: string | undefined;

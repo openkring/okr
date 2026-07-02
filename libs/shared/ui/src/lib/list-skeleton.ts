@@ -6,10 +6,10 @@ import { IonItem, IonLabel, IonList, IonSkeletonText } from '@ionic/angular/stan
  * list area has structure (no layout jump) instead of an empty container or a spinner.
  *
  * Usage:
- *   @if (isLoading()) { <bk-list-skeleton [rows]="6" /> } @else { ...real list... }
+ *   @if (isLoading()) { <okr-list-skeleton [rows]="6" /> } @else { ...real list... }
  */
 @Component({
-  selector: 'bk-list-skeleton',
+  selector: 'okr-list-skeleton',
   standalone: true,
   imports: [IonList, IonItem, IonLabel, IonSkeletonText],
   template: `

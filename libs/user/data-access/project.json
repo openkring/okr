@@ -2,7 +2,7 @@
   "name": "user-data-access",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/user/data-access/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:data-access", "scope:user", "platform:mobile", "platform:web"],
   "targets": {

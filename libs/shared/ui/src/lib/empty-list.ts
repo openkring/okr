@@ -2,7 +2,7 @@ import { Component, input } from '@angular/core';
 import { IonItem, IonLabel, IonToolbar } from '@ionic/angular/standalone';
 
 @Component({
-  selector: 'bk-empty-list',
+  selector: 'okr-empty-list',
   standalone: true,
   imports: [
     IonItem, IonLabel, IonToolbar

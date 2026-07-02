@@ -14,14 +14,14 @@ import { TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
  * and the multi-year history graph ('graph'). All data comes from TripStatsService via the section store.
  */
 @Component({
-  selector: 'bk-trip-stats-modal',
+  selector: 'okr-trip-stats-modal',
   standalone: true,
   imports: [
     Header, TripStatsSectionComponent,
     IonContent, IonSegment, IonSegmentButton, IonLabel,
   ],
   template: `
-    <bk-header [i18n]="{ title: title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content>
       <ion-segment [value]="viewType()" (ionChange)="onViewChange($event)">
         <ion-segment-button value="list">
@@ -31,7 +31,7 @@ import { TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
           <ion-label>{{ i18n.stats_view_graph() }}</ion-label>
         </ion-segment-button>
       </ion-segment>
-      <bk-trip-stats-section [section]="section()" />
+      <okr-trip-stats-section [section]="section()" />
     </ion-content>
   `,
 })

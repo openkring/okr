@@ -15,7 +15,7 @@ import { FolderBreadcrumb } from '@okr/folder-ui';
 import { DocumentStore } from './document.store';
 
 @Component({
-  selector: 'bk-document-list',
+  selector: 'okr-document-list',
   standalone: true,
   imports: [
     SvgIconPipe, FileNamePipe, FileLogoPipe, FileSizePipe, PrettyDatePipe, ThumbnailUrlPipe,
@@ -49,7 +49,7 @@ import { DocumentStore } from './document.store';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [excludeNames]="['addFiles']"/>
+                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [excludeNames]="['addFiles']"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -60,11 +60,11 @@ import { DocumentStore } from './document.store';
 
     <!-- folder breadcrumb (only when filtered by folder) -->
     @if(folderKey(); as fkey) {
-      <bk-folder-breadcrumb [folderKey]="fkey" (folderSelected)="onFolderSelected($event)" />
+      <okr-folder-breadcrumb [folderKey]="fkey" (folderSelected)="onFolderSelected($event)" />
     }
 
     <!-- search and filters -->
-    <bk-list-filter
+    <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -94,10 +94,10 @@ import { DocumentStore } from './document.store';
 <!-- list data -->
 <ion-content #content>
   @if(isLoading()) {
-    <bk-spinner />
+    <okr-spinner />
   } @else {
     @if (isEmpty()) {
-      <bk-empty-list [message]="store.i18n.empty()" />
+      <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       @if(isListView() === true) {
         <ion-grid>

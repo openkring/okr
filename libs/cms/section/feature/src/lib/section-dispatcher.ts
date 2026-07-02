@@ -39,10 +39,10 @@ import { SectionStore } from './section.store';
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
  * The section renders differently depending on the type property.
- * Use it like this: <bk-section-dispatcher sectionType="name of the sectionType"></bk-section-dispatcher>
+ * Use it like this: <okr-section-dispatcher sectionType="name of the sectionType"></okr-section-dispatcher>
  */
 @Component({
-  selector: 'bk-section-dispatcher',
+  selector: 'okr-section-dispatcher',
   standalone: true,
   providers: [SectionStore],
   imports: [
@@ -62,109 +62,109 @@ import { SectionStore } from './section.store';
       @if (hasRole(roleNeeded())) {
         @switch (section.type) {
           @case('accordion') { 
-            <bk-accordion-section [section]="section" />
+            <okr-accordion-section [section]="section" />
           }
           @case('album') { 
-            <bk-album-section [section]="section" [editMode]="editMode()" />
+            <okr-album-section [section]="section" [editMode]="editMode()" />
           }
           @case('article') {
-            <bk-article-section [section]="section" [editMode]="editMode()" />
+            <okr-article-section [section]="section" [editMode]="editMode()" />
           }
           @case('button') {  
-            <bk-button-section [section]="section" [editMode]="editMode()" />
+            <okr-button-section [section]="section" [editMode]="editMode()" />
           }
           @case('cal') {
             @defer (on viewport) {
-              <bk-calendar-section [section]="section" [editMode]="editMode()" />
+              <okr-calendar-section [section]="section" [editMode]="editMode()" />
             } @placeholder {
-              <bk-spinner />
+              <okr-spinner />
             }
           }
           @case('chart') {
             @defer (on viewport) {
-              <bk-chart-section [section]="section" />
+              <okr-chart-section [section]="section" />
             } @placeholder {
-              <bk-spinner />
+              <okr-spinner />
             }
           }
           @case('events') {
-            <bk-events-section [section]="section" [editMode]="editMode()" />
+            <okr-events-section [section]="section" [editMode]="editMode()" />
           }
           @case('hero') {
-            <bk-hero-section [section]="section" />
+            <okr-hero-section [section]="section" />
           }
           @case('iframe') { 
-            <bk-iframe-section [section]="section" />
+            <okr-iframe-section [section]="section" />
           }
           @case('invitations') {
-            <bk-invitations-section [section]="section" [editMode]="editMode()" />
+            <okr-invitations-section [section]="section" [editMode]="editMode()" />
           }
           @case('map') {
-            <bk-map-section [section]="section" [editMode]="editMode()" />
+            <okr-map-section [section]="section" [editMode]="editMode()" />
           }
           @case('messages') {
-            <bk-messages-section [section]="section" [editMode]="editMode()" />
+            <okr-messages-section [section]="section" [editMode]="editMode()" />
           }
           @case('news') {
-            <bk-news-section [section]="section" [editMode]="editMode()" />
+            <okr-news-section [section]="section" [editMode]="editMode()" />
           }
           @case('orgchart') {
             @defer (on viewport) {
-              <bk-orgchart-section [section]="section" [editMode]="editMode()" />
+              <okr-orgchart-section [section]="section" [editMode]="editMode()" />
             } @placeholder {
-              <bk-spinner />
+              <okr-spinner />
             }
           }
           @case('people') {
-            <bk-people-section [section]="section" [editMode]="editMode()" />
+            <okr-people-section [section]="section" [editMode]="editMode()" />
           }
           @case('responsibility') {
-            <bk-responsibility-section [section]="section" [editMode]="editMode()" />
+            <okr-responsibility-section [section]="section" [editMode]="editMode()" />
           }
           @case('context') {
             @defer (on viewport) {
-              <bk-context-diagram-section [section]="section" [editMode]="editMode()" />
+              <okr-context-diagram-section [section]="section" [editMode]="editMode()" />
             } @placeholder {
-              <bk-spinner />
+              <okr-spinner />
             }
           }
           @case('rag') {
-            <bk-rag-section [section]="section" [editMode]="editMode()" />
+            <okr-rag-section [section]="section" [editMode]="editMode()" />
           }
           @case('slider') {
             @defer (on idle) {
-              <bk-slider-section [section]="section" [editMode]="editMode()" />
+              <okr-slider-section [section]="section" [editMode]="editMode()" />
             }
           }
           @case('table') {
-            <bk-table-section [section]="section" />
+            <okr-table-section [section]="section" />
           }
           @case('tasks') {
-            <bk-tasks-section [section]="section" [editMode]="editMode()" />
+            <okr-tasks-section [section]="section" [editMode]="editMode()" />
           }
           @case('activities') {
-            <bk-activities-section [section]="section" [editMode]="editMode()" />
+            <okr-activities-section [section]="section" [editMode]="editMode()" />
           }
           @case('tracker') {
-            <bk-tracker-section [section]="section" [editMode]="editMode()" [buttonCopyI18n]="buttonCopyI18n()" />
+            <okr-tracker-section [section]="section" [editMode]="editMode()" [buttonCopyI18n]="buttonCopyI18n()" />
           }
           @case('video') {
-            <bk-video-section [section]="section" />
+            <okr-video-section [section]="section" />
           }
           @case('member-age') {
-            <bk-member-age-section [section]="section" [editMode]="editMode()" />
+            <okr-member-age-section [section]="section" [editMode]="editMode()" />
           }
           @case('member-cat') {
-            <bk-member-cat-section [section]="section" [editMode]="editMode()" />
+            <okr-member-cat-section [section]="section" [editMode]="editMode()" />
           }
           @case('trip-stats') {
-            <bk-trip-stats-section [section]="section" [editMode]="editMode()" />
+            <okr-trip-stats-section [section]="section" [editMode]="editMode()" />
           }
           @case('form') {
-            <bk-form-section [section]="section" [editMode]="editMode()" />
+            <okr-form-section [section]="section" [editMode]="editMode()" />
           }
           @default {
-            <bk-missing-section [section]="section" />
+            <okr-missing-section [section]="section" />
           }
         }
       }

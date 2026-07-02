@@ -7,7 +7,7 @@ import { Browser } from '@capacitor/browser';
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
 @Component({
-  selector: 'bk-ics-download',
+  selector: 'okr-ics-download',
   standalone: true,
   imports: [SvgIconPipe, IonIcon, IonButton],
   template: `

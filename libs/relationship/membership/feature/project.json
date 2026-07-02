@@ -2,7 +2,7 @@
   "name": "relationship-membership-feature",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/membership/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:membership", "platform:mobile", "platform:web"],
   "targets": {

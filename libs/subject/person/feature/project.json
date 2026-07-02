@@ -2,7 +2,7 @@
   "name": "subject-person-feature",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/subject/person/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:person", "platform:mobile", "platform:web"],
   "targets": {

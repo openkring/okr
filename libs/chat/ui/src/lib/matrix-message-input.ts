@@ -12,7 +12,7 @@ import { isSupportedImageFile, MatrixChatI18n } from '@okr/chat-util';
 import 'emoji-picker-element';
 
 @Component({
-  selector: 'bk-matrix-message-input',
+  selector: 'okr-matrix-message-input',
   standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
@@ -265,7 +265,7 @@ import 'emoji-picker-element';
           <ion-icon src="{{'cancel' | svgIcon }}" />
         </ion-button>
 
-        <bk-button-copy [value]="messageText()" [i18n]="buttonCopyI18n()" />
+        <okr-button-copy [value]="messageText()" [i18n]="buttonCopyI18n()" />
 
         <div class="emoji-picker-wrapper">
           <ion-button fill="clear" class="action-button" (click)="toggleEmojiPicker($event)">

@@ -31,7 +31,7 @@ function loadIxPlayer(): void {
  */
 
 @Component({
-    selector: 'bk-video',
+    selector: 'okr-video',
     standalone: true,
     imports: [
     ],

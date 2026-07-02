@@ -2,7 +2,7 @@
   "name": "cms-page-util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/cms/page/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:page", "platform:mobile", "platform:web"],
   "targets": {

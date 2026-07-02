@@ -11,21 +11,21 @@ import { CategoryListForm } from '@okr/category-ui';
 import { CATEGORY_I18N_KEYS, CategoryI18n } from '@okr/category-util';
 
 @Component({
-  selector: 'bk-category-edit-modal',
+  selector: 'okr-category-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, CategoryListForm,
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
-          <bk-category-list-form
+          <okr-category-list-form
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"

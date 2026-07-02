@@ -25,7 +25,7 @@ interface ButtonStyleI18n {
 }
 
 @Component({
-  selector: 'bk-button-style',
+  selector: 'okr-button-style',
   standalone: true,
   imports: [
     FormsModule,
@@ -49,22 +49,22 @@ interface ButtonStyleI18n {
         <ion-grid>
           <ion-row>
               <ion-col size="12">
-                  <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="readOnly()" />
+                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                  <bk-string-select [i18n]="shapeI18n()" [selectedString]="shape()" (selectedStringChange)="onFieldChange('shape', $event)" [readOnly]="readOnly()" [stringList]="['round', 'default']" />
+                  <okr-string-select [i18n]="shapeI18n()" [selectedString]="shape()" (selectedStringChange)="onFieldChange('shape', $event)" [readOnly]="readOnly()" [stringList]="['round', 'default']" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                  <bk-string-select [i18n]="fillI18n()" [selectedString]="fill()" (selectedStringChange)="onFieldChange('fill', $event)" [readOnly]="readOnly()" [stringList]="['clear', 'outline', 'solid']" />
+                  <okr-string-select [i18n]="fillI18n()" [selectedString]="fill()" (selectedStringChange)="onFieldChange('fill', $event)" [readOnly]="readOnly()" [stringList]="['clear', 'outline', 'solid']" />
               </ion-col>
               <ion-col size="12">
-                  <bk-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" />
+                  <okr-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12">
-                  <bk-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [readOnly]="readOnly()" />
+                  <okr-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12">
-                  <bk-category-old [i18n]="colorI18n()" [value]="color()" (valueChange)="onFieldChange('color', $event)" [categories]="colors" [readOnly]="readOnly()" />
+                  <okr-category-old [i18n]="colorI18n()" [value]="color()" (valueChange)="onFieldChange('color', $event)" [categories]="colors" [readOnly]="readOnly()" />
               </ion-col>
           </ion-row>
         </ion-grid>

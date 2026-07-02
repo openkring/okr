@@ -11,7 +11,7 @@ import { centsToCHF } from '@okr/finance-expense-util';
 import { ExpenseDocumentService } from '@okr/finance-expense-data-access';
 
 @Component({
-  selector: 'bk-expense-detail-modal',
+  selector: 'okr-expense-detail-modal',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,

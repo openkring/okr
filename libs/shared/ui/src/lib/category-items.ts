@@ -16,7 +16,7 @@ export interface CategoryItemsI18n {
 }
 
 @Component({
-  selector: 'bk-category-items',
+  selector: 'okr-category-items',
   standalone: true,
   imports: [
     SvgIconPipe,

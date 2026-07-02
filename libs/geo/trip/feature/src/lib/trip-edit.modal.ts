@@ -11,7 +11,7 @@ import { getTripIndex, newTripName } from '@okr/trip-util';
 import { TripService } from '@okr/trip-data-access';
 
 @Component({
-  selector: 'bk-trip-edit-modal',
+  selector: 'okr-trip-edit-modal',
   standalone: true,
   imports: [
     Header, TripEditForm, ChangeConfirmation,
@@ -19,13 +19,13 @@ import { TripService } from '@okr/trip-data-access';
   ],
   providers: [TripStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if (formData(); as formData) {
-        <bk-trip-edit-form
+        <okr-trip-edit-form
           [formData]="formData" (formDataChange)="onTripChange($event)"
           [currentUser]="currentUser()"
           [tenantId]="tenantId()"

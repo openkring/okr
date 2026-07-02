@@ -14,7 +14,7 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
 
 
 @Component({
-    selector: 'bk-aoc-user-accounts',
+    selector: 'okr-aoc-user-accounts',
     standalone: true,
     imports: [
       SvgIconPipe, FullNamePipe,
@@ -38,7 +38,7 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -47,7 +47,7 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
+    <okr-list-filter 
       (searchTermChanged)="onSearchtermChange($event)"
      />
 
@@ -64,10 +64,10 @@ import { AocUserAccountStore, UserAccount } from './aoc-user-account.store';
   <!-- Data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(filteredAccounts().length === 0) {
-        <bk-empty-list [message]="store.i18n.account_empty()" />
+        <okr-empty-list [message]="store.i18n.account_empty()" />
       } @else {
         <ion-list lines="inset">
           @for(account of filteredAccounts(); track $index) {

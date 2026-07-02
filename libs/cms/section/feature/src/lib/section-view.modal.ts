@@ -7,16 +7,16 @@ import { SectionModel } from '@okr/shared-models';
 import { SectionDispatcher } from "./section-dispatcher";
 
 @Component( {
-  selector: 'bk-section-view-modal',
+  selector: 'okr-section-view-modal',
   standalone: true,
   imports: [
     IonContent,
     SectionDispatcher, Header
 ],
   template: `
-    <bk-header [i18n]="headerI18n()" [isModal]="true" />
+    <okr-header [i18n]="headerI18n()" [isModal]="true" />
     <ion-content>
-      <bk-section-dispatcher [section]="section()" [currentUser]="undefined" [editMode]="false" />
+      <okr-section-dispatcher [section]="section()" [currentUser]="undefined" [editMode]="false" />
     </ion-content>
   `
 } )

@@ -10,7 +10,7 @@ import { LocationStore } from './location.store';
 
 
 @Component({
-  selector: 'bk-location-edit-modal',
+  selector: 'okr-location-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, LocationForm,
@@ -18,13 +18,13 @@ import { LocationStore } from './location.store';
   ],
   providers: [LocationStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
     <ion-content>
       @if(formData(); as formData) {
-        <bk-location-form
+        <okr-location-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"

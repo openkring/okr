@@ -11,7 +11,7 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
  * all others go into the main column.
  */
 @Component({
-  selector: 'bk-blog-classic',
+  selector: 'okr-blog-classic',
   standalone: true,
   imports: [
     SectionDispatcher,
@@ -36,10 +36,10 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
             <div [id]="section.okey" (click)="sectionClick.emit(section.okey)">
               @if (editMode()) {
                 <div class="section-wrapper editable">
-                  <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+                  <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
                 </div>
               } @else {
-                <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+                <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
               }
             </div>
           }
@@ -50,10 +50,10 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
             <div [id]="section.okey" (click)="sectionClick.emit(section.okey)">
               @if (editMode()) {
                 <div class="section-wrapper editable">
-                  <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+                  <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
                 </div>
               } @else {
-                <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+                <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
               }
             </div>
           }

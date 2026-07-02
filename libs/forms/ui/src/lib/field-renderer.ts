@@ -8,7 +8,7 @@ import {
 import { Field } from '@okr/shared-models';
 
 @Component({
-  selector: 'bk-field-renderer',
+  selector: 'okr-field-renderer',
   standalone: true,
   imports: [
     ReactiveFormsModule,
@@ -30,30 +30,30 @@ import { Field } from '@okr/shared-models';
       @case ('text') {
         <div [class]="'field-' + field().width">
           @if ($any(field()).multiline) {
-            <bk-notes-input [i18n]="notesI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
+            <okr-notes-input [i18n]="notesI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
           } @else {
-            <bk-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
+            <okr-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
           }
         </div>
       }
       @case ('email') {
         <div [class]="'field-' + field().width">
-          <bk-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" inputMode="email" />
+          <okr-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" inputMode="email" />
         </div>
       }
       @case ('iban') {
         <div [class]="'field-' + field().width">
-          <bk-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
+          <okr-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
         </div>
       }
       @case ('phone') {
         <div [class]="'field-' + field().width">
-          <bk-phone [i18n]="phoneI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
+          <okr-phone [i18n]="phoneI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
         </div>
       }
       @case ('password') {
         <div [class]="'field-' + field().width">
-          <bk-password-input [i18n]="passwordI18n()" [value]="strValue()" (valueChange)="setValue($event)" />
+          <okr-password-input [i18n]="passwordI18n()" [value]="strValue()" (valueChange)="setValue($event)" />
         </div>
       }
 
@@ -85,7 +85,7 @@ import { Field } from '@okr/shared-models';
           }
         } @else {
           <div [class]="'field-' + field().width">
-            <bk-checkbox [i18n]="checkboxI18n()" [checked]="boolValue()" (checkedChange)="setValue($event)" [readOnly]="false" />
+            <okr-checkbox [i18n]="checkboxI18n()" [checked]="boolValue()" (checkedChange)="setValue($event)" [readOnly]="false" />
           </div>
         }
       }

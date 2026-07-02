@@ -11,7 +11,7 @@ import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 import { FolderI18n, folderValidations } from '@okr/folder-util';
 
 @Component({
-  selector: 'bk-folder-form',
+  selector: 'okr-folder-form',
   standalone: true,
   imports: [
     TextInput, NotesInput, Chips,
@@ -27,11 +27,11 @@ import { FolderI18n, folderValidations } from '@okr/folder-util';
             <ion-grid>
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
+                  <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
                     [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
+                  <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
                     [maxLength]="50" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
@@ -41,10 +41,10 @@ import { FolderI18n, folderValidations } from '@okr/folder-util';
 
         <!-- guarded, always last -->
         @if (hasRole('contentAdmin')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+          <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('contentAdmin')) {
-          <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }

@@ -12,7 +12,7 @@ export interface LightboxImage {
 }
 
 @Component({
-  selector: 'bk-image-lightbox-modal',
+  selector: 'okr-image-lightbox-modal',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonContent,

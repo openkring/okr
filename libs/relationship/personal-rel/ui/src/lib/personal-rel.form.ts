@@ -10,7 +10,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-personal-rel-util';
 
 @Component({
-  selector: 'bk-personal-rel-form',
+  selector: 'okr-personal-rel-form',
   standalone: true,
   imports: [
     AvatarPipe, FullNamePipe,
@@ -32,7 +32,7 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -53,11 +53,11 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6"> 
-                <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
               </ion-col>
               @if(type() === 'custom') {
                 <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
+                    <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               }
             </ion-row>
@@ -88,10 +88,10 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -99,11 +99,11 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
       </ion-card>
 
       @if(hasRole('privileged')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
       @if(hasRole('admin')) {
-        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }

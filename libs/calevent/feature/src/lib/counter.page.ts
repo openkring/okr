@@ -4,16 +4,16 @@ import { IonContent } from '@ionic/angular/standalone';
 import { Counter, Header } from '@okr/shared-ui';
 
 @Component({
-  selector: 'bk-counter-page',
+  selector: 'okr-counter-page',
   standalone: true,
   imports: [
     Header, Counter,
     IonContent, 
   ],
   template: `
-    <bk-header [i18n]="{ title: 'Counter' }" />
+    <okr-header [i18n]="{ title: 'Counter' }" />
     <ion-content #content>
-      <bk-counter />
+      <okr-counter />
     </ion-content>
   `,
 })

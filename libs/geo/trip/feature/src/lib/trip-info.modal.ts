@@ -11,14 +11,14 @@ import { TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
  * triggered by the info icon in the list header.
  */
 @Component({
-  selector: 'bk-trip-info-modal',
+  selector: 'okr-trip-info-modal',
   standalone: true,
   imports: [
     Header,
     IonContent, IonList, IonItem, IonLabel,
   ],
   template: `
-    <bk-header [i18n]="{ title: i18n.list_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.list_title() }" [isModal]="true" />
     <ion-content>
       <ion-list lines="none">
         <ion-item>

@@ -13,7 +13,7 @@ import { AvatarSelect } from '@okr/avatar-ui';
 import { TaskStore } from './task.store';
 
 @Component({
-  selector: 'bk-task-edit-modal',
+  selector: 'okr-task-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, TaskForm, CommentsAccordion,
@@ -22,13 +22,13 @@ import { TaskStore } from './task.store';
   ],
   providers: [TaskStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-task-form
+        <okr-task-form
           [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
@@ -45,7 +45,7 @@ import { TaskStore } from './task.store';
         />
       }
 
-      <bk-avatar-select 
+      <okr-avatar-select 
         name="assignee"
         [title]="store.i18n.assignee()"
         [note]="store.i18n.assignee_description()"
@@ -53,7 +53,7 @@ import { TaskStore } from './task.store';
         [readOnly]="isReadOnly()"
         (selectClicked)="selectPerson('assignee')" 
       />
-      <bk-avatar-select
+      <okr-avatar-select
         name="author"
         [title]="store.i18n.author()"
         [note]="store.i18n.author_description()"
@@ -62,7 +62,7 @@ import { TaskStore } from './task.store';
         (selectClicked)="selectPerson('author')"
         />
 
-      <bk-strings
+      <okr-strings
         [strings]="calendars()"
         (stringsChange)="onFieldChange('calendars', $event)"
         [mask]="calendarMask"
@@ -74,7 +74,7 @@ import { TaskStore } from './task.store';
 
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
         <ion-accordion-group value="comments">
-          <bk-comments-accordion [parentKey]="parentKey()" />
+          <okr-comments-accordion [parentKey]="parentKey()" />
         </ion-accordion-group>
       }
     </ion-content>

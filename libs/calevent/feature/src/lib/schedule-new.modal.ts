@@ -8,7 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
 
 @Component({
-  selector: 'bk-schedule-new-modal',
+  selector: 'okr-schedule-new-modal',
   standalone: true,
   imports: [
     IonButton,
@@ -18,7 +18,7 @@ import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
     Header,
   ],
   template: `
-    <bk-header [i18n]="{ title: i18n.schedule_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.schedule_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-input

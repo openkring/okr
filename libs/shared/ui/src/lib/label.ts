@@ -6,7 +6,7 @@ import { ColorIonic } from '@okr/shared-models';
 import { CategoryPlainNamePipe } from '@okr/shared-pipes';
 
 @Component({
-  selector: 'bk-label',
+  selector: 'okr-label',
   standalone: true,
   imports: [
     CategoryPlainNamePipe,

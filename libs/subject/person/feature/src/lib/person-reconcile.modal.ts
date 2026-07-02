@@ -26,12 +26,12 @@ const FIELD_LABEL: Record<ReconcilableField, keyof PersonI18n> = {
 };
 
 @Component({
-  selector: 'bk-person-reconcile-modal',
+  selector: 'okr-person-reconcile-modal',
   standalone: true,
   imports: [Header, ChangeConfirmation, IonContent, IonList, IonItem, IonLabel, IonSegment, IonSegmentButton],
   template: `
-    <bk-header [i18n]="{ title: i18n().reconcile_title() }" [isModal]="true" />
-    <bk-change-confirmation [i18n]="confirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+    <okr-header [i18n]="{ title: i18n().reconcile_title() }" [isModal]="true" />
+    <okr-change-confirmation [i18n]="confirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     <ion-content class="ion-padding">
       <p>{{ i18n().reconcile_intro() }}</p>
       <ion-list>

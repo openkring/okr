@@ -19,7 +19,7 @@ export function getItemLabel(category: CategoryListModel, itemName?: string): st
 
 /**
  * extract the names of category list items as a comma-separated string.
- * This can be used to generate the allChips attribute in bk-chips
+ * This can be used to generate the allChips attribute in okr-chips
  * @param cat 
  * @returns 
  */

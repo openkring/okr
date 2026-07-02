@@ -7,7 +7,7 @@ import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { getSafeEmbedUrl } from '@okr/shared-util-core';
 
 @Component({
-  selector: 'bk-iframe-section',
+  selector: 'okr-iframe-section',
   standalone: true,
   imports: [
     Spinner, OptionalCardHeader,
@@ -20,7 +20,7 @@ import { getSafeEmbedUrl } from '@okr/shared-util-core';
   template: `
     @if(section()) {
       <ion-card>
-        <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <iframe
             [src]="url()"
@@ -34,7 +34,7 @@ import { getSafeEmbedUrl } from '@okr/shared-util-core';
       </ion-card>
 
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

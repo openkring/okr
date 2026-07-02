@@ -12,7 +12,7 @@ import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
 import { PageStore } from './page.store';
 
 @Component({
-  selector: 'bk-dashboard-page',
+  selector: 'okr-dashboard-page',
   standalone: true,
   imports: [
     SectionDispatcher, Menu,
@@ -29,7 +29,7 @@ import { PageStore } from './page.store';
     }
 
     ion-content { --background: var(--ion-color-light); }
-    bk-section { 
+    okr-section { 
       width: 100%; 
       display: block; 
     }
@@ -54,7 +54,7 @@ import { PageStore } from './page.store';
       flex-direction: column;
     }
 
-    .section-wrapper bk-section-dispatcher {
+    .section-wrapper okr-section-dispatcher {
       flex: 1;
       display: block;
     }
@@ -238,7 +238,7 @@ import { PageStore } from './page.store';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <bk-menu [menuName]="contextMenuName"/>
+                      <okr-menu [menuName]="contextMenuName"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -270,7 +270,7 @@ import { PageStore } from './page.store';
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
                     <div class="section-wrapper state-{{ section.state }}" [class.editable]="editMode()">
-                      <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                     </div>
                   </ion-col>
                 }
@@ -294,7 +294,7 @@ import { PageStore } from './page.store';
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
                     <div class="section-wrapper">
-                      <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                     </div>
                   </ion-col>
                 }

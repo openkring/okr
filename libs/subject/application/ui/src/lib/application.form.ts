@@ -12,7 +12,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { ApplicationI18n, needsSsn } from '@okr/application-util';
 
 @Component({
-  selector: 'bk-application-form',
+  selector: 'okr-application-form',
   standalone: true,
   imports: [
     DatePipe, FormsModule,

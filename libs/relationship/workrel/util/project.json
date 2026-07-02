@@ -2,7 +2,7 @@
   "name": "relationship-workrel-util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/workrel/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:workrel", "platform:mobile", "platform:web"],
   "targets": {

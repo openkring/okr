@@ -8,7 +8,7 @@ import { SectionI18n } from '@okr/cms-section-util';
 const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
 
 @Component({
-  selector: 'bk-image-edit-modal',
+  selector: 'okr-image-edit-modal',
   standalone: true,
   imports: [
     Header,
@@ -16,7 +16,7 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol,
   ],
   template: `
-    <bk-header [i18n]="{ title: i18n().image_edit_title() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
+    <okr-header [i18n]="{ title: i18n().image_edit_title() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
     <ion-card>
       <ion-card-header>
         <ion-card-title>{{ i18n().image_edit_title() }}</ion-card-title>
@@ -25,22 +25,22 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [maxLength]="500" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [maxLength]="500" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="actionUrlI18n()" [value]="actionUrl()" (valueChange)="onFieldChange('actionUrl', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="actionUrlI18n()" [value]="actionUrl()" (valueChange)="onFieldChange('actionUrl', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input [i18n]="overlayI18n()" [value]="overlay()" (valueChange)="onFieldChange('overlay', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="overlayI18n()" [value]="overlay()" (valueChange)="onFieldChange('overlay', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-string-select [i18n]="imageTypeI18n()" [selectedString]="typeName()" (selectedStringChange)="onTypeChange($event)" [stringList]="imageTypeNames" [readOnly]="readOnly()" />
+              <okr-string-select [i18n]="imageTypeI18n()" [selectedString]="typeName()" (selectedStringChange)="onTypeChange($event)" [stringList]="imageTypeNames" [readOnly]="readOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>

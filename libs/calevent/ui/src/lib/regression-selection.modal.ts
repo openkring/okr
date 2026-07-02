@@ -4,14 +4,14 @@ import { IonContent, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, ModalC
 import { Header } from '@okr/shared-ui';
 
 @Component({
-  selector: 'bk-regression-selection-modal',
+  selector: 'okr-regression-selection-modal',
   standalone: true,
   imports: [
     Header,
     IonContent, IonRadioGroup, IonRadio, IonLabel, IonItem, IonList
   ],
   template: `
-    <bk-header [i18n]="{ title: title() }" [showOkButton]="true" (okClicked)="save()" [isModal]="true" />
+    <okr-header [i18n]="{ title: title() }" [showOkButton]="true" (okClicked)="save()" [isModal]="true" />
     <ion-content class="ion-no-padding">
       <ion-item>
         <ion-label>{{'@calevent.operation.seriesupdate.intro' }}</ion-label>

@@ -11,7 +11,7 @@ import { ColorSelectModal } from './color-select.modal';
  * The color picker is a simple input field with a color picker.
  */
 @Component({
-  selector: 'bk-color',
+  selector: 'okr-color',
   standalone: true,
   imports: [
     

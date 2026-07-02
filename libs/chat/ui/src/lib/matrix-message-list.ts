@@ -9,7 +9,7 @@ import { PollMessage } from './poll-message';
 import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
 
 @Component({
-  selector: 'bk-matrix-message-list',
+  selector: 'okr-matrix-message-list',
   standalone: true,
   imports: [
     IonIcon,
@@ -348,7 +348,7 @@ import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '
                     {{ item.messages.length > 1 ? item.messages.length + ' Bilder · ' : '' }}{{ formatTime(item.timestamp) }}
                   </div>
                   @if (receiptsByEventId().get(item.messages[0].eventId); as receipts) {
-                    <bk-matrix-read-receipt-strip [receipts]="receipts" />
+                    <okr-matrix-read-receipt-strip [receipts]="receipts" />
                   }
                 </div>
               </div>
@@ -423,7 +423,7 @@ import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '
                             </a>
                           }
                           @case ('org.matrix.msc3381.poll.start') {
-                            <bk-poll-message
+                            <okr-poll-message
                               [message]="item"
                               [currentUserId]="currentUserId() ?? ''"
                               (voteClicked)="pollVoteClicked.emit($event)"
@@ -439,7 +439,7 @@ import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '
                     </div>
                     <div class="message-timestamp">{{ formatTime(item.timestamp) }}</div>
                     @if (receiptsByEventId().get(item.eventId); as receipts) {
-                      <bk-matrix-read-receipt-strip [receipts]="receipts" />
+                      <okr-matrix-read-receipt-strip [receipts]="receipts" />
                     }
                     @if (item.reactions && item.reactions.size > 0) {
                       <div class="message-reactions">

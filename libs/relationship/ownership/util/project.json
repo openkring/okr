@@ -2,7 +2,7 @@
   "name": "relationship-ownership-util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/ownership/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:ownership", "platform:mobile", "platform:web"],
   "targets": {

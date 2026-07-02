@@ -10,7 +10,7 @@ import { FlightInfoResponse } from '@okr/flighttracker-data-access';
 import { FlightTrackerStore } from './flighttracker.store';
 
 @Component({
-  selector: 'bk-flighttracker-detail-modal',
+  selector: 'okr-flighttracker-detail-modal',
   standalone: true,
   providers: [FlightTrackerStore],
   imports: [
@@ -19,7 +19,7 @@ import { FlightTrackerStore } from './flighttracker.store';
     IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.detailTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.detailTitle() }" [isModal]="true" />
     <ion-content>
       <ion-grid>
         <!-- Departure -->

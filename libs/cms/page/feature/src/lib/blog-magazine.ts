@@ -9,7 +9,7 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
  * Remaining sections in a responsive multi-column grid below.
  */
 @Component({
-  selector: 'bk-blog-magazine',
+  selector: 'okr-blog-magazine',
   standalone: true,
   imports: [
     SectionDispatcher
@@ -35,10 +35,10 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
       <div class="hero" [id]="hero.okey" (click)="sectionClick.emit(hero.okey)">
         @if (editMode()) {
           <div class="section-wrapper editable">
-            <bk-section-dispatcher [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
+            <okr-section-dispatcher [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
           </div>
         } @else {
-          <bk-section-dispatcher [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
+          <okr-section-dispatcher [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
         }
       </div>
     }
@@ -47,10 +47,10 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
         <div class="article-item" [id]="section.okey" (click)="sectionClick.emit(section.okey)">
           @if (editMode()) {
             <div class="section-wrapper editable">
-              <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+              <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
             </div>
           } @else {
-            <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+            <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
           }
         </div>
       }

@@ -2,7 +2,7 @@
   "name": "subject-address-util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/subject/address/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:address", "platform:mobile", "platform:web"],
   "targets": {

@@ -8,7 +8,7 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { ReportingService } from '@okr/finance-reporting-data-access';
 
 @Component({
-  selector: 'bk-balance-sheet-page',
+  selector: 'okr-balance-sheet-page',
   standalone: true,
   imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonNote, IonButton],
   template: `

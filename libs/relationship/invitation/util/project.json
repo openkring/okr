@@ -2,7 +2,7 @@
   "name": "relationship-invitation-util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/invitation/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:invitation", "platform:mobile", "platform:web"],
   "targets": {

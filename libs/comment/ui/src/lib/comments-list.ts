@@ -5,7 +5,7 @@ import { CommentModel } from '@okr/shared-models';
 import { PrettyDatePipe } from '@okr/shared-pipes';
 
 @Component({
-  selector: 'bk-comments-list',
+  selector: 'okr-comments-list',
   standalone: true,
   imports: [
     PrettyDatePipe,

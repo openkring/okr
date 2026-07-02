@@ -9,14 +9,14 @@ import { Header } from '@okr/shared-ui';
 import { EncryptedFileMetadata, decryptFile } from '@okr/forms-util';
 
 @Component({
-  selector: 'bk-decrypt-files-modal',
+  selector: 'okr-decrypt-files-modal',
   standalone: true,
   imports: [
     FormsModule, Header, DecimalPipe,
     IonContent, IonList, IonItem, IonLabel, IonInput, IonNote, IonButton,
   ],
   template: `
-    <bk-header [i18n]="{ title: 'Dateien entschlüsseln' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: 'Dateien entschlüsseln' }" [isModal]="true" />
     <ion-content class="ion-padding">
 
       <ion-note color="medium" style="display:block; padding:12px; border-radius:8px; margin-bottom:16px;">

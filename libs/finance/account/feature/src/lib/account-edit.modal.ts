@@ -9,7 +9,7 @@ import { AccountForm } from '@okr/finance-account-ui';
 import { AccountStore } from './account.store';
 
 @Component({
-  selector: 'bk-account-edit-modal',
+  selector: 'okr-account-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, AccountForm,
@@ -17,13 +17,13 @@ import { AccountStore } from './account.store';
   ],
   providers: [AccountStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(showForm() && formData(); as formData) {
-        <bk-account-form
+        <okr-account-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"

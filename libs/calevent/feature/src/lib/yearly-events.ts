@@ -14,7 +14,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 import { CalEventStore } from './calevent.store';
 
 @Component({
-    selector: 'bk-yearly-events',
+    selector: 'okr-yearly-events',
     standalone: true,
     imports: [
     SvgIconPipe, LabelPipe,
@@ -37,7 +37,7 @@ import { CalEventStore } from './calevent.store';
             <ion-popover trigger="c-yevents" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -47,7 +47,7 @@ import { CalEventStore } from './calevent.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter
+    <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -78,17 +78,17 @@ import { CalEventStore } from './calevent.store';
   <!-- list data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(filteredCalEventsCount() === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(event of filteredCalEvents(); track event.okey) {
             <ion-item (click)="showActions(event)">
               <ion-label>{{event.name}}</ion-label>
-              <ion-label class="ion-hide-md-down"><bk-avatar-display [avatars]="event.responsiblePersons" [showName]="true" /></ion-label>
-              <ion-label class="ion-hide-md-up"><bk-avatar-display [avatars]="event.responsiblePersons" [showName]="false" /></ion-label>
+              <ion-label class="ion-hide-md-down"><okr-avatar-display [avatars]="event.responsiblePersons" [showName]="true" /></ion-label>
+              <ion-label class="ion-hide-md-up"><okr-avatar-display [avatars]="event.responsiblePersons" [showName]="false" /></ion-label>
               <ion-label>{{ event.locationKey | label }}</ion-label>
               <ion-label class="ion-hide-lg-down">{{ event.description }}</ion-label>
             </ion-item>

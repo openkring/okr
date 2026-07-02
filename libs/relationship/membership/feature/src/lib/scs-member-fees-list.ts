@@ -15,7 +15,7 @@ import { ScsMemberFeeEditModal } from './scs-member-fee-edit.modal';
 import { Menu } from '@okr/cms-menu-feature';
 
 @Component({
-  selector: 'bk-scs-member-fees',
+  selector: 'okr-scs-member-fees',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -48,7 +48,7 @@ import { Menu } from '@okr/cms-menu-feature';
             <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -56,7 +56,7 @@ import { Menu } from '@okr/cms-menu-feature';
         }
       </ion-toolbar>
 
-      <bk-list-filter
+      <okr-list-filter
         (searchTermChanged)="onSearchTermChange($event)"
         (categoryChanged)="onMcatSelected($event)" [categories]="mcatScsCategory()"
         selectedString="all" [strings]="states"  (stringsChanged)="onStateChange($event)" stringsName="state"
@@ -117,10 +117,10 @@ import { Menu } from '@okr/cms-menu-feature';
 
     <ion-content>
       @if (isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @if (sortedFees().length === 0) {
-          <bk-empty-list [message]="store.i18n.scsMemberFee_list_empty()" />
+          <okr-empty-list [message]="store.i18n.scsMemberFee_list_empty()" />
         } @else {
           <ion-grid>
             @for (fee of sortedFees(); track $index) {

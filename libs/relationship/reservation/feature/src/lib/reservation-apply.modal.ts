@@ -14,7 +14,7 @@ import { convertApplyToReservation, getNewReservationApply } from '@okr/relation
 import { ReservationStore } from './reservation.store';
 
 @Component({
-  selector: 'bk-reservation-apply-modal',
+  selector: 'okr-reservation-apply-modal',
   standalone: true,
   imports: [
     RelationshipToolbar, Header, ChangeConfirmation, ReservationApplyForm,
@@ -23,15 +23,15 @@ import { ReservationStore } from './reservation.store';
   providers: [ReservationStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" [showCloseButton]="false" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" [showCloseButton]="false" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
         @if(reserverAvatar(); as reserver) {
           @if(resourceAvatar(); as resource) {
-            <bk-relationship-toolbar
+            <okr-relationship-toolbar
               relType="reservation"
               [subjectAvatar]="resource"
               [subjectDefaultIcon]="subjectDefaultIcon()"
@@ -45,7 +45,7 @@ import { ReservationStore } from './reservation.store';
         }
 
         @if(formData(); as formData) {
-          <bk-reservation-apply-form
+          <okr-reservation-apply-form
             [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"

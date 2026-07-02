@@ -72,7 +72,7 @@ export async function bkPrompt(
 ): Promise<string | undefined> {
   const alert = await alertController.create({
     header,
-    cssClass: 'bk-prompt-alert',
+    cssClass: 'okr-prompt-alert',
     buttons: [
       { text: cancelLabel, role: 'cancel' },
       { text: okLabel, role: 'confirm' }

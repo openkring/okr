@@ -12,7 +12,7 @@ import { getSessionStatus, getSessionStatusColor } from '@okr/session-util';
 import { AocSessionStore } from './aoc-session.store';
 
 @Component({
-  selector: 'bk-aoc-session',
+  selector: 'okr-aoc-session',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -55,7 +55,7 @@ import { AocSessionStore } from './aoc-session.store';
       </ion-toolbar>
 
       <!-- search and status filter -->
-      <bk-list-filter
+      <okr-list-filter
         (searchTermChanged)="store.setSearchTerm($event)"
         [strings]="statusOptions()"
         [stringsName]="'sessionStatus'"
@@ -78,7 +78,7 @@ import { AocSessionStore } from './aoc-session.store';
 
     <ion-content>
       @if (store.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         <ion-card>
           <ion-card-header>
@@ -91,7 +91,7 @@ import { AocSessionStore } from './aoc-session.store';
         </ion-card>
 
         @if (sessions().length === 0) {
-          <bk-empty-list [message]="store.i18n.session_empty()" />
+          <okr-empty-list [message]="store.i18n.session_empty()" />
         } @else {
           <ion-list lines="inset">
             @for (session of sessions(); track session.okey) {

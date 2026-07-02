@@ -8,7 +8,7 @@ import { NetworkStatusService } from './network-status.service';
 
 
 @Component({
-  selector: 'bk-auth-info',
+  selector: 'okr-auth-info',
   standalone: true,
   imports: [FullNamePipe, IonGrid, IonRow, IonCol],
   template: `

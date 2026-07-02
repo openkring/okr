@@ -2,7 +2,7 @@
   "name": "vcard-feature",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/vcard/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:vcard", "platform:mobile", "platform:web"],
   "targets": {

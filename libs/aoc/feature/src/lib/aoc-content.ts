@@ -10,7 +10,7 @@ import { AocContentStore, MissingMenuRef, MissingSectionRef, SectionImageRef } f
 import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 
 @Component({
-  selector: 'bk-aoc-content',
+  selector: 'okr-aoc-content',
   standalone: true,
   imports: [
     SvgIconPipe, ThumbnailUrlPipe,
@@ -20,7 +20,7 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
   ],
   providers: [AocContentStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.title() }" />
+    <okr-header [i18n]="{ title: store.i18n.title() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>
@@ -42,7 +42,7 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
             <ion-row>
               <ion-col size="6">{{ store.i18n.content_section_orphaned_content() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="orphanedSectionsLabel()" [iconName]="orphanedSectionsIcon()" (click)="toggleOrphanedSections()" />
+                <okr-button [label]="orphanedSectionsLabel()" [iconName]="orphanedSectionsIcon()" (click)="toggleOrphanedSections()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -72,7 +72,7 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
             <ion-row>
               <ion-col size="6">{{ store.i18n.content_section_missing_content() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="missingSectionsLabel()" [iconName]="missingSectionsIcon()" (click)="toggleMissingSections()" />
+                <okr-button [label]="missingSectionsLabel()" [iconName]="missingSectionsIcon()" (click)="toggleMissingSections()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -102,7 +102,7 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
             <ion-row>
               <ion-col size="6">{{ store.i18n.content_section_images_content() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="sectionImagesLabel()" [iconName]="sectionImagesIcon()" (click)="toggleSectionImages()" />
+                <okr-button [label]="sectionImagesLabel()" [iconName]="sectionImagesIcon()" (click)="toggleSectionImages()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -134,7 +134,7 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
             <ion-row>
               <ion-col size="6">{{ store.i18n.content_menu_orphaned_content() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="orphanedMenusLabel()" [iconName]="orphanedMenusIcon()" (click)="toggleOrphanedMenus()" />
+                <okr-button [label]="orphanedMenusLabel()" [iconName]="orphanedMenusIcon()" (click)="toggleOrphanedMenus()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -164,7 +164,7 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
             <ion-row>
               <ion-col size="6">{{ store.i18n.content_menu_missing_content() }}</ion-col>
               <ion-col size="6">
-                <bk-button [label]="missingMenusLabel()" [iconName]="missingMenusIcon()" (click)="toggleMissingMenus()" />
+                <okr-button [label]="missingMenusLabel()" [iconName]="missingMenusIcon()" (click)="toggleMissingMenus()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -193,14 +193,14 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
             <ion-row>
               <ion-col size="6">{{ store.i18n.content_link_check_content() }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ store.i18n.content_link_check_show() }}" iconName="checkbox-circle" (click)="checkLinks()" />
+                <okr-button label=" {{ store.i18n.content_link_check_show() }}" iconName="checkbox-circle" (click)="checkLinks()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
 
-      <bk-result-log [cardTitle]="store.i18n.result_title()" [title]="logTitle()" [log]="logInfo()" />
+      <okr-result-log [cardTitle]="store.i18n.result_title()" [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
   `,
 })

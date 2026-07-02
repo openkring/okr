@@ -2,7 +2,7 @@
   "name": "category-util",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/category/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:category", "platform:mobile", "platform:web"],
   "targets": {

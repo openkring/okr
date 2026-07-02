@@ -15,7 +15,7 @@ import { hasRole } from '@okr/shared-util-core';
 import { ICON_SETS, IconStore } from './icon.store';
 
 @Component({
-  selector: 'bk-icon-list',
+  selector: 'okr-icon-list',
   standalone: true,
   imports: [
     SvgIconPipe, FileSizePipe, PrettyDatePipe,
@@ -92,7 +92,7 @@ import { ICON_SETS, IconStore } from './icon.store';
       }
 
       <!-- search and filters -->
-      <bk-list-filter
+      <okr-list-filter
         (searchTermChanged)="store.setSearchTerm($event)"
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         [strings]="iconSets" [selectedString]="store.selectedDir()" (stringsChanged)="store.setSelectedDir($event)"
@@ -125,9 +125,9 @@ import { ICON_SETS, IconStore } from './icon.store';
   <!-- list data -->
     <ion-content>
       @if(store.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if(store.filteredIcons().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else if(isListView()) {
         <!-- list view -->
         <ion-list lines="inset">

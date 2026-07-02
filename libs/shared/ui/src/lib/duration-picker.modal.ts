@@ -38,16 +38,16 @@ export interface DurationPickerModalI18n {
  * stays inclusive.
  */
 @Component({
-  selector: 'bk-duration-picker-modal',
+  selector: 'okr-duration-picker-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation,
     IonContent, IonGrid, IonRow, IonCol, IonDatetime,
   ],
   template: `
-    <bk-header [i18n]="{ title: i18n().title }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
     @if (showConfirmation()) {
-      <bk-change-confirmation
+      <okr-change-confirmation
         [i18n]="{ cancel: i18n().cancel, save: i18n().save }"
         (saveClicked)="save()"
         (cancelClicked)="revert()" />

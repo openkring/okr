@@ -14,7 +14,7 @@ import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
 import { PageStore } from './page.store';
 
 @Component({
-  selector: 'bk-content-page',
+  selector: 'okr-content-page',
   standalone: true,
   imports: [
     SectionDispatcher, Menu,
@@ -29,7 +29,7 @@ import { PageStore } from './page.store';
       height: 100%;
       width: 100%;
     }
-  bk-section { width: 100%; display: block; }
+  okr-section { width: 100%; display: block; }
 
   .section-wrapper.editable {
     border: 3px solid;
@@ -138,7 +138,7 @@ import { PageStore } from './page.store';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <bk-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()"/>
+                      <okr-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -172,10 +172,10 @@ import { PageStore } from './page.store';
                   >
                     @if(editMode()) {
                       <div class="section-wrapper editable state-{{ section.state }}">
-                        <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                        <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                       </div>  
                     } @else {
-                      <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                     }
                   </ion-col>
                 }
@@ -192,7 +192,7 @@ import { PageStore } from './page.store';
           <div class="print-content" #printContent>
             @for(section of visibleSections(); track section.okey) {
               <div [id]="section.okey">
-                <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
               </div>
             }
           </div>

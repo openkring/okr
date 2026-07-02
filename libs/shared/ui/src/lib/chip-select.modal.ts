@@ -27,7 +27,7 @@ const ChipSelectStore = signalStore(
 );
 
 @Component({
-  selector: 'bk-chip-select-modal',
+  selector: 'okr-chip-select-modal',
   standalone: true,
   providers: [ChipSelectStore],
   imports: [
@@ -36,7 +36,7 @@ const ChipSelectStore = signalStore(
     IonContent, IonChip, IonLabel
   ],
   template: `
-    <bk-header [i18n]="{ title: store.headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.headerTitle() }" [isModal]="true" />
     <ion-content class="ion-padding">
       @for (chip of chips(); track chip) {
         <ion-chip color="primary" (click)="select(chip)">

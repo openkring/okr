@@ -8,7 +8,7 @@ import { CategoryPlainNamePipe } from '@okr/shared-pipes';
 export type BkSpinnerName = 'dots' | 'bubbles' | 'circles' | 'crescent' | 'circular' | 'lines' | 'lines-small' | 'lines-sharp' | 'lines-small-sharp';
 
 @Component({
-  selector: 'bk-spinner',
+  selector: 'okr-spinner',
   standalone: true,
   imports: [
     CategoryPlainNamePipe,

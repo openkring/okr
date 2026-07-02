@@ -13,7 +13,7 @@ import { formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLe
 import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
 
 @Component({
-  selector: 'bk-aoc-chat',
+  selector: 'okr-aoc-chat',
   standalone: true,
   imports: [
     FormsModule, 
@@ -113,10 +113,10 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
     }
   `],
   template: `
-      <bk-header [i18n]="{ title: title() }" />
+      <okr-header [i18n]="{ title: title() }" />
     <ion-content>
       <div class="person-bar">
-        <bk-avatar-select
+        <okr-avatar-select
           [avatar]="avatar()"
           name="roomMember"
           [selectLabel]="store.i18n.chat_select_roomMember()"

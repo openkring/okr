@@ -5,7 +5,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 
 
 @Component({
-  selector: 'bk-searchbar',
+  selector: 'okr-searchbar',
   standalone: true,
   imports: [
     IonSearchbar

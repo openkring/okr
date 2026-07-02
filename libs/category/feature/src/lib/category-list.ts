@@ -12,7 +12,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { CategoryStore } from './category.store';
 
 @Component({
-    selector: 'bk-category-list',
+    selector: 'okr-category-list',
     standalone: true,
     imports: [
       SvgIconPipe,
@@ -35,7 +35,7 @@ import { CategoryStore } from './category.store';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -44,7 +44,7 @@ import { CategoryStore } from './category.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter
+    <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
      />
@@ -70,10 +70,10 @@ import { CategoryStore } from './category.store';
   <!-- list data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(filteredCategories().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(cat of filteredCategories(); track cat.okey) {

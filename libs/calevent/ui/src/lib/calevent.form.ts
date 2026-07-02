@@ -12,7 +12,7 @@ import { Avatars } from '@okr/avatar-ui';
 import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
 
 @Component({
-  selector: 'bk-calevent-form',
+  selector: 'okr-calevent-form',
   standalone: true,
   imports: [
     CategorySelect, Chips, NotesInput, DateInput, TimeInput, NumberInput,
@@ -30,58 +30,58 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
           @if(expertMode()) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="seriesIdI18n()" [value]="seriesId()" [readOnly]="true" [copyable]="true" />
+                <okr-text-input [i18n]="seriesIdI18n()" [value]="seriesId()" [readOnly]="true" [copyable]="true" />
               </ion-col>
             </ion-row>
           }
             <ion-row>
               <ion-col size="12">
-                <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false"  [readOnly]="isReadOnly()" />
+                <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false"  [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="nameErrors()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="fullDayI18n()" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="fullDayI18n()" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if(!fullDay()) {
               <ion-row>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <okr-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6" size-lg="4">
-                  <bk-number-input [i18n]="durationMinutesI18n()" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="isReadOnly()" />
+                  <okr-number-input [i18n]="durationMinutesI18n()" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             } @else {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                <okr-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
               </ion-col>
               @if(isRecurring()) {
                 <ion-col size="12" size-md="6">
-                  <bk-date-input [i18n]="repeatUntilDateI18n()" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="repeatUntilDateI18n()" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" />
                 </ion-col>
               }
             </ion-row>
@@ -89,7 +89,7 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
               <ion-row>
                 <ion-col size="12">
                   <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
-                  <bk-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
@@ -98,7 +98,7 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
     </ion-card>
 
     @if(currentUser(); as currentUser) {
-      <bk-avatars name="responsiblePersons"
+      <okr-avatars name="responsiblePersons"
         [avatars]="responsiblePersons()" (avatarsChange)="onFieldChange('responsiblePersons', $event)"
         (selectClicked)="selectPerson()"
         [currentUser]="currentUser"
@@ -108,7 +108,7 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
       />
     }
 
-    <bk-strings
+    <okr-strings
       [strings]="calendars()"
       (stringsChange)="onFieldChange('calendars', $event)"
       [mask]="calendarMask"
@@ -124,11 +124,11 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
     TAG, NOTES
     --------------------------------------------------->
     @if(expertMode()) {
-      <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+      <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
     }
 
     @if(hasRole('admin')) {
-      <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+      <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
     }
   </form>
   }

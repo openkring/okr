@@ -14,7 +14,7 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
 
 
 @Component({
-  selector: 'bk-trip-edit-form',
+  selector: 'okr-trip-edit-form',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -99,7 +99,7 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
             @if(formData().locations.length > 0 || formData().customLocationLabel) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [readOnly]="isReadOnly()" />
+                  <okr-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
@@ -119,7 +119,7 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
 
       <!-- participants -->
       @if(currentUser(); as currentUser) {
-        <bk-avatars (selectClicked)="personSelectClicked.emit()"
+        <okr-avatars (selectClicked)="personSelectClicked.emit()"
           [avatars]="participants()"
           (avatarsChange)="onFieldChange('participants', $event)"
           [readOnly]="isReadOnly()"
@@ -129,7 +129,7 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
       }
 
     @if(hasRole('admin')) {
-      <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+      <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
     }
   `,
 })

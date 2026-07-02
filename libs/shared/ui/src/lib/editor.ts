@@ -13,7 +13,7 @@ import { EditorToolbar } from './editor-toolbar';
 import { copyToClipboard, showToast } from '@okr/shared-util-angular';
 
 @Component({
-  selector: 'bk-editor',
+  selector: 'okr-editor',
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,

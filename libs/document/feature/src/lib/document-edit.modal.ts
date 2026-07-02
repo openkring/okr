@@ -12,7 +12,7 @@ import { DOCUMENT_I18N_KEYS, DocumentI18n } from '@okr/document-util';
 import { DocumentForm } from '@okr/document-ui';
 
 @Component({
-  selector: 'bk-document-edit-modal',
+  selector: 'okr-document-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation,
@@ -21,13 +21,13 @@ import { DocumentForm } from '@okr/document-ui';
   ],
     styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-document-form
+        <okr-document-form
           [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n"
           [currentUser]="currentUser()"

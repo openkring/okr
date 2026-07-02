@@ -18,7 +18,7 @@ const MissingSectionStore = signalStore(
 );
 
 @Component({
-  selector: 'bk-missing-section',
+  selector: 'okr-missing-section',
   standalone: true,
   imports: [
     Spinner,
@@ -28,7 +28,7 @@ const MissingSectionStore = signalStore(
   styles: [`
     ion-card-content { padding: 0px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
-    .warning { --background: var(--bk-light-warning-color);}
+    .warning { --background: var(--okr-light-warning-color);}
   `],
   template: `
     @if(section(); as section) {
@@ -40,7 +40,7 @@ const MissingSectionStore = signalStore(
         </ion-card-content>
       </ion-card>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

@@ -12,7 +12,7 @@ import { ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { NewsStore } from './news-section.store';
 
 @Component({
-  selector: 'bk-news-section',
+  selector: 'okr-news-section',
   standalone: true,
   styles: [`
     .title { font-size: 1rem; font-weight: 600; }
@@ -28,13 +28,13 @@ import { NewsStore } from './news-section.store';
   ],
   template: `
     @if (isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (news().length === 0) {
-            <bk-empty-list [message]="store.i18n.empty()" />
+            <okr-empty-list [message]="store.i18n.empty()" />
           } @else {
             <ion-list lines="none">
               @for (article of news(); track article.okey) {
@@ -59,7 +59,7 @@ import { NewsStore } from './news-section.store';
                 </ion-item>
               }
               @if(showMoreButton() && !editMode()) {
-                <bk-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
+                <okr-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
               }
             </ion-list>
           }

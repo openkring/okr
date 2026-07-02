@@ -20,7 +20,7 @@ import { AvatarPipe } from './avatar.pipe';
  */
 
 @Component({
-  selector: 'bk-avatars',
+  selector: 'okr-avatars',
   standalone: true,
   imports: [
     SvgIconPipe, AvatarPipe,
@@ -55,7 +55,7 @@ import { AvatarPipe } from './avatar.pipe';
         }
         @if(isReadOnly()) {
           <ion-item lines="none">
-            <bk-avatar-display [avatars]="avatars()" [showName]="false" />
+            <okr-avatar-display [avatars]="avatars()" [showName]="false" />
           </ion-item>
         } @else {
           @if(avatars(); as avatars) {

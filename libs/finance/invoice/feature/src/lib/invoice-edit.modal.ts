@@ -11,7 +11,7 @@ import { InvoiceEditForm } from '@okr/finance-invoice-ui';
 import { INVOICE_I18N_KEYS, InvoiceI18n } from '@okr/finance-invoice-util';
 
 @Component({
-  selector: 'bk-invoice-edit-modal',
+  selector: 'okr-invoice-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, InvoiceEditForm,
@@ -19,13 +19,13 @@ import { INVOICE_I18N_KEYS, InvoiceI18n } from '@okr/finance-invoice-util';
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-invoice-edit-form
+        <okr-invoice-edit-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"

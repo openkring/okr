@@ -8,7 +8,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { SectionI18n } from '@okr/cms-section-util';
 
 @Component({
-  selector: 'bk-table-grid',
+  selector: 'okr-table-grid',
   standalone: true,
   imports: [
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
@@ -24,19 +24,19 @@ import { SectionI18n } from '@okr/cms-section-util';
             <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="templateI18n()" [value]="template()" (valueChange)="onFieldChange('template', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                    <okr-text-input [i18n]="templateI18n()" [value]="template()" (valueChange)="onFieldChange('template', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-string-select [i18n]="showTitleAsI18n()" [selectedString]="showTitleAs()" (selectedStringChange)="onFieldChange('showTitleAs', $event)" [readOnly]="readOnly()" [stringList]="['title', 'legend', 'header', 'none']" />
+                    <okr-string-select [i18n]="showTitleAsI18n()" [selectedString]="showTitleAs()" (selectedStringChange)="onFieldChange('showTitleAs', $event)" [readOnly]="readOnly()" [stringList]="['title', 'legend', 'header', 'none']" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="gapI18n()" [value]="gap()" (valueChange)="onFieldChange('gap', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                    <okr-text-input [i18n]="gapI18n()" [value]="gap()" (valueChange)="onFieldChange('gap', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="backgroundColorI18n()" [value]="backgroundColor()" (valueChange)="onFieldChange('backgroundColor', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                    <okr-text-input [i18n]="backgroundColorI18n()" [value]="backgroundColor()" (valueChange)="onFieldChange('backgroundColor', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="paddingI18n()" [value]="padding()" (valueChange)="onFieldChange('padding', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                    <okr-text-input [i18n]="paddingI18n()" [value]="padding()" (valueChange)="onFieldChange('padding', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                   </ion-col>
                 </ion-row>
             </ion-grid>

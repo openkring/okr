@@ -8,7 +8,7 @@ import { Button, Header, ResultLog } from '@okr/shared-ui';
 import { AocStorageStore } from './aoc-storage.store';
 
 @Component({
-  selector: 'bk-aoc-storage',
+  selector: 'okr-aoc-storage',
   standalone: true,
   styles: [
     `
@@ -24,7 +24,7 @@ import { AocStorageStore } from './aoc-storage.store';
   ],
   providers: [AocStorageStore],
   template: `
-    <bk-header [i18n]="{ title: aocStorageStore.i18n.title() }" />
+    <okr-header [i18n]="{ title: aocStorageStore.i18n.title() }" />
     <ion-content>
       <ion-card>
         <ion-card-header>
@@ -52,7 +52,7 @@ import { AocStorageStore } from './aoc-storage.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-button [disabled]="isFilePathButtonDisabled()" [label]="aocStorageStore.i18n.storage_info_button_label()" iconName="checkbox-circle" (click)="getRefInfo()" />
+                <okr-button [disabled]="isFilePathButtonDisabled()" [label]="aocStorageStore.i18n.storage_info_button_label()" iconName="checkbox-circle" (click)="getRefInfo()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -88,14 +88,14 @@ import { AocStorageStore } from './aoc-storage.store';
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-button [disabled]="isDirPathButtonDisabled()" [label]="aocStorageStore.i18n.storage_sizes_button_label()" iconName="checkbox-circle" (click)="calculateStorageConsumption()" />
+                <okr-button [disabled]="isDirPathButtonDisabled()" [label]="aocStorageStore.i18n.storage_sizes_button_label()" iconName="checkbox-circle" (click)="calculateStorageConsumption()" />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
 
-      <bk-result-log [title]="logTitle()" cardTitle="Resultat" [log]="logInfo()" />
+      <okr-result-log [title]="logTitle()" cardTitle="Resultat" [log]="logInfo()" />
     </ion-content>
   `,
 })

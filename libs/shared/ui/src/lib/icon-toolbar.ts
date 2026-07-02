@@ -6,7 +6,7 @@ import { ColorIonic } from '@okr/shared-models';
 import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 
 @Component({
-  selector: 'bk-icon-toolbar',
+  selector: 'okr-icon-toolbar',
   standalone: true,
   imports: [
     CategoryPlainNamePipe, SvgIconPipe,

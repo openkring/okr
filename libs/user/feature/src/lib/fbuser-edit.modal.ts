@@ -9,7 +9,7 @@ import { FbuserForm } from "@okr/user-ui";
 import { UserStore } from "./user.store";
 
 @Component({
-  selector: 'bk-fbuser-edit-modal',
+  selector: 'okr-fbuser-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, FbuserForm,
@@ -17,12 +17,12 @@ import { UserStore } from "./user.store";
   ],
   providers: [UserStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.fbuser_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.fbuser_title() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       } 
     <ion-content>
-      <bk-fbuser-form
+      <okr-fbuser-form
         [i18n]="store.i18n"
         [formData]="formData()"
         (formDataChange)="onFormDataChange($event)"

@@ -16,7 +16,7 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
  * then recursively renders its children when expanded.
  */
 @Component({
-  selector: 'bk-menu-graph-node',
+  selector: 'okr-menu-graph-node',
   standalone: true,
   imports: [
     SvgIconPipe, 
@@ -127,7 +127,7 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
       @if (store.isExpanded(node().id) && node().children.length > 0) {
         <div class="children">
           @for (child of node().children; track child.id) {
-            <bk-menu-graph-node [node]="child" (nodeEdit)="nodeEdit.emit($event)" />
+            <okr-menu-graph-node [node]="child" (nodeEdit)="nodeEdit.emit($event)" />
           }
         </div>
       }

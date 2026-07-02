@@ -13,7 +13,7 @@ import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
  * Tapping the icon or name always emits groupAction so the parent can open the ActionSheet.
  */
 @Component({
-  selector: 'bk-orgchart-node',
+  selector: 'okr-orgchart-node',
   standalone: true,
   imports: [
     OrgchartNodeComponent,
@@ -65,7 +65,7 @@ import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
     @if (expanded() && children().length > 0) {
       <ion-list lines="none" [class.children-horizontal]="display() === 'horizontal'">
         @for (child of children(); track child.okey) {
-          <bk-orgchart-node
+          <okr-orgchart-node
             [node]="child"
             [depth]="display() === 'horizontal' ? 0 : depth() + 1"
             [showName]="showName()"

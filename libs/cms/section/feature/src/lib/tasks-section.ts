@@ -13,7 +13,7 @@ import { TasksStore } from './tasks-section.store';
 
 
 @Component({
-  selector: 'bk-tasks-section',
+  selector: 'okr-tasks-section',
   standalone: true,
   styles: [
     `
@@ -39,13 +39,13 @@ import { TasksStore } from './tasks-section.store';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     @if(isLoading()) {
-    <bk-spinner />
+    <okr-spinner />
     } @else {        
         <ion-card>
-            <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" [count]="numberOfTasks()" />
+            <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" [count]="numberOfTasks()" />
             <ion-card-content>
                 @if(numberOfTasks() === 0) {
-                    <bk-empty-list [message]="store.i18n.empty()" />
+                    <okr-empty-list [message]="store.i18n.empty()" />
                 } @else {
                     <ion-list lines="inset">
                         @for(task of tasks(); track $index) {
@@ -74,7 +74,7 @@ import { TasksStore } from './tasks-section.store';
                     </ion-list>
                 }
                 @if(showMoreButton() && !editMode()) {
-                  <bk-more-button [url]="moreUrl()" [label]="store.i18n.more()"/>
+                  <okr-more-button [url]="moreUrl()" [label]="store.i18n.more()"/>
                 }
             </ion-card-content>
         </ion-card>

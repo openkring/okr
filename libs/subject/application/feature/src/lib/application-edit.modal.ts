@@ -9,7 +9,7 @@ import { ApplicationI18n } from '@okr/application-util';
 import { ApplicationForm } from '@okr/application-ui';
 
 @Component({
-  selector: 'bk-application-edit-modal',
+  selector: 'okr-application-edit-modal',
   standalone: true,
   imports: [
     ApplicationForm,
@@ -30,7 +30,7 @@ import { ApplicationForm } from '@okr/application-ui';
     </ion-toolbar>
   </ion-header>
   <ion-content>
-    <bk-application-form
+    <okr-application-form
       [application]="currentApp()"
       [readonly]="isTerminal()"
       [i18n]="i18n()"

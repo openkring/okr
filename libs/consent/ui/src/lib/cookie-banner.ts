@@ -9,7 +9,7 @@ import {
 import { ConsentService } from '@okr/consent-data-access';
 
 @Component({
-  selector: 'bk-cookie-banner',
+  selector: 'okr-cookie-banner',
   standalone: true,
   imports: [FormsModule, IonButton, IonItem, IonLabel, IonList, IonToggle],
   styles: [`

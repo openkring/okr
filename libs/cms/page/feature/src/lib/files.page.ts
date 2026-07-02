@@ -12,7 +12,7 @@ import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
 import { PageStore } from './page.store';
 
 @Component({
-  selector: 'bk-files-page',
+  selector: 'okr-files-page',
   standalone: true,
   imports: [
     SectionDispatcher, Menu,
@@ -29,7 +29,7 @@ import { PageStore } from './page.store';
       width: 100%;
     }
 
-  bk-section { width: 100%; display: block; }
+  okr-section { width: 100%; display: block; }
 
   .section-wrapper.editable {
     border: 3px solid;
@@ -117,7 +117,7 @@ import { PageStore } from './page.store';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <bk-menu [menuName]="contextMenuName"/>
+                      <okr-menu [menuName]="contextMenuName"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -151,10 +151,10 @@ import { PageStore } from './page.store';
                   >
                     @if(editMode()) {
                       <div class="section-wrapper" [class.editable]="editMode()">
-                        <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                        <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                       </div>  
                     } @else {
-                      <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                     }
                   </ion-col>
                 }
@@ -170,7 +170,7 @@ import { PageStore } from './page.store';
         } @else {
           <div class="print-content" #printContent>
             @for(section of sections(); track section.okey) {
-              <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+              <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
             } 
           </div>
         }

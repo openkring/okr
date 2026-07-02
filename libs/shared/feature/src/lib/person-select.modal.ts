@@ -14,7 +14,7 @@ export type PersonSelectResult =
   | { kind: 'custom'; label: string };
 
 @Component({
-  selector: 'bk-person-select-modal',
+  selector: 'okr-person-select-modal',
   standalone: true,
   imports: [
     Header, Spinner,
@@ -28,7 +28,7 @@ export type PersonSelectResult =
     ion-list { padding: 0px; }
   `],
   template: `
-    <bk-header
+    <okr-header
       [searchTerm]="searchTerm()"
       (searchTermChange)="onSearchTermChange($event)"
       [isSearchable]="true"
@@ -37,7 +37,7 @@ export type PersonSelectResult =
     />
     <ion-content>
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @if(store.showCustomEntry()) {
           <ion-list lines="none">
@@ -51,7 +51,7 @@ export type PersonSelectResult =
           </ion-list>
         }
         @if(selectedPersonsCount() === 0 && !store.showCustomEntry()) {
-          <bk-empty-list [message]="store.i18n.person_empty()" />
+          <okr-empty-list [message]="store.i18n.person_empty()" />
         } @else {
           @for(person of filteredPersons(); track $index) {
             <ion-list lines="none">

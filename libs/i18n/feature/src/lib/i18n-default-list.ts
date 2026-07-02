@@ -17,7 +17,7 @@ import { I18nDefaultStore } from './i18n-default.store';
 import { I18nDefaultEditModal } from './i18n-default-edit.modal';
 
 @Component({
-  selector: 'bk-i18n-default-list',
+  selector: 'okr-i18n-default-list',
   standalone: true,
   imports: [
     SlicePipe, FormsModule, SvgIconPipe,
@@ -28,7 +28,7 @@ import { I18nDefaultEditModal } from './i18n-default-edit.modal';
   ],
   providers: [I18nDefaultStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.default_title()}" />
+    <okr-header [i18n]="{ title: store.i18n.default_title()}" />
     <ion-content>
       <ion-toolbar>
         <ion-searchbar

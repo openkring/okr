@@ -22,7 +22,7 @@ interface MapConfigI18n {
 };
 
 @Component({
-  selector: 'bk-map-config',
+  selector: 'okr-map-config',
   standalone: true,
   imports: [
     IonGrid, IonRow, IonCol, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
@@ -48,16 +48,16 @@ interface MapConfigI18n {
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-number-input [i18n]="latitudeI18n()" [value]="centerLatitude()" (valueChange)="onFieldChange('centerLatitude', $event)" [maxLength]=8 [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-number-input [i18n]="latitudeI18n()" [value]="centerLatitude()" (valueChange)="onFieldChange('centerLatitude', $event)" [maxLength]=8 [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-number-input [i18n]="longitudeI18n()" [value]="centerLongitude()" (valueChange)="onFieldChange('centerLongitude', $event)" [maxLength]=7 [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-number-input [i18n]="longitudeI18n()" [value]="centerLongitude()" (valueChange)="onFieldChange('centerLongitude', $event)" [maxLength]=7 [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-number-input [i18n]="zoomFactorI18n()" [value]="zoom()" (valueChange)="onFieldChange('zoom', $event)" [maxLength]=2 [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-number-input [i18n]="zoomFactorI18n()" [value]="zoom()" (valueChange)="onFieldChange('zoom', $event)" [maxLength]=2 [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="useCurrentLocationAsCenterI18n()" [checked]="useCurrentLocationAsCenter()" (checkedChange)="onFieldChange('useCurrentLocationAsCenter', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="useCurrentLocationAsCenterI18n()" [checked]="useCurrentLocationAsCenter()" (checkedChange)="onFieldChange('useCurrentLocationAsCenter', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           </ion-grid>

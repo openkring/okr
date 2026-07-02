@@ -21,7 +21,7 @@ import { PersonForm } from '@okr/subject-person-ui';
 import { PersonStore } from './person.store';
 
 @Component({
-  selector: 'bk-person-edit-page',
+  selector: 'okr-person-edit-page',
   standalone: true,
   imports: [
     Header, ChangeConfirmation,
@@ -33,13 +33,13 @@ import { PersonStore } from './person.store';
   providers: [PersonStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" />
+    <okr-header [i18n]="{ title: headerTitle() }" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
 
-      <bk-avatar-toolbar 
+      <okr-avatar-toolbar 
         key="{{parentKey()}}" 
         [title]="toolbarTitle()" 
         modelType="person" 
@@ -48,7 +48,7 @@ import { PersonStore } from './person.store';
       />
 
       @if(formData(); as formData) {
-        <bk-person-form
+        <okr-person-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [i18n]="store.i18n"
@@ -68,15 +68,15 @@ import { PersonStore } from './person.store';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="addresses" [multiple]="true">
-              <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
-              <bk-membership-accordion [member]="person" [readOnly]="isReadOnly()"/>
-              <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="hideAddButton()" />
-              <bk-reservations-accordion [listId]="listId()" [readOnly]="hideAddButton()" />
+              <okr-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
+              <okr-membership-accordion [member]="person" [readOnly]="isReadOnly()"/>
+              <okr-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="hideAddButton()" />
+              <okr-reservations-accordion [listId]="listId()" [readOnly]="hideAddButton()" />
               @if(hasRole('privileged') || hasRole('memberAdmin')) {
-                <bk-personal-rel-accordion [person]="person" [readOnly]="isReadOnly()" />
-                <bk-workrel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
-                <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
-                <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
+                <okr-personal-rel-accordion [person]="person" [readOnly]="isReadOnly()" />
+                <okr-workrel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
+                <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
+                <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
               }
             </ion-accordion-group> 
           </ion-card-content>

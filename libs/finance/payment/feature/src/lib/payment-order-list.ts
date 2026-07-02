@@ -9,7 +9,7 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentStore } from './payment.store';
 
 @Component({
-  selector: 'bk-payment-order-list',
+  selector: 'okr-payment-order-list',
   standalone: true,
   imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonButton, IonFab, IonFabButton, IonIcon, SvgIconPipe],
   providers: [PaymentStore],

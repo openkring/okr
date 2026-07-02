@@ -173,7 +173,7 @@ describe('alert.util', () => {
       await bkPrompt(mockAlertController, 'Header', 'Placeholder', 'OK', 'Cancel');
       expect(mockAlertController.create).toHaveBeenCalledWith({
         header: 'Header',
-        cssClass: 'bk-prompt-alert',
+        cssClass: 'okr-prompt-alert',
         buttons: [
           { text: 'Cancel', role: 'cancel' },
           { text: 'OK', role: 'confirm' }

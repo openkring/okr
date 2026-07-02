@@ -25,7 +25,7 @@ import { OrgForm } from '@okr/subject-org-ui';
 import { OrgStore } from './org.store';
 
 @Component({
-  selector: 'bk-org-edit-modal',
+  selector: 'okr-org-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation,
@@ -37,16 +37,16 @@ import { OrgStore } from './org.store';
   providers: [OrgStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} } `],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(!isNew()) {
-        <bk-avatar-toolbar key="{{parentKey()}}" [title]="toolbarTitle()" modelType="org" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
+        <okr-avatar-toolbar key="{{parentKey()}}" [title]="toolbarTitle()" modelType="org" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
       }
       @if(formData(); as formData) {
-        <bk-org-form
+        <okr-org-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [i18n]="store.i18n"
@@ -65,18 +65,18 @@ import { OrgStore } from './org.store';
           <ion-card>
             <ion-card-content class="ion-no-padding">
               <ion-accordion-group value="addresses" [multiple]="true">
-                <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
-                <bk-membership-accordion [member]="org" [readOnly]="isReadOnly()" modelType="org" />
+                <okr-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
+                <okr-membership-accordion [member]="org" [readOnly]="isReadOnly()" modelType="org" />
 
                 @if(hasRole('privileged') || hasRole('memberAdmin') || hasRole('resourceAdmin')) {
                     @if(resource(); as resource) {
-                      <bk-ownerships-accordion [owner]="org" [defaultResource]="resource" ownerModelType="org" [readOnly]="isReadOnly()" />
-                      <bk-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
+                      <okr-ownerships-accordion [owner]="org" [defaultResource]="resource" ownerModelType="org" [readOnly]="isReadOnly()" />
+                      <okr-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
                     }
-                    <bk-members-accordion [orgKey]="orgKey()" [orgType]="orgType()" [readOnly]="isReadOnly()" />
-                    <bk-bill-accordion [listId]="orgKey()" />
-                    <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
-                    <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+                    <okr-members-accordion [orgKey]="orgKey()" [orgType]="orgType()" [readOnly]="isReadOnly()" />
+                    <okr-bill-accordion [listId]="orgKey()" />
+                    <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
+                    <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
                 }
               </ion-accordion-group>
             </ion-card-content>

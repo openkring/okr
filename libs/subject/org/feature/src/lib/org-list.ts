@@ -16,7 +16,7 @@ import { OrgStore } from './org.store';
 
 
 @Component({
-  selector: 'bk-org-list',
+  selector: 'okr-org-list',
   standalone: true,
   imports: [
     AvatarPipe, SvgIconPipe,
@@ -43,7 +43,7 @@ import { OrgStore } from './org.store';
           <ion-popover trigger="c-orgs" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
-                <bk-menu [menuName]="contextMenuName()"/>
+                <okr-menu [menuName]="contextMenuName()"/>
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -52,7 +52,7 @@ import { OrgStore } from './org.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter
+    <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -79,10 +79,10 @@ import { OrgStore } from './org.store';
   <!-- list data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(selectedOrgsCount() === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(org of filteredOrgs(); track $index) {

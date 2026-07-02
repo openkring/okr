@@ -15,7 +15,7 @@ import { RelationshipToolbar } from '@okr/avatar-ui';
 import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
 
 @Component({
-  selector: 'bk-membership-edit-modal',
+  selector: 'okr-membership-edit-modal',
   standalone: true,
   imports: [
     CommentsAccordion, MembershipForm, RelationshipToolbar, Header,
@@ -24,14 +24,14 @@ import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membersh
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
 
       @if(currentUser(); as currentUser) {
-        <bk-relationship-toolbar
+        <okr-relationship-toolbar
           relType="membership"
           [subjectAvatar]="memberAvatar()"
           [objectAvatar]="orgAvatar()"
@@ -40,7 +40,7 @@ import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membersh
         />
         @if(currentMcat(); as mcat) {
           @if(formData(); as formData) {
-            <bk-membership-form
+            <okr-membership-form
               [formData]="formData"
               (formDataChange)="onFormDataChange($event)"
               [currentUser]="currentUser"
@@ -60,8 +60,8 @@ import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membersh
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="comments">
-              <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
-              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
             </ion-accordion-group>
           </ion-card-content>
         </ion-card>

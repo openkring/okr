@@ -9,7 +9,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarToolbarStore } from './avatar-toolbar.store';
 
 @Component({
-  selector: 'bk-avatar-toolbar',
+  selector: 'okr-avatar-toolbar',
   standalone: true,
   imports: [
     SvgIconPipe,

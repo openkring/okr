@@ -14,7 +14,7 @@ interface DeleteConfig {
 }
 
 @Component({
-  selector: 'bk-esign-delete-confirm-modal',
+  selector: 'okr-esign-delete-confirm-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [

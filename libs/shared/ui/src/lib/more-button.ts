@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { navigateByUrl } from '@okr/shared-util-angular';
 
 @Component({
-  selector: 'bk-more-button',
+  selector: 'okr-more-button',
   standalone: true,
   imports: [
     IonGrid, IonRow, IonCol, IonButton

@@ -10,7 +10,7 @@ import { MatrixRoom, MessagesConfig, MessagesSection } from '@okr/shared-models'
 import { MessagesStore } from './messages-section.store';
 
 @Component({
-  selector: 'bk-messages-section',
+  selector: 'okr-messages-section',
   standalone: true,
   styles: [`
     ion-card-content { padding: 0px; }
@@ -24,13 +24,13 @@ import { MessagesStore } from './messages-section.store';
   ],
   template: `
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if(rooms().length === 0) {
-            <bk-empty-list [message]="store.i18n.chat_empty()" />
+            <okr-empty-list [message]="store.i18n.chat_empty()" />
           } @else {
             <ion-list lines="inset">
               @for(room of rooms(); track room.roomId) {
@@ -44,7 +44,7 @@ import { MessagesStore } from './messages-section.store';
             </ion-list>
           }
           @if(showMoreButton() && !editMode()) {
-            <bk-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
+            <okr-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
           }
         </ion-card-content>
       </ion-card>

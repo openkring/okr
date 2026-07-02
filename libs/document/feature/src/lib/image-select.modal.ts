@@ -17,7 +17,7 @@ import { DocumentStore } from './document.store';
  * This modal requests a user to select an image file and provide some metadata about the image.
  */
 @Component({
-  selector: 'bk-image-select-modal',
+  selector: 'okr-image-select-modal',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -26,16 +26,16 @@ import { DocumentStore } from './document.store';
   ],
   providers: [DocumentStore],
   template: `
-      <bk-header [i18n]="{ title: store.i18n.image_select() }" [isModal]="true" />
+      <okr-header [i18n]="{ title: store.i18n.image_select() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
       <ion-content class="ion-no-padding">
         <ion-button (click)="pickImage()">
           <ion-icon slot="start" src="{{'camera' | svgIcon }}" />
           {{ store.i18n.upload_single() }}
         </ion-button>
-        <bk-image-config
+        <okr-image-config
           [formData]="formData()" (formDataChange)="onFormDataChange($event)"
            [i18n]="store.i18n"
           [readOnly]="isReadOnly()"

@@ -10,7 +10,7 @@ export interface ButtonCopyI18n {
 }
 
 @Component({
-  selector: 'bk-button-copy',
+  selector: 'okr-button-copy',
   standalone: true,
   imports: [
     SvgIconPipe,

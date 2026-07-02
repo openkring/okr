@@ -15,7 +15,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
  * Note: Since ion-button uses Shadow DOM, --box-shadow is its exposed CSS custom property — using it is the correct Ionic way to style the shadow rather than targeting .button-native directly.
  */
 @Component({
-  selector: 'bk-emergency-button-widget',
+  selector: 'okr-emergency-button-widget',
   standalone: true,
   imports: [
     SvgIconPipe,

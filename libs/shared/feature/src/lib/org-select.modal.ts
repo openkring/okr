@@ -9,7 +9,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { OrgSelectStore } from './org-select.store';
 
 @Component({
-  selector: 'bk-org-select-modal',
+  selector: 'okr-org-select-modal',
   standalone: true,
   imports: [
     Header, Spinner,
@@ -23,7 +23,7 @@ import { OrgSelectStore } from './org-select.store';
     ion-list { padding: 0px; }
   `],
   template: `
-    <bk-header
+    <okr-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
       [i18n]="{ title: store.i18n.org_select()}"
@@ -31,10 +31,10 @@ import { OrgSelectStore } from './org-select.store';
     />   
     <ion-content>
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @if(selectedOrgsCount() === 0) {
-          <bk-empty-list [message]="store.i18n.org_empty()" />
+          <okr-empty-list [message]="store.i18n.org_empty()" />
         } @else {
           @for(org of filteredOrgs(); track $index) {
             <ion-list lines="none">

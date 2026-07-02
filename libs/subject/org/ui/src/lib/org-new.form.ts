@@ -14,7 +14,7 @@ import { ZefixCompanyDetails } from '@okr/subject-org-data-access';
 import { ZefixLookup } from './zefix-lookup';
 
 @Component({
-  selector: 'bk-org-new-form',
+  selector: 'okr-org-new-form',
   standalone: true,
   imports: [
     DateInput, TextInput, Chips, NotesInput, ErrorNote, EmailInput, PhoneInput,
@@ -35,30 +35,30 @@ import { ZefixLookup } from './zefix-lookup';
             @if (isOrgTypeVisible()) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-cat-select [category]="types()" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isOrgTypeReadOnly() || isReadOnly()" />
+                  <okr-cat-select [category]="types()" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isOrgTypeReadOnly() || isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
 
             <ion-row class="ion-align-items-center">
               <ion-col [size]="isLegalEntity() ? 10 : 12">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="nameErrors()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
               @if (isLegalEntity()) {
                 <ion-col size="2" class="ion-text-center">
-                  <bk-zefix-lookup [orgName]="name()" (detailsLoaded)="onZefixSelected($event)" />
+                  <okr-zefix-lookup [orgName]="name()" (detailsLoaded)="onZefixSelected($event)" />
                 </ion-col>
               }
             </ion-row>
 
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
 
@@ -67,42 +67,42 @@ import { ZefixLookup } from './zefix-lookup';
             --------------------------------------------------->
             <ion-row>
               <ion-col size="10">
-                <bk-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="streetNameErrors()" />                                                                                                                     
+                <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="streetNameErrors()" />                                                                                                                     
               </ion-col>
               <ion-col size="2">
-                <bk-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="streetNumberErrors()" />                                                                                                                     
+                <okr-text-input [i18n]="streetNumberI18n()" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="streetNumberErrors()" />                                                                                                                     
               </ion-col>
             </ion-row>
 
-            <bk-swisscity-search (citySelected)="onCitySelected($event)" />
+            <okr-swisscity-search (citySelected)="onCitySelected($event)" />
 
             <ion-row>
               <ion-col size="12" size-md="3">
-                <bk-text-input [i18n]="countryCodeI18n()" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="countryCodeI18n()" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
       
               <ion-col size="12" size-md="3">
-                <bk-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="cityI18n()" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6"> 
-                <bk-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="phoneErrors()" />
+                <okr-phone [i18n]="phoneI18n()" [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="phoneErrors()" />
               </ion-col>
               <ion-col size="12">
-                <bk-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="emailErrors()" />                                                                                                                     
+                <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="emailErrors()" />                                                                                                                     
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="urlErrors()" />                                                                                                                     
+                <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="urlErrors()" />                                                                                                                     
               </ion-col>
             </ion-row>
 
@@ -110,13 +110,13 @@ import { ZefixLookup } from './zefix-lookup';
             
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
@@ -125,11 +125,11 @@ import { ZefixLookup } from './zefix-lookup';
       </ion-card>
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
       @if(hasRole('admin')) { 
-        <bk-notes-input [i18n]="notesI18n()" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
+        <okr-notes-input [i18n]="notesI18n()" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
       }
     </form>
   }

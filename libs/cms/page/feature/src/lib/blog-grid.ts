@@ -8,7 +8,7 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
  * Responsive 2–4 column grid (Pinterest / Medium style) using CSS Grid.
  */
 @Component({
-  selector: 'bk-blog-grid',
+  selector: 'okr-blog-grid',
   standalone: true,
   imports: [
     SectionDispatcher
@@ -34,10 +34,10 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
         <div class="grid-item" [id]="section.okey" (click)="sectionClick.emit(section.okey)">
           @if (editMode()) {
             <div class="section-wrapper editable">
-              <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+              <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
             </div>
           } @else {
-            <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+            <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
           }
         </div>
       }

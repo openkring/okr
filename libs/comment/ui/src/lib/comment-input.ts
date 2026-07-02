@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 import { IonCol, IonRow, IonTextarea } from '@ionic/angular/standalone';
 
 @Component({
-  selector: 'bk-comment-input',
+  selector: 'okr-comment-input',
   standalone: true,
   imports: [
     IonRow, IonCol, IonTextarea

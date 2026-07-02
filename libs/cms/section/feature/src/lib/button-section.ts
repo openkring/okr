@@ -15,7 +15,7 @@ import { SectionStore } from './section.store';
 
 
 @Component({
-  selector: 'bk-button-section',
+  selector: 'okr-button-section',
   standalone: true,
   imports: [
     Spinner, ButtonWidget, EmergencyButtonWidget, OptionalCardHeader,
@@ -29,14 +29,14 @@ import { SectionStore } from './section.store';
   template: `
     @if(section(); as section) {
       <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <!-- we need to handle the emergency-button differently because of a different button style and action -->
           @if(name() === 'emergency-button') {
             <ion-grid>
               <ion-row>
                 <ion-col size="12">
-                  <bk-emergency-button-widget [section]="section" [editMode]="editMode()" (send)="store.sendEmergencyMessage()" />
+                  <okr-emergency-button-widget [section]="section" [editMode]="editMode()" (send)="store.sendEmergencyMessage()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -51,7 +51,7 @@ import { SectionStore } from './section.store';
               <ion-grid>
                 <ion-row>
                   <ion-col [size]="colSizeButton()">
-                    <bk-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
                   </ion-col>
                   <ion-col [size]="colSizeText()">
                     <div [innerHTML]="content()"></div>
@@ -66,7 +66,7 @@ import { SectionStore } from './section.store';
                     <div [innerHTML]="content()"></div>
                   </ion-col>
                   <ion-col [size]="colSizeButton()">
-                    <bk-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -75,7 +75,7 @@ import { SectionStore } from './section.store';
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
@@ -94,20 +94,20 @@ import { SectionStore } from './section.store';
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
             }
             @default {  <!-- VP.None -->
-              <bk-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+              <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
             }
           }
         }
         </ion-card-content>
       </ion-card>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

@@ -10,7 +10,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-u
 import { ReservationStore } from './reservation.store';
 
 @Component({
-  selector: 'bk-reservations-accordion',
+  selector: 'okr-reservations-accordion',
   standalone: true,
   imports: [
     SvgIconPipe, DurationPipe,
@@ -31,7 +31,7 @@ import { ReservationStore } from './reservation.store';
     </ion-item>
     <div slot="content">
       @if(reservations().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(reservation of reservations(); track $index) {

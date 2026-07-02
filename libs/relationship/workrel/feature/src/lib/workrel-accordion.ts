@@ -14,7 +14,7 @@ import { WorkrelNamePipe } from '@okr/relationship-workrel-util';
 import { WorkrelStore } from './workrel.store';
 
 @Component({
-  selector: 'bk-workrel-accordion',
+  selector: 'okr-workrel-accordion',
   standalone: true,
   imports: [
     AvatarPipe, FullNamePipe, SvgIconPipe, WorkrelNamePipe, AsyncPipe,
@@ -37,7 +37,7 @@ import { WorkrelStore } from './workrel.store';
     </ion-item>
     <div slot="content">
         @if(workRels().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(workrel of workRels(); track $index) {

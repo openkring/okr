@@ -10,7 +10,7 @@ import { ResponsibilitySectionStore } from './responsibility-section.store';
 import { AvatarLabel } from '@okr/avatar-ui';
 
 @Component({
-  selector: 'bk-responsibility-section',
+  selector: 'okr-responsibility-section',
   standalone: true,
   imports: [
     Spinner, AvatarLabel,
@@ -23,7 +23,7 @@ import { AvatarLabel } from '@okr/avatar-ui';
   providers: [ResponsibilitySectionStore],
   template: `
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       <ion-card>
         <ion-card-content>
@@ -36,7 +36,7 @@ import { AvatarLabel } from '@okr/avatar-ui';
               </ion-col>
               @if(avatar(); as avatar) {
                 <ion-col size="12" size-md="9" (click)="showPerson(avatar)">
-                  <bk-avatar-label 
+                  <okr-avatar-label 
                     [key]="avatarKey()" 
                     [label]="name()" 
                     [color]="color()"

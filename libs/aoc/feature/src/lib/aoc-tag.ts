@@ -11,7 +11,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AocTagStore, TagItem } from './aoc-tag.store';
 
 @Component({
-  selector: 'bk-aoc-tag',
+  selector: 'okr-aoc-tag',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, FormsModule,
@@ -22,7 +22,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
   ],
   providers: [AocTagStore],
   template: `
-    <bk-header [i18n]="{ title: aocTagStore.i18n.title() }" />
+    <okr-header [i18n]="{ title: aocTagStore.i18n.title() }" />
     <ion-content>
 
       <!-- Filter toolbar -->

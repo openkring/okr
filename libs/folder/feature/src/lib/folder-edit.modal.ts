@@ -11,20 +11,20 @@ import { FolderForm } from '@okr/folder-ui';
 import { FOLDER_I18N_KEYS, FolderI18n } from '@okr/folder-util';
 
 @Component({
-  selector: 'bk-folder-edit-modal',
+  selector: 'okr-folder-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, FolderForm,
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-folder-form
+        <okr-folder-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"

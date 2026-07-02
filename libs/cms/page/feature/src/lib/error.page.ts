@@ -19,7 +19,7 @@ import { PFX } from './scope';
  * The component displays a background image, logo, title, subtitle, and help text.
  */
 @Component({
-  selector: 'bk-error-page',
+  selector: 'okr-error-page',
   standalone: true,
   providers: [PageStore],
   imports: [
@@ -76,7 +76,7 @@ import { PFX } from './scope';
     }
   `],
   template: `
-    <bk-header [i18n]="{ title: title() }" [showCloseButton]="false" />
+    <okr-header [i18n]="{ title: title() }" [showCloseButton]="false" />
     <ion-content>
       <div class="error-container">
         <img class="error-image" [src]="bannerUrl()" alt="Background" />

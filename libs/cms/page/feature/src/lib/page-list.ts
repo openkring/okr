@@ -12,7 +12,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { PageStore } from './page.store';
 
 @Component({
-  selector: 'bk-page-all-list',
+  selector: 'okr-page-all-list',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -34,7 +34,7 @@ import { PageStore } from './page.store';
           <ion-popover trigger="c_page" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
-                <bk-menu [menuName]="contextMenuName()"/>
+                <okr-menu [menuName]="contextMenuName()"/>
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -50,7 +50,7 @@ import { PageStore } from './page.store';
     </ion-toolbar>
 
   <!-- search and filters -->
-  <bk-list-filter
+  <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -76,13 +76,13 @@ import { PageStore } from './page.store';
       </ion-item>
     </ion-toolbar>
   </ion-header>
-<bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+<okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
 <ion-content #content>
   @if(isLoading()) {
-    <bk-list-skeleton [rows]="6" />
+    <okr-list-skeleton [rows]="6" />
   } @else {
     @if (filteredPages().length === 0) {
-      <bk-empty-list [message]="store.i18n.empty()" />
+      <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
         @for(page of visiblePages(); track page.okey) {

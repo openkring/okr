@@ -2,7 +2,7 @@
   "name": "cms-section-feature",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/cms/section/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:section", "platform:mobile", "platform:web"],
   "targets": {

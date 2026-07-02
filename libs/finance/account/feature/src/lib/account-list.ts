@@ -12,7 +12,7 @@ import { FlatAccountNode } from '@okr/finance-account-util';
 import { AccountStore } from './account.store';
 
 @Component({
-  selector: 'bk-account-list',
+  selector: 'okr-account-list',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -35,7 +35,7 @@ import { AccountStore } from './account.store';
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content>
-                <bk-menu [menuName]="contextMenuName()" />
+                <okr-menu [menuName]="contextMenuName()" />
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -69,12 +69,12 @@ import { AccountStore } from './account.store';
 
   <ion-content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
       <ion-backdrop />
     } @else if(!store.selectedRootKey()) {
-      <bk-empty-list [message]="store.i18n.select_hint()" />
+      <okr-empty-list [message]="store.i18n.select_hint()" />
     } @else if(visibleNodes().length === 0) {
-      <bk-empty-list [message]="store.i18n.empty()" />
+      <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
         @for(node of visibleNodes(); track node.account.okey) {

@@ -27,7 +27,7 @@ import { TemplateStore } from './template.store';
 type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
 
 @Component({
-  selector: 'bk-template-edit-page',
+  selector: 'okr-template-edit-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [TemplateStore],
@@ -89,7 +89,7 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
       </ion-toolbar>
 
       @if(showConfirmation()) {
-        <bk-change-confirmation [i18n]="changeConfirmationI18n()"
+        <okr-change-confirmation [i18n]="changeConfirmationI18n()"
           (saveClicked)="save()" (cancelClicked)="cancel()" />
       }
 

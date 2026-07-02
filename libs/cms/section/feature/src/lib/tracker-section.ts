@@ -22,7 +22,7 @@ import { TrackerSectionStore } from './tracker-section.store';
  * tbd: pause tracking, add speed, heading, accuracy, altitude, altitudeAccuracy
  */
 @Component({
-  selector: 'bk-tracker-section',
+  selector: 'okr-tracker-section',
   standalone: true,
   imports: [
     Spinner, ButtonCopy, OptionalCardHeader,
@@ -39,7 +39,7 @@ import { TrackerSectionStore } from './tracker-section.store';
   template: `
     @if(section()) {
       <ion-card>
-        <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-grid>
             <ion-row>
@@ -72,7 +72,7 @@ import { TrackerSectionStore } from './tracker-section.store';
                   <ion-label>Longitude: </ion-label>
                   <ion-label>{{ longitude()}}</ion-label>
                   @if(!editMode()) {
-                    <bk-button-copy [value]="longitude()" [i18n]="buttonCopyI18n()" />
+                    <okr-button-copy [value]="longitude()" [i18n]="buttonCopyI18n()" />
                   }
                 </ion-item>
               </ion-col>
@@ -81,7 +81,7 @@ import { TrackerSectionStore } from './tracker-section.store';
                   <ion-label>Latitude: </ion-label>
                   <ion-label>{{ latitude()}}</ion-label>
                   @if(!editMode()) {
-                    <bk-button-copy [value]="latitude()" [i18n]="buttonCopyI18n()" />
+                    <okr-button-copy [value]="latitude()" [i18n]="buttonCopyI18n()" />
                   }
                 </ion-item>
               </ion-col>
@@ -90,7 +90,7 @@ import { TrackerSectionStore } from './tracker-section.store';
                   <ion-label>Altitude: </ion-label>
                   <ion-label>{{ altitude()}}</ion-label>
                   @if(!editMode()) {
-                    <bk-button-copy [value]="altitude()" [i18n]="buttonCopyI18n()" />
+                    <okr-button-copy [value]="altitude()" [i18n]="buttonCopyI18n()" />
                   }
                 </ion-item>
               </ion-col>
@@ -100,7 +100,7 @@ import { TrackerSectionStore } from './tracker-section.store';
         </ion-card-content>
       </ion-card>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

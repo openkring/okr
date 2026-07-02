@@ -9,7 +9,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
 
 @Component({
-  selector: 'bk-avatar-select',
+  selector: 'okr-avatar-select',
   standalone: true,
   imports: [
     CategoryPlainNamePipe, AvatarPipe, SvgIconPipe,

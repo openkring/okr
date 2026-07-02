@@ -27,7 +27,7 @@ import { StringSelect } from './string-select';
  * 7. strings (a string-select)
  */
 @Component({
-  selector: 'bk-list-filter',
+  selector: 'okr-list-filter',
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
@@ -40,37 +40,37 @@ import { StringSelect } from './string-select';
         <ion-row class="ion-align-items-center">
           @if(showSearch()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
-              <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@search.label' | translate | async }}" />
+              <okr-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@search.label' | translate | async }}" />
             </ion-col>
           }
           @if(showTags()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding">
-              <bk-single-tag [selectedTag]="selectedTag()" (selectedTagChange)="tagChanged.emit($event)" [tags]="tags()" />
+              <okr-single-tag [selectedTag]="selectedTag()" (selectedTagChange)="tagChanged.emit($event)" [tags]="tags()" />
             </ion-col>
           }
           @if(showCategory()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
-              <bk-cat-select [selectedItemName]="selectedCategory()" (selectedItemNameChange)="categoryChanged.emit($event)" [category]="categories()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
+              <okr-cat-select [selectedItemName]="selectedCategory()" (selectedItemNameChange)="categoryChanged.emit($event)" [category]="categories()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showType()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
-              <bk-cat-select [selectedItemName]="selectedType()" (selectedItemNameChange)="typeChanged.emit($event)" [category]="types()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
+              <okr-cat-select [selectedItemName]="selectedType()" (selectedItemNameChange)="typeChanged.emit($event)" [category]="types()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showYear()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding">
-              <bk-year-select [selectedYear]="selectedYear()" (selectedYearChange)="yearChanged.emit($event)" [years]="yearList()" [label]="yearLabel()!" [readOnly]="false" [showAllYears]="true" />
+              <okr-year-select [selectedYear]="selectedYear()" (selectedYearChange)="yearChanged.emit($event)" [years]="yearList()" [label]="yearLabel()!" [readOnly]="false" [showAllYears]="true" />
             </ion-col>
           }
           @if(showState()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding">
-              <bk-cat-select [selectedItemName]="selectedState()" (selectedItemNameChange)="stateChanged.emit($event)" [category]="states()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
+              <okr-cat-select [selectedItemName]="selectedState()" (selectedItemNameChange)="stateChanged.emit($event)" [category]="states()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showStrings()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
-              <bk-string-select [i18n]="{ name: stringsName(), label: stringsLabel() }" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [readOnly]="false" />
+              <okr-string-select [i18n]="{ name: stringsName(), label: stringsLabel() }" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [readOnly]="false" />
             </ion-col>
           }
         </ion-row>
@@ -88,7 +88,7 @@ import { StringSelect } from './string-select';
 })
 export class ListFilter {
   // inputs
-  // data inputs per filter (optional, if undefined (= not used on the bk-list-filter), the filter is not shown)
+  // data inputs per filter (optional, if undefined (= not used on the okr-list-filter), the filter is not shown)
   public tags = input<string>('');
   public types = input<CategoryListModel>();
   public categories = input<CategoryListModel>();

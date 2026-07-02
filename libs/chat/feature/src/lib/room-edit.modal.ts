@@ -9,21 +9,21 @@ import { RoomEditForm } from '@okr/chat-ui';
 import { MatrixChatStore } from './matrix-chat.store';
 
 @Component({
-  selector: 'bk-room-edit-modal',
+  selector: 'okr-room-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, RoomEditForm,
     IonContent
 ],
   template: `
-    <bk-header [i18n]="{ title: header() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: header() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
-          <bk-room-edit-form
+          <okr-room-edit-form
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"

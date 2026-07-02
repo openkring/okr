@@ -10,7 +10,7 @@ import { SocialPost } from '@okr/social-feed-ui';
 
 
 @Component({
-  selector: 'bk-social-feed-list',
+  selector: 'okr-social-feed-list',
   standalone: true,
   imports: [ 
     IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonList, IonItem,
@@ -24,7 +24,7 @@ import { SocialPost } from '@okr/social-feed-ui';
       <ion-list>
         @for(post of posts(); track post.id) {
           <ion-item>
-            <bk-social-post [post]="post" />
+            <okr-social-post [post]="post" />
           </ion-item>
         }
       </ion-list>

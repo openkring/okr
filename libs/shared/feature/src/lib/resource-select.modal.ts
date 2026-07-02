@@ -8,7 +8,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { ResourceSelectStore } from './resource-select.store';
 
 @Component({
-  selector: 'bk-resource-select-modal',
+  selector: 'okr-resource-select-modal',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -22,7 +22,7 @@ import { ResourceSelectStore } from './resource-select.store';
     ion-list { padding: 0px; }
   `],
   template: `
-    <bk-header
+    <okr-header
       [searchTerm]="searchTerm()"
       (searchTermChange)="store.setSearchTerm($event)"
       [isSearchable]="true"
@@ -31,10 +31,10 @@ import { ResourceSelectStore } from './resource-select.store';
     />   
     <ion-content>
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @if(selectedResourcesCount() === 0) {
-          <bk-empty-list [message]="store.i18n.resource_empty()" />
+          <okr-empty-list [message]="store.i18n.resource_empty()" />
         } @else {
           @for(resource of filteredResources(); track $index) {
             <ion-list lines="none">

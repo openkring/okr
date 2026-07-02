@@ -16,7 +16,7 @@ import { CalendarStore } from './calendar-section.store';
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
 @Component({
-  selector: 'bk-events-section',
+  selector: 'okr-events-section',
   standalone: true,
   styles: [
     `
@@ -42,13 +42,13 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     @if(isLoading()) {
-    <bk-spinner />
+    <okr-spinner />
     } @else {        
     <ion-card>
-      <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
         @if(numberOfEvents() === 0) {
-          <bk-empty-list [message]="store.i18n.empty()" />
+          <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
             @for(event of calevents(); track event.okey) {
@@ -60,7 +60,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           </ion-list>
         }
         @if(showMoreButton() && !editMode()) {
-          <bk-more-button class="events-more" [url]="moreUrl()" [label]="store.i18n.more()" />
+          <okr-more-button class="events-more" [url]="moreUrl()" [label]="store.i18n.more()" />
         }
       </ion-card-content>
     </ion-card>

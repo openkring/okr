@@ -19,7 +19,7 @@ import { ContextDiagramStore, ContextDiagramNode, ContextDiagramEdge } from './c
 import { ContextDiagramConfigModal } from './context-diagram-config.modal';
 
 @Component({
-  selector: 'bk-context-diagram-section',
+  selector: 'okr-context-diagram-section',
   standalone: true,
   providers: [provideEchartsCore({ echarts }), ContextDiagramStore],
   imports: [
@@ -34,10 +34,10 @@ import { ContextDiagramConfigModal } from './context-diagram-config.modal';
   `],
   template: `
     @if (isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (echartsOption(); as opt) {
             <div echarts [options]="opt" class="chart"

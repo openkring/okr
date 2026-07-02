@@ -15,7 +15,7 @@ interface IframeConfigI18n {
 }
 
 @Component({
-  selector: 'bk-iframe-config',
+  selector: 'okr-iframe-config',
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid,
@@ -36,10 +36,10 @@ interface IframeConfigI18n {
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <bk-url [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" />
+                <okr-url [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="styleI18n()" [value]="style()" (valueChange)="onFieldChange('style', $event)" [readOnly]="readOnly()" [maxLength]=200 />
+                <okr-text-input [i18n]="styleI18n()" [value]="style()" (valueChange)="onFieldChange('style', $event)" [readOnly]="readOnly()" [maxLength]=200 />
               </ion-col>
             </ion-row>
           </ion-grid>

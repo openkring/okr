@@ -35,7 +35,7 @@ const CardSelectStore = signalStore(
 );
 
 @Component({
-  selector: 'bk-card-select-modal',
+  selector: 'okr-card-select-modal',
   standalone: true,
   providers: [CardSelectStore],
   imports: [
@@ -49,7 +49,7 @@ const CardSelectStore = signalStore(
   `],
   template: `
     @if(slug()) {
-      <bk-header [i18n]="{ title: store.headerTitle() }" [isModal]="true" />
+      <okr-header [i18n]="{ title: store.headerTitle() }" [isModal]="true" />
       <ion-content>
         <ion-grid>
           <ion-row>

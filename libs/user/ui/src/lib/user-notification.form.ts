@@ -9,7 +9,7 @@ import { coerceBoolean } from "@okr/shared-util-core";
 import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, userNotificationFormValidations } from "@okr/user-util";
 
 @Component({
-  selector: 'bk-user-notification-form',
+  selector: 'okr-user-notification-form',
   standalone: true,
   imports: [
     CategoryOld,
@@ -28,10 +28,10 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, user
           <ion-grid>
             <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-category-old [i18n]="newsDeliveryI18n()" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
+              <okr-category-old [i18n]="newsDeliveryI18n()" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-category-old [i18n]="invoiceDeliveryI18n()" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
+              <okr-category-old [i18n]="invoiceDeliveryI18n()" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
             </ion-col>
             </ion-row>
           </ion-grid>

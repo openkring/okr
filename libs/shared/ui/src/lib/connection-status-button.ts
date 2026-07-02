@@ -8,7 +8,7 @@ import { PFX } from './scope';
 type Status = 'online' | 'slow' | 'offline';
 
 @Component({
-  selector: 'bk-connection-status-button',
+  selector: 'okr-connection-status-button',
   standalone: true,
   imports: [
     IonButton

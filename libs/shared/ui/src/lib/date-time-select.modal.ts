@@ -12,7 +12,7 @@ export interface DateTimeSelectModalI18n {
 }
 
 @Component({
-  selector: 'bk-date-time-select-modal',
+  selector: 'okr-date-time-select-modal',
   standalone: true,
   imports: [
 
@@ -20,7 +20,7 @@ export interface DateTimeSelectModalI18n {
     IonContent, IonDatetime
   ],
   template: `
-    <bk-header [i18n]="{ title: i18n().title }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-datetime
         #datetimePicker

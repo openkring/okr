@@ -2,7 +2,7 @@
   "name": "relationship-workrel-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/workrel/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:workrel", "platform:mobile", "platform:web"],
   "targets": {

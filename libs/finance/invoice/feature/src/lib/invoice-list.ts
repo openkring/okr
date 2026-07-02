@@ -13,7 +13,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { InvoiceStore } from './invoice.store';
 
 @Component({
-  selector: 'bk-invoice-list',
+  selector: 'okr-invoice-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [InvoiceStore],
@@ -58,14 +58,14 @@ import { InvoiceStore } from './invoice.store';
               (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()" />
+                  <okr-menu [menuName]="contextMenuName()" />
                 </ion-content>
               </ng-template>
             </ion-popover>
           } -->
         </ion-buttons>
       </ion-toolbar>
-      <bk-list-filter
+      <okr-list-filter
         (searchTermChanged)="onSearchTermChange($event)"
         (stateChanged)="onStateSelected($event)" [states]="states()"
         (yearChanged)="onYearSelected($event)" [years]="years()"
@@ -74,9 +74,9 @@ import { InvoiceStore } from './invoice.store';
 
     <ion-content>
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if(filteredInvoices().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
           @for(invoice of filteredInvoices(); track invoice.okey) {

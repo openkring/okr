@@ -7,14 +7,14 @@ import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@okr/s
 import { CalEventStore } from './calevent.store';
 
 @Component({
-  selector: 'bk-schedule-table-modal',
+  selector: 'okr-schedule-table-modal',
   standalone: true,
   imports: [
     IonContent, IonAvatar,
     Header,
   ],
   template: `
-    <bk-header [i18n]="{ title: '@schedule.tableTitle' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: '@schedule.tableTitle' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <div class="schedule-table-wrapper">
         <table class="schedule-table">

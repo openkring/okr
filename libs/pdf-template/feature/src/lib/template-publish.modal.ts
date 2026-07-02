@@ -8,7 +8,7 @@ import {
 } from '@ionic/angular/standalone';
 
 @Component({
-  selector: 'bk-template-publish-modal',
+  selector: 'okr-template-publish-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [

@@ -8,7 +8,7 @@ import { getAge } from '@okr/shared-util-core';
 import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membership-util';
 
 @Component({
-  selector: 'bk-scs-member-fee-edit-form',
+  selector: 'okr-scs-member-fee-edit-form',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -37,39 +37,39 @@ import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membe
               <!-- fee amounts — name maps to @input.{name}.label i18n key -->
               <ion-row>
                 <ion-col size="6" size-md="4">
-                  <bk-number-input [i18n]="jbI18n()" [value]="fd.jb" (valueChange)="onFieldChange('jb', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-number-input [i18n]="jbI18n()" [value]="fd.jb" (valueChange)="onFieldChange('jb', $event, fd)" [readOnly]="readOnly()" />
                 </ion-col>
                 <ion-col size="6" size-md="4">
-                  <bk-number-input [i18n]="srvI18n()" [value]="fd.srv" (valueChange)="onFieldChange('srv', $event, fd)" [readOnly]="readOnly()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="6" size-md="4">
-                  <bk-number-input [i18n]="bevI18n()" [value]="fd.bev" (valueChange)="onFieldChange('bev', $event, fd)" [readOnly]="readOnly()" />
-                </ion-col>
-                <ion-col size="6" size-md="4">
-                  <bk-number-input [i18n]="entryFeeI18n()" [value]="fd.entryFee" (valueChange)="onFieldChange('entryFee', $event, fd)" [readOnly]="readOnly()" />
-                </ion-col>
-                <ion-col size="6" size-md="4">
-                  <bk-number-input [i18n]="lockerI18n()" [value]="fd.locker" (valueChange)="onFieldChange('locker', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-number-input [i18n]="srvI18n()" [value]="fd.srv" (valueChange)="onFieldChange('srv', $event, fd)" [readOnly]="readOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="6" size-md="4">
-                  <bk-number-input [i18n]="skiffI18n()" [value]="fd.skiff" (valueChange)="onFieldChange('skiff', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-number-input [i18n]="bevI18n()" [value]="fd.bev" (valueChange)="onFieldChange('bev', $event, fd)" [readOnly]="readOnly()" />
                 </ion-col>
                 <ion-col size="6" size-md="4">
-                  <bk-number-input [i18n]="skiffInsuranceI18n()" [value]="fd.skiffInsurance" (valueChange)="onFieldChange('skiffInsurance', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-number-input [i18n]="entryFeeI18n()" [value]="fd.entryFee" (valueChange)="onFieldChange('entryFee', $event, fd)" [readOnly]="readOnly()" />
+                </ion-col>
+                <ion-col size="6" size-md="4">
+                  <okr-number-input [i18n]="lockerI18n()" [value]="fd.locker" (valueChange)="onFieldChange('locker', $event, fd)" [readOnly]="readOnly()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="6" size-md="4">
+                  <okr-number-input [i18n]="skiffI18n()" [value]="fd.skiff" (valueChange)="onFieldChange('skiff', $event, fd)" [readOnly]="readOnly()" />
+                </ion-col>
+                <ion-col size="6" size-md="4">
+                  <okr-number-input [i18n]="skiffInsuranceI18n()" [value]="fd.skiffInsurance" (valueChange)="onFieldChange('skiffInsurance', $event, fd)" [readOnly]="readOnly()" />
                 </ion-col>
               </ion-row>
 
               <!-- rebate -->
               <ion-row>
                 <ion-col size="6" size-md="4">
-                  <bk-number-input [i18n]="rebateI18n()" [value]="fd.rebate" (valueChange)="onFieldChange('rebate', $event, fd)" [readOnly]="readOnly()" />
+                  <okr-number-input [i18n]="rebateI18n()" [value]="fd.rebate" (valueChange)="onFieldChange('rebate', $event, fd)" [readOnly]="readOnly()" />
                 </ion-col>
                 <ion-col size="6" size-md="4">
-                  <bk-string-select [i18n]="rebateReasonI18n()"
+                  <okr-string-select [i18n]="rebateReasonI18n()"
                     [selectedString]="fd.rebateReason"
                     (selectedStringChange)="onFieldChange('rebateReason', $event, fd)"
                     [readOnly]="readOnly()"
@@ -80,7 +80,7 @@ import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membe
               <!-- invoice state -->
               <ion-row>
                 <ion-col size="6" size-md="4">
-                  <bk-string-select [i18n]="invoiceStateI18n()"
+                  <okr-string-select [i18n]="invoiceStateI18n()"
                     [selectedString]="fd.state"
                     (selectedStringChange)="onFieldChange('state', $event, fd)"
                     [readOnly]="readOnly()"
@@ -90,7 +90,7 @@ import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membe
             </ion-grid>
           </ion-card-content>
         </ion-card>
-        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event, fd)" [readOnly]="false" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event, fd)" [readOnly]="false" />
       </form>
     }
   `

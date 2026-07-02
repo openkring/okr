@@ -11,21 +11,21 @@ import { IconEditForm } from '@okr/cms-icon-ui';
 import { ICON_I18N_KEYS, IconI18n } from '@okr/cms-icon-util';
 
 @Component({
-  selector: 'bk-icon-edit-modal',
+  selector: 'okr-icon-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, IconEditForm,
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
-          <bk-icon-edit-form
+          <okr-icon-edit-form
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"

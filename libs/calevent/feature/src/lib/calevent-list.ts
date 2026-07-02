@@ -29,7 +29,7 @@ import { CalEventStore } from './calevent.store';
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
 @Component({
-    selector: 'bk-calevent-list',
+    selector: 'okr-calevent-list',
     standalone: true,
     imports: [
       CalEventDurationPipe, SvgIconPipe, PartPipe,
@@ -87,7 +87,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
+                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -118,7 +118,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         }
 
         <!-- search and filters -->
-        <bk-list-filter
+        <okr-list-filter
           (searchTermChanged)="onSearchtermChange($event)"
           (tagChanged)="onTagSelected($event)" [tags]="tags()"
           (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -154,10 +154,10 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
   <!-- list data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(filteredCalEventsCount() === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         @if(isListView() === false) {
           <ion-card>
@@ -180,7 +180,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
                 <ion-label>{{event.name}}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ event.locationKey | part:true }}</ion-label>
                 @if(showMenu()) {
-                <ion-label class="ion-hide-md-down"><bk-avatar-display [avatars]="event.responsiblePersons" /></ion-label>
+                <ion-label class="ion-hide-md-down"><okr-avatar-display [avatars]="event.responsiblePersons" /></ion-label>
                 }
               </ion-item>
             }

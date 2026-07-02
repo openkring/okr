@@ -8,7 +8,7 @@ import { AocI18n } from '@okr/aoc-util';
 interface CountRow { key: string; count: number; }
 
 @Component({
-  selector: 'bk-session-statistics-modal',
+  selector: 'okr-session-statistics-modal',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,

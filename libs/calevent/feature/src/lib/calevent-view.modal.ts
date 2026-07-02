@@ -22,7 +22,7 @@ function storeToView(d: string): string {
 }
 
 @Component({
-  selector: 'bk-calevent-view-modal',
+  selector: 'okr-calevent-view-modal',
   standalone: true,
   imports: [
     PartPipe, SvgIconPipe,
@@ -38,7 +38,7 @@ function storeToView(d: string): string {
     .responsible-name { font-size: 0.9rem; }
   `],
   template: `
-    <bk-header [i18n]="{ title: calevent().name }" [isModal]="true" />
+    <okr-header [i18n]="{ title: calevent().name }" [isModal]="true" />
 
     <ion-content class="ion-padding">    
       <ion-card>
@@ -82,7 +82,7 @@ function storeToView(d: string): string {
                 <ion-label>
                     <p class="view-label">{{ i18n.responsible() }}</p>
                     <div class="responsible-row">
-                      <bk-avatar-display [avatars]="calevent().responsiblePersons" [showName]="true" />
+                      <okr-avatar-display [avatars]="calevent().responsiblePersons" [showName]="true" />
                     </div>
                 </ion-label>
                 </ion-item>
@@ -119,12 +119,12 @@ function storeToView(d: string): string {
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="documents">
               @if(calevent().isOpen) {
-                <bk-attendees-accordion [calevent]="calevent()" [readOnly]="true" />
+                <okr-attendees-accordion [calevent]="calevent()" [readOnly]="true" />
               } @else {
-                <bk-invitees-accordion [calevent]="calevent()" [readOnly]="true" />
+                <okr-invitees-accordion [calevent]="calevent()" [readOnly]="true" />
               }
-              <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="true" />
-              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="true" />
+              <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="true" />
+              <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="true" />
             </ion-accordion-group>
           </ion-card-content>
         </ion-card>

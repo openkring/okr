@@ -13,7 +13,7 @@ import { PersonalRelNamePipe } from '@okr/relationship-personal-rel-util';
 import { PersonalRelStore } from './personal-rel.store';
 
 @Component({
-  selector: 'bk-personal-rel-list',
+  selector: 'okr-personal-rel-list',
   standalone: true,
   imports: [
     SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe, AsyncPipe,
@@ -38,7 +38,7 @@ import { PersonalRelStore } from './personal-rel.store';
               <ion-popover trigger="c-prel" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                 <ng-template>
                   <ion-content>
-                    <bk-menu [menuName]="contextMenuName()"/>
+                    <okr-menu [menuName]="contextMenuName()"/>
                   </ion-content>
                 </ng-template>
               </ion-popover>
@@ -48,7 +48,7 @@ import { PersonalRelStore } from './personal-rel.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter
+    <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -68,10 +68,10 @@ import { PersonalRelStore } from './personal-rel.store';
   <!-- list data -->
   <ion-content #content>
     @if(isLoading() === true) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(selectedPersonalRelsCount() === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(personalRel of filteredPersonalRels(); track $index) {

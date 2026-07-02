@@ -20,7 +20,7 @@ export interface IbanInputI18n {
 }
 
 @Component({
-  selector: 'bk-iban',
+  selector: 'okr-iban',
   standalone: true,
   imports: [
     MaskitoDirective, FormsModule,
@@ -48,7 +48,7 @@ export interface IbanInputI18n {
         [maskitoElement]="maskPredicate"
       />
       @if (isCopyable()) {
-        <bk-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
+        <okr-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
       }
     </ion-item>
     @if(i18n().helper) {

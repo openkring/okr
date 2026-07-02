@@ -31,7 +31,7 @@ function newField(type: FieldType, order: number): Field {
 }
 
 @Component({
-  selector: 'bk-form-builder-editor',
+  selector: 'okr-form-builder-editor',
   standalone: true,
   imports: [
     SvgIconPipe, Header, ChangeConfirmation,
@@ -53,16 +53,16 @@ function newField(type: FieldType, order: number): Field {
     .source-view   { margin: 8px 16px; padding: 12px; background: var(--ion-color-light); border-radius: 6px; font-family: monospace; font-size: 12px; white-space: pre; overflow: auto; }
   `],
   template: `
-    <bk-header [i18n]="{ title: 'Formular-Editor: ' + formData().name }" [isModal]="true" />
+    <okr-header [i18n]="{ title: 'Formular-Editor: ' + formData().name }" [isModal]="true" />
     @if (isDirty()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n" (saveClicked)="save()" (cancelClicked)="cancel()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n" (saveClicked)="save()" (cancelClicked)="cancel()" />
     }
     <ion-content>
       <div class="editor-layout" cdkDropListGroup>
 
         <!-- left: field-type library -->
         <div class="library-panel">
-          <bk-field-type-library (fieldAdded)="addField($event)" />
+          <okr-field-type-library (fieldAdded)="addField($event)" />
         </div>
 
         <!-- right: canvas -->
@@ -111,7 +111,7 @@ function newField(type: FieldType, order: number): Field {
               <div class="canvas-empty">Noch keine Felder zum Vorschauen.</div>
             } @else {
               <div style="padding: 8px 16px 24px;">
-                <bk-form-renderer [definition]="previewDefinition()" [showSubmit]="false" />
+                <okr-form-renderer [definition]="previewDefinition()" [showSubmit]="false" />
               </div>
             }
           } @else {

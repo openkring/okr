@@ -35,7 +35,7 @@ export interface OwnershipFormI18n {
 }
 
 @Component({
-  selector: 'bk-ownership-form',
+  selector: 'okr-ownership-form',
   standalone: true,
   imports: [
     Chips, NotesInput, DateInput, TextInput, NumberInput,
@@ -51,7 +51,7 @@ export interface OwnershipFormI18n {
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                    <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                   </ion-col>
                 </ion-row>
               }
@@ -61,15 +61,15 @@ export interface OwnershipFormI18n {
                 --------------------------------------------------->
                 @if(ownerModelType() === 'person') {
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="ownerName1I18n()" [value]="ownerName1()" [readOnly]="true" />
+                    <okr-text-input [i18n]="ownerName1I18n()" [value]="ownerName1()" [readOnly]="true" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="ownerName2I18n()" [value]="ownerName2()" [readOnly]="true" />
+                    <okr-text-input [i18n]="ownerName2I18n()" [value]="ownerName2()" [readOnly]="true" />
                   </ion-col>
                 } @else {
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="ownerName2I18n()" [value]="ownerName2()" [readOnly]="true" />
+                    <okr-text-input [i18n]="ownerName2I18n()" [value]="ownerName2()" [readOnly]="true" />
                   </ion-col>
                 }
               </ion-row>
@@ -79,19 +79,19 @@ export interface OwnershipFormI18n {
               --------------------------------------------------->
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <bk-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <bk-number-input [i18n]="priceI18n()" [value]="amount()" (valueChange)="onFieldChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
+                  <okr-number-input [i18n]="priceI18n()" [value]="amount()" (valueChange)="onFieldChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="currencyI18n()" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -101,11 +101,11 @@ export interface OwnershipFormI18n {
         TAG, NOTES 
         --------------------------------------------------->
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+          <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
     
         @if(hasRole('admin')) {
-          <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }

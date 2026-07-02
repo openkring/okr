@@ -10,7 +10,7 @@ import { AvatarDisplay, AvatarInput } from '@okr/avatar-ui';
 import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/relationship-invitation-util';
 
 @Component({
-  selector: 'bk-invitation-form',
+  selector: 'okr-invitation-form',
   standalone: true,
   imports: [
     PrettyDatePipe,
@@ -31,7 +31,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
                 @if(hasRole('admin')) {
                   <ion-row>
                     <ion-col size="12" size-md="6">
-                      <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                      <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                     </ion-col>
                   </ion-row>
                 }
@@ -53,9 +53,9 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
                   <ion-col size="12" size-md="6">
                     <ion-item lines="none">
                       @if(isReadOnly() || !editable()) {
-                        <bk-avatar-display [avatars]="[inviterAvatar()]" [showName]="true" />
+                        <okr-avatar-display [avatars]="[inviterAvatar()]" [showName]="true" />
                       } @else {
-                        <bk-avatar-input (avatarAdded)="add('inviter', $event)" (selectClicked)="selectClicked.emit('inviter')" />
+                        <okr-avatar-input (avatarAdded)="add('inviter', $event)" (selectClicked)="selectClicked.emit('inviter')" />
                       }
                     </ion-item>
                   </ion-col>
@@ -67,29 +67,29 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
                   <ion-col size="12" size-md="6">
                     <ion-item lines="none">
                       @if(isReadOnly() || !editable()) {
-                        <bk-avatar-display [avatars]="[inviteeAvatar()]" [showName]="true" />
+                        <okr-avatar-display [avatars]="[inviteeAvatar()]" [showName]="true" />
                       } @else {
-                        <bk-avatar-input (avatarAdded)="add('invitee', $event)" (selectClicked)="selectClicked.emit('invitee')" />
+                        <okr-avatar-input (avatarAdded)="add('invitee', $event)" (selectClicked)="selectClicked.emit('invitee')" />
                       }
                     </ion-item>
                   </ion-col>
 
                   <!-- state -->
                   <ion-col size="12" size-md="6">
-                    <bk-string-select [i18n]="stateI18n()" [selectedString]="state()" (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="readOnly()" [stringList]="['pending', 'accepted', 'declined', 'maybe']" />
+                    <okr-string-select [i18n]="stateI18n()" [selectedString]="state()" (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="readOnly()" [stringList]="['pending', 'accepted', 'declined', 'maybe']" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-string-select [i18n]="roleI18n()" [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList]="['required', 'optional', 'info-circle']" />           
+                    <okr-string-select [i18n]="roleI18n()" [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList]="['required', 'optional', 'info-circle']" />           
                   </ion-col>
 
                   <!-- sentAt -->
                   <ion-col size="12" size-md="6">
-                    <bk-date-input [i18n]="sentAtI18n()" [storeDate]="sentAt()" (storeDateChange)="onFieldChange('sentAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                    <okr-date-input [i18n]="sentAtI18n()" [storeDate]="sentAt()" (storeDateChange)="onFieldChange('sentAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                   </ion-col>
 
                   <!-- respondedAt -->
                   <ion-col size="12" size-md="6">
-                    <bk-date-input [i18n]="respondedAtI18n()" [storeDate]="respondedAt()" (storeDateChange)="onFieldChange('respondedAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                    <okr-date-input [i18n]="respondedAtI18n()" [storeDate]="respondedAt()" (storeDateChange)="onFieldChange('respondedAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -98,11 +98,11 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
         }
 
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+          <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         } 
         
         @if(hasRole('admin')) {
-          <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }

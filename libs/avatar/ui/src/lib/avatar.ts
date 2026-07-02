@@ -6,7 +6,7 @@ import { coerceBoolean, getFullName } from "@okr/shared-util-core";
 import { AvatarService } from '@okr/avatar-data-access';
 
 @Component({
-  selector: 'bk-avatar',
+  selector: 'okr-avatar',
   standalone: true,
   imports: [
     IonAvatar, IonImg, IonLabel, IonItem

@@ -12,7 +12,7 @@ import { ENV } from '@okr/shared-config';
 import { DocumentI18n, documentValidations } from '@okr/document-util';
 
 @Component({
-  selector: 'bk-document-form',
+  selector: 'okr-document-form',
   standalone: true,
   imports: [
     SvgIconPipe, ThumbnailUrlPipe, FileLogoPipe,
@@ -39,81 +39,81 @@ import { DocumentI18n, documentValidations } from '@okr/document-util';
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               }
               <ion-col size="12" >
                   <ion-icon src="{{ 'download' | svgIcon }}" slot="start" (click)="download()" />
-                  <bk-text-input [i18n]="fullPathI18n()" [value]="fullPath()" (valueChange)="onFieldChange('fullPath', $event)" [maxLength]=300 [readOnly]="true" [copyable]="true"/>
+                  <okr-text-input [i18n]="fullPathI18n()" [value]="fullPath()" (valueChange)="onFieldChange('fullPath', $event)" [maxLength]=300 [readOnly]="true" [copyable]="true"/>
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [autofocus]="true" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [autofocus]="true" [maxLength]=50 [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12">
-                <bk-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [maxLength]=100 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [maxLength]=100 [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
 
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="sources()!" [selectedItemName]="source()" (selectedItemNameChange)="onFieldChange('source', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                <okr-cat-select [category]="sources()!" [selectedItemName]="source()" (selectedItemNameChange)="onFieldChange('source', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
 
             <ion-row>
               @if (hasRole('admin')) {
                 <ion-col size="12">
-                  <bk-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [autofocus]="true" [maxLength]=300 [readOnly]="isReadOnly()" [copyable]="true" />
+                  <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [autofocus]="true" [maxLength]=300 [readOnly]="isReadOnly()" [copyable]="true" />
                 </ion-col>
               }
 
               <ion-col size="12">
-                <bk-text-input [i18n]="mimeTypeI18n()" [value]="mimeType()" (valueChange)="onFieldChange('mimeType', $event)" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="mimeTypeI18n()" [value]="mimeType()" (valueChange)="onFieldChange('mimeType', $event)" [maxLength]=50 [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="authorKeyI18n()" [value]="authorKey()" (valueChange)="onFieldChange('authorKey', $event)" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="authorKeyI18n()" [value]="authorKey()" (valueChange)="onFieldChange('authorKey', $event)" [maxLength]=50 [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="authorNameI18n()" [value]="authorName()" (valueChange)="onFieldChange('authorName', $event)" [maxLength]=50 [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="authorNameI18n()" [value]="authorName()" (valueChange)="onFieldChange('authorName', $event)" [maxLength]=50 [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
 
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="dateOfDocCreationI18n()" [storeDate]="dateOfDocCreation()" (storeDateChange)="onFieldChange('dateOfDocCreation', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="dateOfDocCreationI18n()" [storeDate]="dateOfDocCreation()" (storeDateChange)="onFieldChange('dateOfDocCreation', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="dateOfDocLastUpdateI18n()" [storeDate]="dateOfDocLastUpdate()" (storeDateChange)="onFieldChange('dateOfDocLastUpdate', $event)" [readOnly]="isReadOnly()" />
+                <okr-date-input [i18n]="dateOfDocLastUpdateI18n()" [storeDate]="dateOfDocLastUpdate()" (storeDateChange)="onFieldChange('dateOfDocLastUpdate', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
 
             @if(hasRole('privileged') || !isReadOnly()) {
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [autofocus]="true" [maxLength]=20 [readOnly]="isReadOnly()" [copyable]="true" />
+                  <okr-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [autofocus]="true" [maxLength]=20 [readOnly]="isReadOnly()" [copyable]="true" />
                 </ion-col>
 
                 <ion-col size="12">
-                  <bk-text-input [i18n]="hashI18n()" [value]="hash()" (valueChange)="onFieldChange('hash', $event)" [maxLength]=100 [readOnly]="isReadOnly()" [copyable]="true" />
+                  <okr-text-input [i18n]="hashI18n()" [value]="hash()" (valueChange)="onFieldChange('hash', $event)" [maxLength]=100 [readOnly]="isReadOnly()" [copyable]="true" />
                 </ion-col>
 
                 <ion-col size="12">
                   <ion-item lines="none">
                     <ion-icon src="{{'link' | svgIcon }}" slot="start" (click)="showPriorVersion()" />
-                    <bk-text-input [i18n]="priorVersionKeyI18n()" [value]="priorVersionKey()" (valueChange)="onFieldChange('priorVersionKey', $event)" [maxLength]=20 [readOnly]="isReadOnly()" [showHelper]=true />
+                    <okr-text-input [i18n]="priorVersionKeyI18n()" [value]="priorVersionKey()" (valueChange)="onFieldChange('priorVersionKey', $event)" [maxLength]=20 [readOnly]="isReadOnly()" [showHelper]=true />
                   </ion-item>
                 </ion-col>
 
                 <ion-col size="12">
-                  <bk-text-input [i18n]="versionI18n()" [value]="version()" (valueChange)="onFieldChange('version', $event)" [maxLength]=20 [readOnly]="isReadOnly()" [showHelper]=true />
+                  <okr-text-input [i18n]="versionI18n()" [value]="version()" (valueChange)="onFieldChange('version', $event)" [maxLength]=20 [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
               </ion-row>
             }
@@ -122,10 +122,10 @@ import { DocumentI18n, documentValidations } from '@okr/document-util';
       </ion-card>
 
       @if(hasRole('privileged') || hasRole('contentAdmin')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
       @if(hasRole('admin')) {
-        <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }

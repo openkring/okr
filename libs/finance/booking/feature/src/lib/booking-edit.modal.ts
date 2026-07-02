@@ -10,7 +10,7 @@ import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { AvatarSelect } from '@okr/avatar-ui';
 
 @Component({
-  selector: 'bk-booking-edit-modal',
+  selector: 'okr-booking-edit-modal',
   standalone: true,
   imports: [
     FormsModule,
@@ -39,7 +39,7 @@ import { AvatarSelect } from '@okr/avatar-ui';
         <ion-label position="stacked">Description</ion-label>
         <ion-input [(ngModel)]="editBooking.title" [readonly]="readOnly()" />
       </ion-item>
-      <bk-avatar-select
+      <okr-avatar-select
         name="counterparty"
         title="Gegenpartei"
         selectLabel="auswählen"

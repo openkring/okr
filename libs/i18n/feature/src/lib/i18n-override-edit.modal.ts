@@ -11,7 +11,7 @@ import { deepEqual, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nOverrideStore } from './i18n-override.store';
 
 @Component({
-  selector: 'bk-i18n-override-edit-modal',
+  selector: 'okr-i18n-override-edit-modal',
   standalone: true,
   imports: [
     FormsModule,
@@ -21,7 +21,7 @@ import { I18nOverrideStore } from './i18n-override.store';
   ],
   providers: [I18nOverrideStore],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.override_edit_title()}" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.override_edit_title()}" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-label position="stacked">{{ store.i18n.module() }}</ion-label>

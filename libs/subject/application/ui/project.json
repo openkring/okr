@@ -2,7 +2,7 @@
   "name": "subject-application-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/subject/application/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:application", "platform:mobile", "platform:web"],
   "targets": {

@@ -4,7 +4,7 @@ import { IonNote } from '@ionic/angular/standalone';
 import { AccountingStore } from './accounting.store';
 
 @Component({
-  selector: 'bk-read-only-banner',
+  selector: 'okr-read-only-banner',
   standalone: true,
   imports: [IonNote],
   template: `

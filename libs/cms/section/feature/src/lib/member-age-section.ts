@@ -7,7 +7,7 @@ import { EmptyList, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { MemberAgeSectionStore } from './member-age-section.store';
 
 @Component({
-  selector: 'bk-member-age-section',
+  selector: 'okr-member-age-section',
   standalone: true,
   imports: [
     Spinner, EmptyList, OptionalCardHeader,
@@ -21,12 +21,12 @@ import { MemberAgeSectionStore } from './member-age-section.store';
   `],
   template: `
     @if(store.isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else if(isEmpty()) {
-      <bk-empty-list [message]="store.i18n.empty()" />
+      <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-grid>
             <ion-row class="header-row">

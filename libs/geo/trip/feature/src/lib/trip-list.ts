@@ -16,7 +16,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'corrected', 'all'];
 
 @Component({
-  selector: 'bk-trip-list',
+  selector: 'okr-trip-list',
   standalone: true,
   imports: [
     SvgIconPipe, PrettyDatePipe, TranslatePipe, AsyncPipe,
@@ -86,7 +86,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
       }
 
       <ion-toolbar>
-        <bk-list-filter 
+        <okr-list-filter 
           (searchTermChanged)="store.setSearchTerm($event)"
           (stateChanged)="store.setSelectedState($event)" [states]="states()"
           (yearChanged)="store.setSelectedYear($event)" [years]="years()"
@@ -96,10 +96,10 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
 
     <ion-content>
       @if (store.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
         <ion-backdrop />
       } @else if (store.filteredTrips().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for (day of store.groupedByDay(); track day.date) {
@@ -112,7 +112,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
                   {{ formatTime(trip.startTime) }}
                   {{ trip.resource?.name2 }}
                 </ion-label>
-                <bk-avatar-display [avatars]="trip.participants" [showName]="false" />
+                <okr-avatar-display [avatars]="trip.participants" [showName]="false" />
                 <ion-label slot="end">
                   {{ trip.distance }} km
                 </ion-label>

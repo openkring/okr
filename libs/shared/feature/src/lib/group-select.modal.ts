@@ -9,7 +9,7 @@ import { MultiAvatar } from '@okr/cms-menu-ui';
 import { GroupSelectStore } from './group-select.store';
 
 @Component({
-  selector: 'bk-group-select-modal',
+  selector: 'okr-group-select-modal',
   standalone: true,
   imports: [
     Header, Spinner, EmptyList, MultiAvatar,
@@ -22,7 +22,7 @@ import { GroupSelectStore } from './group-select.store';
     ion-list { padding: 0px; }
   `],
   template: `
-    <bk-header
+    <okr-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
       [i18n]="{ title: store.i18n.group_select() }"
@@ -30,14 +30,14 @@ import { GroupSelectStore } from './group-select.store';
     />   
     <ion-content>
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else {
         @if(selectedGroupsCount() === 0) {
-          <bk-empty-list [message]="store.i18n.group_empty()" />
+          <okr-empty-list [message]="store.i18n.group_empty()" />
         } @else {
           <ion-list lines="inset">
             @for(group of filteredGroups(); track $index) {
-              <bk-multi-avatar [icon]="group.icon" [label]="group.name"  (click)="select(group)"/>
+              <okr-multi-avatar [icon]="group.icon" [label]="group.name"  (click)="select(group)"/>
             }
           </ion-list>
         }

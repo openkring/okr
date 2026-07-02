@@ -15,7 +15,7 @@ import { ReservationStore } from './reservation.store';
 
 
 @Component({
-  selector: 'bk-reservation-list',
+  selector: 'okr-reservation-list',
   standalone: true,
   imports: [
     SvgIconPipe, PrettyDatePipe,
@@ -44,7 +44,7 @@ import { ReservationStore } from './reservation.store';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -53,14 +53,14 @@ import { ReservationStore } from './reservation.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-      <bk-list-filter class="ion-hide-md-down"
+      <okr-list-filter class="ion-hide-md-down"
         (searchTermChanged)="onSearchtermChange($event)"
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         (typeChanged)="onReasonSelected($event)" [types]="reasons()"
         (stateChanged)="onStateSelected($event)" [states]="states()"
         (yearChanged)="onYearSelected($event)" [years]="years()"
       />
-      <bk-list-filter class="ion-hide-md-up"
+      <okr-list-filter class="ion-hide-md-up"
         (searchTermChanged)="onSearchtermChange($event)"
         (yearChanged)="onYearSelected($event)" [years]="years()"
       />
@@ -151,7 +151,7 @@ import { ReservationStore } from './reservation.store';
   <!-- list data -->
   <ion-content #content>
     @if(selectedReservationsCount() === 0) {
-      <bk-empty-list [message]="store.i18n.empty()" />
+      <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-grid>
         @for(reservation of filteredReservations(); track $index) {

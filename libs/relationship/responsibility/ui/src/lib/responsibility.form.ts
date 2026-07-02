@@ -9,7 +9,7 @@ import { isDelegateActive, responsibilityValidations, ResponsibilityI18n } from 
 import { LowercaseWordMask } from '@okr/shared-config';
 
 @Component({
-  selector: 'bk-responsibility-form',
+  selector: 'okr-responsibility-form',
   standalone: true,
   imports: [
     TextInput, DateInput, ButtonCopy, ErrorNote,
@@ -29,17 +29,17 @@ import { LowercaseWordMask } from '@okr/shared-config';
             <ion-row>
              <ion-col size="12" size-md="6">
                 @if(isNew()) {
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="false" />
+                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="false" />
                 } @else {
                   <ion-item lines="none">
                     <ion-label>ID: {{ okey() }}</ion-label>
-                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="okey()" />
+                    <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey()" />
                   </ion-item>
                 }                                     
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="false" />
-                <bk-error-note [errors]="nameErrors()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="false" />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -69,10 +69,10 @@ import { LowercaseWordMask } from '@okr/shared-config';
                 </ion-item>
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [readOnly]="false" />
+                <okr-date-input [i18n]="validFromI18n()" [storeDate]="validFrom()" (storeDateChange)="onFieldChange('validFrom', $event)" [locale]="locale()" [readOnly]="false" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [locale]="locale()" [readOnly]="false" />
+                <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onFieldChange('validTo', $event)" [locale]="locale()" [readOnly]="false" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -98,10 +98,10 @@ import { LowercaseWordMask } from '@okr/shared-config';
               </ion-col>
               @if(formData().delegateAvatar) {
                 <ion-col size="12" size-md="6">
-                  <bk-date-input [i18n]="delegateValidFromI18n()" [storeDate]="delegateValidFrom()" (storeDateChange)="onFieldChange('delegateValidFrom', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-date-input [i18n]="delegateValidFromI18n()" [storeDate]="delegateValidFrom()" (storeDateChange)="onFieldChange('delegateValidFrom', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-date-input [i18n]="delegateValidToI18n()" [storeDate]="delegateValidTo()" (storeDateChange)="onFieldChange('delegateValidTo', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-date-input [i18n]="delegateValidToI18n()" [storeDate]="delegateValidTo()" (storeDateChange)="onFieldChange('delegateValidTo', $event)" [locale]="locale()" [readOnly]="false" />
                 </ion-col>
                 @if(delegateExpired()) {
                   <ion-row>

@@ -10,7 +10,7 @@ import { AccountI18n, accountValidations } from '@okr/finance-account-util';
 export type { AccountI18n };
 
 @Component({
-  selector: 'bk-account-form',
+  selector: 'okr-account-form',
   standalone: true,
   imports: [
     CategorySelect, TextInput, NotesInput, ErrorNote,
@@ -27,27 +27,27 @@ export type { AccountI18n };
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                    <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                   </ion-col>
                 </ion-row>
               }
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="idI18n()" [value]="id()" (valueChange)="onFieldChange('id', $event)" [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="idErrors()" />
+                  <okr-text-input [i18n]="idI18n()" [value]="id()" (valueChange)="onFieldChange('id', $event)" [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="idErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="nameErrors()" />
+                  <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                  <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="parentIdI18n()" [value]="parentId()" (valueChange)="onFieldChange('parentId', $event)" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="parentIdI18n()" [value]="parentId()" (valueChange)="onFieldChange('parentId', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -55,7 +55,7 @@ export type { AccountI18n };
         </ion-card>
 
         @if(hasRole('admin')) {
-          <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }

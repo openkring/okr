@@ -14,7 +14,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EsignService } from '@okr/esign-data-access';
 
 @Component({
-  selector: 'bk-esign-view-modal',
+  selector: 'okr-esign-view-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [

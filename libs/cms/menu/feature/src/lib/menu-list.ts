@@ -10,7 +10,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-u
 import { MenuStore } from './menu.store';
 
 @Component({
-  selector: 'bk-menu-list',
+  selector: 'okr-menu-list',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -42,7 +42,7 @@ import { MenuStore } from './menu.store';
       </ion-toolbar>
 
       <!-- search and filters -->
-      <bk-list-filter
+      <okr-list-filter
         (searchTermChanged)="onSearchTermChange($event)"
         (typeChanged)="onTypeSelected($event)" [types]="menuActions()"
       />
@@ -67,15 +67,15 @@ import { MenuStore } from './menu.store';
       </ion-toolbar>
     </ion-header>
 
-    <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+    <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
 
     <!-- Data -->
     <ion-content #content>
       @if(isLoading()) {
-        <bk-list-skeleton [rows]="6" />
+        <okr-list-skeleton [rows]="6" />
       } @else {
         @if (filteredMenuItems().length === 0) {
-          <bk-empty-list [message]="store.i18n.empty()" />
+          <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
             @for(menuItem of visibleMenuItems(); track menuItem.okey) {

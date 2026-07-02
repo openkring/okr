@@ -2,7 +2,7 @@
   "name": "finance-expense-feature",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/finance/expense/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:finance", "platform:mobile", "platform:web"],
   "targets": {

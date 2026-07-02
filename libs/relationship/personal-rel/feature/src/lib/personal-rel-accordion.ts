@@ -13,7 +13,7 @@ import { PersonalRelNamePipe } from '@okr/relationship-personal-rel-util';
 import { PersonalRelStore } from './personal-rel.store';
 
 @Component({
-  selector: 'bk-personal-rel-accordion',
+  selector: 'okr-personal-rel-accordion',
   standalone: true,
   imports: [
     AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
@@ -37,7 +37,7 @@ import { PersonalRelStore } from './personal-rel.store';
     </ion-item>
     <div slot="content">
         @if(relsCount() === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(personalRel of personalRels(); track $index) {

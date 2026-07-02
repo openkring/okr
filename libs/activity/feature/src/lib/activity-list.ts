@@ -9,7 +9,7 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { ActivityStore } from './activity.store';
 
 @Component({
-  selector: 'bk-activity-list',
+  selector: 'okr-activity-list',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -30,16 +30,16 @@ import { ActivityStore } from './activity.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.i18n.title() }}</ion-title>
       </ion-toolbar>
-      <bk-list-filter
+      <okr-list-filter
         (searchTermChanged)="store.setSearchTerm($event)"
       />
     </ion-header>
 
     <ion-content>
       @if(store.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if(store.activities().length === 0) {
-        <bk-empty-list message="{{ store.i18n.empty() }}" />
+        <okr-empty-list message="{{ store.i18n.empty() }}" />
       } @else {
         <ion-list lines="inset">
           @for(activity of store.activities(); track activity.okey) {

@@ -10,7 +10,7 @@ import {
 import { AppStore } from '@okr/shared-feature';
 
 @Component({
-  selector: 'bk-bill-qr-scan-modal',
+  selector: 'okr-bill-qr-scan-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [

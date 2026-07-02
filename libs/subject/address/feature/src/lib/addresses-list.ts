@@ -13,7 +13,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { AddressStore } from './addresses.store';
 
 @Component({
-  selector: 'bk-addresses-list',
+  selector: 'okr-addresses-list',
   standalone: true,
   imports: [
     SvgIconPipe, FavoriteColorPipe, FormatAddressPipe, AvatarPipe,
@@ -37,7 +37,7 @@ import { AddressStore } from './addresses.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
+    <okr-list-filter 
       (searchTermChanged)="onSearchtermChange($event)"
       (typeChanged)="onChannelSelected($event)" [types]="channels()"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
@@ -65,10 +65,10 @@ import { AddressStore } from './addresses.store';
   <!-- list data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(filteredAddressesCount() === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         @if(selectedChannel()) {
           <ion-list lines="inset">

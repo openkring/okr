@@ -11,20 +11,20 @@ import { createNewMemberFormModel, MemberNewFormModel, MEMBERSHIP_I18N_KEYS, Mem
 import { MemberNewForm } from '@okr/relationship-membership-ui';
 
 @Component({
-  selector: 'bk-member-new-modal',
+  selector: 'okr-member-new-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, MemberNewForm,
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: this.i18n.create_member()}" [isModal]="true" />
+    <okr-header [i18n]="{ title: this.i18n.create_member()}" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-member-new-form
+        <okr-member-new-form
           [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [genders]="genders()"

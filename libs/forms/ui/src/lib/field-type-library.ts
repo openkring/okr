@@ -5,7 +5,7 @@ import { FieldType } from '@okr/shared-models';
 import { FieldTypeCard, FieldTypeDef, FIELD_TYPE_DEFS } from './field-type-card';
 
 @Component({
-  selector: 'bk-field-type-library',
+  selector: 'okr-field-type-library',
   standalone: true,
   imports: [IonSearchbar, FieldTypeCard, CdkDropList, CdkDrag],
   styles: [`
@@ -22,7 +22,7 @@ import { FieldTypeCard, FieldTypeDef, FIELD_TYPE_DEFS } from './field-type-card'
          disabled and nothing may be dropped back in, so cards stay put and are reusable. -->
     <div class="list" cdkDropList [cdkDropListData]="visibleDefs()" [cdkDropListSortingDisabled]="true" [cdkDropListEnterPredicate]="preventDrop">
       @for (def of visibleDefs(); track def.type) {
-        <bk-field-type-card cdkDrag [cdkDragData]="def" [def]="def" (add)="fieldAdded.emit($event.type)" />
+        <okr-field-type-card cdkDrag [cdkDragData]="def" [def]="def" (add)="fieldAdded.emit($event.type)" />
       }
     </div>
   `,

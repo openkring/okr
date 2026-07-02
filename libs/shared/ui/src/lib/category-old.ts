@@ -17,10 +17,10 @@ export interface CategoryOldI18n {
  * A component to select a category from a list of categories.
  * The selected category is shown as a ready-only text if the `readOnly` input is true.
  * Usage example:
- *  <bk-cat [i18n]="catI18n()" [value]="orgType" (valueChange)="onFieldChange('orgType', $event)" [categories]="orgTypes" [readOnly]="false" />
+ *  <okr-cat [i18n]="catI18n()" [value]="orgType" (valueChange)="onFieldChange('orgType', $event)" [categories]="orgTypes" [readOnly]="false" />
  */
 @Component({
-  selector: 'bk-category-old',
+  selector: 'okr-category-old',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,

@@ -2,7 +2,7 @@
   "name": "session-util",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/session/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:session", "platform:mobile", "platform:web"],
   "targets": {

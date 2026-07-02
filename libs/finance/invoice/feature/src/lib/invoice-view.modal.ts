@@ -9,7 +9,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { InvoiceStore } from './invoice.store';
 
 @Component({
-  selector: 'bk-invoice-view-modal',
+  selector: 'okr-invoice-view-modal',
   standalone: true,
   providers: [InvoiceStore],
   imports: [
@@ -22,7 +22,7 @@ import { InvoiceStore } from './invoice.store';
     .view-label { font-size: 0.8rem }
   `],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.view() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.view() }" [isModal]="true" />
     <ion-content class="ion-no-padding">
       @if(invoice(); as invoice) {
         <ion-card>

@@ -12,7 +12,7 @@ import { personValidations } from "@okr/subject-person-util";
 import { ProfileI18n } from '@okr/profile-util';
 
 @Component({
-  selector: 'bk-profile-data-accordion',
+  selector: 'okr-profile-data-accordion',
   standalone: true,
   imports: [
     DateInput, TextInput, CategorySelect, ErrorNote,
@@ -41,7 +41,7 @@ import { ProfileI18n } from '@okr/profile-util';
             </ion-row>
             <ion-row> 
               <ion-col size="12" size-md="6">                                                              
-                <bk-date-input
+                <okr-date-input
                   [i18n]="dobI18n()"
                   [storeDate]="dateOfBirth()"
                   (storeDateChange)="onFieldChange('dateOfBirth', $event)"
@@ -49,7 +49,7 @@ import { ProfileI18n } from '@okr/profile-util';
                   [readOnly]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat-select
+                <okr-cat-select
                   [category]="genders()!"
                   [selectedItemName]="gender()"
                   (selectedItemNameChange)="onFieldChange('gender', $event)"
@@ -57,7 +57,7 @@ import { ProfileI18n } from '@okr/profile-util';
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input
+                <okr-text-input
                   [i18n]="ssnI18n()"
                   [value]="ssnId()" 
                   (valueChange)="onFieldChange('ssnId', $event)"
@@ -67,7 +67,7 @@ import { ProfileI18n } from '@okr/profile-util';
                   [copyable]=true
                   [readOnly]="isReadOnly()"
                 />
-                <bk-error-note [errors]="ssnIdErrors()" />                                                  
+                <okr-error-note [errors]="ssnIdErrors()" />                                                  
               </ion-col>
             </ion-row>
           </ion-grid>

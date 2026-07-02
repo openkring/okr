@@ -11,7 +11,7 @@ import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { InvitationSectionStore } from './invitations-section.store';
 
 @Component({
-  selector: 'bk-invitations-section',
+  selector: 'okr-invitations-section',
   standalone: true,
   styles: [
     `
@@ -37,10 +37,10 @@ import { InvitationSectionStore } from './invitations-section.store';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     @if(isLoading()) {
-    <bk-spinner />
+    <okr-spinner />
     } @else {        
     <ion-card>
-      <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
           <ion-grid>
             @for(inv of invitations(); track inv.okey) {

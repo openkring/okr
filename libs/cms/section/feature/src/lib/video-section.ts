@@ -11,7 +11,7 @@ import { getSafeEmbedUrl } from '@okr/shared-util-core';
  * See: https://developers.google.com/youtube/player_parameters 
  */
 @Component({
-  selector: 'bk-video-section',
+  selector: 'okr-video-section',
   standalone: true,
   imports: [
     Spinner, OptionalCardHeader,
@@ -25,7 +25,7 @@ import { getSafeEmbedUrl } from '@okr/shared-util-core';
   template: `
     @if(section(); as section) {
       <ion-card>
-        <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <iframe 
             id="ytplayer"
@@ -39,7 +39,7 @@ import { getSafeEmbedUrl } from '@okr/shared-util-core';
         </ion-card-content>
       </ion-card>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

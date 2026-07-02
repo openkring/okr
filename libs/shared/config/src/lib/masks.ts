@@ -53,7 +53,7 @@ export const ChZipCodeMask: MaskitoOptions = {
   mask: /^\d{1,4}$/,
 };
 
-// passwordMask is used as default in bk-password-input
+// passwordMask is used as default in okr-password-input
 export const PasswordMask: MaskitoOptions = {
   mask: /^[a-zA-Z0-9-_!@?:;äüö$*+&()=.,£$%]+$/,
 };

@@ -11,21 +11,21 @@ import { GroupForm } from '@okr/subject-group-ui';
 import { GROUP_I18N_KEYS, GroupI18n } from '@okr/subject-group-util';
 
 @Component({
-  selector: 'bk-group-edit-modal',
+  selector: 'okr-group-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, GroupForm,
     IonContent
   ],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
-          <bk-group-form
+          <okr-group-form
               [i18n]="i18n"
               [formData]="formData"
               (formDataChange)="onFormDataChange($event)"

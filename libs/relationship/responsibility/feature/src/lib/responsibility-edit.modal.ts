@@ -9,7 +9,7 @@ import { ResponsibilityForm } from '@okr/relationship-responsibility-ui';
 import { ResponsibilityStore } from './responsibility.store';
 
 @Component({
-  selector: 'bk-responsibility-edit-modal',
+  selector: 'okr-responsibility-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, ResponsibilityForm,
@@ -18,13 +18,13 @@ import { ResponsibilityStore } from './responsibility.store';
   providers: [ResponsibilityStore],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
       @if(formData(); as formData) {
-        <bk-responsibility-form
+        <okr-responsibility-form
           [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"

@@ -12,7 +12,7 @@ interface PersonsWidgetI18n {
 }
 
 @Component({
-  selector: 'bk-persons-widget',
+  selector: 'okr-persons-widget',
   standalone: true,
   imports: [
     IonGrid, IonRow, IonCol,
@@ -26,7 +26,7 @@ interface PersonsWidgetI18n {
         } @else {
           @for(person of persons(); track person.key) {
             <ion-col size="12" [sizeMd]="cols()" (click)="showPerson(person)">
-              <bk-avatar-label
+              <okr-avatar-label
                 [key]="person.modelType + '.' + person.key"
                 [label]="getPersonLabel(person)"
                 [color]="color()"

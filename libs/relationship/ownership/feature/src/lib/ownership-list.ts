@@ -16,7 +16,7 @@ import { getOwnerName } from '@okr/relationship-ownership-util';
 import { OwnershipStore } from './ownership.store';
 
 @Component({
-  selector: 'bk-ownership-list',
+  selector: 'okr-ownership-list',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe,
@@ -38,7 +38,7 @@ import { OwnershipStore } from './ownership.store';
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
-                <bk-menu [menuName]="contextMenuName()"/>
+                <okr-menu [menuName]="contextMenuName()"/>
               </ion-content>
             </ng-template>
           </ion-popover>
@@ -47,7 +47,7 @@ import { OwnershipStore } from './ownership.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter
+    <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -75,11 +75,11 @@ import { OwnershipStore } from './ownership.store';
   <!-- Data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
       <ion-backdrop />
     } @else {
       @if(filteredOwnerships().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(ownership of filteredOwnerships(); track $index) {

@@ -2,7 +2,7 @@
   "name": "avatar-feature",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/avatar/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:avatar", "platform:mobile", "platform:web"],
   "targets": {

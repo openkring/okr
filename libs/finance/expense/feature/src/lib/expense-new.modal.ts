@@ -20,7 +20,7 @@ import { PFX } from './scope';
 const EXPENSE_MIMETYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic'];
 
 @Component({
-  selector: 'bk-expense-new-modal',
+  selector: 'okr-expense-new-modal',
   standalone: true,
   imports: [
     ExpenseForm,
@@ -37,7 +37,7 @@ const EXPENSE_MIMETYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <bk-expense-form
+      <okr-expense-form
         [i18n]="formI18n"
         [ibans]="ibans()"
         [(formData)]="formValue"

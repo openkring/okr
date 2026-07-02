@@ -15,7 +15,7 @@ import { MemberAvatarsPipe } from '@okr/relationship-membership-feature';
 import { GroupStore } from './group.store';
 
 @Component({
-  selector: 'bk-group-list',
+  selector: 'okr-group-list',
   standalone: true,
   imports: [
     AsyncPipe, SvgIconPipe, AvatarPipe, MemberAvatarsPipe,
@@ -41,7 +41,7 @@ import { GroupStore } from './group.store';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -50,7 +50,7 @@ import { GroupStore } from './group.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
+    <okr-list-filter 
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
     />
@@ -70,10 +70,10 @@ import { GroupStore } from './group.store';
   <!-- list data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(selectedGroupsCount() === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(group of filteredGroups(); track $index) {
@@ -82,7 +82,7 @@ import { GroupStore } from './group.store';
                 <ion-img src="{{ 'group.' + group.okey | avatar:group.icon }}" alt="Group Avatar Logo" />
               </ion-avatar>
               <ion-label>{{group.name}}</ion-label>
-              <bk-avatar-display [avatars]="(group | memberAvatars | async) ?? []" [showName]="false" />
+              <okr-avatar-display [avatars]="(group | memberAvatars | async) ?? []" [showName]="false" />
             </ion-item>
           }
         </ion-list>

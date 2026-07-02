@@ -2,7 +2,7 @@
   "name": "relationship-responsibility-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/responsibility/data-access/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:data-access", "scope:responsibility", "platform:mobile", "platform:web"],
   "targets": {

@@ -15,7 +15,7 @@ import { SectionStore } from './section.store';
  * subTitle is not used
  */
 @Component({
-  selector: 'bk-table-section',
+  selector: 'okr-table-section',
   standalone: true,
   imports: [
     Spinner, OptionalCardHeader,
@@ -45,7 +45,7 @@ import { SectionStore } from './section.store';
   @if(section(); as section) {
     <ion-card>
       @if(showTitleAs() === 'title') {
-        <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
       }
       <ion-card-content>
         @if(header()?.length === 0 && body()?.length === 0) {
@@ -75,7 +75,7 @@ import { SectionStore } from './section.store';
       </ion-card-content>
     </ion-card>
   } @else {
-    <bk-spinner />
+    <okr-spinner />
   }
 `
 })

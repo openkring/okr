@@ -2,7 +2,7 @@
   "name": "pdf-template-feature",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/pdf-template/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:pdf-template", "platform:mobile", "platform:web"],
   "targets": {

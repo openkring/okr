@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header } from './header';
 
 @Component({
-  selector: 'bk-label-select-modal',
+  selector: 'okr-label-select-modal',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -14,7 +14,7 @@ import { Header } from './header';
     IonIcon, IonContent, IonItem, IonLabel
   ],
   template: `
-      <bk-header [i18n]="{ title: title() }" [isModal]="true" />
+      <okr-header [i18n]="{ title: title() }" [isModal]="true" />
       <ion-content>
         @for (label of labels(); track label; let i = $index) {
           <ion-item lines="none" (click)="select(i)">

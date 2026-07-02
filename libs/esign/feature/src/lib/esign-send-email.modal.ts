@@ -13,7 +13,7 @@ import { EsignService } from '@okr/esign-data-access';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Component({
-  selector: 'bk-esign-send-email-modal',
+  selector: 'okr-esign-send-email-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -46,23 +46,23 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               </ion-col>
 
               <ion-col size="12">
-                <bk-text-input [i18n]="recipientsI18n" [value]="recipients()"
+                <okr-text-input [i18n]="recipientsI18n" [value]="recipients()"
                   (valueChange)="recipients.set($event)"
                   [readOnly]="false" [autofocus]="true" [maxLength]="500" />
               </ion-col>
 
               <ion-col size="12">
-                <bk-text-input [i18n]="subjectI18n" [value]="subject()"
+                <okr-text-input [i18n]="subjectI18n" [value]="subject()"
                   (valueChange)="subject.set($event)" [readOnly]="false" [maxLength]="120" />
               </ion-col>
 
               <ion-col size="12">
-                <bk-checkbox [i18n]="includePdfI18n" [checked]="includePdf()"
+                <okr-checkbox [i18n]="includePdfI18n" [checked]="includePdf()"
                   (checkedChange)="includePdf.set($event)" [readOnly]="false" />
               </ion-col>
 
               <ion-col size="12">
-                <bk-notes-input [i18n]="bodyI18n" [value]="body()"
+                <okr-notes-input [i18n]="bodyI18n" [value]="body()"
                   (valueChange)="body.set($event)" [readOnly]="false" />
               </ion-col>
             </ion-row>

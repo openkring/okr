@@ -35,7 +35,7 @@ import { GraphPage } from "./graph.page";
  * - Scalability - Easy to add new page types (LandingPage, BlogPage, FormPage, etc.)
  */
 @Component({
-  selector: 'bk-page-dispatcher',
+  selector: 'okr-page-dispatcher',
   standalone: true,
   imports: [
     ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage, FilesPage, AlbumPage, GraphPage,
@@ -43,71 +43,71 @@ import { GraphPage } from "./graph.page";
 ],
   template: `
     @if(pageStore.isLoading()) {
-          <bk-spinner />
+          <okr-spinner />
     } @else { <!-- not loading anymore -->
         @if(page(); as page) {
             @switch (page.type) {
                 @case ('landing') {
-                    <bk-landing-page  />
+                    <okr-landing-page  />
                 }
                 @case ('chat') {
                     @defer (on idle) {
-                        <bk-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [isGroupView]="isGroupView()" />
+                        <okr-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [isGroupView]="isGroupView()" />
                     } @placeholder {
-                        <bk-spinner />
+                        <okr-spinner />
                     }
                 }
                 @case ('content') {
                     @defer (on idle) {
-                        <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" [groupAdmin]="groupAdmin()" />
+                        <okr-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" [groupAdmin]="groupAdmin()" />
                     } @placeholder {
-                        <bk-spinner />
+                        <okr-spinner />
                     }
                 }
                 @case ('dashboard') {
                     @defer (on idle) {
-                        <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
+                        <okr-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
-                        <bk-spinner />
+                        <okr-spinner />
                     }
                 }
                 @case ('blog') {
                     @defer (on idle) {
-                        <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
+                        <okr-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
-                        <bk-spinner />
+                        <okr-spinner />
                     }
                 }
                 @case ('files') {
                     @defer (on idle) {
-                        <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
+                        <okr-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
-                        <bk-spinner />
+                        <okr-spinner />
                     }
                 }
                 @case ('album') {
                     @defer (on idle) {
-                        <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
+                        <okr-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
-                        <bk-spinner />
+                        <okr-spinner />
                     }
                 }
                 @case ('graph') {
                     @defer (on idle) {
-                        <bk-graph-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
+                        <okr-graph-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
-                        <bk-spinner />
+                        <okr-spinner />
                     }
                 }
                 @case ('error') {
-                    <bk-error-page [errorName]="page.okey" />
+                    <okr-error-page [errorName]="page.okey" />
                 }
                 @default {
-                    <bk-error-page errorName="unknownPageType" />
+                    <okr-error-page errorName="unknownPageType" />
                 }
             }
         } @else {
-            <bk-error-page errorName="pageNotFound" />
+            <okr-error-page errorName="pageNotFound" />
         }
     }
   `

@@ -7,7 +7,7 @@ import { EmptyList, Header, ListFilter, Spinner } from '@okr/shared-ui';
 import { ICON_SETS, IconStore } from './icon.store';
 
 @Component({
-  selector: 'bk-icon-select-modal',
+  selector: 'okr-icon-select-modal',
   standalone: true,
   imports: [
     Header, ListFilter, Spinner, EmptyList,
@@ -20,9 +20,9 @@ import { ICON_SETS, IconStore } from './icon.store';
     img.icon-grid { width: 70%; height: 70%; margin: 15%; object-fit: contain; }
   `],
   template: `
-    <bk-header [i18n]="{ title: '@icon.operation.select.label' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: '@icon.operation.select.label' }" [isModal]="true" />
 
-    <bk-list-filter
+    <okr-list-filter
       [compact]="true"
       (searchTermChanged)="store.setSearchTerm($event)"
       [strings]="iconSet" [selectedString]="store.selectedDir()" (stringsChanged)="store.setSelectedDir($event)"
@@ -31,9 +31,9 @@ import { ICON_SETS, IconStore } from './icon.store';
 
     <ion-content>
       @if(store.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if(store.filteredIcons().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else if(isListView()) {
         <!-- list view: thumbnail + name, size, lastUpdate -->
         <ion-grid>

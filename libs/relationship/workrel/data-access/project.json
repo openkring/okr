@@ -2,7 +2,7 @@
   "name": "relationship-workrel-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/workrel/data-access/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:data-access", "scope:workrel", "platform:mobile", "platform:web"],
   "targets": {

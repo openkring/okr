@@ -2,7 +2,7 @@
   "name": "relationship-membership-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/relationship/membership/data-access/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:data-access", "scope:membership", "platform:mobile", "platform:web"],
   "targets": {

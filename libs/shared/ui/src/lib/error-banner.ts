@@ -9,10 +9,10 @@ import { SvgIconPipe } from '@okr/shared-pipes';
  * of list and edit views. It renders nothing when `message` is undefined/empty.
  *
  * Usage:
- *   <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+ *   <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
  */
 @Component({
-  selector: 'bk-error-banner',
+  selector: 'okr-error-banner',
   standalone: true,
   imports: [IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe],
   template: `

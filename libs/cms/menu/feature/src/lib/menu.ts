@@ -12,7 +12,7 @@ import { isMenuBlocked, nextVisitedKeys } from '@okr/cms-menu-util';
 import { MenuStore } from './menu.store';
 
 @Component({
-  selector: 'bk-menu',
+  selector: 'okr-menu',
   standalone: true,
   imports: [
     forwardRef(() => Menu), Spinner, MultiAvatar,
@@ -28,16 +28,16 @@ import { MenuStore } from './menu.store';
   providers: [MenuStore],
   template: `
     @if(menuStore.isMenuLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if (isVisible()) {
         @if(menuItem(); as menuItem) {
           @switch(action()) {
             @case('navigate') {
-              <bk-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" />
+              <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" />
             }
             @case('browse') {
-              <bk-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" />
+              <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" />
             }
             @case('sub') {
               <ion-accordion-group>
@@ -52,7 +52,7 @@ import { MenuStore } from './menu.store';
                           <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                         }
                       } @else {
-                        <bk-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                        <okr-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                       }
                     }
                   </div>
@@ -72,7 +72,7 @@ import { MenuStore } from './menu.store';
                       <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                     }
                   } @else {
-                    <bk-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                    <okr-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                   }
                 }
               </ion-list>
@@ -85,13 +85,13 @@ import { MenuStore } from './menu.store';
                       <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                     }
                   } @else {
-                    <bk-menu [menuName]="menuItemName" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                    <okr-menu [menuName]="menuItemName" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                   }
                 }
               </ion-list>
             }
             @case('call') {
-              <bk-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" [safariWorkaround]="safariWorkaround()"/>
+              <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" [safariWorkaround]="safariWorkaround()"/>
             }
           }
         } @else {

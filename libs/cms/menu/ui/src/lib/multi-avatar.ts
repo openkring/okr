@@ -7,7 +7,7 @@ import { extractFirstPartOfOptionalTupel } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
 
 @Component({
-  selector: 'bk-multi-avatar',
+  selector: 'okr-multi-avatar',
   standalone: true,
   imports: [
     SvgIconPipe, AvatarPipe,

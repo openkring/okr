@@ -2,7 +2,7 @@
   "name": "finance-reporting-util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/finance/reporting/util/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:util", "scope:finance", "platform:mobile", "platform:web"],
   "targets": {

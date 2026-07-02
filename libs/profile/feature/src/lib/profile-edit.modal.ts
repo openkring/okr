@@ -15,7 +15,7 @@ import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
 
 @Component({
-  selector: 'bk-profile-edit-modal',
+  selector: 'okr-profile-edit-modal',
   standalone: true,
   imports: [
     AsyncPipe,
@@ -26,12 +26,12 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
   providers: [ProfileStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} } `],
   template: `
-    <bk-header [i18n]="headerI18n()" [isModal]="true" />
+    <okr-header [i18n]="headerI18n()" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-        <bk-avatar-toolbar
+        <okr-avatar-toolbar
             key="{{parentKey()}}"
             [title]="avatarTitle()"
             modelType="person"
@@ -47,7 +47,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
           <ion-accordion-group value="addresses" [multiple]="true">
             @if(personFormData(); as personFormData) {
               @if(currentUser(); as currentUser) {
-                <bk-profile-data-accordion
+                <okr-profile-data-accordion
                   [formData]="personFormData" (formDataChange)="onPersonChange($event)"
                   [currentUser]="currentUser"
                   [genders]="genders()"
@@ -61,9 +61,9 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
                 />
               }
             }
-            <bk-addresses-accordion [parentKey]="parentKey()" [priv]="priv()" [readOnly]="false" />
+            <okr-addresses-accordion [parentKey]="parentKey()" [priv]="priv()" [readOnly]="false" />
             @if(userFormData(); as userFormData) {
-              <bk-profile-settings-accordion
+              <okr-profile-settings-accordion
                 [formData]="userFormData" (formDataChange)="onUserChange($event)"
                 [currentUser]="currentUser()"
                 [readOnly]="false"
@@ -77,7 +77,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
             }
             @if(userFormData(); as userFormData) {
               @if(personFormData(); as personFormData) {
-                <bk-profile-privacy-accordion
+                <okr-profile-privacy-accordion
                   [personFormData]="personFormData" (personFormDataChange)="onPersonChange($event)"
                   [formData]="userFormData" (formDataChange)="onUserChange($event)"
                   [currentUser]="currentUser()"
@@ -91,7 +91,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
                 />
               }
             }
-            <bk-email-signature-accordion [i18n]="store.i18n" />
+            <okr-email-signature-accordion [i18n]="store.i18n" />
           </ion-accordion-group>
         </ion-card-content>
       </ion-card>

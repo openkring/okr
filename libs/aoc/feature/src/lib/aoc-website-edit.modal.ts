@@ -8,7 +8,7 @@ import { deepEqual, safeStructuredClone } from '@okr/shared-util-core';
 import { AocWebsiteStore } from './aoc-website.store';
 
 @Component({
-  selector: 'bk-aoc-website-edit-modal',
+  selector: 'okr-aoc-website-edit-modal',
   standalone: true,
   providers: [AocWebsiteStore],
   imports: [
@@ -18,7 +18,7 @@ import { AocWebsiteStore } from './aoc-website.store';
     IonItem, IonLabel, IonInput, IonToggle, IonTextarea
   ],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.website_update_label()}" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.website_update_label()}" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-label position="stacked">{{ store.i18n.website_key() }}</ion-label>
@@ -35,7 +35,7 @@ import { AocWebsiteStore } from './aoc-website.store';
         <ion-item lines="none">
           <ion-label>DE:</ion-label>
         </ion-item>
-        <bk-editor [(content)]="deContent" [readOnly]="false" [buttonCopyI18n]="buttonCopyI18n()" />
+        <okr-editor [(content)]="deContent" [readOnly]="false" [buttonCopyI18n]="buttonCopyI18n()" />
       } @else {
         <ion-item>
           <ion-textarea [value]="formData().de" label="DE" (ionInput)="onDeInput($event)" />
@@ -46,7 +46,7 @@ import { AocWebsiteStore } from './aoc-website.store';
         <ion-item lines="none">
           <ion-label>EN:</ion-label>
         </ion-item>
-        <bk-editor [(content)]="enContent" [readOnly]="false" [buttonCopyI18n]="buttonCopyI18n()" />
+        <okr-editor [(content)]="enContent" [readOnly]="false" [buttonCopyI18n]="buttonCopyI18n()" />
       } @else {
         <ion-item>
           <ion-textarea [value]="formData().en" label="EN" (ionInput)="onEnInput($event)" />

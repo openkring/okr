@@ -17,7 +17,7 @@ interface ButtonWidgetI18n {
 }
 
 @Component({
-  selector: 'bk-button-widget',
+  selector: 'okr-button-widget',
   standalone: true,
   imports: [
     NgStyle,

@@ -24,7 +24,7 @@ interface EventsConfigI18n {
 }
 
 @Component({
-  selector: 'bk-events-config',
+  selector: 'okr-events-config',
   standalone: true,
   imports: [
     TextInput, Checkbox, NumberInput,
@@ -48,22 +48,22 @@ interface EventsConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input [i18n]="moreUrlI18n()" [value]="moreUrl()" (valueChange)="onFieldChange('moreUrl', $event)" [readOnly]="readOnly()" />
+              <okr-text-input [i18n]="moreUrlI18n()" [value]="moreUrl()" (valueChange)="onFieldChange('moreUrl', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-number-input [i18n]="maxEventsI18n()" [value]="maxEvents()" (valueChange)="onFieldChange('maxEvents', $event)" [readOnly]="readOnly()" />
+              <okr-number-input [i18n]="maxEventsI18n()" [value]="maxEvents()" (valueChange)="onFieldChange('maxEvents', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showPastEventsI18n()" [checked]="showPastEvents()" (checkedChange)="onFieldChange('showPastEvents', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showPastEventsI18n()" [checked]="showPastEvents()" (checkedChange)="onFieldChange('showPastEvents', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showUpcomingEventsI18n()" [checked]="showUpcomingEvents()" (checkedChange)="onFieldChange('showUpcomingEvents', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showUpcomingEventsI18n()" [checked]="showUpcomingEvents()" (checkedChange)="onFieldChange('showUpcomingEvents', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showEventTimeI18n()" [checked]="showEventTime()" (checkedChange)="onFieldChange('showEventTime', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showEventTimeI18n()" [checked]="showEventTime()" (checkedChange)="onFieldChange('showEventTime', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox [i18n]="showEventLocationI18n()" [checked]="showEventLocation()" (checkedChange)="onFieldChange('showEventLocation', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-checkbox [i18n]="showEventLocationI18n()" [checked]="showEventLocation()" (checkedChange)="onFieldChange('showEventLocation', $event)" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>

@@ -18,7 +18,7 @@ import { CalEventList } from '@okr/calevent-feature';
 import { GroupStore } from './group.store';
 
 @Component({
-  selector: 'bk-group-view-page',
+  selector: 'okr-group-view-page',
   standalone: true,
   imports: [
     ChangeConfirmation, PageDispatcher, CalEventList, MembershipList, DocumentList, TaskList,
@@ -73,7 +73,7 @@ import { GroupStore } from './group.store';
       </ion-toolbar>
     </ion-header>
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(id(); as id) {
@@ -81,49 +81,49 @@ import { GroupStore } from './group.store';
         @switch (selectedSegment()) {
           @case ('content') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
+              <okr-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('chat') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
+              <okr-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('calendar') {
             @defer (on immediate) {
-              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+              <okr-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('tasks') {
             @defer (on immediate) {
-               <bk-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+               <okr-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('files') {
             @defer (on immediate) {
-              <bk-document-list [listId]="listId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+              <okr-document-list [listId]="listId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('album') {
             @defer (on immediate) {
-              <bk-document-list [listId]="albumId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+              <okr-document-list [listId]="albumId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('members') {
             @defer (on immediate) {
-              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" [groupAdmin]="isGroupAdmin()" />
+              <okr-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }

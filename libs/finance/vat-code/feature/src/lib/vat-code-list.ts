@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { VatCodeStore } from './vat-code.store';
 
 @Component({
-  selector: 'bk-vat-code-list',
+  selector: 'okr-vat-code-list',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent,

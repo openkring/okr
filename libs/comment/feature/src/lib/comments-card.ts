@@ -10,7 +10,7 @@ import { CommentHeader, CommentInput, CommentsList } from '@okr/comment-ui';
 import { CommentListStore } from './comment-list.store';
 
 @Component({
-  selector: 'bk-comments-card',
+  selector: 'okr-comments-card',
   standalone: true,
   imports: [
     IonGrid, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
@@ -25,10 +25,10 @@ import { CommentListStore } from './comment-list.store';
       <ion-card-content>
         <ion-grid style="width: 100%; height: 100%;">
           @if (!readOnly()) {
-            <bk-comment-input [name]="name()" [value]="" (changed)="addComment($event)" />
+            <okr-comment-input [name]="name()" [value]="" (changed)="addComment($event)" />
           }
-          <bk-comment-header />
-          <bk-comments-list [comments]="comments()" [empty]="store.i18n.empty()" />
+          <okr-comment-header />
+          <okr-comments-list [comments]="comments()" [empty]="store.i18n.empty()" />
         </ion-grid>
       </ion-card-content>
     </ion-card>

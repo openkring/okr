@@ -17,7 +17,7 @@ export interface CheckboxI18n {
 }
 
 @Component({
-  selector: 'bk-checkbox',
+  selector: 'okr-checkbox',
   standalone: true,
   imports: [
     

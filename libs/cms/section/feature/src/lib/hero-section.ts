@@ -5,7 +5,7 @@ import { HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@okr/shared-
 import { Img, Spinner } from '@okr/shared-ui';
 
 @Component({
-  selector: 'bk-hero-section',
+  selector: 'okr-hero-section',
   standalone: true,
   imports: [
     Spinner, Img,
@@ -22,19 +22,19 @@ import { Img, Spinner } from '@okr/shared-ui';
   template: `
     @if(section(); as section) {
       <div class="hero-container">
-        <bk-img class="hero-image" [image]="heroImage()" [imageStyle]="imageStyle()" />
+        <okr-img class="hero-image" [image]="heroImage()" [imageStyle]="imageStyle()" />
         <ion-grid class="hero-form">
           @if(logoImage(); as logoImage) {
             <ion-row>
               <ion-col>
-                <bk-img class="logo" [image]="logoImage" [imageStyle]="imageStyle()" />
+                <okr-img class="logo" [image]="logoImage" [imageStyle]="imageStyle()" />
               </ion-col>
             </ion-row>
           }
         </ion-grid>
       </div>
     } @else {
-      <bk-spinner />
+      <okr-spinner />
     }
   `
 })

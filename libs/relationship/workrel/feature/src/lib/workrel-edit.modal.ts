@@ -10,7 +10,7 @@ import { WorkrelForm } from '@okr/relationship-workrel-ui';
 import { WorkrelStore } from './workrel.store';
 
 @Component({
-  selector: 'bk-workrel-edit-modal',
+  selector: 'okr-workrel-edit-modal',
   standalone: true,
   imports: [
     CommentsAccordion, Header,
@@ -20,14 +20,14 @@ import { WorkrelStore } from './workrel.store';
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   providers: [WorkrelStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
-          <bk-workrel-form
+          <okr-workrel-form
             [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
@@ -51,7 +51,7 @@ import { WorkrelStore } from './workrel.store';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="comments">
-              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
             </ion-accordion-group>
           </ion-card-content>
         </ion-card>

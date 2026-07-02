@@ -10,7 +10,7 @@ import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DE
 import { PageI18n, pageValidations } from '@okr/cms-page-util';
 
 @Component({
-  selector: 'bk-page-form',
+  selector: 'okr-page-form',
   standalone: true,
   imports: [
     Chips, NotesInput, TextInput, StringList, ButtonCopy, ErrorNote, CategorySelect, StringSelect,
@@ -35,27 +35,27 @@ import { PageI18n, pageValidations } from '@okr/cms-page-util';
                 @if(okey(); as okey) {
                   <ion-item lines="none">
                     <ion-label>Page Key: {{ okey }}</ion-label>
-                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
+                    <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
                   </ion-item>
                 }
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="nameErrors()" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="nameErrors()" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="titleErrors()" />
+                <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="titleErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
               </ion-col>
               @if(type() === 'blog') {
                 <ion-col size="12" size-md="6">
-                  <bk-string-select [i18n]="blogTypeI18n()" [selectedString]="blogType()" (selectedStringChange)="onFieldChange('blogType', $event)" [readOnly]="false" [stringList]="['minimal', 'grid', 'classic', 'magazine', 'bento', 'stream']" />
+                  <okr-string-select [i18n]="blogTypeI18n()" [selectedString]="blogType()" (selectedStringChange)="onFieldChange('blogType', $event)" [readOnly]="false" [stringList]="['minimal', 'grid', 'classic', 'magazine', 'bento', 'stream']" />
                 </ion-col>
               }
             </ion-row>
@@ -64,7 +64,7 @@ import { PageI18n, pageValidations } from '@okr/cms-page-util';
       </ion-card>
 
       <!-- sections -->
-      <bk-strings
+      <okr-strings
           [strings]="sections()"
           (stringsChange)="onFieldChange('sections', $event)"
           [mask]="mask"
@@ -75,10 +75,10 @@ import { PageI18n, pageValidations } from '@okr/cms-page-util';
           [add]="i18n().section_add()" />
 
       @if(hasRole('privileged')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
       }
       @if(hasRole('admin')) {
-        <bk-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
     }

@@ -10,7 +10,7 @@ import { CategoryChangeFormModel, categoryChangeFormValidations, MembershipI18n 
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 @Component({
-  selector: 'bk-category-change-form',
+  selector: 'okr-category-change-form',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -27,7 +27,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
               <ion-row>
                 <ion-col size="4">
                   <ion-item lines="none">
-                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" [readOnly]="true" />
+                    <okr-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" [readOnly]="true" />
                   </ion-item>
                 </ion-col>
                 <ion-col size="3" class="ion-align-self-center ion-text-center">
@@ -35,7 +35,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
                 </ion-col>
                 <ion-col size="5">
                   <ion-item lines="none">
-                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="newCategory()" (selectedItemNameChange)="onFieldChange('membershipCategoryNew', $event)" [readOnly]="isReadOnly()" />
+                    <okr-cat-select [category]="membershipCategory()" [selectedItemName]="newCategory()" (selectedItemNameChange)="onFieldChange('membershipCategoryNew', $event)" [readOnly]="isReadOnly()" />
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -48,7 +48,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-date-input [i18n]="dateOfChangeI18n()" [storeDate]="dateOfChange()" (storeDateChange)="onFieldChange('dateOfChange', $event)" [readOnly]="isReadOnly()" />
+                  <okr-date-input [i18n]="dateOfChangeI18n()" [storeDate]="dateOfChange()" (storeDateChange)="onFieldChange('dateOfChange', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12">
                   <ion-item lines="none">

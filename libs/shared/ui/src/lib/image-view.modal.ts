@@ -9,7 +9,7 @@ import { getImgixUrl, getSizedImgixParamsByExtension } from '@okr/shared-util-co
 import { Header } from './header';
 
 @Component({
-  selector: 'bk-image-view-modal',
+  selector: 'okr-image-view-modal',
   standalone: true,
   imports: [
     Header,
@@ -37,7 +37,7 @@ import { Header } from './header';
     }
   `],
   template: `
-      <bk-header [i18n]="{ title: title() }" [isModal]="true" />
+      <okr-header [i18n]="{ title: title() }" [isModal]="true" />
       <ion-content>
           <div class="image-container">
             <img [src]="imgixUrl()"

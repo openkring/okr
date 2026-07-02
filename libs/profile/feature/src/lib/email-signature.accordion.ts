@@ -17,7 +17,7 @@ import { SignatureService } from './signature.service';
  * All assembly + clipboard logic lives in the injected {@link SignatureService}.
  */
 @Component({
-  selector: 'bk-email-signature-accordion',
+  selector: 'okr-email-signature-accordion',
   standalone: true,
   providers: [SignatureService],
   imports: [
@@ -50,7 +50,7 @@ import { SignatureService } from './signature.service';
 
         <ion-row>
           <ion-col size="12" size-md="6">
-            <bk-text-input [i18n]="functionI18n()" [value]="signatureService.functionLabel()"
+            <okr-text-input [i18n]="functionI18n()" [value]="signatureService.functionLabel()"
               (valueChange)="signatureService.functionLabel.set($event)" [readOnly]="false" [maxLength]="50" />
           </ion-col>
           <ion-col size="12" size-md="6">

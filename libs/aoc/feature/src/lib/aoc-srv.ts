@@ -12,7 +12,7 @@ import { AocSrvStore, getMismatches } from './aoc-srv.store';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 
 @Component({
-  selector: 'bk-aoc-srv',
+  selector: 'okr-aoc-srv',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -22,7 +22,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
     IonButtons, IonMenuButton, IonTitle, IonToolbar
   ],
   providers: [AocSrvStore],
-  styles: [`bk-list-filter { width: 100%; }`],
+  styles: [`okr-list-filter { width: 100%; }`],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
@@ -78,7 +78,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
 
             @if(showIndex() && filteredIndex().length > 0) {
               <ion-row>
-                <bk-list-filter
+                <okr-list-filter
                   (searchTermChanged)="store.setSearchTerm($event)"
                   stringsName="srvFilter" [strings]="filters" [selectedString]="filter()" (stringsChanged)="filter.set($event)"
                 />
@@ -94,7 +94,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
                 <ion-row (click)="showIndexActions(item)">
                   <ion-col size="6">
                     @if(item.personKey) {
-                      <bk-avatar-label
+                      <okr-avatar-label
                         [key]="getAvatarKey(item)"
                         [label]="displayName(item)"
                         [color]="getColor(item)"
@@ -167,7 +167,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
                 <ion-row (click)="showForeignerActions(item)">
                   <ion-col size="5">
                     @if(item.personKey) {
-                      <bk-avatar-label
+                      <okr-avatar-label
                         [key]="getAvatarKey(item)"
                         [label]="displayName(item)"
                         [color]="getColor(item)"
@@ -228,7 +228,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
                 <ion-row (click)="showLicenseActions(item)">
                   <ion-col size="6">
                     @if(item.personKey) {
-                      <bk-avatar-label
+                      <okr-avatar-label
                         [key]="getAvatarKey(item)"
                         [label]="displayName(item)"
                         [color]="getColor(item)"
@@ -285,7 +285,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
                 <ion-row (click)="showClubActions(item)">
                   <ion-col size="6">
                     @if(item.personKey) {
-                      <bk-avatar-label
+                      <okr-avatar-label
                         [key]="getAvatarKey(item)"
                         [label]="displayName(item)"
                         [color]="getColor(item)"

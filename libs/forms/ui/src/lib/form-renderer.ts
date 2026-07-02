@@ -6,7 +6,7 @@ import { validatorsFor, defaultFor, isInputField } from '@okr/forms-util';
 import { FieldRenderer } from './field-renderer';
 
 @Component({
-  selector: 'bk-form-renderer',
+  selector: 'okr-form-renderer',
   standalone: true,
   imports: [ReactiveFormsModule, IonList, IonButton, FieldRenderer],
   styles: [`
@@ -33,7 +33,7 @@ import { FieldRenderer } from './field-renderer';
 
       <ion-list lines="none">
         @for (field of sortedFields(); track field.id) {
-          <bk-field-renderer [field]="field" [control]="getControl(field)" />
+          <okr-field-renderer [field]="field" [control]="getControl(field)" />
         }
       </ion-list>
       @if (showSubmit()) {

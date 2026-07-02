@@ -32,7 +32,7 @@ export const FIELD_TYPE_DEFS: FieldTypeDef[] = [
 ];
 
 @Component({
-  selector: 'bk-field-type-card',
+  selector: 'okr-field-type-card',
   standalone: true,
   imports: [SvgIconPipe, IonCard, IonCardContent, IonIcon, IonLabel],
   styles: [`

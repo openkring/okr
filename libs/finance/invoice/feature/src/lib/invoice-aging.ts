@@ -39,7 +39,7 @@ function agingBuckets(invoices: InvoiceModel[]): AgingBucket[] {
 }
 
 @Component({
-  selector: 'bk-invoice-aging',
+  selector: 'okr-invoice-aging',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [

@@ -8,7 +8,7 @@ import { BillStore } from './bill.store';
 
 
 @Component({
-  selector: 'bk-bill-view-modal',
+  selector: 'okr-bill-view-modal',
   standalone: true,
   providers: [BillStore],
   imports: [
@@ -21,7 +21,7 @@ import { BillStore } from './bill.store';
     .view-label { font-size: 0.8rem; }
   `],
   template: `
-    <bk-header [i18n]="{ title: store.i18n.bills() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.bills() }" [isModal]="true" />
     <ion-content class="ion-no-padding">
       @if(bill(); as bill) {
         <ion-card>

@@ -12,7 +12,7 @@ import { FavoriteColorPipe, FormatAddressPipe } from "@okr/subject-address-util"
 import { AddressStore } from "./addresses.store";
 
 @Component({
-  selector: 'bk-addresses-accordion',
+  selector: 'okr-addresses-accordion',
   standalone: true,
   imports: [ 
     FavoriteColorPipe, FormatAddressPipe, SvgIconPipe,
@@ -42,7 +42,7 @@ import { AddressStore } from "./addresses.store";
         </ion-item>
       }  
       @if(addresses().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(address of addresses(); track $index) {

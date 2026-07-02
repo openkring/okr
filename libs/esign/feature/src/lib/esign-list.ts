@@ -17,7 +17,7 @@ import { Browser } from '@capacitor/browser';
 import { EsignStore } from './esign.store';
 
 @Component({
-  selector: 'bk-esign-list',
+  selector: 'okr-esign-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [EsignStore],
@@ -45,7 +45,7 @@ import { EsignStore } from './esign.store';
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
-      <bk-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
+      <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
       <div class="filter-row">
         @for(f of statusFilters; track f.value) {
           <ion-chip
@@ -60,9 +60,9 @@ import { EsignStore } from './esign.store';
 
     <ion-content>
       @if(store.isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if(store.filteredEsigns().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
           @for(esign of store.filteredEsigns(); track esign.esignId) {

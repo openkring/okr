@@ -32,7 +32,7 @@ interface ImagesConfigurationI18n {
 }
 
 @Component({
-  selector: 'bk-images-config',
+  selector: 'okr-images-config',
   standalone: true,
   imports: [
     SvgIconPipe,

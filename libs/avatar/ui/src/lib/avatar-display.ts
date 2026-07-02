@@ -9,7 +9,7 @@ import { AvatarPipe } from './avatar.pipe';
 import { getDefaultIcon } from "@okr/avatar-util";
 
 @Component({
-  selector: 'bk-avatar-display',
+  selector: 'okr-avatar-display',
   standalone: true,
   imports: [
     AvatarPipe, FullNamePipe,

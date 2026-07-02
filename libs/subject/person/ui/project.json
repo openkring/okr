@@ -2,7 +2,7 @@
   "name": "subject-person-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/subject/person/ui/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:ui", "scope:person", "platform:mobile", "platform:web"],
   "targets": {

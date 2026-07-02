@@ -6,14 +6,14 @@ import { Header } from '@okr/shared-ui';
 import { QuizStore } from './quiz.store';
 
 @Component({
-  selector: 'bk-quiz-page',
+  selector: 'okr-quiz-page',
   standalone: true,
   imports: [
     Header,
     IonContent, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonButton
   ],
   template: `
-    <bk-header [i18n]="{ title: 'Quiz' }" />
+    <okr-header [i18n]="{ title: 'Quiz' }" />
     <ion-content>
       @for(question of quizStore.questions(); track question) {
         <ion-card>

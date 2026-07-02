@@ -32,7 +32,7 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
 }
 
 @Component({
-  selector: 'bk-flighttracker-search',
+  selector: 'okr-flighttracker-search',
   standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [FlightTrackerStore],
@@ -116,7 +116,7 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
 
     <ion-content>
       @if (isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
         <ion-backdrop />
       }
       @if (error(); as err) {
@@ -145,7 +145,7 @@ export class FlightTrackerSearch implements AfterViewInit, OnDestroy {
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly error = computed(() => this.store.error());
 
-  protected readonly mapId = 'bk-flighttracker-map';
+  protected readonly mapId = 'okr-flighttracker-map';
 
   private map: any;
   private markerIds: string[] = [];

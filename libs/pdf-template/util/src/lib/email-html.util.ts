@@ -33,7 +33,7 @@ function escapeHtml(value: string): string {
  * Wrap a (rich-text) message body in a branded, responsive, inline-CSS HTML email.
  * Table-based layout for broad email-client compatibility.
  *
- * @param bodyHtml the message body as HTML (e.g. from bk-editor)
+ * @param bodyHtml the message body as HTML (e.g. from okr-editor)
  * @param opts branding + attachment metadata
  * @returns a self-contained HTML document string
  */

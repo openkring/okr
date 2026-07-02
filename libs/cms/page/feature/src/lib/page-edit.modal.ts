@@ -9,7 +9,7 @@ import { PageForm } from '@okr/cms-page-ui';
 import { PageStore } from './page.store';
 
 @Component({
-  selector: 'bk-page-edit-modal',
+  selector: 'okr-page-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, ErrorBanner,
@@ -18,15 +18,15 @@ import { PageStore } from './page.store';
   ],
   providers: [PageStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
-    <bk-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+    <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
-          <bk-page-form
+          <okr-page-form
             [i18n]="store.i18n"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"

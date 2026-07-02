@@ -10,7 +10,7 @@ export interface StringSelectI18n {
 }
 
 @Component({
-  selector: 'bk-string-select',
+  selector: 'okr-string-select',
   standalone: true,
   imports: [
     IonSelect, IonSelectOption, IonNote, IonItem

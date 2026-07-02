@@ -15,7 +15,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { BillStore } from './bill.store';
 
 @Component({
-  selector: 'bk-bill-list',
+  selector: 'okr-bill-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [BillStore],
@@ -53,14 +53,14 @@ import { BillStore } from './bill.store';
           }
         </ion-buttons>
       </ion-toolbar>
-      <bk-list-filter (searchTermChanged)="onSearchTermChange($event)" />
+      <okr-list-filter (searchTermChanged)="onSearchTermChange($event)" />
     </ion-header>
 
     <ion-content>
       @if(isLoading()) {
-        <bk-spinner />
+        <okr-spinner />
       } @else if(filteredBills().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
           @for(bill of filteredBills(); track bill.okey) {

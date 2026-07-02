@@ -7,12 +7,12 @@ import { AccountingStore } from './accounting.store';
 import { ReadOnlyBanner } from './read-only-banner';
 
 @Component({
-  selector: 'bk-accounting-shell',
+  selector: 'okr-accounting-shell',
   standalone: true,
   imports: [IonContent, IonRouterOutlet, ReadOnlyBanner],
   template: `
     <ion-content>
-      <bk-read-only-banner />
+      <okr-read-only-banner />
       <ion-router-outlet />
     </ion-content>
   `,

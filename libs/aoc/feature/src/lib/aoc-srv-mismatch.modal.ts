@@ -13,7 +13,7 @@ interface SrvDisplayRow {
 }
 
 @Component({
-  selector: 'bk-aoc-srv-mismatch-modal',
+  selector: 'okr-aoc-srv-mismatch-modal',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,

@@ -5,7 +5,7 @@ import { MatrixChat } from '@okr/chat-feature';
 
 
 @Component({
-  selector: 'bk-chat-page',
+  selector: 'okr-chat-page',
   standalone: true,
   imports: [
     MatrixChat, 
@@ -18,7 +18,7 @@ import { MatrixChat } from '@okr/chat-feature';
       height: 100%;
       width: 100%;
     }
-  bk-matrix-chat-overview { width: 100%; display: block; }
+  okr-matrix-chat-overview { width: 100%; display: block; }
   `],
   template: `
     <ion-header>
@@ -30,7 +30,7 @@ import { MatrixChat } from '@okr/chat-feature';
       </ion-toolbar>
     </ion-header>
     <ion-content>
-        <bk-matrix-chat-overview [isGroupView]="isGroupView()" [selectedRoom]="selectedRoom()" />
+        <okr-matrix-chat-overview [isGroupView]="isGroupView()" [selectedRoom]="selectedRoom()" />
     </ion-content>
   `
 })

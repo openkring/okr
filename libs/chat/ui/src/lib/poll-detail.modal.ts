@@ -11,7 +11,7 @@ interface PollDetailModalI18n {
 }
 
 @Component({
-  selector: 'bk-poll-detail-modal',
+  selector: 'okr-poll-detail-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -57,7 +57,7 @@ interface PollDetailModalI18n {
     }
   `],
   template: `
-    <bk-header [i18n]="{ title: i18n().survey_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n().survey_title() }" [isModal]="true" />
     <ion-content>
       @for(answer of pollAnswers(); track answer.id) {
         <div class="answer-header">{{ answer.body }} ({{ voteCount(answer.id) }})</div>

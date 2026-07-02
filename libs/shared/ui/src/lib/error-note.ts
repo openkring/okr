@@ -8,7 +8,7 @@ import { ColorsIonic } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';
 
 @Component({
-  selector: 'bk-error-note',
+  selector: 'okr-error-note',
   standalone: true,
   imports: [
     IonNote, IonItem

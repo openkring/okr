@@ -11,7 +11,7 @@ import { hasRole } from '@okr/shared-util-core';
 import { UserStore } from './user.store';
 
 @Component({
-    selector: 'bk-user-list',
+    selector: 'okr-user-list',
     standalone: true,
     imports: [
       SvgIconPipe, FullNamePipe,
@@ -34,7 +34,7 @@ import { UserStore } from './user.store';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -43,7 +43,7 @@ import { UserStore } from './user.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
+    <okr-list-filter 
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
      />
@@ -60,10 +60,10 @@ import { UserStore } from './user.store';
   <!-- Data -->
   <ion-content #content>
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       @if(filteredUsers().length === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(user of filteredUsers(); track user.okey) {

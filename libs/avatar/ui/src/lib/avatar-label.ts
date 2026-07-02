@@ -7,7 +7,7 @@ import { ColorIonic } from '@okr/shared-models';
 import { AvatarService } from '@okr/avatar-data-access';
 
 @Component({
-  selector: 'bk-avatar-label',
+  selector: 'okr-avatar-label',
   standalone: true,
   imports: [
     IonItem, IonAvatar, IonImg, IonLabel

@@ -10,7 +10,7 @@ import { ENV } from "@okr/shared-config";
 
 
 @Component({
-  selector: 'bk-avatar-user',
+  selector: 'okr-avatar-user',
   standalone: true,
   imports: [
     IonAvatar, IonLabel, IonImg

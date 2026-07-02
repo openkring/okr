@@ -14,7 +14,7 @@ import { RelationshipToolbar } from '@okr/avatar-ui';
 import { OwnershipStore } from './ownership.store';
 
 @Component({
-  selector: 'bk-ownership-edit-modal',
+  selector: 'okr-ownership-edit-modal',
   standalone: true,
   imports: [
     CommentsAccordion, Header, DocumentsAccordion,
@@ -24,13 +24,13 @@ import { OwnershipStore } from './ownership.store';
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   providers: [OwnershipStore],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if (currentUser(); as currentUser) {
-        <bk-relationship-toolbar
+        <okr-relationship-toolbar
           relType="ownership"
           [subjectAvatar]="resourceAvatar()"
           [subjectDefaultIcon]="subjectDefaultIcon()"
@@ -42,7 +42,7 @@ import { OwnershipStore } from './ownership.store';
         />
         
         @if(formData(); as formData) {
-          <bk-ownership-form
+          <okr-ownership-form
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
@@ -60,8 +60,8 @@ import { OwnershipStore } from './ownership.store';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="comments">
-              <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
-              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
             </ion-accordion-group>
           </ion-card-content>
         </ion-card>

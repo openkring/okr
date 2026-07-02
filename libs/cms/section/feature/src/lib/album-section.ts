@@ -27,7 +27,7 @@ import { AlbumStore } from './album-section.store';
  * - implement multiple file upload (drag and drop)
  */
 @Component({
-  selector: 'bk-album-section',
+  selector: 'okr-album-section',
   standalone: true,
   imports: [
     NgStyle,
@@ -54,7 +54,7 @@ import { AlbumStore } from './album-section.store';
   providers: [AlbumStore],
   template: `
     @if(isLoading()) {
-      <bk-spinner />
+      <okr-spinner />
     } @else {
       <ion-toolbar>
         <ion-grid>
@@ -68,7 +68,7 @@ import { AlbumStore } from './album-section.store';
                 }
             </ion-col>
             <ion-col size="6" size-md="4">
-                <bk-category-old [i18n]="albumStyleI18n()" [value]="albumStyle()" (valueChange)="onAlbumStyleChange($event)" [categories]="albumStyles" [readOnly]="false" />
+                <okr-category-old [i18n]="albumStyleI18n()" [value]="albumStyle()" (valueChange)="onAlbumStyleChange($event)" [categories]="albumStyles" [readOnly]="false" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -94,7 +94,7 @@ import { AlbumStore } from './album-section.store';
                             } @case(IT.Image) {
                               <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
                             } @case(IT.StreamingVideo) {
-                              <bk-video [url]="image.url" />
+                              <okr-video [url]="image.url" />
                             } @case (IT.Pdf) {
                               <img [src]="url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
                             }
@@ -115,17 +115,17 @@ import { AlbumStore } from './album-section.store';
                         <div class="imgix-image">
                           @switch(image.type) {
                             @case(IT.Dir) {
-                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()" />
+                              <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()" />
                               <ion-label>{{ image.label }}</ion-label>
                             } @case(IT.Image) {
-                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
+                              <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
                             } @case(IT.StreamingVideo) {
-                              <bk-video [url]="image.url" />
+                              <okr-video [url]="image.url" />
                             } @case (IT.Pdf) {
                               <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
                             }
                             @default {
-                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
+                              <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
                               <ion-label>{{ image.label }}</ion-label>
                             }
                           }
@@ -172,17 +172,17 @@ import { AlbumStore } from './album-section.store';
                           <ion-col size="6" size-xl="3" size-md="4">
                             @switch(image.type) {
                               @case(IT.Dir) {
-                                <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
+                                <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
                                 <ion-label>{{ image.label }}</ion-label>
                               } @case(IT.Image) {
                                 <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, $index)"></div>
                               } @case(IT.StreamingVideo) {
-                                <bk-video [url]="image.url" />
+                                <okr-video [url]="image.url" />
                               } @case (IT.Pdf) {
                                 <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, $index)"></div>
                               }
                               @default {
-                                <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
+                                <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
                                 <ion-label>{{ image.label }}</ion-label>
                               }
                             }
@@ -194,7 +194,7 @@ import { AlbumStore } from './album-section.store';
                 }
               }
             } @else {
-              <bk-label>{{ store.i18n.no_images() }}</bk-label>
+              <okr-label>{{ store.i18n.no_images() }}</okr-label>
             }
         </ion-card-content>
       </ion-card>

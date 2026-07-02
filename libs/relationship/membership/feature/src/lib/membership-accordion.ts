@@ -12,7 +12,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { MembershipStore } from './membership.store';
 
 @Component({
-  selector: 'bk-membership-accordion',
+  selector: 'okr-membership-accordion',
   standalone: true,
   imports: [
     RellogPipe, SvgIconPipe, AvatarPipe, EmptyList,
@@ -34,7 +34,7 @@ import { MembershipStore } from './membership.store';
     </ion-item>
     <div slot="content">
         @if(memberships().length === 0) {
-        <bk-empty-list [message]="store.i18n.no_data_memberships()" />
+        <okr-empty-list [message]="store.i18n.no_data_memberships()" />
       } @else {
         <ion-list lines="inset">
           @for(membership of memberships(); track $index) {

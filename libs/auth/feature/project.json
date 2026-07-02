@@ -2,7 +2,7 @@
   "name": "auth-feature",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/auth/feature/src",
-  "prefix": "bk",
+  "prefix": "okr",
   "projectType": "library",
   "tags": ["type:feature", "scope:auth", "platform:mobile", "platform:web"],
   "targets": {

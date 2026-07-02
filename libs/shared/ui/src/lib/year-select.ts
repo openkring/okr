@@ -6,7 +6,7 @@ import { coerceBoolean, getYear } from '@okr/shared-util-core';
 import { TranslatePipe } from '@okr/shared-i18n';
 
 @Component({
-  selector: 'bk-year-select',
+  selector: 'okr-year-select',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,

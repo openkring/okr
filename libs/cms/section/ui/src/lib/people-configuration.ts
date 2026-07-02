@@ -11,7 +11,7 @@ import { Avatars } from '@okr/avatar-ui';
 import { SectionI18n } from '@okr/cms-section-util';
 
 @Component({
-  selector: 'bk-people-config',
+  selector: 'okr-people-config',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -28,19 +28,19 @@ import { SectionI18n } from '@okr/cms-section-util';
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" />
+                <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="showNameI18n()" [checked]="showName()" (checkedChange)="onFieldChange('showName', $event)" [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="showNameI18n()" [checked]="showName()" (checkedChange)="onFieldChange('showName', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="showLabelI18n()" [checked]="showLabel()" (checkedChange)="onFieldChange('showLabel', $event)" [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="showLabelI18n()" [checked]="showLabel()" (checkedChange)="onFieldChange('showLabel', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                  <bk-string-select [i18n]="peopleTypeI18n()" [selectedString]="type()" (selectedStringChange)="onTypeChange($event)" [readOnly]="readOnly()" [stringList]="['persons', 'group', 'responsibility']" />
+                  <okr-string-select [i18n]="peopleTypeI18n()" [selectedString]="type()" (selectedStringChange)="onTypeChange($event)" [readOnly]="readOnly()" [stringList]="['persons', 'group', 'responsibility']" />
               </ion-col>
                <ion-col size="12" size-md="6">
                 @if(type() === 'group') {
@@ -57,13 +57,13 @@ import { SectionI18n } from '@okr/cms-section-util';
                 }
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="colorI18n()" [value]="color()" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />
+                <okr-category-old [i18n]="colorI18n()" [value]="color()" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="nameDisplayI18n()" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [readOnly]="isReadOnly()" [categories]="nameDisplays" />
+                <okr-category-old [i18n]="nameDisplayI18n()" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [readOnly]="isReadOnly()" [categories]="nameDisplays" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="linkedSectionI18n()" [value]="linkedSection()" (valueChange)="onFieldChange('linkedSection', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
+                <okr-text-input [i18n]="linkedSectionI18n()" [value]="linkedSection()" (valueChange)="onFieldChange('linkedSection', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -71,7 +71,7 @@ import { SectionI18n } from '@okr/cms-section-util';
       </ion-card>
       @if(currentUser(); as currentUser) {
         @if(type() === 'persons') {
-          <bk-avatars (selectClicked)="selectClicked.emit()"
+          <okr-avatars (selectClicked)="selectClicked.emit()"
             [avatars]="persons()"
             (avatarsChange)="onPersonsChange($event)"
             [readOnly]="readOnly()"

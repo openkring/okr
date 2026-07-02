@@ -20,7 +20,7 @@ import { BlogBento } from './blog-bento';
 import { BlogStream } from './blog-stream';
 
 @Component({
-  selector: 'bk-blog-page',
+  selector: 'okr-blog-page',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -63,7 +63,7 @@ import { BlogStream } from './blog-stream';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                   <ng-template>
                     <ion-content>
-                      <bk-menu [menuName]="contextMenuName" />
+                      <okr-menu [menuName]="contextMenuName" />
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -93,22 +93,22 @@ import { BlogStream } from './blog-stream';
         <div class="print-content" #printRoot>
           @switch (blogType()) {
             @case ('grid') {
-              <bk-blog-grid [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-grid [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('classic') {
-              <bk-blog-classic [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-classic [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('magazine') {
-              <bk-blog-magazine [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-magazine [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('bento') {
-              <bk-blog-bento [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-bento [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('stream') {
-              <bk-blog-stream [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-stream [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @default {
-              <bk-blog-minimal [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-minimal [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
           }
         </div>

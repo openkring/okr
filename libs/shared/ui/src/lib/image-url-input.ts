@@ -16,7 +16,7 @@ export interface ImageUrlInputI18n {
 }
 
 @Component({
-  selector: 'bk-image-url-input',
+  selector: 'okr-image-url-input',
   standalone: true,
   imports: [
     FormsModule,
@@ -41,7 +41,7 @@ export interface ImageUrlInputI18n {
         [readonly]="isReadOnly()"
       />
       @if (isCopyable()) {
-        <bk-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
+        <okr-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
       }
     </ion-item>
     @if(i18n().helper) {

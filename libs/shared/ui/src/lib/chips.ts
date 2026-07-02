@@ -14,7 +14,7 @@ import { ChipSelectModal } from './chip-select.modal';
  * That is why we notify the parent component about the changes in the selected chips by calling a function that updates the model.
  */
 @Component({
-  selector: 'bk-chips',
+  selector: 'okr-chips',
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,

@@ -14,7 +14,7 @@ export class ItemColorPipe implements PipeTransform {
 
 /**
  * Determine the color to highlight archived items in a list.
- *   --bk-archived-color: #ffcc99;
+ *   --okr-archived-color: #ffcc99;
  * @param isArchived  it is an archived item
  */
 export function getListItemColor(isArchived: boolean): string {

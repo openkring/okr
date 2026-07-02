@@ -9,14 +9,14 @@ export interface TableBodyI18n {
 }
 
 @Component({
-  selector: 'bk-table-body',
+  selector: 'okr-table-body',
   standalone: true,
   imports: [
     TextList
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-text-list
+    <okr-text-list
         [(texts)]="formData"
         [maxLength]="maxLength()"
         [title]="i18n().table_body_title()"

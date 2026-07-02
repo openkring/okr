@@ -13,7 +13,7 @@ import { PersonalRelForm } from '@okr/relationship-personal-rel-ui';
 import { PersonalRelStore } from './personal-rel.store';
 
 @Component({
-  selector: 'bk-personal-rel-edit-modal',
+  selector: 'okr-personal-rel-edit-modal',
   standalone: true,
   imports: [
     CommentsAccordion, Header, DocumentsAccordion,
@@ -23,13 +23,13 @@ import { PersonalRelStore } from './personal-rel.store';
   providers: [PersonalRelStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <bk-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-personal-rel-form
+        <okr-personal-rel-form
           [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
@@ -49,8 +49,8 @@ import { PersonalRelStore } from './personal-rel.store';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="comments">
-              <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
-              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
             </ion-accordion-group>
           </ion-card-content>
         </ion-card>

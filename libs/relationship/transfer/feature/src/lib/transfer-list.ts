@@ -12,7 +12,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 import { TransferStore } from './transfer.store';
 
 @Component({
-  selector: 'bk-transfer-list',
+  selector: 'okr-transfer-list',
   standalone: true,
   imports: [
     SvgIconPipe, PrettyDatePipe,
@@ -36,7 +36,7 @@ import { TransferStore } from './transfer.store';
             <ion-popover trigger="c-transfers" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -45,7 +45,7 @@ import { TransferStore } from './transfer.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
+    <okr-list-filter 
         (searchTermChanged)="onSearchtermChange($event)"
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         (typeChanged)="onTypeSelected($event)" [types]="types()"
@@ -69,14 +69,14 @@ import { TransferStore } from './transfer.store';
   <!-- list data -->
   <ion-content #content>
     @if(selectedTransfersCount() === 0) {
-      <bk-empty-list [message]="store.i18n.empty()" />
+      <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
         @for(transfer of filteredTransfers(); track $index) {
           <ion-item (click)="showActions(transfer)" detail="false">
             <ion-label class="ion-hide-md-down">{{transfer.dateOfTransfer | prettyDate}}</ion-label>
-            <ion-label><bk-avatar-display [avatars]="transfer.subjects" /></ion-label>
-            <ion-label><bk-avatar-display [avatars]="transfer.objects" /></ion-label>
+            <ion-label><okr-avatar-display [avatars]="transfer.subjects" /></ion-label>
+            <ion-label><okr-avatar-display [avatars]="transfer.objects" /></ion-label>
             <ion-label>{{transfer.resource.name1}}</ion-label>
             <ion-label class="ion-hide-lg-down">{{transfer.name}}</ion-label>
             <ion-label class="ion-hide-lg-down">{{transfer.state }}</ion-label>

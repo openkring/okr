@@ -16,7 +16,7 @@ export interface PollCreateFormI18n {
 }
 
 @Component({
-  selector: 'bk-poll-create-form',
+  selector: 'okr-poll-create-form',
   standalone: true,
   imports: [
     StringList, Checkbox,
@@ -39,8 +39,8 @@ export interface PollCreateFormI18n {
         />
       </ion-item>
 
-      <!-- Answers via bk-strings -->
-      <bk-strings
+      <!-- Answers via okr-strings -->
+      <okr-strings
         [(strings)]="answers"
         [title]="i18n().answer_create()"
         [add]="i18n().answer_add()"
@@ -50,7 +50,7 @@ export interface PollCreateFormI18n {
       />
 
       <!-- Multiple answers toggle -->
-      <bk-checkbox
+      <okr-checkbox
         [i18n]="allowMultipleAnswersI18n()"
         [(checked)]="allowMultipleAnswers"
         [readOnly]="false"

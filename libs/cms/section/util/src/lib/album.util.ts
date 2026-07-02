@@ -67,7 +67,7 @@ export async function listAllFilesFromDirectory(
  * Return a thumbnail representation of the file given based on its mime type.
  * image:  thumbnail image
  * video:  move icon to download the video
- * streaming video: ix-player (bk-video)
+ * streaming video: ix-player (okr-video)
  * other:  file icon to download the file
  * @param ref 
  * @param url 

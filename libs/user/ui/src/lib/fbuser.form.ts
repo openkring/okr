@@ -8,7 +8,7 @@ import { coerceBoolean } from "@okr/shared-util-core";
 import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr/user-util";
 
 @Component({
-  selector: 'bk-fbuser-form',
+  selector: 'okr-fbuser-form',
   standalone: true,
   imports: [
     Checkbox, TextInput, EmailInput, PhoneInput, ErrorNote,
@@ -26,37 +26,37 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="uidI18n()" [value]="uid()" (valueChange)="onFieldChange('uid', $event)" [readOnly]="isReadOnly()" [copyable]=true />
+                <okr-text-input [i18n]="uidI18n()" [value]="uid()" (valueChange)="onFieldChange('uid', $event)" [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="displayNameI18n()" [readOnly]="isReadOnly()" [value]="displayName()" (valueChange)="onFieldChange('displayName', $event)" [copyable]=true />
+                <okr-text-input [i18n]="displayNameI18n()" [readOnly]="isReadOnly()" [value]="displayName()" (valueChange)="onFieldChange('displayName', $event)" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email
+                <okr-email
                   [i18n]="emailI18n()"
                   [value]="email()"
                   (valueChange)="onFieldChange('email', $event)"
                   [readOnly]="isReadOnly()"
                 />
-                <bk-error-note [errors]="emailError()" />
+                <okr-error-note [errors]="emailError()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-phone
+                <okr-phone
                   [i18n]="phoneI18n()"
                   [value]="phone()"
                   (valueChange)="onFieldChange('phone', $event)"
                   [readOnly]="isReadOnly()"
                 />
-                <bk-error-note [errors]="phoneError()" />                                                                                                                     
+                <okr-error-note [errors]="phoneError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="emailVerifiedI18n()" [checked]="emailVerified()" (checkedChange)="onFieldChange('emailVerified', $event)" [showHelper]="true"  [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="emailVerifiedI18n()" [checked]="emailVerified()" (checkedChange)="onFieldChange('emailVerified', $event)" [showHelper]="true"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox [i18n]="disabledI18n()" [checked]="disabled()" (checkedChange)="onFieldChange('disabled', $event)" [showHelper]="true"  [readOnly]="isReadOnly()" />
+                <okr-checkbox [i18n]="disabledI18n()" [checked]="disabled()" (checkedChange)="onFieldChange('disabled', $event)" [showHelper]="true"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input [i18n]="photoUrlI18n()" [readOnly]="isReadOnly()" [value]="photoUrl()" (valueChange)="onFieldChange('photoUrl', $event)" [copyable]=true />
+                <okr-text-input [i18n]="photoUrlI18n()" [readOnly]="isReadOnly()" [value]="photoUrl()" (valueChange)="onFieldChange('photoUrl', $event)" [copyable]=true />
               </ion-col>
             </ion-row>
             <ion-row>

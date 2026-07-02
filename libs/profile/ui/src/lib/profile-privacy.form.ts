@@ -10,7 +10,7 @@ import { personValidations } from "@okr/subject-person-util";
 import { ProfileI18n } from "@okr/profile-util";
 
 @Component({
-  selector: 'bk-profile-privacy-accordion',
+  selector: 'okr-profile-privacy-accordion',
   standalone: true,
   imports: [
     IonAccordion, IonItem, IonLabel, IonGrid, IonRow, IonCol,
@@ -39,22 +39,22 @@ import { ProfileI18n } from "@okr/profile-util";
             </ion-row>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onUsageChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onUsageChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onUsageChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onUsageChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usagePostalAddressI18n()" [value]="usagePostalAddress()" (valueChange)="onUsageChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="usagePostalAddressI18n()" [value]="usagePostalAddress()" (valueChange)="onUsageChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageEmailI18n()" [value]="usageEmail()" (valueChange)="onUsageChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="usageEmailI18n()" [value]="usageEmail()" (valueChange)="onUsageChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usagePhoneI18n()" [value]="usagePhone()" (valueChange)="onUsageChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="usagePhoneI18n()" [value]="usagePhone()" (valueChange)="onUsageChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-category-old [i18n]="usageNameI18n()" [value]="usageName()" (valueChange)="onUsageChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="usageNameI18n()" [value]="usageName()" (valueChange)="onUsageChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -67,7 +67,7 @@ import { ProfileI18n } from "@okr/profile-util";
               </ion-row>
               <ion-row>
                 <ion-col>
-                  <bk-checkbox [i18n]="srvEmailI18n()" [checked]="srvEmail()" (checkedChange)="onSrvEmailChange($event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <okr-checkbox [i18n]="srvEmailI18n()" [checked]="srvEmail()" (checkedChange)="onSrvEmailChange($event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }

@@ -26,7 +26,7 @@ export interface ExpenseFormI18n {
 }
 
 @Component({
-  selector: 'bk-expense-form',
+  selector: 'okr-expense-form',
   standalone: true,
   imports: [
     TextInput, ErrorNote,
@@ -41,17 +41,17 @@ export interface ExpenseFormI18n {
       <ion-grid>
         <ion-row>
           <ion-col size="12">
-            <bk-text-input [i18n]="abstractI18n()" [value]="abstract()"
+            <okr-text-input [i18n]="abstractI18n()" [value]="abstract()"
               (valueChange)="onFieldChange('abstract', $event)" [autofocus]="true" [readOnly]="false" />
-            <bk-error-note [errors]="abstractErrors()" />
+            <okr-error-note [errors]="abstractErrors()" />
           </ion-col>
         </ion-row>
 
         <ion-row>
           <ion-col size="8">
-            <bk-text-input [i18n]="amountI18n()" [value]="amountCHFStr()"
+            <okr-text-input [i18n]="amountI18n()" [value]="amountCHFStr()"
               (valueChange)="onAmountChange($event)" [readOnly]="false" />
-            <bk-error-note [errors]="amountErrors()" />
+            <okr-error-note [errors]="amountErrors()" />
           </ion-col>
           <ion-col size="4">
             <ion-item>
@@ -79,9 +79,9 @@ export interface ExpenseFormI18n {
               </ion-select>
             </ion-item>
             @if (showIbanInput()) {
-              <bk-text-input [i18n]="ibanI18n()" [value]="iban()"
+              <okr-text-input [i18n]="ibanI18n()" [value]="iban()"
                 (valueChange)="onFieldChange('iban', $event)" [readOnly]="false" />
-              <bk-error-note [errors]="ibanErrors()" />
+              <okr-error-note [errors]="ibanErrors()" />
             }
           </ion-col>
         </ion-row>

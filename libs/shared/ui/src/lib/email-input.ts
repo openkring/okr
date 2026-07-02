@@ -16,7 +16,7 @@ export interface EmailInputI18n {
 }
 
 @Component({
-  selector: 'bk-email',
+  selector: 'okr-email',
   standalone: true,
   imports: [
     FormsModule,
@@ -42,7 +42,7 @@ export interface EmailInputI18n {
       [readonly]="isReadOnly()"
     />
     @if (isCopyable()) {
-      <bk-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
+      <okr-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
     }
   </ion-item>
   @if(i18n().helper) {

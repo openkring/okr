@@ -8,7 +8,7 @@ import { deepEqual, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nDefaultStore } from './i18n-default.store';
 
 @Component({
-  selector: 'bk-i18n-default-edit-modal',
+  selector: 'okr-i18n-default-edit-modal',
   standalone: true,
   imports: [
     FormsModule,
@@ -18,7 +18,7 @@ import { I18nDefaultStore } from './i18n-default.store';
   ],
   providers: [I18nDefaultStore],
   template: `
-    <bk-header [i18n]="{ title: '@i18n.default.edit.title' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: '@i18n.default.edit.title' }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-label position="stacked">{{ store.i18n.module() }}</ion-label>

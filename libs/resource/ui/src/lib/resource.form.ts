@@ -9,7 +9,7 @@ import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_
 import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/resource-util';
 
 @Component({
-  selector: 'bk-resource-form',
+  selector: 'okr-resource-form',
   standalone: true,
   imports: [
     Chips, NotesInput, PropertyList, TextInput, NumberInput, ErrorNote, CategorySelect, Color,
@@ -32,32 +32,32 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
                     <ion-col size="12">
-                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12">
-                      <bk-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onFieldChange('usage', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onFieldChange('usage', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="loadErrors()" />
+                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="loadErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="currentValueErrors()" />
+                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />
+                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -76,30 +76,30 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
 <!--                   tbd. boat subtype and category
                     <ion-col size="12">
-                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col> -->
                     <ion-col size="12" size-md="6">
-                      <bk-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="loadErrors()" />
+                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="loadErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="currentValueErrors()" />
+                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />
+                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -118,29 +118,29 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
                     <ion-col size="12">
-                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="loadErrors()" />
+                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="loadErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="currentValueErrors()" />
+                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />
+                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -159,22 +159,22 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input [i18n]="lockerNrI18n()" [value]="lockerNr()" (valueChange)="onFieldChange('lockerNr', $event)" [maxLength]=3 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="lockerNrErrors()" />
+                      <okr-number-input [i18n]="lockerNrI18n()" [value]="lockerNr()" (valueChange)="onFieldChange('lockerNr', $event)" [maxLength]=3 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="lockerNrErrors()" />
                     </ion-col>
 
                     <ion-col size="12" size-md="6">
-                      <bk-number-input [i18n]="keyNrNumI18n()" [value]="keyNr()" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=5 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="keyNrErrors()" />
+                      <okr-number-input [i18n]="keyNrNumI18n()" [value]="keyNr()" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=5 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="keyNrErrors()" />
                     </ion-col>
                     <ion-col size="12">
-                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -193,14 +193,14 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input [i18n]="keyNrTextI18n()" [value]="keyNr() + ''" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="keyNrErrors()" />
+                      <okr-text-input [i18n]="keyNrTextI18n()" [value]="keyNr() + ''" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="keyNrErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -219,21 +219,21 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
                   <ion-col size="12">
-                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />
+                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -252,18 +252,18 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row>
                     <ion-col size="12">
-                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="currentValueErrors()" />
+                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -282,28 +282,28 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
                   <ion-row >
                     <ion-col size="12">
-                      <bk-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="nameErrors()" />
+                      <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
 
                     <ion-col size="12" size-md="6">
-                      <bk-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="loadErrors()" />
+                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="loadErrors()" />
                     </ion-col>
 
                     <ion-col size="12" size-md="6">
-                      <bk-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="currentValueErrors()" />
+                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="currentValueErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <bk-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
-                      <bk-error-note [errors]="hexColorErrors()" />
+                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="hexColorErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -312,14 +312,14 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
           }
         }
 
-        <bk-property-list [(properties)]="data" name="resourceData" />
+        <okr-property-list [(properties)]="data" name="resourceData" />
 
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+          <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
 
         @if(hasRole('admin')) {
-          <bk-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
         }
     </form>
   }

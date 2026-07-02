@@ -12,7 +12,7 @@ const CHANNEL_ORDER: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
  * dismisses with the assembled {@link ExportScope}.
  */
 @Component({
-  selector: 'bk-vcard-export-scope-modal',
+  selector: 'okr-vcard-export-scope-modal',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,

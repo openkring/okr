@@ -23,7 +23,7 @@ import { TaskStore } from './task.store';
  * Completed task items are added to the diary at the same date as the completion date.
  */
 @Component({
-  selector: 'bk-task-list',
+  selector: 'okr-task-list',
   standalone: true,
   imports: [
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
@@ -54,7 +54,7 @@ import { TaskStore } from './task.store';
             <ion-popover trigger="c-tasks" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
+                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -84,7 +84,7 @@ import { TaskStore } from './task.store';
       }
 
       <!-- search and filters -->
-      <bk-list-filter
+      <okr-list-filter
         (searchTermChanged)="onSearchtermChange($event)"
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         (typeChanged)="onPrioritySelected($event)" [types]="priorities()"
@@ -95,7 +95,7 @@ import { TaskStore } from './task.store';
   <!-- list data -->
   <ion-content #content>
       @if(selectedTasksCount() === 0) {
-        <bk-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
           @for(task of filteredTasks(); track $index) {

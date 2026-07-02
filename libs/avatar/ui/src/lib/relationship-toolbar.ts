@@ -11,7 +11,7 @@ import { AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
 import { BkAvatar } from './avatar';
 
 @Component({
-  selector: 'bk-relationship-toolbar',
+  selector: 'okr-relationship-toolbar',
   standalone: true,
   imports: [
     CategoryPlainNamePipe,
@@ -31,7 +31,7 @@ import { BkAvatar } from './avatar';
       <ion-row>
         <ion-col size="5" class="ion-align-items-center ion-justify-content-center">
           <ion-item lines="none" (click)="goto(subjectUrl())" [color]="color() | categoryPlainName:colorsIonic" class="ion-align-items-center ion-justify-content-center">
-            <bk-avatar [avatarInfo]="subjectAvatar()" [types]="types()" [defaultIcon]="subDefaultIcon()" [currentUser]="currentUser()"  class="ion-align-items-center ion-justify-content-center"/>
+            <okr-avatar [avatarInfo]="subjectAvatar()" [types]="types()" [defaultIcon]="subDefaultIcon()" [currentUser]="currentUser()"  class="ion-align-items-center ion-justify-content-center"/>
           </ion-item>
         </ion-col>
         <ion-col size="2" class="ion-align-items-center ion-justify-content-center">
@@ -41,7 +41,7 @@ import { BkAvatar } from './avatar';
         </ion-col>
         <ion-col size="5" class="ion-align-items-center ion-justify-content-center">
           <ion-item lines="none" (click)="goto(objectUrl())" [color]="color() | categoryPlainName:colorsIonic" class="ion-align-items-center ion-justify-content-center">
-            <bk-avatar [avatarInfo]="objectAvatar()" [defaultIcon]="objDefaultIcon()" [currentUser]="currentUser()" />
+            <okr-avatar [avatarInfo]="objectAvatar()" [defaultIcon]="objDefaultIcon()" [currentUser]="currentUser()" />
           </ion-item>
         </ion-col>
       </ion-row>
@@ -52,7 +52,7 @@ import { BkAvatar } from './avatar';
     ion-thumbnail { margin: auto; height: 100px; text-align: right; position: relative;}
     .title { margin: auto; width: 100%; text-align: center;  }
     ion-icon { font-size: 80px;   }
-    bk-avatar { width: 100%; height: 100%; }
+    okr-avatar { width: 100%; height: 100%; }
   `]
 })
 export class RelationshipToolbar {

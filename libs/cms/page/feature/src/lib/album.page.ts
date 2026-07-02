@@ -11,22 +11,22 @@ import { ALBUM_CONFIG_SHAPE, AlbumSection, AlbumStyle } from '@okr/shared-models
 import { PageStore } from './page.store';
 
 @Component({
-  selector: 'bk-album-page',
+  selector: 'okr-album-page',
   standalone: true,
   imports: [
     Header, Spinner, AlbumSectionComponent,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonContent
   ],
   styles: [`
-  bk-section { width: 100%; }
+  okr-section { width: 100%; }
 `],
   template: `
     @if(id(); as id) {
       @if(showMenu()) {
-        <bk-header [i18n]="{ title: headerTitle() }" [isRoot]="true" />
+        <okr-header [i18n]="{ title: headerTitle() }" [isRoot]="true" />
       }
       <ion-content>
-        <bk-album-section [section]="section()" />
+        <okr-album-section [section]="section()" />
       </ion-content>
     } @else {
       @if(showMenu()) {
@@ -37,7 +37,7 @@ import { PageStore } from './page.store';
         </ion-header>
       }
       <ion-content>
-        <bk-spinner />
+        <okr-spinner />
       </ion-content>
     }
   `

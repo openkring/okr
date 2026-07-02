@@ -11,7 +11,7 @@ import { LoginForm } from '@okr/auth-ui';
 import { AuthStore } from './auth.store';
 
 @Component({
-  selector: 'bk-confirm-password-reset-page',
+  selector: 'okr-confirm-password-reset-page',
   standalone: true,
   providers: [AuthStore],
   imports: [
@@ -33,7 +33,7 @@ import { AuthStore } from './auth.store';
     }
   `,
   template: `
-    <bk-header [i18n]="{ title: store.i18n.pwdconfirm() }" [showCloseButton]="false" />
+    <okr-header [i18n]="{ title: store.i18n.pwdconfirm() }" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />
@@ -50,7 +50,7 @@ import { AuthStore } from './auth.store';
               <p>{{ store.i18n.success() }}</p>
             </ion-text>
           } @else {
-            <bk-login-form context="password"
+            <okr-login-form context="password"
               [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
               [i18n]="store.i18n"
             />
