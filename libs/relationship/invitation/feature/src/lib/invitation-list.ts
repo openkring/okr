@@ -1,15 +1,15 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { RoleName, InvitationModel } from '@bk2/shared-models';
-import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getYearList, hasRole } from '@bk2/shared-util-core';
+import { RoleName, InvitationModel } from '@okr/shared-models';
+import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { getYearList, hasRole } from '@okr/shared-util-core';
 
-import { Menu } from '@bk2/cms-menu-feature';
-import { AvatarDisplay } from '@bk2/avatar-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { AvatarDisplay } from '@okr/avatar-ui';
 
-import { createPersonAvatar } from '@bk2/relationship-invitation-util';
+import { createPersonAvatar } from '@okr/relationship-invitation-util';
 import { InvitationStore } from './invitation.store';
 
 @Component({

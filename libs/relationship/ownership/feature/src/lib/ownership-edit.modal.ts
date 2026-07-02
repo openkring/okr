@@ -1,15 +1,15 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
+import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, RoleName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
 
-import { DocumentsAccordion } from '@bk2/document-feature';
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { OwnershipForm } from '@bk2/relationship-ownership-ui';
-import { getOwnerName } from '@bk2/relationship-ownership-util';
-import { RelationshipToolbar } from '@bk2/avatar-ui';
+import { DocumentsAccordion } from '@okr/document-feature';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { OwnershipForm } from '@okr/relationship-ownership-ui';
+import { getOwnerName } from '@okr/relationship-ownership-util';
+import { RelationshipToolbar } from '@okr/avatar-ui';
 
 import { OwnershipStore } from './ownership.store';
 

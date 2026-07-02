@@ -1,4 +1,4 @@
-import { MembershipModel } from "@bk2/shared-models";
+import { MembershipModel } from "@okr/shared-models";
 
 export const SRV_FILTERS = ['all', 'bk', 'srv', 'both'];
 

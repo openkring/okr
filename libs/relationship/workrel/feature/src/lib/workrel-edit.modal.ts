@@ -1,12 +1,12 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, OrgModel, PersonModel, RoleName, UserModel, WorkrelModel, WorkrelModelName } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { CategoryListModel, OrgModel, PersonModel, RoleName, UserModel, WorkrelModel, WorkrelModelName } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { WorkrelForm } from '@bk2/relationship-workrel-ui';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { WorkrelForm } from '@okr/relationship-workrel-ui';
 import { WorkrelStore } from './workrel.store';
 
 @Component({

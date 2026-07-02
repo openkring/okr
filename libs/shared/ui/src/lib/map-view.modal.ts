@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, PLATFORM_ID, computed,
 import { IonContent } from '@ionic/angular/standalone';
 import type * as L from 'leaflet';
 
-import { isBrowser } from '@bk2/shared-util-angular';
+import { isBrowser } from '@okr/shared-util-angular';
 
 import { Header } from './header';
 import { MapMarkerDetail, MapMarkerDetailI18n } from './map-marker-detail';

@@ -1,16 +1,16 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarInfo, CalEventModel, PersonModelName, ReservationApplyModel, ResourceModelName, RoleName } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { getAvatarName, hasRole } from '@bk2/shared-util-core';
+import { AvatarInfo, CalEventModel, PersonModelName, ReservationApplyModel, ResourceModelName, RoleName } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
-import { CalEventEditModal } from '@bk2/calevent-feature';
-import { isCalEvent } from '@bk2/calevent-util';
+import { CalEventEditModal } from '@okr/calevent-feature';
+import { isCalEvent } from '@okr/calevent-util';
 
-import { ReservationApplyForm } from '@bk2/relationship-reservation-ui';
-import { RelationshipToolbar } from '@bk2/avatar-ui';
-import { convertApplyToReservation, getNewReservationApply } from '@bk2/relationship-reservation-util';
+import { ReservationApplyForm } from '@okr/relationship-reservation-ui';
+import { RelationshipToolbar } from '@okr/avatar-ui';
+import { convertApplyToReservation, getNewReservationApply } from '@okr/relationship-reservation-util';
 import { ReservationStore } from './reservation.store';
 
 @Component({

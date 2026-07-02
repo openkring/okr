@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { MatrixChat } from '@bk2/chat-feature';
+import { MatrixChat } from '@okr/chat-feature';
 
 
 @Component({

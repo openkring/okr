@@ -1,5 +1,5 @@
-import { addDuration, getTodayStr } from '@bk2/shared-util-core';
-import { MembershipModel } from '@bk2/shared-models';
+import { addDuration, getTodayStr } from '@okr/shared-util-core';
+import { MembershipModel } from '@okr/shared-models';
 
 export interface BexioInvoicePosition {
   text: string;

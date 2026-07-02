@@ -1,10 +1,10 @@
 import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { ImageConfig, ImageType } from '@bk2/shared-models';
-import { ImageTypes } from '@bk2/shared-categories';
+import { ImageConfig, ImageType } from '@okr/shared-models';
+import { ImageTypes } from '@okr/shared-categories';
 
 import { CategoryOld } from './category-old';
 import { TextInput, TextInputI18n } from './text-input';

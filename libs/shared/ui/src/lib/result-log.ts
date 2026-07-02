@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { LogInfo } from '@bk2/shared-models';
+import { LogInfo } from '@okr/shared-models';
 
 @Component({
   selector: 'bk-result-log',

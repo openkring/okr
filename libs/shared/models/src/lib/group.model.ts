@@ -1,4 +1,4 @@
-import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 import { AVATAR_INFO_SHAPE, AvatarInfo } from './avatar-info';
 

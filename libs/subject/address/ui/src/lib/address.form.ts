@@ -1,13 +1,13 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { AddressModel, CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { AddressModel, CategoryListModel, RoleName, SwissCity, UserModel } from '@okr/shared-models';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
-import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
-import { addressValidations, AddressesI18n } from '@bk2/subject-address-util';
+import { SwissCitySearch } from '@okr/subject-swisscities-ui';
+import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
 
 @Component({
   selector: 'bk-address-form',

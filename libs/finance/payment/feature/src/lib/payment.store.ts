@@ -3,13 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { PaymentOrderModel } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { PaymentOrderModel } from '@okr/shared-models';
 
-import { AccountingStore } from '@bk2/finance-accounting-feature';
-import { PaymentOrderService, PaymentService } from '@bk2/finance-payment-data-access';
-import { PAYMENT_I18N_KEYS, PaymentI18n } from '@bk2/finance-payment-util';
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
+import { PAYMENT_I18N_KEYS, PaymentI18n } from '@okr/finance-payment-util';
 
 import { PaymentOrderEditModal } from './payment-order-edit.modal';
 

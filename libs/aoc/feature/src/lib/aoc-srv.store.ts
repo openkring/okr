@@ -6,20 +6,20 @@ import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { rxResource } from '@angular/core/rxjs-interop';
 
-import { isFirestoreInitializedCheck } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvMismatch } from '@bk2/shared-models';
-import { debugListLoaded, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@bk2/shared-util-core';
+import { isFirestoreInitializedCheck } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvMismatch } from '@okr/shared-models';
+import { debugListLoaded, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
 
-import { OwnershipService } from '@bk2/relationship-ownership-data-access';
-import { MembershipEditModal } from '@bk2/relationship-membership-feature';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { PersonService } from '@bk2/subject-person-data-access';
-import { PersonEditModal } from '@bk2/subject-person-feature';
-import { newMembershipForPerson } from '@bk2/relationship-membership-util';
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { OwnershipService } from '@okr/relationship-ownership-data-access';
+import { MembershipEditModal } from '@okr/relationship-membership-feature';
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { PersonService } from '@okr/subject-person-data-access';
+import { PersonEditModal } from '@okr/subject-person-feature';
+import { newMembershipForPerson } from '@okr/relationship-membership-util';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
 import { AocSrvMismatchModal } from './aoc-srv-mismatch.modal';
 

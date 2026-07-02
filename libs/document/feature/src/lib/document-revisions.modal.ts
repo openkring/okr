@@ -1,9 +1,9 @@
 import { Component, inject, input } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
-import { DocumentModel } from '@bk2/shared-models';
-import { FileNamePipe, PrettyDatePipe } from '@bk2/shared-pipes';
-import { Header } from '@bk2/shared-ui';
+import { DocumentModel } from '@okr/shared-models';
+import { FileNamePipe, PrettyDatePipe } from '@okr/shared-pipes';
+import { Header } from '@okr/shared-ui';
 
 import { DocumentStore } from './document.store';
 

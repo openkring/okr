@@ -1,10 +1,10 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { AppStore, GroupSelectModal, OrgSelectModal, PersonSelectModal, ResourceSelectModal, ResponsibilitySelectModal } from "@bk2/shared-feature";
-import { isLocation, isOrg, isPerson, isResource } from "@bk2/shared-util-core";
-import { AvatarInfo, GroupModel, LocationModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@bk2/shared-models";
-import { DEFAULT_LABEL, DEFAULT_TAGS } from "@bk2/shared-constants";
+import { AppStore, GroupSelectModal, OrgSelectModal, PersonSelectModal, ResourceSelectModal, ResponsibilitySelectModal } from "@okr/shared-feature";
+import { isLocation, isOrg, isPerson, isResource } from "@okr/shared-util-core";
+import { AvatarInfo, GroupModel, LocationModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@okr/shared-models";
+import { DEFAULT_LABEL, DEFAULT_TAGS } from "@okr/shared-constants";
 
 import { LocationSelectModal, LocationSelectResult } from "./location-select.modal";
 import { PersonSelectResult } from "./person-select.modal";

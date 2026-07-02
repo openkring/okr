@@ -4,13 +4,13 @@ import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@bk2/shared-models";
-import { error } from "@bk2/shared-util-angular";
-import { isPhotoCancellation, warn } from "@bk2/shared-util-core";
-import { buildDocumentModel } from "@bk2/document-util";
-import { DocumentService } from "@bk2/document-data-access";
-import { DEFAULT_MIMETYPES } from "@bk2/shared-constants";
-import { UploadEntry, UploadTaskModal, showZoomedImage } from "@bk2/shared-ui";
+import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@okr/shared-models";
+import { error } from "@okr/shared-util-angular";
+import { isPhotoCancellation, warn } from "@okr/shared-util-core";
+import { buildDocumentModel } from "@okr/document-util";
+import { DocumentService } from "@okr/document-data-access";
+import { DEFAULT_MIMETYPES } from "@okr/shared-constants";
+import { UploadEntry, UploadTaskModal, showZoomedImage } from "@okr/shared-ui";
 
 @Injectable({
     providedIn: 'root'

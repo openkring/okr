@@ -4,7 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { createHmac, createHash } from 'node:crypto';
 
-import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
+import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { getAppEmailConfig } from '../auth/email-templates';
 

@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@bk2/shared-feature';
-import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@bk2/shared-models';
-import { DateInput, DateInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
+import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@okr/shared-models';
+import { DateInput, DateInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@okr/shared-util-core';
 
-import { ownershipValidations } from '@bk2/relationship-ownership-util';
+import { ownershipValidations } from '@okr/relationship-ownership-util';
 import { OwnershipStore } from './ownership.store';
 
 

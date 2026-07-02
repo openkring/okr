@@ -1,9 +1,9 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { RoleName, SectionModel, UserModel } from '@bk2/shared-models';
-import { ButtonCopyI18n, Spinner } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
+import { RoleName, SectionModel, UserModel } from '@okr/shared-models';
+import { ButtonCopyI18n, Spinner } from '@okr/shared-ui';
+import { hasRole } from '@okr/shared-util-core';
 
 import { AccordionSectionComponent } from './accordion-section';
 import { AlbumSectionComponent } from './album-section';

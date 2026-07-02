@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
-import { AlbumSection, AlbumStyle, GalleryEffect, ImageActionType } from '@bk2/shared-models';
-import { booleanValidations, categoryValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
+import { AlbumSection, AlbumStyle, GalleryEffect, ImageActionType } from '@okr/shared-models';
+import { booleanValidations, categoryValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 import { baseSectionValidations } from './base-section.validations';
 

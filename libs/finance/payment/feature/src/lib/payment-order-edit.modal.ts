@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ModalController, IonButton, IonButtons, IonContent, IonHeader,
   IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { PaymentOrderModel, UserModel } from '@bk2/shared-models';
+import { PaymentOrderModel, UserModel } from '@okr/shared-models';
 
 @Component({
   selector: 'bk-payment-order-edit-modal',

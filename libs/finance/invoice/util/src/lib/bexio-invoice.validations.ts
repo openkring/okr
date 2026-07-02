@@ -1,7 +1,7 @@
 import { only, staticSuite } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { dateValidations, stringValidations } from '@bk2/shared-util-core';
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { dateValidations, stringValidations } from '@okr/shared-util-core';
 
 import { BexioInvoiceFormModel } from './bexio-invoice.util';
 

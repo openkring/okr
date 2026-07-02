@@ -1,9 +1,9 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { IconConfig, Slot } from '@bk2/shared-models';
-import { NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { DEFAULT_NAME } from '@bk2/shared-constants';
+import { IconConfig, Slot } from '@okr/shared-models';
+import { NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { DEFAULT_NAME } from '@okr/shared-constants';
 
 interface IconConfigI18n {
   icon_title:             Signal<string>;

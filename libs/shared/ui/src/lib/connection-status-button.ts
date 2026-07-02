@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Network } from '@capacitor/network';
 import { AlertController, IonButton, IonicSafeString } from '@ionic/angular/standalone';
 
-import { I18nService } from '@bk2/shared-i18n';
+import { I18nService } from '@okr/shared-i18n';
 import { PFX } from './scope';
 
 type Status = 'online' | 'slow' | 'offline';

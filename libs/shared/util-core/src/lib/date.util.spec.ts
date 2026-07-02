@@ -1,4 +1,4 @@
-import { END_FUTURE_DATE_STR, MAX_YEAR, MIN_YEAR } from '@bk2/shared-constants';
+import { END_FUTURE_DATE_STR, MAX_YEAR, MIN_YEAR } from '@okr/shared-constants';
 import { describe, expect, it } from 'vitest';
 import {
     checkYearRange,

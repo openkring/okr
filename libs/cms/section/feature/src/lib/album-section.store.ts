@@ -2,13 +2,13 @@ import { computed, inject, resource, Signal } from '@angular/core';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { STORAGE } from '@bk2/shared-config';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { ALBUM_CONFIG_SHAPE, AlbumConfig, AlbumStyle, ImageConfig, ImageType } from '@bk2/shared-models';
-import { debugMessage, die } from '@bk2/shared-util-core';
+import { STORAGE } from '@okr/shared-config';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { ALBUM_CONFIG_SHAPE, AlbumConfig, AlbumStyle, ImageConfig, ImageType } from '@okr/shared-models';
+import { debugMessage, die } from '@okr/shared-util-core';
 
-import { getImageMetaData, listAllFilesFromDirectory, SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { getImageMetaData, listAllFilesFromDirectory, SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 import { HttpClient } from '@angular/common/http';
 

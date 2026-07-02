@@ -2,7 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 
-import { SocialPostModel } from "@bk2/shared-models";
+import { SocialPostModel } from "@okr/shared-models";
 
 @Injectable({ providedIn: 'root' })
 export class SocialFeedService {

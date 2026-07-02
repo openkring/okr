@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PEOPLE_SECTION_SHAPE, PeopleSection } from '@bk2/shared-models';
+import { PEOPLE_SECTION_SHAPE, PeopleSection } from '@okr/shared-models';
 
 import { peopleSectionValidations } from './people-section.validations';
 

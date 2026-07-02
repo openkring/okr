@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ActivityModel } from '@bk2/shared-models';
-import { AVATAR_INFO_SHAPE } from '@bk2/shared-models';
+import { ActivityModel } from '@okr/shared-models';
+import { AVATAR_INFO_SHAPE } from '@okr/shared-models';
 import { getActivityIndex, getActivityRoleNeeded, isActivity } from './activity.util';
 
 const TENANT = 'scs';

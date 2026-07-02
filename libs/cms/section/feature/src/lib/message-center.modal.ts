@@ -4,11 +4,11 @@ import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonInput, Io
 import { of } from 'rxjs';
 import { signalStore, withProps } from '@ngrx/signals';
 
-import { DeliveryTypes } from '@bk2/shared-categories';
-import { AppStore } from '@bk2/shared-feature';
-import { DeliveryType, UserModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { I18nService } from '@bk2/shared-i18n';
+import { DeliveryTypes } from '@okr/shared-categories';
+import { AppStore } from '@okr/shared-feature';
+import { DeliveryType, UserModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { I18nService } from '@okr/shared-i18n';
 
 const MessageCenterStore = signalStore(
   withProps(() => ({ i18nService: inject(I18nService) })),
@@ -19,9 +19,9 @@ const MessageCenterStore = signalStore(
   })),
 );
 
-import { BkAvatar } from '@bk2/avatar-ui';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { UserService } from '@bk2/user-data-access';
+import { BkAvatar } from '@okr/avatar-ui';
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { UserService } from '@okr/user-data-access';
 
 const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtrap_test'] as const;
 

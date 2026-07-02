@@ -1,4 +1,4 @@
-import { getTodayStr } from '@bk2/shared-util-core';
+import { getTodayStr } from '@okr/shared-util-core';
 
 export type PersonNewFormModel = {
   firstName: string,

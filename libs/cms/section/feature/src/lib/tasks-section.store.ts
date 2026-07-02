@@ -4,15 +4,15 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { map, of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { TaskCollection, TaskModel } from '@bk2/shared-models';
-import { getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
+import { TaskCollection, TaskModel } from '@okr/shared-models';
+import { getSystemQuery, getTodayStr } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
-import { TaskService } from '@bk2/task-data-access';
-import { TaskEditModal } from '@bk2/task-feature';
-import { isTask } from '@bk2/task-util';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { TaskService } from '@okr/task-data-access';
+import { TaskEditModal } from '@okr/task-feature';
+import { isTask } from '@okr/task-util';
 
 
 export type TasksState = {

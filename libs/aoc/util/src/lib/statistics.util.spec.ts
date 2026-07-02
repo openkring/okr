@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { initializeAgeByGenderStatistics, updateAgeByGenderStats, initializeCategoryByGenderStatistics, GenderRow } from './statistics.util';
-import * as coreUtils from '@bk2/shared-util-core';
+import * as coreUtils from '@okr/shared-util-core';
 
 // Mock the getAge function from the core utilities
-vi.mock('@bk2/shared-util-core', async importOriginal => {
+vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
   return {
     ...actual,

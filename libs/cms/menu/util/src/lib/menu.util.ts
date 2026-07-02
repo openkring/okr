@@ -2,9 +2,9 @@ import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 
 
-import { MenuItemModel } from '@bk2/shared-models';
-import { navigateByUrl } from '@bk2/shared-util-angular';
-import { getPropertyValue, isType, warn } from '@bk2/shared-util-core';
+import { MenuItemModel } from '@okr/shared-models';
+import { navigateByUrl } from '@okr/shared-util-angular';
+import { getPropertyValue, isType, warn } from '@okr/shared-util-core';
 
 export async function menuActionNavigate(router: Router, menuItem: MenuItemModel): Promise<void> {
   await navigateByUrl(router, menuItem.url, menuItem.data);

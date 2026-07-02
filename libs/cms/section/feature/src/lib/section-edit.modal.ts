@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, SectionModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@bk2/shared-ui';
-import { coerceBoolean, deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
-import { SectionForm } from '@bk2/cms-section-ui';
+import { CategoryListModel, SectionModel, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';
+import { coerceBoolean, deepEqual, safeStructuredClone } from '@okr/shared-util-core';
+import { SectionForm } from '@okr/cms-section-ui';
 
 import { SectionStore } from './section.store';
 

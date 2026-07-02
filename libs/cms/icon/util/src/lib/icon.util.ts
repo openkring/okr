@@ -1,5 +1,5 @@
-import { DEFAULT_DATE } from '@bk2/shared-constants';
-import { IconModel } from '@bk2/shared-models';
+import { DEFAULT_DATE } from '@okr/shared-constants';
+import { IconModel } from '@okr/shared-models';
 
 /**
  * Build a searchable index string for an icon from its name, type, and tags.

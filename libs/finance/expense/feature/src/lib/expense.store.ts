@@ -4,20 +4,20 @@ import { ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { ENV } from '@bk2/shared-config';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { AddressModel, BookingLineModel, BookingModel, ExpenseModel } from '@bk2/shared-models';
-import { getTodayStr } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { AddressModel, BookingLineModel, BookingModel, ExpenseModel } from '@okr/shared-models';
+import { getTodayStr } from '@okr/shared-util-core';
 
-import { AddressService } from '@bk2/subject-address-data-access';
-import { UploadService } from '@bk2/avatar-data-access';
-import { DocumentService } from '@bk2/document-data-access';
-import { AccountingConfigService } from '@bk2/finance-accounting-data-access';
-import { BookingService } from '@bk2/finance-booking-data-access';
+import { AddressService } from '@okr/subject-address-data-access';
+import { UploadService } from '@okr/avatar-data-access';
+import { DocumentService } from '@okr/document-data-access';
+import { AccountingConfigService } from '@okr/finance-accounting-data-access';
+import { BookingService } from '@okr/finance-booking-data-access';
 
-import { ExpenseDocumentService, ExpenseService } from '@bk2/finance-expense-data-access';
-import { chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, newExpenseDocumentModel, newExpenseModel, normalizeIban } from '@bk2/finance-expense-util';
+import { ExpenseDocumentService, ExpenseService } from '@okr/finance-expense-data-access';
+import { chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, newExpenseDocumentModel, newExpenseModel, normalizeIban } from '@okr/finance-expense-util';
 
 export type SubmitStep = 'idle' | 'iban' | 'upload' | 'saving' | 'booking' | 'done' | 'error';
 

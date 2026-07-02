@@ -3,13 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { MemberCatConfig } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
-import { AppStore } from '@bk2/shared-feature';
+import { MemberCatConfig } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
 
-import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { MembershipService } from '@okr/relationship-membership-data-access';
 import { applyCatRowConfig, buildCatRows, CatRow } from './member-cat-section.util';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export { buildCatRows, CatRow };
 

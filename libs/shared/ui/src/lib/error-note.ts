@@ -4,8 +4,8 @@ import { IonItem, IonNote } from '@ionic/angular/standalone';
 import { TranslocoService } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
 
-import { ColorsIonic } from '@bk2/shared-categories';
-import { ColorIonic } from '@bk2/shared-models';
+import { ColorsIonic } from '@okr/shared-categories';
+import { ColorIonic } from '@okr/shared-models';
 
 @Component({
   selector: 'bk-error-note',

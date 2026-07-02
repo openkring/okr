@@ -2,18 +2,18 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
-import { ChangeConfirmation, ChangeConfirmationI18n } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { isAdminMember } from '@bk2/subject-group-util';
-import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
+import { ChangeConfirmation, ChangeConfirmationI18n } from '@okr/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { isAdminMember } from '@okr/subject-group-util';
+import { DEFAULT_ID, DEFAULT_NAME } from '@okr/shared-constants';
 
-import { PageDispatcher, PageStore } from '@bk2/cms-page-feature';
-import { getDocumentStoragePath } from '@bk2/document-util';
-import { FolderService } from '@bk2/folder-data-access';
-import { MembershipList } from '@bk2/relationship-membership-feature';
-import { TaskList } from '@bk2/task-feature';
-import { DocumentList } from '@bk2/document-feature';
-import { CalEventList } from '@bk2/calevent-feature';
+import { PageDispatcher, PageStore } from '@okr/cms-page-feature';
+import { getDocumentStoragePath } from '@okr/document-util';
+import { FolderService } from '@okr/folder-data-access';
+import { MembershipList } from '@okr/relationship-membership-feature';
+import { TaskList } from '@okr/task-feature';
+import { DocumentList } from '@okr/document-feature';
+import { CalEventList } from '@okr/calevent-feature';
 
 import { GroupStore } from './group.store';
 

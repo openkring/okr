@@ -1,6 +1,6 @@
 import { Firestore } from 'firebase-admin/firestore';
 import { searchData } from './search.util';
-import { WorkrelCollection, WorkrelModel } from '@bk2/shared-models';
+import { WorkrelCollection, WorkrelModel } from '@okr/shared-models';
 
 /**
  * Retrieves all workingRels for a given subject (person or org).

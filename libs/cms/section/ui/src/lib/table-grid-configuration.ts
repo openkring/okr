@@ -1,11 +1,11 @@
 import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { TableGrid } from '@bk2/shared-models';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { TableGrid } from '@okr/shared-models';
+import { coerceBoolean } from '@okr/shared-util-core';
 
-import { SectionI18n } from '@bk2/cms-section-util';
+import { SectionI18n } from '@okr/cms-section-util';
 
 @Component({
   selector: 'bk-table-grid',

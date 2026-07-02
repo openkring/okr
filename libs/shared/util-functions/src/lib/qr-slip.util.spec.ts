@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseSwissAmount, pickFavoriteByChannel, buildQrSlipData, QrPayee } from './qr-slip.util';
-import { AddressModel } from '@bk2/shared-models';
+import { AddressModel } from '@okr/shared-models';
 
 describe('parseSwissAmount', () => {
   it('parses a Swiss-formatted string with apostrophe', () => {

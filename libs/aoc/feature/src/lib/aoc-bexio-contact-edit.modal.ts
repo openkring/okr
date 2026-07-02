@@ -1,13 +1,13 @@
 import { Component, computed, inject, input } from "@angular/core";
 import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 
-import { UserModel } from "@bk2/shared-models";
-import { Header, Spinner } from "@bk2/shared-ui";
-import { I18nService } from "@bk2/shared-i18n";
-import { AOC_I18N_KEYS } from "@bk2/aoc-util";
+import { UserModel } from "@okr/shared-models";
+import { Header, Spinner } from "@okr/shared-ui";
+import { I18nService } from "@okr/shared-i18n";
+import { AOC_I18N_KEYS } from "@okr/aoc-util";
 
 import { BexioIndex } from "..";
-import { getFullName } from "@bk2/shared-util-core";
+import { getFullName } from "@okr/shared-util-core";
 
 type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
 

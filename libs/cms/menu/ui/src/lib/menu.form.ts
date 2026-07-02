@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@bk2/shared-constants';
-import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@okr/shared-constants';
+import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
-import { MenuI18n, menuItemValidations } from '@bk2/cms-menu-util';
+import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
 
 @Component({
   selector: 'bk-menu-item-form',

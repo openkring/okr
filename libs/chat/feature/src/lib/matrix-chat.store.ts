@@ -7,16 +7,16 @@ import { of, switchMap } from 'rxjs';
 import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@bk2/shared-models';
-import { debugMessage } from '@bk2/shared-util-core';
-import { AlertService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
+import { MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@okr/shared-models';
+import { debugMessage } from '@okr/shared-util-core';
+import { AlertService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 
-import { ActivityService } from '@bk2/activity-data-access';
-import { AvatarService } from '@bk2/avatar-data-access';
-import { MatrixChatService, MatrixPollData } from '@bk2/chat-data-access';
-import { MATRIX_CHAT_I18N_KEYS, MatrixChatI18n } from '@bk2/chat-util';
+import { ActivityService } from '@okr/activity-data-access';
+import { AvatarService } from '@okr/avatar-data-access';
+import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
+import { MATRIX_CHAT_I18N_KEYS, MatrixChatI18n } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 

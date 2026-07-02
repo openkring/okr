@@ -1,9 +1,9 @@
 
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { WorkrelModel } from '@bk2/shared-models';
-import { dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { WorkrelModel } from '@okr/shared-models';
+import { dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const workrelValidations = staticSuite((model: WorkrelModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

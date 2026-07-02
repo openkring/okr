@@ -1,15 +1,15 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
-import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
+import { BexioIdMask, ChVatMask } from '@okr/shared-config';
+import { CategoryListModel, RoleName, SwissCity, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@okr/shared-constants';
 
-import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
-import { OrgI18n, OrgNewFormModel, orgNewFormValidations } from '@bk2/subject-org-util';
-import { ZefixCompanyDetails } from '@bk2/subject-org-data-access';
+import { SwissCitySearch } from '@okr/subject-swisscities-ui';
+import { OrgI18n, OrgNewFormModel, orgNewFormValidations } from '@okr/subject-org-util';
+import { ZefixCompanyDetails } from '@okr/subject-org-data-access';
 
 import { ZefixLookup } from './zefix-lookup';
 

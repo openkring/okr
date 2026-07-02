@@ -1,7 +1,7 @@
 import { Component, input, output, signal } from '@angular/core';
 import { IonModal, IonContent, IonDatetime } from '@ionic/angular/standalone';
 
-import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
+import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 export interface DatePickerModalI18n {
   ok: string;

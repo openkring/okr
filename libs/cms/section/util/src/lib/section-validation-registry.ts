@@ -1,4 +1,4 @@
-import { SectionModel, SectionType } from '@bk2/shared-models';
+import { SectionModel, SectionType } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 import { albumSectionValidations } from './album-section.validations';

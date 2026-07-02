@@ -3,7 +3,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { CanActivateFn, CanActivateChildFn } from '@angular/router';
 import { filter, map, take } from 'rxjs/operators';
 
-import { AppStore } from '@bk2/shared-feature';
+import { AppStore } from '@okr/shared-feature';
 
 /**
  * Holds route activation until the app is ready (auth settled + UserModel and categories

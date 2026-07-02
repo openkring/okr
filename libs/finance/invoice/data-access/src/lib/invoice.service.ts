@@ -1,14 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { InvoiceCollection, InvoiceModel, UserModel } from '@bk2/shared-models';
-import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
-import { ActivityService } from '@bk2/activity-data-access';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { InvoiceCollection, InvoiceModel, UserModel } from '@okr/shared-models';
+import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { ActivityService } from '@okr/activity-data-access';
 
-import { getInvoiceIndex } from '@bk2/finance-invoice-util';
+import { getInvoiceIndex } from '@okr/finance-invoice-util';
 const PFX = '@finance/invoice/data-access.';
 
 @Injectable({

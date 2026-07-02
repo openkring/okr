@@ -1,9 +1,9 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { getCategoryPlaceholder } from '@bk2/shared-categories';
-import { CategoryModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
+import { getCategoryPlaceholder } from '@okr/shared-categories';
+import { CategoryModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
 
 @Pipe({
   name: 'categoryPlaceholder',

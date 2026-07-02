@@ -8,7 +8,7 @@ import {
   ALL_ESIGN_SECRETS, REGION,
   getDeepSignAccessToken, getEsignApiBase,
 } from './shared';
-import { EsignCollection } from '@bk2/shared-models';
+import { EsignCollection } from '@okr/shared-models';
 
 export const esignArchiveSigned = onDocumentUpdated(
   { document: `${EsignCollection}/{esignId}`, region: REGION, secrets: ALL_ESIGN_SECRETS },

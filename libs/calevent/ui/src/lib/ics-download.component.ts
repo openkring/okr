@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { IonButton, IonIcon } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { Browser } from '@capacitor/browser';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';

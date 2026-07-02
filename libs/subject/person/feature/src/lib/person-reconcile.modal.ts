@@ -2,7 +2,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import {
   computePersonFieldDiffs,
   PersonDuplicateCandidate,
@@ -10,7 +10,7 @@ import {
   PersonI18n,
   PersonNewFormModel,
   ReconcilableField,
-} from '@bk2/subject-person-util';
+} from '@okr/subject-person-util';
 
 /** Maps each reconcilable field to its existing person-i18n label key. */
 const FIELD_LABEL: Record<ReconcilableField, keyof PersonI18n> = {

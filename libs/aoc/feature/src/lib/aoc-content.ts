@@ -2,12 +2,12 @@ import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, ToastController } from '@ionic/angular/standalone';
 
-import { MenuItemModel, SectionModel } from '@bk2/shared-models';
-import { Button, Header, ResultLog } from '@bk2/shared-ui';
-import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { MenuItemModel, SectionModel } from '@okr/shared-models';
+import { Button, Header, ResultLog } from '@okr/shared-ui';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
 import { AocContentStore, MissingMenuRef, MissingSectionRef, SectionImageRef } from './aoc-content.store';
-import { SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 
 @Component({
   selector: 'bk-aoc-content',

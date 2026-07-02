@@ -6,24 +6,24 @@ import { Observable, firstValueFrom, forkJoin, from, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { StorageReference, deleteObject, getDownloadURL, getMetadata, listAll, ref } from 'firebase/storage';
 
-import { STORAGE } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { AccordionSection, ArticleSection, BkModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, SliderSection, UserModel } from '@bk2/shared-models';
-import { confirm, downloadToBrowser, navigateByUrl } from '@bk2/shared-util-angular';
-import { DateFormat, convertDateFormatToString, getFullName, getSystemQuery, getTodayStr, replaceSubstring, safeStructuredClone } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
-import { ImageDetailModal } from '@bk2/shared-ui';
+import { STORAGE } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { AccordionSection, ArticleSection, BkModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, SliderSection, UserModel } from '@okr/shared-models';
+import { confirm, downloadToBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { DateFormat, convertDateFormatToString, getFullName, getSystemQuery, getTodayStr, replaceSubstring, safeStructuredClone } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { ImageDetailModal } from '@okr/shared-ui';
 
-import { DocumentService } from '@bk2/document-data-access';
-import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@bk2/document-util';
-import { MenuService } from '@bk2/cms-menu-data-access';
-import { MenuModal } from '@bk2/cms-menu-feature';
-import { PageService } from '@bk2/cms-page-data-access';
-import { SectionService } from '@bk2/cms-section-data-access';
-import { SectionEditModal } from '@bk2/cms-section-feature';
+import { DocumentService } from '@okr/document-data-access';
+import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/document-util';
+import { MenuService } from '@okr/cms-menu-data-access';
+import { MenuModal } from '@okr/cms-menu-feature';
+import { PageService } from '@okr/cms-page-data-access';
+import { SectionService } from '@okr/cms-section-data-access';
+import { SectionEditModal } from '@okr/cms-section-feature';
 
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
 export type MissingMenuRef = {
   parent: MenuItemModel;   // menu item that contains the broken reference

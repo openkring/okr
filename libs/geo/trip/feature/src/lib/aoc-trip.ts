@@ -8,15 +8,15 @@ import {
   IonMenuButton, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { Spinner } from '@bk2/shared-ui';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { AlertService } from '@bk2/shared-util-angular';
-import { TripModel } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { Spinner } from '@okr/shared-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { AlertService } from '@okr/shared-util-angular';
+import { TripModel } from '@okr/shared-models';
 
-import { TripService } from '@bk2/trip-data-access';
-import { TRIP_I18N_KEYS, TripI18n, formatTripTime } from '@bk2/trip-util';
+import { TripService } from '@okr/trip-data-access';
+import { TRIP_I18N_KEYS, TripI18n, formatTripTime } from '@okr/trip-util';
 
 import { TripEditModal } from './trip-edit.modal';
 

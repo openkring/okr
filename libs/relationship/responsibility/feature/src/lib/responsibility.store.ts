@@ -3,15 +3,15 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, MultiSelectModal, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
-import { confirm } from '@bk2/shared-util-angular';
-import { CategoryListModel, PersonModel, ResponsibilityModel } from '@bk2/shared-models';
-import { debugListLoaded, isPerson, isValidAt, nameMatches } from '@bk2/shared-util-core';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore, MultiSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { confirm } from '@okr/shared-util-angular';
+import { CategoryListModel, PersonModel, ResponsibilityModel } from '@okr/shared-models';
+import { debugListLoaded, isPerson, isValidAt, nameMatches } from '@okr/shared-util-core';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
 
-import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
-import { isResponsibility, RESPONSIBILITY_I18N_KEYS, ResponsibilityI18n } from '@bk2/relationship-responsibility-util';
+import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
+import { isResponsibility, RESPONSIBILITY_I18N_KEYS, ResponsibilityI18n } from '@okr/relationship-responsibility-util';
 
 export type ResponsibilityState = {
   listId: string;          // 'k_key', 'r_responsibleKey', 'all'

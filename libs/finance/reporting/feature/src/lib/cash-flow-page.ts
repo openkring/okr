@@ -3,9 +3,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { IonContent, IonHeader, IonItem, IonLabel,
   IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { BookingModel } from '@bk2/shared-models';
-import { AccountingStore } from '@bk2/finance-accounting-feature';
-import { ReportingService } from '@bk2/finance-reporting-data-access';
+import { BookingModel } from '@okr/shared-models';
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { ReportingService } from '@okr/finance-reporting-data-access';
 
 @Component({
   selector: 'bk-cash-flow-page',

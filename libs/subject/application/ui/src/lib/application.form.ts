@@ -6,10 +6,10 @@ import {
   IonInput, IonItem, IonLabel, IonRadio, IonRadioGroup, IonSelect, IonSelectOption
 } from '@ionic/angular/standalone';
 
-import { ApplicationKind, ApplicationModel } from '@bk2/shared-models';
-import { APPLICATION_KIND_VALUES } from '@bk2/shared-models';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { ApplicationI18n, needsSsn } from '@bk2/application-util';
+import { ApplicationKind, ApplicationModel } from '@okr/shared-models';
+import { APPLICATION_KIND_VALUES } from '@okr/shared-models';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { ApplicationI18n, needsSsn } from '@okr/application-util';
 
 @Component({
   selector: 'bk-application-form',

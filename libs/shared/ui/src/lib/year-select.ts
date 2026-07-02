@@ -2,8 +2,8 @@ import { Component, computed, input, model } from '@angular/core';
 import { IonLabel, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { coerceBoolean, getYear } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { coerceBoolean, getYear } from '@okr/shared-util-core';
+import { TranslatePipe } from '@okr/shared-i18n';
 
 @Component({
   selector: 'bk-year-select',

@@ -2,7 +2,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
-import { AddressModel } from '@bk2/shared-models';
+import { AddressModel } from '@okr/shared-models';
 
 import { updateFavoriteAddressInfo } from './address.util';
 

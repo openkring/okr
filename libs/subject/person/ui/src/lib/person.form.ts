@@ -1,13 +1,13 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
-import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
-import { personValidations, PersonI18n } from '@bk2/subject-person-util';
-import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
+import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
+import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVisibleToUser } from '@okr/shared-util-core';
+import { personValidations, PersonI18n } from '@okr/subject-person-util';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'bk-person-form',

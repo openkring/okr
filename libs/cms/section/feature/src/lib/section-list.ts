@@ -1,11 +1,11 @@
 import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { RoleName, SectionModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { BkListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { sectionSupportsImages } from '@bk2/cms-section-util';
+import { RoleName, SectionModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { BkListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@okr/shared-ui';
+import { hasRole } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { sectionSupportsImages } from '@okr/cms-section-util';
 
 import { SectionStore } from './section.store';
 import { SectionImageService, SectionImageUploadLabels } from './section-image.service';

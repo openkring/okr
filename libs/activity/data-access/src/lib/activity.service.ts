@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { ActivityCollection, ActivityModel, AVATAR_INFO_SHAPE, UserModel } from '@bk2/shared-models';
-import { findByKey, getAvatarInfo, getSystemQuery, getTodayStr, DateFormat } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { ActivityCollection, ActivityModel, AVATAR_INFO_SHAPE, UserModel } from '@okr/shared-models';
+import { findByKey, getAvatarInfo, getSystemQuery, getTodayStr, DateFormat } from '@okr/shared-util-core';
 
-import { getActivityIndex, getActivityRoleNeeded } from '@bk2/activity-util';
+import { getActivityIndex, getActivityRoleNeeded } from '@okr/activity-util';
 import { PFX } from './scope';
 
 @Injectable({

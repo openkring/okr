@@ -1,13 +1,13 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable, of } from "rxjs";
 
-import { ENV } from "@bk2/shared-config";
-import { FirestoreService } from "@bk2/shared-data-access";
-import { CommentCollection, CommentModel, UserModel } from "@bk2/shared-models";
-import { error } from "@bk2/shared-util-angular";
-import { getFullName, getSystemQuery } from "@bk2/shared-util-core";
+import { ENV } from "@okr/shared-config";
+import { FirestoreService } from "@okr/shared-data-access";
+import { CommentCollection, CommentModel, UserModel } from "@okr/shared-models";
+import { error } from "@okr/shared-util-angular";
+import { getFullName, getSystemQuery } from "@okr/shared-util-core";
 
-import { createComment } from "@bk2/comment-util";
+import { createComment } from "@okr/comment-util";
 
 @Injectable({
     providedIn: 'root'

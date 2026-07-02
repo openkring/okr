@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { TransferModel } from '@bk2/shared-models';
-import { booleanValidations, dateValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { TransferModel } from '@okr/shared-models';
+import { booleanValidations, dateValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const transferValidations = staticSuite((model: TransferModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

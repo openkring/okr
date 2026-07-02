@@ -3,12 +3,12 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { MemberAgeConfig } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
-import { AppStore } from '@bk2/shared-feature';
+import { MemberAgeConfig } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
 
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export type AgeRow = { label: string; male: number; female: number; total: number };
 

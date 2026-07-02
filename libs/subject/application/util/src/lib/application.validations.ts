@@ -1,6 +1,6 @@
 import { create, enforce, omitWhen, test } from 'vest';
-import { ApplicationModel } from '@bk2/shared-models';
-import { ssnValidations } from '@bk2/subject-person-util';
+import { ApplicationModel } from '@okr/shared-models';
+import { ssnValidations } from '@okr/subject-person-util';
 import { needsSsn } from './application.util';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

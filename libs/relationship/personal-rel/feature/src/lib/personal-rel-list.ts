@@ -1,15 +1,15 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { PersonalRelModel, RoleName } from '@bk2/shared-models';
-import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole, isOngoing } from '@bk2/shared-util-core';
+import { PersonalRelModel, RoleName } from '@okr/shared-models';
+import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { hasRole, isOngoing } from '@okr/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { Menu } from '@bk2/cms-menu-feature';
-import { PersonalRelNamePipe } from '@bk2/relationship-personal-rel-util';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { PersonalRelNamePipe } from '@okr/relationship-personal-rel-util';
 import { PersonalRelStore } from './personal-rel.store';
 
 @Component({

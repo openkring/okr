@@ -1,5 +1,5 @@
-import { TransferModel } from '@bk2/shared-models';
-import { addIndexElement, getAvatarKeys, getAvatarNames, isType } from '@bk2/shared-util-core';
+import { TransferModel } from '@okr/shared-models';
+import { addIndexElement, getAvatarKeys, getAvatarNames, isType } from '@okr/shared-util-core';
 
 export function isTransfer(transfer: unknown, tenantId: string): transfer is TransferModel {
   return isType(transfer, new TransferModel(tenantId));

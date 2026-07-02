@@ -1,8 +1,8 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
-import { storeDateToRegasoftDate, regasoftDateToStoreDate } from '@bk2/shared-util-core';
-import { Club, RegasoftMember, SrvContactData, SrvMemberLicenseDetail } from '@bk2/shared-models';
+import { storeDateToRegasoftDate, regasoftDateToStoreDate } from '@okr/shared-util-core';
+import { Club, RegasoftMember, SrvContactData, SrvMemberLicenseDetail } from '@okr/shared-models';
 
 import { regasoftApiKey, regasoftClubId, REGASOFT_BASE } from './shared';
 

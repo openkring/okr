@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ApplicationModel } from '@bk2/shared-models';
+import { ApplicationModel } from '@okr/shared-models';
 
-vi.mock('@bk2/shared-util-core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@bk2/shared-util-core')>();
+vi.mock('@okr/shared-util-core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@okr/shared-util-core')>();
   return { ...actual };
 });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FolderModel } from '@bk2/shared-models';
+import { FolderModel } from '@okr/shared-models';
 import { getFolderIndex, getFolderTitle, newFolderModel } from './folder.util';
 
 describe('getFolderTitle', () => {

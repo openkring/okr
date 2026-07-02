@@ -3,10 +3,10 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { setCacheHeaders, parseTags, storeDateToIso, titleToI18n } from '../utils';
 import { getHtmlSanitizer, sanitizeI18n } from '../sanitize';
-import type { I18nString } from '@bk2/shared-models';
+import type { I18nString } from '@okr/shared-models';
 
 type SanitizeFn = (html: string) => string;
-import { shortenText } from '@bk2/shared-util-core';
+import { shortenText } from '@okr/shared-util-core';
 
 const IMGIX_BASE = 'https://bkaiser.imgix.net';
 

@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
-import { I18nService } from '@bk2/shared-i18n';
-import { getCountryName } from '@bk2/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { getCountryName } from '@okr/shared-util-core';
 
 @Pipe({
   name: 'countryName',

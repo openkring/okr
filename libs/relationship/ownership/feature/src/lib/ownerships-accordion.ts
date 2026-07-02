@@ -1,12 +1,12 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
-import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList } from '@bk2/shared-ui';
-import { getAvatarKey, getCategoryIcon, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@okr/shared-models';
+import { DurationPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList } from '@okr/shared-ui';
+import { getAvatarKey, getCategoryIcon, hasRole, isOngoing } from '@okr/shared-util-core';
 
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { OwnershipStore } from './ownership.store';
 
 @Component({

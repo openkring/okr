@@ -6,7 +6,7 @@ import {
   IonButton, IonItem, IonLabel, IonList, IonToggle,
 } from '@ionic/angular/standalone';
 
-import { ConsentService } from '@bk2/consent-data-access';
+import { ConsentService } from '@okr/consent-data-access';
 
 @Component({
   selector: 'bk-cookie-banner',

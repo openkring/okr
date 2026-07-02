@@ -1,11 +1,11 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { MenuItemModel, RoleName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { BkListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { MenuItemModel, RoleName } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { BkListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@okr/shared-ui';
+import { hasRole } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
 import { MenuStore } from './menu.store';
 

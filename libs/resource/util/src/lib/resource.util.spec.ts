@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ResourceModel } from '@bk2/shared-models';
+import { ResourceModel } from '@okr/shared-models';
 import {
   getResourceIndex,
   getResourceIndexInfo,

@@ -4,13 +4,13 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { ModalController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
-import { AppStore } from '@bk2/shared-feature';
-import { ActivityCollection, ActivityModel } from '@bk2/shared-models';
-import { getSystemQuery, nameMatches } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
+import { ActivityCollection, ActivityModel } from '@okr/shared-models';
+import { getSystemQuery, nameMatches } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { ActivityService } from '@bk2/activity-data-access';
-import { ACTIVITY_I18N_KEYS, ActivityI18n } from '@bk2/activity-util';
+import { ActivityService } from '@okr/activity-data-access';
+import { ACTIVITY_I18N_KEYS, ActivityI18n } from '@okr/activity-util';
 
 import { ActivityViewModal } from './activity-view.modal';
 

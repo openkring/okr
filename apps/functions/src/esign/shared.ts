@@ -3,7 +3,7 @@ import { defineSecret } from 'firebase-functions/params';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 import axios from 'axios';
-import { EsignSignee, EsignSignStatus } from '@bk2/shared-models';
+import { EsignSignee, EsignSignStatus } from '@okr/shared-models';
 
 // ─── Environment switch ───────────────────────────────────────────────────────
 // Flip the entire DeepSign integration (endpoints + credentials) between the

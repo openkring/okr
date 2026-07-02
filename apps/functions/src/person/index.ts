@@ -3,16 +3,16 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
-import { PersonCollection, UserCollection } from '@bk2/shared-models';
-import { addIndexElement } from '@bk2/shared-util-core';
-import { checkAppCheckToken, checkAuthentication } from '@bk2/shared-util-functions';
+import { PersonCollection, UserCollection } from '@okr/shared-models';
+import { addIndexElement } from '@okr/shared-util-core';
+import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import type {
   FindPersonDuplicatesRequest,
   FindPersonDuplicatesResponse,
   MergePersonIntoTenantRequest,
   MergePersonIntoTenantResponse,
   PersonDuplicateCandidate,
-} from '@bk2/subject-person-util';
+} from '@okr/subject-person-util';
 
 const REGION = 'europe-west6';
 const ALLOWED_ROLES = ['admin', 'memberAdmin'];

@@ -2,9 +2,9 @@ import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { ToastController } from '@ionic/angular';
 
-import { AddressModel } from '@bk2/shared-models';
-import { copyToClipboard, formatIban, formatPhoneNumber, IbanFormat, showToast } from '@bk2/shared-util-angular';
-import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@bk2/shared-util-core';
+import { AddressModel } from '@okr/shared-models';
+import { copyToClipboard, formatIban, formatPhoneNumber, IbanFormat, showToast } from '@okr/shared-util-angular';
+import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@okr/shared-util-core';
 
 /*-------------------------- address creation --------------------------------*/
 

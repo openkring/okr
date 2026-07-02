@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, OnInit } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
-import { BillModel } from '@bk2/shared-models';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
+import { BillModel } from '@okr/shared-models';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 
 import { BillStore } from './bill.store';
 

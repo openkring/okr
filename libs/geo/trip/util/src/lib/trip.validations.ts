@@ -1,7 +1,7 @@
 import { enforce, only, staticSuite, test } from 'vest';
 
-import { TripModel } from '@bk2/shared-models';
-import { dateValidations, timeValidations } from '@bk2/shared-util-core';
+import { TripModel } from '@okr/shared-models';
+import { dateValidations, timeValidations } from '@okr/shared-util-core';
 
 export const tripValidationSuite = staticSuite((trip: TripModel, field?: string) => {
   if (field) only(field);

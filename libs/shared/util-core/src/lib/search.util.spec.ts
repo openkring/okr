@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BkModel, DbQuery, UserModel } from '@bk2/shared-models';
+import { BkModel, DbQuery, UserModel } from '@okr/shared-models';
 import * as logUtil from './log.util';
 import {
   findAllByField,

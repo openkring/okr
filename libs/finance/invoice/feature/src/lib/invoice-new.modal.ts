@@ -3,12 +3,12 @@ import { IonContent } from '@ionic/angular/standalone';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { MembershipModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { showToast } from '@bk2/shared-util-angular';
+import { MembershipModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { showToast } from '@okr/shared-util-angular';
 
-import { BexioInvoiceFormModel, BexioInvoicePosition, newInvoiceFormModel } from '@bk2/finance-invoice-util';
-import { BexioInvoiceNewForm } from '@bk2/finance-invoice-ui';
+import { BexioInvoiceFormModel, BexioInvoicePosition, newInvoiceFormModel } from '@okr/finance-invoice-util';
+import { BexioInvoiceNewForm } from '@okr/finance-invoice-ui';
 import { InvoiceStore } from './invoice.store';
 
 @Component({

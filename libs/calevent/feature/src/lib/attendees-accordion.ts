@@ -1,18 +1,18 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular/standalone';
 
-import { Attendee, CalEventModel, MembershipModel, UserModel } from '@bk2/shared-models';
-import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList } from '@bk2/shared-ui';
-import { coerceBoolean, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { CALEVENT_I18N_KEYS, CaleventI18n } from '@bk2/calevent-util';
+import { Attendee, CalEventModel, MembershipModel, UserModel } from '@okr/shared-models';
+import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList } from '@okr/shared-ui';
+import { coerceBoolean, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 /**
  * An accordion component to display a list of attendees related to a specific CalEvent.

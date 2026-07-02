@@ -2,12 +2,12 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import { doc } from 'firebase/firestore';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { BookingCollection, BookingLineModel, BookingModel, UserModel } from '@bk2/shared-models';
-import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { BookingCollection, BookingLineModel, BookingModel, UserModel } from '@okr/shared-models';
+import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 
-import { validateBookingBalance } from '@bk2/finance-booking-util';
+import { validateBookingBalance } from '@okr/finance-booking-util';
 
 import { BookingLineService } from './booking-line.service';
 

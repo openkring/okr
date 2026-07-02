@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { AddressModel } from '@bk2/shared-models';
+import { AddressModel } from '@okr/shared-models';
 import { stringifyAddress } from './address.util';
 
 @Pipe({

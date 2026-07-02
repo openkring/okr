@@ -1,11 +1,11 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
-import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME } from '@bk2/shared-constants';
-import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
-import { getAvatarName, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME } from '@okr/shared-constants';
+import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
-import { reservationApplyValidations, ReservationI18n } from '@bk2/relationship-reservation-util';
+import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-reservation-util';
 
 @Component({
   selector: 'bk-reservation-apply-form',

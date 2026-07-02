@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { CurrencyCode, ExchangeRateCollection, ExchangeRateModel } from '@bk2/shared-models';
-import { getSystemQuery } from '@bk2/shared-util-core';
-import { pickClosestRate } from '@bk2/finance-exchange-rate-util';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { CurrencyCode, ExchangeRateCollection, ExchangeRateModel } from '@okr/shared-models';
+import { getSystemQuery } from '@okr/shared-util-core';
+import { pickClosestRate } from '@okr/finance-exchange-rate-util';
 
 @Injectable({ providedIn: 'root' })
 export class ExchangeRateService {

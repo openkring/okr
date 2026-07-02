@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/cms-section-ui",
+  "name": "@okr/cms-section-ui",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,17 +7,17 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/avatar-data-access": "*",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-constants": "*",
-    "@bk2/shared-categories": "*",
-    "@bk2/shared-ui": "*",
-    "@bk2/shared-pipes": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/cms-section-util": "*"
+    "@okr/avatar-data-access": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-constants": "*",
+    "@okr/shared-categories": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/cms-section-util": "*"
   }
 }
 

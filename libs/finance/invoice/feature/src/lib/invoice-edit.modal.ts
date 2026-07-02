@@ -2,13 +2,13 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent } from '@ionic/angular/standalone';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { InvoiceModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { InvoiceModel, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { InvoiceEditForm } from '@bk2/finance-invoice-ui';
-import { INVOICE_I18N_KEYS, InvoiceI18n } from '@bk2/finance-invoice-util';
+import { InvoiceEditForm } from '@okr/finance-invoice-ui';
+import { INVOICE_I18N_KEYS, InvoiceI18n } from '@okr/finance-invoice-util';
 
 @Component({
   selector: 'bk-invoice-edit-modal',

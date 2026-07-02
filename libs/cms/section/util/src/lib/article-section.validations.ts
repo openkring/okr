@@ -1,9 +1,9 @@
 import { each, omitWhen, only, staticSuite } from 'vest';
 
-import { ArticleSection, ImageActionType, ImageType } from '@bk2/shared-models';
+import { ArticleSection, ImageActionType, ImageType } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
-import { booleanValidations, categoryValidations, numberValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
+import { booleanValidations, categoryValidations, numberValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
 
 export const articleSectionValidations = staticSuite((model: ArticleSection, field?: string) => {
   if (field) only(field);

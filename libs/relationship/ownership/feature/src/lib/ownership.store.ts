@@ -3,17 +3,17 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { ownerTypeMatches } from '@bk2/shared-categories';
-import { AppStore } from '@bk2/shared-feature';
-import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared-models';
-import { selectDate } from '@bk2/shared-ui';
-import { confirm } from '@bk2/shared-util-angular';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, nameMatches } from '@bk2/shared-util-core';
-import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
+import { ownerTypeMatches } from '@okr/shared-categories';
+import { AppStore } from '@okr/shared-feature';
+import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@okr/shared-models';
+import { selectDate } from '@okr/shared-ui';
+import { confirm } from '@okr/shared-util-angular';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, nameMatches } from '@okr/shared-util-core';
+import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
 
-import { OwnershipService } from '@bk2/relationship-ownership-data-access';
-import { newOwnership, OWNERSHIP_I18N_KEYS } from '@bk2/relationship-ownership-util';
+import { OwnershipService } from '@okr/relationship-ownership-data-access';
+import { newOwnership, OWNERSHIP_I18N_KEYS } from '@okr/relationship-ownership-util';
 
 export type OwnershipState = {
   // accordion state

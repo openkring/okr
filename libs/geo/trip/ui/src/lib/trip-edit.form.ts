@@ -2,15 +2,15 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@bk2/shared-models';
-import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n } from '@bk2/shared-ui';
-import { debugFormModel, getDurationLabel, hasRole } from '@bk2/shared-util-core';
-import { validateVestTree } from '@bk2/shared-util-angular';
-import { DEFAULT_NOTES } from '@bk2/shared-constants';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
+import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { debugFormModel, getDurationLabel, hasRole } from '@okr/shared-util-core';
+import { validateVestTree } from '@okr/shared-util-angular';
+import { DEFAULT_NOTES } from '@okr/shared-constants';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { Avatars } from '@bk2/avatar-ui';
-import { formatTripTime, TripI18n, tripValidationSuite } from '@bk2/trip-util';
+import { Avatars } from '@okr/avatar-ui';
+import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
 
 
 @Component({

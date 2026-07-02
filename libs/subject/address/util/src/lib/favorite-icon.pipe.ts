@@ -1,5 +1,5 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
-import { ENV } from '@bk2/shared-config';
+import { ENV } from '@okr/shared-config';
 
 @Pipe({
   name: 'favoriteIcon',

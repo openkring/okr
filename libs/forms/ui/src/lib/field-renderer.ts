@@ -4,8 +4,8 @@ import { IonCheckbox, IonInput, IonItem, IonLabel, IonNote, IonRadio, IonRadioGr
 import {
   Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, PasswordInput, PasswordInputI18n,
   PhoneInput, PhoneInputI18n, TextInput, TextInputI18n,
-} from '@bk2/shared-ui';
-import { Field } from '@bk2/shared-models';
+} from '@okr/shared-ui';
+import { Field } from '@okr/shared-models';
 
 @Component({
   selector: 'bk-field-renderer',

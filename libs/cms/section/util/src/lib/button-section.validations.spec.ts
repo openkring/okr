@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BUTTON_SECTION_SHAPE, ButtonSection } from '@bk2/shared-models';
+import { BUTTON_SECTION_SHAPE, ButtonSection } from '@okr/shared-models';
 
 import { buttonSectionValidations } from './button-section.validations';
 

@@ -1,14 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { UserModel, WorkrelCollection, WorkrelModel } from '@bk2/shared-models';
-import { findByKey, getFullName, getSystemQuery } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { UserModel, WorkrelCollection, WorkrelModel } from '@okr/shared-models';
+import { findByKey, getFullName, getSystemQuery } from '@okr/shared-util-core';
 
-import { getWorkrelIndex } from '@bk2/relationship-workrel-util';
-import { ActivityService } from '@bk2/activity-data-access';
+import { getWorkrelIndex } from '@okr/relationship-workrel-util';
+import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
 
 @Injectable({

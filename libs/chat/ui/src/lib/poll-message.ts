@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, Signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, ModalController } from '@ionic/angular/standalone';
 
-import { MatrixMessage } from '@bk2/shared-models';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { ENV } from '@bk2/shared-config';
-import { hashUserIdToColor, MatrixChatI18n } from '@bk2/chat-util';
+import { MatrixMessage } from '@okr/shared-models';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { ENV } from '@okr/shared-config';
+import { hashUserIdToColor, MatrixChatI18n } from '@okr/chat-util';
 
 import { PollDetailModal } from './poll-detail.modal';
 

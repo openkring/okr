@@ -1,6 +1,6 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { isBrowser } from '@bk2/shared-util-core';
+import { isBrowser } from '@okr/shared-util-core';
 
 export const CONSENT_KEY = 'cookie_consent_v1';
 

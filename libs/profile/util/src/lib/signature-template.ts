@@ -1,4 +1,4 @@
-import { getCountryName } from '@bk2/shared-util-core';
+import { getCountryName } from '@okr/shared-util-core';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 import { SignatureModel, SignatureRender } from './signature.model';

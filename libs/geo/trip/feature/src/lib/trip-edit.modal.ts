@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { DateFormat, debugFormModel, getCurrentTime, getTodayStr, safeStructuredClone } from '@bk2/shared-util-core';
-import { AvatarInfo, ResourceModel, TripModel, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { DateFormat, debugFormModel, getCurrentTime, getTodayStr, safeStructuredClone } from '@okr/shared-util-core';
+import { AvatarInfo, ResourceModel, TripModel, UserModel } from '@okr/shared-models';
 
-import { TripEditForm } from '@bk2/trip-ui';
+import { TripEditForm } from '@okr/trip-ui';
 import { TripStore } from './trip.store';
-import { getTripIndex, newTripName } from '@bk2/trip-util';
-import { TripService } from '@bk2/trip-data-access';
+import { getTripIndex, newTripName } from '@okr/trip-util';
+import { TripService } from '@okr/trip-data-access';
 
 @Component({
   selector: 'bk-trip-edit-modal',

@@ -9,10 +9,10 @@
       "node"
     ],
     "paths": {
-      "@bk2/shared-models": [
+      "@okr/shared-models": [
         "../../../dist/libs/shared/models/src/index.d.ts"
       ],
-      "@bk2/shared-constants": [
+      "@okr/shared-constants": [
         "../../../dist/libs/shared/constants/src/index.d.ts"
       ]
     },

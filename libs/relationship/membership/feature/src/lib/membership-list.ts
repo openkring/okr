@@ -2,17 +2,17 @@ import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { FullNamePipe, RellogPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { DateFormat, getSvgIconUrl, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
-import { SIZE_SM } from '@bk2/shared-constants';
+import { TranslatePipe } from '@okr/shared-i18n';
+import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
+import { FullNamePipe, RellogPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { DateFormat, getSvgIconUrl, getTodayStr, getYearList, hasRole, isOngoing } from '@okr/shared-util-core';
+import { SIZE_SM } from '@okr/shared-constants';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { Menu } from '@bk2/cms-menu-feature';
-import { getMainContact, isAdminMember } from '@bk2/subject-group-util';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { getMainContact, isAdminMember } from '@okr/subject-group-util';
 
 import { MembershipStore } from './membership.store';
 

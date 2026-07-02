@@ -4,11 +4,11 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { I18nDefaultCollection, I18nDefaultModel } from '@bk2/shared-models';
-import { bkPrompt } from '@bk2/shared-util-angular';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { I18nDefaultCollection, I18nDefaultModel } from '@okr/shared-models';
+import { bkPrompt } from '@okr/shared-util-angular';
 
 import { PFX } from './scope';
 

@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { getFullName, safeStructuredClone } from '@bk2/shared-util-core';
+import { CategoryListModel, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { getFullName, safeStructuredClone } from '@okr/shared-util-core';
 
-import { AvatarToolbar } from '@bk2/avatar-feature';
+import { AvatarToolbar } from '@okr/avatar-feature';
 
-import { ScsMemberFeeEditForm } from '@bk2/relationship-membership-ui';
+import { ScsMemberFeeEditForm } from '@okr/relationship-membership-ui';
 import { ScsMemberFeesStore } from './scs-member-fees.store';
 
 

@@ -1,5 +1,5 @@
-import { CommentModel } from "@bk2/shared-models";
-import { DateFormat, generateRandomString, getTodayStr } from "@bk2/shared-util-core";
+import { CommentModel } from "@okr/shared-models";
+import { DateFormat, generateRandomString, getTodayStr } from "@okr/shared-util-core";
 
 /* ---------------------- Model  -------------------------------*/
  /**

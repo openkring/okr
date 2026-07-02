@@ -3,11 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ModalController, IonButton, IonButtons, IonContent, IonHeader,
   IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { AvatarInfo, BookingLineModel, BookingModel, UserModel, VatCodeModel } from '@bk2/shared-models';
-import { ModelSelectService } from '@bk2/shared-feature';
-import { validateBookingBalance } from '@bk2/finance-booking-util';
-import { VatCodeService } from '@bk2/finance-vat-code-data-access';
-import { AvatarSelect } from '@bk2/avatar-ui';
+import { AvatarInfo, BookingLineModel, BookingModel, UserModel, VatCodeModel } from '@okr/shared-models';
+import { ModelSelectService } from '@okr/shared-feature';
+import { validateBookingBalance } from '@okr/finance-booking-util';
+import { VatCodeService } from '@okr/finance-vat-code-data-access';
+import { AvatarSelect } from '@okr/avatar-ui';
 
 @Component({
   selector: 'bk-booking-edit-modal',

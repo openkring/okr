@@ -1,5 +1,5 @@
-import { AddressModel, PersonModel } from '@bk2/shared-models';
-import { getFullName } from '@bk2/shared-util-core';
+import { AddressModel, PersonModel } from '@okr/shared-models';
+import { getFullName } from '@okr/shared-util-core';
 
 export type EmailEntry = {
   email: string;

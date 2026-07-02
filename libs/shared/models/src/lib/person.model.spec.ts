@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PersonCollection, PersonModel } from './person.model';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS } from '@okr/shared-constants';
 describe('PersonModel', () => {
   it('should create an instance with tenantId', () => {
     const model = new PersonModel('tenant-123');

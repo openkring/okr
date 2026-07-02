@@ -6,12 +6,12 @@ import {
   IonTitle, IonToolbar, ModalController
 } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
-import { isBrowser } from '@bk2/shared-util-angular';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { Spinner } from '@bk2/shared-ui';
+import { ENV } from '@okr/shared-config';
+import { isBrowser } from '@okr/shared-util-angular';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { Spinner } from '@okr/shared-ui';
 
-import { FlightInfoResponse } from '@bk2/flighttracker-data-access';
+import { FlightInfoResponse } from '@okr/flighttracker-data-access';
 import { FlightDetailModal } from './flighttracker-detail.modal';
 import { FlightTrackerStore } from './flighttracker.store';
 

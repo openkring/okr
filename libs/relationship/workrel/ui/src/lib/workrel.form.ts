@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
-import { FullNamePipe } from '@bk2/shared-pipes';
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { workrelValidations, WorkrelI18n } from '@bk2/relationship-workrel-util';
+import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@okr/shared-models';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@okr/shared-constants';
+import { FullNamePipe } from '@okr/shared-pipes';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util';
 
 @Component({
   selector: 'bk-workrel-form',

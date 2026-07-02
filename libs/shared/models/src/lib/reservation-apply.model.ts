@@ -1,4 +1,4 @@
-import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_RES_REASON, DEFAULT_TIME } from '@bk2/shared-constants';
+import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_RES_REASON, DEFAULT_TIME } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
 
 export class ReservationApplyModel {

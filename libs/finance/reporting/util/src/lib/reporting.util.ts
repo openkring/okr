@@ -1,4 +1,4 @@
-import { BookingLineModel } from '@bk2/shared-models';
+import { BookingLineModel } from '@okr/shared-models';
 
 export interface AccountBalanceEntry {
   accountKey: string;

@@ -2,11 +2,11 @@ import { Component, computed, inject, input, output } from "@angular/core";
 import { IonAvatar, IonImg, IonLabel } from "@ionic/angular/standalone";
 import { rxResource } from "@angular/core/rxjs-interop";
 
-import { AvatarCollection, AvatarModel, PersonModelName, UserModel } from "@bk2/shared-models";
-import { coerceBoolean, getFullName } from "@bk2/shared-util-core";
-import { FirestoreService } from '@bk2/shared-data-access';
-import { addImgixParams } from '@bk2/shared-util-core';
-import { ENV } from "@bk2/shared-config";
+import { AvatarCollection, AvatarModel, PersonModelName, UserModel } from "@okr/shared-models";
+import { coerceBoolean, getFullName } from "@okr/shared-util-core";
+import { FirestoreService } from '@okr/shared-data-access';
+import { addImgixParams } from '@okr/shared-util-core';
+import { ENV } from "@okr/shared-config";
 
 
 @Component({

@@ -1,4 +1,4 @@
-import { DEFAULT_KEY, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { BkModel, SearchableModel } from './base.model';
 import { RoleName } from './menu-item.model';

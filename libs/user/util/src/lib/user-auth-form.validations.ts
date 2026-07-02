@@ -1,6 +1,6 @@
 import { only, staticSuite } from 'vest';
 
-import { booleanValidations } from '@bk2/shared-util-core';
+import { booleanValidations } from '@okr/shared-util-core';
 
 import { UserAuthFormModel } from './user-auth-form.model';
 

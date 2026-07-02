@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { form } from '@angular/forms/signals';
 import { IonCol, IonContent, IonDatetime, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { validateVestTree } from '@bk2/shared-util-angular';
+import { validateVestTree } from '@okr/shared-util-angular';
 import {
   convertDateFormatToString,
   convertDateFromAnyFormatToString,
@@ -10,7 +10,7 @@ import {
   DateFormat,
   getTodayStr,
   subDuration,
-} from '@bk2/shared-util-core';
+} from '@okr/shared-util-core';
 
 import { ChangeConfirmation } from './change-confirmation';
 import { Header } from './header';

@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/document-feature",
+  "name": "@okr/document-feature",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,18 +7,18 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-categories": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-data-access": "*",
-    "@bk2/shared-feature": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-pipes": "*",
-    "@bk2/shared-ui": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/cms-menu-feature": "*",
-    "@bk2/document-ui": "*",
-    "@bk2/document-util": "*"
+    "@okr/shared-categories": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/shared-feature": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/cms-menu-feature": "*",
+    "@okr/document-ui": "*",
+    "@okr/document-util": "*"
   }
 }

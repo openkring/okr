@@ -1,11 +1,11 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
-import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
-import { Checkbox, CheckboxI18n, EmailInput, EmailInputI18n, ErrorNote, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from "@bk2/shared-ui";
-import { coerceBoolean } from "@bk2/shared-util-core";
+import { FirebaseUserModel, UserModel } from "@okr/shared-models";
+import { Checkbox, CheckboxI18n, EmailInput, EmailInputI18n, ErrorNote, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
+import { coerceBoolean } from "@okr/shared-util-core";
 
-import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@bk2/user-util";
+import { FIREBASE_USER_SHAPE, firebaseUserFormValidations, UserI18n } from "@okr/user-util";
 
 @Component({
   selector: 'bk-fbuser-form',

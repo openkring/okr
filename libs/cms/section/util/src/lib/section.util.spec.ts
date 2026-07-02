@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ButtonAction, ButtonSection, ColorIonic } from '@bk2/shared-models';
+import { ButtonAction, ButtonSection, ColorIonic } from '@okr/shared-models';
 
 import { createSection, narrowSection } from './section.util';
 

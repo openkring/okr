@@ -3,7 +3,7 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 const REGION = 'europe-west6';
 const TASK_COLLECTION = 'tasks';

@@ -6,7 +6,7 @@ import {
   ALL_ESIGN_SECRETS, REGION,
   getDeepSignAccessToken, getEsignApiBase, assertEsignAccess,
 } from './shared';
-import { EsignCollection } from '@bk2/shared-models';
+import { EsignCollection } from '@okr/shared-models';
 
 export const esignGetDocumentDetails = onCall<{ esignId: string }>(
   { region: REGION, enforceAppCheck: true, secrets: ALL_ESIGN_SECRETS },

@@ -5,7 +5,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { selectLanguage } from './i18n.util';
 
-import { AvailableLanguages } from '@bk2/shared-models';
+import { AvailableLanguages } from '@okr/shared-models';
 
 @Injectable({
   providedIn: 'root'

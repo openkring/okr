@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAL_SECTION_SHAPE, CalendarSection } from '@bk2/shared-models';
+import { CAL_SECTION_SHAPE, CalendarSection } from '@okr/shared-models';
 
 import { calendarSectionValidations } from './calendar-section.validations';
 

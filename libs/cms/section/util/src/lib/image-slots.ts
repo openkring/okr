@@ -1,4 +1,4 @@
-import { ImageConfig, SectionModel } from '@bk2/shared-models';
+import { ImageConfig, SectionModel } from '@okr/shared-models';
 
 /** An image "slot" on a section: either the multi `images[]` array or a named single image. */
 export interface ImageSlot {

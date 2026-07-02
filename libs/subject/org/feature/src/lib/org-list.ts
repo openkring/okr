@@ -1,16 +1,16 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { OrgModel, RoleName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { AlertService, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { OrgModel, RoleName } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { Menu } from '@bk2/cms-menu-feature';
-import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@bk2/vcard-util';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
 
 import { OrgStore } from './org.store';
 

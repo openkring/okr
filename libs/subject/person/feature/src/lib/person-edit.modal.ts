@@ -2,23 +2,23 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { CategoryListModel, PersonModel, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 
-import { AvatarToolbar } from '@bk2/avatar-feature';
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { getDocumentStoragePath } from '@bk2/document-util';
-import { DocumentsAccordion } from '@bk2/document-feature';
+import { AvatarToolbar } from '@okr/avatar-feature';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { getDocumentStoragePath } from '@okr/document-util';
+import { DocumentsAccordion } from '@okr/document-feature';
 
-import { MembershipAccordion } from '@bk2/relationship-membership-feature';
-import { OwnershipAccordion } from '@bk2/relationship-ownership-feature';
-import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
-import { PersonalRelAccordion } from '@bk2/relationship-personal-rel-feature';
-import { WorkrelAccordion } from '@bk2/relationship-workrel-feature';
+import { MembershipAccordion } from '@okr/relationship-membership-feature';
+import { OwnershipAccordion } from '@okr/relationship-ownership-feature';
+import { ReservationsAccordion } from '@okr/relationship-reservation-feature';
+import { PersonalRelAccordion } from '@okr/relationship-personal-rel-feature';
+import { WorkrelAccordion } from '@okr/relationship-workrel-feature';
 
-import { AddressesAccordion } from '@bk2/subject-address-feature';
-import { PersonForm } from '@bk2/subject-person-ui';
+import { AddressesAccordion } from '@okr/subject-address-feature';
+import { PersonForm } from '@okr/subject-person-ui';
 
 import { PersonStore } from './person.store';
 

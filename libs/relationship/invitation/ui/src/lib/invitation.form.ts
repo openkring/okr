@@ -1,13 +1,13 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@bk2/shared-constants';
-import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@bk2/shared-models';
-import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, getTodayStr, hasRole } from '@bk2/shared-util-core';
-import { PrettyDatePipe } from '@bk2/shared-pipes';
-import { AvatarDisplay, AvatarInput } from '@bk2/avatar-ui';
-import { invitationValidations, createPersonAvatar, InvitationI18n } from '@bk2/relationship-invitation-util';
+import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@okr/shared-constants';
+import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@okr/shared-models';
+import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
+import { PrettyDatePipe } from '@okr/shared-pipes';
+import { AvatarDisplay, AvatarInput } from '@okr/avatar-ui';
+import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/relationship-invitation-util';
 
 @Component({
   selector: 'bk-invitation-form',

@@ -1,4 +1,4 @@
-import { BkModel } from '@bk2/shared-models';
+import { BkModel } from '@okr/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { addIndexElement, sortModels } from './base-model.util';
 import { SortCriteria, SortDirection, SortField, sortAscending, sortDescending } from './sort.util';

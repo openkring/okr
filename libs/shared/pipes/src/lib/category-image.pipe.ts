@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { getCategoryImage } from '@bk2/shared-categories';
+import { getCategoryImage } from '@okr/shared-categories';
 
 /**
  * Returns the translated i18n label for a category.

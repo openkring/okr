@@ -1,5 +1,5 @@
-import { AvatarInfo, GroupModel, RoleName, Roles, UserModel } from '@bk2/shared-models';
-import { addIndexElement } from '@bk2/shared-util-core';
+import { AvatarInfo, GroupModel, RoleName, Roles, UserModel } from '@okr/shared-models';
+import { addIndexElement } from '@okr/shared-util-core';
 
 /*-------------------------- admins --------------------------------*/
 export function getMainContact(group?: GroupModel): AvatarInfo | undefined {

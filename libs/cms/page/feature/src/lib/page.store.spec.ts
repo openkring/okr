@@ -5,12 +5,12 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { AppStore } from '@bk2/shared-feature';
-import { mockCollection, mockError } from '@bk2/shared-feature/testing';
-import { I18nService } from '@bk2/shared-i18n';
-import { PageService } from '@bk2/cms-page-data-access';
-import { SectionService } from '@bk2/cms-section-data-access';
+import { ENV } from '@okr/shared-config';
+import { AppStore } from '@okr/shared-feature';
+import { mockCollection, mockError } from '@okr/shared-feature/testing';
+import { I18nService } from '@okr/shared-i18n';
+import { PageService } from '@okr/cms-page-data-access';
+import { SectionService } from '@okr/cms-section-data-access';
 
 import { PageStore } from './page.store';
 

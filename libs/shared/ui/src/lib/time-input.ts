@@ -5,10 +5,10 @@ import { IonIcon, IonInput, IonItem, IonNote, ModalController } from '@ionic/ang
 import { MaskitoElementPredicate } from '@maskito/core';
 import { MaskitoDirective } from '@maskito/angular';
 
-import { ChTimeMask } from '@bk2/shared-config';
-import { InputMode, TIME_LENGTH } from '@bk2/shared-constants';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { coerceBoolean, getCurrentTime } from '@bk2/shared-util-core';
+import { ChTimeMask } from '@okr/shared-config';
+import { InputMode, TIME_LENGTH } from '@okr/shared-constants';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { coerceBoolean, getCurrentTime } from '@okr/shared-util-core';
 
 import { TimeSelectModal } from './time-select.modal';
 

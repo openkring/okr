@@ -1,4 +1,4 @@
-import { FormMapping } from '@bk2/shared-models';
+import { FormMapping } from '@okr/shared-models';
 
 export const FORM_MAPPINGS: FormMapping[] = [
   {

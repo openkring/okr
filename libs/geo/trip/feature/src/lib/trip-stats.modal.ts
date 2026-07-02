@@ -1,12 +1,12 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonContent, IonLabel, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
 
-import { I18nService } from '@bk2/shared-i18n';
-import { TripStatsSection } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
+import { I18nService } from '@okr/shared-i18n';
+import { TripStatsSection } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
 
-import { TripStatsSectionComponent } from '@bk2/cms-section-feature';
-import { TRIP_I18N_KEYS, TripI18n } from '@bk2/trip-util';
+import { TripStatsSectionComponent } from '@okr/cms-section-feature';
+import { TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
 
 /**
  * Hosts the existing CMS trip-stats section in a modal, preset to either boats or members.

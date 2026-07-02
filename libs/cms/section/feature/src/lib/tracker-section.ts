@@ -1,9 +1,9 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 
-import { TrackerSection } from '@bk2/shared-models';
-import { ButtonCopy, ButtonCopyI18n, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { lookupAddress } from '@bk2/shared-util-angular';
+import { TrackerSection } from '@okr/shared-models';
+import { ButtonCopy, ButtonCopyI18n, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { lookupAddress } from '@okr/shared-util-angular';
 
 import { TrackerSectionStore } from './tracker-section.store';
 

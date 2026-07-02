@@ -1,4 +1,4 @@
-import { FieldType } from '@bk2/shared-models';
+import { FieldType } from '@okr/shared-models';
 
 /** Element types that only display content — they hold no value and are never submitted. */
 export const DISPLAY_FIELD_TYPES: readonly FieldType[] = ['label', 'divider'];

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { VatCodeModel } from '@bk2/shared-models';
+import { VatCodeModel } from '@okr/shared-models';
 import { computeVatFromNet, computeGrossFromNet, resolveActiveVatCode } from './vat-code.util';
 
 describe('computeVatFromNet', () => {

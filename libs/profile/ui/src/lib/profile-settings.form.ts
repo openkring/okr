@@ -1,14 +1,14 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from "@angular/core";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 
-import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
-import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@bk2/shared-models";
-import { FcmService } from "@bk2/shared-data-access";
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from "@bk2/shared-ui";
-import { coerceBoolean, hasRole } from "@bk2/shared-util-core";
+import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
+import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
+import { FcmService } from "@okr/shared-data-access";
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
+import { coerceBoolean, hasRole } from "@okr/shared-util-core";
 
-import { userValidations } from "@bk2/user-util";
-import { ProfileI18n } from "@bk2/profile-util";
+import { userValidations } from "@okr/user-util";
+import { ProfileI18n } from "@okr/profile-util";
 
 @Component({
   selector: 'bk-profile-settings-accordion',

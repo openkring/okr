@@ -2,8 +2,8 @@ import { Component, inject, input } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { User } from 'firebase/auth';
 
-import { UserModel } from '@bk2/shared-models';
-import { FullNamePipe } from '@bk2/shared-pipes';
+import { UserModel } from '@okr/shared-models';
+import { FullNamePipe } from '@okr/shared-pipes';
 import { NetworkStatusService } from './network-status.service';
 
 

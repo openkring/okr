@@ -1,8 +1,8 @@
 import { Component, inject, input } from '@angular/core';
 import { IonButton, IonContent, IonFooter, IonItem, IonLabel, IonList, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { PersonDuplicateCandidate, PersonI18n } from '@bk2/subject-person-util';
+import { Header } from '@okr/shared-ui';
+import { PersonDuplicateCandidate, PersonI18n } from '@okr/subject-person-util';
 
 @Component({
   selector: 'bk-person-duplicate-modal',

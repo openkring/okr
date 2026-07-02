@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/finance-vat-code-feature",
+  "name": "@okr/finance-vat-code-feature",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,15 +7,15 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/shared-feature": "*",
-    "@bk2/finance-accounting-feature": "*",
-    "@bk2/finance-vat-code-data-access": "*",
-    "@bk2/finance-vat-code-util": "*",
-    "@bk2/finance-vat-code-ui": "*"
+    "@okr/shared-models": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-feature": "*",
+    "@okr/finance-accounting-feature": "*",
+    "@okr/finance-vat-code-data-access": "*",
+    "@okr/finance-vat-code-util": "*",
+    "@okr/finance-vat-code-ui": "*"
   }
 }

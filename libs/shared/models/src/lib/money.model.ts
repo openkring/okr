@@ -1,4 +1,4 @@
-import { DEFAULT_CURRENCY, DEFAULT_PERIODICITY } from "@bk2/shared-constants";
+import { DEFAULT_CURRENCY, DEFAULT_PERIODICITY } from "@okr/shared-constants";
 
 // ISO 4217 currency codes (3 letters)
 export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'CHF'| string;

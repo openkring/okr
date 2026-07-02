@@ -6,19 +6,19 @@ import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
-import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
-import { AlertService, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugData, debugItemLoaded, debugListLoaded, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@okr/shared-models';
+import { AlertService, AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
+import { chipMatches, debugData, debugItemLoaded, debugListLoaded, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { GroupService } from '@bk2/subject-group-data-access';
-import { AvatarService } from '@bk2/avatar-data-access';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { createGroupMembership } from '@bk2/relationship-membership-util';
-import { MatrixChatService } from '@bk2/chat-data-access';
-import { getVisibleGroupKeys, GROUP_I18N_KEYS } from '@bk2/subject-group-util';
+import { GroupService } from '@okr/subject-group-data-access';
+import { AvatarService } from '@okr/avatar-data-access';
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { createGroupMembership } from '@okr/relationship-membership-util';
+import { MatrixChatService } from '@okr/chat-data-access';
+import { getVisibleGroupKeys, GROUP_I18N_KEYS } from '@okr/subject-group-util';
 
 import { GroupEditModal } from './group-edit.modal';
 

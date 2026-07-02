@@ -2,14 +2,14 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import {} from '@capacitor/google-maps';
 
-import { ButtonSection, ViewPosition } from '@bk2/shared-models';
-import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { ButtonSection, ViewPosition } from '@okr/shared-models';
+import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
-import { ReservationApplyModal } from '@bk2/relationship-reservation-feature';
-import { isReservation } from '@bk2/relationship-reservation-util';
-import { ReservationService } from '@bk2/relationship-reservation-data-access';
+import { ReservationApplyModal } from '@okr/relationship-reservation-feature';
+import { isReservation } from '@okr/relationship-reservation-util';
+import { ReservationService } from '@okr/relationship-reservation-data-access';
 
-import { ButtonWidget, EmergencyButtonWidget } from '@bk2/cms-section-ui';
+import { ButtonWidget, EmergencyButtonWidget } from '@okr/cms-section-ui';
 import { SectionStore } from './section.store';
 
 

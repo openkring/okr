@@ -15,11 +15,11 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@bk2/shared-constants": ["dist/libs/shared/constants/src"],
-      "@bk2/shared-models": ["dist/libs/shared/models/src"],
-      "@bk2/shared-util-core": ["dist/libs/shared/util-core/src"],
-      "@bk2/shared-util-functions": ["dist/libs/shared/util-functions/src"],
-      "@bk2/*": ["dist/libs/*/src"]
+      "@okr/shared-constants": ["dist/libs/shared/constants/src"],
+      "@okr/shared-models": ["dist/libs/shared/models/src"],
+      "@okr/shared-util-core": ["dist/libs/shared/util-core/src"],
+      "@okr/shared-util-functions": ["dist/libs/shared/util-functions/src"],
+      "@okr/*": ["dist/libs/*/src"]
     }
   },
   "exclude": ["node_modules", "tmp", "dist"]

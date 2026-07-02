@@ -1,13 +1,13 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryListModel, UserModel } from '@bk2/shared-models';
-import { CategorySelect, DateInput, DateInputI18n } from '@bk2/shared-ui';
-import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { CategoryListModel, UserModel } from '@okr/shared-models';
+import { CategorySelect, DateInput, DateInputI18n } from '@okr/shared-ui';
+import { DEFAULT_DATE, DEFAULT_NAME } from '@okr/shared-constants';
+import { coerceBoolean } from '@okr/shared-util-core';
 
-import { CategoryChangeFormModel, categoryChangeFormValidations, MembershipI18n } from '@bk2/relationship-membership-util';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { CategoryChangeFormModel, categoryChangeFormValidations, MembershipI18n } from '@okr/relationship-membership-util';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 @Component({
   selector: 'bk-category-change-form',

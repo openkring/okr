@@ -1,8 +1,8 @@
 import { Component, input } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonList, IonListHeader, IonRow } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { PageI18n } from '@bk2/cms-page-util';
+import { Header } from '@okr/shared-ui';
+import { PageI18n } from '@okr/cms-page-util';
 
 /**
  * Help modal for the CMS sitemap (graph page).

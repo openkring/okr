@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AccountBalanceEntry, aggregateAccountBalances, exportToCsv } from './reporting.util';
-import { BookingLineModel } from '@bk2/shared-models';
+import { BookingLineModel } from '@okr/shared-models';
 
 describe('aggregateAccountBalances', () => {
   const makeLines = (accountKey: string, debit: number, credit: number): Partial<BookingLineModel> => ({

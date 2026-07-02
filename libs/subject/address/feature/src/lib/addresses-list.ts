@@ -1,14 +1,14 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAccordionGroup, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { AddressModel, OrgModel, PersonModel, RoleName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser, navigateByUrl } from '@bk2/shared-util-angular';
-import { generateRandomString, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
+import { AddressModel, OrgModel, PersonModel, RoleName } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { generateRandomString, getCategoryIcon, hasRole } from '@okr/shared-util-core';
 
-import { FavoriteColorPipe, FormatAddressPipe } from '@bk2/subject-address-util';
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { FavoriteColorPipe, FormatAddressPipe } from '@okr/subject-address-util';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 import { AddressStore } from './addresses.store';
 

@@ -1,13 +1,13 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { StringSelectI18n } from '@bk2/shared-ui';
+import { StringSelectI18n } from '@okr/shared-ui';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
 
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { Header, StringSelect } from '@bk2/shared-ui';
-import { AvatarLabel } from '@bk2/avatar-ui';
-import { ColorIonic } from '@bk2/shared-models';
-import { DateFormat, getFullName, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { Header, StringSelect } from '@okr/shared-ui';
+import { AvatarLabel } from '@okr/avatar-ui';
+import { ColorIonic } from '@okr/shared-models';
+import { DateFormat, getFullName, getTodayStr, isAfterDate } from '@okr/shared-util-core';
 
 export const CONTACT_FILTERS = ['Alle', 'Nur Personen', 'Nur Mitglieder', 'Nur Orgs', 'Nur Abweichungen'];
 

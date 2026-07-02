@@ -5,13 +5,13 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getStorage, ref, uploadBytes } from 'firebase/storage';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
 import {
   EsignCollection,
   EsignRecord,
   EsignDocumentStatus,
-} from '@bk2/shared-models';
+} from '@okr/shared-models';
 
 export interface EsignSendDocumentRequest {
   storagePath: string;

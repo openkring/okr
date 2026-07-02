@@ -1,11 +1,11 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonAvatar, IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { InvoiceModel } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
-import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { getFullName } from '@bk2/shared-util-core';
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { InvoiceModel } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
+import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { getFullName } from '@okr/shared-util-core';
+import { AvatarPipe } from '@okr/avatar-ui';
 import { InvoiceStore } from './invoice.store';
 
 @Component({

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 
-import { Counter, Header } from '@bk2/shared-ui';
+import { Counter, Header } from '@okr/shared-ui';
 
 @Component({
   selector: 'bk-counter-page',

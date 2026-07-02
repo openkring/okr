@@ -3,8 +3,8 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ViewWillEnter } from '@ionic/angular';
 
-import { coerceBoolean, debugMessage, replaceSubstring } from "@bk2/shared-util-core";
-import { Spinner } from "@bk2/shared-ui";
+import { coerceBoolean, debugMessage, replaceSubstring } from "@okr/shared-util-core";
+import { Spinner } from "@okr/shared-ui";
 
 import { ContentPage } from "./content.page";
 import { PageStore } from "./page.store";

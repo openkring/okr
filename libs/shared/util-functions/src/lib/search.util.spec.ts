@@ -1,7 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { Firestore } from 'firebase-admin/firestore';
 import { searchData, hasChanged } from './search.util';
-import { DbQuery } from '@bk2/shared-models';
+import { DbQuery } from '@okr/shared-models';
 
 // Mock the Firestore methods
 const mockWhere = vi.fn();

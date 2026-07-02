@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/comment-data-access",
+  "name": "@okr/comment-data-access",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,11 +7,11 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/shared-data-access": "*",
-    "@bk2/comment-util": "*"
+    "@okr/shared-models": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/comment-util": "*"
   }
 }

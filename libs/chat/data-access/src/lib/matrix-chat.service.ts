@@ -7,11 +7,11 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@bk2/shared-models';
-import { AppStore } from '@bk2/shared-feature';
-import { debugData, debugMessage } from '@bk2/shared-util-core';
-import { convertHeicToJpeg, initMatrixLogLevel } from '@bk2/chat-util';
-import { ActivityService } from '@bk2/activity-data-access';
+import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { debugData, debugMessage } from '@okr/shared-util-core';
+import { convertHeicToJpeg, initMatrixLogLevel } from '@okr/chat-util';
+import { ActivityService } from '@okr/activity-data-access';
 
 /**
  * Localparts of Matrix service/bot accounts to hide from user-facing lists (S1).

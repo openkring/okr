@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAllReservationsOfReserver, getAllReservationsOfResource } from './reservation.util';
 import { searchData } from './search.util';
-import { ReservationCollection, ReservationModel } from '@bk2/shared-models';
+import { ReservationCollection, ReservationModel } from '@okr/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 
 // Mock the searchData utility

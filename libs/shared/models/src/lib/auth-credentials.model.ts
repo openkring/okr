@@ -1,4 +1,4 @@
-import { DEFAULT_EMAIL } from "@bk2/shared-constants";
+import { DEFAULT_EMAIL } from "@okr/shared-constants";
 
 export type AuthCredentials = {
   loginEmail: string;

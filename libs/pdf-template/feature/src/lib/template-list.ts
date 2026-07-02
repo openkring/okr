@@ -7,11 +7,11 @@ import {
   IonContent, IonLabel, IonGrid, IonRow, IonCol, IonChip, IonMenuButton,
 } from '@ionic/angular/standalone';
 
-import { TemplateModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { AppStore } from '@bk2/shared-feature';
+import { TemplateModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { AppStore } from '@okr/shared-feature';
 
 import { TemplateStore } from './template.store';
 

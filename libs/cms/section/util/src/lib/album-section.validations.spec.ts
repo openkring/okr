@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALBUM_SECTION_SHAPE, AlbumSection } from '@bk2/shared-models';
+import { ALBUM_SECTION_SHAPE, AlbumSection } from '@okr/shared-models';
 
 import { albumSectionValidations } from './album-section.validations';
 

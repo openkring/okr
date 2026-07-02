@@ -7,19 +7,19 @@ import {
   ModalController, ToastController,
 } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { AppStore } from '@okr/shared-feature';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import {
   BkEditor, ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
   EmailInput, EmailInputI18n, TextInput, TextInputI18n,
-} from '@bk2/shared-ui';
-import { getImgixUrl } from '@bk2/shared-util-core';
-import { validateVestTree } from '@bk2/shared-util-angular';
+} from '@okr/shared-ui';
+import { getImgixUrl } from '@okr/shared-util-core';
+import { validateVestTree } from '@okr/shared-util-angular';
 import {
   buildBrandedEmailHtml, parseEmails,
   EmailComposerFormModel, emailComposerValidations,
-} from '@bk2/pdf-template-util';
-import { DocEmailService, InlineAttachment } from '@bk2/pdf-template-data-access';
+} from '@okr/pdf-template-util';
+import { DocEmailService, InlineAttachment } from '@okr/pdf-template-data-access';
 
 /** Reject files larger than this client-side (the CF caps inline attachments at 8 MB). */
 const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;

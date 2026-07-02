@@ -1,11 +1,11 @@
 import { Component, computed, input, output, Signal } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, ColorIonic, NameDisplay } from '@bk2/shared-models';
-import { getFullName } from '@bk2/shared-util-core';
+import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, ColorIonic, NameDisplay } from '@okr/shared-models';
+import { getFullName } from '@okr/shared-util-core';
 
-import { AvatarLabel } from '@bk2/avatar-ui';
-import { calculateCols } from '@bk2/cms-section-util';
+import { AvatarLabel } from '@okr/avatar-ui';
+import { calculateCols } from '@okr/cms-section-util';
 
 interface PersonsWidgetI18n {
   people_empty:  Signal<string>

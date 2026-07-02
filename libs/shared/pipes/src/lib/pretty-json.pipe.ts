@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { jsonPrettyPrint } from '@bk2/shared-util-core';
+import { jsonPrettyPrint } from '@okr/shared-util-core';
 
 /**
  * Pretty print JSON code.

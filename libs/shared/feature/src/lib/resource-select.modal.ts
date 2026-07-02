@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { IonContent, IonIcon, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
-import { ResourceModel, UserModel } from '@bk2/shared-models';
-import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ResourceModel, UserModel } from '@okr/shared-models';
+import { EmptyList, Header, Spinner } from '@okr/shared-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { ResourceSelectStore } from './resource-select.store';
 

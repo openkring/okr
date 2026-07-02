@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { FolderModel, UserModel } from '@bk2/shared-models';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { FolderModel, UserModel } from '@okr/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
-import { FolderForm } from '@bk2/folder-ui';
-import { FOLDER_I18N_KEYS, FolderI18n } from '@bk2/folder-util';
+import { FolderForm } from '@okr/folder-ui';
+import { FOLDER_I18N_KEYS, FolderI18n } from '@okr/folder-util';
 
 @Component({
   selector: 'bk-folder-edit-modal',

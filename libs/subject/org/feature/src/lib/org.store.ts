@@ -4,17 +4,17 @@ import { Router } from '@angular/router';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, CategoryListModel, OrgCollection, OrgModel } from '@bk2/shared-models';
-import { AlertService, AppNavigationService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { chipMatches, debugItemLoaded, debugListLoaded, getSystemQuery, isOrg, nameMatches } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { AddressModel, CategoryListModel, OrgCollection, OrgModel } from '@okr/shared-models';
+import { AlertService, AppNavigationService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
+import { chipMatches, debugItemLoaded, debugListLoaded, getSystemQuery, isOrg, nameMatches } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { AddressService } from '@bk2/subject-address-data-access';
-import { OrgService } from '@bk2/subject-org-data-access';
-import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel, ORG_I18N_KEYS } from '@bk2/subject-org-util';
-import { VcardExportService } from '@bk2/vcard-feature';
+import { AddressService } from '@okr/subject-address-data-access';
+import { OrgService } from '@okr/subject-org-data-access';
+import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel, ORG_I18N_KEYS } from '@okr/subject-org-util';
+import { VcardExportService } from '@okr/vcard-feature';
 
 
 export type OrgState = {

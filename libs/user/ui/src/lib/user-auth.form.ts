@@ -1,11 +1,11 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
-import { CategoryListModel, UserModel } from "@bk2/shared-models";
-import { Checkbox, CheckboxI18n, Chips } from "@bk2/shared-ui";
-import { coerceBoolean, getCategoryItemNames } from "@bk2/shared-util-core";
+import { CategoryListModel, UserModel } from "@okr/shared-models";
+import { Checkbox, CheckboxI18n, Chips } from "@okr/shared-ui";
+import { coerceBoolean, getCategoryItemNames } from "@okr/shared-util-core";
 
-import { flattenRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } from "@bk2/user-util";
+import { flattenRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } from "@okr/user-util";
 
 @Component({
   selector: 'bk-user-auth-form',

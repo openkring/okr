@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
-import { RellogPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isOngoing } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { MembershipModel, OrgModel, PersonModel } from '@okr/shared-models';
+import { RellogPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList } from '@okr/shared-ui';
+import { coerceBoolean, hasRole, isOngoing } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 import { MembershipStore } from './membership.store';
 

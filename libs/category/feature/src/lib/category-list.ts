@@ -1,13 +1,13 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { CategoryListModel, RoleName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { AlertService, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
-import { AppStore } from '@bk2/shared-feature';
+import { CategoryListModel, RoleName } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
 
-import { Menu } from '@bk2/cms-menu-feature';
+import { Menu } from '@okr/cms-menu-feature';
 
 import { CategoryStore } from './category.store';
 

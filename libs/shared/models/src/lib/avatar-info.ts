@@ -1,4 +1,4 @@
-import { DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME } from '@bk2/shared-constants';
+import { DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME } from '@okr/shared-constants';
 
 export type AvatarModelTypes = 'person' | 'org' | 'resource' | 'location' | 'user' | 'group' | 'account';
 

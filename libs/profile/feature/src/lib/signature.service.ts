@@ -1,12 +1,12 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
-import { AppStore } from '@bk2/shared-feature';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { AlertService } from '@bk2/shared-util-angular';
-import { AddressCollection, AddressModel, OrgModelName, PersonModelName } from '@bk2/shared-models';
-import { getSystemQuery } from '@bk2/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { AlertService } from '@okr/shared-util-angular';
+import { AddressCollection, AddressModel, OrgModelName, PersonModelName } from '@okr/shared-models';
+import { getSystemQuery } from '@okr/shared-util-core';
 import {
   adaptForClient,
   ClientPlan,
@@ -18,7 +18,7 @@ import {
   ProfileI18n,
   renderSignature,
   SignatureModel,
-} from '@bk2/profile-util';
+} from '@okr/profile-util';
 
 const IMGIX_BASE = 'https://bkaiser.imgix.net';
 

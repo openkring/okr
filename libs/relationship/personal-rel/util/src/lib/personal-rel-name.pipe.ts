@@ -1,8 +1,8 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
 
-import { CategoryListModel, PersonalRelModel } from '@bk2/shared-models';
-import { getItemLabel } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { CategoryListModel, PersonalRelModel } from '@okr/shared-models';
+import { getItemLabel } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 import { Observable, of } from 'rxjs';
 
 /**

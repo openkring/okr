@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
-import { IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header, ImageConfigEdit } from '@bk2/shared-ui';
-import { coerceBoolean, getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header, ImageConfigEdit } from '@okr/shared-ui';
+import { coerceBoolean, getImgixUrlWithAutoParams } from '@okr/shared-util-core';
 
-import { UploadService } from '@bk2/avatar-data-access';
-import { getDocumentStoragePath, pickPhoto } from '@bk2/document-util';
+import { UploadService } from '@okr/avatar-data-access';
+import { getDocumentStoragePath, pickPhoto } from '@okr/document-util';
 
 import { DocumentStore } from './document.store';
 

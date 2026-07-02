@@ -1,4 +1,4 @@
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { add, compareAsc, differenceInCalendarDays, differenceInHours, Duration, addBusinessDays, format, getISODay, isAfter, isFuture, isValid, parse } from 'date-fns';
 import { die, warn } from './log.util';
 

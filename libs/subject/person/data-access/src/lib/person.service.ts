@@ -4,11 +4,11 @@ import { map, Observable, of, take } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
-import { getFullName, getSystemQuery } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { PersonCollection, PersonModel, UserModel } from '@okr/shared-models';
+import { getFullName, getSystemQuery } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
 import {
   getPersonIndex,
@@ -18,8 +18,8 @@ import {
   MergePersonIntoTenantResponse,
   PersonDuplicateCandidate,
   ReconcilableField,
-} from '@bk2/subject-person-util';
-import { ActivityService } from '@bk2/activity-data-access';
+} from '@okr/subject-person-util';
+import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
 
 @Injectable({

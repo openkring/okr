@@ -2,14 +2,14 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { RoleName, WorkrelModel } from '@bk2/shared-models';
-import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList } from '@bk2/shared-ui';
-import { hasRole, isOngoing } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { RoleName, WorkrelModel } from '@okr/shared-models';
+import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList } from '@okr/shared-ui';
+import { hasRole, isOngoing } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { WorkrelNamePipe } from '@bk2/relationship-workrel-util';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { WorkrelNamePipe } from '@okr/relationship-workrel-util';
 
 import { WorkrelStore } from './workrel.store';
 

@@ -14,7 +14,7 @@ vi.mock('@angular/core', async (importOriginal) => {
 // Minimal mock for FirestoreService
 const mockReadObject = vi.fn();
 const mockSearchData = vi.fn();
-vi.mock('@bk2/shared-data-access', () => ({
+vi.mock('@okr/shared-data-access', () => ({
   FirestoreService: class {
     readObject = mockReadObject;
     searchData = mockSearchData;
@@ -23,7 +23,7 @@ vi.mock('@bk2/shared-data-access', () => ({
 
 import { inject } from '@angular/core';
 import { TripStatsService, YearStats } from './trip-stats.service';
-import { FirestoreService } from '@bk2/shared-data-access';
+import { FirestoreService } from '@okr/shared-data-access';
 
 describe('TripStatsService', () => {
   let service: TripStatsService;

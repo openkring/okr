@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAllWorkrelsOfSubject, getAllWorkrelsOfObject } from './working-rel.util';
 import { searchData } from './search.util';
-import { WorkrelCollection, WorkrelModel } from '@bk2/shared-models';
+import { WorkrelCollection, WorkrelModel } from '@okr/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 
 // Mock the searchData utility

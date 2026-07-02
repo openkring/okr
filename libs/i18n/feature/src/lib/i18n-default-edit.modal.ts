@@ -2,9 +2,9 @@ import { Component, computed, inject, input, linkedSignal } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonContent, IonInput, IonItem, IonLabel, IonTextarea, IonToggle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { I18nDefaultModel } from '@bk2/shared-models';
-import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
+import { Header } from '@okr/shared-ui';
+import { I18nDefaultModel } from '@okr/shared-models';
+import { deepEqual, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nDefaultStore } from './i18n-default.store';
 
 @Component({

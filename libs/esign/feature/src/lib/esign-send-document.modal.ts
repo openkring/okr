@@ -7,10 +7,10 @@ import {
   ModalController, ToastController,
 } from '@ionic/angular/standalone';
 
-import { NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { validateVestTree } from '@bk2/shared-util-angular';
-import { EsignSendFormModel, esignSendValidations } from '@bk2/esign-util';
-import { EsignScanPredefinedResponse, EsignService } from '@bk2/esign-data-access';
+import { NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { validateVestTree } from '@okr/shared-util-angular';
+import { EsignSendFormModel, esignSendValidations } from '@okr/esign-util';
+import { EsignScanPredefinedResponse, EsignService } from '@okr/esign-data-access';
 
 type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' | 'error';
 

@@ -4,13 +4,13 @@ import { BookingAction } from './booking-action.model';
 import { AddressModel } from '../../../../../shared/models/src/lib/address.model';
 import { OrgModel } from '../../../../../shared/models/src/lib/org.model';
 import { PersonModel } from '../../../../../shared/models/src/lib/person.model';
-import * as utilCore from '@bk2/shared-util-core';
+import * as utilCore from '@okr/shared-util-core';
 
-// @bk2/shared-util-core re-exports platform.util which imports @angular/common (isPlatformBrowser).
+// @okr/shared-util-core re-exports platform.util which imports @angular/common (isPlatformBrowser).
 // Vite loads the whole barrel, triggering Angular JIT errors in a non-Angular test env.
 // We pass-through all real implementations so convertDateFormatToString/DateFormat work as-is.
-vi.mock('@bk2/shared-util-core', async () => {
-  const actual = await vi.importActual<typeof utilCore>('@bk2/shared-util-core');
+vi.mock('@okr/shared-util-core', async () => {
+  const actual = await vi.importActual<typeof utilCore>('@okr/shared-util-core');
   return { ...actual };
 });
 vi.mock('@angular/common', () => ({ isPlatformBrowser: vi.fn(() => true) }));

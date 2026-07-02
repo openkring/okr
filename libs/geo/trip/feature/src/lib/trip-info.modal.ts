@@ -1,10 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { I18nService } from '@bk2/shared-i18n';
-import { Header } from '@bk2/shared-ui';
+import { I18nService } from '@okr/shared-i18n';
+import { Header } from '@okr/shared-ui';
 
-import { TRIP_I18N_KEYS, TripI18n } from '@bk2/trip-util';
+import { TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
 
 /**
  * Shows the trip-list description text (general description + warning note) in a modal,

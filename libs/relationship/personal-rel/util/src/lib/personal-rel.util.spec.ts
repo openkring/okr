@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PersonalRelModel, PersonModel, UserModel } from '@bk2/shared-models';
-import * as coreUtils from '@bk2/shared-util-core';
+import { PersonalRelModel, PersonModel, UserModel } from '@okr/shared-models';
+import * as coreUtils from '@okr/shared-util-core';
 
 import { getPersonalRelIndex, getPersonalRelIndexInfo } from './personal-rel.util';
 
 // Mock shared utility functions
-vi.mock('@bk2/shared-util-core', async importOriginal => {
+vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
   return {
     ...actual,
@@ -16,7 +16,7 @@ vi.mock('@bk2/shared-util-core', async importOriginal => {
 });
 
 // Proactively mock shared-i18n to prevent Angular compiler errors
-vi.mock('@bk2/shared-i18n', () => ({
+vi.mock('@okr/shared-i18n', () => ({
   bkTranslate: vi.fn(),
 }));
 

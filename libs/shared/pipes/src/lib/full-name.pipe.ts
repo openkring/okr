@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { NameDisplay } from '@bk2/shared-models';
-import { getFullName } from '@bk2/shared-util-core';
+import { NameDisplay } from '@okr/shared-models';
+import { getFullName } from '@okr/shared-util-core';
 
 @Pipe({
   name: 'fullName',

@@ -4,12 +4,12 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { combineLatest, map, of } from 'rxjs';
 import type { EChartsOption } from 'echarts';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { PersonModel, ResourceModel, TripStatsConfig } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { PersonModel, ResourceModel, TripStatsConfig } from '@okr/shared-models';
 
-import { TripStatsService, YearStats } from '@bk2/trip-data-access';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { TripStatsService, YearStats } from '@okr/trip-data-access';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export interface StatsRow {
   key: string;

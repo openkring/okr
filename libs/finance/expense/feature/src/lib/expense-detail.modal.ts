@@ -6,9 +6,9 @@ import {
   IonHeader, IonItem, IonLabel, IonList, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { ExpenseDocumentModel, ExpenseModel } from '@bk2/shared-models';
-import { centsToCHF } from '@bk2/finance-expense-util';
-import { ExpenseDocumentService } from '@bk2/finance-expense-data-access';
+import { ExpenseDocumentModel, ExpenseModel } from '@okr/shared-models';
+import { centsToCHF } from '@okr/finance-expense-util';
+import { ExpenseDocumentService } from '@okr/finance-expense-data-access';
 
 @Component({
   selector: 'bk-expense-detail-modal',

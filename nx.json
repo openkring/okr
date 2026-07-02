@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "npmScope": "bk2",
+  "npmScope": "okr",
   "defaultProject": "scs-app",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],

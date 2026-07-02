@@ -2,11 +2,11 @@ import { Component, computed, inject, input, model, output } from '@angular/core
 import { FormsModule } from '@angular/forms';
 import { IonCheckbox, IonIcon, IonItem, IonLabel, IonNote } from '@ionic/angular/standalone';
 
-import { ColorsIonic, getCategoryStringField } from '@bk2/shared-categories';
-import { ColorIonic } from '@bk2/shared-models';
-import { getSvgIconUrl } from '@bk2/shared-pipes';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { ENV } from '@bk2/shared-config';
+import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
+import { ColorIonic } from '@okr/shared-models';
+import { getSvgIconUrl } from '@okr/shared-pipes';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { ENV } from '@okr/shared-config';
 export type CheckboxLabelPlacement = 'start' | 'end' | 'fixed';
 export type CheckboxJustification = 'start' | 'end' | 'space-between';
 

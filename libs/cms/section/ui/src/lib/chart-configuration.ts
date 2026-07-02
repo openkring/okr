@@ -2,8 +2,8 @@ import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, input, linkedSignal, model
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonItem, IonNote, IonRow, IonTextarea } from '@ionic/angular/standalone';
 
-import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { ChartOption, CHART_TYPES, getChartTitle, getChartType, parseChartOption, setChartTitle, setChartType, stringifyChartOption } from '@bk2/cms-section-util';
+import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ChartOption, CHART_TYPES, getChartTitle, getChartType, parseChartOption, setChartTitle, setChartType, stringifyChartOption } from '@okr/cms-section-util';
 
 interface ChartConfigI18n {
   chart_title:                  Signal<string>;

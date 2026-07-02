@@ -1,4 +1,4 @@
-import { DEFAULT_COMPETITION_LEVEL, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_COMPETITION_LEVEL, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { BkModel, SearchableModel } from './base.model';
 
 export class CompetitionLevelModel implements BkModel, SearchableModel {

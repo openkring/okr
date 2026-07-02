@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { ChatSection } from '@bk2/shared-models';
-import { stringValidations } from '@bk2/shared-util-core';
-import { DESCRIPTION_LENGTH, NAME_LENGTH, URL_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { ChatSection } from '@okr/shared-models';
+import { stringValidations } from '@okr/shared-util-core';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, URL_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 
 import { baseSectionValidations } from './base-section.validations';
 

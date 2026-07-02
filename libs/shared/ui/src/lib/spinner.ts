@@ -1,9 +1,9 @@
 import { Component, input } from '@angular/core';
 import { IonGrid, IonRow, IonSpinner } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared-categories';
-import { ColorIonic } from '@bk2/shared-models';
-import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
+import { ColorsIonic } from '@okr/shared-categories';
+import { ColorIonic } from '@okr/shared-models';
+import { CategoryPlainNamePipe } from '@okr/shared-pipes';
 
 export type BkSpinnerName = 'dots' | 'bubbles' | 'circles' | 'crescent' | 'circular' | 'lines' | 'lines-small' | 'lines-sharp' | 'lines-small-sharp';
 

@@ -1,9 +1,9 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import 'vest/enforce/compounds';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { ResourceModel } from '@bk2/shared-models';
-import { baseValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { ResourceModel } from '@okr/shared-models';
+import { baseValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const resourceValidations = staticSuite((model: ResourceModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

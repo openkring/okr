@@ -2,12 +2,12 @@ import { computed, inject } from '@angular/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { ENV } from '@bk2/shared-config';
-import { TrackerSection } from '@bk2/shared-models';
-import { convertToKml, downloadZipFile, error } from '@bk2/shared-util-angular';
-import { warn } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { TrackerSection } from '@okr/shared-models';
+import { convertToKml, downloadZipFile, error } from '@okr/shared-util-angular';
+import { warn } from '@okr/shared-util-core';
 
-import { SectionService } from '@bk2/cms-section-data-access';
+import { SectionService } from '@okr/cms-section-data-access';
 
 export type TrackerState = {
   section: TrackerSection | undefined;

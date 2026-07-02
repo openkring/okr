@@ -1,10 +1,10 @@
 import { Component, computed, input, model } from '@angular/core';
 import { IonItem, IonLabel, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 
-import { compareCategories } from '@bk2/shared-categories';
-import { CategoryModel } from '@bk2/shared-models';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { compareCategories } from '@okr/shared-categories';
+import { CategoryModel } from '@okr/shared-models';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 
 export interface CategoryOldI18n {

@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/pdf-template-data-access",
+  "name": "@okr/pdf-template-data-access",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,12 +7,12 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-data-access": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/pdf-template-util": "*"
+    "@okr/shared-config": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/pdf-template-util": "*"
   }
 }

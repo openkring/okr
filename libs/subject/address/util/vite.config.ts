@@ -9,7 +9,7 @@ const libraryConfig = defineConfig({
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
     setupFiles: ['./test-setup.ts'],  // load @angular/compiler so JIT-compiled Angular deps in the import graph don't fail
-    // address.util transitively imports the @bk2/shared-util-angular barrel (Ionic-coupled);
+    // address.util transitively imports the @okr/shared-util-angular barrel (Ionic-coupled);
     // inline @ionic so Vite resolves its directory imports instead of failing ESM resolution.
     server: { deps: { inline: [/@ionic\/angular/, /@ionic\/core/] } },
     // only keep project-specific settings here

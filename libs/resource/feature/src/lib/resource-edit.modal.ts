@@ -1,16 +1,16 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
-import { CategorySelect, ChangeConfirmation, ChangeConfirmationI18n, Header, IconToolbar } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
-import { DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
+import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@okr/shared-models';
+import { CategorySelect, ChangeConfirmation, ChangeConfirmationI18n, Header, IconToolbar } from '@okr/shared-ui';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { ReservationsAccordion } from '@okr/relationship-reservation-feature';
 
-import { ResourceForm } from '@bk2/resource-ui';
-import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@bk2/resource-util';
+import { ResourceForm } from '@okr/resource-ui';
+import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@okr/resource-util';
 import { ResourceStore } from './resource.store';
 
 @Component({

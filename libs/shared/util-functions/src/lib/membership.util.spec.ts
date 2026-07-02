@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAllMembershipsOfMember, getAllMembershipsOfOrg } from './membership.util';
 import { searchData } from './search.util';
-import { MembershipCollection, MembershipModel } from '@bk2/shared-models';
+import { MembershipCollection, MembershipModel } from '@okr/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 
 // Mock the searchData utility

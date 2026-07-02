@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { OrgModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { OrgSelectModal } from '@bk2/shared-feature';
-import { isOrg } from '@bk2/shared-util-core';
+import { OrgModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { OrgSelectModal } from '@okr/shared-feature';
+import { isOrg } from '@okr/shared-util-core';
 
-import { createNewPersonFormModel, PersonNewFormModel } from '@bk2/subject-person-util';
-import { PersonNewForm } from '@bk2/subject-person-ui';
+import { createNewPersonFormModel, PersonNewFormModel } from '@okr/subject-person-util';
+import { PersonNewForm } from '@okr/subject-person-ui';
 
 import { PersonStore } from './person.store';
 

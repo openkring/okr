@@ -1,4 +1,4 @@
-import { Field, FieldOption, FieldType } from '@bk2/shared-models';
+import { Field, FieldOption, FieldType } from '@okr/shared-models';
 
 /**
  * Compact description of a prefill field. The `key` MUST match the target

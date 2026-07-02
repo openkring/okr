@@ -4,9 +4,9 @@ import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { ResponsibilityConfig, ResponsibilitySection } from '@bk2/shared-models';
-import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { ResponsibilityConfig, ResponsibilitySection } from '@okr/shared-models';
+import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 
 export type ResponsibilitySectionState = {
   bkey: string;

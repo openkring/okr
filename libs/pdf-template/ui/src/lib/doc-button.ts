@@ -4,10 +4,10 @@ import {
   input, Output, signal,
 } from '@angular/core';
 import { IonButton, IonIcon, IonSpinner, ModalController, ToastController } from '@ionic/angular/standalone';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import {
   DocGenerationService, GenerateDocumentRequest, GenerateDocumentResponse,
-} from '@bk2/pdf-template-data-access';
+} from '@okr/pdf-template-data-access';
 import { PdfPreviewModal } from './pdf-preview.modal';
 
 @Component({

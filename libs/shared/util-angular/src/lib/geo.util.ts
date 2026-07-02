@@ -1,4 +1,4 @@
-import { GeoPosition } from "@bk2/shared-models";
+import { GeoPosition } from "@okr/shared-models";
 import { Geolocation, Position } from "@capacitor/geolocation";
 import { AlertController, Platform } from "@ionic/angular/standalone";
 /**

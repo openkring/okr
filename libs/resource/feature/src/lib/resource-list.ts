@@ -1,12 +1,12 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { ResourceModel, RoleName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { ResourceModel, RoleName } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
 
-import { Menu } from '@bk2/cms-menu-feature';
+import { Menu } from '@okr/cms-menu-feature';
 
 import { ResourceStore } from './resource.store';
 

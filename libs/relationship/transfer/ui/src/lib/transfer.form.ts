@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular/standalone';
-import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@bk2/shared-constants';
-import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, getTodayStr, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@okr/shared-constants';
+import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 
-import { Avatars } from '@bk2/avatar-ui';
-import { transferValidations, TransferI18n } from '@bk2/relationship-transfer-util';
+import { Avatars } from '@okr/avatar-ui';
+import { transferValidations, TransferI18n } from '@okr/relationship-transfer-util';
 
 @Component({
   selector: 'bk-transfer-form',

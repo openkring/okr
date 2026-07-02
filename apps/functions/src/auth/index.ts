@@ -4,7 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { getFirestore } from 'firebase-admin/firestore';
-import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/shared-util-functions';
+import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField } from '@okr/shared-util-functions';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
 

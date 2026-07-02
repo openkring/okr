@@ -3,29 +3,29 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
 import {
   ApplicationCollection, ApplicationModel, ApplicationState, AvatarInfo,
   PersonalRelModel, TaskModel, UserModel
-} from '@bk2/shared-models';
+} from '@okr/shared-models';
 import {
   addWorkDays, getAvatarInfo, getAvatarInfoForCurrentUser,
   getSystemQuery, getTodayStr, isValidAt
-} from '@bk2/shared-util-core';
-import { showToast } from '@bk2/shared-util-angular';
+} from '@okr/shared-util-core';
+import { showToast } from '@okr/shared-util-angular';
 import { ToastController } from '@ionic/angular/standalone';
-import { ActivityService } from '@bk2/activity-data-access';
-import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
-import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
-import { AddressService } from '@bk2/subject-address-data-access';
-import { createFavoriteAddress } from '@bk2/subject-address-util';
-import { PersonService } from '@bk2/subject-person-data-access';
-import { TaskService } from '@bk2/task-data-access';
+import { ActivityService } from '@okr/activity-data-access';
+import { PersonalRelService } from '@okr/relationship-personal-rel-data-access';
+import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
+import { AddressService } from '@okr/subject-address-data-access';
+import { createFavoriteAddress } from '@okr/subject-address-util';
+import { PersonService } from '@okr/subject-person-data-access';
+import { TaskService } from '@okr/task-data-access';
 import {
   getApplicationIndex, newParentPerson, toPersonModel
-} from '@bk2/application-util';
+} from '@okr/application-util';
 import { PFX } from './scope';
 
 @Injectable({ providedIn: 'root' })

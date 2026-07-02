@@ -1,11 +1,11 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@bk2/shared-constants';
-import { CategoryListModel, RoleName, TaskModel, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { TaskI18n, taskValidations } from '@bk2/task-util';
+import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
+import { CategoryListModel, RoleName, TaskModel, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { TaskI18n, taskValidations } from '@okr/task-util';
 
 @Component({
   selector: 'bk-task-form',

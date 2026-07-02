@@ -1,17 +1,17 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonChip, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
 
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { RoleName, TripModel } from '@bk2/shared-models';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { RoleName, TripModel } from '@okr/shared-models';
 
-import { formatTripTime, isTripEditable } from '@bk2/trip-util';
+import { formatTripTime, isTripEditable } from '@okr/trip-util';
 import { TripStore } from './trip.store';
-import { getWeekdayI18nKey, getYear, getYearList, hasRole } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { getWeekdayI18nKey, getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
-import { AvatarDisplay } from '@bk2/avatar-ui';
+import { AvatarDisplay } from '@okr/avatar-ui';
 
 const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'corrected', 'all'];
 

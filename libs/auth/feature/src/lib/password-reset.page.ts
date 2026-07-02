@@ -2,11 +2,11 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
-import { AuthCredentials } from '@bk2/shared-models';
+import { Header } from '@okr/shared-ui';
+import { getImgixUrlWithAutoParams } from '@okr/shared-util-core';
+import { AuthCredentials } from '@okr/shared-models';
 
-import { LoginForm } from '@bk2/auth-ui';
+import { LoginForm } from '@okr/auth-ui';
 
 import { AuthStore } from './auth.store';
 

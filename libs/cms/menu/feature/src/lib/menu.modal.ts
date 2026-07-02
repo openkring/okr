@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
-import { CategoryListModel, MenuItemModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { ENV } from '@okr/shared-config';
+import { CategoryListModel, MenuItemModel, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header } from '@okr/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { MenuForm } from '@bk2/cms-menu-ui';
-import { MENU_I18N_KEYS, MenuI18n } from '@bk2/cms-menu-util';
+import { MenuForm } from '@okr/cms-menu-ui';
+import { MENU_I18N_KEYS, MenuI18n } from '@okr/cms-menu-util';
 
 import { MenuStore } from './menu.store';
 
@@ -94,7 +94,7 @@ export class MenuModal {
   }
 
   protected async selectIcon(): Promise<void> {
-    const { IconSelectModal: IconSelectModal } = await import('@bk2/cms-icon-feature');
+    const { IconSelectModal: IconSelectModal } = await import('@okr/cms-icon-feature');
     const modal = await this.modalController.create({
       component: IconSelectModal,
       componentProps: {

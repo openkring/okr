@@ -1,4 +1,4 @@
-import { BookingLineModel } from '@bk2/shared-models';
+import { BookingLineModel } from '@okr/shared-models';
 
 export function validateBookingBalance(lines: BookingLineModel[]): boolean {
   let debitTotal = 0;

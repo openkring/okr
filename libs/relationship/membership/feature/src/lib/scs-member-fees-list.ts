@@ -1,18 +1,18 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { INVOICE_STATE_VALUES, RoleName, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getAge, hasRole } from '@bk2/shared-util-core';
+import { INVOICE_STATE_VALUES, RoleName, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { getAge, hasRole } from '@okr/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 
-import { getFeeTotal } from '@bk2/relationship-membership-data-access';
+import { getFeeTotal } from '@okr/relationship-membership-data-access';
 
 import { ScsMemberFeesStore } from './scs-member-fees.store';
 import { ScsMemberFeeEditModal } from './scs-member-fee-edit.modal';
-import { Menu } from '@bk2/cms-menu-feature';
+import { Menu } from '@okr/cms-menu-feature';
 
 @Component({
   selector: 'bk-scs-member-fees',

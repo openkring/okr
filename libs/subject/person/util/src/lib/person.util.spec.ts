@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PersonModel } from '@bk2/shared-models';
+import { PersonModel } from '@okr/shared-models';
 
-// person.util imports formatAhv from @bk2/shared-util-angular, which transitively pulls in
+// person.util imports formatAhv from @okr/shared-util-angular, which transitively pulls in
 // @ionic/angular. Mock it so these pure-function tests don't load Ionic ES modules.
-vi.mock('@bk2/shared-util-angular', () => ({
+vi.mock('@okr/shared-util-angular', () => ({
   formatAhv: vi.fn((ssnId, format) => `formatted:${ssnId}:${format}`),
   AhvFormat: {
     Friendly: 'friendly',

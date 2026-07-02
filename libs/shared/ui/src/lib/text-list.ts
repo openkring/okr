@@ -1,11 +1,11 @@
 import { Component, computed, inject, input, model, viewChild } from '@angular/core';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
-import { NAME_LENGTH } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { NAME_LENGTH } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { bkPrompt, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
 

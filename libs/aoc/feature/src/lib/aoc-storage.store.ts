@@ -2,12 +2,12 @@ import { computed, inject } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { LogInfo } from '@bk2/shared-models';
-import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
-import { warn } from '@bk2/shared-util-core';
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { LogInfo } from '@okr/shared-models';
+import { copyToClipboard, showToast } from '@okr/shared-util-angular';
+import { warn } from '@okr/shared-util-core';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
 export type AocStorageState = {
   filePath: string;

@@ -7,7 +7,7 @@ import {
     PersonalRelModel,
     PersonModel,
     ResourceModel
-} from '@bk2/shared-models';
+} from '@okr/shared-models';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as logUtil from './log.util';
 import {

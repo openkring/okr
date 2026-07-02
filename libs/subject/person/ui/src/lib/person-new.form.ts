@@ -1,17 +1,17 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
-import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, getTodayStr, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
-import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
+import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
+import { CategoryListModel, RoleName, SwissCity, UserModel } from '@okr/shared-models';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@okr/shared-constants';
+import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { SwissCitySearch } from '@bk2/subject-swisscities-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { SwissCitySearch } from '@okr/subject-swisscities-ui';
 
-import { PersonNewFormModel, personNewFormValidations, PersonI18n } from '@bk2/subject-person-util';
+import { PersonNewFormModel, personNewFormValidations, PersonI18n } from '@okr/subject-person-util';
 
 @Component({
   selector: 'bk-person-new-form',

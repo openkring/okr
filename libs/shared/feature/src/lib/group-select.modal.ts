@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { IonContent, IonList, ModalController } from '@ionic/angular/standalone';
 
-import { GroupModel, GroupModelName, UserModel } from '@bk2/shared-models';
-import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
+import { GroupModel, GroupModelName, UserModel } from '@okr/shared-models';
+import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 
-import { MultiAvatar } from '@bk2/cms-menu-ui';
+import { MultiAvatar } from '@okr/cms-menu-ui';
 
 import { GroupSelectStore } from './group-select.store';
 

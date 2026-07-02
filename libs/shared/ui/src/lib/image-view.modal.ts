@@ -2,9 +2,9 @@ import { provideImgixLoader } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 
-import { ImageStyle } from '@bk2/shared-models';
-import { ENV } from '@bk2/shared-config';
-import { getImgixUrl, getSizedImgixParamsByExtension } from '@bk2/shared-util-core';
+import { ImageStyle } from '@okr/shared-models';
+import { ENV } from '@okr/shared-config';
+import { getImgixUrl, getSizedImgixParamsByExtension } from '@okr/shared-util-core';
 
 import { Header } from './header';
 

@@ -3,17 +3,17 @@ import { FirebaseStorage, StorageReference, deleteObject, getDownloadURL, getMet
 import { AlertController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { STORAGE } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { DocumentCollection, DocumentModel } from '@bk2/shared-models';
-import { confirm, copyToClipboardWithConfirmation, downloadToBrowser } from '@bk2/shared-util-angular';
-import { DateFormat, convertDateFormatToString, getFullName, getTodayStr } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { STORAGE } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { DocumentCollection, DocumentModel } from '@okr/shared-models';
+import { confirm, copyToClipboardWithConfirmation, downloadToBrowser } from '@okr/shared-util-angular';
+import { DateFormat, convertDateFormatToString, getFullName, getTodayStr } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { DocumentService } from '@bk2/document-data-access';
-import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@bk2/document-util';
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { DocumentService } from '@okr/document-data-access';
+import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/document-util';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
 export type StorageFileInfo = {
   fullPath: string;

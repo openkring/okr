@@ -2,20 +2,20 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { Photo } from '@capacitor/camera';
 import { IonContent, ModalController, Platform } from '@ionic/angular/standalone';
 
-import { PersonModel, UserModel, UserModelName } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@bk2/shared-ui';
-import { getFullName } from '@bk2/shared-util-core';
-import { mirrorPrivacyUsageToPerson } from '@bk2/subject-person-util';
+import { PersonModel, UserModel, UserModelName } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@okr/shared-ui';
+import { getFullName } from '@okr/shared-util-core';
+import { mirrorPrivacyUsageToPerson } from '@okr/subject-person-util';
 
-import { AvatarService, UploadService } from '@bk2/avatar-data-access';
-import { AvatarToolbar } from '@bk2/avatar-feature';
-import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
-import { CommentsCard } from '@bk2/comment-feature';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
+import { AvatarService, UploadService } from '@okr/avatar-data-access';
+import { AvatarToolbar } from '@okr/avatar-feature';
+import { newAvatarModel, readAsFile } from '@okr/avatar-util';
+import { CommentsCard } from '@okr/comment-feature';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
 
-import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, UserPrivacyForm } from '@bk2/user-ui';
-import { convertFormsToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, USER_I18N_KEYS, UserAuthFormModel, UserDisplayFormModel, UserI18n, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
+import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, UserPrivacyForm } from '@okr/user-ui';
+import { convertFormsToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, USER_I18N_KEYS, UserAuthFormModel, UserDisplayFormModel, UserI18n, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@okr/user-util';
 
 @Component({
   selector: 'bk-user-edit-modal',

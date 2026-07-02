@@ -1,4 +1,4 @@
-import { CategoryListModel } from '@bk2/shared-models';
+import { CategoryListModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 import { getItemLabel } from './category.util';
 

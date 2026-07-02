@@ -2,8 +2,8 @@ import { Photo } from '@capacitor/camera';
 import { Filesystem } from '@capacitor/filesystem';
 import { Platform } from '@ionic/angular';
 
-import { AvatarDirectory, AvatarModel, OrgModelName, PersonModelName } from '@bk2/shared-models';
-import { blobToFile, die, getPartsOfTupel } from '@bk2/shared-util-core';
+import { AvatarDirectory, AvatarModel, OrgModelName, PersonModelName } from '@okr/shared-models';
+import { blobToFile, die, getPartsOfTupel } from '@okr/shared-util-core';
 
 export function newAvatarModel(tenantIds: string[], modelType: string, key: string, fileName: string): AvatarModel {
   const [fn, ext] = getPartsOfTupel(fileName);

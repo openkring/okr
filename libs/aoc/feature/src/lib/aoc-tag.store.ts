@@ -4,13 +4,13 @@ import { AlertController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { BkModel, TagCollection, TagModel } from '@bk2/shared-models';
-import { bkPrompt, confirm } from '@bk2/shared-util-angular';
-import { getSystemQuery } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { BkModel, TagCollection, TagModel } from '@okr/shared-models';
+import { bkPrompt, confirm } from '@okr/shared-util-angular';
+import { getSystemQuery } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
 /**
  * TagModel as it arrives from Firestore.

@@ -1,9 +1,9 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonItem, IonLabel, IonList, IonListHeader, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { SessionModel } from '@bk2/shared-models';
-import { getSessionStatus, SessionStatus } from '@bk2/session-util';
-import { AocI18n } from '@bk2/aoc-util';
+import { SessionModel } from '@okr/shared-models';
+import { getSessionStatus, SessionStatus } from '@okr/session-util';
+import { AocI18n } from '@okr/aoc-util';
 
 interface CountRow { key: string; count: number; }
 

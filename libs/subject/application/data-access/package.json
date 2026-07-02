@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/application-data-access",
+  "name": "@okr/application-data-access",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,19 +7,19 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/activity-data-access": "*",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-data-access": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/relationship-personal-rel-data-access": "*",
-    "@bk2/relationship-responsibility-data-access": "*",
-    "@bk2/subject-address-data-access": "*",
-    "@bk2/subject-address-util": "*",
-    "@bk2/subject-person-data-access": "*",
-    "@bk2/application-util": "*",
-    "@bk2/task-data-access": "*"
+    "@okr/activity-data-access": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/relationship-personal-rel-data-access": "*",
+    "@okr/relationship-responsibility-data-access": "*",
+    "@okr/subject-address-data-access": "*",
+    "@okr/subject-address-util": "*",
+    "@okr/subject-person-data-access": "*",
+    "@okr/application-util": "*",
+    "@okr/task-data-access": "*"
   }
 }

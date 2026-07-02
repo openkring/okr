@@ -3,13 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { from, Observable, of } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { AddressCollection, AddressModel, BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
-import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@bk2/shared-util-core';
-import { getMembershipCategoryChanges } from '@bk2/relationship-membership-util';
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { AddressCollection, AddressModel, BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
+import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@okr/shared-util-core';
+import { getMembershipCategoryChanges } from '@okr/relationship-membership-util';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
 export type AocAdminOpsState = {
   modelType: string | undefined;

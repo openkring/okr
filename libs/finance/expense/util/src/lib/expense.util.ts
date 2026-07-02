@@ -1,4 +1,4 @@
-import { ExpenseDocumentModel, ExpenseModel } from '@bk2/shared-models';
+import { ExpenseDocumentModel, ExpenseModel } from '@okr/shared-models';
 
 export const ALLOWED_CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP'] as const;
 export type AllowedCurrency = (typeof ALLOWED_CURRENCIES)[number];

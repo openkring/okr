@@ -3,13 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { CategoryListModel } from '@bk2/shared-models';
-import { chipMatches, debugListLoaded, isCategoryList, nameMatches } from '@bk2/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { CategoryListModel } from '@okr/shared-models';
+import { chipMatches, debugListLoaded, isCategoryList, nameMatches } from '@okr/shared-util-core';
 
-import { CategoryService } from '@bk2/category-data-access';
-import { CATEGORY_I18N_KEYS, CategoryI18n } from '@bk2/category-util';
+import { CategoryService } from '@okr/category-data-access';
+import { CATEGORY_I18N_KEYS, CategoryI18n } from '@okr/category-util';
 
 import { CategoryEditModal } from './category-edit.modal';
 

@@ -1,12 +1,12 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonCheckbox, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular/standalone';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { Header } from '@bk2/shared-ui';
-import { FormDefinitionModel } from '@bk2/shared-models';
-import { generateEncryptionPassword, generateSalt, hashPasswordForVerification } from '@bk2/forms-util';
-import { FormDefinitionService } from '@bk2/forms-data-access';
-import { AppStore } from '@bk2/shared-feature';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { Header } from '@okr/shared-ui';
+import { FormDefinitionModel } from '@okr/shared-models';
+import { generateEncryptionPassword, generateSalt, hashPasswordForVerification } from '@okr/forms-util';
+import { FormDefinitionService } from '@okr/forms-data-access';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'bk-section-encryption-setup-modal',

@@ -1,4 +1,4 @@
-import { DbQuery } from "@bk2/shared-models";
+import { DbQuery } from "@okr/shared-models";
 
 export function getRangeQuery(key: string, lowValue: number | string, highValue: number | string, isArchived = false): DbQuery[] {
   return [

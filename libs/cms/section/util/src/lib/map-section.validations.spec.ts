@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_SECTION_SHAPE, MapSection } from '@bk2/shared-models';
+import { MAP_SECTION_SHAPE, MapSection } from '@okr/shared-models';
 
 import { mapSectionValidations } from './map-section.validations';
 

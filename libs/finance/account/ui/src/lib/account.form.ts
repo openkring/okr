@@ -1,11 +1,11 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryListModel, AccountModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { CategoryListModel, AccountModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
-import { AccountI18n, accountValidations } from '@bk2/finance-account-util';
+import { AccountI18n, accountValidations } from '@okr/finance-account-util';
 
 export type { AccountI18n };
 

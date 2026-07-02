@@ -6,8 +6,8 @@ import {
   IonNote, IonSearchbar, IonSelect, IonSelectOption, IonToolbar
 } from '@ionic/angular/standalone';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { Header } from '@bk2/shared-ui';
+import { FirestoreService } from '@okr/shared-data-access';
+import { Header } from '@okr/shared-ui';
 
 export interface EmailEvent {
   bkey: string;

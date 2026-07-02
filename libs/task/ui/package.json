@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/task-ui",
+  "name": "@okr/task-ui",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,12 +7,12 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-constants": "*",
-    "@bk2/shared-categories": "*",
-    "@bk2/shared-ui": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/task-util": "*"
+    "@okr/shared-models": "*",
+    "@okr/shared-constants": "*",
+    "@okr/shared-categories": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/task-util": "*"
   }
 }
 

@@ -2,10 +2,10 @@ import { Component, computed, input, linkedSignal, model, viewChild } from '@ang
 import { IonIcon, IonItem, IonNote } from '@ionic/angular/standalone';
 import { MaskitoOptions } from '@maskito/core';
 
-import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { coerceBoolean, convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared-util-core';
-import { ChAnyDate } from '@bk2/shared-config';
+import { DATE_LENGTH, InputMode } from '@okr/shared-constants';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { coerceBoolean, convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { ChAnyDate } from '@okr/shared-config';
 
 import { ViewDateInput, ViewDateInputI18n } from './viewdate-input';
 import { DatePickerModal } from './date-picker.modal';

@@ -2,11 +2,11 @@ import { Component, computed, effect, input, linkedSignal, model, output, Signal
 import { DecimalPipe } from '@angular/common';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { iconValidations } from '@bk2/cms-icon-util';
-import { IconModel, RoleName, UserModel } from '@bk2/shared-models';
-import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { iconValidations } from '@okr/cms-icon-util';
+import { IconModel, RoleName, UserModel } from '@okr/shared-models';
+import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
 export interface IconEditFormI18n {
   bkey_label: Signal<string>;

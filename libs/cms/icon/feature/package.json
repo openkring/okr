@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/cms-icon-feature",
+  "name": "@okr/cms-icon-feature",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,18 +7,18 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/avatar-data-access": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-feature": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-pipes": "*",
-    "@bk2/shared-ui": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/cms-icon-data-access": "*",
-    "@bk2/cms-icon-ui": "*",
-    "@bk2/cms-icon-util": "*"
+    "@okr/avatar-data-access": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-feature": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/cms-icon-data-access": "*",
+    "@okr/cms-icon-ui": "*",
+    "@okr/cms-icon-util": "*"
   },
   "module": "./src/index.js",
   "type": "module"

@@ -1,5 +1,5 @@
-import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE, DEFAULT_URL } from '@bk2/shared-constants';
-import { AvatarInfo, MoneyModel } from '@bk2/shared-models';
+import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE, DEFAULT_URL } from '@okr/shared-constants';
+import { AvatarInfo, MoneyModel } from '@okr/shared-models';
 
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
 

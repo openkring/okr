@@ -1,4 +1,4 @@
-import { UserModel } from '@bk2/shared-models';
+import { UserModel } from '@okr/shared-models';
 import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {

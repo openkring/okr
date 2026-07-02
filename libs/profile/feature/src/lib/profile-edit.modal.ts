@@ -3,13 +3,13 @@ import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { safeStructuredClone } from '@bk2/shared-util-core';
+import { PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { safeStructuredClone } from '@okr/shared-util-core';
 
-import { AvatarToolbar } from '@bk2/avatar-feature';
-import { AddressesAccordion } from '@bk2/subject-address-feature';
-import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@bk2/profile-ui';
+import { AvatarToolbar } from '@okr/avatar-feature';
+import { AddressesAccordion } from '@okr/subject-address-feature';
+import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
 
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';

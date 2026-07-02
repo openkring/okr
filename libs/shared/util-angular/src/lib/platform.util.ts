@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core';
-import { isBrowser } from '@bk2/shared-util-core';
+import { isBrowser } from '@okr/shared-util-core';
 
 export { isBrowser };
 

@@ -1,9 +1,9 @@
 import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@bk2/shared-ui';
-import { TrackerConfig } from '@bk2/shared-models';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
+import { TrackerConfig } from '@okr/shared-models';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 interface TrackerConfigI18n {
   tracker_title:                 Signal<string>;

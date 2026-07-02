@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { BkModel } from '@bk2/shared-models';
+import { BkModel } from '@okr/shared-models';
 
 @Pipe({
   name: 'itemColor',

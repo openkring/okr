@@ -2,9 +2,9 @@ import { Component, computed, inject, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ModalController, IonContent, IonItem, IonLabel, IonToggle, IonButton, IonFooter, IonToolbar } from '@ionic/angular/standalone';
 
-import { ContextDiagramConfig, UserModel } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
+import { ContextDiagramConfig, UserModel } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
+import { hasRole } from '@okr/shared-util-core';
 
 import { ContextDiagramStore } from './context-diagram-section.store';
 

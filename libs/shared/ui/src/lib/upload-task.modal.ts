@@ -5,11 +5,11 @@ import {
 } from '@ionic/angular/standalone';
 import { UploadTask, getDownloadURL } from 'firebase/storage';
 
-import { uploadToFirebaseStorage } from '@bk2/shared-config';
-import { error } from '@bk2/shared-util-angular';
+import { uploadToFirebaseStorage } from '@okr/shared-config';
+import { error } from '@okr/shared-util-angular';
 
 import { Header } from './header';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 export interface UploadEntry {
   file: File;

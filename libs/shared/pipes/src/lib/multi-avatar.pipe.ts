@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { MatrixRoom } from '@bk2/shared-models';
+import { MatrixRoom } from '@okr/shared-models';
 
 @Pipe({
   name: 'multiAvatar',

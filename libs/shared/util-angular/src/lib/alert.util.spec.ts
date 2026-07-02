@@ -1,5 +1,5 @@
 import { TranslocoService } from '@jsverse/transloco';
-import { TOAST_LENGTH } from '@bk2/shared-constants';
+import { TOAST_LENGTH } from '@okr/shared-constants';
 import { AlertController, ToastController } from '@ionic/angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bkPrompt, confirm, error, initAlertTranslation, PromptInputType, showToast } from './alert.util';
@@ -9,7 +9,7 @@ vi.mock('@ionic/angular', () => ({
   ToastController: vi.fn()
 }));
 
-vi.mock('@bk2/shared-constants', () => ({
+vi.mock('@okr/shared-constants', () => ({
   TOAST_LENGTH: 3000
 }));
 

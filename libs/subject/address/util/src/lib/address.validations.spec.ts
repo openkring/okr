@@ -1,7 +1,7 @@
 import '@angular/compiler';
 import { describe, it, expect } from 'vitest';
 
-import { AddressModel } from '@bk2/shared-models';
+import { AddressModel } from '@okr/shared-models';
 import { addressValidations } from './address.validations';
 
 const tenantId = 'tenant-1';

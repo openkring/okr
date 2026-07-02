@@ -3,15 +3,15 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { yearMatches } from '@bk2/shared-categories';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, ModelSelectService } from '@bk2/shared-feature';
-import { AvatarInfo, CategoryListModel, TransferCollection, TransferModel } from '@bk2/shared-models';
-import { chipMatches, DateFormat, getAvatarInfo, getAvatarInfoArray, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { yearMatches } from '@okr/shared-categories';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, ModelSelectService } from '@okr/shared-feature';
+import { AvatarInfo, CategoryListModel, TransferCollection, TransferModel } from '@okr/shared-models';
+import { chipMatches, DateFormat, getAvatarInfo, getAvatarInfoArray, getSystemQuery, getTodayStr, nameMatches } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { TransferService } from '@bk2/relationship-transfer-data-access';
-import { isTransfer, TRANSFER_I18N_KEYS, TransferI18n } from '@bk2/relationship-transfer-util';
+import { TransferService } from '@okr/relationship-transfer-data-access';
+import { isTransfer, TRANSFER_I18N_KEYS, TransferI18n } from '@okr/relationship-transfer-util';
 
 
 export type TransferState = {

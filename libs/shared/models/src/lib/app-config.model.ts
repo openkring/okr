@@ -4,7 +4,7 @@
    tenantId is used as the key to query the correct app-specific configuration document from the database
 */
 
-import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_TITLE, DEFAULT_URL } from "@bk2/shared-constants";
+import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_TITLE, DEFAULT_URL } from "@okr/shared-constants";
 
 export type PrivacyAccessor = 'admin' | 'privileged' | 'registered' | 'public';
 

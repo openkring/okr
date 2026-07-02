@@ -1,10 +1,10 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { ColorsIonic, getCategoryStringField } from '@bk2/shared-categories';
-import { ColorIonic } from '@bk2/shared-models';
+import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
+import { ColorIonic } from '@okr/shared-models';
 
-import { AvatarService } from '@bk2/avatar-data-access';
+import { AvatarService } from '@okr/avatar-data-access';
 
 @Component({
   selector: 'bk-avatar-label',

@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { ActionSheetOptions, ActionSheetController, IonAccordion, IonAccordionGroup, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { ResponsibilityModel, RoleName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { ResponsibilityModel, RoleName } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
 import { ResponsibilityStore } from './responsibility.store';
 
 @Component({

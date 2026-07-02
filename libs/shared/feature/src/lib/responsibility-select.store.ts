@@ -2,11 +2,11 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { ResponsibilityModel, UserModel } from '@bk2/shared-models';
-import { nameMatches } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { ResponsibilityModel, UserModel } from '@okr/shared-models';
+import { nameMatches } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
+import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { AppStore } from './app.store';
 import { SHARED_FEATURE_I18N_KEYS, SharedFeatureI18n } from './select-i18n';
 

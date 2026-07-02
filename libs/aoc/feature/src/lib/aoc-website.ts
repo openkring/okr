@@ -8,10 +8,10 @@ import {
   IonLabel, IonList, IonSearchbar, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { WebsiteContentModel } from '@bk2/shared-models';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { Header } from '@okr/shared-ui';
+import { WebsiteContentModel } from '@okr/shared-models';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { AocWebsiteStore } from './aoc-website.store';
 import { AocWebsiteEditModal } from './aoc-website-edit.modal';

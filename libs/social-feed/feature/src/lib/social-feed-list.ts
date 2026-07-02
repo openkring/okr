@@ -3,10 +3,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonList } from '@ionic/angular/standalone';
 import { tap } from 'rxjs';
 
-import { SocialPostModel } from '@bk2/shared-models';
+import { SocialPostModel } from '@okr/shared-models';
 
-import { SocialFeedService } from '@bk2/social-feed-data-access';
-import { SocialPost } from '@bk2/social-feed-ui';
+import { SocialFeedService } from '@okr/social-feed-data-access';
+import { SocialPost } from '@okr/social-feed-ui';
 
 
 @Component({

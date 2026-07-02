@@ -1,5 +1,5 @@
 import { Injectable, signal, effect, PLATFORM_ID, inject } from '@angular/core';
-import { isBrowser } from '@bk2/shared-util-angular';
+import { isBrowser } from '@okr/shared-util-angular';
 
 /**
  * Service to track browser online/offline status using Signals.

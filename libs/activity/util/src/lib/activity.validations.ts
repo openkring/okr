@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { WORD_LENGTH } from '@bk2/shared-constants';
-import { ActivityModel } from '@bk2/shared-models';
-import { avatarValidations, dateTimeValidations, stringValidations } from '@bk2/shared-util-core';
+import { WORD_LENGTH } from '@okr/shared-constants';
+import { ActivityModel } from '@okr/shared-models';
+import { avatarValidations, dateTimeValidations, stringValidations } from '@okr/shared-util-core';
 
 export const activityValidations = staticSuite((model: ActivityModel, tenants: string, field?: string) => {
   if (field) only(field);

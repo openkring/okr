@@ -1,5 +1,5 @@
-import { WorkrelModel } from '@bk2/shared-models';
-import { addIndexElement, isType } from '@bk2/shared-util-core';
+import { WorkrelModel } from '@okr/shared-models';
+import { addIndexElement, isType } from '@okr/shared-util-core';
 
 export function isWorkrel(workrel: unknown, tenantId: string): workrel is WorkrelModel {
   return isType(workrel, new WorkrelModel(tenantId));

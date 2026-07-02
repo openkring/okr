@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Camera, CameraSource, Photo } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
-import { checkUrlType, warn } from '@bk2/shared-util-core';
-import { readAsFile } from '@bk2/avatar-util';
+import { checkUrlType, warn } from '@okr/shared-util-core';
+import { readAsFile } from '@okr/avatar-util';
 import { pickPhoto, checkMimeType, getDocumentStoragePath, getStoragePath } from './document.util';
 
 // Mock all external dependencies
@@ -20,9 +20,9 @@ vi.mock('@capacitor/camera', () => ({
     Uri: 'uri',
   },
 }));
-vi.mock('@bk2/shared-categories');
-vi.mock('@bk2/shared-util-core');
-vi.mock('@bk2/avatar-util');
+vi.mock('@okr/shared-categories');
+vi.mock('@okr/shared-util-core');
+vi.mock('@okr/avatar-util');
 
 describe('Document Utils', () => {
   const mockGetPhoto = vi.mocked(Camera.getPhoto);

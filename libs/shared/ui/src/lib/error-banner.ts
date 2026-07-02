@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 /**
  * Dismissible error banner. Renders a danger-colored item with the given (already

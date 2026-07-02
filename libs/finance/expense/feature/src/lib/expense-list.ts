@@ -5,8 +5,8 @@ import {
   IonItem, IonLabel, IonList, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { centsToCHF } from '@bk2/finance-expense-util';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { centsToCHF } from '@okr/finance-expense-util';
 
 import { ExpenseNewModal } from './expense-new.modal';
 import { ExpenseStore } from './expense.store';

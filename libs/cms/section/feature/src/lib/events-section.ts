@@ -3,14 +3,14 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effec
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
-import { CalEventModel, EventsConfig, EventsSection } from '@bk2/shared-models';
-import { MoreButton, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser } from '@bk2/shared-util-angular';
-import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@bk2/shared-pipes';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { CalEventModel, EventsConfig, EventsSection } from '@okr/shared-models';
+import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
+import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@okr/shared-pipes';
+import { TranslatePipe } from '@okr/shared-i18n';
 
-import { isAdminMember } from '@bk2/subject-group-util';
+import { isAdminMember } from '@okr/subject-group-util';
 import { CalendarStore } from './calendar-section.store';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';

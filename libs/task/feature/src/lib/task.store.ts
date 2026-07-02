@@ -4,15 +4,15 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { map, of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { CategoryListModel, PersonModel, TaskCollection, TaskModel } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, isPerson, nameMatches } from '@bk2/shared-util-core';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { CategoryListModel, PersonModel, TaskCollection, TaskModel } from '@okr/shared-models';
+import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, isPerson, nameMatches } from '@okr/shared-util-core';
 
-import { TaskService } from '@bk2/task-data-access';
-import { isTask, TASK_I18N_KEYS, TaskI18n } from '@bk2/task-util';
-import { AvatarService } from '@bk2/avatar-data-access';
+import { TaskService } from '@okr/task-data-access';
+import { isTask, TASK_I18N_KEYS, TaskI18n } from '@okr/task-util';
+import { AvatarService } from '@okr/avatar-data-access';
 
 import { TaskEditModal } from './task-edit.modal';
 

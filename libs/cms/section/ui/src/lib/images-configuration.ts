@@ -8,14 +8,14 @@ import {
 
 import { getDownloadURL, ref } from 'firebase/storage';
 
-import { ENV, STORAGE } from '@bk2/shared-config';
-import { IMAGE_MIMETYPES } from '@bk2/shared-constants';
-import { ImageConfig, ImageType, UserModel } from '@bk2/shared-models';
-import { ImageDetailModal, UploadEntry } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from '@bk2/shared-util-angular';
-import { IMGIX_THUMBNAIL_PARAMS } from '@bk2/shared-util-core';
-import { UploadService } from '@bk2/avatar-data-access';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ENV, STORAGE } from '@okr/shared-config';
+import { IMAGE_MIMETYPES } from '@okr/shared-constants';
+import { ImageConfig, ImageType, UserModel } from '@okr/shared-models';
+import { ImageDetailModal, UploadEntry } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from '@okr/shared-util-angular';
+import { IMGIX_THUMBNAIL_PARAMS } from '@okr/shared-util-core';
+import { UploadService } from '@okr/avatar-data-access';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { ImageEditModal } from './image-edit.modal';
 

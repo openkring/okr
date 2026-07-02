@@ -1,4 +1,4 @@
-import { SessionModel } from '@bk2/shared-models';
+import { SessionModel } from '@okr/shared-models';
 
 export type SessionStatus = 'active' | 'stale' | 'orphaned' | 'ended';
 

@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { Button, Header, ResultLog } from '@bk2/shared-ui';
+import { Button, Header, ResultLog } from '@okr/shared-ui';
 import { AocStatisticsStore } from './aoc-statistics.store';
 
 @Component({

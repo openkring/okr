@@ -1,12 +1,12 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { OrgNewForm } from '@bk2/subject-org-ui';
-import { CategoryListModel, UserModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { OrgNewForm } from '@okr/subject-org-ui';
+import { CategoryListModel, UserModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
 
-import { ORG_I18N_KEYS, ORG_NEW_FORM_SHAPE, OrgI18n, OrgNewFormModel } from '@bk2/subject-org-util';
+import { ORG_I18N_KEYS, ORG_NEW_FORM_SHAPE, OrgI18n, OrgNewFormModel } from '@okr/subject-org-util';
 
 @Component({
   selector: 'bk-org-new-modal',

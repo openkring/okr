@@ -2,9 +2,9 @@ import { Component, computed, effect, inject, input, output } from '@angular/cor
 import { Photo } from '@capacitor/camera';
 import { IonAvatar, IonIcon, IonImg, IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { ColorsIonic, getCategoryStringField } from '@bk2/shared-categories';
-import { ColorIonic } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
+import { ColorIonic } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { AvatarToolbarStore } from './avatar-toolbar.store';
 

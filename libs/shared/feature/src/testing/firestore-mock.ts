@@ -6,7 +6,7 @@ import { Observable, of, throwError } from 'rxjs';
  *
  * These helpers are dev-only (they import `vitest`) and live under `src/testing/`,
  * which is excluded from the library build. Import them in specs via
- * `@bk2/shared-feature/testing`.
+ * `@okr/shared-feature/testing`.
  */
 
 /** An Observable that emits the given list once (a collection stream). */

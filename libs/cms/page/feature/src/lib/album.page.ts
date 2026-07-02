@@ -1,12 +1,12 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonToolbar } from '@ionic/angular/standalone';
 
-import { Header, Spinner } from '@bk2/shared-ui';
-import { extractFirstPartOfOptionalTupel, getPartsOfTupel } from '@bk2/shared-util-core';
+import { Header, Spinner } from '@okr/shared-ui';
+import { extractFirstPartOfOptionalTupel, getPartsOfTupel } from '@okr/shared-util-core';
 
-import { AlbumSectionComponent } from '@bk2/cms-section-feature';
-import { createSection } from '@bk2/cms-section-util';
-import { ALBUM_CONFIG_SHAPE, AlbumSection, AlbumStyle } from '@bk2/shared-models';
+import { AlbumSectionComponent } from '@okr/cms-section-feature';
+import { createSection } from '@okr/cms-section-util';
+import { ALBUM_CONFIG_SHAPE, AlbumSection, AlbumStyle } from '@okr/shared-models';
 
 import { PageStore } from './page.store';
 

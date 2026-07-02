@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
-import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@bk2/shared-ui';
-import { getAge } from '@bk2/shared-util-core';
+import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
+import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
+import { getAge } from '@okr/shared-util-core';
 
-import { MembershipI18n, scsMemberFeeValidations } from '@bk2/relationship-membership-util';
+import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membership-util';
 
 @Component({
   selector: 'bk-scs-member-fee-edit-form',

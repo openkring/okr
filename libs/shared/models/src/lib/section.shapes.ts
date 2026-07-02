@@ -1,7 +1,7 @@
 import type { CalendarOptions } from "@fullcalendar/core";
 import type { EChartsOption } from "echarts";
 
-import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DEFAULT_URL } from "@bk2/shared-constants";
+import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DEFAULT_URL } from "@okr/shared-constants";
 import type {
   AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection,
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection,

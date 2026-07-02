@@ -2,11 +2,11 @@ import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared-categories';
+import { ColorsIonic } from '@okr/shared-categories';
 
-import { AvatarInfo, CategoryListModel, ColorIonic, UserModel } from '@bk2/shared-models';
-import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
+import { AvatarInfo, CategoryListModel, ColorIonic, UserModel } from '@okr/shared-models';
+import { CategoryPlainNamePipe } from '@okr/shared-pipes';
+import { AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
 
 import { BkAvatar } from './avatar';
 

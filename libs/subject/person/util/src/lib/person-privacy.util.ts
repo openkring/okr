@@ -1,4 +1,4 @@
-import { PersonModel } from '@bk2/shared-models';
+import { PersonModel } from '@okr/shared-models';
 
 /** The display-privacy preference fields (usage*) a person carries. */
 export type PrivacyUsageFields = Pick<PersonModel,

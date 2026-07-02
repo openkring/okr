@@ -7,11 +7,11 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AlertController, ToastController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { showToast } from '@bk2/shared-util-angular';
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
-import { getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@bk2/chat-util';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { showToast } from '@okr/shared-util-angular';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
+import { getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
 export interface AdminRoom {

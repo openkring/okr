@@ -2,14 +2,14 @@ import { Component, computed, effect, inject, input, linkedSignal } from '@angul
 import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ActionSheetController } from '@ionic/angular';
 
-import { CalEventModel, RoleName } from '@bk2/shared-models';
-import { LabelPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getYear, getYearList, hasRole } from '@bk2/shared-util-core';
+import { CalEventModel, RoleName } from '@okr/shared-models';
+import { LabelPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { getYear, getYearList, hasRole } from '@okr/shared-util-core';
 
-import { Menu } from '@bk2/cms-menu-feature';
-import { AvatarDisplay } from '@bk2/avatar-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { AvatarDisplay } from '@okr/avatar-ui';
 
 import { CalEventStore } from './calevent.store';
 

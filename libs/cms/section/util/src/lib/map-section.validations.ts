@@ -1,7 +1,7 @@
 import { only, staticSuite } from 'vest';
 
-import { MapSection } from '@bk2/shared-models';
-import { booleanValidations, numberValidations } from '@bk2/shared-util-core';
+import { MapSection } from '@okr/shared-models';
+import { booleanValidations, numberValidations } from '@okr/shared-util-core';
 
 import { baseSectionValidations } from './base-section.validations';
 

@@ -3,8 +3,8 @@ import type { Firestore } from 'firebase-admin/firestore';
 import { SwissQRBill } from 'swissqrbill/svg';
 import type { Data } from 'swissqrbill/types';
 
-import { AppConfigCollection, OrgCollection, AddressCollection, AddressModel } from '@bk2/shared-models';
-import { pickFavoriteByChannel, QrPayee, QrSlipData } from '@bk2/shared-util-functions';
+import { AppConfigCollection, OrgCollection, AddressCollection, AddressModel } from '@okr/shared-models';
+import { pickFavoriteByChannel, QrPayee, QrSlipData } from '@okr/shared-util-functions';
 
 /**
  * Resolve the payee (creditor) org: name from the org, IBAN from its favorite

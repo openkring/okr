@@ -1,10 +1,10 @@
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
-import { DOCUMENT_DIR, DocumentModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, checkUrlType, getFileHash, getFullName, getTodayStr, isPhotoCancellation, warn } from '@bk2/shared-util-core';
+import { DOCUMENT_DIR, DocumentModel, UserModel } from '@okr/shared-models';
+import { addIndexElement, checkUrlType, getFileHash, getFullName, getTodayStr, isPhotoCancellation, warn } from '@okr/shared-util-core';
 
-import { readAsFile } from '@bk2/avatar-util';
+import { readAsFile } from '@okr/avatar-util';
 
 
 /* ---------------------- Camera -------------------------*/

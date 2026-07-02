@@ -1,9 +1,9 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { ViewPositions } from '@bk2/shared-categories';
-import { EditorConfig, ViewPosition } from '@bk2/shared-models';
-import { BkEditor, ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@bk2/shared-ui';
+import { ViewPositions } from '@okr/shared-categories';
+import { EditorConfig, ViewPosition } from '@okr/shared-models';
+import { BkEditor, ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
 
 interface EditorConfigI18n {
   editor_title:               Signal<string>;

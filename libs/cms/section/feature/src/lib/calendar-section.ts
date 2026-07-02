@@ -8,13 +8,13 @@ import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { format } from 'date-fns';
 
-import { CalendarSection, CalEventModel } from '@bk2/shared-models';
-import { Spinner } from '@bk2/shared-ui';
-import { DateFormat, debugData, debugMessage, parseDate } from '@bk2/shared-util-core';
-import { isBrowser } from '@bk2/shared-util-angular';
+import { CalendarSection, CalEventModel } from '@okr/shared-models';
+import { Spinner } from '@okr/shared-ui';
+import { DateFormat, debugData, debugMessage, parseDate } from '@okr/shared-util-core';
+import { isBrowser } from '@okr/shared-util-angular';
 
-import { convertCalEventToFullCalendar } from '@bk2/calevent-util';
-import { CalEventStore } from '@bk2/calevent-feature';
+import { convertCalEventToFullCalendar } from '@okr/calevent-util';
+import { CalEventStore } from '@okr/calevent-feature';
 
 import { CalendarStore } from './calendar-section.store';
 

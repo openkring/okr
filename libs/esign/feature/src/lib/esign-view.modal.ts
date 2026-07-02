@@ -9,9 +9,9 @@ import {
 } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
-import { EsignRecord, EsignSignee } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EsignService } from '@bk2/esign-data-access';
+import { EsignRecord, EsignSignee } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EsignService } from '@okr/esign-data-access';
 
 @Component({
   selector: 'bk-esign-view-modal',

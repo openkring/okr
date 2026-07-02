@@ -1,11 +1,11 @@
 import { Component, computed, effect, input, linkedSignal, output, signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular/standalone';
 
-import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInvoicePositions, bexioInvoiceValidations, defaultInvoicePositionToBexio, InvoiceI18n } from '@bk2/finance-invoice-util';
+import { BexioInvoiceFormModel, BexioInvoicePosition, BexioTemplates, DefaultInvoicePositions, bexioInvoiceValidations, defaultInvoicePositionToBexio, InvoiceI18n } from '@okr/finance-invoice-util';
 
 @Component({
   selector: 'bk-bexio-invoice-new-form',

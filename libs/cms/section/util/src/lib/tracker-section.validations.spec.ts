@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TRACKER_SECTION_SHAPE, TrackerSection } from '@bk2/shared-models';
+import { TRACKER_SECTION_SHAPE, TrackerSection } from '@okr/shared-models';
 
 import { trackerSectionValidations } from './tracker-section.validations';
 

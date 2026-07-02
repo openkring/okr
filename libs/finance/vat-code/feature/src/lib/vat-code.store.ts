@@ -3,13 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { VatCodeModel } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { VatCodeModel } from '@okr/shared-models';
 
-import { AccountingStore } from '@bk2/finance-accounting-feature';
-import { VatCodeService } from '@bk2/finance-vat-code-data-access';
-import { VAT_CODE_I18N_KEYS, VatCodeI18n } from '@bk2/finance-vat-code-util';
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { VatCodeService } from '@okr/finance-vat-code-data-access';
+import { VAT_CODE_I18N_KEYS, VatCodeI18n } from '@okr/finance-vat-code-util';
 
 import { VatCodeEditModal } from './vat-code-edit.modal';
 

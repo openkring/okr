@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/shared-categories",
+  "name": "@okr/shared-categories",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,6 +7,6 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-models": "*"
+    "@okr/shared-models": "*"
   }
 }

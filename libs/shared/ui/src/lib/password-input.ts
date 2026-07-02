@@ -5,9 +5,9 @@ import { IonInput, IonInputPasswordToggle, IonItem, IonNote } from '@ionic/angul
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 
-import { PasswordMask } from '@bk2/shared-config';
-import { InputMode, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { PasswordMask } from '@okr/shared-config';
+import { InputMode, PASSWORD_MAX_LENGTH } from '@okr/shared-constants';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
 

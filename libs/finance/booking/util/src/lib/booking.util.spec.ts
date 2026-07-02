@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BookingLineModel } from '@bk2/shared-models';
+import { BookingLineModel } from '@okr/shared-models';
 import { validateBookingBalance, generateBookingNo } from './booking.util';
 
 describe('validateBookingBalance', () => {

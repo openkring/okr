@@ -1,8 +1,8 @@
 import { Component, computed, inject, OnInit } from '@angular/core';
 import { IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
-import { InvoiceModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
+import { InvoiceModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 
 import { InvoiceStore } from './invoice.store';
 

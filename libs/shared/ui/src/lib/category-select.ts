@@ -4,10 +4,10 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
 import { switchMap } from 'rxjs/operators';
 
-import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { coerceBoolean, getItemLabel } from '@bk2/shared-util-core';
+import { I18nService, TranslatePipe } from '@okr/shared-i18n';
+import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { coerceBoolean, getItemLabel } from '@okr/shared-util-core';
 
 // unique id to avoid duplicated IDs in reusable component
 let id = 0;

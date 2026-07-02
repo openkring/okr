@@ -7,7 +7,7 @@ import {
   IonTextarea, IonTitle, IonToolbar, ModalController,
 } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'bk-bill-qr-scan-modal',

@@ -6,18 +6,18 @@ import { Router } from '@angular/router';
 import { combineLatest, firstValueFrom, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { AppStore, withErrorState } from '@bk2/shared-feature';
-import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData, getTodayStr, DateFormat } from '@bk2/shared-util-core';
-import { bkPrompt, confirm, downloadTextFile, error, exportCsv, getExportFileName, navigateByUrl } from '@bk2/shared-util-angular';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore, withErrorState } from '@okr/shared-feature';
+import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@okr/shared-models';
+import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData, getTodayStr, DateFormat } from '@okr/shared-util-core';
+import { bkPrompt, confirm, downloadTextFile, error, exportCsv, getExportFileName, navigateByUrl } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 
-import { PageService } from '@bk2/cms-page-data-access';
-import { SectionSelectModal } from '@bk2/cms-section-feature';
-import { SectionService } from '@bk2/cms-section-data-access';
-import { isPage, PAGE_I18N_KEYS } from '@bk2/cms-page-util';
+import { PageService } from '@okr/cms-page-data-access';
+import { SectionSelectModal } from '@okr/cms-section-feature';
+import { SectionService } from '@okr/cms-section-data-access';
+import { isPage, PAGE_I18N_KEYS } from '@okr/cms-page-util';
 
-import { DocGenerationService } from '@bk2/pdf-template-data-access';
+import { DocGenerationService } from '@okr/pdf-template-data-access';
 import { PagePrintService } from './page-print.service';
 
 export type PageState = {

@@ -2,10 +2,10 @@ import { Component, computed, input, linkedSignal, model, Signal } from '@angula
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { ButtonAction, ButtonActionConfig } from '@bk2/shared-models';
-import { CategoryOld, CategoryOldI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { DEFAULT_LABEL, DEFAULT_URL } from '@bk2/shared-constants';
-import { ButtonActions } from '@bk2/shared-categories';
+import { ButtonAction, ButtonActionConfig } from '@okr/shared-models';
+import { CategoryOld, CategoryOldI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { DEFAULT_LABEL, DEFAULT_URL } from '@okr/shared-constants';
+import { ButtonActions } from '@okr/shared-categories';
 
 interface ButtonActionI18n {
   button_action_title:                  Signal<string>;

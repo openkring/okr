@@ -5,8 +5,8 @@ import {
   IonSegment, IonSegmentButton, IonSelect, IonSelectOption,
 } from '@ionic/angular/standalone';
 
-import { TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { EmailClient, ProfileI18n } from '@bk2/profile-util';
+import { TextInput, TextInputI18n } from '@okr/shared-ui';
+import { EmailClient, ProfileI18n } from '@okr/profile-util';
 
 import { SignatureService } from './signature.service';
 

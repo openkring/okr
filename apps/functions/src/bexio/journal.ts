@@ -4,7 +4,7 @@ import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, BEXIO_BASE_V3 } from './shared';
 

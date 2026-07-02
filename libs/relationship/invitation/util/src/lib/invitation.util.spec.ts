@@ -1,6 +1,6 @@
-import { AvatarInfo } from '@bk2/shared-models';
+import { AvatarInfo } from '@okr/shared-models';
 import { createPersonAvatar, getInvitationIndex, getInvitationIndexInfo, isInvitation } from './invitation.util';
-import { InvitationModel } from '@bk2/shared-models';
+import { InvitationModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
 describe('invitation.util', () => {

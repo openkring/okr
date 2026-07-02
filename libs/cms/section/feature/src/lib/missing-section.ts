@@ -2,9 +2,9 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { signalStore, withProps } from '@ngrx/signals';
 
-import { I18nService } from '@bk2/shared-i18n';
-import { SectionModel } from '@bk2/shared-models';
-import { Spinner } from '@bk2/shared-ui';
+import { I18nService } from '@okr/shared-i18n';
+import { SectionModel } from '@okr/shared-models';
+import { Spinner } from '@okr/shared-ui';
 
 export const PFX = '@cms/section/feature.';
 

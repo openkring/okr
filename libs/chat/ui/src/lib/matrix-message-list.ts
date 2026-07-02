@@ -2,11 +2,11 @@ import { Component, computed, effect, input, output, viewChild, ElementRef, Sign
 
 import { IonIcon, IonChip, IonAvatar } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { MatrixMessage, MatrixReadReceipt } from '@bk2/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '@bk2/chat-util';
+import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
 
 @Component({
   selector: 'bk-matrix-message-list',

@@ -3,7 +3,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getTodayStr, DateFormat, subDuration } from '@bk2/shared-util-core';
+import { getTodayStr, DateFormat, subDuration } from '@okr/shared-util-core';
 
 const REGION = 'europe-west6';
 const SESSION_COLLECTION = 'sessions';

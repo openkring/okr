@@ -1,12 +1,12 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, RoleName, TransferModel, TransferModelName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { CategoryListModel, RoleName, TransferModel, TransferModelName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
 
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { TransferForm } from '@bk2/relationship-transfer-ui';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { TransferForm } from '@okr/relationship-transfer-ui';
 import { TransferStore } from './transfer.store';
 
 

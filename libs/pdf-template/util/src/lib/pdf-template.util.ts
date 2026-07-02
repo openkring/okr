@@ -1,5 +1,5 @@
-import { TemplateModel, TemplateVersionModel } from '@bk2/shared-models';
-import { addIndexElement } from '@bk2/shared-util-core';
+import { TemplateModel, TemplateVersionModel } from '@okr/shared-models';
+import { addIndexElement } from '@okr/shared-util-core';
 
 export function newTemplate(tenantId: string): TemplateModel {
   return new TemplateModel(tenantId);

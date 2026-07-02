@@ -1,11 +1,11 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarInfo, PersonModel, ResponsibilityModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { AvatarInfo, PersonModel, ResponsibilityModel, RoleName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
 
-import { ResponsibilityForm } from '@bk2/relationship-responsibility-ui';
+import { ResponsibilityForm } from '@okr/relationship-responsibility-ui';
 import { ResponsibilityStore } from './responsibility.store';
 
 @Component({

@@ -1,7 +1,7 @@
 import type { HttpInterceptorFn } from '@angular/common/http';
 import { addBreadcrumb, setTag, setUser } from '@sentry/angular';
 import type { BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
-import { redactSensitive, stripPii } from '@bk2/shared-util-core';
+import { redactSensitive, stripPii } from '@okr/shared-util-core';
 import { catchError } from 'rxjs';
 
 /** Sentry configuration as emitted into environment.ts by set-env.js. */

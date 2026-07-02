@@ -2,7 +2,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 const SNB_CSV_URL = 'https://data.snb.ch/api/cube/devkum/data/CSV/de';
 

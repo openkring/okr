@@ -3,12 +3,12 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { HttpClient } from '@angular/common/http';
 
-import { STORAGE } from '@bk2/shared-config';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { ARTICLE_CONFIG_SHAPE, ArticleConfig, ImageConfig } from '@bk2/shared-models';
+import { STORAGE } from '@okr/shared-config';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { ARTICLE_CONFIG_SHAPE, ArticleConfig, ImageConfig } from '@okr/shared-models';
 
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export interface ArticleState {
   config: ArticleConfig;

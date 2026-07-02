@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
-import { MenuItemModel, PageModel, RoleName, SectionModel } from '@bk2/shared-models';
-import { Spinner } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { error } from '@bk2/shared-util-angular';
+import { MenuItemModel, PageModel, RoleName, SectionModel } from '@okr/shared-models';
+import { Spinner } from '@okr/shared-ui';
+import { hasRole } from '@okr/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { error } from '@okr/shared-util-angular';
 
-import { Menu, MenuStore } from '@bk2/cms-menu-feature';
-import { SectionStore } from '@bk2/cms-section-feature';
+import { Menu, MenuStore } from '@okr/cms-menu-feature';
+import { SectionStore } from '@okr/cms-section-feature';
 
 import { DependencyNode, MenuGraphStore } from './menu-graph.store';
 import { MenuGraphNode } from './menu-graph-node';

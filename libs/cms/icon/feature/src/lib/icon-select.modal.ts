@@ -1,8 +1,8 @@
 import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, IonThumbnail, ModalController } from '@ionic/angular/standalone';
 
-import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, Header, ListFilter, Spinner } from '@bk2/shared-ui';
+import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, Header, ListFilter, Spinner } from '@okr/shared-ui';
 
 import { ICON_SETS, IconStore } from './icon.store';
 

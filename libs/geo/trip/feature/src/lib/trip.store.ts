@@ -5,21 +5,21 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 
-import { AppStore, LocationSelectResult, ModelSelectService } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@bk2/shared-models';
-import { AlertService } from '@bk2/shared-util-angular';
-import { getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, nameMatches } from '@bk2/shared-util-core';
-import { yearMatches } from '@bk2/shared-categories';
+import { AppStore, LocationSelectResult, ModelSelectService } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
+import { AlertService } from '@okr/shared-util-angular';
+import { getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, nameMatches } from '@okr/shared-util-core';
+import { yearMatches } from '@okr/shared-categories';
 
-import { TaskService } from '@bk2/task-data-access';
-import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
-import { UploadService } from '@bk2/avatar-data-access';
-import { readAsFile } from '@bk2/avatar-util';
-import { LocationService } from '@bk2/location-data-access';
+import { TaskService } from '@okr/task-data-access';
+import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
+import { UploadService } from '@okr/avatar-data-access';
+import { readAsFile } from '@okr/avatar-util';
+import { LocationService } from '@okr/location-data-access';
 
-import { TripService } from '@bk2/trip-data-access';
-import { groupTripsByDay, newTrip, TRIP_I18N_KEYS } from '@bk2/trip-util';
+import { TripService } from '@okr/trip-data-access';
+import { groupTripsByDay, newTrip, TRIP_I18N_KEYS } from '@okr/trip-util';
 
 
 const SUSPICIOUS_WINDOW_MS = 15 * 60 * 1000;

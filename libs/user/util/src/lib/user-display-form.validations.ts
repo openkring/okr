@@ -1,7 +1,7 @@
 import { only, staticSuite } from 'vest';
 
-import { AvatarUsage, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared-models';
-import { booleanValidations, categoryValidations } from '@bk2/shared-util-core';
+import { AvatarUsage, Language, NameDisplay, PersonSortCriteria } from '@okr/shared-models';
+import { booleanValidations, categoryValidations } from '@okr/shared-util-core';
 
 import { UserDisplayFormModel } from './user-display-form.model';
 

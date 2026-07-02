@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { PersonModel, PrivacyUsage } from '@bk2/shared-models';
+import { PersonModel, PrivacyUsage } from '@okr/shared-models';
 
 import { mirrorPrivacyUsageToPerson } from './person-privacy.util';
 

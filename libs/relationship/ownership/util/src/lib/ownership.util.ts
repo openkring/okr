@@ -1,6 +1,6 @@
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { AccountModel, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared-models';
-import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from '@bk2/shared-util-core';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { AccountModel, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@okr/shared-models';
+import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from '@okr/shared-util-core';
 
 /**
  * Creates a new ownership between a person or org and a resource or account for the current tenant.

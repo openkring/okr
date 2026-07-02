@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/finance-account-feature",
+  "name": "@okr/finance-account-feature",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,17 +7,17 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-pipes": "*",
-    "@bk2/shared-feature": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-ui": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/finance-accounting-feature": "*",
-    "@bk2/finance-account-data-access": "*",
-    "@bk2/finance-account-ui": "*",
-    "@bk2/finance-account-util": "*",
-    "@bk2/cms-menu-feature": "*"
+    "@okr/shared-models": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-feature": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/finance-accounting-feature": "*",
+    "@okr/finance-account-data-access": "*",
+    "@okr/finance-account-ui": "*",
+    "@okr/finance-account-util": "*",
+    "@okr/cms-menu-feature": "*"
   }
 }

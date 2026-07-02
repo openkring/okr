@@ -10,11 +10,11 @@ echarts.use([TreeChart, CanvasRenderer]);
 
 import type { EChartsOption } from 'echarts';
 
-import { OrgchartConfig, OrgchartSection } from '@bk2/shared-models';
-import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
-import { AvatarService } from '@bk2/avatar-data-access';
+import { OrgchartConfig, OrgchartSection } from '@okr/shared-models';
+import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
+import { AvatarService } from '@okr/avatar-data-access';
 
 import { OrgchartNodeComponent } from './orgchart-node';
 import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';

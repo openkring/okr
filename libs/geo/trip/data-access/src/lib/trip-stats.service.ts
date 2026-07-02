@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
+import { FirestoreService } from '@okr/shared-data-access';
 
 export interface YearStats {
   bkey?: string;   // document ID (year string e.g. '2026') — present when loaded via searchData

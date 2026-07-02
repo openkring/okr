@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonImg, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
-import { NAME_LENGTH } from '@bk2/shared-constants';
+import { NAME_LENGTH } from '@okr/shared-constants';
 
-import { AvatarInfo, UserModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { AlertService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { coerceBoolean, getAvatarName } from '@bk2/shared-util-core';
+import { AvatarInfo, UserModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { AlertService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
+import { coerceBoolean, getAvatarName } from '@okr/shared-util-core';
 
-import { getDefaultIcon } from '@bk2/avatar-util';
+import { getDefaultIcon } from '@okr/avatar-util';
 
 import { AvatarDisplay } from './avatar-display';
 import { AvatarPipe } from './avatar.pipe';

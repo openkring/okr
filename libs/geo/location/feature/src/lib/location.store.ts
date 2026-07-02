@@ -3,17 +3,17 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { CategoryListModel, LocationModel } from '@bk2/shared-models';
-import { chipMatches, nameMatches } from '@bk2/shared-util-core';
-import { AlertService, copyToClipboard } from '@bk2/shared-util-angular';
-import { I18nService } from '@bk2/shared-i18n';
-import { MapViewModal } from '@bk2/shared-ui';
+import { AppStore } from '@okr/shared-feature';
+import { CategoryListModel, LocationModel } from '@okr/shared-models';
+import { chipMatches, nameMatches } from '@okr/shared-util-core';
+import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
+import { MapViewModal } from '@okr/shared-ui';
 
-import { LocationConversionService, LocationService } from '@bk2/location-data-access';
-import { isLocation } from '@bk2/location-util';
+import { LocationConversionService, LocationService } from '@okr/location-data-access';
+import { isLocation } from '@okr/location-util';
 
-import { LOCATION_I18N_KEYS, LocationI18n } from '@bk2/location-util';
+import { LOCATION_I18N_KEYS, LocationI18n } from '@okr/location-util';
 export type { LocationI18n };
 
 function zoomForBounds(latSpan: number, lngSpan: number): number {

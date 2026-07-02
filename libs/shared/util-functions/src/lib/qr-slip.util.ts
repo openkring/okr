@@ -1,4 +1,4 @@
-import { AddressModel } from '@bk2/shared-models';
+import { AddressModel } from '@okr/shared-models';
 
 /** Parse a (possibly Swiss-formatted) amount string into a number, or undefined. */
 export function parseSwissAmount(value: unknown): number | undefined {

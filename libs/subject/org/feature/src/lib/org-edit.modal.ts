@@ -2,26 +2,26 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, OrgModel, OrgModelName, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
-import { DEFAULT_TITLE } from '@bk2/shared-constants';
-import { ENV } from '@bk2/shared-config';
+import { CategoryListModel, OrgModel, OrgModelName, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { DEFAULT_TITLE } from '@okr/shared-constants';
+import { ENV } from '@okr/shared-config';
 
-import { AvatarToolbar } from '@bk2/avatar-feature';
-import { AvatarService } from '@bk2/avatar-data-access';
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { getDocumentStoragePath } from '@bk2/document-util';
-import { DocumentsAccordion } from '@bk2/document-feature';
+import { AvatarToolbar } from '@okr/avatar-feature';
+import { AvatarService } from '@okr/avatar-data-access';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { getDocumentStoragePath } from '@okr/document-util';
+import { DocumentsAccordion } from '@okr/document-feature';
 
-import { BillAccordion } from '@bk2/finance-bill-feature';
+import { BillAccordion } from '@okr/finance-bill-feature';
 
-import { MembersAccordion, MembershipAccordion } from '@bk2/relationship-membership-feature';
-import { OwnershipAccordion } from '@bk2/relationship-ownership-feature';
-import { ReservationsAccordion } from '@bk2/relationship-reservation-feature';
+import { MembersAccordion, MembershipAccordion } from '@okr/relationship-membership-feature';
+import { OwnershipAccordion } from '@okr/relationship-ownership-feature';
+import { ReservationsAccordion } from '@okr/relationship-reservation-feature';
 
-import { AddressesAccordion } from '@bk2/subject-address-feature';
-import { OrgForm } from '@bk2/subject-org-ui';
+import { AddressesAccordion } from '@okr/subject-address-feature';
+import { OrgForm } from '@okr/subject-org-ui';
 import { OrgStore } from './org.store';
 
 @Component({

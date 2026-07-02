@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as logger from "firebase-functions/logger";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
-import { AddressCollection, AddressModel, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PersonModel, ReservationCollection, ResourceCollection, WorkrelCollection } from "@bk2/shared-models";
+import { AddressCollection, AddressModel, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PersonModel, ReservationCollection, ResourceCollection, WorkrelCollection } from "@okr/shared-models";
 import {
   getAllMembershipsOfMember, getAllMembershipsOfOrg,
   getAllOwnershipsOfOwner, getAllOwnershipsOfResource,
@@ -11,7 +11,7 @@ import {
   getAllWorkrelsOfObject, getAllWorkrelsOfSubject,
   hasChanged,
   updateFavoriteAddressInfo
-} from "@bk2/shared-util-functions";
+} from "@okr/shared-util-functions";
 
 const firestore = admin.firestore();
 

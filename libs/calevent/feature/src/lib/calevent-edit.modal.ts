@@ -1,17 +1,17 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup } from '@ionic/angular/standalone';
 
-import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { CalendarSelectModal } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
+import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { CalendarSelectModal } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
 
-import { CalEventForm } from '@bk2/calevent-ui';
-import { InviteesAccordion } from '@bk2/relationship-invitation-feature';
-import { DocumentsAccordion } from '@bk2/document-feature';
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { CALEVENT_I18N_KEYS, CaleventI18n } from '@bk2/calevent-util';
+import { CalEventForm } from '@okr/calevent-ui';
+import { InviteesAccordion } from '@okr/relationship-invitation-feature';
+import { DocumentsAccordion } from '@okr/document-feature';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
 
 import { AttendeesAccordion } from './attendees-accordion';
 

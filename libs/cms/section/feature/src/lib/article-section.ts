@@ -1,8 +1,8 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 
-import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ViewPosition } from '@bk2/shared-models';
-import { Img, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ViewPosition } from '@okr/shared-models';
+import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { ArticleStore } from './article-section.store';
 

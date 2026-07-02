@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 
-import { ENV } from '@bk2/shared-config';
+import { ENV } from '@okr/shared-config';
 
 export interface GenerateDocumentRequest {
   templateId?: string;

@@ -4,12 +4,12 @@ import {
   IonList, IonRow, IonSelect, IonSelectOption, IonTextarea,
 } from '@ionic/angular/standalone';
 
-import { AddressModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ErrorNote, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { formatIban, IbanFormat } from '@bk2/shared-util-angular';
+import { AddressModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { formatIban, IbanFormat } from '@okr/shared-util-angular';
 
-import { ALLOWED_CURRENCIES, ExpenseFormValue, expenseValidations } from '@bk2/finance-expense-util';
+import { ALLOWED_CURRENCIES, ExpenseFormValue, expenseValidations } from '@okr/finance-expense-util';
 
 export interface ExpenseFormI18n {
   abstract_label: Signal<string>;

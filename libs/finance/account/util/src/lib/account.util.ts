@@ -1,5 +1,5 @@
-import { AccountModel } from '@bk2/shared-models';
-import { isType } from '@bk2/shared-util-core';
+import { AccountModel } from '@okr/shared-models';
+import { isType } from '@okr/shared-util-core';
 
 export interface FlatAccountNode {
   account: AccountModel;

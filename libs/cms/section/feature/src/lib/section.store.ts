@@ -9,21 +9,21 @@ import { Geolocation, Position } from '@capacitor/geolocation';
 
 import { catchError, of } from 'rxjs';
 
-import { AppStore, withErrorState } from '@bk2/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@bk2/shared-models';
-import { chipMatches, debugData, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
-import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
-import { confirm, downloadTextFile, exportCsv, getExportFileName, showToast } from '@bk2/shared-util-angular';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore, withErrorState } from '@okr/shared-feature';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
+import { chipMatches, debugData, debugItemLoaded, debugMessage, nameMatches } from '@okr/shared-util-core';
+import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
+import { confirm, downloadTextFile, exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
 
-import { UploadService } from '@bk2/avatar-data-access';
-import { SectionService } from '@bk2/cms-section-data-access';
-import { createSection, narrowSection, SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { UploadService } from '@okr/avatar-data-access';
+import { SectionService } from '@okr/cms-section-data-access';
+import { createSection, narrowSection, SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 import { MessageCenterModal } from './message-center.modal';
 import { CardSelectModal } from './card-select.modal';
-import { MatrixChatService } from '@bk2/chat-data-access';
+import { MatrixChatService } from '@okr/chat-data-access';
 
 export type Coordinates = {
   latitude: number;

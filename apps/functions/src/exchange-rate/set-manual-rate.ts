@@ -1,7 +1,7 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 interface SetManualRateData {
   fromCurrency: string;

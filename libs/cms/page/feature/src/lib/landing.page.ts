@@ -3,10 +3,10 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs';
 import { IonButton, IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { Header } from '@bk2/shared-ui';
-import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { Header } from '@okr/shared-ui';
+import { DEFAULT_BANNER_URL } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
 
 import { PageStore } from './page.store';
 import { PFX } from './scope';

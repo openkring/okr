@@ -8,8 +8,8 @@ import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 echarts.use([LineChart, GridComponent, CanvasRenderer, LegendComponent, TooltipComponent]);
 
-import { TripStatsSection } from '@bk2/shared-models';
-import { EmptyList, ListFilter, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { TripStatsSection } from '@okr/shared-models';
+import { EmptyList, ListFilter, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { TripStatsSectionStore } from './trip-stats-section.store';
 

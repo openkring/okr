@@ -1,9 +1,9 @@
 import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { ImageConfig, ImageType } from '@bk2/shared-models';
-import { StringSelect, StringSelectI18n, TextInput, TextInputI18n, Header } from '@bk2/shared-ui';
-import { SectionI18n } from '@bk2/cms-section-util';
+import { ImageConfig, ImageType } from '@okr/shared-models';
+import { StringSelect, StringSelectI18n, TextInput, TextInputI18n, Header } from '@okr/shared-ui';
+import { SectionI18n } from '@okr/cms-section-util';
 
 const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
 

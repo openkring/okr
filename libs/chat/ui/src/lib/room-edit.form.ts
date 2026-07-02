@@ -2,12 +2,12 @@ import { Component, computed, effect, input, model, output, Signal } from '@angu
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { MatrixRoom, UserModel } from '@bk2/shared-models';
-import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@bk2/shared-ui';
-import { DEFAULT_NAME, DEFAULT_URL } from '@bk2/shared-constants';
-import { validateVestTree } from '@bk2/shared-util-angular';
+import { MatrixRoom, UserModel } from '@okr/shared-models';
+import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
+import { DEFAULT_NAME, DEFAULT_URL } from '@okr/shared-constants';
+import { validateVestTree } from '@okr/shared-util-angular';
 
-import { roomValidations } from '@bk2/chat-util';
+import { roomValidations } from '@okr/chat-util';
 
 export interface RoomEditFormI18n {
   roomId_label: Signal<string>;

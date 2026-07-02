@@ -4,16 +4,16 @@ import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { ApplicationModel, ApplicationState, UserModel } from '@bk2/shared-models';
-import { getAvatarInfoForCurrentUser } from '@bk2/shared-util-core';
-import { AlertService } from '@bk2/shared-util-angular';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { ApplicationModel, ApplicationState, UserModel } from '@okr/shared-models';
+import { getAvatarInfoForCurrentUser } from '@okr/shared-util-core';
+import { AlertService } from '@okr/shared-util-angular';
 
-import { MemberNewModal } from '@bk2/relationship-membership-feature';
+import { MemberNewModal } from '@okr/relationship-membership-feature';
 
-import { ApplicationService } from '@bk2/application-data-access';
-import { APPLICATION_I18N_KEYS, matchesStateFilter, stateColor } from '@bk2/application-util';
+import { ApplicationService } from '@okr/application-data-access';
+import { APPLICATION_I18N_KEYS, matchesStateFilter, stateColor } from '@okr/application-util';
 import { ApplicationEditModal } from './application-edit.modal';
 
 

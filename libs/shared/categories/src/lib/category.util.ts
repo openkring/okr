@@ -1,4 +1,4 @@
-import { AllCategories, CategoryModel, MembershipModel, OwnershipModel } from '@bk2/shared-models';
+import { AllCategories, CategoryModel, MembershipModel, OwnershipModel } from '@okr/shared-models';
 
 /**
  * Return a Category based on its id.

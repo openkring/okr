@@ -1,11 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, IonThumbnail } from '@ionic/angular/standalone';
 
-import { Button, Header } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { fileSizeUnit } from '@bk2/shared-util-core';
-import { FileLogoPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
-import { I18nService } from '@bk2/shared-i18n';
+import { Button, Header } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { fileSizeUnit } from '@okr/shared-util-core';
+import { FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
+import { I18nService } from '@okr/shared-i18n';
 
 import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
 

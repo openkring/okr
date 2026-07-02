@@ -3,8 +3,8 @@ import {
   IonButton, IonButtons, IonContent, IonHeader,
   IonIcon, IonTitle, IonToolbar, ModalController
 } from '@ionic/angular/standalone';
-import { downloadToBrowser } from '@bk2/shared-util-angular';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { downloadToBrowser } from '@okr/shared-util-angular';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 export interface LightboxImage {
   mediaUrl: string;

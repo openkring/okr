@@ -4,17 +4,17 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Photo } from '@capacitor/camera';
 import { of, take } from 'rxjs';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@bk2/shared-models';
-import { AhvFormat, AppNavigationService, formatAhv } from '@bk2/shared-util-angular';
-import { debugItemLoaded } from '@bk2/shared-util-core';
-import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@okr/shared-models';
+import { AhvFormat, AppNavigationService, formatAhv } from '@okr/shared-util-angular';
+import { debugItemLoaded } from '@okr/shared-util-core';
+import { FirestoreService } from '@okr/shared-data-access';
 
-import { AvatarService } from '@bk2/avatar-data-access';
+import { AvatarService } from '@okr/avatar-data-access';
 
-import { PersonService } from '@bk2/subject-person-data-access';
-import { PROFILE_I18N_KEYS, ProfileI18n } from '@bk2/profile-util';
+import { PersonService } from '@okr/subject-person-data-access';
+import { PROFILE_I18N_KEYS, ProfileI18n } from '@okr/profile-util';
 
 /**
  * the personEditPage is setting the personKey.

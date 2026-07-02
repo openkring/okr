@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, OnInit, output, signal, viewChild } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonRow, IonSearchbar, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { SwissCity } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SwissCity } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { SwissCitiesSearchStore } from './swisscity-search.store';
 

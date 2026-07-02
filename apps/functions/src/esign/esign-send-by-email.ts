@@ -9,7 +9,7 @@ import {
   ALL_ESIGN_SECRETS, REGION,
   getDeepSignAccessToken, getEsignApiBase,
 } from './shared';
-import { EsignCollection } from '@bk2/shared-models';
+import { EsignCollection } from '@okr/shared-models';
 
 const mailtrapApiKey = defineSecret('MAILTRAP_APIKEY');
 // EMAIL_FROM must be an address on the verified Mailtrap sending domain (e.g. app@seeclub.org).

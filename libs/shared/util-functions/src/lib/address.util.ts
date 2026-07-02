@@ -2,8 +2,8 @@ import * as admin from 'firebase-admin';
 import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
-import { AddressCollection, AddressModel, OrgCollection, PersonCollection } from '@bk2/shared-models';
-import { DEFAULT_EMAIL, DEFAULT_PHONE } from '@bk2/shared-constants';
+import { AddressCollection, AddressModel, OrgCollection, PersonCollection } from '@okr/shared-models';
+import { DEFAULT_EMAIL, DEFAULT_PHONE } from '@okr/shared-constants';
 
 export interface FavoriteAddressInfo {
   favEmail: string;

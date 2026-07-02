@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { MemberAgeSection } from '@bk2/shared-models';
-import { EmptyList, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { MemberAgeSection } from '@okr/shared-models';
+import { EmptyList, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { MemberAgeSectionStore } from './member-age-section.store';
 

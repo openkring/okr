@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
-import { DEFAULT_DATE, WORD_LENGTH } from '@bk2/shared-constants';
-import { ResponsibilityModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopy, ButtonCopyI18n, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { getAvatarName, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_DATE, WORD_LENGTH } from '@okr/shared-constants';
+import { ResponsibilityModel, RoleName, UserModel } from '@okr/shared-models';
+import { ButtonCopy, ButtonCopyI18n, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
-import { isDelegateActive, responsibilityValidations, ResponsibilityI18n } from '@bk2/relationship-responsibility-util';
-import { LowercaseWordMask } from '@bk2/shared-config';
+import { isDelegateActive, responsibilityValidations, ResponsibilityI18n } from '@okr/relationship-responsibility-util';
+import { LowercaseWordMask } from '@okr/shared-config';
 
 @Component({
   selector: 'bk-responsibility-form',

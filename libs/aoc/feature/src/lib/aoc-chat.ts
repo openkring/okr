@@ -2,14 +2,14 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { Header } from '@bk2/shared-ui';
-import { ModelSelectService } from '@bk2/shared-feature';
-import { AvatarInfo } from '@bk2/shared-models';
-import { AvatarSelect } from '@bk2/avatar-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { Header } from '@okr/shared-ui';
+import { ModelSelectService } from '@okr/shared-feature';
+import { AvatarInfo } from '@okr/shared-models';
+import { AvatarSelect } from '@okr/avatar-ui';
 
-import { formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLevel } from '@bk2/chat-util';
+import { formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLevel } from '@okr/chat-util';
 import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
 
 @Component({

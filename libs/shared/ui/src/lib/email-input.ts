@@ -2,8 +2,8 @@ import { Component, computed, effect, input, model, viewChild } from '@angular/c
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
-import { EMAIL_LENGTH } from '@bk2/shared-constants';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { EMAIL_LENGTH } from '@okr/shared-constants';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
 

@@ -5,13 +5,13 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Observable, of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { getImageDimensionsFromMetadata, showZoomedImage, updateImageDimensions } from '@bk2/shared-ui';
-import { getModelAndKey } from '@bk2/shared-util-core';
-import { CategoryItemModel, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { getImageDimensionsFromMetadata, showZoomedImage, updateImageDimensions } from '@okr/shared-ui';
+import { getModelAndKey } from '@okr/shared-util-core';
+import { CategoryItemModel, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 
-import { AvatarService, UploadService } from '@bk2/avatar-data-access';
-import { getDefaultIcon } from '@bk2/avatar-util';
+import { AvatarService, UploadService } from '@okr/avatar-data-access';
+import { getDefaultIcon } from '@okr/avatar-util';
 
 export interface AvatarToolbarState {
   key: string; // = ModelType.ModelKey e.g. person.lasdfölj

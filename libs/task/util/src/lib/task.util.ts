@@ -1,5 +1,5 @@
-import { TaskModel } from '@bk2/shared-models';
-import { addIndexElement, isType } from '@bk2/shared-util-core';
+import { TaskModel } from '@okr/shared-models';
+import { addIndexElement, isType } from '@okr/shared-util-core';
 
 /*-------------------------- type guard --------------------------------*/
 

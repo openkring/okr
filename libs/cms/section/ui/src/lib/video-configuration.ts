@@ -1,10 +1,10 @@
 import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { VideoConfig } from '@bk2/shared-models';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { SectionI18n } from '@bk2/cms-section-util';
+import { TextInput, TextInputI18n } from '@okr/shared-ui';
+import { VideoConfig } from '@okr/shared-models';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { SectionI18n } from '@okr/cms-section-util';
 
 @Component({
   selector: 'bk-video-config',

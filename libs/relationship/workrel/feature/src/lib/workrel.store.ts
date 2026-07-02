@@ -3,16 +3,16 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
-import { CategoryListModel, OrgModel, PersonModel, WorkrelModel } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isOrg, isPerson, isValidAt, nameMatches } from '@bk2/shared-util-core';
-import { confirm } from '@bk2/shared-util-angular';
-import { selectDate } from '@bk2/shared-ui';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { CategoryListModel, OrgModel, PersonModel, WorkrelModel } from '@okr/shared-models';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isOrg, isPerson, isValidAt, nameMatches } from '@okr/shared-util-core';
+import { confirm } from '@okr/shared-util-angular';
+import { selectDate } from '@okr/shared-ui';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
 
-import { WorkrelService } from '@bk2/relationship-workrel-data-access';
-import { isWorkrel, WORKREL_I18N_KEYS, WorkrelI18n } from '@bk2/relationship-workrel-util';
+import { WorkrelService } from '@okr/relationship-workrel-data-access';
+import { isWorkrel, WORKREL_I18N_KEYS, WorkrelI18n } from '@okr/relationship-workrel-util';
 
 export type WorkrelState = {
   personKey: string | undefined;    // parent e.g. in accordions

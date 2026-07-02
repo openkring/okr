@@ -1,10 +1,10 @@
 import { Component, OnInit, computed, effect, input, output, signal, Signal } from '@angular/core';
 import { IonItem, IonInput, IonList } from '@ionic/angular/standalone';
 
-import { AnyCharacterMask } from '@bk2/shared-config';
-import { Checkbox, CheckboxI18n, StringList } from '@bk2/shared-ui';
+import { AnyCharacterMask } from '@okr/shared-config';
+import { Checkbox, CheckboxI18n, StringList } from '@okr/shared-ui';
 
-import { MatrixPollData } from '@bk2/chat-data-access';
+import { MatrixPollData } from '@okr/chat-data-access';
 
 export interface PollCreateFormI18n {
   allowMultipleAnswers_label: Signal<string>;

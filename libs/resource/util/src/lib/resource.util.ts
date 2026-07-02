@@ -1,7 +1,7 @@
-import { ResourceModel } from '@bk2/shared-models';
-import { addIndexElement, extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared-util-core';
+import { ResourceModel } from '@okr/shared-models';
+import { addIndexElement, extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@okr/shared-util-core';
 
-import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_PET_TYPE, DEFAULT_RBOAT_TYPE } from '@bk2/shared-constants';
+import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_PET_TYPE, DEFAULT_RBOAT_TYPE } from '@okr/shared-constants';
 
   // locker:  name = lockerNr/keyNr, subType = GenderType
   // key:     name = keyNr

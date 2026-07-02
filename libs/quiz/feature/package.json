@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/quiz-feature",
+  "name": "@okr/quiz-feature",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,6 +7,6 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-ui": "*"
+    "@okr/shared-ui": "*"
   }
 }

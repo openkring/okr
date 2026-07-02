@@ -1,4 +1,4 @@
-import { DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL } from "@bk2/shared-constants";
+import { DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL } from "@okr/shared-constants";
 
 export class FirebaseUserModel {
   public uid = DEFAULT_ID;

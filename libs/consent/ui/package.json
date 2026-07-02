@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/consent-ui",
+  "name": "@okr/consent-ui",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,7 +7,7 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-util-core": "*",
-    "@bk2/consent-data-access": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/consent-data-access": "*"
   }
 }

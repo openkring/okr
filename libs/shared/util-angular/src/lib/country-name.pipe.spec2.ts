@@ -1,5 +1,5 @@
-import { I18nService } from '@bk2/shared-i18n';
-import { getCountryName } from '@bk2/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { getCountryName } from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CountryNamePipe } from './country-name.pipe';
 
@@ -9,7 +9,7 @@ const mockI18nService = {
 };
 
 // Mock getCountryName
-vi.mock('@bk2/shared-util-core', () => ({
+vi.mock('@okr/shared-util-core', () => ({
   getCountryName: vi.fn()
 }));
 

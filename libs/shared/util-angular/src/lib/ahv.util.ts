@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { die } from '@bk2/shared-util-core';
+import { die } from '@okr/shared-util-core';
 
 export enum AhvFormat {
   Electronic, // no special chars, only 13 digits: 7561234123412

@@ -2,7 +2,7 @@ import { Component, inject, input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { AssetCategoryModel, AssetModel, UserModel } from '@bk2/shared-models';
+import { AssetCategoryModel, AssetModel, UserModel } from '@okr/shared-models';
 import { AssetStore } from './asset.store';
 
 @Component({

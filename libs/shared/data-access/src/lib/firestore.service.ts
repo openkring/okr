@@ -27,13 +27,13 @@ import { collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBat
 import { collectionData, docData } from 'rxfire/firestore';
 import { firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 
-import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@bk2/shared-config';
-import { BkModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@bk2/shared-models";
-import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
-import { TOAST_LENGTH } from '@bk2/shared-constants';
-import { I18nService } from "@bk2/shared-i18n";
+import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
+import { BkModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
+import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromBkModel, removeUndefinedFields } from '@okr/shared-util-core';
+import { TOAST_LENGTH } from '@okr/shared-constants';
+import { I18nService } from "@okr/shared-i18n";
 
-import { createComment } from '@bk2/comment-util';
+import { createComment } from '@okr/comment-util';
 
 import { PFX } from "./scope";
 

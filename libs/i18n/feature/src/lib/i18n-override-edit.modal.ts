@@ -5,9 +5,9 @@ import {
   IonLabel, IonTextarea, IonToggle, IonToolbar, ModalController,
 } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { I18nTenantOverrideModel } from '@bk2/shared-models';
-import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
+import { Header } from '@okr/shared-ui';
+import { I18nTenantOverrideModel } from '@okr/shared-models';
+import { deepEqual, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nOverrideStore } from './i18n-override.store';
 
 @Component({

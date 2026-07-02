@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { AssetStore } from './asset.store';
 

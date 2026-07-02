@@ -6,18 +6,18 @@ import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom, from, of } from 'rxjs';
 
-import { AUTH, isFirestoreInitializedCheck } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
-import { error } from '@bk2/shared-util-angular';
-import { debugListLoaded, debugMessage, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
+import { AUTH, isFirestoreInitializedCheck } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@okr/shared-models';
+import { error } from '@okr/shared-util-angular';
+import { debugListLoaded, debugMessage, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@okr/shared-util-core';
 
-import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser, AOC_I18N_KEYS } from '@bk2/aoc-util';
-import { AuthService } from '@bk2/auth-data-access';
-import { UserService } from '@bk2/user-data-access';
-import { FbuserEditModal } from '@bk2/user-feature';
+import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser, AOC_I18N_KEYS } from '@okr/aoc-util';
+import { AuthService } from '@okr/auth-data-access';
+import { UserService } from '@okr/user-data-access';
+import { FbuserEditModal } from '@okr/user-feature';
 
 export type AocRolesState = {
   calendarName: string;

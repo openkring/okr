@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { IonBadge, IonButton, IonContent, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { PeriodStore } from './period.store';
 

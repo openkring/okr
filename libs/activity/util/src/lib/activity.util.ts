@@ -1,6 +1,6 @@
-import { ActivityModel } from '@bk2/shared-models';
-import { RoleName } from '@bk2/shared-models';
-import { addIndexElement, isType } from '@bk2/shared-util-core';
+import { ActivityModel } from '@okr/shared-models';
+import { RoleName } from '@okr/shared-models';
+import { addIndexElement, isType } from '@okr/shared-util-core';
 
 /*-------------------------- type guard --------------------------------*/
 

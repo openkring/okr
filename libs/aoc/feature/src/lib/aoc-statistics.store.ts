@@ -3,14 +3,14 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, map, Observable, of } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { BkModel, LogInfo, logMessage, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel, TABLE_SECTION_SHAPE } from '@bk2/shared-models';
-import { error } from '@bk2/shared-util-angular';
-import { DateFormat, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { BkModel, LogInfo, logMessage, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel, TABLE_SECTION_SHAPE } from '@okr/shared-models';
+import { error } from '@okr/shared-util-angular';
+import { DateFormat, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 
-import { initializeAgeByGenderStatistics, updateAgeByGenderStats, AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { initializeAgeByGenderStatistics, updateAgeByGenderStats, AOC_I18N_KEYS } from '@okr/aoc-util';
 
 export type AocStatisticsState = {
   modelType: string | undefined;

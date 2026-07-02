@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { ResponsibilityModel } from '@bk2/shared-models';
-import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
+import { SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { ResponsibilityModel } from '@okr/shared-models';
+import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
 export const responsibilityValidations = staticSuite((model: ResponsibilityModel, tenants: string, field?: string) => {
   if (field) only(field);

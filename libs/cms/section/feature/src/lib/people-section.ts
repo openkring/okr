@@ -2,13 +2,13 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { AvatarInfo, PeopleSection, PersonModelName } from "@bk2/shared-models";
-import { Spinner } from "@bk2/shared-ui";
-import { AppStore } from '@bk2/shared-feature';
+import { AvatarInfo, PeopleSection, PersonModelName } from "@okr/shared-models";
+import { Spinner } from "@okr/shared-ui";
+import { AppStore } from '@okr/shared-feature';
 
-import { PersonsWidget } from '@bk2/cms-section-ui';
-import { SectionViewModal } from '@bk2/cms-section-feature';
-import { SectionService } from '@bk2/cms-section-data-access';
+import { PersonsWidget } from '@okr/cms-section-ui';
+import { SectionViewModal } from '@okr/cms-section-feature';
+import { SectionService } from '@okr/cms-section-data-access';
 
 import { PeopleSectionStore } from './people-section.store';
 
@@ -84,7 +84,7 @@ export class PeopleSectionComponent {
   protected async showPerson(avatar: AvatarInfo): Promise<void> {
     const person = this.appStore.getPerson(avatar.key);
     if (!person) return;
-    const { PersonEditModal } = await import('@bk2/subject-person-feature');
+    const { PersonEditModal } = await import('@okr/subject-person-feature');
     const modal = await this.modalController.create({
       component: PersonEditModal,
       componentProps: {

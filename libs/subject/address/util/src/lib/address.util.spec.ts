@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AddressModel } from '@bk2/shared-models';
-import { getCountryName } from '@bk2/shared-util-core';
+import { AddressModel } from '@okr/shared-models';
+import { getCountryName } from '@okr/shared-util-core';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, getWebUrl, normalizeAddressValue, openExternalUrl, stringifyAddress, stringifyPostalAddress } from './address.util';
@@ -12,8 +12,8 @@ vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: vi.fn(() => f
 // stub it without importing the real module so collection can proceed.
 vi.mock('@ionic/angular', () => ({ ToastController: class {} }));
 // keep the real util helpers (replaceSubstring, die, isType, …) but spy on getCountryName
-vi.mock('@bk2/shared-util-core', async (importActual) => ({
-  ...(await importActual<typeof import('@bk2/shared-util-core')>()),
+vi.mock('@okr/shared-util-core', async (importActual) => ({
+  ...(await importActual<typeof import('@okr/shared-util-core')>()),
   getCountryName: vi.fn(),
 }));
 

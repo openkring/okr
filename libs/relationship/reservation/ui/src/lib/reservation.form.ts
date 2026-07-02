@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME } from '@bk2/shared-constants';
-import { CategoryListModel, MoneyModel, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, getAvatarName, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME } from '@okr/shared-constants';
+import { CategoryListModel, MoneyModel, ReservationModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, getAvatarName, hasRole } from '@okr/shared-util-core';
 
-import { reservationValidations, ReservationI18n } from '@bk2/relationship-reservation-util';
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { reservationValidations, ReservationI18n } from '@okr/relationship-reservation-util';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 @Component({
   selector: 'bk-reservation-form',

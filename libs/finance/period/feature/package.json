@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/finance-period-feature",
+  "name": "@okr/finance-period-feature",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,13 +7,13 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/shared-feature": "*",
-    "@bk2/finance-accounting-feature": "*",
-    "@bk2/finance-period-data-access": "*"
+    "@okr/shared-models": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-feature": "*",
+    "@okr/finance-accounting-feature": "*",
+    "@okr/finance-period-data-access": "*"
   }
 }

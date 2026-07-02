@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { die, warn } from '@bk2/shared-util-core';
+import { die, warn } from '@okr/shared-util-core';
 import { CountryCode, ParseError, PhoneNumber, getCountryCallingCode, isSupportedCountry, isValidPhoneNumber, parsePhoneNumberFromString, parsePhoneNumberWithError } from 'libphonenumber-js';
 
 /*---------------------------------------- PHONENUMBER -------------------------------------------------------*/

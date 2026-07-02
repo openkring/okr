@@ -1,8 +1,8 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@bk2/shared-ui';
-import { IframeConfig } from '@bk2/shared-models';
+import { TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
+import { IframeConfig } from '@okr/shared-models';
 
 interface IframeConfigI18n {
   iframe_title:      Signal<string>;

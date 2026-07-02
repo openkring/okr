@@ -1,11 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { IonButton, IonContent, IonItem, ModalController } from '@ionic/angular/standalone';
 
-import { AuthCredentials } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
+import { AuthCredentials } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
 
-import { AuthService } from '@bk2/auth-data-access';
-import { LoginForm } from '@bk2/auth-ui';
+import { AuthService } from '@okr/auth-data-access';
+import { LoginForm } from '@okr/auth-ui';
 
 import { AuthStore } from './auth.store';
 

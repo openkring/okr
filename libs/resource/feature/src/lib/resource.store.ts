@@ -3,14 +3,14 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { CategoryListModel, ResourceCollection, ResourceModel, ResourceModelName } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, getSystemQuery, isResource, nameMatches } from '@bk2/shared-util-core';
-import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { CategoryListModel, ResourceCollection, ResourceModel, ResourceModelName } from '@okr/shared-models';
+import { chipMatches, debugItemLoaded, getSystemQuery, isResource, nameMatches } from '@okr/shared-util-core';
+import { FirestoreService } from '@okr/shared-data-access';
 
-import { ResourceService } from '@bk2/resource-data-access';
-import { RESOURCE_I18N_KEYS } from '@bk2/resource-util';
+import { ResourceService } from '@okr/resource-data-access';
+import { RESOURCE_I18N_KEYS } from '@okr/resource-util';
 
 import { ResourceEditModal } from './resource-edit.modal';
 

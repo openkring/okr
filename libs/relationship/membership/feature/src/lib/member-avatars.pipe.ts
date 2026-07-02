@@ -1,8 +1,8 @@
 import { firstValueFrom, map } from 'rxjs';
 import { inject, Pipe, PipeTransform } from '@angular/core';
 
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { AvatarInfo, GroupModel } from '@bk2/shared-models';
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { AvatarInfo, GroupModel } from '@okr/shared-models';
 
 @Pipe({
   name: 'memberAvatars',

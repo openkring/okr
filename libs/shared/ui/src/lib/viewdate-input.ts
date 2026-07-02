@@ -5,9 +5,9 @@ import { IonInput, ModalController } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 
-import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
-import { coerceBoolean, DateFormat, getTodayStr } from '@bk2/shared-util-core';
-import { ChAnyDate } from '@bk2/shared-config';
+import { DATE_LENGTH, InputMode } from '@okr/shared-constants';
+import { coerceBoolean, DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { ChAnyDate } from '@okr/shared-config';
 
 export interface ViewDateInputI18n {
   name: string;

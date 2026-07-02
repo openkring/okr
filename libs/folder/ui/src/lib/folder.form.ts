@@ -2,13 +2,13 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { FolderModel, RoleName, UserModel } from '@bk2/shared-models';
-import { Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { validateVestTree } from '@bk2/shared-util-angular';
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { FolderModel, RoleName, UserModel } from '@okr/shared-models';
+import { Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { validateVestTree } from '@okr/shared-util-angular';
+import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
-import { FolderI18n, folderValidations } from '@bk2/folder-util';
+import { FolderI18n, folderValidations } from '@okr/folder-util';
 
 @Component({
   selector: 'bk-folder-form',

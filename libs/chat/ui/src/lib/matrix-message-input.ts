@@ -3,12 +3,12 @@ import { Component, DestroyRef, afterNextRender, computed, effect, inject, input
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { AppStore } from '@bk2/shared-feature';
-import { ButtonCopy } from '@bk2/shared-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { AppStore } from '@okr/shared-feature';
+import { ButtonCopy } from '@okr/shared-ui';
 
-import { isSupportedImageFile, MatrixChatI18n } from '@bk2/chat-util';
+import { isSupportedImageFile, MatrixChatI18n } from '@okr/chat-util';
 import 'emoji-picker-element';
 
 @Component({

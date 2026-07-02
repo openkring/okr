@@ -11,19 +11,19 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 
-import { CalEventModel, PersonModel, RoleName } from '@bk2/shared-models';
-import type { PersonSelectResult } from '@bk2/shared-feature';
-import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, QuickEntryService } from '@bk2/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
+import { CalEventModel, PersonModel, RoleName } from '@okr/shared-models';
+import type { PersonSelectResult } from '@okr/shared-feature';
+import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, QuickEntryService } from '@okr/shared-util-angular';
+import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
-import { Menu } from '@bk2/cms-menu-feature';
-import { AvatarDisplay } from '@bk2/avatar-ui';
-import { isAdminMember } from '@bk2/subject-group-util';
+import { Menu } from '@okr/cms-menu-feature';
+import { AvatarDisplay } from '@okr/avatar-ui';
+import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass } from '@bk2/calevent-util';
-import { MatrixChatService } from '@bk2/chat-data-access';
+import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass } from '@okr/calevent-util';
+import { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
@@ -465,7 +465,7 @@ export class CalEventList implements OnInit {
     this.isSettingQuickEntryValue = true;
     try {
       if (trigger === 'person') {
-        const { PersonSelectModal } = await import('@bk2/shared-feature');
+        const { PersonSelectModal } = await import('@okr/shared-feature');
         const modal = await this.modalController.create({
           component: PersonSelectModal,
           cssClass: 'list-modal',
@@ -484,7 +484,7 @@ export class CalEventList implements OnInit {
           textarea.value = value.slice(0, -1); // remove stray '@'
         }
       } else if (trigger === 'date') {
-        const { DateTimeSelectModal: DateTimeSelectModal } = await import('@bk2/shared-ui');
+        const { DateTimeSelectModal: DateTimeSelectModal } = await import('@okr/shared-ui');
         const modal = await this.modalController.create({
           component: DateTimeSelectModal,
         });

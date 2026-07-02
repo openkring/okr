@@ -1,18 +1,18 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { AvatarInfo, CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
-import { error } from '@bk2/shared-util-angular';
-import { addDuration, DateFormat, findByKey, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { AvatarInfo, CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@okr/shared-models';
+import { error } from '@okr/shared-util-angular';
+import { addDuration, DateFormat, findByKey, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, isAfterDate } from '@okr/shared-util-core';
 
-import { createComment } from '@bk2/comment-util';
+import { createComment } from '@okr/comment-util';
 
-import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipIndex, getRelLogEntry } from '@bk2/relationship-membership-util';
-import { ActivityService } from '@bk2/activity-data-access';
+import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipIndex, getRelLogEntry } from '@okr/relationship-membership-util';
+import { ActivityService } from '@okr/activity-data-access';
 
 const PFX = '@relationship/membership/data-access.';
 

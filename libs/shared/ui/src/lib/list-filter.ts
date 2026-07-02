@@ -2,10 +2,10 @@ import { Component, computed, input, output, linkedSignal } from '@angular/core'
 import { IonButton, IonButtons, IonCol, IonGrid, IonIcon, IonRow, IonToolbar } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { CategoryListModel } from '@bk2/shared-models';
-import { coerceBoolean, getYear, getYearList } from '@bk2/shared-util-core';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryListModel } from '@okr/shared-models';
+import { coerceBoolean, getYear, getYearList } from '@okr/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { TranslatePipe } from '@okr/shared-i18n';
 
 import { CategorySelect } from './category-select';
 import { Searchbar } from './searchbar';

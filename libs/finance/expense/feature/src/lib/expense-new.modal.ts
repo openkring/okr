@@ -6,14 +6,14 @@ import {
   IonHeader, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
 
-import { UploadService } from '@bk2/avatar-data-access';
-import { AddressService } from '@bk2/subject-address-data-access';
+import { UploadService } from '@okr/avatar-data-access';
+import { AddressService } from '@okr/subject-address-data-access';
 
-import { ExpenseFormValue } from '@bk2/finance-expense-util';
-import { ExpenseForm, ExpenseFormI18n } from '@bk2/finance-expense-ui';
+import { ExpenseFormValue } from '@okr/finance-expense-util';
+import { ExpenseForm, ExpenseFormI18n } from '@okr/finance-expense-ui';
 import { ExpenseStore } from './expense.store';
 import { PFX } from './scope';
 

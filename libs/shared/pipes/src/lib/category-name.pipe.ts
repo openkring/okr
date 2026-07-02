@@ -1,8 +1,8 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
 
-import { getCategoryLabel } from '@bk2/shared-categories';
-import { I18nService } from '@bk2/shared-i18n';
-import { CategoryModel } from '@bk2/shared-models';
+import { getCategoryLabel } from '@okr/shared-categories';
+import { I18nService } from '@okr/shared-i18n';
+import { CategoryModel } from '@okr/shared-models';
 import { firstValueFrom } from 'rxjs';
 
 /**

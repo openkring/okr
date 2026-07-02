@@ -1,7 +1,7 @@
 import { Inject, Injectable, InjectionToken } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
-import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@bk2/shared-models';
+import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@okr/shared-models';
 
 import { FirestoreService } from './firestore.service';
 

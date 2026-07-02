@@ -4,13 +4,13 @@ import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 import { IonButton, IonIcon, ModalController } from '@ionic/angular/standalone';
 
-import { ColorsIonic, getCategoryStringField } from '@bk2/shared-categories';
-import { ENV } from '@bk2/shared-config';
-import { BUTTON_HEIGHT, BUTTON_WIDTH, ICON_SIZE } from '@bk2/shared-constants';
-import { ButtonAction, ButtonSection, ColorIonic } from '@bk2/shared-models';
-import { showZoomedImage } from '@bk2/shared-ui';
-import { downloadToBrowser, navigateByUrl } from '@bk2/shared-util-angular';
-import { IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
+import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
+import { ENV } from '@okr/shared-config';
+import { BUTTON_HEIGHT, BUTTON_WIDTH, ICON_SIZE } from '@okr/shared-constants';
+import { ButtonAction, ButtonSection, ColorIonic } from '@okr/shared-models';
+import { showZoomedImage } from '@okr/shared-ui';
+import { downloadToBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 
 interface ButtonWidgetI18n {
   button_image_zoomed: Signal<string>;

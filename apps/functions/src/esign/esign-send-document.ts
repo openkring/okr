@@ -8,7 +8,7 @@ import {
   getDeepSignAccessToken, getEsignApiBase, downloadFromStorage, computeWebhookToken, getCallerTenants,
   mapDeepSignSignees, webhookSecret,
 } from './shared';
-import { EsignCollection } from '@bk2/shared-models';
+import { EsignCollection } from '@okr/shared-models';
 
 export interface EsignSendDocumentRequest {
   storagePath: string;

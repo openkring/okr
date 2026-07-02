@@ -4,13 +4,13 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { AccountModel } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { AccountModel } from '@okr/shared-models';
 
-import { AccountService } from '@bk2/finance-account-data-access';
-import { ACCOUNT_I18N_KEYS, AccountI18n, flattenAccountTree, isAccount } from '@bk2/finance-account-util';
-import { AccountingStore } from '@bk2/finance-accounting-feature';
+import { AccountService } from '@okr/finance-account-data-access';
+import { ACCOUNT_I18N_KEYS, AccountI18n, flattenAccountTree, isAccount } from '@okr/finance-account-util';
+import { AccountingStore } from '@okr/finance-accounting-feature';
 
 export type { AccountI18n };
 

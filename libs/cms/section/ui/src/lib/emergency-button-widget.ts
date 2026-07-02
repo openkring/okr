@@ -1,8 +1,8 @@
 import { Component, input, output } from '@angular/core';
 import { IonButton, IonIcon } from '@ionic/angular/standalone';
 
-import { ButtonSection } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ButtonSection } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 /**
  * We do not consider the config from the button section for the emergency button.

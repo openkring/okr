@@ -1,15 +1,15 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { BexioIdMask } from '@bk2/shared-config';
-import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
-import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { areTagsVisible, coerceBoolean, getFullName, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
+import { BexioIdMask } from '@okr/shared-config';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { areTagsVisible, coerceBoolean, getFullName, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
 
-import { MembershipI18n, membershipValidations } from '@bk2/relationship-membership-util';
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { MembershipI18n, membershipValidations } from '@okr/relationship-membership-util';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 @Component({
   selector: 'bk-membership-form',

@@ -1,13 +1,13 @@
 import { NgStyle } from '@angular/common';
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, input, linkedSignal, PLATFORM_ID, viewChild } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
-import { AlbumSection, AlbumStyle, BackgroundStyle, ImageActionType, ImageConfig, ImageStyle, ImageType } from '@bk2/shared-models';
-import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
-import { browse, CategoryOld, CategoryOldI18n, Img, Label, showZoomedImage, Spinner, Video } from '@bk2/shared-ui';
-import { downloadToBrowser, isBrowser } from '@bk2/shared-util-angular';
-import { debugData, debugMessage } from '@bk2/shared-util-core';
+import { AlbumSection, AlbumStyle, BackgroundStyle, ImageActionType, ImageConfig, ImageStyle, ImageType } from '@okr/shared-models';
+import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
+import { browse, CategoryOld, CategoryOldI18n, Img, Label, showZoomedImage, Spinner, Video } from '@okr/shared-ui';
+import { downloadToBrowser, isBrowser } from '@okr/shared-util-angular';
+import { debugData, debugMessage } from '@okr/shared-util-core';
 
-import { AlbumStyles, convertThumbnailToFullImage, getBackgroundStyle } from '@bk2/cms-section-util';
+import { AlbumStyles, convertThumbnailToFullImage, getBackgroundStyle } from '@okr/cms-section-util';
 
 import { AlbumStore } from './album-section.store';
 

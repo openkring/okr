@@ -3,17 +3,17 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, GroupSelectModal } from '@bk2/shared-feature';
-import { DEFAULT_KEY } from '@bk2/shared-constants';
-import { GroupModel, GroupModelName } from '@bk2/shared-models';
-import { confirm } from '@bk2/shared-util-angular';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore, GroupSelectModal } from '@okr/shared-feature';
+import { DEFAULT_KEY } from '@okr/shared-constants';
+import { GroupModel, GroupModelName } from '@okr/shared-models';
+import { confirm } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 import { of } from 'rxjs';
 
-import { GroupService } from '@bk2/subject-group-data-access';
-import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
-import { OrgEditModal } from '@bk2/subject-org-feature';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { GroupService } from '@okr/subject-group-data-access';
+import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
+import { OrgEditModal } from '@okr/subject-org-feature';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export interface OrgchartTreeNode {
   name: string;

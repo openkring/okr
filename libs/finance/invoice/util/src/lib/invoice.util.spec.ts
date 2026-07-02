@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { InvoiceModel } from '@bk2/shared-models';
+import { InvoiceModel } from '@okr/shared-models';
 
 import { getInvoiceExportData, getInvoiceIndex, newInvoice } from './invoice.util';
 

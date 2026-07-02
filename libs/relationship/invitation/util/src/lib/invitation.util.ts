@@ -1,5 +1,5 @@
-import { AvatarInfo, InvitationModel } from '@bk2/shared-models';
-import { addIndexElement, isType } from '@bk2/shared-util-core';
+import { AvatarInfo, InvitationModel } from '@okr/shared-models';
+import { addIndexElement, isType } from '@okr/shared-util-core';
 
 export function isInvitation(invitation: unknown, tenantId: string): invitation is InvitationModel {
   if (isType<InvitationModel>(invitation, new InvitationModel(tenantId))) {

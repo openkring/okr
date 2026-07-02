@@ -1,13 +1,13 @@
 import { Component, computed, effect, forwardRef, inject, input } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { MenuItemModel } from '@bk2/shared-models';
-import { Spinner } from '@bk2/shared-ui';
-import { debugData, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_MENU_ACTION } from '@bk2/shared-constants';
+import { MenuItemModel } from '@okr/shared-models';
+import { Spinner } from '@okr/shared-ui';
+import { debugData, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_MENU_ACTION } from '@okr/shared-constants';
 
-import { MultiAvatar } from '@bk2/cms-menu-ui';
-import { isMenuBlocked, nextVisitedKeys } from '@bk2/cms-menu-util';
+import { MultiAvatar } from '@okr/cms-menu-ui';
+import { isMenuBlocked, nextVisitedKeys } from '@okr/cms-menu-util';
 
 import { MenuStore } from './menu.store';
 

@@ -1,14 +1,14 @@
 import { Component, computed, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular/standalone';
 
-import { ColorsIonic, NameDisplays } from '@bk2/shared-categories';
-import { AvatarInfo, ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@bk2/shared-models';
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ColorsIonic, NameDisplays } from '@okr/shared-categories';
+import { AvatarInfo, ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@okr/shared-models';
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { Avatars } from '@bk2/avatar-ui';
-import { SectionI18n } from '@bk2/cms-section-util';
+import { Avatars } from '@okr/avatar-ui';
+import { SectionI18n } from '@okr/cms-section-util';
 
 @Component({
   selector: 'bk-people-config',

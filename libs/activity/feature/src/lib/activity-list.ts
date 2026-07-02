@@ -1,10 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
 import { IonContent, IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { ActivityModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { ActivityModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { ActivityStore } from './activity.store';
 

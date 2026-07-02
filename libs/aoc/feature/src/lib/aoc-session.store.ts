@@ -6,16 +6,16 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { SessionCollection, SessionModel } from '@bk2/shared-models';
-import { DateFormat, convertDateFormatToString, getTodayStr, subDuration } from '@bk2/shared-util-core';
-import { exportCsv, getExportFileName, navigateByUrl, showToast } from '@bk2/shared-util-angular';
-import { getSessionStatus, SessionStatus } from '@bk2/session-util';
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
-import { UserService } from '@bk2/user-data-access';
-import { PersonService } from '@bk2/subject-person-data-access';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { SessionCollection, SessionModel } from '@okr/shared-models';
+import { DateFormat, convertDateFormatToString, getTodayStr, subDuration } from '@okr/shared-util-core';
+import { exportCsv, getExportFileName, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { getSessionStatus, SessionStatus } from '@okr/session-util';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
+import { UserService } from '@okr/user-data-access';
+import { PersonService } from '@okr/subject-person-data-access';
 
 export type StatusFilter = 'all' | SessionStatus;
 
@@ -151,7 +151,7 @@ export const AocSessionStore = signalStore(
     },
 
     async changeDuration(): Promise<void> {
-      const { DurationPickerModal } = await import('@bk2/shared-ui');
+      const { DurationPickerModal } = await import('@okr/shared-ui');
       const modal = await store.modalController.create({
         component: DurationPickerModal,
         cssClass: 'duration-picker-modal',
@@ -197,7 +197,7 @@ export const AocSessionStore = signalStore(
       if (!user?.personKey) return;
       const person = store.appStore.getPerson(user.personKey);
       if (!person) return;
-      const { PersonEditModal } = await import('@bk2/subject-person-feature');
+      const { PersonEditModal } = await import('@okr/subject-person-feature');
       const modal = await store.modalController.create({
         component: PersonEditModal,
         componentProps: {

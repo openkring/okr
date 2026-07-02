@@ -1,6 +1,6 @@
 import { only, staticSuite } from 'vest';
 
-import { CalendarSection } from '@bk2/shared-models';
+import { CalendarSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 

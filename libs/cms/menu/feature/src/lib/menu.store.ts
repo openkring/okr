@@ -7,21 +7,21 @@ import { Browser } from '@capacitor/browser';
 import { combineLatest, Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { ENV } from '@bk2/shared-config';
-import { AppStore, withErrorState } from '@bk2/shared-feature';
-import { CategoryListModel, MenuItemModel, TaskCollection, TaskModel } from '@bk2/shared-models';
-import { debugData, die, getSystemQuery, nameMatches, safeStructuredClone, warn } from '@bk2/shared-util-core';
-import { AppNavigationService, isInSplitPane, navigateByUrl, VersionCheckService } from '@bk2/shared-util-angular';
-import { I18nService } from '@bk2/shared-i18n';
+import { ENV } from '@okr/shared-config';
+import { AppStore, withErrorState } from '@okr/shared-feature';
+import { CategoryListModel, MenuItemModel, TaskCollection, TaskModel } from '@okr/shared-models';
+import { debugData, die, getSystemQuery, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
+import { AppNavigationService, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 
-import { expandMenuTokens, MENU_I18N_KEYS } from '@bk2/cms-menu-util';
+import { expandMenuTokens, MENU_I18N_KEYS } from '@okr/cms-menu-util';
 
-import { AuthService } from '@bk2/auth-data-access';
-import { ActivityService } from '@bk2/activity-data-access';
-import { MatrixChatService } from '@bk2/chat-data-access';
+import { AuthService } from '@okr/auth-data-access';
+import { ActivityService } from '@okr/activity-data-access';
+import { MatrixChatService } from '@okr/chat-data-access';
 
-import { MenuService } from '@bk2/cms-menu-data-access';
-import { getTarget, isMenuItem } from '@bk2/cms-menu-util';
+import { MenuService } from '@okr/cms-menu-data-access';
+import { getTarget, isMenuItem } from '@okr/cms-menu-util';
 
 
 export type MenuState = {

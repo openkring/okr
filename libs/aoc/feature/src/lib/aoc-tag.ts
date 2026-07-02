@@ -3,10 +3,10 @@ import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, IonSearchbar, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { Header } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { TranslatePipe } from '@okr/shared-i18n';
+import { Header } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { AocTagStore, TagItem } from './aoc-tag.store';
 

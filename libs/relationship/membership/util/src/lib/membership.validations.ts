@@ -1,9 +1,9 @@
 
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
-import { MembershipModel } from '@bk2/shared-models';
-import { baseValidations, booleanValidations, dateValidations, isAfterDate, isFutureDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
+import { MembershipModel } from '@okr/shared-models';
+import { baseValidations, booleanValidations, dateValidations, isAfterDate, isFutureDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const membershipValidations = staticSuite((model: MembershipModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

@@ -3,16 +3,16 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { CategoryListModel, PersonalRelModel, PersonModel } from '@bk2/shared-models';
-import { selectDate } from '@bk2/shared-ui';
-import { confirm } from '@bk2/shared-util-angular';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isPersonalRel, isValidAt, nameMatches } from '@bk2/shared-util-core';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
+import { CategoryListModel, PersonalRelModel, PersonModel } from '@okr/shared-models';
+import { selectDate } from '@okr/shared-ui';
+import { confirm } from '@okr/shared-util-angular';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isPersonalRel, isValidAt, nameMatches } from '@okr/shared-util-core';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
 
-import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
-import { PERSONAL_REL_I18N_KEYS, PersonalRelI18n } from '@bk2/relationship-personal-rel-util';
+import { PersonalRelService } from '@okr/relationship-personal-rel-data-access';
+import { PERSONAL_REL_I18N_KEYS, PersonalRelI18n } from '@okr/relationship-personal-rel-util';
 
 export type PersonalRelState = {
   person: PersonModel | undefined;

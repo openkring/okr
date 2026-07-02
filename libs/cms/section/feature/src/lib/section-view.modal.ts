@@ -1,8 +1,8 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { Header, HeaderI18n } from '@bk2/shared-ui';
-import { SectionModel } from '@bk2/shared-models';
+import { Header, HeaderI18n } from '@okr/shared-ui';
+import { SectionModel } from '@okr/shared-models';
 
 import { SectionDispatcher } from "./section-dispatcher";
 

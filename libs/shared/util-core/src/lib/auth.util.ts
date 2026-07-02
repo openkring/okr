@@ -1,4 +1,4 @@
-import { PrivacyAccessor, PrivacySettings, RoleName, Roles, UserModel } from "@bk2/shared-models";
+import { PrivacyAccessor, PrivacySettings, RoleName, Roles, UserModel } from "@okr/shared-models";
 import { die } from "./log.util";
 import { debugMessage } from "./debug.util";
 

@@ -4,15 +4,15 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { TemplateModel, TemplateVersionModel } from '@bk2/shared-models';
-import { DocGenerationService, GenerateDocumentResponse, TemplateService } from '@bk2/pdf-template-data-access';
-import { EmailComposerModal } from '@bk2/pdf-template-ui';
-import { newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n } from '@bk2/pdf-template-util';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { TemplateModel, TemplateVersionModel } from '@okr/shared-models';
+import { DocGenerationService, GenerateDocumentResponse, TemplateService } from '@okr/pdf-template-data-access';
+import { EmailComposerModal } from '@okr/pdf-template-ui';
+import { newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n } from '@okr/pdf-template-util';
 export type { TemplateI18n };
 
-import { nameMatches } from '@bk2/shared-util-core';
+import { nameMatches } from '@okr/shared-util-core';
 
 interface TemplateState {
   searchTerm: string;

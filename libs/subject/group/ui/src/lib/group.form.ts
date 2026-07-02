@@ -1,14 +1,14 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { LowercaseWordMask } from '@bk2/shared-config';
-import { WORD_LENGTH } from '@bk2/shared-constants';
-import { AvatarInfo, GroupModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { LowercaseWordMask } from '@okr/shared-config';
+import { WORD_LENGTH } from '@okr/shared-constants';
+import { AvatarInfo, GroupModel, RoleName, UserModel } from '@okr/shared-models';
+import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
-import { Avatars } from '@bk2/avatar-ui';
-import { groupValidations, GroupI18n } from '@bk2/subject-group-util';
+import { Avatars } from '@okr/avatar-ui';
+import { groupValidations, GroupI18n } from '@okr/subject-group-util';
 
 @Component({
   selector: 'bk-group-form',

@@ -1,12 +1,12 @@
 import { Component, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { FormDefinitionModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { AlertService, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { FormDefinitionModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
-import { Menu } from '@bk2/cms-menu-feature';
+import { Menu } from '@okr/cms-menu-feature';
 
 import { FormDefinitionStore } from './form-definition.store';
 

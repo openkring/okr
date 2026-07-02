@@ -2,15 +2,15 @@ import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, On
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ImageLightboxModal, LightboxImage, Spinner } from '@bk2/shared-ui';
-import { debugMessage, hasRole } from '@bk2/shared-util-core';
-import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@bk2/shared-util-angular';
-import { MatrixMessage, RoleName } from '@bk2/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
+import { debugMessage, hasRole } from '@okr/shared-util-core';
+import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
+import { MatrixMessage, RoleName } from '@okr/shared-models';
 
-import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
-import { MatrixPollData } from '@bk2/chat-data-access';
-import { convertHeicToJpeg, isSupportedImageFile } from '@bk2/chat-util';
+import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@okr/chat-ui';
+import { MatrixPollData } from '@okr/chat-data-access';
+import { convertHeicToJpeg, isSupportedImageFile } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';

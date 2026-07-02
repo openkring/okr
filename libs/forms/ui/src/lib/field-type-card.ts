@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonIcon, IonLabel } from '@ionic/angular/standalone';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { FieldType } from '@bk2/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { FieldType } from '@okr/shared-models';
 
 export interface FieldTypeDef {
   type: FieldType;

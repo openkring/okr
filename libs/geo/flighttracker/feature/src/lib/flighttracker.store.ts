@@ -1,9 +1,9 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { I18nService } from '@bk2/shared-i18n';
-import { FlightInfoResponse, FlightTrackerService } from '@bk2/flighttracker-data-access';
-import { FLIGHTTRACKER_I18N_KEYS, FlighttrackerI18n } from '@bk2/geo-flighttracker-util';
+import { I18nService } from '@okr/shared-i18n';
+import { FlightInfoResponse, FlightTrackerService } from '@okr/flighttracker-data-access';
+import { FLIGHTTRACKER_I18N_KEYS, FlighttrackerI18n } from '@okr/geo-flighttracker-util';
 export type { FlighttrackerI18n };
 
 export type FlightTrackerState = {

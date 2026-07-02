@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { TrackerSection } from '@bk2/shared-models';
-import { booleanValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
-import { WORD_LENGTH } from '@bk2/shared-constants';
+import { TrackerSection } from '@okr/shared-models';
+import { booleanValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
+import { WORD_LENGTH } from '@okr/shared-constants';
 
 import { baseSectionValidations } from './base-section.validations';
 

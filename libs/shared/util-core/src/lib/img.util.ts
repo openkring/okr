@@ -4,8 +4,8 @@
    one single image in high resolution is uploaded to firebase storage.
    Firebase storage is linked as a source to imgix CDN and the images can be served from there.
 */
-import { THUMBNAIL_SIZE } from "@bk2/shared-constants";
-import { ImageType } from "@bk2/shared-models";
+import { THUMBNAIL_SIZE } from "@okr/shared-constants";
+import { ImageType } from "@okr/shared-models";
 import { fileExtension, fileLogo, isAudio, isDocument, isImage, isPdf, isStreamingVideo, isVideo } from './file.util';
 import { die, warn } from './log.util';
 

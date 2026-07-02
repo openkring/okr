@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
-import { DEFAULT_CURRENCY } from '@bk2/shared-constants';
-import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { OwnershipModel, RoleName, UserModel } from '@okr/shared-models';
+import { DEFAULT_CURRENCY } from '@okr/shared-constants';
+import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
-import { ownershipValidations } from '@bk2/relationship-ownership-util';
+import { ownershipValidations } from '@okr/relationship-ownership-util';
 
 export interface OwnershipFormI18n {
   bkey_label: Signal<string>;

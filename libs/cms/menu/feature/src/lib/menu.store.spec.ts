@@ -5,15 +5,15 @@ import { MenuController, ModalController, PopoverController } from '@ionic/angul
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { AppStore } from '@bk2/shared-feature';
-import { mockCollection, mockError } from '@bk2/shared-feature/testing';
-import { I18nService } from '@bk2/shared-i18n';
-import { AppNavigationService, VersionCheckService } from '@bk2/shared-util-angular';
-import { AuthService } from '@bk2/auth-data-access';
-import { ActivityService } from '@bk2/activity-data-access';
-import { MatrixChatService } from '@bk2/chat-data-access';
-import { MenuService } from '@bk2/cms-menu-data-access';
+import { ENV } from '@okr/shared-config';
+import { AppStore } from '@okr/shared-feature';
+import { mockCollection, mockError } from '@okr/shared-feature/testing';
+import { I18nService } from '@okr/shared-i18n';
+import { AppNavigationService, VersionCheckService } from '@okr/shared-util-angular';
+import { AuthService } from '@okr/auth-data-access';
+import { ActivityService } from '@okr/activity-data-access';
+import { MatrixChatService } from '@okr/chat-data-access';
+import { MenuService } from '@okr/cms-menu-data-access';
 
 import { MenuStore } from './menu.store';
 

@@ -3,13 +3,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { ArticleSection, BlogLayoutType, ButtonSection, RoleName, SectionModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole, replaceSubstring } from '@bk2/shared-util-core';
+import { ArticleSection, BlogLayoutType, ButtonSection, RoleName, SectionModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { hasRole, replaceSubstring } from '@okr/shared-util-core';
 
-import { Menu } from '@bk2/cms-menu-feature';
-import { SectionStore } from '@bk2/cms-section-feature';
+import { Menu } from '@okr/cms-menu-feature';
+import { SectionStore } from '@okr/cms-section-feature';
 
 import { PageStore } from './page.store';
 import { BlogMinimal } from './blog-minimal';

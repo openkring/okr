@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/flighttracker-feature",
+  "name": "@okr/flighttracker-feature",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,12 +7,12 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-pipes": "*",
-    "@bk2/shared-ui": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/flighttracker-data-access": "*"
+    "@okr/shared-config": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/flighttracker-data-access": "*"
   }
 }

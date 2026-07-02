@@ -1,9 +1,9 @@
 import { Component, computed, inject, input } from "@angular/core";
 import { IonAvatar, IonImg, IonItem, IonLabel } from "@ionic/angular/standalone";
 
-import { AvatarInfo, CategoryListModel, UserModel } from "@bk2/shared-models";
-import { coerceBoolean, getFullName } from "@bk2/shared-util-core";
-import { AvatarService } from '@bk2/avatar-data-access';
+import { AvatarInfo, CategoryListModel, UserModel } from "@okr/shared-models";
+import { coerceBoolean, getFullName } from "@okr/shared-util-core";
+import { AvatarService } from '@okr/avatar-data-access';
 
 @Component({
   selector: 'bk-avatar',

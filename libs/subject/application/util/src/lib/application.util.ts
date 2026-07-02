@@ -1,6 +1,6 @@
-import { DEFAULT_COUNTRY } from '@bk2/shared-constants';
-import { ApplicationModel, ApplicationState, PersonModel } from '@bk2/shared-models';
-import { addIndexElement, getAge } from '@bk2/shared-util-core';
+import { DEFAULT_COUNTRY } from '@okr/shared-constants';
+import { ApplicationModel, ApplicationState, PersonModel } from '@okr/shared-models';
+import { addIndexElement, getAge } from '@okr/shared-util-core';
 
 export function newApplication(tenantId: string): ApplicationModel {
   const app = new ApplicationModel(tenantId);

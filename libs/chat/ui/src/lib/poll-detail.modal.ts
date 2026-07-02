@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, input, Signal } from '@angular/core';
 import { IonAvatar, IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { MatrixReadReceipt } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
-import { hashUserIdToColor } from '@bk2/chat-util';
+import { MatrixReadReceipt } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
+import { hashUserIdToColor } from '@okr/chat-util';
 
 interface PollDetailModalI18n {
   survey_title: Signal<string>;

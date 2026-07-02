@@ -2,13 +2,13 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { MenuService } from '@bk2/cms-menu-data-access';
-import { PageService } from '@bk2/cms-page-data-access';
-import { SectionService } from '@bk2/cms-section-data-access';
-import { CategoryListModel, MenuItemModel, PageModel, SectionModel } from '@bk2/shared-models';
-import { downloadTextFile, exportCsv, getExportFileName } from '@bk2/shared-util-angular';
-import { getCategoryIcon } from '@bk2/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
+import { MenuService } from '@okr/cms-menu-data-access';
+import { PageService } from '@okr/cms-page-data-access';
+import { SectionService } from '@okr/cms-section-data-access';
+import { CategoryListModel, MenuItemModel, PageModel, SectionModel } from '@okr/shared-models';
+import { downloadTextFile, exportCsv, getExportFileName } from '@okr/shared-util-angular';
+import { getCategoryIcon } from '@okr/shared-util-core';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAL_SECTION_SHAPE, IFRAME_SECTION_SHAPE, MAP_SECTION_SHAPE } from '@bk2/shared-models';
+import { CAL_SECTION_SHAPE, IFRAME_SECTION_SHAPE, MAP_SECTION_SHAPE } from '@okr/shared-models';
 
 import { getSectionValidationSuite, validateSection } from './section-validation-registry';
 import { iframeSectionValidations } from './iframe-section.validations';

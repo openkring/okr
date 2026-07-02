@@ -1,4 +1,4 @@
-import { PrivacyUsage } from '@bk2/shared-models';
+import { PrivacyUsage } from '@okr/shared-models';
 
 export type UserPrivacyFormModel = {
   usageImages: PrivacyUsage,

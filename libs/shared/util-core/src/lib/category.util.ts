@@ -1,4 +1,4 @@
-import { CategoryListModel, CategoryItemModel } from "@bk2/shared-models";
+import { CategoryListModel, CategoryItemModel } from "@okr/shared-models";
 import { isType } from "./type.util";
 import { addIndexElement } from "./base-model.util";
 

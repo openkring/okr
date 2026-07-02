@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 
-import { ButtonCopyI18n, Spinner } from '@bk2/shared-ui';
+import { ButtonCopyI18n, Spinner } from '@okr/shared-ui';
 
 import { SectionStore } from './section.store';
 import { ArticleSectionComponent } from './article-section';

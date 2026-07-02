@@ -2,10 +2,10 @@ import { Component, input, output, Signal } from '@angular/core';
 
 import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail } from '@ionic/angular/standalone';
 
-import { MatrixRoom } from '@bk2/shared-models';
-import { MultiAvatarPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { MatrixRoom } from '@okr/shared-models';
+import { MultiAvatarPipe, SvgIconPipe } from '@okr/shared-pipes';
 
-import { formatMatrixTimestamp, isMatrixPhotoUrl } from '@bk2/chat-util';
+import { formatMatrixTimestamp, isMatrixPhotoUrl } from '@okr/chat-util';
 
 export interface MatrixRoomListI18n {
   isTypeing: Signal<string>;

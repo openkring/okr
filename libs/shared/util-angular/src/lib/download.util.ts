@@ -8,8 +8,8 @@ import { ToastController } from '@ionic/angular';
 import { saveAs } from 'file-saver';
 import { deleteObject, getDownloadURL, ref } from "firebase/storage";
 
-import { STORAGE } from '@bk2/shared-config';
-import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
+import { STORAGE } from '@okr/shared-config';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { error, showToast } from './alert.util';
 // import * as papa from 'papaparse'; // for csv conversions

@@ -2,10 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { doc, WriteBatch } from 'firebase/firestore';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { BookingLineCollection, BookingLineModel } from '@bk2/shared-models';
-import { getSystemQuery } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { BookingLineCollection, BookingLineModel } from '@okr/shared-models';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 @Injectable({ providedIn: 'root' })
 export class BookingLineService {

@@ -1,11 +1,11 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryListModel, RoleName, SectionModel, UserModel } from '@bk2/shared-models';
-import { ButtonCopy, ButtonCopyI18n, CategorySelect, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
-import { SectionI18n } from '@bk2/cms-section-util';
+import { CategoryListModel, RoleName, SectionModel, UserModel } from '@okr/shared-models';
+import { ButtonCopy, ButtonCopyI18n, CategorySelect, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
+import { SectionI18n } from '@okr/cms-section-util';
 
 export const PFX = '@cms/section/feature.';
 

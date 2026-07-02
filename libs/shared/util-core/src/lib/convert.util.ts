@@ -1,4 +1,4 @@
-import { AccountModel, AvatarInfo, GroupModel, MembershipModel, NameDisplay, NamedModel, OrgModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
+import { AccountModel, AvatarInfo, GroupModel, MembershipModel, NameDisplay, NamedModel, OrgModel, PersonModel, ResourceModel, UserModel } from '@okr/shared-models';
 import { warn } from './log.util';
 import { isOwnership, isPerson, isPersonalRel, isUser } from './type.util';
 

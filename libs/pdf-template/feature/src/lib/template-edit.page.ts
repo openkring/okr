@@ -15,12 +15,12 @@ import {
   IonCheckbox, IonBackButton,
 } from '@ionic/angular/standalone';
 
-import { TemplateModel, TemplateVersionModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ChangeConfirmation, ChangeConfirmationI18n } from '@bk2/shared-ui';
-import { safeStructuredClone } from '@bk2/shared-util-core';
-import { newTemplateVersion, prettifyJson } from '@bk2/pdf-template-util';
-import { TemplateService } from '@bk2/pdf-template-data-access';
+import { TemplateModel, TemplateVersionModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { ChangeConfirmation, ChangeConfirmationI18n } from '@okr/shared-ui';
+import { safeStructuredClone } from '@okr/shared-util-core';
+import { newTemplateVersion, prettifyJson } from '@okr/pdf-template-util';
+import { TemplateService } from '@okr/pdf-template-data-access';
 
 import { TemplateStore } from './template.store';
 

@@ -1,8 +1,8 @@
-import { IBAN_LENGTH } from '@bk2/shared-constants';
+import { IBAN_LENGTH } from '@okr/shared-constants';
 import { enforce, omitWhen, test } from 'vest';
 
-import { checkIban } from '@bk2/shared-util-angular';
-import { stringValidations } from '@bk2/shared-util-core';
+import { checkIban } from '@okr/shared-util-angular';
+import { stringValidations } from '@okr/shared-util-core';
 
 export function ibanValidations(fieldName: string, iban: unknown) {
 

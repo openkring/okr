@@ -1,4 +1,4 @@
-import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME } from "@bk2/shared-constants";
+import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME } from "@okr/shared-constants";
 
 export type CategoryChangeFormModel = {
   bkey: string,

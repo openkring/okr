@@ -1,4 +1,4 @@
-import { CategoryModel, ImageType } from '@bk2/shared-models';
+import { CategoryModel, ImageType } from '@okr/shared-models';
 
 export type ImageTypeCategory = CategoryModel;
 

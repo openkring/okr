@@ -2,10 +2,10 @@ import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { Header } from '@okr/shared-ui';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
-import { FlightInfoResponse } from '@bk2/flighttracker-data-access';
+import { FlightInfoResponse } from '@okr/flighttracker-data-access';
 
 import { FlightTrackerStore } from './flighttracker.store';
 

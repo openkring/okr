@@ -1,9 +1,9 @@
-import { CommentModel } from '@bk2/shared-models';
-import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
+import { CommentModel } from '@okr/shared-models';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { describe, expect, it, vi } from 'vitest';
 import { createComment, getCommentIndex } from './comment.util';
 
-vi.mock('@bk2/shared-util-core', () => ({
+vi.mock('@okr/shared-util-core', () => ({
   getTodayStr: vi.fn(() => '20240117'),
   generateRandomString: vi.fn(() => 'random12345678901234'),
   DateFormat: { StoreDate: 'YYYYMMDD', StoreDateTime: 'YYYYMMDDHHmmss' }

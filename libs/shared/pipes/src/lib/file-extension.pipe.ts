@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { fileExtension } from '@bk2/shared-util-core';
+import { fileExtension } from '@okr/shared-util-core';
 
 @Pipe({
   name: 'fileExtension',

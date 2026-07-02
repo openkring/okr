@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { sortAscending, sortDescending } from '@bk2/shared-util-core';
+import { sortAscending, sortDescending } from '@okr/shared-util-core';
 
 @Pipe({
     name: 'sort',

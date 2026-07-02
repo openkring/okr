@@ -1,5 +1,5 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { isBrowser } from '@bk2/shared-util-core';
+import { isBrowser } from '@okr/shared-util-core';
 import { ConsentService } from './consent.service';
 
 type FirebaseAnalytics = import('firebase/analytics').Analytics;

@@ -1,9 +1,9 @@
 import { Component, input } from '@angular/core';
 import { IonAvatar, IonIcon, IonItem, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared-categories';
-import { ColorIonic } from '@bk2/shared-models';
-import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { ColorsIonic } from '@okr/shared-categories';
+import { ColorIonic } from '@okr/shared-models';
+import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 
 @Component({
   selector: 'bk-icon-toolbar',

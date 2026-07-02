@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TripModel } from '@bk2/shared-models';
+import { TripModel } from '@okr/shared-models';
 import {
   newTrip,
   newTripName,

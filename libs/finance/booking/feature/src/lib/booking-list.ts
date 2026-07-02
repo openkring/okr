@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { ActionSheetButton, ActionSheetController, IonButton, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { BookingModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { BookingModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { BookingStore } from './booking.store';
 

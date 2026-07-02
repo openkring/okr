@@ -5,7 +5,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
   IonContent, IonFooter, ModalController,
 } from '@ionic/angular/standalone';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmailComposerModal } from './email-composer.modal';
 
 @Component({

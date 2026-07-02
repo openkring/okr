@@ -1,10 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 
-import { MatrixPollData } from '@bk2/chat-data-access';
-import { PollCreateForm } from '@bk2/chat-ui';
+import { MatrixPollData } from '@okr/chat-data-access';
+import { PollCreateForm } from '@okr/chat-ui';
 
 import { MatrixChatStore } from './matrix-chat.store';
 

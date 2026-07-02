@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { InvoiceModel, UserModel } from '@bk2/shared-models';
-import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { InvoiceModel, UserModel } from '@okr/shared-models';
+import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean } from '@okr/shared-util-core';
 
-import { InvoiceI18n, invoiceValidations } from '@bk2/finance-invoice-util';
+import { InvoiceI18n, invoiceValidations } from '@okr/finance-invoice-util';
 
 const INVOICE_STATES = ['draft', 'pending', 'paid', 'cancelled'];
 const VAT_TYPES = ['included', 'excluded', 'exempt'];

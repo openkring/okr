@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { VIDEO_SECTION_SHAPE, VideoSection } from '@bk2/shared-models';
+import { VIDEO_SECTION_SHAPE, VideoSection } from '@okr/shared-models';
 
 import { videoSectionValidations } from './video-section.validations';
 

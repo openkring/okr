@@ -2,8 +2,8 @@ import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { Button, Header, ResultLog } from '@bk2/shared-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { Button, Header, ResultLog } from '@okr/shared-ui';
 
 import { AocStorageStore } from './aoc-storage.store';
 

@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
-import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
-import { AvatarUsage, DeliveryType, Language, NameDisplay, UserModel } from "@bk2/shared-models";
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
-import { coerceBoolean } from "@bk2/shared-util-core";
+import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
+import { AvatarUsage, DeliveryType, Language, NameDisplay, UserModel } from "@okr/shared-models";
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
+import { coerceBoolean } from "@okr/shared-util-core";
 
-import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations, UserI18n } from "@bk2/user-util";
+import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations, UserI18n } from "@okr/user-util";
 
 @Component({
   selector: 'bk-user-display-form',

@@ -4,13 +4,13 @@ import { map, Observable, of, switchMap, take } from 'rxjs';
 import { Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
 
-import { BkEnvironment, ENV } from '@bk2/shared-config';
-import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
-import { APP_STORE_MIN, AppStoreMin, FirestoreService } from '@bk2/shared-data-access';
-import { AvatarCollection, AvatarModel } from '@bk2/shared-models';
-import { addImgixParams } from '@bk2/shared-util-core';
+import { BkEnvironment, ENV } from '@okr/shared-config';
+import { THUMBNAIL_SIZE } from '@okr/shared-constants';
+import { APP_STORE_MIN, AppStoreMin, FirestoreService } from '@okr/shared-data-access';
+import { AvatarCollection, AvatarModel } from '@okr/shared-models';
+import { addImgixParams } from '@okr/shared-util-core';
 
-import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+import { newAvatarModel, readAsFile } from '@okr/avatar-util';
 import { UploadService } from './upload.service';
 
 export interface UserPhoto {

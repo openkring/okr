@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { AppStore, OrgSelectModal } from '@bk2/shared-feature';
-import { getDefaultCategoryName, isOrg } from '@bk2/shared-util-core';
-import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { AppStore, OrgSelectModal } from '@okr/shared-feature';
+import { getDefaultCategoryName, isOrg } from '@okr/shared-util-core';
+import { CategoryListModel, OrgModel, UserModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
 
-import { createNewMemberFormModel, MemberNewFormModel, MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@bk2/relationship-membership-util';
-import { MemberNewForm } from '@bk2/relationship-membership-ui';
+import { createNewMemberFormModel, MemberNewFormModel, MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
+import { MemberNewForm } from '@okr/relationship-membership-ui';
 
 @Component({
   selector: 'bk-member-new-modal',

@@ -2,13 +2,13 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { PeriodModel } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { PeriodModel } from '@okr/shared-models';
 
-import { AccountingStore } from '@bk2/finance-accounting-feature';
-import { PeriodService } from '@bk2/finance-period-data-access';
-import { PERIOD_I18N_KEYS } from '@bk2/finance-period-util';
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { PeriodService } from '@okr/finance-period-data-access';
+import { PERIOD_I18N_KEYS } from '@okr/finance-period-util';
 
 export const PeriodStore = signalStore(
   withState({}),

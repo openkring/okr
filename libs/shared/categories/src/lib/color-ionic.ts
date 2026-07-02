@@ -1,4 +1,4 @@
-import { CategoryModel, ColorIonic } from '@bk2/shared-models';
+import { CategoryModel, ColorIonic } from '@okr/shared-models';
 
 export type ColorIonicCategory = CategoryModel;
 

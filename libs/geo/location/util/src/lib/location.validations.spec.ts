@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LocationModel } from '@bk2/shared-models';
+import { LocationModel } from '@okr/shared-models';
 
 import { locationValidations } from './location.validations';
 

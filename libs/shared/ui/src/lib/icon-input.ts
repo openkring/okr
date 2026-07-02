@@ -2,8 +2,8 @@
 import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { IonIcon, IonItem } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 import { TextInput, TextInputI18n } from './text-input';
 

@@ -1,14 +1,14 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { AccountModel, RoleName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { AccountModel, RoleName } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
 
-import { Menu } from '@bk2/cms-menu-feature';
+import { Menu } from '@okr/cms-menu-feature';
 
-import { FlatAccountNode } from '@bk2/finance-account-util';
+import { FlatAccountNode } from '@okr/finance-account-util';
 import { AccountStore } from './account.store';
 
 @Component({

@@ -7,11 +7,11 @@ import {
   IonContent, IonLabel, IonGrid, IonRow, IonCol, IonChip, IonMenuButton,
 } from '@ionic/angular/standalone';
 
-import { EsignRecord } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { AppStore } from '@bk2/shared-feature';
-import { EsignService } from '@bk2/esign-data-access';
+import { EsignRecord } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { AppStore } from '@okr/shared-feature';
+import { EsignService } from '@okr/esign-data-access';
 import { Browser } from '@capacitor/browser';
 
 import { EsignStore } from './esign.store';

@@ -1,4 +1,4 @@
-import { AVATAR_INFO_SHAPE, AvatarInfo, BaseProperty, BaseType, BkModel, GroupModel, LocationModel, MembershipModel, MetaTag, MoneyModel, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
+import { AVATAR_INFO_SHAPE, AvatarInfo, BaseProperty, BaseType, BkModel, GroupModel, LocationModel, MembershipModel, MetaTag, MoneyModel, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@okr/shared-models';
 import { die, warn } from './log.util';
 import { convertDateFormatToString, DateFormat } from './date.util';
 

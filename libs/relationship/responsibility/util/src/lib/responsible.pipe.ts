@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-import { ResponsibilityModel } from '@bk2/shared-models';
-import { convertDateFormatToString, DateFormat, getFullName } from '@bk2/shared-util-core';
+import { ResponsibilityModel } from '@okr/shared-models';
+import { convertDateFormatToString, DateFormat, getFullName } from '@okr/shared-util-core';
 
 import { isDelegateActive } from './responsibility.util';
 

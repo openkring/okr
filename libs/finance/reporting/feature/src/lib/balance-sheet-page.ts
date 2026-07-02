@@ -4,8 +4,8 @@ import { from } from 'rxjs';
 import { IonButton, IonContent, IonHeader, IonItem, IonLabel,
   IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { AccountingStore } from '@bk2/finance-accounting-feature';
-import { ReportingService } from '@bk2/finance-reporting-data-access';
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { ReportingService } from '@okr/finance-reporting-data-access';
 
 @Component({
   selector: 'bk-balance-sheet-page',

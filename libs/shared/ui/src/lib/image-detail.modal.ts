@@ -3,8 +3,8 @@ import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, 
 import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
 import exifr from 'exifr';
 
-import { STORAGE } from '@bk2/shared-config';
-import { fileSizeUnit } from '@bk2/shared-util-core';
+import { STORAGE } from '@okr/shared-config';
+import { fileSizeUnit } from '@okr/shared-util-core';
 
 export interface ImageDetailRow { label: string; value: string; }
 

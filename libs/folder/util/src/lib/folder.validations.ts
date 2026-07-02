@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { FolderModel } from '@bk2/shared-models';
-import { baseValidations, stringValidations } from '@bk2/shared-util-core';
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { FolderModel } from '@okr/shared-models';
+import { baseValidations, stringValidations } from '@okr/shared-util-core';
 
 export const folderValidations = staticSuite((model: FolderModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

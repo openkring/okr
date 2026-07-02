@@ -1,8 +1,8 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { DocumentModel } from '@bk2/shared-models';
-import { baseValidations, compareDate, dateValidations, isFutureDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DocumentModel } from '@okr/shared-models';
+import { baseValidations, compareDate, dateValidations, isFutureDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const documentValidations = staticSuite((model: DocumentModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

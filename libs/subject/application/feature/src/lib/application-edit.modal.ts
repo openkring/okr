@@ -1,12 +1,12 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { AlertController, IonButton, IonButtons, IonContent, IonHeader, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { ApplicationModel, UserModel } from '@bk2/shared-models';
-import { AlertService } from '@bk2/shared-util-angular';
+import { ApplicationModel, UserModel } from '@okr/shared-models';
+import { AlertService } from '@okr/shared-util-angular';
 
-import { ApplicationService } from '@bk2/application-data-access';
-import { ApplicationI18n } from '@bk2/application-util';
-import { ApplicationForm } from '@bk2/application-ui';
+import { ApplicationService } from '@okr/application-data-access';
+import { ApplicationI18n } from '@okr/application-util';
+import { ApplicationForm } from '@okr/application-ui';
 
 @Component({
   selector: 'bk-application-edit-modal',

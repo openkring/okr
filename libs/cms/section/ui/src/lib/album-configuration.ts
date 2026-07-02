@@ -1,11 +1,11 @@
 import { Component, computed, input, linkedSignal, model, Signal, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { AlbumConfig } from '@bk2/shared-models';
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { GalleryEffects } from '@bk2/shared-categories';
+import { AlbumConfig } from '@okr/shared-models';
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { GalleryEffects } from '@okr/shared-categories';
 
-import { AlbumStyles, SectionI18n } from '@bk2/cms-section-util';
+import { AlbumStyles, SectionI18n } from '@okr/cms-section-util';
 
 @Component({
   selector: 'bk-album-config',

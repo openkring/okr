@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SLIDER_SECTION_SHAPE, SliderSection } from '@bk2/shared-models';
+import { SLIDER_SECTION_SHAPE, SliderSection } from '@okr/shared-models';
 
 import { sliderSectionValidations } from './slider-section.validations';
 

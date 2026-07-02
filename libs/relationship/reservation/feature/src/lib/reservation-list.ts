@@ -1,15 +1,15 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { AvatarInfo, OrgModel, PersonModel, ReservationModel, ResourceModelName, RoleName } from '@bk2/shared-models';
-import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson } from '@bk2/shared-util-core';
+import { AvatarInfo, OrgModel, PersonModel, ReservationModel, ResourceModelName, RoleName } from '@okr/shared-models';
+import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson } from '@okr/shared-util-core';
 
-import { Menu } from '@bk2/cms-menu-feature';
-import { AvatarService } from '@bk2/avatar-data-access';
+import { Menu } from '@okr/cms-menu-feature';
+import { AvatarService } from '@okr/avatar-data-access';
 
-import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
+import { THUMBNAIL_SIZE } from '@okr/shared-constants';
 
 import { ReservationStore } from './reservation.store';
 

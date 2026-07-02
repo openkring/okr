@@ -1,4 +1,4 @@
-import { ReservationCollection, ReservationModel } from '@bk2/shared-models';
+import { ReservationCollection, ReservationModel } from '@okr/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 import { searchData } from './search.util';
 

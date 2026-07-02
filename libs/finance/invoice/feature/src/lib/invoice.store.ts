@@ -6,16 +6,16 @@ import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { of } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { InvoiceCollection, InvoiceModel } from '@bk2/shared-models';
-import { confirm, exportCsv } from '@bk2/shared-util-angular';
-import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { InvoiceCollection, InvoiceModel } from '@okr/shared-models';
+import { confirm, exportCsv } from '@okr/shared-util-angular';
+import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { InvoiceService } from '@bk2/finance-invoice-data-access';
-import { getInvoiceExportData, INVOICE_I18N_KEYS, InvoiceI18n, newInvoice } from '@bk2/finance-invoice-util';
-import { AccountingStore } from '@bk2/finance-accounting-feature';
+import { InvoiceService } from '@okr/finance-invoice-data-access';
+import { getInvoiceExportData, INVOICE_I18N_KEYS, InvoiceI18n, newInvoice } from '@okr/finance-invoice-util';
+import { AccountingStore } from '@okr/finance-accounting-feature';
 
 import { InvoiceEditModal } from './invoice-edit.modal';
 

@@ -1,8 +1,8 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { CalEventModel } from '@bk2/shared-models';
-import { baseValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { CalEventModel } from '@okr/shared-models';
+import { baseValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const calEventValidations = staticSuite((model: CalEventModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

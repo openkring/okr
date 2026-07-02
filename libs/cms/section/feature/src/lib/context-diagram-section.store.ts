@@ -5,21 +5,21 @@ import { map, switchMap } from 'rxjs/operators';
 import { ActionSheetController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { ContextDiagramConfig, ContextDiagramSection, GroupModelName, MembershipModel, OrgModelName, PersonalRelModel, PersonModelName, ResponsibilityModel, WorkrelModel } from '@bk2/shared-models';
-import { getFullName, isPerson } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
+import { ContextDiagramConfig, ContextDiagramSection, GroupModelName, MembershipModel, OrgModelName, PersonalRelModel, PersonModelName, ResponsibilityModel, WorkrelModel } from '@okr/shared-models';
+import { getFullName, isPerson } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { WorkrelService } from '@bk2/relationship-workrel-data-access';
-import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
-import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { WorkrelService } from '@okr/relationship-workrel-data-access';
+import { PersonalRelService } from '@okr/relationship-personal-rel-data-access';
+import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 
-import { PersonService } from '@bk2/subject-person-data-access';
-import { AvatarService } from '@bk2/avatar-data-access';
-import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
-import { OrgEditModal } from '@bk2/subject-org-feature';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { PersonService } from '@okr/subject-person-data-access';
+import { AvatarService } from '@okr/avatar-data-access';
+import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
+import { OrgEditModal } from '@okr/subject-org-feature';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 // ---------------------------------------------------------------------------
 // Graph node / edge types
@@ -228,7 +228,7 @@ export const ContextDiagramStore = signalStore(
       } else if (modelType === PersonModelName) {
         const person = store.appStore.getPerson(key);
         if (!person) return;
-        const { PersonEditModal } = await import('@bk2/subject-person-feature');
+        const { PersonEditModal } = await import('@okr/subject-person-feature');
         const modal = await store.modalController.create({
           cssClass: 'wide-modal',
           component: PersonEditModal,

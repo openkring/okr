@@ -1,6 +1,6 @@
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
-import { baseValidations, booleanValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
+import { baseValidations, booleanValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 import { only, staticSuite } from 'vest';
 

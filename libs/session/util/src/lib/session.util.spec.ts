@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SessionModel } from '@bk2/shared-models';
+import { SessionModel } from '@okr/shared-models';
 import { getSessionIndex, getSessionIndexInfo, getSessionStatus, getSessionStatusColor } from './session.util';
 
 function makeSession(partial: Partial<SessionModel>): SessionModel {

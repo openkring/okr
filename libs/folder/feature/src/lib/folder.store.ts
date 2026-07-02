@@ -4,15 +4,15 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { FolderCollection, FolderModel } from '@bk2/shared-models';
-import { debugItemLoaded, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
-import { AlertService } from '@bk2/shared-util-angular';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { FolderCollection, FolderModel } from '@okr/shared-models';
+import { debugItemLoaded, debugListLoaded, getSystemQuery, nameMatches } from '@okr/shared-util-core';
+import { AlertService } from '@okr/shared-util-angular';
 
-import { FolderService } from '@bk2/folder-data-access';
-import { FOLDER_I18N_KEYS, newFolderModel } from '@bk2/folder-util';
+import { FolderService } from '@okr/folder-data-access';
+import { FOLDER_I18N_KEYS, newFolderModel } from '@okr/folder-util';
 
 // Inline import to avoid circular dependency (same lib)
 import { FolderEditModal } from './folder-edit.modal';

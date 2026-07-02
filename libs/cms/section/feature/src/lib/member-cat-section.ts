@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { MemberCatSection } from '@bk2/shared-models';
-import { EmptyList, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { MemberCatSection } from '@okr/shared-models';
+import { EmptyList, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { MemberCatSectionStore } from './member-cat-section.store';
 

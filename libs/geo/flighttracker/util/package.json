@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/geo-flighttracker-util",
+  "name": "@okr/geo-flighttracker-util",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

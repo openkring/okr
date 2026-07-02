@@ -7,22 +7,22 @@ import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/
 import { doc } from 'firebase/firestore';
 import { of } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { ExportFormat, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, ScsMemberFeesCollection, ScsMemberFeesModel } from '@bk2/shared-models';
-import { confirm, exportCsv, showToast } from '@bk2/shared-util-angular';
-import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@bk2/shared-util-core';
-import { ExportFormats } from '@bk2/shared-categories';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { ExportFormat, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, ScsMemberFeesCollection, ScsMemberFeesModel } from '@okr/shared-models';
+import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
+import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
+import { ExportFormats } from '@okr/shared-categories';
+import { I18nService } from '@okr/shared-i18n';
 
-import { ActivityService } from '@bk2/activity-data-access';
-import { ScsMemberFeeService, convertMembershipToFee, getFeeTotal, getTemplateId } from '@bk2/relationship-membership-data-access';
+import { ActivityService } from '@okr/activity-data-access';
+import { ScsMemberFeeService, convertMembershipToFee, getFeeTotal, getTemplateId } from '@okr/relationship-membership-data-access';
 
 import { MembershipEditModal } from './membership-edit.modal';
 import { ScsMemberFeeInvoiceIdModal } from './scs-member-fee-invoice-id.modal';
 import { ScsMemberFeeUploadModal } from './scs-member-fee-upload.modal';
 import { ScsMemberFeesTotalsModal } from './scs-member-fees-totals.modal';
-import { MEMBERSHIP_I18N_KEYS } from '@bk2/relationship-membership-util';
+import { MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 
 export type ScsMemberFeesState = {
   searchTerm: string;

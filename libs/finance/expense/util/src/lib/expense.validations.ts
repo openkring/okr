@@ -1,6 +1,6 @@
 import { enforce, only, staticSuite, test } from 'vest';
 
-import { ibanValidations } from '@bk2/subject-address-util';
+import { ibanValidations } from '@okr/subject-address-util';
 
 import { ALLOWED_CURRENCIES } from './expense.util';
 

@@ -4,9 +4,9 @@ import {
   IonPopover, IonSpinner, IonText, IonTitle, IonToolbar
 } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { ZefixCompanyDetails, ZefixSearchResult, ZefixService } from '@bk2/subject-org-data-access';
+import { ZefixCompanyDetails, ZefixSearchResult, ZefixService } from '@okr/subject-org-data-access';
 
 @Component({
   selector: 'bk-zefix-lookup',

@@ -1,6 +1,6 @@
 import { BookingAction } from './booking-action.model';
-import { AddressModel, OrgModel, PersonModel } from '@bk2/shared-models';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { AddressModel, OrgModel, PersonModel } from '@okr/shared-models';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 /**
  * Returns every action whose trigger matches the given accounting tenant and

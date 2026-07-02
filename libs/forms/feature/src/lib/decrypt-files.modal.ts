@@ -4,9 +4,9 @@ import { DecimalPipe } from '@angular/common';
 import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular/standalone';
 import { inject } from '@angular/core';
 
-import { Header } from '@bk2/shared-ui';
+import { Header } from '@okr/shared-ui';
 
-import { EncryptedFileMetadata, decryptFile } from '@bk2/forms-util';
+import { EncryptedFileMetadata, decryptFile } from '@okr/forms-util';
 
 @Component({
   selector: 'bk-decrypt-files-modal',

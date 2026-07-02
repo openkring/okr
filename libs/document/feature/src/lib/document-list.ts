@@ -2,15 +2,15 @@ import { Component, computed, inject, input, linkedSignal, effect } from '@angul
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonThumbnail, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 
-import { DocumentModel, RoleName } from '@bk2/shared-models';
-import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
-import { FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { DocumentModel, RoleName } from '@okr/shared-models';
+import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
+import { FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
 
-import { Menu } from '@bk2/cms-menu-feature';
-import { FolderBreadcrumb } from '@bk2/folder-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { FolderBreadcrumb } from '@okr/folder-ui';
 
 import { DocumentStore } from './document.store';
 

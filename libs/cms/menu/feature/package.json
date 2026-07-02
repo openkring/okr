@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/cms-menu-feature",
+  "name": "@okr/cms-menu-feature",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,20 +7,20 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-categories": "*",
-    "@bk2/shared-feature": "*",
-    "@bk2/shared-i18n": "*",
-    "@bk2/shared-pipes": "*",
-    "@bk2/shared-ui": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/shared-util-angular": "*",
-    "@bk2/cms-menu-data-access": "*",
-    "@bk2/cms-menu-ui": "*",
-    "@bk2/cms-menu-util": "*",
-    "@bk2/auth-data-access": "*",
-    "@bk2/activity-data-access": "*",
-    "@bk2/chat-data-access": "*"
+    "@okr/shared-models": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-categories": "*",
+    "@okr/shared-feature": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/cms-menu-data-access": "*",
+    "@okr/cms-menu-ui": "*",
+    "@okr/cms-menu-util": "*",
+    "@okr/auth-data-access": "*",
+    "@okr/activity-data-access": "*",
+    "@okr/chat-data-access": "*"
   }
 }

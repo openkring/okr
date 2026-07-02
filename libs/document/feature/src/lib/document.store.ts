@@ -5,18 +5,18 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Browser } from '@capacitor/browser';
 import { firstValueFrom, Observable, of } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { CategoryListModel, DocumentCollection, DocumentModel, DocumentModelName, FolderModel } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, fileName, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
-import { confirm, AppNavigationService, downloadFile } from '@bk2/shared-util-angular';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { CategoryListModel, DocumentCollection, DocumentModel, DocumentModelName, FolderModel } from '@okr/shared-models';
+import { chipMatches, debugItemLoaded, debugListLoaded, fileName, getSystemQuery, nameMatches } from '@okr/shared-util-core';
+import { confirm, AppNavigationService, downloadFile } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 
-import { DocumentService } from '@bk2/document-data-access';
-import { DOCUMENT_I18N_KEYS } from '@bk2/document-util';
-import { FolderService } from '@bk2/folder-data-access';
-import { newFolderModel } from '@bk2/folder-util';
-import { UploadService } from '@bk2/avatar-data-access';
+import { DocumentService } from '@okr/document-data-access';
+import { DOCUMENT_I18N_KEYS } from '@okr/document-util';
+import { FolderService } from '@okr/folder-data-access';
+import { newFolderModel } from '@okr/folder-util';
+import { UploadService } from '@okr/avatar-data-access';
 
 import { DocumentEditModal } from './document-edit.modal';
 

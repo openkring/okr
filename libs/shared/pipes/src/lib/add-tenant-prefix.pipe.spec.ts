@@ -1,9 +1,9 @@
 import { ReplacePipe } from './add-tenant-prefix.pipe';
-import { replaceSubstring } from '@bk2/shared-util-core';
+import { replaceSubstring } from '@okr/shared-util-core';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Mock the external dependency from another library
-vi.mock('@bk2/shared-util-core', () => ({
+vi.mock('@okr/shared-util-core', () => ({
   replaceSubstring: vi.fn(),
 }));
 

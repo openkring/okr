@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { AvatarUsage, DeliveryType, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared-models';
-import { baseValidations, booleanValidations, categoryValidations, stringValidations } from '@bk2/shared-util-core';
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { AvatarUsage, DeliveryType, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@okr/shared-models';
+import { baseValidations, booleanValidations, categoryValidations, stringValidations } from '@okr/shared-util-core';
 
 export const userValidations = staticSuite((model: UserModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

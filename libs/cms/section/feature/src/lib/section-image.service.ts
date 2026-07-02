@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { ActionSheetController, AlertController } from '@ionic/angular/standalone';
 
-import { ImageConfig, ImageType, SectionModel, UserModel } from '@bk2/shared-models';
-import { IMAGE_MIMETYPES } from '@bk2/shared-constants';
-import { confirm, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { UploadService } from '@bk2/avatar-data-access';
-import { applyImagesToSlot, getSectionImageSlots, ImageSlot, isSlotOccupied } from '@bk2/cms-section-util';
+import { ImageConfig, ImageType, SectionModel, UserModel } from '@okr/shared-models';
+import { IMAGE_MIMETYPES } from '@okr/shared-constants';
+import { confirm, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { UploadService } from '@okr/avatar-data-access';
+import { applyImagesToSlot, getSectionImageSlots, ImageSlot, isSlotOccupied } from '@okr/cms-section-util';
 
 export interface SectionImageUploadLabels {
   slotLogo: string;

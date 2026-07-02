@@ -4,14 +4,14 @@ import { of } from 'rxjs';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, ModelSelectService } from '@bk2/shared-feature';
-import { CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, ModelSelectService } from '@okr/shared-feature';
+import { CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
-import { InvitationService } from '@bk2/relationship-invitation-data-access';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { InvitationService } from '@okr/relationship-invitation-data-access';
 
 
 export type InvitationSectionState = {

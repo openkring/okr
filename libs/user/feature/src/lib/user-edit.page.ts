@@ -2,18 +2,18 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { Photo } from '@capacitor/camera';
 import { IonContent, Platform } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
-import { UserModelName } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@bk2/shared-ui';
-import { debugFormModel, getFullName, hasRole } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { UserModelName } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@okr/shared-ui';
+import { debugFormModel, getFullName, hasRole } from '@okr/shared-util-core';
 
-import { AvatarService, UploadService } from '@bk2/avatar-data-access';
-import { AvatarToolbar } from '@bk2/avatar-feature';
-import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
-import { CommentsCard } from '@bk2/comment-feature';
+import { AvatarService, UploadService } from '@okr/avatar-data-access';
+import { AvatarToolbar } from '@okr/avatar-feature';
+import { newAvatarModel, readAsFile } from '@okr/avatar-util';
+import { CommentsCard } from '@okr/comment-feature';
 
-import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, UserPrivacyForm } from '@bk2/user-ui';
-import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
+import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, UserPrivacyForm } from '@okr/user-ui';
+import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@okr/user-util';
 import { UserStore } from './user.store';
 
 @Component({

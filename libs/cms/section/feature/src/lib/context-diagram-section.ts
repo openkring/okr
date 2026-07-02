@@ -9,12 +9,12 @@ echarts.use([GraphChart, CanvasRenderer]);
 
 import type { EChartsOption } from 'echarts';
 
-import { ContextDiagramConfig, ContextDiagramSection } from '@bk2/shared-models';
-import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { ContextDiagramConfig, ContextDiagramSection } from '@okr/shared-models';
+import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
 
-import { SectionService } from '@bk2/cms-section-data-access';
+import { SectionService } from '@okr/cms-section-data-access';
 import { ContextDiagramStore, ContextDiagramNode, ContextDiagramEdge } from './context-diagram-section.store';
 import { ContextDiagramConfigModal } from './context-diagram-config.modal';
 

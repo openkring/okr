@@ -1,10 +1,10 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input, output, signal } from '@angular/core';
 import { IonItem, IonLabel, IonList, IonSearchbar, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
-import { isBrowser } from '@bk2/shared-util-angular';
-import { LocationModel } from '@bk2/shared-models';
-import { TripI18n } from '@bk2/trip-util';
+import { ENV } from '@okr/shared-config';
+import { isBrowser } from '@okr/shared-util-angular';
+import { LocationModel } from '@okr/shared-models';
+import { TripI18n } from '@okr/trip-util';
 
 let GoogleMap: any;
 let MapType: any;

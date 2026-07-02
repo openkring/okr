@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { TaskModel } from '@bk2/shared-models';
-import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { TaskModel } from '@okr/shared-models';
+import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
 export const taskValidations = staticSuite((model: TaskModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

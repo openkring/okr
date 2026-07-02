@@ -1,7 +1,7 @@
 import { EventInput } from '@fullcalendar/core';
 
-import { CalEventModel } from '@bk2/shared-models';
-import { addTime, convertDateFormatToString, DateFormat, getIsoDateTime, isType } from '@bk2/shared-util-core';
+import { CalEventModel } from '@okr/shared-models';
+import { addTime, convertDateFormatToString, DateFormat, getIsoDateTime, isType } from '@okr/shared-util-core';
 
 export function isCalEvent(calEvent: unknown, tenantId: string): calEvent is CalEventModel {
   return isType(calEvent, new CalEventModel(tenantId));

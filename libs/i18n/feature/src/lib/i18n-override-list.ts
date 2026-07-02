@@ -8,10 +8,10 @@ import {
   IonLabel, IonList, IonSearchbar, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { I18nTenantOverrideModel } from '@bk2/shared-models';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { Header } from '@okr/shared-ui';
+import { I18nTenantOverrideModel } from '@okr/shared-models';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { I18nOverrideStore } from './i18n-override.store';
 import { I18nOverrideEditModal } from './i18n-override-edit.modal';

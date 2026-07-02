@@ -2,14 +2,14 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup, CdkDrag, moveItemInArray } from '@angular/cdk/drag-drop';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { safeStructuredClone } from '@bk2/shared-util-core';
-import { Field, FieldType, FormDefinitionModel } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { safeStructuredClone } from '@okr/shared-util-core';
+import { Field, FieldType, FormDefinitionModel } from '@okr/shared-models';
 
-import { FormDefinitionService } from '@bk2/forms-data-access';
-import { FIELD_TYPE_DEFS, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@bk2/forms-ui';
+import { FormDefinitionService } from '@okr/forms-data-access';
+import { FIELD_TYPE_DEFS, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
 
 import { FieldConfigModal } from './field-config.modal';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARTICLE_SECTION_SHAPE, ArticleSection } from '@bk2/shared-models';
+import { ARTICLE_SECTION_SHAPE, ArticleSection } from '@okr/shared-models';
 
 import { articleSectionValidations } from './article-section.validations';
 

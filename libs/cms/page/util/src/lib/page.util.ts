@@ -1,5 +1,5 @@
-import { PageModel } from '@bk2/shared-models';
-import { buildSearchTokens, isType } from '@bk2/shared-util-core';
+import { PageModel } from '@okr/shared-models';
+import { buildSearchTokens, isType } from '@okr/shared-util-core';
 
 export function isPage(page: unknown, tenantId: string): page is PageModel {
   return isType(page, new PageModel(tenantId));

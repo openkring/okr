@@ -1,7 +1,7 @@
-import { DEFAULT_KEY, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { BkModel } from './base.model';
 
-// Defined here to avoid a dependency on @bk2/shared-util-angular (which would create a circular risk).
+// Defined here to avoid a dependency on @okr/shared-util-angular (which would create a circular risk).
 // Keep in sync with BrowserName in platform.util.ts.
 export type BrowserName = 'safari' | 'chrome' | 'firefox' | 'opera' | 'other';
 export type OsName = 'ios' | 'android' | 'macos' | 'windows' | 'other';

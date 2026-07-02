@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input } from "@angular/core";
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
 
-import { AddressModel, PrivacySettings, RoleName } from "@bk2/shared-models";
-import { SvgIconPipe } from "@bk2/shared-pipes";
-import { EmptyList } from "@bk2/shared-ui";
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser } from "@bk2/shared-util-angular";
-import { coerceBoolean, getCategoryIcon, hasRole, isVisibleToUser } from "@bk2/shared-util-core";
+import { AddressModel, PrivacySettings, RoleName } from "@okr/shared-models";
+import { SvgIconPipe } from "@okr/shared-pipes";
+import { EmptyList } from "@okr/shared-ui";
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser } from "@okr/shared-util-angular";
+import { coerceBoolean, getCategoryIcon, hasRole, isVisibleToUser } from "@okr/shared-util-core";
 
-import { FavoriteColorPipe, FormatAddressPipe } from "@bk2/subject-address-util";
+import { FavoriteColorPipe, FormatAddressPipe } from "@okr/subject-address-util";
 
 import { AddressStore } from "./addresses.store";
 

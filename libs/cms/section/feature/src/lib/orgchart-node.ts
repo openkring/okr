@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
 

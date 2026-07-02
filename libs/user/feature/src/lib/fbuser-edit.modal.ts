@@ -1,11 +1,11 @@
 import { Component, computed, inject, input, linkedSignal, signal } from "@angular/core";
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
-import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from "@bk2/shared-ui";
-import { hasRole, removeUndefinedFields } from "@bk2/shared-util-core";
+import { FirebaseUserModel, UserModel } from "@okr/shared-models";
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from "@okr/shared-ui";
+import { hasRole, removeUndefinedFields } from "@okr/shared-util-core";
 
-import { FbuserForm } from "@bk2/user-ui";
+import { FbuserForm } from "@okr/user-ui";
 import { UserStore } from "./user.store";
 
 @Component({

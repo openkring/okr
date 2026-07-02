@@ -7,8 +7,8 @@ import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/
 import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-import { ENV } from '@bk2/shared-config';
-import { isBrowser } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { isBrowser } from '@okr/shared-util-core';
 
 /**
  * Service for Firebase Cloud Messaging (FCM) push notifications.

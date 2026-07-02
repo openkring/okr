@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
 
-import { AvatarService } from '@bk2/avatar-data-access';
+import { AvatarService } from '@okr/avatar-data-access';
 
 @Pipe({
   name: 'avatar',

@@ -1,4 +1,4 @@
-import { CategoryModel, HorizontalPosition, VerticalPosition, ViewPosition } from '@bk2/shared-models';
+import { CategoryModel, HorizontalPosition, VerticalPosition, ViewPosition } from '@okr/shared-models';
 
 export type ViewPositionCategory = CategoryModel;
 

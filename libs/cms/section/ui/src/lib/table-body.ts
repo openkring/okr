@@ -1,6 +1,6 @@
 import { Component, input, model, Signal } from '@angular/core';
 
-import { TextList } from '@bk2/shared-ui';
+import { TextList } from '@okr/shared-ui';
 
 export interface TableBodyI18n {
   table_body_title: Signal<string>;

@@ -1,9 +1,9 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n } from '@bk2/shared-ui';
-import { MapConfig } from '@bk2/shared-models';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { MapConfig } from '@okr/shared-models';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 interface MapConfigI18n {
   map_edit:                                 Signal<string>;

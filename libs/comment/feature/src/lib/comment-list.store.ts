@@ -1,13 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { debugListLoaded } from '@bk2/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { debugListLoaded } from '@okr/shared-util-core';
 
-import { CommentService } from '@bk2/comment-data-access';
-import { COMMENT_LIST_I18N_KEYS } from '@bk2/comment-util';
-import { AlertService } from '@bk2/shared-util-angular';
+import { CommentService } from '@okr/comment-data-access';
+import { COMMENT_LIST_I18N_KEYS } from '@okr/comment-util';
+import { AlertService } from '@okr/shared-util-angular';
 
 export type CommentListState = {
   parentKey: string; // modelType.key of the parent model

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GroupModel, UserModel } from '@bk2/shared-models';
+import { GroupModel, UserModel } from '@okr/shared-models';
 import { canAccessGroup, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, userMatchesGroupVisibility } from './group.util';
 
 describe('Group Utils', () => {

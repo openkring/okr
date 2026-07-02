@@ -1,7 +1,7 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
 
-import { ENV } from '@bk2/shared-config';
-import { getImgixJpgUrl, getImgixPdfUrl, getImgixThumbnailUrl } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { getImgixJpgUrl, getImgixPdfUrl, getImgixThumbnailUrl } from '@okr/shared-util-core';
 
 @Pipe({
   name: 'jpgUrl',

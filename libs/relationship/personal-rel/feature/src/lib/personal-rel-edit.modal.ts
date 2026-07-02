@@ -1,15 +1,15 @@
 import { Component, computed, inject, input, linkedSignal, signal, Type } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
-import { PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
+import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@okr/shared-util-core';
+import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 
-import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { DocumentsAccordion } from '@bk2/document-feature';
-import { PersonalRelForm } from '@bk2/relationship-personal-rel-ui';
+import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { DocumentsAccordion } from '@okr/document-feature';
+import { PersonalRelForm } from '@okr/relationship-personal-rel-ui';
 import { PersonalRelStore } from './personal-rel.store';
 
 @Component({

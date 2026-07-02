@@ -1,5 +1,5 @@
-import { ReservationApplyModel, ReservationModel, ResourceModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isType } from '@bk2/shared-util-core';
+import { ReservationApplyModel, ReservationModel, ResourceModel, UserModel } from '@okr/shared-models';
+import { addIndexElement, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isType } from '@okr/shared-util-core';
 
 export function isReservation(reservation: unknown, tenantId: string): reservation is ReservationModel {
   return isType(reservation, new ReservationModel(tenantId));

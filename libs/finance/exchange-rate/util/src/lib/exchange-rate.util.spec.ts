@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ExchangeRateModel } from '@bk2/shared-models';
+import { ExchangeRateModel } from '@okr/shared-models';
 import { convertAmount, pickClosestRate } from './exchange-rate.util';
 
 describe('convertAmount', () => {

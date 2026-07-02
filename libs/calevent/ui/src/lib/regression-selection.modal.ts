@@ -1,7 +1,7 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, ModalController } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
+import { Header } from '@okr/shared-ui';
 
 @Component({
   selector: 'bk-regression-selection-modal',

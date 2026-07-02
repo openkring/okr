@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { ModalController, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonListHeader, IonTitle, IonToggle, IonToolbar } from '@ionic/angular/standalone';
 
-import { I18nService } from '@bk2/shared-i18n';
-import { ExportScope, ScopeAvailability, VcardChannelType, VcardI18n, VCARD_I18N_KEYS, VcardTargetKind } from '@bk2/vcard-util';
+import { I18nService } from '@okr/shared-i18n';
+import { ExportScope, ScopeAvailability, VcardChannelType, VcardI18n, VCARD_I18N_KEYS, VcardTargetKind } from '@okr/vcard-util';
 
 const CHANNEL_ORDER: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
 

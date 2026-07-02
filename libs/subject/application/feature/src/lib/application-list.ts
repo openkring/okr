@@ -6,11 +6,11 @@ import {
   IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonTitle, IonToolbar
 } from '@ionic/angular/standalone';
 
-import { ApplicationModel } from '@bk2/shared-models';
-import { hasRole } from '@bk2/shared-util-core';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { ApplicationModel } from '@okr/shared-models';
+import { hasRole } from '@okr/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 
 import { ApplicationStore } from './application.store';
 

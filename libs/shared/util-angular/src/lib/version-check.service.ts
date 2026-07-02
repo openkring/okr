@@ -4,7 +4,7 @@ import { AlertController } from '@ionic/angular/standalone';
 import { SwUpdate } from '@angular/service-worker';
 import { doc, onSnapshot } from 'firebase/firestore';
 
-import { FIRESTORE } from '@bk2/shared-config';
+import { FIRESTORE } from '@okr/shared-config';
 
 import packageJson from '../../../../../package.json';
 

@@ -1,4 +1,4 @@
-import { MembershipCollection, MembershipModel } from '@bk2/shared-models';
+import { MembershipCollection, MembershipModel } from '@okr/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 import { searchData } from './search.util';
 

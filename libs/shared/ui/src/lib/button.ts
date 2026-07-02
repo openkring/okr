@@ -1,10 +1,10 @@
 import { Component, computed, input } from '@angular/core';
 import { IonButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared-categories';
-import { ColorIonic } from '@bk2/shared-models';
-import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { ColorsIonic } from '@okr/shared-categories';
+import { ColorIonic } from '@okr/shared-models';
+import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 @Component({
   selector: 'bk-button',

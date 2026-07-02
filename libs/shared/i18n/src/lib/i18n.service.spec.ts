@@ -13,7 +13,7 @@ vi.mock('@jsverse/transloco', () => ({
   HashMap: Object,
 }));
 
-vi.mock('@bk2/shared-models', () => ({
+vi.mock('@okr/shared-models', () => ({
   AvailableLanguages: ['en', 'de', 'fr'],
 }));
 

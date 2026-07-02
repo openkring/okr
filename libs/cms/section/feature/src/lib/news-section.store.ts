@@ -5,10 +5,10 @@ import { combineLatest, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { ArticleSection, PageCollection, PageModel, SectionCollection, SectionModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { AppStore } from '@okr/shared-feature';
+import { ArticleSection, PageCollection, PageModel, SectionCollection, SectionModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export type NewsState = {
   blogPageKey: string | undefined;

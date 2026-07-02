@@ -1,4 +1,4 @@
-import { AvatarUsage, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared-models';
+import { AvatarUsage, Language, NameDisplay, PersonSortCriteria } from '@okr/shared-models';
 
 export type UserDisplayFormModel = {
   avatarUsage: AvatarUsage;

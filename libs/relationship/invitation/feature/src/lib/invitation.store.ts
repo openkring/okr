@@ -3,15 +3,15 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, ModelSelectService } from '@bk2/shared-feature';
-import { AvatarInfo, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { chipMatches, DateFormat, extractSecondPartOfOptionalTupel, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
-import { confirm } from '@bk2/shared-util-angular';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, ModelSelectService } from '@okr/shared-feature';
+import { AvatarInfo, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { chipMatches, DateFormat, extractSecondPartOfOptionalTupel, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@okr/shared-util-core';
+import { confirm } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 
-import { InvitationService } from '@bk2/relationship-invitation-data-access';
-import { isInvitation, INVITATION_I18N_KEYS, InvitationI18n } from '@bk2/relationship-invitation-util';
+import { InvitationService } from '@okr/relationship-invitation-data-access';
+import { isInvitation, INVITATION_I18N_KEYS, InvitationI18n } from '@okr/relationship-invitation-util';
 
 export type { InvitationI18n };
 

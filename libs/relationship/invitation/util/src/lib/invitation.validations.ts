@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { InvitationModel } from '@bk2/shared-models';
-import { booleanValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { InvitationModel } from '@okr/shared-models';
+import { booleanValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
 export const invitationValidations = staticSuite((model: InvitationModel, field?: string) => {
   if (field) only(field);

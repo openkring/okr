@@ -1,13 +1,13 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { CaseInsensitiveWordMask } from '@bk2/shared-config';
-import { CategoryListModel, PageModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@bk2/shared-constants';
+import { CaseInsensitiveWordMask } from '@okr/shared-config';
+import { CategoryListModel, PageModel, RoleName, UserModel } from '@okr/shared-models';
+import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@okr/shared-constants';
 
-import { PageI18n, pageValidations } from '@bk2/cms-page-util';
+import { PageI18n, pageValidations } from '@okr/cms-page-util';
 
 @Component({
   selector: 'bk-page-form',

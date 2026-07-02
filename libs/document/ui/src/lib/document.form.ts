@@ -1,15 +1,15 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, ToastController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
-import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
-import { ENV } from '@bk2/shared-config';
+import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
+import { copyToClipboard, showToast } from '@okr/shared-util-angular';
+import { ENV } from '@okr/shared-config';
 
-import { DocumentI18n, documentValidations } from '@bk2/document-util';
+import { DocumentI18n, documentValidations } from '@okr/document-util';
 
 @Component({
   selector: 'bk-document-form',

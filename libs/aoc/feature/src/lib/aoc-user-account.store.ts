@@ -8,18 +8,18 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { authState } from 'rxfire/auth';
 import { Router } from '@angular/router';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
-import { DateFormat, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
-import { AUTH } from '@bk2/shared-config';
-import { confirm, error, navigateByUrl } from '@bk2/shared-util-angular';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { MembershipCollection, MembershipModel, UserModel } from '@okr/shared-models';
+import { DateFormat, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { AUTH } from '@okr/shared-config';
+import { confirm, error, navigateByUrl } from '@okr/shared-util-angular';
 
-import { AuthService } from '@bk2/auth-data-access';
-import { UserService } from '@bk2/user-data-access';
-import { PersonService } from '@bk2/subject-person-data-access';
-import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail, AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { AuthService } from '@okr/auth-data-access';
+import { UserService } from '@okr/user-data-access';
+import { PersonService } from '@okr/subject-person-data-access';
+import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail, AOC_I18N_KEYS } from '@okr/aoc-util';
 
 export type FirebaseAuthUser = {
   uid: string;
@@ -250,7 +250,7 @@ export const AocUserAccountStore = signalStore(
         if (!account.personKey) return;
         const person = store.appStore.getPerson(account.personKey);
         if (!person) return;
-        const { PersonEditModal } = await import('@bk2/subject-person-feature');
+        const { PersonEditModal } = await import('@okr/subject-person-feature');
         const modal = await store.modalController.create({
           component: PersonEditModal,
           componentProps: {
@@ -273,7 +273,7 @@ export const AocUserAccountStore = signalStore(
         if (!account.personKey) return;
         const person = store.appStore.getPerson(account.personKey);
         if (!person) return;
-        const { PersonEditModal } = await import('@bk2/subject-person-feature');
+        const { PersonEditModal } = await import('@okr/subject-person-feature');
         const modal = await store.modalController.create({
           component: PersonEditModal,
           componentProps: {

@@ -3,7 +3,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { webhookSecret, REGION, verifyWebhookToken } from './shared';
-import { EsignCollection } from '@bk2/shared-models';
+import { EsignCollection } from '@okr/shared-models';
 
 const TERMINAL_STATUSES = ['signed', 'rejected', 'withdrawn'];
 

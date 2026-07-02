@@ -1,13 +1,13 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarInfo, CalEventModel, CategoryListModel, PersonModelName, ReservationModel, ReservationModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, getAvatarName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { AvatarInfo, CalEventModel, CategoryListModel, PersonModelName, ReservationModel, ReservationModelName, ResourceModelName, RoleName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, getAvatarName, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { ReservationForm } from '@bk2/relationship-reservation-ui';
-import { RelationshipToolbar } from '@bk2/avatar-ui';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { ReservationForm } from '@okr/relationship-reservation-ui';
+import { RelationshipToolbar } from '@okr/avatar-ui';
 import { ReservationStore } from './reservation.store';
 
 @Component({

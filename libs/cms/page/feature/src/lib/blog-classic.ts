@@ -1,8 +1,8 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { SectionModel, UserModel } from '@bk2/shared-models';
-import { SectionDispatcher } from '@bk2/cms-section-feature';
+import { SectionModel, UserModel } from '@okr/shared-models';
+import { SectionDispatcher } from '@okr/cms-section-feature';
 
 /**
  * Classic Blog + Sidebar layout.

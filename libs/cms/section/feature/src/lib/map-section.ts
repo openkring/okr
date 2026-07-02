@@ -3,12 +3,12 @@ import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_I
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { AppStore } from '@bk2/shared-feature';
-import { LocationCollection, LocationModel, MAP_CONFIG_SHAPE, MapSection } from '@bk2/shared-models';
-import { debugMessage, die } from '@bk2/shared-util-core';
-import { isBrowser } from '@bk2/shared-util-angular';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { OptionalCardHeader } from '@bk2/shared-ui';
+import { AppStore } from '@okr/shared-feature';
+import { LocationCollection, LocationModel, MAP_CONFIG_SHAPE, MapSection } from '@okr/shared-models';
+import { debugMessage, die } from '@okr/shared-util-core';
+import { isBrowser } from '@okr/shared-util-angular';
+import { FirestoreService } from '@okr/shared-data-access';
+import { OptionalCardHeader } from '@okr/shared-ui';
 
 // Dynamic imports for Capacitor plugins to avoid SSR issues
 let Geolocation: any;

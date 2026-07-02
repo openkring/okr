@@ -4,13 +4,13 @@ import { signalStore, withMethods, withProps } from '@ngrx/signals';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonNote } from '@ionic/angular/standalone';
 import { from, of } from 'rxjs';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { Spinner } from '@bk2/shared-ui';
-import { FormDefinitionModel, FormSection } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { Spinner } from '@okr/shared-ui';
+import { FormDefinitionModel, FormSection } from '@okr/shared-models';
 
-import { FormRenderer } from '@bk2/forms-ui';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { FormRenderer } from '@okr/forms-ui';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 
 const FormSectionStore = signalStore(
@@ -207,13 +207,13 @@ export class FormSectionComponent {
 
   private async uploadFiles(
     values: Record<string, unknown>,
-    def: import('@bk2/shared-models').FormDefinitionModel,
+    def: import('@okr/shared-models').FormDefinitionModel,
   ): Promise<Record<string, unknown>> {
     const encryptFileUpload = this.section().properties?.encryptFileUpload ?? false;
     const hasFiles = Object.values(values).some(v => v instanceof File);
     if (!hasFiles) return values;
 
-    const { uploadToFirebaseStorage } = await import('@bk2/shared-config');
+    const { uploadToFirebaseStorage } = await import('@okr/shared-config');
     const { getDownloadURL } = await import('firebase/storage');
     const result = { ...values };
 
@@ -229,7 +229,7 @@ export class FormSectionComponent {
       const path = `forms/${def.formKey}/${crypto.randomUUID()}-${val.name}`;
 
       if (encryptFileUpload && def.encryptionSalt && password) {
-        const { encryptFile } = await import('@bk2/forms-util');
+        const { encryptFile } = await import('@okr/forms-util');
         const encrypted = await encryptFile(val, password, def.encryptionSalt);
         const encBlob = new File([encrypted.ciphertext], val.name + '.enc', { type: 'application/octet-stream' });
         const task = uploadToFirebaseStorage(path + '.enc', encBlob);

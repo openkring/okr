@@ -3,9 +3,9 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid } from '@
 import { Observable } from 'rxjs';
 
 
-import { CommentModel } from '@bk2/shared-models';
+import { CommentModel } from '@okr/shared-models';
 
-import { CommentHeader, CommentInput, CommentsList } from '@bk2/comment-ui';
+import { CommentHeader, CommentInput, CommentsList } from '@okr/comment-ui';
 
 import { CommentListStore } from './comment-list.store';
 

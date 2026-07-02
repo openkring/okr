@@ -2,8 +2,8 @@ import { Component, computed, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
-import { URL_LENGTH } from '@bk2/shared-constants';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { URL_LENGTH } from '@okr/shared-constants';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
 

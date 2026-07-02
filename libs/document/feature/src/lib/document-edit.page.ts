@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 
-import { DocumentModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { DocumentModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
-import { DocumentForm } from '@bk2/document-ui';
+import { DocumentForm } from '@okr/document-ui';
 import { DocumentStore } from './document.store';
 
 

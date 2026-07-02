@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { VideoSection } from '@bk2/shared-models';
-import { stringValidations } from '@bk2/shared-util-core';
-import { URL_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { VideoSection } from '@okr/shared-models';
+import { stringValidations } from '@okr/shared-util-core';
+import { URL_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 
 import { baseSectionValidations } from './base-section.validations';
 

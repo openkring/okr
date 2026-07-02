@@ -1,14 +1,14 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
-import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@bk2/shared-constants';
-import { ModelSelectService } from '@bk2/shared-feature';
-import { UploadService } from '@bk2/avatar-data-access';
-import { confirm } from '@bk2/shared-util-angular';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@okr/shared-models';
+import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
+import { ModelSelectService } from '@okr/shared-feature';
+import { UploadService } from '@okr/avatar-data-access';
+import { confirm } from '@okr/shared-util-angular';
 import { AlertController, IonItem, IonToggle } from '@ionic/angular/standalone';
-import { ChartOption, SectionI18n, validateSection } from '@bk2/cms-section-util';
+import { ChartOption, SectionI18n, validateSection } from '@okr/cms-section-util';
 
 import { SectionConfiguration } from './section-configuration';
 import { EditorConfiguration } from './editor-configuration';

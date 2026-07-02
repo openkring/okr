@@ -5,41 +5,41 @@ import { from, Observable, of } from 'rxjs';
 import { StaticSuite } from 'vest';
 import { AlertController } from '@ionic/angular/standalone';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryCollection, CommentCollection, CommentModel,
   DocumentCollection, DocumentModel, GroupCollection, LocationCollection, LocationModel, LogInfo, MembershipCollection, MembershipModel, MenuItemCollection,
   MenuItemModel, OrgCollection, OrgModel, OwnershipCollection, OwnershipModel, PageCollection, PageModel, PersonalRelCollection, PersonalRelModel, PersonCollection,
   PersonModel, ReservationCollection, ReservationModel, SessionCollection, SessionModel, TaskCollection, TransferCollection, UserCollection,
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel,
-  AvatarInfo, AVATAR_INFO_SHAPE, CategoryListModel, ResponsibilityModel, ResponsibilityCollection } from '@bk2/shared-models';
-import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
-import { confirm } from '@bk2/shared-util-angular';
-import { I18nService } from '@bk2/shared-i18n';
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+  AvatarInfo, AVATAR_INFO_SHAPE, CategoryListModel, ResponsibilityModel, ResponsibilityCollection } from '@okr/shared-models';
+import { getCategoryIndex, getSystemQuery, removeProperty } from '@okr/shared-util-core';
+import { confirm } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
-import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@bk2/subject-address-util';
-import { commentValidations, getCommentIndex } from '@bk2/comment-util';
-import { calEventValidations, getCaleventIndex } from '@bk2/calevent-util';
-import { documentValidations, getDocumentIndex } from '@bk2/document-util';
-import { getLocationIndex, locationValidations } from '@bk2/location-util';
-import { getMembershipIndex, membershipValidations } from '@bk2/relationship-membership-util';
-import { getMenuIndex, menuItemValidations } from '@bk2/cms-menu-util';
-import { getOrgIndex, orgValidations } from '@bk2/subject-org-util';
-import { getOwnershipIndex, ownershipValidations } from '@bk2/relationship-ownership-util';
-import { getPageIndex, pageValidations } from '@bk2/cms-page-util';
-import { getPersonIndex, personValidations } from '@bk2/subject-person-util';
-import { getPersonalRelIndex, personalRelValidations } from '@bk2/relationship-personal-rel-util';
-import { getReservationIndex, reservationValidations } from '@bk2/relationship-reservation-util';
-import { getResourceIndex, resourceValidations } from '@bk2/resource-util';
-import { getTaskIndex, taskValidations } from '@bk2/task-util';
-import { getTransferIndex, transferValidations } from '@bk2/relationship-transfer-util';
-import { getWorkrelIndex, workrelValidations } from '@bk2/relationship-workrel-util';
-import { getUserIndex, userValidations } from '@bk2/user-util';
-import { categoryListValidations } from '@bk2/category-util';
-import { getGroupIndex, groupValidations, isAdminMember } from '@bk2/subject-group-util';
-import { getResponsibilityIndex } from '@bk2/relationship-responsibility-util';
-import { getSessionIndex } from '@bk2/session-util';
+import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@okr/subject-address-util';
+import { commentValidations, getCommentIndex } from '@okr/comment-util';
+import { calEventValidations, getCaleventIndex } from '@okr/calevent-util';
+import { documentValidations, getDocumentIndex } from '@okr/document-util';
+import { getLocationIndex, locationValidations } from '@okr/location-util';
+import { getMembershipIndex, membershipValidations } from '@okr/relationship-membership-util';
+import { getMenuIndex, menuItemValidations } from '@okr/cms-menu-util';
+import { getOrgIndex, orgValidations } from '@okr/subject-org-util';
+import { getOwnershipIndex, ownershipValidations } from '@okr/relationship-ownership-util';
+import { getPageIndex, pageValidations } from '@okr/cms-page-util';
+import { getPersonIndex, personValidations } from '@okr/subject-person-util';
+import { getPersonalRelIndex, personalRelValidations } from '@okr/relationship-personal-rel-util';
+import { getReservationIndex, reservationValidations } from '@okr/relationship-reservation-util';
+import { getResourceIndex, resourceValidations } from '@okr/resource-util';
+import { getTaskIndex, taskValidations } from '@okr/task-util';
+import { getTransferIndex, transferValidations } from '@okr/relationship-transfer-util';
+import { getWorkrelIndex, workrelValidations } from '@okr/relationship-workrel-util';
+import { getUserIndex, userValidations } from '@okr/user-util';
+import { categoryListValidations } from '@okr/category-util';
+import { getGroupIndex, groupValidations, isAdminMember } from '@okr/subject-group-util';
+import { getResponsibilityIndex } from '@okr/relationship-responsibility-util';
+import { getSessionIndex } from '@okr/session-util';
 
 
 export interface FavMismatch {

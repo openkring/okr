@@ -1,11 +1,11 @@
 import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryI18n, categoryListValidations } from '@bk2/category-util';
-import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { CategoryI18n, categoryListValidations } from '@okr/category-util';
+import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
 @Component({
   selector: 'bk-category-list-form',

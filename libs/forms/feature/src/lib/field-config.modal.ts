@@ -6,10 +6,10 @@ import {
   ModalController,
 } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { Field } from '@bk2/shared-models';
-import { safeStructuredClone } from '@bk2/shared-util-core';
-import { isDisplayField } from '@bk2/forms-util';
+import { Header } from '@okr/shared-ui';
+import { Field } from '@okr/shared-models';
+import { safeStructuredClone } from '@okr/shared-util-core';
+import { isDisplayField } from '@okr/forms-util';
 
 @Component({
   selector: 'bk-field-config-modal',

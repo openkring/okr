@@ -5,13 +5,13 @@ import { signalStore, withComputed, withMethods, withProps, withState } from '@n
 import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { BookingLineModel, BookingModel } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { BookingLineModel, BookingModel } from '@okr/shared-models';
 
-import { AccountingStore } from '@bk2/finance-accounting-feature';
-import { AccountService } from '@bk2/finance-account-data-access';
-import { BookingLineService, BookingService } from '@bk2/finance-booking-data-access';
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountService } from '@okr/finance-account-data-access';
+import { BookingLineService, BookingService } from '@okr/finance-booking-data-access';
 import {
   BOOKING_ACTIONS,
   BookingAction,
@@ -20,11 +20,11 @@ import {
   buildReceiptPayload,
   matchActions,
   ReceiptParty,
-} from '@bk2/finance-booking-util';
-import { PersonService } from '@bk2/subject-person-data-access';
-import { OrgService } from '@bk2/subject-org-data-access';
-import { AddressService } from '@bk2/subject-address-data-access';
-import { DocGenerationService } from '@bk2/pdf-template-data-access';
+} from '@okr/finance-booking-util';
+import { PersonService } from '@okr/subject-person-data-access';
+import { OrgService } from '@okr/subject-org-data-access';
+import { AddressService } from '@okr/subject-address-data-access';
+import { DocGenerationService } from '@okr/pdf-template-data-access';
 
 import { BookingEditModal } from './booking-edit.modal';
 

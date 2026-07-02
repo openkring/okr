@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UserModel, NameDisplay, PersonSortCriteria, DeliveryType, AvatarUsage, PrivacyUsage, Roles, Language } from '@bk2/shared-models';
-import * as coreUtils from '@bk2/shared-util-core';
+import { UserModel, NameDisplay, PersonSortCriteria, DeliveryType, AvatarUsage, PrivacyUsage, Roles, Language } from '@okr/shared-models';
+import * as coreUtils from '@okr/shared-util-core';
 import {
   flattenRoles,
   structureRoles,
@@ -25,7 +25,7 @@ import { UserNotificationFormModel } from './user-notification-form.model';
 import { UserPrivacyFormModel } from './user-privacy-form.model';
 
 // Mock shared utility functions
-vi.mock('@bk2/shared-util-core', async importOriginal => {
+vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
   return {
     ...actual,

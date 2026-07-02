@@ -1,4 +1,4 @@
-import { die } from '@bk2/shared-util-core';
+import { die } from '@okr/shared-util-core';
 import { Subscription } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -11,7 +11,7 @@ import {
 
 // die() returns `never` and throws in production; navigateByUrl relies on that to
 // short-circuit before dereferencing router. The mock must throw too.
-vi.mock('@bk2/shared-util-core', () => ({
+vi.mock('@okr/shared-util-core', () => ({
   die: vi.fn((message: string) => { throw new Error(message); })
 }));
 

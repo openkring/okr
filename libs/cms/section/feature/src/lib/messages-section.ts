@@ -2,10 +2,10 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonBadge, IonCard, IonCardContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { debugMessage } from '@bk2/shared-util-core';
-import { navigateByUrl } from '@bk2/shared-util-angular';
-import { MatrixRoom, MessagesConfig, MessagesSection } from '@bk2/shared-models';
+import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { debugMessage } from '@okr/shared-util-core';
+import { navigateByUrl } from '@okr/shared-util-angular';
+import { MatrixRoom, MessagesConfig, MessagesSection } from '@okr/shared-models';
 
 import { MessagesStore } from './messages-section.store';
 

@@ -1,5 +1,5 @@
 import { getStorage } from 'firebase-admin/storage';
-import type { TemplateAssetRef } from '@bk2/shared-models';
+import type { TemplateAssetRef } from '@okr/shared-models';
 
 interface CachedUrl {
   url: string;

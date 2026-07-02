@@ -1,5 +1,5 @@
-import { LocationModel } from '@bk2/shared-models';
-import { die, isType } from '@bk2/shared-util-core';
+import { LocationModel } from '@okr/shared-models';
+import { die, isType } from '@okr/shared-util-core';
 
 export function isLocation(location: unknown, tenantId: string): location is LocationModel {
   return isType(location, new LocationModel(tenantId));

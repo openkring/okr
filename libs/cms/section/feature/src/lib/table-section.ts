@@ -2,8 +2,8 @@ import { NgStyle } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { TableSection } from '@bk2/shared-models';
-import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { TableSection } from '@okr/shared-models';
+import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { SectionStore } from './section.store';
 
 /**

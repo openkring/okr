@@ -2,13 +2,13 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular/standalone';
 
-import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { debugMessage, hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, isBrowser } from '@bk2/shared-util-angular';
-import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { TaskModel, TasksConfig, TasksSection } from '@bk2/shared-models';
+import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { debugMessage, hasRole } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
+import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { TaskModel, TasksConfig, TasksSection } from '@okr/shared-models';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 import { TasksStore } from './tasks-section.store';
 
 

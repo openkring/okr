@@ -5,7 +5,7 @@ import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
 
-import { addDuration, convertDateFormatToString, getTodayStr, DateFormat } from '@bk2/shared-util-core';
+import { addDuration, convertDateFormatToString, getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, BEXIO_BASE_V4 } from './shared';
 

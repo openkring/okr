@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { LowercaseWordMask } from '@bk2/shared-config';
-import { CategoryListModel, PersonModel, RoleName, TaskModel, TaskModelName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header, StringList } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
+import { LowercaseWordMask } from '@okr/shared-config';
+import { CategoryListModel, PersonModel, RoleName, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header, StringList } from '@okr/shared-ui';
+import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
 
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { TaskForm } from '@bk2/task-ui';
-import { AvatarSelect } from '@bk2/avatar-ui';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { TaskForm } from '@okr/task-ui';
+import { AvatarSelect } from '@okr/avatar-ui';
 
 import { TaskStore } from './task.store';
 

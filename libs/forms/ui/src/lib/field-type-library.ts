@@ -1,7 +1,7 @@
 import { Component, computed, output, signal } from '@angular/core';
 import { CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
 import { IonSearchbar } from '@ionic/angular/standalone';
-import { FieldType } from '@bk2/shared-models';
+import { FieldType } from '@okr/shared-models';
 import { FieldTypeCard, FieldTypeDef, FIELD_TYPE_DEFS } from './field-type-card';
 
 @Component({

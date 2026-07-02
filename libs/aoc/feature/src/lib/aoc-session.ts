@@ -2,12 +2,12 @@
 import { Component, computed, inject } from '@angular/core';
 import { ActionSheetController, IonBadge, IonButton, IonButtons, IonCard, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
 
-import { SessionModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { DateFormat, convertDateFormatToString, generateRandomString } from '@bk2/shared-util-core';
-import { getSessionStatus, getSessionStatusColor } from '@bk2/session-util';
+import { SessionModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { DateFormat, convertDateFormatToString, generateRandomString } from '@okr/shared-util-core';
+import { getSessionStatus, getSessionStatusColor } from '@okr/session-util';
 
 import { AocSessionStore } from './aoc-session.store';
 

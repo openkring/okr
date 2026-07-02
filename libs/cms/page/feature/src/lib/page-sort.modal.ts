@@ -1,9 +1,9 @@
 import { Component, inject, input, output } from '@angular/core';
 import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared-models';
-import { Header, Spinner } from '@bk2/shared-ui';
-import { arrayMove } from '@bk2/shared-util-core';
+import { SectionModel } from '@okr/shared-models';
+import { Header, Spinner } from '@okr/shared-ui';
+import { arrayMove } from '@okr/shared-util-core';
 
 import { PageStore } from './page.store';
 

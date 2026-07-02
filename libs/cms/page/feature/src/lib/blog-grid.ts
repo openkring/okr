@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 
-import { SectionModel, UserModel } from '@bk2/shared-models';
-import { SectionDispatcher } from '@bk2/cms-section-feature';
+import { SectionModel, UserModel } from '@okr/shared-models';
+import { SectionDispatcher } from '@okr/cms-section-feature';
 
 /**
  * Full-width Card Grid layout.

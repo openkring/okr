@@ -10,10 +10,10 @@ import { FormsModule } from '@angular/forms';
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
 
-import { LowercaseWordMask } from '@bk2/shared-config';
-import { BaseProperty } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { getIndexOfKey } from '@bk2/shared-util-core';
+import { LowercaseWordMask } from '@okr/shared-config';
+import { BaseProperty } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { getIndexOfKey } from '@okr/shared-util-core';
 
 @Component({
   selector: 'bk-property-list',

@@ -1,4 +1,4 @@
-import { Roles } from '@bk2/shared-models';
+import { Roles } from '@okr/shared-models';
 
 export type UserAuthFormModel = {
   roles: Roles;

@@ -1,4 +1,4 @@
-import { PrivacyAccessor, RoleName, Roles, UserModel } from '@bk2/shared-models';
+import { PrivacyAccessor, RoleName, Roles, UserModel } from '@okr/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   checkAuthorization,

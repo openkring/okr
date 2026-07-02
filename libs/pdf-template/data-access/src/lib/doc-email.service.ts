@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 
-import { ENV } from '@bk2/shared-config';
+import { ENV } from '@okr/shared-config';
 
 /** A user-picked file attached inline (base64) to the email. */
 export interface InlineAttachment {

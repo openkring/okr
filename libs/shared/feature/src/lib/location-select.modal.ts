@@ -2,12 +2,12 @@ import { Component, ElementRef, OnDestroy, computed, effect, inject, input, link
 import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
 import type * as L from 'leaflet';
 
-import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
-import { LocationModel, LocationModelName, UserModel } from '@bk2/shared-models';
-import { copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
+import { EmptyList, Header, Spinner } from '@okr/shared-ui';
+import { LocationModel, LocationModelName, UserModel } from '@okr/shared-models';
+import { copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { SvgIconPipe, getSvgIconUrl } from '@bk2/shared-pipes';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { SvgIconPipe, getSvgIconUrl } from '@okr/shared-pipes';
 
 import { FIT_PADDING, MAX_FIT_ZOOM, LocationSelectStore } from './location-select.store';
 

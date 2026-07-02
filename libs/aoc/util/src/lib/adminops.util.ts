@@ -1,9 +1,9 @@
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { ToastController } from '@ionic/angular/standalone';
 
-import { FirebaseUserModel, LogInfo, PersonModel, UserModel } from '@bk2/shared-models';
-import { error, showToast } from '@bk2/shared-util-angular';
-import { die, generateRandomString } from '@bk2/shared-util-core';
+import { FirebaseUserModel, LogInfo, PersonModel, UserModel } from '@okr/shared-models';
+import { error, showToast } from '@okr/shared-util-angular';
+import { die, generateRandomString } from '@okr/shared-util-core';
 import { getApp } from 'firebase/app';
 
 export function getLogInfo(key: string | undefined, name: string | undefined, message: string, isVerbose = true): LogInfo {

@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
+import { Header } from '@okr/shared-ui';
 
 import { QuizStore } from './quiz.store';
 

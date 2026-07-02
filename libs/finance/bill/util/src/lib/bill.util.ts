@@ -1,5 +1,5 @@
-import { BillModel } from '@bk2/shared-models';
-import { addIndexElement } from '@bk2/shared-util-core';
+import { BillModel } from '@okr/shared-models';
+import { addIndexElement } from '@okr/shared-util-core';
 
 export function newBill(tenantId: string): BillModel {
   return new BillModel(tenantId);

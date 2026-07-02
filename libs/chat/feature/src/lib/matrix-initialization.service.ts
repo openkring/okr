@@ -8,9 +8,9 @@ import { getAuth } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { filter, switchMap, take, tap } from 'rxjs/operators';
 
-import { AppStore } from '@bk2/shared-feature';
-import { MatrixChatService } from '@bk2/chat-data-access';
-import { FcmService } from '@bk2/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { MatrixChatService } from '@okr/chat-data-access';
+import { FcmService } from '@okr/shared-data-access';
 import { MatrixChatStore } from './matrix-chat.store';
 
 /**

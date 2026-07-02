@@ -8,7 +8,7 @@ const libraryConfig = defineConfig({
   cacheDir: '../../../../node_modules/.vite/libs/relationship/membership/util',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
-    // membership.util transitively imports the @bk2/shared-util-angular barrel (Ionic-coupled);
+    // membership.util transitively imports the @okr/shared-util-angular barrel (Ionic-coupled);
     // inline @ionic so Vite resolves its directory imports instead of failing ESM resolution.
     server: { deps: { inline: [/@ionic\/angular/, /@ionic\/core/] } },
     // only keep project-specific settings here

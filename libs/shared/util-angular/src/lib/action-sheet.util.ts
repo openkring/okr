@@ -1,4 +1,4 @@
-import { getSvgIconUrl } from "@bk2/shared-util-core";
+import { getSvgIconUrl } from "@okr/shared-util-core";
 import { ActionSheetButton, ActionSheetOptions } from "@ionic/angular";
 
 export function createActionSheetOptions(

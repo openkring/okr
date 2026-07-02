@@ -6,15 +6,15 @@ import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { of } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { BillCollection, BillModel } from '@bk2/shared-models';
-import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { BillCollection, BillModel } from '@okr/shared-models';
+import { debugListLoaded, getSystemQuery, nameMatches } from '@okr/shared-util-core';
 
-import { BillService } from '@bk2/finance-bill-data-access';
-import { BILL_I18N_KEYS, BillI18n } from '@bk2/finance-bill-util';
-import { AccountingStore } from '@bk2/finance-accounting-feature';
+import { BillService } from '@okr/finance-bill-data-access';
+import { BILL_I18N_KEYS, BillI18n } from '@okr/finance-bill-util';
+import { AccountingStore } from '@okr/finance-accounting-feature';
 
 export type { BillI18n };
 

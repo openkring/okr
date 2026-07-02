@@ -9,12 +9,12 @@ vi.mock('@angular/core', async (importOriginal) => {
   };
 });
 
-vi.mock('@bk2/shared-util-core', () => ({
+vi.mock('@okr/shared-util-core', () => ({
   isBrowser: vi.fn(() => true),
 }));
 
 import { inject } from '@angular/core';
-import { isBrowser } from '@bk2/shared-util-core';
+import { isBrowser } from '@okr/shared-util-core';
 import { ConsentService, CONSENT_KEY, DEFAULT_CONSENT, ConsentState } from './consent.service';
 
 function makeService(platform: 'browser' | 'server'): ConsentService {

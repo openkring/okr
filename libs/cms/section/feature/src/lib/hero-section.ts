@@ -1,8 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
-import { Img, Spinner } from '@bk2/shared-ui';
+import { HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
+import { Img, Spinner } from '@okr/shared-ui';
 
 @Component({
   selector: 'bk-hero-section',

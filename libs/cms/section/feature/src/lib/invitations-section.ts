@@ -3,11 +3,11 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effec
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 
-import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@bk2/shared-models';
-import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { getAttendanceColor, getAttendanceIcon, hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, isBrowser, navigateByUrl } from '@bk2/shared-util-angular';
-import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@okr/shared-models';
+import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { getAttendanceColor, getAttendanceIcon, hasRole } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { InvitationSectionStore } from './invitations-section.store';
 
 @Component({

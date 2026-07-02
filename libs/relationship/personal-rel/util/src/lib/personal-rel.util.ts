@@ -1,5 +1,5 @@
-import { PersonalRelModel } from '@bk2/shared-models';
-import { addIndexElement } from '@bk2/shared-util-core';
+import { PersonalRelModel } from '@okr/shared-models';
+import { addIndexElement } from '@okr/shared-util-core';
 
 /*-------------------------- search index --------------------------------*/
 /**

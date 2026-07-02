@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Roles } from '@bk2/shared-models';
+import { Roles } from '@okr/shared-models';
 
 import { resolveVcardCapability, vcardTier } from './vcard-capability';
 

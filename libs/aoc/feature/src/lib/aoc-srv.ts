@@ -1,15 +1,15 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonSpinner, IonTitle, IonToolbar, ToastController } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ListFilter } from '@bk2/shared-ui';
-import { convertDateFormatToString, DateFormat, getAge as getAgeFn } from '@bk2/shared-util-core';
-import { ColorIonic, SrvIndex } from '@bk2/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { ListFilter } from '@okr/shared-ui';
+import { convertDateFormatToString, DateFormat, getAge as getAgeFn } from '@okr/shared-util-core';
+import { ColorIonic, SrvIndex } from '@okr/shared-models';
 
-import { AvatarLabel } from '@bk2/avatar-ui';
+import { AvatarLabel } from '@okr/avatar-ui';
 
 import { AocSrvStore, getMismatches } from './aoc-srv.store';
-import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'bk-aoc-srv',

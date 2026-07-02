@@ -7,20 +7,20 @@ import { addMonths, format } from 'date-fns';
 import { doc } from 'firebase/firestore';
 import { from, firstValueFrom, map, of } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, ModelSelectService } from '@bk2/shared-feature';
-import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, subDuration, warn } from '@bk2/shared-util-core';
-import { error, navigateByUrl, confirm } from '@bk2/shared-util-angular';
-import { yearMatches } from '@bk2/shared-categories';
-import { MAX_DATES_PER_SERIES } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, ModelSelectService } from '@okr/shared-feature';
+import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, subDuration, warn } from '@okr/shared-util-core';
+import { error, navigateByUrl, confirm } from '@okr/shared-util-angular';
+import { yearMatches } from '@okr/shared-categories';
+import { MAX_DATES_PER_SERIES } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
 
-import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { MembershipService } from '@okr/relationship-membership-data-access';
 
-import { CalEventService } from '@bk2/calevent-data-access';
-import { CALEVENT_I18N_KEYS, getCaleventIndex, isCalEvent } from '@bk2/calevent-util';
-import { RegressionSelectionModal } from '@bk2/calevent-ui';
+import { CalEventService } from '@okr/calevent-data-access';
+import { CALEVENT_I18N_KEYS, getCaleventIndex, isCalEvent } from '@okr/calevent-util';
+import { RegressionSelectionModal } from '@okr/calevent-ui';
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
 

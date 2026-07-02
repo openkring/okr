@@ -1,4 +1,4 @@
-import { die, warn } from '@bk2/shared-util-core';
+import { die, warn } from '@okr/shared-util-core';
 import {
     getCountryCallingCode,
     isSupportedCountry,
@@ -15,7 +15,7 @@ import {
     parsePhoneNumber
 } from './phone.util';
 
-vi.mock('@bk2/shared-util-core', () => ({
+vi.mock('@okr/shared-util-core', () => ({
   warn: vi.fn(),
   die: vi.fn()
 }));

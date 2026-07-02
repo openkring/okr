@@ -1,7 +1,7 @@
 import { Component, inject, input, viewChild } from '@angular/core';
 import { IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
 
-import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { Header } from './header';
 

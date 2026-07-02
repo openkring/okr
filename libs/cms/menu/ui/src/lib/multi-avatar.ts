@@ -1,10 +1,10 @@
 import { Component, computed, input } from '@angular/core';
 import { IonBadge, IonIcon, IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { extractFirstPartOfOptionalTupel } from '@bk2/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { extractFirstPartOfOptionalTupel } from '@okr/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 @Component({
   selector: 'bk-multi-avatar',

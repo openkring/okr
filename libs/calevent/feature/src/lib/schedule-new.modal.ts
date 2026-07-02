@@ -1,11 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IonButton, IonChip, IonIcon, IonDatetime, IonModal, IonContent, IonItem, IonInput, IonTextarea, ModalController } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { Header } from '@bk2/shared-ui';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
-import { CALEVENT_I18N_KEYS, CaleventI18n } from '@bk2/calevent-util';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { Header } from '@okr/shared-ui';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
 
 @Component({
   selector: 'bk-schedule-new-modal',

@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonToggle } from '@ionic/angular/standalone';
 
-import { Button, Header, ResultLog, StringSelect, StringSelectI18n } from '@bk2/shared-ui';
+import { Button, Header, ResultLog, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 
 import { AocAdminOpsStore } from './aoc-adminops.store';
 

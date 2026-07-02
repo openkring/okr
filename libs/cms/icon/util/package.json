@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/cms-icon-util",
+  "name": "@okr/cms-icon-util",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,9 +7,9 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-constants": "*",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-util-core": "*"
+    "@okr/shared-constants": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-util-core": "*"
   },
   "module": "./src/index.js",
   "type": "module"

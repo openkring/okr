@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { DocumentModel } from '@bk2/shared-models';
-import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, Spinner } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { DocumentModel } from '@okr/shared-models';
+import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, Spinner } from '@okr/shared-ui';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
 import { DocumentStore } from './document.store';
 

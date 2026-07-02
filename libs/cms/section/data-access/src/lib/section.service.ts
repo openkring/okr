@@ -1,13 +1,13 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable, first, forkJoin, map, of } from "rxjs";
 
-import { ENV } from "@bk2/shared-config";
-import { FirestoreService } from "@bk2/shared-data-access";
-import { I18nService } from "@bk2/shared-i18n";
-import { DbQuery, SectionCollection, SectionModel, UserModel } from "@bk2/shared-models";
-import { addSystemQueries, findByKey, getSystemQuery } from "@bk2/shared-util-core";
+import { ENV } from "@okr/shared-config";
+import { FirestoreService } from "@okr/shared-data-access";
+import { I18nService } from "@okr/shared-i18n";
+import { DbQuery, SectionCollection, SectionModel, UserModel } from "@okr/shared-models";
+import { addSystemQueries, findByKey, getSystemQuery } from "@okr/shared-util-core";
 
-import { getSectionIndex } from "@bk2/cms-section-util";
+import { getSectionIndex } from "@okr/cms-section-util";
 import { PFX } from "./scope";
 
 @Injectable({

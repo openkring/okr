@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { IFRAME_SECTION_SHAPE, SectionCollection, SectionModel } from '@bk2/shared-models';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { IFRAME_SECTION_SHAPE, SectionCollection, SectionModel } from '@okr/shared-models';
 
 import { SectionService } from './section.service';
 

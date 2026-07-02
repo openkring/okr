@@ -2,14 +2,14 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { CategoryListModel, DocumentModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
-import { DocumentService } from '@bk2/document-data-access';
-import { DOCUMENT_I18N_KEYS, DocumentI18n } from '@bk2/document-util';
+import { CategoryListModel, DocumentModel, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { DocumentService } from '@okr/document-data-access';
+import { DOCUMENT_I18N_KEYS, DocumentI18n } from '@okr/document-util';
 
-import { DocumentForm } from '@bk2/document-ui';
+import { DocumentForm } from '@okr/document-ui';
 
 @Component({
   selector: 'bk-document-edit-modal',

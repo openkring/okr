@@ -1,8 +1,8 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { OrgModel } from '@bk2/shared-models';
-import { dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { OrgModel } from '@okr/shared-models';
+import { dateValidations, isAfterDate, stringValidations } from '@okr/shared-util-core';
 
 export const orgValidations = staticSuite((model: OrgModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

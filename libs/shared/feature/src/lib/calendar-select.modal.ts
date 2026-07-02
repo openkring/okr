@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonList, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { CalendarModel, UserModel } from '@bk2/shared-models';
-import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
+import { CalendarModel, UserModel } from '@okr/shared-models';
+import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 
 import { CalendarSelectStore } from './calendar-select.store';
 

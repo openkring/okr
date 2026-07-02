@@ -8,25 +8,25 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getDownloadURL, ref } from 'firebase/storage';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { STORAGE } from '@bk2/shared-config';
-import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, AddressModelName, CategoryListModel, DefaultLanguage, DocumentModel, OrgModel, PersonModel } from '@bk2/shared-models';
-import { AlertService, downloadToBrowser } from '@bk2/shared-util-angular';
-import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@bk2/shared-util-core';
-import { Languages } from '@bk2/shared-categories';
-import { MapViewModal } from '@bk2/shared-ui';
+import { FirestoreService } from '@okr/shared-data-access';
+import { STORAGE } from '@okr/shared-config';
+import { AppStore } from '@okr/shared-feature';
+import { AddressCollection, AddressModel, AddressModelName, CategoryListModel, DefaultLanguage, DocumentModel, OrgModel, PersonModel } from '@okr/shared-models';
+import { AlertService, downloadToBrowser } from '@okr/shared-util-angular';
+import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@okr/shared-util-core';
+import { Languages } from '@okr/shared-categories';
+import { MapViewModal } from '@okr/shared-ui';
 
-import { UploadService } from '@bk2/avatar-data-access';
-import { DocumentService } from '@bk2/document-data-access';
-import { FolderService } from '@bk2/folder-data-access';
+import { UploadService } from '@okr/avatar-data-access';
+import { DocumentService } from '@okr/document-data-access';
+import { FolderService } from '@okr/folder-data-access';
 
-import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
-import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, getWebUrl, isAddress, openExternalUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
+import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
+import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, getWebUrl, isAddress, openExternalUrl, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';
-import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
+import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
 
 export type AddressState = {
   parentKey: string;

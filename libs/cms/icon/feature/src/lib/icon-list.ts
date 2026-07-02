@@ -6,11 +6,11 @@ import {
   IonRow, IonThumbnail, IonTitle, IonToolbar,
   PopoverController, ToastController
 } from '@ionic/angular/standalone';
-import { IconModel, RoleName } from '@bk2/shared-models';
-import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { IconModel, RoleName } from '@okr/shared-models';
+import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
 
 import { ICON_SETS, IconStore } from './icon.store';
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { SectionModel } from '@bk2/shared-models';
+import { SectionModel } from '@okr/shared-models';
 import {
   PagePrintContext,
   PagePrintPayload,
@@ -8,7 +8,7 @@ import {
   isPrintableSectionType,
   serializeComputedStyle,
   canvasToImg,
-} from '@bk2/cms-page-util';
+} from '@okr/cms-page-util';
 
 /**
  * Builds the page-print payload from the already-rendered page DOM (Approach A).

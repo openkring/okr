@@ -5,7 +5,7 @@ import {
   IonContent, ModalController,
 } from '@ionic/angular/standalone';
 
-import { EsignRecord } from '@bk2/shared-models';
+import { EsignRecord } from '@okr/shared-models';
 
 interface DeleteConfig {
   title: string;

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAllPersonalRelsOfSubject, getAllPersonalRelsOfObject } from './personal-rel.util';
 import { searchData } from './search.util';
-import { PersonalRelCollection, PersonalRelModel } from '@bk2/shared-models';
+import { PersonalRelCollection, PersonalRelModel } from '@okr/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 
 // Mock the searchData utility

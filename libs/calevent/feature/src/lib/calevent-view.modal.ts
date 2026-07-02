@@ -1,19 +1,19 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { CalEventModel, CalEventModelName, CategoryListModel } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
-import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@bk2/shared-util-core';
-import { addTime } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { CalEventModel, CalEventModelName, CategoryListModel } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
+import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@okr/shared-util-core';
+import { addTime } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { InviteesAccordion } from '@bk2/relationship-invitation-feature';
-import { DocumentsAccordion } from '@bk2/document-feature';
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { AvatarDisplay } from '@bk2/avatar-ui';
+import { InviteesAccordion } from '@okr/relationship-invitation-feature';
+import { DocumentsAccordion } from '@okr/document-feature';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { AvatarDisplay } from '@okr/avatar-ui';
 
-import { CALEVENT_I18N_KEYS, CaleventI18n } from '@bk2/calevent-util';
+import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
 
 import { AttendeesAccordion } from './attendees-accordion';
 

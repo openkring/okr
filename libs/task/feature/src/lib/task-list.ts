@@ -1,15 +1,15 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { PersonModel, RoleName, TaskModel } from '@bk2/shared-models';
-import type { PersonSelectResult } from '@bk2/shared-feature';
-import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, QuickEntryService } from '@bk2/shared-util-angular';
-import { convertDateFormatToString, DateFormat, getAvatarInfo, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
+import { PersonModel, RoleName, TaskModel } from '@okr/shared-models';
+import type { PersonSelectResult } from '@okr/shared-feature';
+import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, QuickEntryService } from '@okr/shared-util-angular';
+import { convertDateFormatToString, DateFormat, getAvatarInfo, getCategoryIcon, hasRole } from '@okr/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { Menu } from '@bk2/cms-menu-feature';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { Menu } from '@okr/cms-menu-feature';
 import { TaskStore } from './task.store';
 
 /**
@@ -238,7 +238,7 @@ export class TaskList {
     this.isSettingQuickEntryValue = true;
     try {
       if (trigger === 'person') {
-        const { PersonSelectModal } = await import('@bk2/shared-feature');
+        const { PersonSelectModal } = await import('@okr/shared-feature');
         const modal = await this.modalController.create({
           component: PersonSelectModal,
           cssClass: 'list-modal',
@@ -257,7 +257,7 @@ export class TaskList {
           textarea.value = value.slice(0, -1);
         }
       } else if (trigger === 'date') {
-        const { DateTimeSelectModal: DateTimeSelectModal } = await import('@bk2/shared-ui');
+        const { DateTimeSelectModal: DateTimeSelectModal } = await import('@okr/shared-ui');
         const modal = await this.modalController.create({
           component: DateTimeSelectModal,
         });

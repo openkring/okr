@@ -1,12 +1,12 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withProps } from '@ngrx/signals';
 
-import { I18nService } from '@bk2/shared-i18n';
-import { AppStore } from '@bk2/shared-feature';
-import { AuthService } from '@bk2/auth-data-access';
-import { AlertService, navigateByUrl } from '@bk2/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
+import { AuthService } from '@okr/auth-data-access';
+import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
 import { Router } from '@angular/router';
-import { AUTH_I18N_KEYS, AuthI18n } from '@bk2/auth-util';
+import { AUTH_I18N_KEYS, AuthI18n } from '@okr/auth-util';
 
 export type { AuthI18n };
 

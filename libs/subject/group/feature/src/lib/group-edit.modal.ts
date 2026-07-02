@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AVATAR_INFO_SHAPE, GroupModel, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
-import { PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
+import { AVATAR_INFO_SHAPE, GroupModel, PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, isPerson, safeStructuredClone } from '@okr/shared-util-core';
+import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
 
-import { GroupForm } from '@bk2/subject-group-ui';
-import { GROUP_I18N_KEYS, GroupI18n } from '@bk2/subject-group-util';
+import { GroupForm } from '@okr/subject-group-ui';
+import { GROUP_I18N_KEYS, GroupI18n } from '@okr/subject-group-util';
 
 @Component({
   selector: 'bk-group-edit-modal',

@@ -4,13 +4,13 @@ import { TestBed } from '@angular/core/testing';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
-import { AppStore } from '@bk2/shared-feature';
-import { mockCollection, mockError } from '@bk2/shared-feature/testing';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { UploadService } from '@bk2/avatar-data-access';
-import { MatrixChatService } from '@bk2/chat-data-access';
-import { SectionService } from '@bk2/cms-section-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { mockCollection, mockError } from '@okr/shared-feature/testing';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { UploadService } from '@okr/avatar-data-access';
+import { MatrixChatService } from '@okr/chat-data-access';
+import { SectionService } from '@okr/cms-section-data-access';
 
 import { SectionStore } from './section.store';
 

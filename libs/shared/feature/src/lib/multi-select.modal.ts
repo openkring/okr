@@ -2,16 +2,16 @@ import { Component, computed, effect, inject, input, linkedSignal } from '@angul
 import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
 
-import { GroupModelName, OrgModel, OrgModelName, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
-import { FullNamePipe } from '@bk2/shared-pipes';
+import { GroupModelName, OrgModel, OrgModelName, PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
+import { FullNamePipe } from '@okr/shared-pipes';
 
-import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { EmptyList, Header, Spinner } from '@okr/shared-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 import { GroupSelectStore } from './group-select.store';
 import { OrgSelectStore } from './org-select.store';
 import { PersonSelectStore } from './person-select.store';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 
 export type MultiSelectSegment = 'org' | 'group' | 'person';

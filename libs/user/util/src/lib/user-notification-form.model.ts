@@ -1,4 +1,4 @@
-import { DeliveryType } from '@bk2/shared-models';
+import { DeliveryType } from '@okr/shared-models';
 
 export type UserNotificationFormModel = {
   newsDelivery: DeliveryType;

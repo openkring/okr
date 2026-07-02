@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { CategoryListModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { CategoryListModel, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
-import { CategoryListForm } from '@bk2/category-ui';
-import { CATEGORY_I18N_KEYS, CategoryI18n } from '@bk2/category-util';
+import { CategoryListForm } from '@okr/category-ui';
+import { CATEGORY_I18N_KEYS, CategoryI18n } from '@okr/category-util';
 
 @Component({
   selector: 'bk-category-edit-modal',

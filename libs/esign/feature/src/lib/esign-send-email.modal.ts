@@ -6,9 +6,9 @@ import {
   ModalController, ToastController,
 } from '@ionic/angular/standalone';
 
-import { Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { EsignRecord } from '@bk2/shared-models';
-import { EsignService } from '@bk2/esign-data-access';
+import { Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { EsignRecord } from '@okr/shared-models';
+import { EsignService } from '@okr/esign-data-access';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

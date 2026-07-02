@@ -3,10 +3,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { ResourceCollection, ResourceModel, UserModel } from '@bk2/shared-models';
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { ResourceCollection, ResourceModel, UserModel } from '@okr/shared-models';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
 import { AppStore } from './app.store';
 import { SHARED_FEATURE_I18N_KEYS, SharedFeatureI18n } from './select-i18n';

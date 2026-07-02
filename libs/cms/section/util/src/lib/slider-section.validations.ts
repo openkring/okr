@@ -1,6 +1,6 @@
 import { only, staticSuite } from 'vest';
 
-import { SliderSection } from '@bk2/shared-models';
+import { SliderSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 

@@ -1,12 +1,12 @@
 import { Component, computed, input } from "@angular/core";
 import { IonAvatar, IonChip, IonImg, IonLabel, IonNote } from "@ionic/angular/standalone";
 
-import { AvatarInfo } from "@bk2/shared-models";
-import { FullNamePipe } from '@bk2/shared-pipes';
-import { coerceBoolean } from "@bk2/shared-util-core";
+import { AvatarInfo } from "@okr/shared-models";
+import { FullNamePipe } from '@okr/shared-pipes';
+import { coerceBoolean } from "@okr/shared-util-core";
 
 import { AvatarPipe } from './avatar.pipe';
-import { getDefaultIcon } from "@bk2/avatar-util";
+import { getDefaultIcon } from "@okr/avatar-util";
 
 @Component({
   selector: 'bk-avatar-display',

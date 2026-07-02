@@ -1,7 +1,7 @@
 import { enforce, only, staticSuite, test } from 'vest';
 
-import { ScsMemberFeesModel } from '@bk2/shared-models';
-import { baseValidations, numberValidations } from '@bk2/shared-util-core';
+import { ScsMemberFeesModel } from '@okr/shared-models';
+import { baseValidations, numberValidations } from '@okr/shared-util-core';
 
 export const scsMemberFeeValidations = staticSuite((model: ScsMemberFeesModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

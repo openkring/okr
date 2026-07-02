@@ -1,13 +1,13 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@bk2/shared-models';
-import { FullNamePipe } from '@bk2/shared-pipes';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@okr/shared-models';
+import { FullNamePipe } from '@okr/shared-pipes';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS } from '@okr/shared-constants';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { personalRelValidations, PersonalRelI18n } from '@bk2/relationship-personal-rel-util';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-personal-rel-util';
 
 @Component({
   selector: 'bk-personal-rel-form',

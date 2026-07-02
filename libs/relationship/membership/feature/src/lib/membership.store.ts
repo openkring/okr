@@ -5,32 +5,32 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@bk2/shared-util-core';
-import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@bk2/shared-util-angular';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
-import { EmailAddressesModal, selectDate } from '@bk2/shared-ui';
+import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categories';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@okr/shared-models';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@okr/shared-util-core';
+import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
+import { EmailAddressesModal, selectDate } from '@okr/shared-ui';
 
-import { TaskService } from '@bk2/task-data-access';
-import { OwnershipService } from '@bk2/relationship-ownership-data-access';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@bk2/relationship-membership-util';
-import { AddressService } from '@bk2/subject-address-data-access';
-import { PersonService } from '@bk2/subject-person-data-access';
-import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
-import { browseUrl } from '@bk2/subject-address-util';
-import { MatrixChatService } from '@bk2/chat-data-access';
-import { InvoiceNewModal } from '@bk2/finance-invoice-feature';
-import { VcardExportService, VcardExportTarget } from '@bk2/vcard-feature';
+import { TaskService } from '@okr/task-data-access';
+import { OwnershipService } from '@okr/relationship-ownership-data-access';
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { AddressService } from '@okr/subject-address-data-access';
+import { PersonService } from '@okr/subject-person-data-access';
+import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
+import { browseUrl } from '@okr/subject-address-util';
+import { MatrixChatService } from '@okr/chat-data-access';
+import { InvoiceNewModal } from '@okr/finance-invoice-feature';
+import { VcardExportService, VcardExportTarget } from '@okr/vcard-feature';
 
 import { MemberNewModal } from './member-new.modal';
 
 import { MembershipEditModal } from './membership-edit.modal';
-import { ActivityService } from '@bk2/activity-data-access';
+import { ActivityService } from '@okr/activity-data-access';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)

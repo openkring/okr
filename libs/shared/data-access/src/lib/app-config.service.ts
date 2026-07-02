@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppConfig, AppConfigCollection } from '@bk2/shared-models';
-import { I18nService } from "@bk2/shared-i18n";
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppConfig, AppConfigCollection } from '@okr/shared-models';
+import { I18nService } from "@okr/shared-i18n";
 
 import { PFX } from "./scope";
 

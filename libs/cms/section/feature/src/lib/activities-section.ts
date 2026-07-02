@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { ActivitiesSection, ActivityModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { ActivitiesSection, ActivityModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { ActivitiesSectionStore } from './activities-section.store';
 

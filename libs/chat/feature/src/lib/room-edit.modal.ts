@@ -1,11 +1,11 @@
 import { Component, computed, inject, input, linkedSignal, model, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { MatrixRoom, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { safeStructuredClone } from '@bk2/shared-util-core';
+import { MatrixRoom, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { safeStructuredClone } from '@okr/shared-util-core';
 
-import { RoomEditForm } from '@bk2/chat-ui';
+import { RoomEditForm } from '@okr/chat-ui';
 import { MatrixChatStore } from './matrix-chat.store';
 
 @Component({

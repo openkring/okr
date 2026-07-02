@@ -1,7 +1,7 @@
 import { orderBy, OrderByDirection, QueryConstraint, where, WhereFilterOp } from 'firebase/firestore';
 import { map, Observable, of } from 'rxjs';
 
-import { BkModel, DbQuery, UserModel } from '@bk2/shared-models';
+import { BkModel, DbQuery, UserModel } from '@okr/shared-models';
 import { warn } from './log.util';
 
 /*----------------------- SEARCH ----------------------------------------------*/

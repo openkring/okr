@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
-import { CategoryListModel, OrgModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { BexioIdMask, ChVatMask } from '@okr/shared-config';
+import { CategoryListModel, OrgModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
-import { OrgI18n, orgValidations } from '@bk2/subject-org-util';
+import { OrgI18n, orgValidations } from '@okr/subject-org-util';
 
 @Component({
   selector: 'bk-org-form',

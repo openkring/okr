@@ -6,16 +6,16 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { AppStore } from '@bk2/shared-feature';
-import { DocumentModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
+import { DocumentModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
 
-import { ActivityService } from '@bk2/activity-data-access';
-import { UploadService } from '@bk2/avatar-data-access';
-import { DocumentService } from '@bk2/document-data-access';
-import { buildDocumentModel } from '@bk2/document-util';
-import { FolderService } from '@bk2/folder-data-access';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { ActivityService } from '@okr/activity-data-access';
+import { UploadService } from '@okr/avatar-data-access';
+import { DocumentService } from '@okr/document-data-access';
+import { buildDocumentModel } from '@okr/document-util';
+import { FolderService } from '@okr/folder-data-access';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 const RAG_FOLDER_KEY = 'rag';
 

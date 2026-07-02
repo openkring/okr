@@ -31,11 +31,11 @@ vi.mock('./alert.util', () => ({
   showToast: vi.fn()
 }));
 
-vi.mock('@bk2/shared-config', () => ({
+vi.mock('@okr/shared-config', () => ({
   STORAGE: {}
 }));
 
-vi.mock('@bk2/shared-util-core', () => ({
+vi.mock('@okr/shared-util-core', () => ({
   getTodayStr: vi.fn(() => '20240117'),
   DateFormat: { StoreDate: 'YYYYMMDD' }
 }));

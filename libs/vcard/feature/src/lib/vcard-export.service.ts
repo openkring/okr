@@ -4,9 +4,9 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { AlertService } from '@bk2/shared-util-angular';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { AlertService } from '@okr/shared-util-angular';
 import {
   AddressCollection,
   AddressModel,
@@ -17,8 +17,8 @@ import {
   Roles,
   WorkrelCollection,
   WorkrelModel,
-} from '@bk2/shared-models';
-import { getSystemQuery } from '@bk2/shared-util-core';
+} from '@okr/shared-models';
+import { getSystemQuery } from '@okr/shared-util-core';
 import {
   ExportScope,
   resolveVcardCapability,
@@ -29,7 +29,7 @@ import {
   VcardI18n,
   VCARD_I18N_KEYS,
   VcardTargetKind,
-} from '@bk2/vcard-util';
+} from '@okr/vcard-util';
 
 import { downloadVcfResponse } from './download.util';
 import { VcardExportScopeModal } from './vcard-export-scope.modal';

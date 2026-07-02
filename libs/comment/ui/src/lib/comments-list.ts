@@ -1,8 +1,8 @@
 import { Component, input } from '@angular/core';
 import { IonCol, IonRow } from '@ionic/angular/standalone';
 
-import { CommentModel } from '@bk2/shared-models';
-import { PrettyDatePipe } from '@bk2/shared-pipes';
+import { CommentModel } from '@okr/shared-models';
+import { PrettyDatePipe } from '@okr/shared-pipes';
 
 @Component({
   selector: 'bk-comments-list',

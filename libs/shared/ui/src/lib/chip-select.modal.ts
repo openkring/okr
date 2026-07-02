@@ -5,7 +5,7 @@ import { filter, map, switchMap } from 'rxjs/operators';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { Header } from './header';
-import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 
 const ChipSelectStore = signalStore(

@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { ButtonAction, ButtonSection, ColorIonic } from '@bk2/shared-models';
-import { categoryValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
-import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { ButtonAction, ButtonSection, ColorIonic } from '@okr/shared-models';
+import { categoryValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
+import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 
 import { baseSectionValidations } from './base-section.validations';
 

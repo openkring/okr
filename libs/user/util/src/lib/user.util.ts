@@ -1,5 +1,5 @@
-import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, Roles, UserModel } from '@bk2/shared-models';
-import { die, isType } from '@bk2/shared-util-core';
+import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, Roles, UserModel } from '@okr/shared-models';
+import { die, isType } from '@okr/shared-util-core';
 
 import { UserAuthFormModel } from './user-auth-form.model';
 import { UserDisplayFormModel } from './user-display-form.model';

@@ -1,9 +1,9 @@
 
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { LocationModel } from '@bk2/shared-models';
-import { baseValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { LocationModel } from '@okr/shared-models';
+import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const locationValidations = staticSuite((model: LocationModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

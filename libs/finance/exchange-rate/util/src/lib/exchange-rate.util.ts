@@ -1,4 +1,4 @@
-import { ExchangeRateModel } from '@bk2/shared-models';
+import { ExchangeRateModel } from '@okr/shared-models';
 
 export function convertAmount(amountCents: number, rate: number): number {
   return Math.round(amountCents * rate);

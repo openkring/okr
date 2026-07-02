@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryChangeForm } from '@bk2/relationship-membership-ui';
-import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm, MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@bk2/relationship-membership-util';
-import { AvatarInfo, CategoryListModel, MembershipModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { getFullName, newAvatarInfo } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { CategoryChangeForm } from '@okr/relationship-membership-ui';
+import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm, MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
+import { AvatarInfo, CategoryListModel, MembershipModel, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { getFullName, newAvatarInfo } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { RelationshipToolbar } from '@bk2/avatar-ui';
+import { RelationshipToolbar } from '@okr/avatar-ui';
 
 @Component({
   selector: 'bk-category-change-modal',

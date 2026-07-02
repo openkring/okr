@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { die } from '@bk2/shared-util-core';
+import { die } from '@okr/shared-util-core';
 import * as ibantools from 'ibantools';
 
 /**

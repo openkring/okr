@@ -1,11 +1,11 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
-import { RoleName, UserModel } from "@bk2/shared-models";
-import { EmailInput, EmailInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@bk2/shared-ui";
-import { coerceBoolean, hasRole } from "@bk2/shared-util-core";
+import { RoleName, UserModel } from "@okr/shared-models";
+import { EmailInput, EmailInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
+import { coerceBoolean, hasRole } from "@okr/shared-util-core";
 
-import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations } from "@bk2/user-util";
+import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations } from "@okr/user-util";
 
 @Component({
   selector: 'bk-user-model-form',

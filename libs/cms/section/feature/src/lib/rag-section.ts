@@ -3,11 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { marked } from 'marked';
 import { IonButton, IonCard, IonCardContent, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonSpinner, IonText } from '@ionic/angular/standalone';
 
-import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { DocumentModel, RagConfig, SectionModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
+import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { DocumentModel, RagConfig, SectionModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { hasRole } from '@okr/shared-util-core';
+import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
 
 import { RagStore } from './rag-section.store';
 

@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
-import { MembershipModel, RoleName } from '@bk2/shared-models';
-import { FullNamePipe, RellogPipe } from '@bk2/shared-pipes';
-import { EmptyList } from '@bk2/shared-ui';
-import { DateFormat, getTodayStr, hasRole, isOngoing } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { MembershipModel, RoleName } from '@okr/shared-models';
+import { FullNamePipe, RellogPipe } from '@okr/shared-pipes';
+import { EmptyList } from '@okr/shared-ui';
+import { DateFormat, getTodayStr, hasRole, isOngoing } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 import { MembershipStore } from './membership.store';
 

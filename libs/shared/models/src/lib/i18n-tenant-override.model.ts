@@ -1,4 +1,4 @@
-import { DEFAULT_KEY } from '@bk2/shared-constants';
+import { DEFAULT_KEY } from '@okr/shared-constants';
 import { BkModel } from './base.model';
 
 export class I18nTenantOverrideModel implements BkModel {

@@ -1,8 +1,8 @@
 import { Component, computed, input, signal } from '@angular/core';
 import { IonAvatar, IonItem, IonLabel, IonList, IonPopover } from '@ionic/angular/standalone';
 
-import { MatrixReadReceipt } from '@bk2/shared-models';
-import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime } from '@bk2/chat-util';
+import { MatrixReadReceipt } from '@okr/shared-models';
+import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime } from '@okr/chat-util';
 
 @Component({
   selector: 'bk-matrix-read-receipt-strip',

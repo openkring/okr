@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAllOwnershipsOfOwner, getAllOwnershipsOfResource } from './ownership.util';
 import { searchData } from './search.util';
-import { OwnershipCollection, OwnershipModel } from '@bk2/shared-models';
+import { OwnershipCollection, OwnershipModel } from '@okr/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 
 // Mock the searchData utility

@@ -1,4 +1,4 @@
-import { VatCodeModel } from '@bk2/shared-models';
+import { VatCodeModel } from '@okr/shared-models';
 
 export function computeVatFromNet(netCents: number, ratePercent: number): number {
   return Math.round(netCents * ratePercent / 100);

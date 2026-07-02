@@ -18,12 +18,12 @@ import {
   TemplateModel,
   TemplateVersionModel,
   DocGenerationModel,
-} from '@bk2/shared-models';
+} from '@okr/shared-models';
 import { registerHelpers } from './handlebars-helpers';
 import { getBrowser } from './browser-pool';
 import { compileTemplate } from './template-cache';
 import { resolvePayee, renderQrSlipSvg, buildQrSlipPageHtml } from './qr-slip';
-import { buildQrSlipData } from '@bk2/shared-util-functions';
+import { buildQrSlipData } from '@okr/shared-util-functions';
 import { resolveAssetUrls } from './asset-resolver';
 import { checkRateLimit } from './rate-limiter';
 import { sanitizeHtml } from './sanitize';

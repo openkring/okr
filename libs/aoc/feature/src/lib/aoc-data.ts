@@ -2,10 +2,10 @@ import { Component, computed, inject, linkedSignal, signal } from '@angular/core
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular/standalone';
 
-import { Button, CategorySelect, Header, ResultLog } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
-import { PersonModelName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { Button, CategorySelect, Header, ResultLog } from '@okr/shared-ui';
+import { hasRole } from '@okr/shared-util-core';
+import { PersonModelName } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { AocDataStore, FavMismatch } from './aoc-data.store';
 

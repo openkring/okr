@@ -1,14 +1,14 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { InvitationModel, InvitationModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
-import { ModelSelectService } from '@bk2/shared-feature';
+import { InvitationModel, InvitationModelName, RoleName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { ModelSelectService } from '@okr/shared-feature';
 
-import { CommentsAccordion } from '@bk2/comment-feature';
+import { CommentsAccordion } from '@okr/comment-feature';
 
-import { InvitationForm } from '@bk2/relationship-invitation-ui';
+import { InvitationForm } from '@okr/relationship-invitation-ui';
 import { InvitationStore } from './invitation.store';
 
 

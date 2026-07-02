@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonContent, IonFooter, IonInput, IonItem, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { ScsMemberFeesModel } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
+import { ScsMemberFeesModel } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
 
 @Component({
   selector: 'bk-scs-member-fee-invoice-id-modal',

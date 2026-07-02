@@ -1,9 +1,9 @@
 
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { ReservationApplyModel } from '@bk2/shared-models';
-import { avatarValidations, booleanValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { ReservationApplyModel } from '@okr/shared-models';
+import { avatarValidations, booleanValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
 export const reservationApplyValidations = staticSuite((model: ReservationApplyModel, field?: string) => {
   if (field) only(field);

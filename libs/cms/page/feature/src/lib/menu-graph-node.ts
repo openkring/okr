@@ -3,11 +3,11 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
 import { IonBadge, IonButton, IonIcon } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { MenuItemModel } from '@bk2/shared-models';
-import { I18nService } from '@bk2/shared-i18n';
-import { VersionCheckService } from '@bk2/shared-util-angular';
-import { expandMenuTokens } from '@bk2/cms-menu-util';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { MenuItemModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+import { VersionCheckService } from '@okr/shared-util-angular';
+import { expandMenuTokens } from '@okr/cms-menu-util';
 import { DependencyNode, MenuGraphStore } from './menu-graph.store';
 
 /**

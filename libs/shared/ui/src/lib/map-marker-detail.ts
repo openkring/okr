@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { MapMarker } from './map-view.modal';
 

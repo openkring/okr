@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, computed, input, signal, viewChild } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { IMAGE_STYLE_SHAPE, SliderSection } from '@bk2/shared-models';
-import { Img, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { IMAGE_STYLE_SHAPE, SliderSection } from '@okr/shared-models';
+import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 
 /**

@@ -10,7 +10,7 @@ vi.mock('@jsverse/transloco', () => ({
   TranslocoService: class {},
 }));
 
-vi.mock('@bk2/shared-models', () => ({
+vi.mock('@okr/shared-models', () => ({
   I18nTenantOverrideCollection: 'i18nTenantOverride',
 }));
 

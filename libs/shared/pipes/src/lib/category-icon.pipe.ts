@@ -1,7 +1,7 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
-import { getCategoryIcon } from '@bk2/shared-categories';
-import { ENV } from '@bk2/shared-config';
-import { CategoryModel } from '@bk2/shared-models';
+import { getCategoryIcon } from '@okr/shared-categories';
+import { ENV } from '@okr/shared-config';
+import { CategoryModel } from '@okr/shared-models';
 
 @Pipe({
   name: 'categoryIcon',

@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/shared-constants",
+  "name": "@okr/shared-constants",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

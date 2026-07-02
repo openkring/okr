@@ -9,10 +9,10 @@ export const FIREBASE_USER_SHAPE: FirebaseUserModel = {
 };
 import { only, staticSuite } from 'vest';
 
-import { booleanValidations, stringValidations } from '@bk2/shared-util-core';
+import { booleanValidations, stringValidations } from '@okr/shared-util-core';
 
-import { FirebaseUserModel } from '@bk2/shared-models';
-import { DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL, EMAIL_LENGTH, NAME_LENGTH, PHONE_LENGTH, URL_LENGTH } from '@bk2/shared-constants';
+import { FirebaseUserModel } from '@okr/shared-models';
+import { DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL, EMAIL_LENGTH, NAME_LENGTH, PHONE_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 
 export const firebaseUserFormValidations = staticSuite((model: FirebaseUserModel, field?: string) => {
   only(field);

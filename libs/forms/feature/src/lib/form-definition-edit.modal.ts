@@ -2,12 +2,12 @@ import { Component, computed, inject, input, linkedSignal } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonNote, IonRadio, IonRadioGroup, IonSelect, IonSelectOption, IonTextarea, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { Header } from '@bk2/shared-ui';
-import { FormDefinitionModel, SubmissionTarget } from '@bk2/shared-models';
-import { safeStructuredClone } from '@bk2/shared-util-core';
-import { FormDefinitionService } from '@bk2/forms-data-access';
-import { FORM_MAPPINGS, getPrefillFields } from '@bk2/forms-util';
+import { AppStore } from '@okr/shared-feature';
+import { Header } from '@okr/shared-ui';
+import { FormDefinitionModel, SubmissionTarget } from '@okr/shared-models';
+import { safeStructuredClone } from '@okr/shared-util-core';
+import { FormDefinitionService } from '@okr/forms-data-access';
+import { FORM_MAPPINGS, getPrefillFields } from '@okr/forms-util';
 
 @Component({
   selector: 'bk-form-definition-edit-modal',

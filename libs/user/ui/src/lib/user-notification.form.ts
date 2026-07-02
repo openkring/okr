@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
-import { DeliveryTypes } from "@bk2/shared-categories";
-import { DeliveryType, UserModel } from "@bk2/shared-models";
-import { CategoryOld, CategoryOldI18n } from "@bk2/shared-ui";
-import { coerceBoolean } from "@bk2/shared-util-core";
+import { DeliveryTypes } from "@okr/shared-categories";
+import { DeliveryType, UserModel } from "@okr/shared-models";
+import { CategoryOld, CategoryOldI18n } from "@okr/shared-ui";
+import { coerceBoolean } from "@okr/shared-util-core";
 
-import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, userNotificationFormValidations } from "@bk2/user-util";
+import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, userNotificationFormValidations } from "@okr/user-util";
 
 @Component({
   selector: 'bk-user-notification-form',

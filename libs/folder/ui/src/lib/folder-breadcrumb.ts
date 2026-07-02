@@ -1,8 +1,8 @@
 import { Component, inject, input, output, signal, effect } from '@angular/core';
 import { IonBreadcrumb, IonBreadcrumbs } from '@ionic/angular/standalone';
 
-import { FolderModel } from '@bk2/shared-models';
-import { FolderService } from '@bk2/folder-data-access';
+import { FolderModel } from '@okr/shared-models';
+import { FolderService } from '@okr/folder-data-access';
 
 @Component({
   selector: 'bk-folder-breadcrumb',

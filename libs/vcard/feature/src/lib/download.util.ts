@@ -1,4 +1,4 @@
-import { VcardExportResponse } from '@bk2/vcard-util';
+import { VcardExportResponse } from '@okr/vcard-util';
 
 /**
  * Trigger the browser download for a vCard export response (spec §8).

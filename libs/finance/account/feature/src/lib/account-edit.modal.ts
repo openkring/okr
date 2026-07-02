@@ -1,11 +1,11 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 
-import { AccountModel, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { AccountModel, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
-import { AccountForm } from '@bk2/finance-account-ui';
+import { AccountForm } from '@okr/finance-account-ui';
 import { AccountStore } from './account.store';
 
 @Component({

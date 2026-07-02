@@ -1,10 +1,10 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { SessionModel } from '@bk2/shared-models';
-import { getSessionStatus } from '@bk2/session-util';
-import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
-import { AocI18n } from '@bk2/aoc-util';
+import { SessionModel } from '@okr/shared-models';
+import { getSessionStatus } from '@okr/session-util';
+import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
+import { AocI18n } from '@okr/aoc-util';
 
 interface DetailRow { label: string; value: string; }
 

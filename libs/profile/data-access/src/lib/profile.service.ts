@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
-import { getSystemQuery } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@okr/shared-models';
+import { getSystemQuery } from '@okr/shared-util-core';
 
-import { getPersonIndex } from '@bk2/subject-person-util';
+import { getPersonIndex } from '@okr/subject-person-util';
 import { PFX } from './scope';
 
 @Injectable({

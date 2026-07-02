@@ -1,10 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AssetMovementCollection, AssetMovementModel, UserModel } from '@bk2/shared-models';
-import { getSystemQuery } from '@bk2/shared-util-core';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AssetMovementCollection, AssetMovementModel, UserModel } from '@okr/shared-models';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
 

@@ -2,10 +2,10 @@ import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input, model } fro
 import { FormsModule } from '@angular/forms';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular/standalone';
 
-import { DESCRIPTION_LENGTH } from '@bk2/shared-constants';
-import { I18nService } from '@bk2/shared-i18n';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { coerceBoolean, decrypt, encrypt } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { coerceBoolean, decrypt, encrypt } from '@okr/shared-util-core';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
 import { PFX } from './scope';

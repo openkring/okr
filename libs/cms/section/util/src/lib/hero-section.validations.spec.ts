@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HERO_SECTION_SHAPE, HeroSection } from '@bk2/shared-models';
+import { HERO_SECTION_SHAPE, HeroSection } from '@okr/shared-models';
 
 import { heroSectionValidations } from './hero-section.validations';
 

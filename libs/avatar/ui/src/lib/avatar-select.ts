@@ -1,12 +1,12 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonImg, IonItem, IonLabel, IonNote } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared-categories';
-import { AvatarInfo, ColorIonic } from '@bk2/shared-models';
-import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { ColorsIonic } from '@okr/shared-categories';
+import { AvatarInfo, ColorIonic } from '@okr/shared-models';
+import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { coerceBoolean } from '@okr/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 @Component({
   selector: 'bk-avatar-select',

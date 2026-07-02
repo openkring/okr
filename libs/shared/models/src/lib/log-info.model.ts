@@ -1,4 +1,4 @@
-import { DEFAULT_NAME } from "@bk2/shared-constants";
+import { DEFAULT_NAME } from "@okr/shared-constants";
 
 export interface LogInfo {
   id: string;

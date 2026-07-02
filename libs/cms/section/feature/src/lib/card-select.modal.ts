@@ -3,11 +3,11 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular/standalone';
 import { switchMap } from 'rxjs/operators';
 
-import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
-import { ENV } from '@bk2/shared-config';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
-import { Header } from '@bk2/shared-ui';
+import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
+import { ENV } from '@okr/shared-config';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { I18nService, TranslatePipe } from '@okr/shared-i18n';
+import { Header } from '@okr/shared-ui';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AsyncPipe } from '@angular/common';

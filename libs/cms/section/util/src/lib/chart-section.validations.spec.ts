@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHART_SECTION_SHAPE, ChartSection } from '@bk2/shared-models';
+import { CHART_SECTION_SHAPE, ChartSection } from '@okr/shared-models';
 
 import { chartSectionValidations } from './chart-section.validations';
 

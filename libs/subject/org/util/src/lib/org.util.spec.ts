@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { OrgModel } from '@bk2/shared-models';
+import { OrgModel } from '@okr/shared-models';
 
-// org.util imports address factories from @bk2/subject-address-util, which transitively pulls in
+// org.util imports address factories from @okr/subject-address-util, which transitively pulls in
 // @ionic/angular. Mock it so these pure-function tests don't load Ionic ES modules.
-vi.mock('@bk2/subject-address-util', () => ({
+vi.mock('@okr/subject-address-util', () => ({
   createFavoriteEmailAddress: vi.fn(),
   createFavoritePhoneAddress: vi.fn(),
   createFavoritePostalAddress: vi.fn(),

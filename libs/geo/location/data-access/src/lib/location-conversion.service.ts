@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 
-import { LocationModel } from '@bk2/shared-models';
+import { LocationModel } from '@okr/shared-models';
 
 interface ConvertLocationRequest {
   address?: string;

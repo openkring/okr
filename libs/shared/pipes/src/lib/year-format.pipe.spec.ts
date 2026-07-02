@@ -1,10 +1,10 @@
 import { YearFormatPipe } from './year-format.pipe';
-import { convertDateFormatToString, warn, DateFormat } from '@bk2/shared-util-core';
+import { convertDateFormatToString, warn, DateFormat } from '@okr/shared-util-core';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Mock the external dependencies
-vi.mock('@bk2/shared-util-core', async importOriginal => {
-  const actual = await importOriginal<typeof import('@bk2/shared-util-core')>();
+vi.mock('@okr/shared-util-core', async importOriginal => {
+  const actual = await importOriginal<typeof import('@okr/shared-util-core')>();
   return {
     ...actual,
     convertDateFormatToString: vi.fn(),

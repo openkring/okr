@@ -2,9 +2,9 @@ import { Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { IframeSection } from '@bk2/shared-models';
-import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { getSafeEmbedUrl } from '@bk2/shared-util-core';
+import { IframeSection } from '@okr/shared-models';
+import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { getSafeEmbedUrl } from '@okr/shared-util-core';
 
 @Component({
   selector: 'bk-iframe-section',

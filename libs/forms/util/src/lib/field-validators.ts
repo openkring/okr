@@ -1,6 +1,6 @@
 import { AbstractControl, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { parsePhoneNumber } from 'libphonenumber-js';
-import { Field } from '@bk2/shared-models';
+import { Field } from '@okr/shared-models';
 import { isDisplayField } from './field-kind';
 
 export function validatorsFor(field: Field): ValidatorFn[] {

@@ -1,9 +1,9 @@
 
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { MenuItemModel } from '@bk2/shared-models';
-import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { MenuItemModel } from '@okr/shared-models';
+import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
 
 export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

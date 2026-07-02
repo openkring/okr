@@ -2,18 +2,18 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController } from '@ionic/angular/standalone';
-import { I18nService } from '@bk2/shared-i18n';
+import { I18nService } from '@okr/shared-i18n';
 import { getMetadata, listAll, ref } from 'firebase/storage';
 
-import { STORAGE } from '@bk2/shared-config';
-import { AppStore } from '@bk2/shared-feature';
-import { IconModel } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, nameMatches } from '@bk2/shared-util-core';
+import { STORAGE } from '@okr/shared-config';
+import { AppStore } from '@okr/shared-feature';
+import { IconModel } from '@okr/shared-models';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, nameMatches } from '@okr/shared-util-core';
 
-import { UploadService } from '@bk2/avatar-data-access';
+import { UploadService } from '@okr/avatar-data-access';
 
-import { IconService } from '@bk2/cms-icon-data-access';
-import { buildIconModel, buildIconModelFromStorage, getIconStoragePath, ICON_I18N_KEYS, IconI18n } from '@bk2/cms-icon-util';
+import { IconService } from '@okr/cms-icon-data-access';
+import { buildIconModel, buildIconModelFromStorage, getIconStoragePath, ICON_I18N_KEYS, IconI18n } from '@okr/cms-icon-util';
 
 import { IconEditModal } from './icon-edit.modal';
 

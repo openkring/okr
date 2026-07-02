@@ -13,9 +13,9 @@ import {
   PersonCollection,
   Roles,
   WorkrelCollection,
-} from '@bk2/shared-models';
-import { convertDateFormatToString, DateFormat, getCountryData, getTodayStr } from '@bk2/shared-util-core';
-import { checkAppCheckToken, checkAuthentication } from '@bk2/shared-util-functions';
+} from '@okr/shared-models';
+import { convertDateFormatToString, DateFormat, getCountryData, getTodayStr } from '@okr/shared-util-core';
+import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import {
   buildVCardFile,
   ExportScope,
@@ -30,7 +30,7 @@ import {
   VcardRecord,
   VcardRelatedName,
   VcardTargetKind,
-} from '@bk2/vcard-util';
+} from '@okr/vcard-util';
 
 const REGION = 'europe-west6';
 const IMGIX_BASE = 'https://bkaiser.imgix.net';

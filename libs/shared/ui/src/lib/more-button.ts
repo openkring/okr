@@ -2,7 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import { IonButton, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 
-import { navigateByUrl } from '@bk2/shared-util-angular';
+import { navigateByUrl } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'bk-more-button',

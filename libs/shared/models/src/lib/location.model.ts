@@ -1,4 +1,4 @@
-import { DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LOCATION_TYPE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LOCATION_TYPE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 export class LocationModel implements BkModel, NamedModel, SearchableModel, TaggedModel {

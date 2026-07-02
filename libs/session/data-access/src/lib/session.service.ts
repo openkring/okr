@@ -1,11 +1,11 @@
 // libs/session/data-access/src/lib/session.service.ts
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { OsName, SessionCollection, SessionModel, UserModel } from '@bk2/shared-models';
-import { getBrowser, isBrowser, isIOS, isAndroid, isMacOS, isSafari } from '@bk2/shared-util-angular';
-import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
-import { getSessionIndex } from '@bk2/session-util';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { OsName, SessionCollection, SessionModel, UserModel } from '@okr/shared-models';
+import { getBrowser, isBrowser, isIOS, isAndroid, isMacOS, isSafari } from '@okr/shared-util-angular';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { getSessionIndex } from '@okr/session-util';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {

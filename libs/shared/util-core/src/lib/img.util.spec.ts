@@ -1,5 +1,5 @@
-import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
-import { ImageType } from '@bk2/shared-models';
+import { THUMBNAIL_SIZE } from '@okr/shared-constants';
+import { ImageType } from '@okr/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fileUtil from './file.util';
 import {

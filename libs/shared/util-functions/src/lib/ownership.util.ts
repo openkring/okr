@@ -1,4 +1,4 @@
-import { OwnershipCollection, OwnershipModel } from '@bk2/shared-models';
+import { OwnershipCollection, OwnershipModel } from '@okr/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 import { searchData } from './search.util';
 

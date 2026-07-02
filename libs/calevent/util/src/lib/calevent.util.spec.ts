@@ -1,10 +1,10 @@
-import { CalEventModel } from '@bk2/shared-models';
-import * as coreUtils from '@bk2/shared-util-core';
+import { CalEventModel } from '@okr/shared-models';
+import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, isCalEvent, isFullDayEvent, isSchedulePoll } from './calevent.util';
 
 // Mock shared utility functions
-vi.mock('@bk2/shared-util-core', async importOriginal => {
+vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
   return {
     ...actual,

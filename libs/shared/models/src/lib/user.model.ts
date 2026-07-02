@@ -1,4 +1,4 @@
-import { DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarUsage } from './enums/avatar-usage.enum';
 import { DeliveryType } from './enums/delivery-type.enum';

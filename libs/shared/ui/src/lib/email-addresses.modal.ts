@@ -3,9 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonFooter, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
 import { signalStore, withProps } from '@ngrx/signals';
 
-import { ENV } from '@bk2/shared-config';
-import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, EmailEntry } from '@bk2/shared-util-angular';
-import { I18nService } from '@bk2/shared-i18n';
+import { ENV } from '@okr/shared-config';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, EmailEntry } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 
 import { Header } from './header';
 

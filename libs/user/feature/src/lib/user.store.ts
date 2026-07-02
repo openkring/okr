@@ -3,16 +3,16 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { ExportFormat, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
-import { AppNavigationService, exportCsv } from '@bk2/shared-util-angular';
-import { chipMatches, debugItemLoaded, generateRandomString, getDataRow, getSystemQuery, isUser, nameMatches } from '@bk2/shared-util-core';
-import { ExportFormats } from '@bk2/shared-categories';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { ExportFormat, PersonCollection, PersonModel, UserCollection, UserModel } from '@okr/shared-models';
+import { AppNavigationService, exportCsv } from '@okr/shared-util-angular';
+import { chipMatches, debugItemLoaded, generateRandomString, getDataRow, getSystemQuery, isUser, nameMatches } from '@okr/shared-util-core';
+import { ExportFormats } from '@okr/shared-categories';
 
-import { UserService } from '@bk2/user-data-access';
-import { USER_I18N_KEYS, UserI18n } from '@bk2/user-util';
+import { UserService } from '@okr/user-data-access';
+import { USER_I18N_KEYS, UserI18n } from '@okr/user-util';
 
 export type { UserI18n };
 

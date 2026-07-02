@@ -2,8 +2,8 @@ import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButtons, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { navigateByUrl } from '@bk2/shared-util-angular';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { navigateByUrl } from '@okr/shared-util-angular';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 import { Button } from './button';
 

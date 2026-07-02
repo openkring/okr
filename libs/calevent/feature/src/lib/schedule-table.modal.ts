@@ -1,8 +1,8 @@
 import { Component, inject, input, computed, effect } from '@angular/core';
 import { IonContent, IonAvatar, ModalController } from '@ionic/angular/standalone';
 
-import { Header } from '@bk2/shared-ui';
-import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@bk2/shared-util-core';
+import { Header } from '@okr/shared-ui';
+import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@okr/shared-util-core';
 
 import { CalEventStore } from './calevent.store';
 

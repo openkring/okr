@@ -2,8 +2,8 @@ import { Browser } from "@capacitor/browser";
 import { ModalController } from "@ionic/angular/standalone";
 import { getDownloadURL, getMetadata, getStorage, ref, updateMetadata } from "firebase/storage";
 
-import { Dimensions, ImageStyle, UserModel } from "@bk2/shared-models";
-import { DateFormat, debugMessage, getTodayStr, warn } from "@bk2/shared-util-core";
+import { Dimensions, ImageStyle, UserModel } from "@okr/shared-models";
+import { DateFormat, debugMessage, getTodayStr, warn } from "@okr/shared-util-core";
 
 import { DateSelectModal } from "./date-select.modal";
 import { ImageViewModal } from "./image-view.modal";

@@ -1,12 +1,12 @@
 import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { AppNavigationService } from '@bk2/shared-util-angular';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { AppNavigationService } from '@okr/shared-util-angular';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 import { Searchbar } from './searchbar';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 
 export interface HeaderI18n {

@@ -2,11 +2,11 @@ import { Component, computed, input } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { AccordionConfig, AccordionSection, ColorIonic } from '@bk2/shared-models';
-import { ColorsIonic } from '@bk2/shared-categories';
-import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { AccordionConfig, AccordionSection, ColorIonic } from '@okr/shared-models';
+import { ColorsIonic } from '@okr/shared-categories';
+import { CategoryPlainNamePipe } from '@okr/shared-pipes';
+import { TranslatePipe } from '@okr/shared-i18n';
 
 import { AccordionItemContentComponent } from './accordion-item';
 

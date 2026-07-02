@@ -1,18 +1,18 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@bk2/shared-ui';
-import { coerceBoolean, getFullName, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
-import { AppStore } from '@bk2/shared-feature';
+import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { coerceBoolean, getFullName, hasRole, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { AppStore } from '@okr/shared-feature';
 
-import { CommentsAccordion } from '@bk2/comment-feature';
-import { DocumentsAccordion } from '@bk2/document-feature';
+import { CommentsAccordion } from '@okr/comment-feature';
+import { DocumentsAccordion } from '@okr/document-feature';
 
-import { MembershipForm } from '@bk2/relationship-membership-ui';
-import { RelationshipToolbar } from '@bk2/avatar-ui';
-import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@bk2/relationship-membership-util';
+import { MembershipForm } from '@okr/relationship-membership-ui';
+import { RelationshipToolbar } from '@okr/avatar-ui';
+import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
 
 @Component({
   selector: 'bk-membership-edit-modal',

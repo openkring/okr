@@ -1,8 +1,8 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { ENV } from '@bk2/shared-config';
-import { SwissCity } from '@bk2/shared-models';
+import { ENV } from '@okr/shared-config';
+import { SwissCity } from '@okr/shared-models';
 
 import { SwissCitiesService } from './swisscities.service';
 

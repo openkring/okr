@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { groupMessages, ImageBatchGroup } from './group-messages.util';
-import { MatrixMessage } from '@bk2/shared-models';
+import { MatrixMessage } from '@okr/shared-models';
 
 let idSeq = 0;
 beforeEach(() => {

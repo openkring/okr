@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ModalController, IonButton, IonButtons, IonContent, IonHeader,
   IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { VatCodeModel, UserModel } from '@bk2/shared-models';
+import { VatCodeModel, UserModel } from '@okr/shared-models';
 
 @Component({
   selector: 'bk-vat-code-edit-modal',

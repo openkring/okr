@@ -1,9 +1,9 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CITY_LENGTH, COUNTRY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
-import { AddressModel } from '@bk2/shared-models';
-import { baseValidations, booleanValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
-import { isPhoneNumberValid } from '@bk2/shared-util-angular';
+import { CITY_LENGTH, COUNTRY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
+import { AddressModel } from '@okr/shared-models';
+import { baseValidations, booleanValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
+import { isPhoneNumberValid } from '@okr/shared-util-angular';
 
 export const addressValidations = staticSuite((model: AddressModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

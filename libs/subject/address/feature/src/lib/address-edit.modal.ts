@@ -1,13 +1,13 @@
 import { Component, computed, inject, input, linkedSignal, signal } from "@angular/core";
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
-import { AddressModel, CategoryListModel, UserModel } from "@bk2/shared-models";
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from "@bk2/shared-ui";
-import { coerceBoolean, safeStructuredClone } from "@bk2/shared-util-core";
-import { I18nService } from "@bk2/shared-i18n";
+import { AddressModel, CategoryListModel, UserModel } from "@okr/shared-models";
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from "@okr/shared-ui";
+import { coerceBoolean, safeStructuredClone } from "@okr/shared-util-core";
+import { I18nService } from "@okr/shared-i18n";
 
-import { AddressForm } from "@bk2/subject-address-ui";
-import { ADDRESSES_I18N_KEYS, AddressesI18n } from "@bk2/subject-address-util";
+import { AddressForm } from "@okr/subject-address-ui";
+import { ADDRESSES_I18N_KEYS, AddressesI18n } from "@okr/subject-address-util";
 
 @Component({
   selector: 'bk-address-edit-modal',

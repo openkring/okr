@@ -4,7 +4,7 @@ import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
-import { convertDateFormatToString, addDuration, getTodayStr, getFullName, addIndexElement, DateFormat } from '@bk2/shared-util-core';
+import { convertDateFormatToString, addDuration, getTodayStr, getFullName, addIndexElement, DateFormat } from '@okr/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, bexioDefaultTaxId, BEXIO_BASE } from './shared';
 
@@ -206,7 +206,7 @@ async function fetchInvoicePaymentDate(apiKey: string, invoiceId: number): Promi
   }
 }
 
-/** Build the searchable index for an invoice (mirrors getInvoiceIndex in @bk2/finance-invoice-util). */
+/** Build the searchable index for an invoice (mirrors getInvoiceIndex in @okr/finance-invoice-util). */
 function buildInvoiceIndex(invoiceId: string, totalCents: number, receiver: ReceiverInfo | undefined, title: string): string {
   let index = '';
   index = addIndexElement(index, 'i', invoiceId);

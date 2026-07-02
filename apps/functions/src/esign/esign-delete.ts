@@ -8,7 +8,7 @@ import {
   ALL_ESIGN_SECRETS, REGION,
   getDeepSignAccessToken, getEsignApiBase, assertEsignAccess,
 } from './shared';
-import { EsignCollection, EsignAuditCollection } from '@bk2/shared-models';
+import { EsignCollection, EsignAuditCollection } from '@okr/shared-models';
 
 export const esignDelete = onCall<{ esignId: string; reason?: string }>(
   { region: REGION, enforceAppCheck: true, secrets: ALL_ESIGN_SECRETS },

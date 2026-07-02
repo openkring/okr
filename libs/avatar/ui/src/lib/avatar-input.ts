@@ -1,9 +1,9 @@
 import { Component, computed, input, output, viewChild } from '@angular/core';
 import { IonButton, IonInput, IonItem } from '@ionic/angular/standalone';
 
-import { NAME_LENGTH } from '@bk2/shared-constants';
-import { AvatarInfo } from '@bk2/shared-models';
-import { generateRandomString, newAvatarInfo } from '@bk2/shared-util-core';
+import { NAME_LENGTH } from '@okr/shared-constants';
+import { AvatarInfo } from '@okr/shared-models';
+import { generateRandomString, newAvatarInfo } from '@okr/shared-util-core';
 
 /**
  * This component lets the user add an avatar for a person by entering a name string or by clicking the select button.

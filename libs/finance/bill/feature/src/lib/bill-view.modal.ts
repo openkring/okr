@@ -1,9 +1,9 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonChip, IonContent, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { BillModel } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
-import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { BillModel } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
+import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { BillStore } from './bill.store';
 
 

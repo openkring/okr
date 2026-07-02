@@ -1,26 +1,26 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { I18nService } from '@bk2/shared-i18n';
-import { AOC_I18N_KEYS } from '@bk2/aoc-util';
+import { I18nService } from '@okr/shared-i18n';
+import { AOC_I18N_KEYS } from '@okr/aoc-util';
 import { getApp } from 'firebase/app';
 import { collection, doc, getCountFromServer, getDocs, getDoc, getFirestore, query, where, writeBatch } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom } from 'rxjs';
 
-import { isFirestoreInitializedCheck } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, AvatarInfo, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
-import { getCatAbbreviation, getFullName, getSystemQuery, isMembership, isOrg, isPerson } from '@bk2/shared-util-core';
+import { isFirestoreInitializedCheck } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { AddressCollection, AddressModel, AvatarInfo, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
+import { getCatAbbreviation, getFullName, getSystemQuery, isMembership, isOrg, isPerson } from '@okr/shared-util-core';
 import { ModalController } from '@ionic/angular/standalone';
 import { AocBexioContactEditModal } from './aoc-bexio-contact-edit.modal';
-import { createFavoriteAddress } from '@bk2/subject-address-util';
-import { PersonService } from '@bk2/subject-person-data-access';
-import { PersonEditModal } from '@bk2/subject-person-feature';
-import { OrgService } from '@bk2/subject-org-data-access';
-import { OrgEditModal } from '@bk2/subject-org-feature';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { MembershipEditModal } from '@bk2/relationship-membership-feature';
+import { createFavoriteAddress } from '@okr/subject-address-util';
+import { PersonService } from '@okr/subject-person-data-access';
+import { PersonEditModal } from '@okr/subject-person-feature';
+import { OrgService } from '@okr/subject-org-data-access';
+import { OrgEditModal } from '@okr/subject-org-feature';
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { MembershipEditModal } from '@okr/relationship-membership-feature';
 
 export interface BexioIndex {
   // person or org

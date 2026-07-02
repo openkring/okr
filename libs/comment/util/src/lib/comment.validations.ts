@@ -1,8 +1,8 @@
 import { enforce, only, staticSuite, test } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { CommentModel } from '@bk2/shared-models';
-import { baseValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
+import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { CommentModel } from '@okr/shared-models';
+import { baseValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
 export const commentValidations = staticSuite((model: CommentModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/auth-ui",
+  "name": "@okr/auth-ui",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,10 +7,10 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@bk2/shared-models": "*",
-    "@bk2/shared-pipes": "*",
-    "@bk2/shared-ui": "*",
-    "@bk2/auth-util": "*",
-    "@bk2/shared-util-angular": "*"
+    "@okr/shared-models": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-ui": "*",
+    "@okr/auth-util": "*",
+    "@okr/shared-util-angular": "*"
   }
 }

@@ -1,6 +1,6 @@
-import { DEFAULT_NAME, DEFAULT_NOTES } from '@bk2/shared-constants';
-import { FolderModel } from '@bk2/shared-models';
-import { addIndexElement } from '@bk2/shared-util-core';
+import { DEFAULT_NAME, DEFAULT_NOTES } from '@okr/shared-constants';
+import { FolderModel } from '@okr/shared-models';
+import { addIndexElement } from '@okr/shared-util-core';
 
 /*-------------------------- factory --------------------------------*/
 /**

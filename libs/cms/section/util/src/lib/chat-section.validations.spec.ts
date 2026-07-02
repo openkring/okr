@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHAT_SECTION_SHAPE, ChatSection } from '@bk2/shared-models';
+import { CHAT_SECTION_SHAPE, ChatSection } from '@okr/shared-models';
 
 import { chatSectionValidations } from './chat-section.validations';
 

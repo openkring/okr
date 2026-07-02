@@ -1,15 +1,15 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
-import { ChSsnMask } from "@bk2/shared-config";
-import { CategoryListModel, PersonModel, UserModel } from "@bk2/shared-models";
-import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@bk2/shared-ui";
-import { coerceBoolean } from "@bk2/shared-util-core";
-import { DEFAULT_GENDER } from "@bk2/shared-constants";
-import { AhvFormat, formatAhv } from "@bk2/shared-util-angular";
+import { ChSsnMask } from "@okr/shared-config";
+import { CategoryListModel, PersonModel, UserModel } from "@okr/shared-models";
+import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
+import { coerceBoolean } from "@okr/shared-util-core";
+import { DEFAULT_GENDER } from "@okr/shared-constants";
+import { AhvFormat, formatAhv } from "@okr/shared-util-angular";
 
-import { personValidations } from "@bk2/subject-person-util";
-import { ProfileI18n } from '@bk2/profile-util';
+import { personValidations } from "@okr/subject-person-util";
+import { ProfileI18n } from '@okr/profile-util';
 
 @Component({
   selector: 'bk-profile-data-accordion',

@@ -1,8 +1,8 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { RagConfig } from '@bk2/shared-models';
-import { NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
+import { RagConfig } from '@okr/shared-models';
+import { NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 
 interface RagConfigI18n {
   rag_config_title:                 Signal<string>;

@@ -2,11 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { ENV } from '@bk2/shared-config';
-import { AddressModel } from '@bk2/shared-models';
-import { AlertService } from '@bk2/shared-util-angular';
+import { ENV } from '@okr/shared-config';
+import { AddressModel } from '@okr/shared-models';
+import { AlertService } from '@okr/shared-util-angular';
 
-import { stringifyAddress } from '@bk2/subject-address-util';
+import { stringifyAddress } from '@okr/subject-address-util';
 
 export interface GeoCoordinates {
   lat: number;

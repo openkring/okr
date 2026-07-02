@@ -4,15 +4,15 @@ import { Observable } from 'rxjs';
 import { collectionData, docData } from 'rxfire/firestore';
 import { collection, doc, query, orderBy, updateDoc } from 'firebase/firestore';
 
-import { ENV } from '@bk2/shared-config';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { I18nService } from '@bk2/shared-i18n';
+import { ENV } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
 import {
   TemplateCollection, TemplateVersionSubcollection,
   TemplateModel, TemplateVersionModel, UserModel,
-} from '@bk2/shared-models';
-import { getTemplateIndex } from '@bk2/pdf-template-util';
-import { getTodayStr, DateFormat, getSystemQuery } from '@bk2/shared-util-core';
+} from '@okr/shared-models';
+import { getTemplateIndex } from '@okr/pdf-template-util';
+import { getTodayStr, DateFormat, getSystemQuery } from '@okr/shared-util-core';
 import { PFX } from './scope';
 
 @Injectable({ providedIn: 'root' })

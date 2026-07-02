@@ -5,24 +5,24 @@ import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
 
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
-import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@bk2/shared-util-angular';
-import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches } from '@bk2/shared-util-core';
-import { EmailAddressesModal, MapViewModal } from '@bk2/shared-ui';
-import { Languages } from '@bk2/shared-categories';
-import { I18nService } from '@bk2/shared-i18n';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
+import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches } from '@okr/shared-util-core';
+import { EmailAddressesModal, MapViewModal } from '@okr/shared-ui';
+import { Languages } from '@okr/shared-categories';
+import { I18nService } from '@okr/shared-i18n';
 
-import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
-import { PersonService } from '@bk2/subject-person-data-access';
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@bk2/subject-person-util';
-import { browseUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
+import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
+import { PersonService } from '@okr/subject-person-data-access';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
+import { browseUrl, stringifyPostalAddress } from '@okr/subject-address-util';
 
-import { MatrixChatService } from '@bk2/chat-data-access';
-import { AvatarService } from '@bk2/avatar-data-access';
-import { VcardExportService } from '@bk2/vcard-feature';
-import { ActivityService } from '@bk2/activity-data-access';
+import { MatrixChatService } from '@okr/chat-data-access';
+import { AvatarService } from '@okr/avatar-data-access';
+import { VcardExportService } from '@okr/vcard-feature';
+import { ActivityService } from '@okr/activity-data-access';
 
 
 export type PersonState = {

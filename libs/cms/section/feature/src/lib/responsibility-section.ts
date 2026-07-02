@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarInfo, ColorIonic, PersonModelName, ResponsibilitySection } from '@bk2/shared-models';
-import { Spinner } from '@bk2/shared-ui';
-import { getAvatarName, getFullName } from '@bk2/shared-util-core';
-import { AppStore } from '@bk2/shared-feature';
+import { AvatarInfo, ColorIonic, PersonModelName, ResponsibilitySection } from '@okr/shared-models';
+import { Spinner } from '@okr/shared-ui';
+import { getAvatarName, getFullName } from '@okr/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
 
 import { ResponsibilitySectionStore } from './responsibility-section.store';
-import { AvatarLabel } from '@bk2/avatar-ui';
+import { AvatarLabel } from '@okr/avatar-ui';
 
 @Component({
   selector: 'bk-responsibility-section',
@@ -101,7 +101,7 @@ export class ResponsibilitySectionComponent {
     if (this.editMode()) return;
     const person = this.appStore.getPerson(avatar.key);
     if (!person) return;
-    const { PersonEditModal } = await import('@bk2/subject-person-feature');
+    const { PersonEditModal } = await import('@okr/subject-person-feature');
     const modal = await this.modalController.create({
       component: PersonEditModal,
       componentProps: {

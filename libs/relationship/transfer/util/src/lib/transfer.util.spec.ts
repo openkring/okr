@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AvatarInfo, OrgModel, OrgModelName, PersonModel, PersonModelName, ResourceModel, ResourceModelName, TransferModel } from '@bk2/shared-models';
-import * as coreUtils from '@bk2/shared-util-core';
+import { AvatarInfo, OrgModel, OrgModelName, PersonModel, PersonModelName, ResourceModel, ResourceModelName, TransferModel } from '@okr/shared-models';
+import * as coreUtils from '@okr/shared-util-core';
 
-import { DEFAULT_GENDER, DEFAULT_ORG_TYPE, DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
+import { DEFAULT_GENDER, DEFAULT_ORG_TYPE, DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 
 import { isTransfer, getName, getTransferIndexInfo, getTransferIndex } from './transfer.util';
 
 // Mock shared utility functions
-vi.mock('@bk2/shared-util-core', async importOriginal => {
+vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
   return {
     ...actual,
@@ -21,7 +21,7 @@ vi.mock('@bk2/shared-util-core', async importOriginal => {
 });
 
 // Proactively mock shared-i18n to prevent Angular compiler errors
-vi.mock('@bk2/shared-i18n', () => ({
+vi.mock('@okr/shared-i18n', () => ({
   bkTranslate: vi.fn(),
 }));
 

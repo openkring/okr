@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
-import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
-import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, Header, Spinner } from '@bk2/shared-ui';
+import { PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
+import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 import { PersonSelectStore } from './person-select.store';
 

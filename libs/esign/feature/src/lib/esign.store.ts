@@ -4,11 +4,11 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { EsignDocumentStatus, EsignRecord } from '@bk2/shared-models';
-import { EsignService } from '@bk2/esign-data-access';
-import { ESIGN_I18N_KEYS, EsignI18n } from '@bk2/esign-util';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { EsignDocumentStatus, EsignRecord } from '@okr/shared-models';
+import { EsignService } from '@okr/esign-data-access';
+import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/esign-util';
 export type { EsignI18n };
 
 type StatusFilter = EsignDocumentStatus | 'all';

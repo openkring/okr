@@ -1,10 +1,10 @@
-import { Roles } from '@bk2/shared-models';
+import { Roles } from '@okr/shared-models';
 
 import { VCARD_MAX_TARGETS, VcardCapability } from './vcard-types';
 
 /**
  * The export tier a set of roles grants. Mirrors the app's role hierarchy
- * (see `hasRole` in `@bk2/shared-util-core`): `admin` satisfies every tier.
+ * (see `hasRole` in `@okr/shared-util-core`): `admin` satisfies every tier.
  */
 export type VcardTier = 'none' | 'registered' | 'privileged' | 'memberAdmin';
 

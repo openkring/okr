@@ -1,4 +1,4 @@
-import { MatrixMessage } from '@bk2/shared-models';
+import { MatrixMessage } from '@okr/shared-models';
 
 export interface ImageBatchGroup {
   kind: 'image-batch';

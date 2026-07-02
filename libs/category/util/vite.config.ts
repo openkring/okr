@@ -9,7 +9,7 @@ const libraryConfig = defineConfig({
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
     // The pure category util functions (isCategoryList, getCategoryAttribute, ...) were moved to
-    // @bk2/shared-util-core (commit d31e685b). This lib now only holds the Vest validation suite and
+    // @okr/shared-util-core (commit d31e685b). This lib now only holds the Vest validation suite and
     // the i18n key map, so there are no util functions left here to unit-test.
     passWithNoTests: true,
     // only keep project-specific settings here

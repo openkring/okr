@@ -1,9 +1,9 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { ImageActions } from '@bk2/shared-categories';
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { ImageActionType, ImageStyle, Slot } from '@bk2/shared-models';
+import { ImageActions } from '@okr/shared-categories';
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ImageActionType, ImageStyle, Slot } from '@okr/shared-models';
 
 interface ImageStyleConfigI18n {
   image_style_title:        Signal<string>;

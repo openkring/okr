@@ -1,4 +1,4 @@
-import { SectionType } from '@bk2/shared-models';
+import { SectionType } from '@okr/shared-models';
 
 /** Section types that cannot be meaningfully rendered into a static PDF. */
 export const PRINT_SKIP_SECTION_TYPES: SectionType[] = ['chat', 'rag', 'form', 'tracker'];

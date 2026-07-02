@@ -5,9 +5,9 @@ import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
 
-import { ChIbanMask } from '@bk2/shared-config';
-import { IBAN_LENGTH } from '@bk2/shared-constants';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { ChIbanMask } from '@okr/shared-config';
+import { IBAN_LENGTH } from '@okr/shared-constants';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
 

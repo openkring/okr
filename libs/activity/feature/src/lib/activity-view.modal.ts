@@ -1,10 +1,10 @@
 import { Component, inject, input } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonIcon, ModalController } from '@ionic/angular/standalone';
 
-import { ActivityModel } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { ActivityModel } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { ActivityStore } from './activity.store';
 

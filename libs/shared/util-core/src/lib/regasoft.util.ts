@@ -1,5 +1,5 @@
 import { convertDateFormatToString, DateFormat } from './date.util';
-import { SrvIndex, SrvMismatch } from '@bk2/shared-models';
+import { SrvIndex, SrvMismatch } from '@okr/shared-models';
 
 /** Convert StoreDate "YYYYMMDD" → Regasoft ISO datetime "YYYY-MM-DDTHH:mm:ss". Returns null for empty. */
 export function storeDateToRegasoftDate(storeDate: string | undefined): string | null {

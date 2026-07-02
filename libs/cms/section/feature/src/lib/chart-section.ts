@@ -9,8 +9,8 @@ import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 echarts.use([BarChart, GridComponent, CanvasRenderer, ToolboxComponent, LegendComponent, TooltipComponent, LineChart]);
 
-import { ChartSection } from '@bk2/shared-models';
-import { OptionalCardHeader, Spinner } from '@bk2/shared-ui';
+import { ChartSection } from '@okr/shared-models';
+import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 /**
  * Data grid based on open source (Generic UI Data Grid)[https://generic-ui.com/].

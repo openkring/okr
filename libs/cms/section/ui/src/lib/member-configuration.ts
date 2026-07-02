@@ -1,8 +1,8 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { MemberCatConfig } from '@bk2/shared-models';
-import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
+import { MemberCatConfig } from '@okr/shared-models';
+import { StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 
 interface MemberConfigI18n {
   member_config_title:                  Signal<string>;

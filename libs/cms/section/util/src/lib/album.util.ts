@@ -2,9 +2,9 @@ import { HttpClient } from "@angular/common/http";
 import { FirebaseStorage, listAll, ref, StorageReference } from "firebase/storage";
 import { firstValueFrom } from "rxjs";
 
-import { AlbumConfig, BackgroundStyle, ImageActionType, ImageConfig, ImageMetaData, ImageStyle, ImageType } from "@bk2/shared-models";
-import { debugData, die, getImageType, getImgixJsonUrl, getSizedImgixParamsByExtension } from "@bk2/shared-util-core";
-import { DEFAULT_ALBUM_HEIGHT, DEFAULT_ALBUM_WIDTH, DEFAULT_BORDER, DEFAULT_BORDER_RADIUS, DEFAULT_SIZES, THUMBNAIL_SIZE } from "@bk2/shared-constants";
+import { AlbumConfig, BackgroundStyle, ImageActionType, ImageConfig, ImageMetaData, ImageStyle, ImageType } from "@okr/shared-models";
+import { debugData, die, getImageType, getImgixJsonUrl, getSizedImgixParamsByExtension } from "@okr/shared-util-core";
+import { DEFAULT_ALBUM_HEIGHT, DEFAULT_ALBUM_WIDTH, DEFAULT_BORDER, DEFAULT_BORDER_RADIUS, DEFAULT_SIZES, THUMBNAIL_SIZE } from "@okr/shared-constants";
 
 
 export async function listAllFilesFromDirectory(

@@ -2,16 +2,16 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { OwnershipModel, PersonModelName, RoleName } from '@bk2/shared-models';
-import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getCategoryIcon, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@okr/shared-i18n';
+import { OwnershipModel, PersonModelName, RoleName } from '@okr/shared-models';
+import { DurationPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { getCategoryIcon, getYearList, hasRole, isOngoing } from '@okr/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
-import { Menu } from '@bk2/cms-menu-feature';
-import { getOwnerName } from '@bk2/relationship-ownership-util';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { getOwnerName } from '@okr/relationship-ownership-util';
 
 import { OwnershipStore } from './ownership.store';
 

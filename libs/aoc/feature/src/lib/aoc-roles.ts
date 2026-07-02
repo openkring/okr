@@ -2,15 +2,15 @@ import { Component, computed, inject, linkedSignal, signal } from '@angular/core
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
+import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH } from '@okr/shared-constants';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { Chips, Header, ResultLog } from '@bk2/shared-ui';
-import { getCategoryItemNames } from '@bk2/shared-util-core';
-import { AvatarInfo } from '@bk2/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { Chips, Header, ResultLog } from '@okr/shared-ui';
+import { getCategoryItemNames } from '@okr/shared-util-core';
+import { AvatarInfo } from '@okr/shared-models';
 
-import { flattenRoles, structureRoles } from '@bk2/user-util';
-import { AvatarDisplay } from '@bk2/avatar-ui';
+import { flattenRoles, structureRoles } from '@okr/user-util';
+import { AvatarDisplay } from '@okr/avatar-ui';
 
 import { AocRolesStore } from './aoc-roles.store';
 

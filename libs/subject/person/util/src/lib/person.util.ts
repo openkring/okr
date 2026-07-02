@@ -1,11 +1,11 @@
-import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { AddressModel, MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
-import { addIndexElement, die, getTodayStr } from '@bk2/shared-util-core';
+import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { AddressModel, MembershipModel, OrgModel, PersonModel } from '@okr/shared-models';
+import { addIndexElement, die, getTodayStr } from '@okr/shared-util-core';
 
-import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
+import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@okr/subject-address-util';
 
 import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel } from './person-new-form.model';
-import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
+import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 // new person
 export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {

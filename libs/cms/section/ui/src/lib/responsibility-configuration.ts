@@ -1,10 +1,10 @@
 import { Component, computed, input, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { ResponsibilityConfig, UserModel } from '@bk2/shared-models';
-import { Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { SectionI18n } from '@bk2/cms-section-util';
+import { ResponsibilityConfig, UserModel } from '@okr/shared-models';
+import { Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { SectionI18n } from '@okr/cms-section-util';
 
 @Component({
   selector: 'bk-responsibility-config',

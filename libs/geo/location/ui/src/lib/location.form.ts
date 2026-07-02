@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@bk2/shared-config';
-import { CategoryListModel, LocationModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@okr/shared-config';
+import { CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
-import { locationValidations } from '@bk2/location-util';
+import { locationValidations } from '@okr/location-util';
 
 export interface LocationFormI18n {
   bkey_label:           Signal<string>;

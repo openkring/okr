@@ -4,25 +4,25 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of, take } from 'rxjs';
 
-import { yearMatches } from '@bk2/shared-categories';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@bk2/shared-feature';
-import { confirm, navigateByUrl, showToast } from '@bk2/shared-util-angular';
-import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, PersonModelName, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
-import { selectDate } from '@bk2/shared-ui';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isPerson, isResource, isValidAt, nameMatches } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
+import { yearMatches } from '@okr/shared-categories';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
+import { confirm, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, PersonModelName, ReservationModel, ResourceCollection, ResourceModel } from '@okr/shared-models';
+import { selectDate } from '@okr/shared-ui';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isPerson, isResource, isValidAt, nameMatches } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
-import { ReservationService } from '@bk2/relationship-reservation-data-access';
-import { isReservation, RESERVATION_I18N_KEYS, ReservationI18n } from '@bk2/relationship-reservation-util';
-import { PersonService } from '@bk2/subject-person-data-access';
-import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
+import { ReservationService } from '@okr/relationship-reservation-data-access';
+import { isReservation, RESERVATION_I18N_KEYS, ReservationI18n } from '@okr/relationship-reservation-util';
+import { PersonService } from '@okr/subject-person-data-access';
+import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 
-import { CalEventEditModal } from '@bk2/calevent-feature';
-import { isCalEvent } from '@bk2/calevent-util';
-import { browseUrl } from '@bk2/subject-address-util';
-import { MatrixChatService } from '@bk2/chat-data-access';
-import { ActivityService } from '@bk2/activity-data-access';
+import { CalEventEditModal } from '@okr/calevent-feature';
+import { isCalEvent } from '@okr/calevent-util';
+import { browseUrl } from '@okr/subject-address-util';
+import { MatrixChatService } from '@okr/chat-data-access';
+import { ActivityService } from '@okr/activity-data-access';
 import { Router } from '@angular/router';
 
 export type ReservationState = {

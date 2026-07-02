@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 
-import { TripModel } from '@bk2/shared-models';
-import { addIndexElement, DateFormat, getCurrentTime, getTodayStr, parseDate } from '@bk2/shared-util-core';
+import { TripModel } from '@okr/shared-models';
+import { addIndexElement, DateFormat, getCurrentTime, getTodayStr, parseDate } from '@okr/shared-util-core';
 
 /** Editing of an ended trip is allowed for this long after its endTime. */
 export const TRIP_EDIT_WINDOW_MS = 15 * 60 * 1000;

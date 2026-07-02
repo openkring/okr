@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, model } from '@angular/core';
 import { IonChip, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { error } from '@bk2/shared-util-angular';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { error } from '@okr/shared-util-angular';
+import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ColorSelectModal } from './color-select.modal';
 

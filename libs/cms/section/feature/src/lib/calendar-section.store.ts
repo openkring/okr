@@ -4,17 +4,17 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { DateFormat, getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@bk2/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { DateFormat, getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@okr/shared-util-core';
 
-import { CalEventService } from '@bk2/calevent-data-access';
-import { CalEventEditModal, CalEventViewModal } from '@bk2/calevent-feature';
-import { getVisibleGroupKeys } from '@bk2/subject-group-util';
+import { CalEventService } from '@okr/calevent-data-access';
+import { CalEventEditModal, CalEventViewModal } from '@okr/calevent-feature';
+import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { MembershipService } from '@okr/relationship-membership-data-access';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export type CalendarState = {
   calendarName: string | undefined; // all, my, or specific calendar name

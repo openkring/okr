@@ -3,10 +3,10 @@ import { Component, computed, ElementRef, inject, input, viewChild } from '@angu
 import { IonThumbnail, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
-import { ENV } from '@bk2/shared-config';
-import { ImageActionType, ImageConfig, ImageStyle } from '@bk2/shared-models';
-import { getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@bk2/shared-util-core';
-import { downloadToBrowser } from '@bk2/shared-util-angular';
+import { ENV } from '@okr/shared-config';
+import { ImageActionType, ImageConfig, ImageStyle } from '@okr/shared-models';
+import { getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@okr/shared-util-core';
+import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { showZoomedImage } from './ui.util';
 

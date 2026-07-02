@@ -15,7 +15,7 @@ export const FIRESTORE_EMULATOR_PORT = 8080;
 let isFirestoreInitialized = false;
 
 // Detects Safari (including iOS Safari). Excludes Chrome/Chromium/CriOS/Opera which also include 'safari' in their UA.
-// Cannot import from @bk2/shared-util-angular — that lib already imports from @bk2/shared-config (circular).
+// Cannot import from @okr/shared-util-angular — that lib already imports from @okr/shared-config (circular).
 export function isSafari(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent;

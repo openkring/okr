@@ -3,10 +3,10 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, Ion
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
 
-import { LowercaseWordMask } from '@bk2/shared-config';
-import { CategoryItemModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { die } from '@bk2/shared-util-core';
+import { LowercaseWordMask } from '@okr/shared-config';
+import { CategoryItemModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { die } from '@okr/shared-util-core';
 
 export interface CategoryItemsI18n {
   title: string;

@@ -2,9 +2,9 @@ import { Component, inject, input, model } from '@angular/core';
 import { IonButton, IonIcon, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { string2stringArray } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { string2stringArray } from '@okr/shared-util-core';
+import { TranslatePipe } from '@okr/shared-i18n';
 
 import { ChipSelectModal } from './chip-select.modal';
 

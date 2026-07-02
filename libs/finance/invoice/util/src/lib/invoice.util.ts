@@ -1,5 +1,5 @@
-import { InvoiceModel } from '@bk2/shared-models';
-import { addIndexElement, getFullName } from '@bk2/shared-util-core';
+import { InvoiceModel } from '@okr/shared-models';
+import { addIndexElement, getFullName } from '@okr/shared-util-core';
 
 export function newInvoice(tenantId: string): InvoiceModel {
   return new InvoiceModel(tenantId);

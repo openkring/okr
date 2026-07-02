@@ -1,10 +1,10 @@
 import { Component, computed, effect, linkedSignal, model, output, input, Signal } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { AuthCredentials } from '@bk2/shared-models';
-import { EmailInput, EmailInputI18n, ErrorNote, PasswordInput, PasswordInputI18n } from '@bk2/shared-ui';
+import { AuthCredentials } from '@okr/shared-models';
+import { EmailInput, EmailInputI18n, ErrorNote, PasswordInput, PasswordInputI18n } from '@okr/shared-ui';
 
-import { authCredentialsValidations } from '@bk2/auth-util';
+import { authCredentialsValidations } from '@okr/auth-util';
 
 export interface LoginFormI18n {
   email_label: Signal<string>;

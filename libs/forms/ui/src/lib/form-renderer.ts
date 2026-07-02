@@ -1,8 +1,8 @@
 import { Component, computed, input, OnInit, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { IonButton, IonList } from '@ionic/angular/standalone';
-import { Field, FormDefinitionModel } from '@bk2/shared-models';
-import { validatorsFor, defaultFor, isInputField } from '@bk2/forms-util';
+import { Field, FormDefinitionModel } from '@okr/shared-models';
+import { validatorsFor, defaultFor, isInputField } from '@okr/forms-util';
 import { FieldRenderer } from './field-renderer';
 
 @Component({

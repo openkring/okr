@@ -1,5 +1,5 @@
-import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_TENANTS } from '@bk2/shared-constants';
-import { CurrencyCode } from '@bk2/shared-models';
+import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
+import { CurrencyCode } from '@okr/shared-models';
 
 import { BkModel } from './base.model';
 

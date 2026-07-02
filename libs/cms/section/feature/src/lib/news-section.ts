@@ -3,11 +3,11 @@ import { Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from 
 import { Router } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
-import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@bk2/shared-ui';
-import { debugMessage, hasRole, shortenText } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, isBrowser, navigateByUrl } from '@bk2/shared-util-angular';
-import { ArticleSection, IMAGE_STYLE_SHAPE, NewsConfig, SectionModel } from '@bk2/shared-models';
-import { ThumbnailUrlPipe } from '@bk2/shared-pipes';
+import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { debugMessage, hasRole, shortenText } from '@okr/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { ArticleSection, IMAGE_STYLE_SHAPE, NewsConfig, SectionModel } from '@okr/shared-models';
+import { ThumbnailUrlPipe } from '@okr/shared-pipes';
 
 import { NewsStore } from './news-section.store';
 

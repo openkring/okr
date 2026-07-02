@@ -1,4 +1,4 @@
-import { DbQuery } from '@bk2/shared-models';
+import { DbQuery } from '@okr/shared-models';
 import { Firestore, OrderByDirection, WhereFilterOp } from 'firebase-admin/firestore';
 
 /**

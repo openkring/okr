@@ -4,12 +4,12 @@ import { browserLocalPersistence, confirmPasswordReset, setPersistence, signInWi
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { AUTH, ENV } from '@bk2/shared-config';
-import { AuthCredentials, UserModel } from '@bk2/shared-models';
-import { AlertService, navigateByUrl } from '@bk2/shared-util-angular';
-import { die, warn } from '@bk2/shared-util-core';
-import { I18nService } from '@bk2/shared-i18n';
-import { ActivityService } from '@bk2/activity-data-access';
+import { AUTH, ENV } from '@okr/shared-config';
+import { AuthCredentials, UserModel } from '@okr/shared-models';
+import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
+import { die, warn } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { ActivityService } from '@okr/activity-data-access';
 
 import { PFX } from './scope';
 

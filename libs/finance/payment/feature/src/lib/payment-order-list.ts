@@ -3,8 +3,8 @@ import { Router } from '@angular/router';
 import { IonBadge, IonButton, IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { AccountingStore } from '@bk2/finance-accounting-feature';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { AccountingStore } from '@okr/finance-accounting-feature';
 
 import { PaymentStore } from './payment.store';
 

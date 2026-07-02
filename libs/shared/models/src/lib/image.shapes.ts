@@ -1,4 +1,4 @@
-import { DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_URL } from "@bk2/shared-constants";
+import { DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_URL } from "@okr/shared-constants";
 
 import { ImageActionType } from "./enums/image-action.enum";
 import { BackgroundStyle, ImageConfig, ImageMetaData, ImageStyle, Slot } from "./image.model";

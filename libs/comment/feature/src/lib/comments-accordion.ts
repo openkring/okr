@@ -2,11 +2,11 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { IonAccordion, IonButton, IonGrid, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 
-import { CommentsList } from '@bk2/comment-ui';
+import { CommentsList } from '@okr/comment-ui';
 
 import { CommentListStore } from './comment-list.store';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 @Component({
   selector: 'bk-comments-accordion',

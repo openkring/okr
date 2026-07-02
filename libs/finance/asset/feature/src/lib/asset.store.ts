@@ -3,14 +3,14 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { AssetModel, BookingLineModel, BookingModel } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { AssetModel, BookingLineModel, BookingModel } from '@okr/shared-models';
 
-import { AccountingStore } from '@bk2/finance-accounting-feature';
-import { AssetCategoryService, AssetService } from '@bk2/finance-asset-data-access';
-import { ASSET_I18N_KEYS, AssetI18n, linearDepreciationMonthly, proRataMonths } from '@bk2/finance-asset-util';
-import { BookingService } from '@bk2/finance-booking-data-access';
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AssetCategoryService, AssetService } from '@okr/finance-asset-data-access';
+import { ASSET_I18N_KEYS, AssetI18n, linearDepreciationMonthly, proRataMonths } from '@okr/finance-asset-util';
+import { BookingService } from '@okr/finance-booking-data-access';
 
 export type { AssetI18n };
 

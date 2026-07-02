@@ -1,10 +1,10 @@
 import { CategoryAbbreviationPipe } from './category-abbreviation.pipe';
-import { getCategoryAbbreviation } from '@bk2/shared-categories';
-import { CategoryModel } from '@bk2/shared-models';
+import { getCategoryAbbreviation } from '@okr/shared-categories';
+import { CategoryModel } from '@okr/shared-models';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Mock the external dependency from another library
-vi.mock('@bk2/shared-categories', () => ({
+vi.mock('@okr/shared-categories', () => ({
   getCategoryAbbreviation: vi.fn(),
 }));
 

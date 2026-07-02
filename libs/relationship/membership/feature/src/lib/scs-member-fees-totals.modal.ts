@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { IonContent, IonGrid, IonRow, IonCol, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { ScsMemberFeesModel } from '@bk2/shared-models';
-import { Header } from '@bk2/shared-ui';
+import { ScsMemberFeesModel } from '@okr/shared-models';
+import { Header } from '@okr/shared-ui';
 
 import { ScsMemberFeesStore } from './scs-member-fees.store';
 

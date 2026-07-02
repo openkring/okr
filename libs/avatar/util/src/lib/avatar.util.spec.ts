@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mocks for external dependencies
-vi.mock('@bk2/shared-categories', () => ({
+vi.mock('@okr/shared-categories', () => ({
   getModelSlug: vi.fn(modelType => `slug-${modelType}`),
 }));
-vi.mock('@bk2/shared-util-core', () => ({
+vi.mock('@okr/shared-util-core', () => ({
   getPartsOfTupel: vi.fn(fileName => fileName.split('.')),
   blobToFile: vi.fn((blob, name) => ({ blob, name })),
   die: vi.fn(msg => {

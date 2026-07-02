@@ -3,12 +3,12 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared-feature';
-import { I18nService } from '@bk2/shared-i18n';
-import { AccountingConfigModel } from '@bk2/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { AccountingConfigModel } from '@okr/shared-models';
 
-import { AccountingConfigService } from '@bk2/finance-accounting-data-access';
-import { ACCOUNTING_I18N_KEYS } from '@bk2/finance-accounting-util';
+import { AccountingConfigService } from '@okr/finance-accounting-data-access';
+import { ACCOUNTING_I18N_KEYS } from '@okr/finance-accounting-util';
 
 export type AccountingState = { accountingTenantId: string };
 

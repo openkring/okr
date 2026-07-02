@@ -1,4 +1,4 @@
-import { Attendee, BkModel, CalEventModel, CategoryListModel, InvitationModel } from '@bk2/shared-models';
+import { Attendee, BkModel, CalEventModel, CategoryListModel, InvitationModel } from '@okr/shared-models';
 import { sortAscending, SortCriteria, sortDescending, SortDirection } from './sort.util';
 
 /*-------------------------SORT --------------------------------------------*/

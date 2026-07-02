@@ -1,6 +1,6 @@
 import { only, staticSuite } from 'vest';
 
-import { ChartSection } from '@bk2/shared-models';
+import { ChartSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IFRAME_SECTION_SHAPE, IframeSection } from '@bk2/shared-models';
+import { IFRAME_SECTION_SHAPE, IframeSection } from '@okr/shared-models';
 
 import { iframeSectionValidations } from './iframe-section.validations';
 

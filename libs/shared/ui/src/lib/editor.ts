@@ -4,13 +4,13 @@ import { IonButton, IonIcon, IonItem, ToastController } from '@ionic/angular/sta
 import { Editor, NgxEditorModule } from 'ngx-editor';
 import { AsyncPipe } from '@angular/common';
 
-import { SvgIconPipe } from '@bk2/shared-pipes';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { coerceBoolean } from '@okr/shared-util-core';
+import { TranslatePipe } from '@okr/shared-i18n';
 
 import { ButtonCopyI18n } from './button-copy';
 import { EditorToolbar } from './editor-toolbar';
-import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
+import { copyToClipboard, showToast } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'bk-editor',

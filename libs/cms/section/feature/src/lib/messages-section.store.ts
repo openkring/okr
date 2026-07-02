@@ -3,10 +3,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map } from 'rxjs';
 
-import { AppStore } from '@bk2/shared-feature';
-import { MatrixChatService } from '@bk2/chat-data-access';
-import { I18nService } from '@bk2/shared-i18n';
-import { SECTION_I18N_KEYS } from '@bk2/cms-section-util';
+import { AppStore } from '@okr/shared-feature';
+import { MatrixChatService } from '@okr/chat-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export type MessagesState = {
   maxItems: number | undefined; // max items to show, undefined means all

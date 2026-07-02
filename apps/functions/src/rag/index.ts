@@ -8,7 +8,7 @@ import axios from 'axios';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { tmpdir } from 'os';
-import { checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkStringField } from '@okr/shared-util-functions';
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 

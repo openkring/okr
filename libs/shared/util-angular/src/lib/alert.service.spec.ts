@@ -19,7 +19,7 @@ vi.mock('@jsverse/transloco', () => ({
   TranslocoService: class TranslocoService {},
 }));
 
-vi.mock('@bk2/shared-i18n', () => ({
+vi.mock('@okr/shared-i18n', () => ({
   I18nService: class I18nService {},
 }));
 
@@ -37,7 +37,7 @@ vi.mock('./alert.util', async (importOriginal) => {
 import { inject } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular/standalone';
 import { TranslocoService } from '@jsverse/transloco';
-import { I18nService } from '@bk2/shared-i18n';
+import { I18nService } from '@okr/shared-i18n';
 import { initAlertTranslation, confirm, bkPrompt, showToast, error } from './alert.util';
 import { AlertService } from './alert.service';
 

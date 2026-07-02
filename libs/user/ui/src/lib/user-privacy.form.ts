@@ -1,12 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
-import { PrivacyUsages } from "@bk2/shared-categories";
-import { PrivacyUsage, UserModel } from "@bk2/shared-models";
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@bk2/shared-ui";
-import { coerceBoolean } from "@bk2/shared-util-core";
+import { PrivacyUsages } from "@okr/shared-categories";
+import { PrivacyUsage, UserModel } from "@okr/shared-models";
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
+import { coerceBoolean } from "@okr/shared-util-core";
 
-import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFormValidations } from "@bk2/user-util";
+import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFormValidations } from "@okr/user-util";
 
 @Component({
   selector: 'bk-user-privacy-form',

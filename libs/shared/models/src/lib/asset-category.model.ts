@@ -1,4 +1,4 @@
-import { DEFAULT_KEY, DEFAULT_NAME, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_KEY, DEFAULT_NAME, DEFAULT_TENANTS } from '@okr/shared-constants';
 
 import { BkModel, NamedModel } from './base.model';
 

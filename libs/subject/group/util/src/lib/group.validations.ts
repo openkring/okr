@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
-import { GroupModel } from '@bk2/shared-models';
-import { booleanValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { GroupModel } from '@okr/shared-models';
+import { booleanValidations, stringValidations } from '@okr/shared-util-core';
 
 export const groupValidations = staticSuite((model: GroupModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);

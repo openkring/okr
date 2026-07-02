@@ -6,10 +6,10 @@ import {
   IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { InvoiceCollection, InvoiceModel } from '@bk2/shared-models';
-import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
-import { getSystemQuery } from '@bk2/shared-util-core';
+import { InvoiceCollection, InvoiceModel } from '@okr/shared-models';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 export interface AgingBucket {
   label: string;

@@ -4,9 +4,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { IonButton, IonContent, IonHeader, IonItem, IonLabel,
   IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { PaymentModel, PaymentOrderModel } from '@bk2/shared-models';
-import { AccountingStore } from '@bk2/finance-accounting-feature';
-import { PaymentOrderService, PaymentService } from '@bk2/finance-payment-data-access';
+import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
 
 @Component({
   selector: 'bk-payment-order-detail-page',
