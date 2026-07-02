@@ -28,17 +28,17 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | `fix-types` | type-checking after editing TypeScript files. |
 | `testing` | writing or running tests — Vitest unit tests (only for util functions and services) or Playwright e2e; includes the `@angular/compiler` JIT-error fix. |
 | `authoring-docs` | creating/saving a spec, design, or implementation plan doc. |
-| `pending-implementation` | creating/updating/regenerating `docs/PENDING_IMPLEMENTATION.md` — the TOC of specified-but-not-fully-implemented topics. |
+| `pending-implementation` | creating/updating/regenerating `planning/PENDING_IMPLEMENTATION.md` — the TOC of specified-but-not-fully-implemented topics. |
 | `creating-help-videos` | creating/updating a step-by-step help/tutorial/onboarding video for end users (login, password reset, …) — German storyboard + Sprechertext + screenshot-capture guide per `tenant/topic`, for desktop and mobile. |
 
 ### Documentation layout (`docs/`)
 
-Docs are organised by **type**: `docs/ideas/` (seed/stub specs), `docs/specs/` (all spec & design docs,
-kept here for their whole life), `docs/plans/` (implementation plans), `docs/documentation/` (reference
-docs). Specs are **not moved on completion**; status lives in `docs/PENDING_IMPLEMENTATION.md` (the TOC)
+Docs are organised by **type**: `planning/ideas/` (seed/stub specs), `planning/specs/` (all spec & design docs,
+kept here for their whole life), `planning/plans/` (implementation plans), `planning/reference/` (reference
+docs). Specs are **not moved on completion**; status lives in `planning/PENDING_IMPLEMENTATION.md` (the TOC)
 via each entry's `State:` field. `docs/done/` is retired (archive for superseded docs only).
 **This overrides the superpowers defaults:** the `brainstorming` skill must save design docs to
-`docs/specs/` and `writing-plans` must save plans to `docs/plans/` (not under `docs/superpowers/`).
+`planning/specs/` and `writing-plans` must save plans to `planning/plans/` (not under `docs/superpowers/`).
 See the `authoring-docs` skill for the full convention.
 
 ## Commands

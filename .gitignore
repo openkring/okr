@@ -107,3 +107,6 @@ e2e/.env
 test-results/
 .continue/
 .idx/
+
+# okr: rendered helper videos are published to YouTube, not git
+planning/video-producer/**/*.mp4
