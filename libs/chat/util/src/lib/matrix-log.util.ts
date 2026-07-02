@@ -14,7 +14,7 @@ export const MATRIX_LOG_LEVELS: readonly MatrixLogLevel[] = ['trace', 'debug', '
  */
 export const DEFAULT_MATRIX_LOG_LEVEL: MatrixLogLevel = 'warn';
 
-const STORAGE_KEY = 'bk2.matrixLogLevel';
+const STORAGE_KEY = 'okr.matrixLogLevel';
 
 /** Minimal shape of a runtime loglevel logger — `setLevel`/`getChild` aren't on the exported type. */
 type LevelLogger = {

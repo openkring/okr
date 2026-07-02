@@ -370,7 +370,7 @@ export class MatrixChatService {
       return new IndexedDBStore({
         indexedDB: window.indexedDB,
         localStorage: window.localStorage,
-        dbName: 'bk2-matrix',
+        dbName: 'okr-matrix',
       });
     } catch (e) {
       console.warn('MatrixChatService: IndexedDB store creation failed, using in-memory store:', e);

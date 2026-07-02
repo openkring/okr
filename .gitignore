@@ -11,7 +11,7 @@ emulator-storage
 **/firebase.config.ts
 **/firebase-config.js
 environment.global.ts
-**/bk-config.ts
+**/okr-config.ts
 **/schema.json
 
 # compiled output

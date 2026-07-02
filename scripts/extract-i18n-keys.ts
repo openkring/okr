@@ -64,7 +64,7 @@ function extractKeysFromFile(filePath: string): string[] {
   while ((m = KEY_RE.exec(content)) !== null) {
     const raw = m[1].substring(1); // strip leading @
     const firstSeg = raw.split('.')[0];
-    // Skip npm-style scoped imports: first segment has / or - (e.g. @bk2/lib, @angular/core)
+    // Skip npm-style scoped imports: first segment has / or - (e.g. @okr/lib, @angular/core)
     if (firstSeg.includes('/') || firstSeg.includes('-')) continue;
     keys.add(raw);
   }

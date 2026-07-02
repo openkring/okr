@@ -8,9 +8,9 @@ export type VatPeriod = 'quarterly' | 'monthly' | 'semi-annual';
 export type DepreciationFrequency = 'monthly' | 'annual';
 export type DepreciationProRata = 'daily' | 'semi-annual';
 
-// Determines whether bk2 is the system of record or a read-only sync cache.
-// 'native': full CRUD via bk2 accounting features.
-// 'bexio': Bexio is authoritative; bk2 collections are populated by sync Cloud Functions and are read-only in the UI.
+// Determines whether okr is the system of record or a read-only sync cache.
+// 'native': full CRUD via okr accounting features.
+// 'bexio': Bexio is authoritative; okr collections are populated by sync Cloud Functions and are read-only in the UI.
 // 'datev': reserved for future DATEV integration.
 export type AccountingBackend = 'native' | 'bexio' | 'datev';
 

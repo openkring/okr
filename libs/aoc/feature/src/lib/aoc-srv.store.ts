@@ -115,7 +115,7 @@ function buildIndexEntry(
 }
 
 function storageKey(tenantId: string): string {
-  return `bk2-aoc-srv-index-${tenantId}`;
+  return `okr-aoc-srv-index-${tenantId}`;
 }
 
 // in the test system, Regasoft adds a 'x' after the email address, we need to remove this to make it comparable
