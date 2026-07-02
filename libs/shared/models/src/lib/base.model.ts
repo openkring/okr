@@ -19,7 +19,7 @@ export interface PersistedModel {
 }
 
 // for models in the application, we add the Firestore Document ID as okey
-export interface BkModel extends PersistedModel {
+export interface OkrModel extends PersistedModel {
   okey: string;
 }
 
@@ -59,7 +59,7 @@ export interface FieldDescription {
   value?: boolean | string | number | Roles;
 }
 
-export function isBaseModel(obj: unknown): obj is BkModel {
+export function isBaseModel(obj: unknown): obj is OkrModel {
   return typeof obj === 'object' && obj !== null && 'okey' in obj;
 }
 

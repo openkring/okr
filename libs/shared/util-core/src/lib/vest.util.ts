@@ -2,9 +2,9 @@ import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, STORE_DATE_LENGTH, ST
 import { enforce, omitWhen, test } from 'vest';
 import { checkDate, DateFormat } from './date.util';
 import { isArrayOfStrings, isAvatarInfo, isMoney } from './type.util';
-import { AddressableModel, AvatarInfo, BkModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, MoneyModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from '@okr/shared-models';
+import { AddressableModel, AvatarInfo, OkrModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, MoneyModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from '@okr/shared-models';
 
-export function baseValidations(model: BkModel, givenTenants: string, givenTags: string, field?: string) {
+export function baseValidations(model: OkrModel, givenTenants: string, givenTags: string, field?: string) {
 
   omitWhen(!isBaseModel(model), () => {
     stringValidations('okey', model.okey, SHORT_NAME_LENGTH);

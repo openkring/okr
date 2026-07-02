@@ -1,8 +1,8 @@
 import { DEFAULT_DATE, DEFAULT_IMPORTANCE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRIORITY, DEFAULT_TAGS, DEFAULT_TASK_STATE, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
-import { BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from './base.model';
 
-export class TaskModel implements BkModel, PersistedModel, NamedModel, SearchableModel, TaggedModel {
+export class TaskModel implements OkrModel, PersistedModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;

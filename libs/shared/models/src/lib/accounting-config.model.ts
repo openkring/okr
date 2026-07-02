@@ -1,7 +1,7 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { CurrencyCode, MoneyModel } from '@okr/shared-models';
 
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 import { VatMethod } from './vat-code.model';
 
 export type VatPeriod = 'quarterly' | 'monthly' | 'semi-annual';
@@ -23,7 +23,7 @@ export interface VatRateEntry {
 }
 
 // One document per accounting tenant. okey = accountingTenantId.
-export class AccountingConfigModel implements BkModel {
+export class AccountingConfigModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

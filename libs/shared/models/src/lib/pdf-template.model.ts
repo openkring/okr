@@ -1,6 +1,6 @@
 import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TENANTS } from '@okr/shared-constants';
 
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
 export const TemplateCollection = 'templates';
 export const TemplateVersionSubcollection = 'versions';
@@ -18,7 +18,7 @@ export interface TemplateAssetRef {
   mimeType: string;
 }
 
-export class TemplateModel implements BkModel {
+export class TemplateModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
@@ -67,7 +67,7 @@ export class TemplateVersionModel {
   public createdBy = '';
 }
 
-export class DocGenerationModel implements BkModel {
+export class DocGenerationModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

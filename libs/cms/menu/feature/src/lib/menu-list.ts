@@ -3,7 +3,7 @@ import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, I
 
 import { MenuItemModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { BkListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@okr/shared-ui';
+import { OkrListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@okr/shared-ui';
 import { hasRole } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
@@ -14,7 +14,7 @@ import { MenuStore } from './menu.store';
   standalone: true,
   imports: [
     SvgIconPipe,
-    BkListSkeleton, EmptyList, ErrorBanner, ListFilter,
+    OkrListSkeleton, EmptyList, ErrorBanner, ListFilter,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList,
     IonInfiniteScroll, IonInfiniteScrollContent

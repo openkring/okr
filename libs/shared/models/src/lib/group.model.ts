@@ -1,5 +1,5 @@
 import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 import { AVATAR_INFO_SHAPE, AvatarInfo } from './avatar-info';
 
 /**
@@ -7,7 +7,7 @@ import { AVATAR_INFO_SHAPE, AvatarInfo } from './avatar-info';
  * They optionally share a common: Content, Chat, Calendar, Tasks, Files.
  * Groups can be administered by a GroupAdmin. This person can open additional groups and add/remove members.
  */
-export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class GroupModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY; // unique
   public name = DEFAULT_NAME;
 

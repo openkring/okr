@@ -1,8 +1,8 @@
 import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
-import { BkModel, NamedModel, SearchableModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel } from './base.model';
 
-export class ResponsibilityModel implements BkModel, SearchableModel, NamedModel {
+export class ResponsibilityModel implements OkrModel, SearchableModel, NamedModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;

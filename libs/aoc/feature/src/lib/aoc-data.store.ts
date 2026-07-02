@@ -7,7 +7,7 @@ import { AlertController } from '@ionic/angular/standalone';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryCollection, CommentCollection, CommentModel,
+import { AddressCollection, AddressModel, OkrModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryCollection, CommentCollection, CommentModel,
   DocumentCollection, DocumentModel, GroupCollection, LocationCollection, LocationModel, LogInfo, MembershipCollection, MembershipModel, MenuItemCollection,
   MenuItemModel, OrgCollection, OrgModel, OwnershipCollection, OwnershipModel, PageCollection, PageModel, PersonalRelCollection, PersonalRelModel, PersonCollection,
   PersonModel, ReservationCollection, ReservationModel, SessionCollection, SessionModel, TaskCollection, TransferCollection, UserCollection,
@@ -79,7 +79,7 @@ export const AocDataStore = signalStore(
       params: () => ({
         modelType: store.modelType(),
       }),
-      stream: ({ params }): Observable<BkModel[] | undefined> => {
+      stream: ({ params }): Observable<OkrModel[] | undefined> => {
         switch (params.modelType) {
           case 'person':
             return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
@@ -176,7 +176,7 @@ export const AocDataStore = signalStore(
 
       /**
        * This is the place where you can implement your custom fixes.
-       * This implementation is for BkModels where we know the model.
+       * This implementation is for OkrModels where we know the model.
        */
       async fixCustomIssues<T>(doc: T): Promise<T> {
         console.log(`  - custom fixes of document ${(doc as any).okey} ...`);
@@ -635,7 +635,7 @@ export const AocDataStore = signalStore(
         }
       },
 
-      createIndex<T extends BkModel>(collection: string, generateIndexFn: (model: T) => string, orderBy = 'none'): void {
+      createIndex<T extends OkrModel>(collection: string, generateIndexFn: (model: T) => string, orderBy = 'none'): void {
         const dbQuery = getSystemQuery(store.appStore.tenantId());
         from(store.appStore.firestoreService.getDataOnce<T>(collection, dbQuery, orderBy, 'asc'))
           .subscribe(async (data) => {

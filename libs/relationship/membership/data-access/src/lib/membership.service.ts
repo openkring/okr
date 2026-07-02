@@ -293,7 +293,7 @@ export class MembershipService {
 
   /*   private async selectExportType(): Promise<number | undefined> {
       const modal = await this.modalController.create({
-        component: BkLabelSelectModal,
+        component: OkrLabelSelectModal,
         componentProps: {
           labels: [
             '@membership.select.default', 

@@ -1,5 +1,5 @@
 import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME } from '@okr/shared-constants';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarInfo } from './avatar-info';
 import { MoneyModel } from './money.model';
 
@@ -24,7 +24,7 @@ import { MoneyModel } from './money.model';
  * CalEvents of a resource can not be changed directly, they are created/updated/deleted via Reservations.
  * That's because the startDate and endDate need to be kept in sync between Reservation and CalEvent.
  */
-export class ReservationModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class ReservationModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   // base
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;

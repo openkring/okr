@@ -1,7 +1,7 @@
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE } from '@okr/shared-constants';
 
 import { AvatarInfo } from './avatar-info';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
  * A transfer of ownership or membership from one entity to another.
@@ -16,7 +16,7 @@ import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model'
  * - inheritance
  * - withdrawal/deposit from/to bank account
  */
-export class TransferModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class TransferModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;

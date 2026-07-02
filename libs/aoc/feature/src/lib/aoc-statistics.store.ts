@@ -6,7 +6,7 @@ import { firstValueFrom, map, Observable, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { BkModel, LogInfo, logMessage, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel, TABLE_SECTION_SHAPE } from '@okr/shared-models';
+import { OkrModel, LogInfo, logMessage, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel, TABLE_SECTION_SHAPE } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
 import { DateFormat, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 
@@ -39,7 +39,7 @@ export const AocStatisticsStore = signalStore(
       params: () => ({
         modelType: store.modelType(),
       }),
-      stream: ({ params }): Observable<BkModel[] | undefined> => {
+      stream: ({ params }): Observable<OkrModel[] | undefined> => {
         switch (params.modelType) {
           case 'person':
             return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');

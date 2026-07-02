@@ -1,7 +1,7 @@
 import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
-export class CalendarModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class CalendarModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY; // unique key of the model in the database
   public tenants: string[] = DEFAULT_TENANTS; // tenant IDs that this model belongs to
   public isArchived = false; // whether the model is archived

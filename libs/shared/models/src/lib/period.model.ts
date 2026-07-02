@@ -1,10 +1,10 @@
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
 // An accounting period (monthly or annual). Created automatically on first booking.
 // Locked periods reject new bookings; corrections go into the current open period.
-export class PeriodModel implements BkModel {
+export class PeriodModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

@@ -1,12 +1,12 @@
 import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { AddressableModel, BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { AddressableModel, OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
  * An organization or company.
  * Groups are also organizations (with OrgType=Group). They can be used on different levels, e.g. as a department or a team.
  * Hierarchies or orgcharts can be built using memberships.
  */
-export class OrgModel implements BkModel, NamedModel, AddressableModel, SearchableModel, TaggedModel {
+export class OrgModel implements OkrModel, NamedModel, AddressableModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public name = DEFAULT_NAME;
   public type = DEFAULT_ORG_TYPE;

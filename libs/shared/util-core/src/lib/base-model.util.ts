@@ -1,8 +1,8 @@
-import { Attendee, BkModel, CalEventModel, CategoryListModel, InvitationModel } from '@okr/shared-models';
+import { Attendee, OkrModel, CalEventModel, CategoryListModel, InvitationModel } from '@okr/shared-models';
 import { sortAscending, SortCriteria, sortDescending, SortDirection } from './sort.util';
 
 /*-------------------------SORT --------------------------------------------*/
-export function sortModels(models: BkModel[], sortCriteria: SortCriteria): BkModel[] {
+export function sortModels(models: OkrModel[], sortCriteria: SortCriteria): OkrModel[] {
   switch(sortCriteria.direction) {
     case SortDirection.Ascending: return sortAscending(models, sortCriteria.field, sortCriteria.typeIsString);
     case SortDirection.Descending: return sortDescending(models, sortCriteria.field, sortCriteria.typeIsString);

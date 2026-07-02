@@ -1,5 +1,5 @@
 import { DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarUsage } from './enums/avatar-usage.enum';
 import { DeliveryType } from './enums/delivery-type.enum';
 import { DefaultLanguage } from './enums/language.enum';
@@ -8,7 +8,7 @@ import { PersonSortCriteria } from './enums/person-sort-criteria.enum';
 import { PrivacyUsage } from './enums/privacy-usage.enum';
 import { Roles } from './roles';
 
-export class UserModel implements BkModel, TaggedModel, SearchableModel {
+export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   public okey = DEFAULT_KEY;
   public loginEmail = DEFAULT_EMAIL; // Firebase Auth Login Email
   public personKey = DEFAULT_KEY; // PersonModel.okey

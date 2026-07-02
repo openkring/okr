@@ -1,7 +1,7 @@
 import { DEFAULT_ACCOUNT_NAME, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
-export class AccountModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class AccountModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

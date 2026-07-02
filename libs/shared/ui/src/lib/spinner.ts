@@ -5,7 +5,7 @@ import { ColorsIonic } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';
 import { CategoryPlainNamePipe } from '@okr/shared-pipes';
 
-export type BkSpinnerName = 'dots' | 'bubbles' | 'circles' | 'crescent' | 'circular' | 'lines' | 'lines-small' | 'lines-sharp' | 'lines-small-sharp';
+export type OkrSpinnerName = 'dots' | 'bubbles' | 'circles' | 'crescent' | 'circular' | 'lines' | 'lines-small' | 'lines-sharp' | 'lines-small-sharp';
 
 @Component({
   selector: 'okr-spinner',
@@ -50,7 +50,7 @@ export type BkSpinnerName = 'dots' | 'bubbles' | 'circles' | 'crescent' | 'circu
 })
 export class Spinner {
   // inputs
-  public name = input<BkSpinnerName>('bubbles');
+  public name = input<OkrSpinnerName>('bubbles');
   public color = input<ColorIonic>(ColorIonic.Primary);
 
   protected colorsIonic = ColorsIonic;

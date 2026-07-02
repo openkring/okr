@@ -1,5 +1,5 @@
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
  * A membership of a person or organization in a group or organization.
@@ -12,7 +12,7 @@ import { BkModel, SearchableModel, TaggedModel } from './base.model';
  * Examples:
  * - membership in a club
  */
-export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
+export class MembershipModel implements OkrModel, SearchableModel, TaggedModel {
   // base
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;

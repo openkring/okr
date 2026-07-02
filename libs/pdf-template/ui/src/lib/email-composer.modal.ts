@@ -10,7 +10,7 @@ import {
 import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
-  BkEditor, ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
+  OkrEditor, ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
   EmailInput, EmailInputI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { getImgixUrl } from '@okr/shared-util-core';
@@ -30,7 +30,7 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     SvgIconPipe,
-    BkEditor, ButtonCopy, ChangeConfirmation, EmailInput, TextInput,
+    OkrEditor, ButtonCopy, ChangeConfirmation, EmailInput, TextInput,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
   ],

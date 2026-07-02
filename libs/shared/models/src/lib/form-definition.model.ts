@@ -1,5 +1,5 @@
 import { DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, NamedModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, TaggedModel } from './base.model';
 
 // ──────────────────────────────────────────
 // Field-type union
@@ -79,7 +79,7 @@ export interface FormMapping {
 export const FormDefinitionCollection = 'formDefinitions';
 export const FormDefinitionModelName = 'formDefinition';
 
-export class FormDefinitionModel implements BkModel, NamedModel, TaggedModel {
+export class FormDefinitionModel implements OkrModel, NamedModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

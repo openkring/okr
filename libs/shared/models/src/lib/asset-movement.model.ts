@@ -1,7 +1,7 @@
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { MoneyModel } from '@okr/shared-models';
 
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
 export type AssetMovementType =
   | 'addition'           // initial capitalisation or component addition
@@ -11,7 +11,7 @@ export type AssetMovementType =
   | 'full_disposal'      // sale or scrapping of the entire asset
   | 'transfer';          // change of cost centre, location, or category
 
-export class AssetMovementModel implements BkModel {
+export class AssetMovementModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

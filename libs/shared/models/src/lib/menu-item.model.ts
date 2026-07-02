@@ -1,9 +1,9 @@
 import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@okr/shared-constants';
-import { BaseProperty, BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { BaseProperty, OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 export type RoleName = 'none' | 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin' | 'public' | 'groupAdmin' | 'kiosk' | 'auditor' | 'tester';
 
-export class MenuItemModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY; // unique key of the model in the database
   public name = DEFAULT_NAME; //  name: e.g. aoc, help, members ...
   public index = DEFAULT_INDEX; // the index of the menu item (to search for)

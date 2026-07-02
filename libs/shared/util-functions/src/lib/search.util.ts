@@ -43,8 +43,8 @@ function getByPath(obj: any, path: string): unknown {
  * Keys in `newData` may be dotted field paths (e.g. `reserver.name2`) to compare against
  * nested fields — this mirrors the dot-notation used in Firestore `update()` calls, so that
  * a nested-field sync is only written when the nested value actually changed.
- * @param currentData  the current data (typically a BkModel from the database)
- * @param newData the new data to compare with (typically a partial BkModel; keys may be dotted paths)
+ * @param currentData  the current data (typically a OkrModel from the database)
+ * @param newData the new data to compare with (typically a partial OkrModel; keys may be dotted paths)
  * @returns true if any one of the data fields has changed, false otherwise
  */
 export function hasChanged(currentData: any, newData: Record<string, any>): boolean {

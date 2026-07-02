@@ -1,6 +1,6 @@
 import {
     BaseProperty,
-    BkModel,
+    OkrModel,
     MembershipModel,
     MetaTag,
     OrgModel,
@@ -274,8 +274,8 @@ describe('type.util', () => {
     });
 
     describe('removeKeyFromBkModel', () => {
-      it('should remove okey property from BkModel', () => {
-        const model = { okey: 'test-key', name: 'Test Model', value: 123 } as unknown as BkModel;
+      it('should remove okey property from OkrModel', () => {
+        const model = { okey: 'test-key', name: 'Test Model', value: 123 } as unknown as OkrModel;
         const result = removeKeyFromBkModel(model);
         
         expect(result).toEqual({ name: 'Test Model', value: 123 });

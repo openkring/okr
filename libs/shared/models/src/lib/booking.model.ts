@@ -1,13 +1,13 @@
 import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@okr/shared-constants';
 
-import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarInfo } from './avatar-info';
 
 export type BookingStatus = 'draft' | 'posted' | 'cancelled';
 
 // Header record for a double-entry booking. All amounts live in BookingLineModel.
 // Every booking has at least two BookingLineModel entries (debit + credit sides).
-export class BookingModel implements BkModel, SearchableModel, TaggedModel {
+export class BookingModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

@@ -1,10 +1,10 @@
 import { DEFAULT_CURRENCY, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 
-import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 
 export type ExpenseStatus = 'draft' | 'processing' | 'validated' | 'error' | 'posted';
 
-export class ExpenseModel implements BkModel, SearchableModel, TaggedModel {
+export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

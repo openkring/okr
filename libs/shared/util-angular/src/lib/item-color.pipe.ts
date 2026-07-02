@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { BkModel } from '@okr/shared-models';
+import { OkrModel } from '@okr/shared-models';
 
 @Pipe({
   name: 'itemColor',
@@ -7,7 +7,7 @@ import { BkModel } from '@okr/shared-models';
 })
 export class ItemColorPipe implements PipeTransform {
 
-  transform(item: BkModel): string {
+  transform(item: OkrModel): string {
       return getListItemColor(item.isArchived);
   }
 }

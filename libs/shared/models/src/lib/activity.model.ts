@@ -1,6 +1,6 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
-import { BkModel, SearchableModel } from './base.model';
+import { OkrModel, SearchableModel } from './base.model';
 import { RoleName } from './menu-item.model';
 
 /**
@@ -9,7 +9,7 @@ import { RoleName } from './menu-item.model';
  *
  * index format: t:<timestamp> c:<scope> a:<action> p:<author-name>
  */
-export class ActivityModel implements BkModel, SearchableModel {
+export class ActivityModel implements OkrModel, SearchableModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

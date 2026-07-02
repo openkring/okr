@@ -1,4 +1,4 @@
-import { BkModel } from '@okr/shared-models';
+import { OkrModel } from '@okr/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { addIndexElement, sortModels } from './base-model.util';
 import { SortCriteria, SortDirection, SortField, sortAscending, sortDescending } from './sort.util';
@@ -22,21 +22,21 @@ describe('base-model.util', () => {
   const mockSortDescending = vi.mocked(sortDescending);
 
   // Helper function to create test models
-  const createTestModel = (key: string, name: string, additionalProps: any = {}): BkModel => ({
+  const createTestModel = (key: string, name: string, additionalProps: any = {}): OkrModel => ({
     key,
     name,
     index: '',
     tags: '',
     state: 'active',
     ...additionalProps
-  } as BkModel);
+  } as OkrModel);
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('sortModels', () => {
-    const testModels: BkModel[] = [
+    const testModels: OkrModel[] = [
       createTestModel('1', 'Model A'),
       createTestModel('2', 'Model B'),
       createTestModel('3', 'Model C')

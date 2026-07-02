@@ -1,5 +1,5 @@
 import { Inject, InjectionToken } from "@angular/core";
-import { BkEnvironment, ENV } from "./env";
+import { OkrEnvironment, ENV } from "./env";
 import { connectStorageEmulator, FirebaseStorage, getStorage, ref, uploadBytesResumable, UploadTask } from "firebase/storage";
 import { getApp } from "firebase/app";
 
@@ -27,7 +27,7 @@ export function getBkStorage(): FirebaseStorage {
     const _firebaseApp = getApp();
     const _storage = getStorage(_firebaseApp, 'gs://bkaiser-org.appspot.com');
   
-    const _env = Inject(ENV) as BkEnvironment;
+    const _env = Inject(ENV) as OkrEnvironment;
     if (_env.useEmulators) {
       connectStorageEmulator(_storage, 'localhost', STORAGE_EMULATOR_PORT);
     }

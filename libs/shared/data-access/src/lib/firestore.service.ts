@@ -28,7 +28,7 @@ import { collectionData, docData } from 'rxfire/firestore';
 import { firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 
 import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
-import { BkModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
+import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
 import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromBkModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 import { I18nService } from "@okr/shared-i18n";
@@ -74,7 +74,7 @@ export class FirestoreService {
    * @param model the data to save. if its key is valid, it will be used as the document ID in Firestore. Otherwise, a new document ID will be generated.
    * @return a Promise of the key of the newly stored model
    */
-  public async createModel<T extends BkModel>(
+  public async createModel<T extends OkrModel>(
     collectionName: string, 
     model: T, 
     confirmMessage?: string,
@@ -123,7 +123,7 @@ export class FirestoreService {
 
   /**
    * Stores a document in Firestore.
-   * Use this method to save any data other than a BkModel. For saving a BkModel, use createModel()
+   * Use this method to save any data other than a OkrModel. For saving a OkrModel, use createModel()
    * @param collectionName The name of the collection.
    * @param key The document ID (optional). If this is not set, a new random document ID will be generated.
    * @param data The data to write.
@@ -171,7 +171,7 @@ export class FirestoreService {
    * @param key the key of the document in the database
    * @return an Observable of the model, or undefined if the model could not be found or an error occurred
    */
-  public readModel<T extends BkModel>(collectionName: string, key: string | undefined): Observable<T | undefined> {
+  public readModel<T extends OkrModel>(collectionName: string, key: string | undefined): Observable<T | undefined> {
     // ensure that the method is only called in the browser context; return undefined in SSR context
     if (!isBrowser(this.platformId)) {
       return of(this.bkError(undefined, 'FirestoreService.readModel: This method can only be called in the browser context.', true));
@@ -219,15 +219,15 @@ export class FirestoreService {
   }
 
   /**
-   * Update the BkModel with id=uid with the given document.
+   * Update the OkrModel with id=uid with the given document.
    * Update is for non-destructive updates, ie. it updates the current value
    * within the database with the new value specified as the parameter.
    * @param collectionName the name of the Firestore collection to update the model in
-   * @param model the changed BkModel document to save
+   * @param model the changed OkrModel document to save
    * @param forceOverwrite whether to force overwrite the document if it exists; this can be used for createOrUpdate
    * @return a Promise of the key of the updated model or undefined if the operation failed
    */
-  public async updateModel<T extends BkModel>(
+  public async updateModel<T extends OkrModel>(
     collectionName: string, 
     model: T, 
     forceOverwrite = false,
@@ -352,7 +352,7 @@ export class FirestoreService {
    * @param model the model document to delete
    * @return a promise of the key of the deleted model or undefined if the operation failed
    */
-  public async deleteModel<T extends BkModel>(
+  public async deleteModel<T extends OkrModel>(
     collectionName: string, 
     model: T,
     confirmMessage?: string,

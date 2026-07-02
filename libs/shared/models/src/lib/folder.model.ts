@@ -1,5 +1,5 @@
 import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@okr/shared-constants';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
  * A Folder groups DocumentModels together.
@@ -9,7 +9,7 @@ import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model'
  *
  * GroupView implicitly creates a FolderModel with okey = groupKey when files are first accessed.
  */
-export class FolderModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class FolderModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public name = DEFAULT_NAME;
   public description = DEFAULT_NOTES;

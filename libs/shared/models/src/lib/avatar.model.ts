@@ -1,7 +1,7 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
-export class AvatarModel implements BkModel {
+export class AvatarModel implements OkrModel {
   okey = DEFAULT_KEY; // key of the avatar
   tenants: string[] = DEFAULT_TENANTS;
   storagePath = '';

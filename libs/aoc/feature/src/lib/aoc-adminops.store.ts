@@ -6,7 +6,7 @@ import { from, Observable, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AddressCollection, AddressModel, BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
+import { AddressCollection, AddressModel, OkrModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
 import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@okr/shared-util-core';
 import { getMembershipCategoryChanges } from '@okr/relationship-membership-util';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
@@ -35,7 +35,7 @@ export const AocAdminOpsStore = signalStore(
       params: () => ({
         modelType: store.modelType(),
       }),
-      stream: ({ params }): Observable<BkModel[] | undefined> => {
+      stream: ({ params }): Observable<OkrModel[] | undefined> => {
         switch (params.modelType) {
           case 'person':
             return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
@@ -114,7 +114,7 @@ export const AocAdminOpsStore = signalStore(
                 if (age < 0) return { id: m.okey, name: name, message: nodob };
                 return { id: m.okey, name: name, message: message };
               }
-              const m = model as BkModel;
+              const m = model as OkrModel;
               return { id: m.okey, name: '', message: 'not a membership ?' };
             });
           patchState(store, { log: log, logTitle: store.i18n.title() });

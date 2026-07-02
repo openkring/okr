@@ -76,7 +76,7 @@ import { copyToClipboard, showToast } from '@okr/shared-util-angular';
       </div>
   `
 })
-export class BkEditor implements OnInit, OnDestroy {
+export class OkrEditor implements OnInit, OnDestroy {
   private toastController = inject(ToastController);
 
   // inputs

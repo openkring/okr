@@ -1,7 +1,7 @@
 import { DEFAULT_COMPETITION_LEVEL, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, SearchableModel } from './base.model';
+import { OkrModel, SearchableModel } from './base.model';
 
-export class CompetitionLevelModel implements BkModel, SearchableModel {
+export class CompetitionLevelModel implements OkrModel, SearchableModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

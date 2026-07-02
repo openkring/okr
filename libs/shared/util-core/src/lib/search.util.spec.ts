@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BkModel, DbQuery, UserModel } from '@okr/shared-models';
+import { OkrModel, DbQuery, UserModel } from '@okr/shared-models';
 import * as logUtil from './log.util';
 import {
   findAllByField,
@@ -149,7 +149,7 @@ describe('search.util', () => {
   });
 
   describe('findByKey', () => {
-    interface TestModel extends BkModel {
+    interface TestModel extends OkrModel {
       okey: string;
       name: string;
     }
@@ -566,8 +566,8 @@ describe('search.util', () => {
       expect(constraints).toHaveLength(2);
 
       // Then use findByKey on results
-      const mockResults: BkModel[] = [
-        { okey: 'result1', name: 'Test Item' } as unknown as BkModel
+      const mockResults: OkrModel[] = [
+        { okey: 'result1', name: 'Test Item' } as unknown as OkrModel
       ];
 
       testScheduler.run(({ cold, expectObservable }) => {
@@ -596,7 +596,7 @@ describe('search.util', () => {
 
     it('should demonstrate typical service usage pattern', () => {
       // Simulate service workflow
-      interface ServiceModel extends BkModel {
+      interface ServiceModel extends OkrModel {
         okey: string;
         name: string;
         category: string;

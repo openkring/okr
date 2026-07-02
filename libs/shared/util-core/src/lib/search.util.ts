@@ -1,7 +1,7 @@
 import { orderBy, OrderByDirection, QueryConstraint, where, WhereFilterOp } from 'firebase/firestore';
 import { map, Observable, of } from 'rxjs';
 
-import { BkModel, DbQuery, UserModel } from '@okr/shared-models';
+import { OkrModel, DbQuery, UserModel } from '@okr/shared-models';
 import { warn } from './log.util';
 
 /*----------------------- SEARCH ----------------------------------------------*/
@@ -33,7 +33,7 @@ export function getQuery(dbQuery: DbQuery[], orderByParam = 'name', sortOrderPar
  * @param key the value key to search for
  * @returns the first item that has the given key or undefined if no such item exists
  */
-export function findByKey<T extends BkModel>(items$: Observable<T[]>, searchValue: string | undefined | null, fieldName = 'okey'): Observable<T | undefined> {
+export function findByKey<T extends OkrModel>(items$: Observable<T[]>, searchValue: string | undefined | null, fieldName = 'okey'): Observable<T | undefined> {
   if (!searchValue || searchValue.length === 0) return of(undefined);
   return items$.pipe(
     map((items: T[]) => {

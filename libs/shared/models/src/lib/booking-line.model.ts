@@ -1,11 +1,11 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { MoneyModel } from '@okr/shared-models';
 
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
 // One side of a double-entry booking line. Every BookingModel has ≥2 lines.
 // Invariant: Σ debitAmount = Σ creditAmount across all lines of a booking (in functional currency).
-export class BookingLineModel implements BkModel {
+export class BookingLineModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

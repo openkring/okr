@@ -4,7 +4,7 @@ import { map, Observable, of, switchMap, take } from 'rxjs';
 import { Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
 
-import { BkEnvironment, ENV } from '@okr/shared-config';
+import { OkrEnvironment, ENV } from '@okr/shared-config';
 import { THUMBNAIL_SIZE } from '@okr/shared-constants';
 import { APP_STORE_MIN, AppStoreMin, FirestoreService } from '@okr/shared-data-access';
 import { AvatarCollection, AvatarModel } from '@okr/shared-models';
@@ -33,7 +33,7 @@ export class AvatarService {
     private readonly platform: Platform,
     private readonly firestoreService: FirestoreService, 
     private readonly uploadService: UploadService,
-    @Inject(ENV) private readonly env: BkEnvironment,
+    @Inject(ENV) private readonly env: OkrEnvironment,
     @Inject(APP_STORE_MIN) private readonly appStore: AppStoreMin,
     private readonly injector: Injector
   ) {

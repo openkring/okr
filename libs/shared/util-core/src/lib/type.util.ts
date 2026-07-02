@@ -1,4 +1,4 @@
-import { AVATAR_INFO_SHAPE, AvatarInfo, BaseProperty, BaseType, BkModel, GroupModel, LocationModel, MembershipModel, MetaTag, MoneyModel, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@okr/shared-models';
+import { AVATAR_INFO_SHAPE, AvatarInfo, BaseProperty, BaseType, OkrModel, GroupModel, LocationModel, MembershipModel, MetaTag, MoneyModel, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@okr/shared-models';
 import { die, warn } from './log.util';
 import { convertDateFormatToString, DateFormat } from './date.util';
 
@@ -92,7 +92,7 @@ export function removeProperty(obj: object, key: string): object {
   // or const copy = structuredClone(obj); delete copy[key]; return copy;
 }
 
-export function removeKeyFromBkModel<T extends BkModel>(model: T): T {
+export function removeKeyFromBkModel<T extends OkrModel>(model: T): T {
   return removeProperty(model, 'okey') as T;
 }
 

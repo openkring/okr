@@ -1,5 +1,5 @@
 import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarInfo } from './avatar-info';
 
 /**
@@ -7,7 +7,7 @@ import { AvatarInfo } from './avatar-info';
  * to prepare the yearly membership invoices.
  * The entries of this list are deleted when creating the invoice in Bexio (upload of the data to Bexio)
  */
-export class ScsMemberFeesModel implements BkModel, SearchableModel, TaggedModel {
+export class ScsMemberFeesModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

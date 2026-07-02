@@ -1,5 +1,5 @@
 import { DEFAULT_COUNT, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_OCAT, DEFAULT_OSTATE, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { MoneyModel } from './money.model';
 
 /**
@@ -15,7 +15,7 @@ import { MoneyModel } from './money.model';
  * - lease of a car
  * - usage of a resource (e.g. a room)
  */
-export class OwnershipModel implements BkModel, SearchableModel, TaggedModel {
+export class OwnershipModel implements OkrModel, SearchableModel, TaggedModel {
   // base
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;

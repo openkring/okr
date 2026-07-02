@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { ViewPositions } from '@okr/shared-categories';
 import { EditorConfig, ViewPosition } from '@okr/shared-models';
-import { BkEditor, ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { OkrEditor, ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
 
 interface EditorConfigI18n {
   editor_title:               Signal<string>;
@@ -19,7 +19,7 @@ interface EditorConfigI18n {
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote,
-    NumberInput, CategoryOld, BkEditor
+    NumberInput, CategoryOld, OkrEditor
   ],
   template: `
     <ion-card>

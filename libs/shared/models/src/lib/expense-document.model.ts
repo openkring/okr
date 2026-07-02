@@ -1,10 +1,10 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
 export type OcrStatus = 'pending' | 'completed' | 'failed' | 'manual';
 
-export class ExpenseDocumentModel implements BkModel {
+export class ExpenseDocumentModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

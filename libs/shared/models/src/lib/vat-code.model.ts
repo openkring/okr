@@ -1,13 +1,13 @@
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_TENANTS } from '@okr/shared-constants';
 
-import { BkModel, NamedModel } from './base.model';
+import { OkrModel, NamedModel } from './base.model';
 
 export type VatMethod = 'effective' | 'net_tax_rate' | 'flat_rate' | 'exempt';
 export type VatDirection = 'input' | 'output';
 
 // A VAT code defines the rate and booking account for one type of VAT treatment.
 // Historical codes (expired validTo) remain to support past-period reporting.
-export class VatCodeModel implements BkModel, NamedModel {
+export class VatCodeModel implements OkrModel, NamedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

@@ -9,7 +9,7 @@ import { StorageReference, deleteObject, getDownloadURL, getMetadata, listAll, r
 import { STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AccordionSection, ArticleSection, BkModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, SliderSection, UserModel } from '@okr/shared-models';
+import { AccordionSection, ArticleSection, OkrModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, SliderSection, UserModel } from '@okr/shared-models';
 import { confirm, downloadToBrowser, navigateByUrl } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getFullName, getSystemQuery, getTodayStr, replaceSubstring, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
@@ -106,7 +106,7 @@ export const AocContentStore = signalStore(
       params: () => ({
         modelType: store.modelType(),
       }),
-      stream: ({ params }): Observable<BkModel[] | undefined> => {
+      stream: ({ params }): Observable<OkrModel[] | undefined> => {
         switch (params.modelType) {
           case 'person':
             return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');

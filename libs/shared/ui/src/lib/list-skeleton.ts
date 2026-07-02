@@ -24,7 +24,7 @@ import { IonItem, IonLabel, IonList, IonSkeletonText } from '@ionic/angular/stan
     </ion-list>
   `
 })
-export class BkListSkeleton {
+export class OkrListSkeleton {
   /** Number of skeleton rows to render. */
   public rows = input(6);
   protected rowArray = computed(() => Array.from({ length: this.rows() }));

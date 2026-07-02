@@ -1,11 +1,11 @@
 import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BaseProperty, BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { BaseProperty, OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
  * A resource is a physical object that is owned by a subject (group, person, org)
  * If a resource has its own type, it should be a separate model (e.g. rowingBoat has boatType, boatUsage, etc.)
  */
-export class ResourceModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class ResourceModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;

@@ -8,14 +8,14 @@ import { AvatarInfo, CategoryListModel, ColorIonic, UserModel } from '@okr/share
 import { CategoryPlainNamePipe } from '@okr/shared-pipes';
 import { AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
 
-import { BkAvatar } from './avatar';
+import { OkrAvatar } from './avatar';
 
 @Component({
   selector: 'okr-relationship-toolbar',
   standalone: true,
   imports: [
     CategoryPlainNamePipe,
-    BkAvatar,
+    OkrAvatar,
     IonToolbar, IonItem, IonGrid, IonRow, IonCol, IonLabel
   ],
   template: `

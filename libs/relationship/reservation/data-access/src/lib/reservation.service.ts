@@ -141,7 +141,7 @@ export class ReservationService {
 
   /*  private async selectExportType(): Promise<number | undefined> {
      const modal = await this.modalController.create({
-       component: BkLabelSelectModal,
+       component: OkrLabelSelectModal,
        componentProps: {
          labels: [
            '@reservation.select.raw', 

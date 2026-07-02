@@ -19,7 +19,7 @@ const MessageCenterStore = signalStore(
   })),
 );
 
-import { BkAvatar } from '@okr/avatar-ui';
+import { OkrAvatar } from '@okr/avatar-ui';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { UserService } from '@okr/user-data-access';
 
@@ -31,7 +31,7 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
   providers: [MessageCenterStore],
   imports: [
     SvgIconPipe,
-    BkAvatar,
+    OkrAvatar,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem,
     IonCheckbox, IonIcon, IonSearchbar, IonSelect, IonSelectOption, IonInput, IonLabel
   ],

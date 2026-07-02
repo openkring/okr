@@ -1,12 +1,12 @@
 import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE, DEFAULT_URL } from '@okr/shared-constants';
-import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { MoneyModel } from './money.model';
 import { AvatarInfo } from './avatar-info';
 
 /**
  * Bill = Lieferantenrechnung (Kreditor) in Bexio
  */
-export class BillModel implements BkModel, SearchableModel, TaggedModel {
+export class BillModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

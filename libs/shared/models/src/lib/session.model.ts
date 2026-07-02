@@ -1,12 +1,12 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
 // Defined here to avoid a dependency on @okr/shared-util-angular (which would create a circular risk).
 // Keep in sync with BrowserName in platform.util.ts.
 export type BrowserName = 'safari' | 'chrome' | 'firefox' | 'opera' | 'other';
 export type OsName = 'ios' | 'android' | 'macos' | 'windows' | 'other';
 
-export class SessionModel implements BkModel {
+export class SessionModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

@@ -1,5 +1,5 @@
 import { DEFAULT_CURRENCY, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
  * A category (CategoryList) consists of some metadata and a list of items.
@@ -12,7 +12,7 @@ import { BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } fro
  * If i18n is not defined, name is shown as the label.
  * Otherwise, '@${i18n}.${name}.${item.name}.label' is translated and shown as the label.
  */
-export class CategoryListModel implements BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel {
+export class CategoryListModel implements OkrModel, NamedModel, PersistedModel, SearchableModel, TaggedModel {
   okey = DEFAULT_KEY;
   name = DEFAULT_NAME;
   tags = DEFAULT_TAGS;

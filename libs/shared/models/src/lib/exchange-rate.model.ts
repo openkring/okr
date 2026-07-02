@@ -1,7 +1,7 @@
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { CurrencyCode } from '@okr/shared-models';
 
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
 export type ExchangeRateSource = 'snb' | 'manual';
 export type ExchangeRateType = 'daily' | 'monthly_avg' | 'yearly_avg';
@@ -9,7 +9,7 @@ export type ExchangeRateType = 'daily' | 'monthly_avg' | 'yearly_avg';
 // Exchange rates are shared across all accounting tenants within a okr-tenant.
 // toCurrency is always the functional currency of the tenant (typically 'CHF').
 // SNB rates are written by the fetchSnbRates Cloud Function; manual entries override for a specific date.
-export class ExchangeRateModel implements BkModel {
+export class ExchangeRateModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

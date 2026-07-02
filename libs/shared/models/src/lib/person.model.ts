@@ -1,8 +1,8 @@
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { AddressableModel, BkModel, SearchableModel, TaggedModel } from './base.model';
+import { AddressableModel, OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { PrivacyUsage } from './enums/privacy-usage.enum';
 
-export class PersonModel implements BkModel, AddressableModel, SearchableModel, TaggedModel {
+export class PersonModel implements OkrModel, AddressableModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;

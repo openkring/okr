@@ -1,13 +1,13 @@
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 export type Attendee = {
   person: AvatarInfo;
   state: 'invited' | 'accepted' | 'declined';
 }
 
-export class CalEventModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class CalEventModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY; // unique key of the model in the database
   public tenants: string[] = DEFAULT_TENANTS; // tenant IDs that this model belongs to
   public isArchived = false; // whether the model is archived

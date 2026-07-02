@@ -1,5 +1,5 @@
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
  * A personal relationship between two persons.
@@ -13,7 +13,7 @@ import { BkModel, SearchableModel, TaggedModel } from './base.model';
  * - marriage
  * - build ancestry graph
  */
-export class PersonalRelModel implements BkModel, SearchableModel, TaggedModel {
+export class PersonalRelModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;

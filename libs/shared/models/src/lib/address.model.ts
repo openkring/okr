@@ -1,7 +1,7 @@
 import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_ADDRESS_USAGE, DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@okr/shared-constants';
-import { BkModel, TaggedModel } from './base.model';
+import { OkrModel, TaggedModel } from './base.model';
 
-export class AddressModel implements BkModel, TaggedModel {
+export class AddressModel implements OkrModel, TaggedModel {
   public okey = DEFAULT_KEY;
 
   // new

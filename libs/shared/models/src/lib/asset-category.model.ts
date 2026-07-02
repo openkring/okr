@@ -1,10 +1,10 @@
 import { DEFAULT_KEY, DEFAULT_NAME, DEFAULT_TENANTS } from '@okr/shared-constants';
 
-import { BkModel, NamedModel } from './base.model';
+import { OkrModel, NamedModel } from './base.model';
 
 export type DepreciationMethod = 'linear' | 'declining' | 'performance' | 'immediate' | 'manual';
 
-export class AssetCategoryModel implements BkModel, NamedModel {
+export class AssetCategoryModel implements OkrModel, NamedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

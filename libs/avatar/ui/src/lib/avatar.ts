@@ -47,7 +47,7 @@ import { AvatarService } from '@okr/avatar-data-access';
     }
   `
 })
-export class BkAvatar {
+export class OkrAvatar {
   private readonly avatarService = inject(AvatarService);
 
   // inputs

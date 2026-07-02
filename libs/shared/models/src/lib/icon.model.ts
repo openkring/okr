@@ -1,12 +1,12 @@
 import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PATH, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
  * An organization or company.
  * Groups are also organizations (with OrgType=Group). They can be used on different levels, e.g. as a department or a team.
  * Hierarchies or orgcharts can be built using memberships.
  */
-export class IconModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class IconModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public name = DEFAULT_NAME;   // the name of the icon, just one word, e.g. download, it is the same as the filename without extension (.svg)
   // icon type = IconSet; it is the name of the subfolder within the logo dir in Firebase storage

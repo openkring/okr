@@ -38,7 +38,7 @@ export const AocStorageStore = signalStore(
       params: () => ({
         filePath: store.filePath()
       }),
-      stream: ({params}): Observable<BkModel[] | undefined> => {
+      stream: ({params}): Observable<OkrModel[] | undefined> => {
       }
     })
   })), */

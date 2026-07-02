@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { BkModel, TagCollection, TagModel } from '@okr/shared-models';
+import { OkrModel, TagCollection, TagModel } from '@okr/shared-models';
 import { bkPrompt, confirm } from '@okr/shared-util-angular';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
@@ -16,7 +16,7 @@ import { AOC_I18N_KEYS } from '@okr/aoc-util';
  * TagModel as it arrives from Firestore.
  * FirestoreService attaches `okey` (document ID) at runtime; this interface makes that explicit.
  */
-export interface TagItem extends BkModel {
+export interface TagItem extends OkrModel {
   tagModel: string;
   tags: string;
 }

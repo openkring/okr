@@ -1,7 +1,7 @@
 import { DEFAULT_KEY } from '@okr/shared-constants';
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
-export class I18nDefaultModel implements BkModel {
+export class I18nDefaultModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = [];
   public module = DEFAULT_KEY;

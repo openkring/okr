@@ -1,5 +1,5 @@
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@okr/shared-constants';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
  * A work relationship between a person and an organization.
@@ -18,7 +18,7 @@ import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model'
  * - student job
  * - board membership
  */
-export class WorkrelModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class WorkrelModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;

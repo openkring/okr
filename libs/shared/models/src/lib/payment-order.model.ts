@@ -1,6 +1,6 @@
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
 export type PaymentOrderStatus = 'draft' | 'approved' | 'transmitted' | 'accepted' | 'rejected';
 
@@ -10,7 +10,7 @@ export type PaymentDeliveryMethod = 'pain001_download' | 'bexio_api' | 'ebics';
 
 // Groups one or more PaymentModel entries into a single bank submission.
 // One PaymentOrderModel = one pain.001 file (or equivalent for other delivery methods).
-export class PaymentOrderModel implements BkModel {
+export class PaymentOrderModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

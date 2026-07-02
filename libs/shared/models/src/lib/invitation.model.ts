@@ -1,6 +1,6 @@
 import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 export type InvitationState = 'pending' | 'accepted' | 'declined' | 'maybe';
 export type InvitationRole = 'required' | 'optional' | 'info';
@@ -12,7 +12,7 @@ export const DEFAULT_INVITATION_ROLE: InvitationRole = 'info';
  *
  * Person    invited to       CalEvent
  */
-export class InvitationModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+export class InvitationModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;

@@ -1,6 +1,6 @@
 import { InjectionToken } from "@angular/core";
 
-export interface BkEnvironment {
+export interface OkrEnvironment {
   production: boolean;
   useEmulators: boolean;
   tenantId: string;
@@ -31,4 +31,4 @@ export interface BkEnvironment {
   }
 }
 
-export const ENV = new InjectionToken<BkEnvironment>('environment');
+export const ENV = new InjectionToken<OkrEnvironment>('environment');

@@ -1,13 +1,13 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { MoneyModel } from '@okr/shared-models';
 
-import { BkModel } from './base.model';
+import { OkrModel } from './base.model';
 
 export type PaymentStatus = 'draft' | 'approved' | 'transmitted' | 'accepted' | 'partial_rejected' | 'rejected';
 
 // One transaction within a PaymentOrderModel.
 // bookingKey is set only after the bank debit is confirmed (camt.054), not on transmission.
-export class PaymentModel implements BkModel {
+export class PaymentModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
