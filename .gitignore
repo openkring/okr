@@ -101,3 +101,9 @@ e2e/.env
 
 # superpowers scratch (brainstorm mockups, SDD ledger/briefs)
 .superpowers/
+
+# okr migration: untrack transient / editor dirs
+.codegraph/
+test-results/
+.continue/
+.idx/
