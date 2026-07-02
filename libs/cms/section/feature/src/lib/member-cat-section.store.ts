@@ -30,6 +30,9 @@ export const MemberCatSectionStore = signalStore(
       params: () => ({ orgId: store.orgId(), currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
         if (!params.currentUser || !params.orgId) return of([]);
+        // Member category stats are person-only (category is a person attribute); orgId is
+        // the containing org. The org/group key collision is not disambiguated here — only
+        // the legacy `scs` key can collide, and new groups use random keys.
         return store.membershipService.listMembersOfOrg(params.orgId);
       },
     }),

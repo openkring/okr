@@ -3,10 +3,11 @@ import { applyCatRowConfig, buildCatRows, CatRow } from './member-cat-section.ut
 
 const TODAY = '20260525';
 
-function member(category: string, memberType: 'male' | 'female', active = true, exited = false) {
+function member(category: string, memberType: 'male' | 'female', active = true, exited = false, memberModelType = 'person') {
   return {
     category,
     memberType,
+    memberModelType,
     relIsLast: active,
     dateOfExit: exited ? '20200101' : '99991231',
     memberDateOfBirth: '19900101',
@@ -28,6 +29,15 @@ describe('buildCatRows', () => {
 
   it('excludes members whose dateOfExit is in the past', () => {
     const rows = buildCatRows([member('A', 'male', true, true)], TODAY);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].total).toBe(0);
+  });
+
+  it('excludes non-person members (org/group)', () => {
+    const rows = buildCatRows([
+      member('A', 'male', true, false, 'org'),
+      member('A', 'female', true, false, 'group'),
+    ], TODAY);
     expect(rows).toHaveLength(1);
     expect(rows[0].total).toBe(0);
   });

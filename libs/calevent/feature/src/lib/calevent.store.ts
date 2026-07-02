@@ -615,7 +615,7 @@ export const CalEventStore = signalStore(
           return;
         }
         // get the group members (query memberships by group id)
-        const members = await firstValueFrom(store.membershipService.listMembersOfOrg(groupId));
+        const members = await firstValueFrom(store.membershipService.listMembersOfOrg(groupId, 'group'));
         console.log(`Found ${members.length} members in group ${groupId}`, members);
         // create invitations for all group members
         const batch = store.firestoreService.getBatch();

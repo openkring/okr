@@ -12,7 +12,7 @@ export class MemberAvatarsPipe implements PipeTransform {
   private membershipService = inject(MembershipService);
 
   async transform(group: GroupModel): Promise<AvatarInfo[]> {
-    const members$ =  this.membershipService.listMembersOfOrg(group.bkey);
+    const members$ =  this.membershipService.listMembersOfOrg(group.bkey, 'group');
     return await firstValueFrom(members$.pipe(map(memberships => this.membershipService.getMemberAvatars(memberships))));
   }
 }

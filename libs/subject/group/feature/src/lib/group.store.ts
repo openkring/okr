@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, of } from 'rxjs';
 import { Router } from '@angular/router';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
 
@@ -10,7 +10,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@bk2/shared-feature';
 import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { AlertService, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugListLoaded, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { I18nService } from '@bk2/shared-i18n';
 
 import { GroupService } from '@bk2/subject-group-data-access';
@@ -46,7 +46,6 @@ export const GroupStore = signalStore(
     avatarService: inject(AvatarService),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    alertController: inject(AlertController),
     alertService: inject(AlertService),
     toastController: inject(ToastController),
     chatService: inject(MatrixChatService),
@@ -209,18 +208,11 @@ export const GroupStore = signalStore(
       if (role === 'confirm' && data && !readOnly) {
         if (isGroup(data, store.tenantId())) {
           if (isNew) {
-            data.bkey = data.name;
-          // bkey is user-defined. Therefore, we need to check for duplicates when creating a new group.
-            const existingGroup = store.groups()?.find((g: GroupModel) => g.bkey === data.bkey);
-            if (existingGroup) {
-              const alert = await store.alertController.create({
-                header: store.i18n.create_duplicate(),
-                message: store.i18n.create_exists(),
-                buttons: [store.i18n.ok()]
-              });
-              await alert.present();
-              return;
-            }
+            // Group keys are random identifiers, never derived from the (mutable, non-unique)
+            // group name. This avoids the org/group key collision on polymorphic FKs
+            // (MembershipModel.orgKey/memberKey point to org OR group) and keeps the derived
+            // folder/page/section/room/calendar ids stable even when the group is renamed.
+            data.bkey = generateRandomString(20);
             data.filesFolder = data.hasFiles ? `f_${data.bkey}` : '';
             data.albumFolder = data.hasAlbum ? `a_${data.bkey}` : '';
             await store.groupService.create(data, store.currentUser());

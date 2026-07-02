@@ -278,7 +278,7 @@ function loadNodeRelations(
   const { modelType, key } = parseElement(nodeId);
 
   const memberships$ = (config.showMembers && (modelType === OrgModelName || modelType === GroupModelName))
-    ? services.membershipService.listMembersOfOrg(key)
+    ? services.membershipService.listMembersOfOrg(key, modelType as 'org' | 'group')
     : (config.showMemberships && modelType === PersonModelName)
       ? services.membershipService.listMembershipsOfMember(key, PersonModelName)
       : of<MembershipModel[]>([]);

@@ -1,10 +1,11 @@
 export type CatRow = { label: string; male: number; female: number; total: number };
 
 export function buildCatRows(
-  memberships: Array<{ category?: string; memberType?: string; relIsLast?: boolean; dateOfExit?: string }>,
+  memberships: Array<{ category?: string; memberType?: string; memberModelType?: string; relIsLast?: boolean; dateOfExit?: string }>,
   today: string
 ): CatRow[] {
-  const active = memberships.filter(m => m.relIsLast === true && (m.dateOfExit ?? '') > today);
+  // Category stats are person-only (category/gender are person attributes); skip org/group members.
+  const active = memberships.filter(m => m.memberModelType === 'person' && m.relIsLast === true && (m.dateOfExit ?? '') > today);
 
   const catSet = new Set(active.map(m => m.category ?? '').filter(Boolean));
   const cats = [...catSet].sort();

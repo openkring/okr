@@ -239,14 +239,23 @@ export class MembershipService {
 
   /**
  * List the members of a given organization or group.
+ *
+ * `orgModelType` disambiguates the polymorphic key collision: an org (e.g. `orgs/scs`)
+ * and a group (e.g. `groups/scs`) can share the same key, so `orgKey == 'scs'` alone
+ * matches memberships of both. Always pass it when the caller knows whether the key is
+ * an org or a group. It is optional only for legacy callers whose configured key type is
+ * ambiguous (member-cat / member-age sections); those fall back to a bare key match.
  * @param orgKey the given organization or group to list its members for.
+ * @param orgModelType filter to memberships whose object is an 'org' or a 'group'.
  * @returns a list of the memberships as an Observable
  */
-  public listMembersOfOrg(orgKey: string): Observable<MembershipModel[]> {
+  public listMembersOfOrg(orgKey: string, orgModelType?: 'org' | 'group'): Observable<MembershipModel[]> {
     if (!orgKey || orgKey.length === 0) return of([]);
     return this.list().pipe(
       map((memberships: MembershipModel[]) => {
-        return memberships.filter((membership: MembershipModel) => membership.orgKey === orgKey);
+        return memberships.filter((membership: MembershipModel) =>
+          membership.orgKey === orgKey &&
+          (!orgModelType || membership.orgModelType === orgModelType));
       }));
   }
 

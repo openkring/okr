@@ -32,10 +32,11 @@ function computeAge(dob: string, todayStr: string): number {
 
 // Pure helper — exported so it can be unit-tested independently if test infra is added
 export function buildAgeRows(
-  memberships: Array<{ memberDateOfBirth?: string; memberType?: string; relIsLast?: boolean; dateOfExit?: string }>,
+  memberships: Array<{ memberDateOfBirth?: string; memberType?: string; memberModelType?: string; relIsLast?: boolean; dateOfExit?: string }>,
   today: string
 ): AgeRow[] {
-  const active = memberships.filter(m => m.relIsLast === true && (m.dateOfExit ?? '') > today);
+  // Age stats are person-only (age/gender are person attributes); skip org/group members.
+  const active = memberships.filter(m => m.memberModelType === 'person' && m.relIsLast === true && (m.dateOfExit ?? '') > today);
   const rows: AgeRow[] = AGE_BUCKETS.map(bucket => {
     let male = 0;
     let female = 0;
@@ -71,6 +72,9 @@ export const MemberAgeSectionStore = signalStore(
       params: () => ({ orgId: store.orgId(), currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
         if (!params.currentUser || !params.orgId) return of([]);
+        // Member age stats are person-only (age is a person attribute); orgId is the
+        // containing org. The org/group key collision is not disambiguated here — only
+        // the legacy `scs` key can collide, and new groups use random keys.
         return store.membershipService.listMembersOfOrg(params.orgId);
       },
     }),

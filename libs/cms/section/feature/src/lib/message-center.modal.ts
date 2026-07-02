@@ -196,7 +196,7 @@ export class MessageCenterModal {
     params: () => ({ groupKey: this.selectedGroupKey() }),
     stream: ({ params }) => {
       if (params.groupKey === 'all') return of([]);
-      return this.membershipService.listMembersOfOrg(params.groupKey);
+      return this.membershipService.listMembersOfOrg(params.groupKey, 'group');
     }
   });
 

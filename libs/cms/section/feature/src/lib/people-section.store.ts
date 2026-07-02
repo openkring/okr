@@ -35,7 +35,7 @@ export const PeopleSectionStore = signalStore(
       params: () => ({ groupId: store.section()?.properties.groupId ?? '', currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
-        return store.membershipService.listMembersOfOrg(params.groupId);
+        return store.membershipService.listMembersOfOrg(params.groupId, 'group');
       },
     }),
     responsibilityResource: rxResource({
