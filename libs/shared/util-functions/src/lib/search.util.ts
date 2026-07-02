@@ -31,14 +31,25 @@ export async function searchData<T>(firestore: Firestore, collectionName: string
 }
 
 /**
+ * Resolve a possibly dotted field path (e.g. `reserver.name2`) against an object.
+ * A key without a dot resolves to a plain property access.
+ */
+function getByPath(obj: any, path: string): unknown {
+  return path.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+}
+
+/**
  * Helper function to check whether data has changed.
+ * Keys in `newData` may be dotted field paths (e.g. `reserver.name2`) to compare against
+ * nested fields — this mirrors the dot-notation used in Firestore `update()` calls, so that
+ * a nested-field sync is only written when the nested value actually changed.
  * @param currentData  the current data (typically a BkModel from the database)
- * @param newData the new data to compare with (typically a partial BkModel)
+ * @param newData the new data to compare with (typically a partial BkModel; keys may be dotted paths)
  * @returns true if any one of the data fields has changed, false otherwise
  */
 export function hasChanged(currentData: any, newData: Record<string, any>): boolean {
   for (const key of Object.keys(newData)) {
-    if (currentData[key] !== newData[key]) {
+    if (getByPath(currentData, key) !== newData[key]) {
       return true;
     }
   }

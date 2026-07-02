@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { Firestore } from 'firebase-admin/firestore';
-import { searchData } from './search.util';
+import { searchData, hasChanged } from './search.util';
 import { DbQuery } from '@bk2/shared-models';
 
 // Mock the Firestore methods
@@ -108,5 +108,31 @@ describe('searchData', () => {
       { name: 'Test 2', bkey: 'doc2' },
     ]);
     expect(result.length).toBe(2);
+  });
+});
+
+describe('hasChanged', () => {
+  it('returns false when all flat fields are unchanged', () => {
+    const current = { name: 'a', type: 'x' };
+    expect(hasChanged(current, { name: 'a', type: 'x' })).toBe(false);
+  });
+
+  it('returns true when a flat field changed', () => {
+    const current = { name: 'a', type: 'x' };
+    expect(hasChanged(current, { name: 'b' })).toBe(true);
+  });
+
+  it('resolves dotted paths against nested fields (unchanged -> false)', () => {
+    const current = { resource: { name2: 'Bootshaus', type: 'realestate' } };
+    expect(hasChanged(current, { 'resource.name2': 'Bootshaus', 'resource.type': 'realestate' })).toBe(false);
+  });
+
+  it('resolves dotted paths against nested fields (changed -> true)', () => {
+    const current = { resource: { name2: 'Bootshaus', type: 'realestate' } };
+    expect(hasChanged(current, { 'resource.name2': 'Clubhaus' })).toBe(true);
+  });
+
+  it('treats a missing nested parent as changed', () => {
+    expect(hasChanged({}, { 'reserver.name2': 'Meier' })).toBe(true);
   });
 });

@@ -19,21 +19,36 @@ describe('Reservation Utils', () => {
   });
 
   describe('getAllReservationsOfReserver', () => {
-    it('should call searchData with the correct query for a reserverId', async () => {
+    it('should query the nested reserver.key / reserver.modelType paths', async () => {
       const reserverId = 'user-123';
-      const expectedQuery = [{ key: 'reserverKey', operator: '==', value: reserverId }];
+      const expectedQuery = [
+        { key: 'reserver.key', operator: '==', value: reserverId },
+        { key: 'reserver.modelType', operator: '==', value: 'person' },
+      ];
 
-      await getAllReservationsOfReserver(mockFirestore, reserverId);
+      await getAllReservationsOfReserver(mockFirestore, reserverId, 'person');
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery, 'resourceName', 'asc');
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery, 'startDate', 'asc');
+    });
+
+    it('should filter by reserver.modelType=org (key collision guard)', async () => {
+      const reserverId = 'scs';
+      const expectedQuery = [
+        { key: 'reserver.key', operator: '==', value: reserverId },
+        { key: 'reserver.modelType', operator: '==', value: 'org' },
+      ];
+
+      await getAllReservationsOfReserver(mockFirestore, reserverId, 'org');
+
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery, 'startDate', 'asc');
     });
 
     it('should return the reservations found by searchData', async () => {
       const reserverId = 'user-123';
-      const mockReservations: ReservationModel[] = [{ reserverKey: reserverId, resourceKey: 'resource-1' } as ReservationModel, { reserverKey: reserverId, resourceKey: 'resource-2' } as ReservationModel];
+      const mockReservations: ReservationModel[] = [{ name: 'r1' } as ReservationModel, { name: 'r2' } as ReservationModel];
       mockSearchData.mockResolvedValue(mockReservations);
 
-      const result = await getAllReservationsOfReserver(mockFirestore, reserverId);
+      const result = await getAllReservationsOfReserver(mockFirestore, reserverId, 'person');
 
       expect(result).toEqual(mockReservations);
       expect(result.length).toBe(2);
@@ -41,21 +56,36 @@ describe('Reservation Utils', () => {
   });
 
   describe('getAllReservationsOfResource', () => {
-    it('should call searchData with the correct query for a resourceId', async () => {
+    it('should query the nested resource.key / resource.modelType paths', async () => {
       const resourceId = 'resource-456';
-      const expectedQuery = [{ key: 'resourceKey', operator: '==', value: resourceId }];
+      const expectedQuery = [
+        { key: 'resource.key', operator: '==', value: resourceId },
+        { key: 'resource.modelType', operator: '==', value: 'resource' },
+      ];
 
-      await getAllReservationsOfResource(mockFirestore, resourceId);
+      await getAllReservationsOfResource(mockFirestore, resourceId, 'resource');
 
-      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery, 'reserverName2', 'asc');
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery, 'startDate', 'asc');
+    });
+
+    it('should filter by resource.modelType=account (key collision guard)', async () => {
+      const resourceId = 'acc-1';
+      const expectedQuery = [
+        { key: 'resource.key', operator: '==', value: resourceId },
+        { key: 'resource.modelType', operator: '==', value: 'account' },
+      ];
+
+      await getAllReservationsOfResource(mockFirestore, resourceId, 'account');
+
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, ReservationCollection, expectedQuery, 'startDate', 'asc');
     });
 
     it('should return the reservations found by searchData', async () => {
       const resourceId = 'resource-456';
-      const mockReservations: ReservationModel[] = [{ reserverKey: 'user-1', resourceKey: resourceId } as ReservationModel, { reserverKey: 'user-2', resourceKey: resourceId } as ReservationModel];
+      const mockReservations: ReservationModel[] = [{ name: 'r1' } as ReservationModel, { name: 'r2' } as ReservationModel];
       mockSearchData.mockResolvedValue(mockReservations);
 
-      const result = await getAllReservationsOfResource(mockFirestore, resourceId);
+      const result = await getAllReservationsOfResource(mockFirestore, resourceId, 'resource');
 
       expect(result).toEqual(mockReservations);
       expect(result.length).toBe(2);

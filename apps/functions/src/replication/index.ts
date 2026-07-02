@@ -63,7 +63,7 @@ async function fetchRelations<T>(label: string, sourceId: string, fetch: () => P
  * address -> person/org (fav*)
  * resource -> ownership, reservation
  * person -> ownership, membership, personalRel, workingRel, reservation
- * org -> ownership, membership, workingRel
+ * org -> ownership, membership, workingRel, reservation
  * group -> membership
  * 
  * As a general rule, there must be no trigger on any relationships.
@@ -113,27 +113,34 @@ export const onResourceChange = onDocumentWritten(
     try {
       const resource = event.data?.after.data();
       if (resource) {
-        const newData = {
+        // ownerships store the resource on flat resourceName/resourceType/resourceSubType fields
+        const newOwnershipData = {
           resourceName: resource.name,
           resourceType: resource.type,
           resourceSubType: resource.subType,
         };
-        // synchronize the ownerships
-        const ownerships = await getAllOwnershipsOfResource(firestore, resourceId)
+        // synchronize the ownerships (resource objects only; an account may share this key)
+        const ownerships = await getAllOwnershipsOfResource(firestore, resourceId, 'resource')
         for (const ownership of ownerships) {
-          if (hasChanged(ownership, newData)) {
+          if (hasChanged(ownership, newOwnershipData)) {
             const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.bkey}`);
-            await ownershipRef.update(newData);
+            await ownershipRef.update(newOwnershipData);
             logger.info(`Successfully updated ownership ${ownership.bkey} for resource ${resourceId}`);
           }
         }
 
-        // synchronize the reservations
-        const reservations = await getAllReservationsOfResource(firestore, resourceId);
+        // reservations store the resource as a nested `resource` AvatarInfo map (dot-notation update)
+        const newReservationData = {
+          'resource.name2': resource.name,
+          'resource.type': resource.type,
+          'resource.subType': resource.subType,
+        };
+        // synchronize the reservations (resource objects only; an account may share this key)
+        const reservations = await getAllReservationsOfResource(firestore, resourceId, 'resource');
         for (const reservation of reservations) {
-          if (hasChanged(reservation, newData)) {
+          if (hasChanged(reservation, newReservationData)) {
             const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.bkey}`);
-            await resRef.update(newData);
+            await resRef.update(newReservationData);
             logger.info(`Successfully updated reservation ${reservation.bkey} for resource ${resourceId} (resource)`);
           }
         }
@@ -171,7 +178,7 @@ export const onPersonChange = onDocumentWritten(
 
     // synchronize the ownerships
     await syncRelations('ownership', source, OwnershipCollection,
-      await fetchRelations('ownerships', source, () => getAllOwnershipsOfOwner(firestore, personId)),
+      await fetchRelations('ownerships', source, () => getAllOwnershipsOfOwner(firestore, personId, 'person')),
       {
         ownerName1: person.firstName,
         ownerName2: person.lastName,
@@ -180,7 +187,7 @@ export const onPersonChange = onDocumentWritten(
 
     // synchronize the memberships
     await syncRelations('membership', source, MembershipCollection,
-      await fetchRelations('memberships', source, () => getAllMembershipsOfMember(firestore, personId)),
+      await fetchRelations('memberships', source, () => getAllMembershipsOfMember(firestore, personId, 'person')),
       {
         memberName1: person.firstName,
         memberName2: person.lastName,
@@ -211,27 +218,27 @@ export const onPersonChange = onDocumentWritten(
 
     // synchronize the workRels (by subject)
     await syncRelations('workingRel (subject)', source, WorkrelCollection,
-      await fetchRelations('workingRels (subject)', source, () => getAllWorkrelsOfSubject(firestore, personId)),
+      await fetchRelations('workingRels (subject)', source, () => getAllWorkrelsOfSubject(firestore, personId, 'person')),
       {
         subjectName1: person.firstName,
         subjectName2: person.lastName,
         subjectType: person.gender
       });
 
-    // synchronize the reservations (by reserver)
+    // synchronize the reservations (by reserver) — reserver is a nested AvatarInfo map (dot-notation update)
     await syncRelations('reservation (reserver)', source, ReservationCollection,
-      await fetchRelations('reservations (reserver)', source, () => getAllReservationsOfReserver(firestore, personId)),
+      await fetchRelations('reservations (reserver)', source, () => getAllReservationsOfReserver(firestore, personId, 'person')),
       {
-        reserverName: person.firstName,
-        reserverName2: person.lastName,
-        reserverType: person.gender,
+        'reserver.name1': person.firstName,
+        'reserver.name2': person.lastName,
+        'reserver.type': person.gender,
       });
   }
 );
 
 /**
  * If an organization is changed, we update all its relationships.
- * THIS UPDATES OWNERSHIP, MEMBERSHIP, WORKINGRELS - be cautious about circular updates!
+ * THIS UPDATES OWNERSHIP, MEMBERSHIP, WORKINGRELS, RESERVATION - be cautious about circular updates!
  */
 export const onOrgChange = onDocumentWritten(
   {
@@ -252,7 +259,7 @@ export const onOrgChange = onDocumentWritten(
           ownerName2: org.name,
           ownerType: org.type
         };
-        const ownerships = await getAllOwnershipsOfOwner(firestore, orgId);
+        const ownerships = await getAllOwnershipsOfOwner(firestore, orgId, 'org');
         for (const ownership of ownerships) {
           if (hasChanged(ownership, newOwner)) {
             const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.bkey}`);
@@ -271,7 +278,7 @@ export const onOrgChange = onDocumentWritten(
           memberZipCode: org.favZipCode,
           memberBexioId: org.bexioId
         };
-        const memberships = await getAllMembershipsOfMember(firestore, orgId);
+        const memberships = await getAllMembershipsOfMember(firestore, orgId, 'org');
         for (const membership of memberships) {
           if (hasChanged(membership, newMember)) {
             const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
@@ -280,8 +287,8 @@ export const onOrgChange = onDocumentWritten(
           }
         }
 
-        // synchronize the membership org
-        const memberOrgs = await getAllMembershipsOfOrg(firestore, orgId);
+        // synchronize the membership org (org objects only; a group may share this key)
+        const memberOrgs = await getAllMembershipsOfOrg(firestore, orgId, 'org');
         for (const membership of memberOrgs) {
           if (membership.orgName !== org.name) {
             const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
@@ -302,6 +309,22 @@ export const onOrgChange = onDocumentWritten(
               objectType: org.type,
             });
             logger.info(`Successfully updated workingRel ${workRel.bkey} for org ${orgId} (object)`);
+          }
+        }
+
+        // synchronize the reservations where this org is the reserver
+        // (reserver is a nested AvatarInfo map; for an org name1 is empty, name2 holds the name)
+        const newReserver = {
+          'reserver.name1': '',
+          'reserver.name2': org.name,
+          'reserver.type': org.type,
+        };
+        const orgReservations = await getAllReservationsOfReserver(firestore, orgId, 'org');
+        for (const reservation of orgReservations) {
+          if (hasChanged(reservation, newReserver)) {
+            const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.bkey}`);
+            await resRef.update(newReserver);
+            logger.info(`Successfully updated reservation ${reservation.bkey} for org ${orgId} (reserver)`);
           }
         }
       } else {
@@ -339,7 +362,7 @@ export const onGroupChange = onDocumentWritten(
           memberZipCode: '',
           memberBexioId: ''
         };
-        const memberships = await getAllMembershipsOfMember(firestore, groupId);
+        const memberships = await getAllMembershipsOfMember(firestore, groupId, 'group');
         for (const membership of memberships) {
           if (hasChanged(membership, newMember)) {
             const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
@@ -348,8 +371,8 @@ export const onGroupChange = onDocumentWritten(
           }
         }
 
-        // synchronize the membership group
-        const memberOrgs = await getAllMembershipsOfOrg(firestore, groupId);
+        // synchronize the membership group (group objects only; an org may share this key)
+        const memberOrgs = await getAllMembershipsOfOrg(firestore, groupId, 'group');
         for (const membership of memberOrgs) {
           if (membership.orgName !== group.name) {
             const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);

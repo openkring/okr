@@ -1368,7 +1368,53 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "memberKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "memberModelType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "orgName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "memberships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "orgKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "memberName2",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "memberships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "orgKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "orgModelType",
           "order": "ASCENDING"
         },
         {
@@ -1658,7 +1704,11 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "objectKey",
+          "fieldPath": "resourceKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "resourceModelType",
           "order": "ASCENDING"
         },
         {
@@ -1678,6 +1728,29 @@
       "fields": [
         {
           "fieldPath": "ownerKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "resourceName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "ownerships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "ownerKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ownerModelType",
           "order": "ASCENDING"
         },
         {
@@ -2018,11 +2091,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "reserverKey",
+          "fieldPath": "reserver.key",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "resourceName",
+          "fieldPath": "reserver.modelType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startDate",
           "order": "ASCENDING"
         },
         {
@@ -2037,11 +2114,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "resourceKey",
+          "fieldPath": "resource.key",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "reserverName2",
+          "fieldPath": "resource.modelType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startDate",
           "order": "ASCENDING"
         },
         {
@@ -2065,87 +2146,6 @@
         },
         {
           "fieldPath": "name",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "reservations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "reserverKey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "reserverModelType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "reserverName2",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "reservations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "reserverName2",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "reservations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "resourceKey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "reserverName2",
           "order": "ASCENDING"
         },
         {
@@ -2590,6 +2590,29 @@
       "fields": [
         {
           "fieldPath": "subjectKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "objectName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "workrels",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "subjectKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "subjectModelType",
           "order": "ASCENDING"
         },
         {

@@ -19,11 +19,26 @@ describe('WorkingRel Utils', () => {
   });
 
   describe('getAllWorkrelsOfSubject', () => {
-    it('should call searchData with the correct query for a subjectId', async () => {
+    it('should call searchData filtering by subjectKey and subjectModelType', async () => {
       const subjectId = 'person-123';
-      const expectedQuery = [{ key: 'subjectKey', operator: '==', value: subjectId }];
+      const expectedQuery = [
+        { key: 'subjectKey', operator: '==', value: subjectId },
+        { key: 'subjectModelType', operator: '==', value: 'person' },
+      ];
 
-      await getAllWorkrelsOfSubject(mockFirestore, subjectId);
+      await getAllWorkrelsOfSubject(mockFirestore, subjectId, 'person');
+
+      expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, WorkrelCollection, expectedQuery, 'objectName', 'asc');
+    });
+
+    it('should filter by subjectModelType=org (key collision guard)', async () => {
+      const subjectId = 'scs';
+      const expectedQuery = [
+        { key: 'subjectKey', operator: '==', value: subjectId },
+        { key: 'subjectModelType', operator: '==', value: 'org' },
+      ];
+
+      await getAllWorkrelsOfSubject(mockFirestore, subjectId, 'org');
 
       expect(mockSearchData).toHaveBeenCalledWith(mockFirestore, WorkrelCollection, expectedQuery, 'objectName', 'asc');
     });
@@ -33,7 +48,7 @@ describe('WorkingRel Utils', () => {
       const mockWorkingRels: WorkrelModel[] = [{ subjectKey: subjectId, objectKey: 'org-1' } as WorkrelModel, { subjectKey: subjectId, objectKey: 'org-2' } as WorkrelModel];
       mockSearchData.mockResolvedValue(mockWorkingRels);
 
-      const result = await getAllWorkrelsOfSubject(mockFirestore, subjectId);
+      const result = await getAllWorkrelsOfSubject(mockFirestore, subjectId, 'person');
 
       expect(result).toEqual(mockWorkingRels);
       expect(result.length).toBe(2);
