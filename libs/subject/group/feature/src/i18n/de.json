@@ -92,8 +92,8 @@
   "attributes": "Gruppen-Eigenschaften",
   "display": "Darstellung",
   "access": "Zugang & Benachrichtigungen",
-  "bkey": {
-    "label": "bkey",
+  "okey": {
+    "label": "okey",
     "placeholder": "sssssssssss",
     "helper": "Der Schlüssel der Gruppe in der Datenbank, eine eindeutige ID, normalerweise automatisch vergeben."
   },

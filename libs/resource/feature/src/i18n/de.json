@@ -30,10 +30,10 @@
     "label": "Resource wählen"
   },
 
-  "bkey": {
-    "label": "bkey",
-    "placeholder": "bkey",
-    "helper": "Der bkey ist der eindeutige Schlüssel einer Resource in der Datenbank."
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "Der okey ist der eindeutige Schlüssel einer Resource in der Datenbank."
   },
   "color": {
     "label": "Farbe",

@@ -40,10 +40,10 @@
     "label": "Kategorie anzeigen"
   },
 
-  "bkey": {
-    "label": "bkey",
-    "placeholder": "bkey",
-    "helper": "Der bkey ist die ID einer Kategorie"
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "Der okey ist die ID einer Kategorie"
   },
   "name": {
     "label": "Name",

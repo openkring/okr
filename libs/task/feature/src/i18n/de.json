@@ -47,7 +47,7 @@
     }
   },
 
-   "bkey": {
+   "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "Der Schlüssel des Tasks in der Datenbank."

@@ -54,9 +54,9 @@
     }
   },
 
-  "bkey": {
-    "label": "bkey",
-    "placeholder": "bkey",
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
     "helper": "Die eindeutige ID der Reservatio in der Datenbank."
   },
   "name": {

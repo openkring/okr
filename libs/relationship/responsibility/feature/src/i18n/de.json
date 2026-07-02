@@ -49,7 +49,7 @@
   },
 
 
-  "bkey": { 
+  "okey": { 
     "label": "Schlüssel",
     "placeholder": "",
     "helper": ""

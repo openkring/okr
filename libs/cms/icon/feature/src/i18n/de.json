@@ -35,7 +35,7 @@
     "label": "Icon Details anzeigen"
   },
 
-  "bkey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssss",
     "helper": "Ein eindeutiger Bezeichner in Form eines Wortes. Es dürfen nur Kleinbuchstaben, Zahlen und _ oder - verwendet werden."

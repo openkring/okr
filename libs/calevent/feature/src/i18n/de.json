@@ -188,7 +188,7 @@
     }
   },
 
-  "bkey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "Eindeutiger Schlüssel in der Datenbank."
@@ -232,7 +232,7 @@
   "locationKey": {
     "label": "Ort-Schlüssel",
     "placeholder": "sssssss",
-    "helper": "Eine Referenz auf den Ort (location.bkey in der Datenbank)."
+    "helper": "Eine Referenz auf den Ort (location.okey in der Datenbank)."
   },
   "name": {
     "label": "Anlass",

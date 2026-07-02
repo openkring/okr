@@ -54,8 +54,8 @@
     }
   },
 
-  "bkey": {
-    "label": "bkey",
+  "okey": {
+    "label": "okey",
     "placeholder": "ID",
     "helper": "Die eindeutige ID des Dokumentes in der Datenbank."
   },

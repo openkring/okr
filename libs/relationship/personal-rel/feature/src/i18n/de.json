@@ -48,10 +48,10 @@
     }
   },
 
-  "bkey": {
-    "label": "bkey",
-    "placeholder": "bkey",
-    "helper": "Der bkey ist der Schlüssel eines Elements, bestehend aus dem Präfix der Kategorie und einer fortlaufenden Nummer, z.B. boat-001 für das erste Boot."
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "Der okey ist der Schlüssel eines Elements, bestehend aus dem Präfix der Kategorie und einer fortlaufenden Nummer, z.B. boat-001 für das erste Boot."
   },
   "label": {
     "label": "Bezeichnung",

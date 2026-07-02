@@ -43,9 +43,9 @@
     }
   },
 
-  "bkey": {
-    "label": "bkey",
-    "placeholder": "bkey",
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
     "helper": "Eindeutige ID der Beschäftigung in der Datenbank."
   },
   "label": {

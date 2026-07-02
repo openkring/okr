@@ -5,7 +5,7 @@
   "addresses": "Adressen",
   "misc": "Verschiedenes",
 
-   "bkey": {
+   "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "Der Schlüssel des Personeneintrags in der Datenbank."

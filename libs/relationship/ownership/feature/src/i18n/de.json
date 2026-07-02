@@ -78,10 +78,10 @@
     }
   },
 
-  "bkey": {
-    "label": "bkey",
-    "placeholder": "bkey",
-    "helper": "Der bkey ist der Schlüssel einer Nutzung, eine eindeutige ID in der Datenbank."
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "Der okey ist der Schlüssel einer Nutzung, eine eindeutige ID in der Datenbank."
   },
   "ownerName1": {
     "label": "Vorname",

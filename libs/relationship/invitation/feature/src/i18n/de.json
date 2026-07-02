@@ -41,7 +41,7 @@
     }
   },
 
-  "bkey": { 
+  "okey": { 
     "label": "ID", 
     "placeholder": "sssssss", 
     "helper": "Eine eindeutige ID der Einladung in der Datenbank."

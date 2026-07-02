@@ -3,7 +3,7 @@
   "users": "Users",
   "empty": "Keine User gefunden",
   "unknown": "Unbekannter User",
-  "intro": "Ein User entspricht 1:1 einem authentisierten Konto (Firebase UID = User.bkey) und genau einer Person (User.personKey = Person.bkey).",
+  "intro": "Ein User entspricht 1:1 einem authentisierten Konto (Firebase UID = User.okey) und genau einer Person (User.personKey = Person.okey).",
 
   "create": {
     "label": "User hinzufügen",
@@ -66,7 +66,7 @@
   "uid":           { "label": "Benutzer-ID",        "placeholder": "ssssssss",                      "helper": "Ein eindeutiger Identifikator für den Firebase User." },
   "displayName":   { "label": "Anzeigename",         "placeholder": "sssssssss",                      "helper": "Dieser Name wird in der Firebase Console angezeigt." },
   "photoUrl":      { "label": "Foto-URL",            "placeholder": "https://...",            "helper": "Ein Link zu einem Portrait Fotos des Users." },
-  "bkey":          { "label": "Benutzer-ID",         "placeholder": "sssssss",                      "helper": "Ein eindeutiger Identifikator für den User" },
+  "okey":          { "label": "Benutzer-ID",         "placeholder": "sssssss",                      "helper": "Ein eindeutiger Identifikator für den User" },
   "personKey":     { "label": "Personen-Schlüssel",  "placeholder": "sssssss",                      "helper": "Der Schlüssel des Personen-Records in der Datenbank." },
   "firstName":     { "label": "Vorname",             "placeholder": "Vorname eingeben",      "helper": "Die Vornamen des Users." },
   "lastName":      { "label": "Nachname",            "placeholder": "Nachname eingeben",     "helper": "Der Familienname des Users." },

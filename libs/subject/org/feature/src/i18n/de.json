@@ -23,7 +23,7 @@
     "label": "Organisation anzeigen"
   },
 
-  "bkey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssssssss",
     "helper": "Eindeutige ID des Adress-Datensatzes in der Datenbank."

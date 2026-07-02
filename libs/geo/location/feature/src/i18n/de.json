@@ -47,8 +47,8 @@
     "label": "Orts-Details anzeigen"
   },
 
-  "bkey": {
-    "label": "bkey",
+  "okey": {
+    "label": "okey",
     "placeholder": "ssssss",
     "helper": "Die eindeutige ID in der Datenbank."
   },
