@@ -52,7 +52,7 @@ export const ExpenseStore = signalStore(
         const isTreasurer = user.roles?.privileged === true || user.roles?.admin === true;
         return isTreasurer
           ? store.expenseService.listAll()
-          : store.expenseService.listForUser(user.bkey);
+          : store.expenseService.listForUser(user.okey);
       },
     }),
   })),
@@ -97,7 +97,7 @@ export const ExpenseStore = signalStore(
       if (!currentUser) return;
 
       const tenantId = store.tenantId();
-      const userId = currentUser.bkey;
+      const userId = currentUser.okey;
       const accountingTenantId = tenantId;
 
       const accountingConfig = await firstValueFrom(

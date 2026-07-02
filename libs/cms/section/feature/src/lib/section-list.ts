@@ -80,9 +80,9 @@ import { SectionImageService, SectionImageUploadLabels } from './section-image.s
         <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
-          @for(section of filteredSections(); track section.bkey) {
+          @for(section of filteredSections(); track section.okey) {
             <ion-item (click)="showActions(section)">
-              <ion-label class="ion-hide-md-down">{{ section.bkey }}</ion-label>
+              <ion-label class="ion-hide-md-down">{{ section.okey }}</ion-label>
               <ion-label>{{ section.name }}</ion-label>
               <ion-label>{{ section.type }}</ion-label>
             </ion-item>

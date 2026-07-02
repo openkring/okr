@@ -59,9 +59,9 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         } @else {
           <ion-list lines="none">
             @for(org of filteredOrgs(); track $index) {
-              <ion-item class="item" (click)="select('org', org.bkey)">
+              <ion-item class="item" (click)="select('org', org.okey)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'org.' + org.bkey | avatar:orgDefaultIcon }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'org.' + org.okey | avatar:orgDefaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ org.name }}</ion-label>
               </ion-item>
@@ -78,9 +78,9 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         } @else {
           <ion-list lines="none">
             @for(group of filteredGroups(); track $index) {
-              <ion-item class="item" (click)="select('group', group.bkey)">
+              <ion-item class="item" (click)="select('group', group.okey)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'group.' + group.bkey | avatar:group.icon }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'group.' + group.okey | avatar:group.icon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ group.name }}</ion-label>
               </ion-item>
@@ -97,9 +97,9 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
         } @else {
           <ion-list lines="none">
             @for(person of filteredPersons(); track $index) {
-              <ion-item class="item" (click)="select('person', person.bkey)">
+              <ion-item class="item" (click)="select('person', person.okey)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'person.' + person.bkey | avatar:personDefaultIcon }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'person.' + person.okey | avatar:personDefaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ person.firstName | fullName:person.lastName }}</ion-label>
               </ion-item>
@@ -167,7 +167,7 @@ export class MultiSelectModal {
     });
   }
 
-  public select(modelType: MultiSelectSegment, bkey: string): Promise<boolean> {
-    return this.modalController.dismiss(`${modelType}.${bkey}`, 'confirm');
+  public select(modelType: MultiSelectSegment, okey: string): Promise<boolean> {
+    return this.modalController.dismiss(`${modelType}.${okey}`, 'confirm');
   }
 }

@@ -68,7 +68,7 @@ interface FormSectionProperties {
 }
 
 interface FormDefinition {
-  bkey: string;
+  okey: string;
   formKey: string;
   name: string;
   honeypotKey: string;
@@ -226,7 +226,7 @@ export const getFormDefinition = onCall(
     // Public-safe projection — whitelist only. encryptionSalt is needed client-side
     // for file encryption and is not secret; encryptionKeyHash is NEVER exposed.
     return {
-      bkey: doc.id,
+      okey: doc.id,
       tenants: data['tenants'] ?? [tenantId],
       isArchived: data['isArchived'] ?? false,
       name: data['name'] ?? '',
@@ -374,7 +374,7 @@ export const submitForm = onCall(
       throw new HttpsError('not-found', `Form '${payload.formKey}' not found`);
     }
 
-    const formDef = { bkey: formSnap.docs[0].id, ...formSnap.docs[0].data() } as FormDefinition;
+    const formDef = { okey: formSnap.docs[0].id, ...formSnap.docs[0].data() } as FormDefinition;
 
     const sectionConfig = formSnap.docs[0].data()?.['rateLimit'] as
       { limit?: number; periodMinutes?: number } | undefined;

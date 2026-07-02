@@ -119,7 +119,7 @@ export const _ScsMemberFeesStore = signalStore(
     // current active+passive memberships of the default org
     defaultOrgMemberships: computed(() => {
       const today = getTodayStr();
-      const orgId = store.appStore.defaultOrg()?.bkey ?? store.appStore.tenantId();
+      const orgId = store.appStore.defaultOrg()?.okey ?? store.appStore.tenantId();
       return store.allMembershipsResource.value()?.filter((m: MembershipModel) => 
         m.orgKey === orgId && 
         m.orgModelType === 'org' &&
@@ -288,8 +288,8 @@ export const _ScsMemberFeesStore = signalStore(
       const fees = store.filteredFees();
       const batch = store.firestoreService.getBatch();
       for (const fee of fees) {
-        if (!fee.bkey) continue;
-        const ref = doc(store.firestoreService.firestore, `${ScsMemberFeesCollection}/${fee.bkey}`);
+        if (!fee.okey) continue;
+        const ref = doc(store.firestoreService.firestore, `${ScsMemberFeesCollection}/${fee.okey}`);
         batch.update(ref, { isArchived: true });
       }
       await batch.commit();
@@ -317,7 +317,7 @@ export const _ScsMemberFeesStore = signalStore(
      * Delete a fee record (only those already persisted).
      */
     async deleteFee(fee: ScsMemberFeesModel): Promise<void> {
-      if (!fee.bkey) return;
+      if (!fee.okey) return;
       const confirmed = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
       await store.scsMemberFeeService.delete(fee, store.appStore.currentUser() ?? undefined);
@@ -325,7 +325,7 @@ export const _ScsMemberFeesStore = signalStore(
     },
 
     async setStatus(fee: ScsMemberFeesModel, status: INVOICE_STATE): Promise<void> {
-      if (!fee.bkey) return;
+      if (!fee.okey) return;
       const updated: ScsMemberFeesModel = { ...fee, state: status };
       await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
       patchState(store, { version: store.version() + 1 });

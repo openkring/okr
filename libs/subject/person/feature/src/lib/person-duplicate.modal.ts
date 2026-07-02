@@ -13,7 +13,7 @@ import { PersonDuplicateCandidate, PersonI18n } from '@okr/subject-person-util';
     <ion-content class="ion-padding">
       <p>{{ i18n().duplicate_intro() }}</p>
       <ion-list>
-        @for (c of candidates(); track c.bkey) {
+        @for (c of candidates(); track c.okey) {
           <ion-item button (click)="select(c)">
             <ion-label>
               <h2>{{ c.firstName }} {{ c.lastName }}</h2>

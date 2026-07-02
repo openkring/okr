@@ -35,7 +35,7 @@ export const PersonSortCriterias: PersonSortCriteriaCategory[] = [
   {
     id: PersonSortCriteria.Key,
     abbreviation: 'KEY',
-    name: 'bkey',
+    name: 'okey',
     i18nBase: '@shared/categories.sortCriteria.key',
     icon: 'key'
   }

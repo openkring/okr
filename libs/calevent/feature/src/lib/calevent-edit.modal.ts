@@ -97,11 +97,11 @@ export class CalEventEditModal {
   // derived signals
   protected headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view();
-    const key = this.calevent().bkey;
+    const key = this.calevent().okey;
     return (key && key.length > 0) ? this.i18n.update() : this.i18n.create();
   });
-  protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().bkey}`);
-  protected isNew = computed(() => !this.formData()?.bkey);
+  protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
+  protected isNew = computed(() => !this.formData()?.okey);
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

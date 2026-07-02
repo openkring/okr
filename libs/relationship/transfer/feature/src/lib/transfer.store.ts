@@ -152,7 +152,7 @@ export const TransferStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isTransfer(data, store.tenantId())) {
-            await (!data.bkey ? 
+            await (!data.okey ? 
               store.transferService.create(data, store.currentUser()) : 
               store.transferService.update(data, store.currentUser()));
           }

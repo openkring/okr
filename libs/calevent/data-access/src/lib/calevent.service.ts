@@ -92,13 +92,13 @@ export class CalEventService {
 
   /*-------------------------- event helpers --------------------------------*/
   public convertEventModelToCalendarEvent(calEvent: CalEventModel): EventInput {
-    if (!calEvent.startDate || calEvent.startDate.length !== 8) die('CalEventService.convertEventModelToCalendarEvent: calEvent ' + calEvent.bkey + ' has invalid start date: ' + calEvent.startDate);
+    if (!calEvent.startDate || calEvent.startDate.length !== 8) die('CalEventService.convertEventModelToCalendarEvent: calEvent ' + calEvent.okey + ' has invalid start date: ' + calEvent.startDate);
     if (!calEvent.startTime || calEvent.startTime.length !== 5) {
       // fullDay CalEvent have no startTime
       return {
         title: calEvent.name,
         start: this.getIsoDate(calEvent.startDate),
-        eventKey: calEvent.bkey,
+        eventKey: calEvent.okey,
       };
     } else {  // not a fullday event
       const endTime = addTime(calEvent.startTime, 0, calEvent.durationMinutes);
@@ -106,7 +106,7 @@ export class CalEventService {
         title: calEvent.name,
         start: this.getIsoDateTime(calEvent.startDate, calEvent.startTime),
         end: this.getIsoDateTime(calEvent.startDate, endTime),
-        eventKey: calEvent.bkey,
+        eventKey: calEvent.okey,
       };
     }
   }

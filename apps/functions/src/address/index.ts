@@ -14,7 +14,7 @@ export type { Data as QrBillData };
 
 export interface GenerateQrBillRequest {
   tenantId: string;
-  addressBkey: string;
+  addressOkey: string;
   data: Data;
 }
 
@@ -25,7 +25,7 @@ export interface GenerateQrBillResponse {
 /**
  * Generates a Swiss QR bill PDF and uploads it to Firebase Storage.
  * The client builds the swissqrbill Data structure (creditor, debtor, amount, currency, reference)
- * and passes it along with tenantId and addressBkey.
+ * and passes it along with tenantId and addressOkey.
  * Returns the storagePath; the client calls getDownloadURL to get the actual URL.
  */
 export const generateQrBill = onCall<GenerateQrBillRequest, Promise<GenerateQrBillResponse>>(
@@ -38,10 +38,10 @@ export const generateQrBill = onCall<GenerateQrBillRequest, Promise<GenerateQrBi
       throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
 
-    const { tenantId, addressBkey, data } = request.data;
+    const { tenantId, addressOkey, data } = request.data;
 
-    if (!tenantId || !addressBkey) {
-      throw new HttpsError('invalid-argument', 'tenantId and addressBkey are required');
+    if (!tenantId || !addressOkey) {
+      throw new HttpsError('invalid-argument', 'tenantId and addressOkey are required');
     }
     if (!data?.creditor || !data?.currency) {
       throw new HttpsError('invalid-argument', 'data.creditor and data.currency are required');
@@ -50,7 +50,7 @@ export const generateQrBill = onCall<GenerateQrBillRequest, Promise<GenerateQrBi
     const fileName = `qr-bill-${Date.now()}.pdf`;
     const tempPath = path.join(os.tmpdir(), fileName);
 
-    logger.info('generateQrBill: generating PDF', { tenantId, addressBkey, fileName });
+    logger.info('generateQrBill: generating PDF', { tenantId, addressOkey, fileName });
 
     try {
       await new Promise<void>((resolve, reject) => {
@@ -66,7 +66,7 @@ export const generateQrBill = onCall<GenerateQrBillRequest, Promise<GenerateQrBi
         stream.on('error', reject);
       });
 
-      const storagePath = `tenant/${tenantId}/address/${addressBkey}/ezs/${fileName}`;
+      const storagePath = `tenant/${tenantId}/address/${addressOkey}/ezs/${fileName}`;
       const bucket = getStorage().bucket();
 
       await bucket.upload(tempPath, {
@@ -79,7 +79,7 @@ export const generateQrBill = onCall<GenerateQrBillRequest, Promise<GenerateQrBi
 
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error('generateQrBill: failed', { tenantId, addressBkey, message });
+      logger.error('generateQrBill: failed', { tenantId, addressOkey, message });
       throw new HttpsError('internal', message);
     } finally {
       if (fs.existsSync(tempPath)) {

@@ -85,9 +85,9 @@ import { PageStore } from './page.store';
       <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
-        @for(page of visiblePages(); track page.bkey) {
+        @for(page of visiblePages(); track page.okey) {
           <ion-item (click)="showActions(page)">
-            <ion-label class="ion-hide-md-down">{{ page.bkey }}</ion-label>
+            <ion-label class="ion-hide-md-down">{{ page.okey }}</ion-label>
             <ion-label>{{ page.name }}</ion-label>
             <ion-label>{{ page.sections.length }}</ion-label>
           </ion-item>

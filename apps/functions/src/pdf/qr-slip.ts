@@ -28,7 +28,7 @@ export async function resolvePayee(db: Firestore, tenantId: string, payeeOrgId?:
 
   const addrSnap = await db.collection(AddressCollection)
     .where('parentKey', '==', `org.${orgId}`).get();
-  const addresses = addrSnap.docs.map(d => ({ bkey: d.id, ...d.data() }) as AddressModel);
+  const addresses = addrSnap.docs.map(d => ({ okey: d.id, ...d.data() }) as AddressModel);
 
   const bank = pickFavoriteByChannel(addresses, 'bankaccount');
   const postal = pickFavoriteByChannel(addresses, 'postal');

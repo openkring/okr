@@ -27,10 +27,10 @@ import { ResponsibilityStore } from './responsibility.store';
           }
         </ion-item>
         <ion-list slot="content">
-          @for(r of store.filteredResponsibilities(); track r.bkey) {
+          @for(r of store.filteredResponsibilities(); track r.okey) {
             <ion-item (click)="onRowClick(r)">
               <ion-label>
-                <h3>{{ r.bkey }}</h3>
+                <h3>{{ r.okey }}</h3>
                 <p>{{ r.name }}</p>
               </ion-label>
             </ion-item>

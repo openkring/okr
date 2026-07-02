@@ -26,18 +26,18 @@ describe('computeGrossFromNet', () => {
 
 describe('resolveActiveVatCode', () => {
   const codes: Partial<VatCodeModel>[] = [
-    { bkey: 'a', validFrom: '20230101', validTo: '20231231', code: 'UST_77' },
-    { bkey: 'b', validFrom: '20240101', validTo: '', code: 'UST_81' },
+    { okey: 'a', validFrom: '20230101', validTo: '20231231', code: 'UST_77' },
+    { okey: 'b', validFrom: '20240101', validTo: '', code: 'UST_81' },
   ];
 
   it('returns the code valid on the given date', () => {
     const result = resolveActiveVatCode(codes as VatCodeModel[], '20240601');
-    expect(result?.bkey).toBe('b');
+    expect(result?.okey).toBe('b');
   });
 
   it('returns the code valid on the given date (old period)', () => {
     const result = resolveActiveVatCode(codes as VatCodeModel[], '20230601');
-    expect(result?.bkey).toBe('a');
+    expect(result?.okey).toBe('a');
   });
 
   it('returns undefined when no code is active', () => {

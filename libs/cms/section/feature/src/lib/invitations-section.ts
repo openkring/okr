@@ -43,7 +43,7 @@ import { InvitationSectionStore } from './invitations-section.store';
       <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
           <ion-grid>
-            @for(inv of invitations(); track inv.bkey) {
+            @for(inv of invitations(); track inv.okey) {
               <ion-row (click)="showActions(inv)">
                 <ion-col size="1">
                   <ion-icon size="large" src="{{getAttendanceIcon(inv.state) | svgIcon }}" color="{{getColor(inv.state)}}" />

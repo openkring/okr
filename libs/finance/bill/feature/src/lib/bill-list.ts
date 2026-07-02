@@ -63,7 +63,7 @@ import { BillStore } from './bill.store';
         <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
-          @for(bill of filteredBills(); track bill.bkey) {
+          @for(bill of filteredBills(); track bill.okey) {
             <ion-row (click)="showActions(bill)">
               <ion-col size="2" class="ion-align-self-center">{{ formatDate(bill.billDate) }}</ion-col>
               <ion-col size="1">
@@ -134,7 +134,7 @@ export class BillList {
     const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
     const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm' && data) {
-      this.store.setListId(data.bkey);
+      this.store.setListId(data.okey);
       const name = [data.firstName, data.lastName].filter(Boolean).join(' ');
       this.selectedVendorName.set(name);
       this.cdr.markForCheck();

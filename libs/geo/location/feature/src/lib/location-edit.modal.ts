@@ -57,7 +57,7 @@ export class LocationEditModal {
   protected showForm = signal(true);
 
   // derived
-  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.location().bkey));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.location().okey));
   protected tags = computed(() => this.store.getTags());
   protected types = computed(() => this.store.getTypes());
   protected tenantId = computed(() => this.store.tenantId());

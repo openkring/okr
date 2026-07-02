@@ -39,7 +39,7 @@ export class AccountingConfigService {
     );
   }
 
-  public listForTenant(orderBy = 'bkey', sortOrder = 'asc'): Observable<AccountingConfigModel[]> {
+  public listForTenant(orderBy = 'okey', sortOrder = 'asc'): Observable<AccountingConfigModel[]> {
     return this.firestoreService.searchData<AccountingConfigModel>(
       AccountingConfigCollection, getSystemQuery(this.tenantId), orderBy, sortOrder
     );

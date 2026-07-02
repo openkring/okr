@@ -89,14 +89,14 @@ describe('MenuStore', () => {
 
   it('filteredMenuItems filters the loaded items by search term', async () => {
     const items = [
-      { bkey: '1', index: 'home', action: 'navigate' },
-      { bkey: '2', index: 'about', action: 'navigate' }
+      { okey: '1', index: 'home', action: 'navigate' },
+      { okey: '2', index: 'about', action: 'navigate' }
     ];
     store = makeStore(menuServiceMock(items));
     await TestBed.inject(ApplicationRef).whenStable();
     expect(store.menuItemsCount()).toBe(2);
     store.setSearchTerm('home');
-    expect(store.filteredMenuItems()?.map((m) => m.bkey)).toEqual(['1']);
+    expect(store.filteredMenuItems()?.map((m) => m.okey)).toEqual(['1']);
   });
 
   it('sets error state when the menu-items stream fails', async () => {

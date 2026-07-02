@@ -50,7 +50,7 @@ import { FormDefinitionStore } from './form-definition.store';
         <bk-empty-list [message]="store.i18n.list_empty()" />
       } @else {
         <ion-list lines="inset">
-          @for (form of store.filteredForms(); track form.bkey) {
+          @for (form of store.filteredForms(); track form.okey) {
             <ion-item button [detail]="false" (click)="showActions(form)">
               <ion-label>
                 <h2>{{ form.name }}</h2>

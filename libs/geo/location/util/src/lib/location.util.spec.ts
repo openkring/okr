@@ -20,7 +20,7 @@ describe('Location Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     location = new LocationModel(tenantId);
-    location.bkey = 'loc-1';
+    location.okey = 'loc-1';
     location.name = 'Main Office';
     location.latitude = 12345;
     location.longitude = 67890;

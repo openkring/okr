@@ -28,13 +28,13 @@ export class BookingService {
       return undefined;
     }
     const batch = this.firestoreService.getBatch();
-    const bkey = booking.bkey?.length > 0 ? booking.bkey : crypto.randomUUID();
-    const { bkey: _bkey, ...headerData } = { ...booking, bkey } as BookingModel & { bkey: string };
-    const headerRef = doc(this.firestoreService.firestore, BookingCollection, bkey);
+    const okey = booking.okey?.length > 0 ? booking.okey : crypto.randomUUID();
+    const { okey: _bkey, ...headerData } = { ...booking, okey } as BookingModel & { okey: string };
+    const headerRef = doc(this.firestoreService.firestore, BookingCollection, okey);
     batch.set(headerRef, headerData);
     this.bookingLineService.addLinesToBatch(lines, batch);
     await batch.commit();
-    return bkey;
+    return okey;
   }
 
   public read(key: string, accountingTenantId: string): Observable<BookingModel | undefined> {
@@ -46,23 +46,23 @@ export class BookingService {
       console.error('BookingService.update: booking lines are not balanced');
       return;
     }
-    const bkey = booking.bkey;
-    const oldLines = await firstValueFrom(this.bookingLineService.listForBooking(bkey, booking.accountingTenantId));
+    const okey = booking.okey;
+    const oldLines = await firstValueFrom(this.bookingLineService.listForBooking(okey, booking.accountingTenantId));
     const batch = this.firestoreService.getBatch();
     this.bookingLineService.deleteLinesToBatch(oldLines, batch);
-    const { bkey: _bkey, ...headerData } = { ...booking } as BookingModel & { bkey: string };
-    const headerRef = doc(this.firestoreService.firestore, BookingCollection, bkey);
+    const { okey: _bkey, ...headerData } = { ...booking } as BookingModel & { okey: string };
+    const headerRef = doc(this.firestoreService.firestore, BookingCollection, okey);
     batch.set(headerRef, headerData, { merge: false });
     this.bookingLineService.addLinesToBatch(lines, batch);
     await batch.commit();
   }
 
   public async delete(booking: BookingModel, currentUser?: UserModel): Promise<void> {
-    const bkey = booking.bkey;
-    const lines = await firstValueFrom(this.bookingLineService.listForBooking(bkey, booking.accountingTenantId));
+    const okey = booking.okey;
+    const lines = await firstValueFrom(this.bookingLineService.listForBooking(okey, booking.accountingTenantId));
     const batch = this.firestoreService.getBatch();
     this.bookingLineService.deleteLinesToBatch(lines, batch);
-    const headerRef = doc(this.firestoreService.firestore, BookingCollection, bkey);
+    const headerRef = doc(this.firestoreService.firestore, BookingCollection, okey);
     batch.delete(headerRef);
     await batch.commit();
   }

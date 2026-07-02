@@ -2,7 +2,7 @@ import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { BkModel } from './base.model';
 
 export class WebsiteContentModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public key = DEFAULT_KEY;

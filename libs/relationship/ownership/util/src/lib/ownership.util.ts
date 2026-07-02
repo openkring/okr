@@ -12,13 +12,13 @@ import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from 
  * @returns
  */
 export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceModel | AccountModel, tenantId: string, validFrom = getTodayStr()): OwnershipModel {
-  if (!owner.bkey) die('ownership.util.newOwnership(): owner.bkey is mandatory.');
+  if (!owner.okey) die('ownership.util.newOwnership(): owner.okey is mandatory.');
   const ownership = new OwnershipModel(tenantId);
 
   ownership.validFrom = validFrom;
   ownership.validTo = END_FUTURE_DATE_STR;
 
-  ownership.ownerKey = owner.bkey;
+  ownership.ownerKey = owner.okey;
   if (isPerson(owner, tenantId)) {
     const person = owner as PersonModel;
     ownership.ownerModelType = 'person';
@@ -33,7 +33,7 @@ export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceMo
     ownership.ownerType = org.type;
   }
 
-  ownership.resourceKey = resource.bkey;
+  ownership.resourceKey = resource.okey;
   ownership.resourceName = resource.name;
   if (isResource(resource, tenantId)) {
     const res = resource as ResourceModel;

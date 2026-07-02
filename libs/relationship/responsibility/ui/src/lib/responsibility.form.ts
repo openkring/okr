@@ -29,11 +29,11 @@ import { LowercaseWordMask } from '@okr/shared-config';
             <ion-row>
              <ion-col size="12" size-md="6">
                 @if(isNew()) {
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="false" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="false" />
                 } @else {
                   <ion-item lines="none">
-                    <ion-label>ID: {{ bkey() }}</ion-label>
-                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="bkey()" />
+                    <ion-label>ID: {{ okey() }}</ion-label>
+                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="okey()" />
                   </ion-item>
                 }                                     
               </ion-col>
@@ -124,7 +124,7 @@ export class ResponsibilityForm {
   // i18n
   public readonly i18n = input.required<ResponsibilityI18n>();
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
-  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
+  protected bkeyI18n = computed(() => ({ name: 'okey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
   protected nameI18n = computed(() => ({ name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper() } as TextInputI18n));
   protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.i18n().validFrom_label(), placeholder: this.i18n().validFrom_placeholder(), helper: this.i18n().validFrom_helper() } as DateInputI18n));
   protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));
@@ -151,10 +151,10 @@ export class ResponsibilityForm {
   // validation and errors
   private readonly validationResult = computed(() => responsibilityValidations(this.formData(), this.tenantId()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
-  protected bkeyErrors = computed(() => this.validationResult().getErrors('bkey'));
+  protected bkeyErrors = computed(() => this.validationResult().getErrors('okey'));
 
   // fields
-  protected bkey = linkedSignal(() => this.formData().bkey ?? '');
+  protected okey = linkedSignal(() => this.formData().okey ?? '');
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected validFrom = linkedSignal(() => this.formData().validFrom ?? DEFAULT_DATE);
   protected validTo = linkedSignal(() => this.formData().validTo ?? DEFAULT_DATE);
@@ -174,7 +174,7 @@ export class ResponsibilityForm {
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | undefined): void {
-    if (fieldName === 'bkey') {
+    if (fieldName === 'okey') {
       fieldValue = (fieldValue as string).toLowerCase();
     }
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));

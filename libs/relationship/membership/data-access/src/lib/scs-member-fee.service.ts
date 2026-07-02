@@ -39,7 +39,7 @@ export class ScsMemberFeeService {
 
   public async save(fee: ScsMemberFeesModel, currentUser?: UserModel, addActivity = true): Promise<string | undefined> {
 
-    if (fee.bkey && fee.bkey.length > 0) {
+    if (fee.okey && fee.okey.length > 0) {
       const key = await this.firestoreService.updateModel<ScsMemberFeesModel>(ScsMemberFeesCollection, fee, false, this.i18n.fee_update_conf(), this.i18n.fee_update_error(), currentUser);
       void this.activityService.log('scs-member-fee', 'update', currentUser, fee.index);
       return key;

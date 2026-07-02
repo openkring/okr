@@ -32,8 +32,8 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
       <ion-row>
         <!-- Main content column -->
         <ion-col size="12" size-md="8">
-          @for (section of mainSections(); track section.bkey) {
-            <div [id]="section.bkey" (click)="sectionClick.emit(section.bkey)">
+          @for (section of mainSections(); track section.okey) {
+            <div [id]="section.okey" (click)="sectionClick.emit(section.okey)">
               @if (editMode()) {
                 <div class="section-wrapper editable">
                   <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
@@ -46,8 +46,8 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
         </ion-col>
         <!-- Sidebar column -->
         <ion-col size="12" size-md="4">
-          @for (section of sidebarSections(); track section.bkey) {
-            <div [id]="section.bkey" (click)="sectionClick.emit(section.bkey)">
+          @for (section of sidebarSections(); track section.okey) {
+            <div [id]="section.okey" (click)="sectionClick.emit(section.okey)">
               @if (editMode()) {
                 <div class="section-wrapper editable">
                   <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />

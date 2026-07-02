@@ -257,7 +257,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
       // Write audit entry (skip for ephemeral)
       if (storageMode === 'persist') {
         const audit: Partial<DocGenerationModel> = {
-          bkey: generationId,
+          okey: generationId,
           tenants: [tenantId],
           userId,
           templateId: templateId ?? '',
@@ -294,7 +294,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
 
       if (storageMode === 'persist') {
         await getFirestore().collection(DocGenerationCollection).doc(generationId).set({
-          bkey: generationId,
+          okey: generationId,
           tenants: [tenantId],
           userId,
           templateId: templateId ?? '',

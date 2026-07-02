@@ -9,9 +9,9 @@ import { PrivacyUsage } from './enums/privacy-usage.enum';
 import { Roles } from './roles';
 
 export class UserModel implements BkModel, TaggedModel, SearchableModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public loginEmail = DEFAULT_EMAIL; // Firebase Auth Login Email
-  public personKey = DEFAULT_KEY; // PersonModel.bkey
+  public personKey = DEFAULT_KEY; // PersonModel.okey
   public firstName = DEFAULT_NAME;
   public lastName = DEFAULT_NAME;
   public tenants = DEFAULT_TENANTS; // user has always exactly one tenant

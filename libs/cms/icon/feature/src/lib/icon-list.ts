@@ -131,7 +131,7 @@ import { ICON_SETS, IconStore } from './icon.store';
       } @else if(isListView()) {
         <!-- list view -->
         <ion-list lines="inset">
-          @for(icon of store.filteredIcons(); track icon.bkey) {
+          @for(icon of store.filteredIcons(); track icon.okey) {
             <ion-item (click)="showActions(icon)">
               <ion-thumbnail slot="start">
                 <img [src]="icon.name | svgIcon:icon.type" [alt]="icon.name" />
@@ -147,7 +147,7 @@ import { ICON_SETS, IconStore } from './icon.store';
         <!-- grid view -->
         <ion-grid>
           <ion-row>
-            @for(icon of store.filteredIcons(); track icon.bkey) {
+            @for(icon of store.filteredIcons(); track icon.okey) {
               <ion-col size="4" size-md="3" size-xl="2" (click)="showActions(icon)">
                 <div class="icon-grid-cell">
                   <img class="icon-grid-img" [src]="icon.name | svgIcon:icon.type" [alt]="icon.name" />

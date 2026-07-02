@@ -8,7 +8,7 @@ export function newTemplate(tenantId: string): TemplateModel {
 export function newTemplateVersion(version = 1): TemplateVersionModel {
   const v = new TemplateVersionModel();
   v.version = version;
-  v.bkey = String(version);
+  v.okey = String(version);
   return v;
 }
 

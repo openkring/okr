@@ -7,7 +7,7 @@ import { AvatarInfo } from './avatar-info';
 
 export class ApplicationModel implements BkModel, SearchableModel, TaggedModel {
   // base
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

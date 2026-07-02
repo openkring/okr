@@ -13,7 +13,7 @@ import { BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } fro
  * Otherwise, '@${i18n}.${name}.${item.name}.label' is translated and shown as the label.
  */
 export class CategoryListModel implements BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel {
-  bkey = DEFAULT_KEY;
+  okey = DEFAULT_KEY;
   name = DEFAULT_NAME;
   tags = DEFAULT_TAGS;
   isArchived = false;

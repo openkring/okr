@@ -39,7 +39,7 @@ const CHANNEL_ORDER: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
 
 /** Minimal info a caller passes about the export target. */
 export interface VcardExportTarget {
-  bkey: string;
+  okey: string;
   displayName: string;
   /** person only — StoreDate (yyyyMMdd); used to decide the birthday toggle */
   dateOfBirth?: string;
@@ -104,7 +104,7 @@ export class VcardExportService {
 
     try {
       const fn = httpsCallable<VcardExportRequest, VcardExportResponse>(this.functions, 'vcardExport');
-      const res = await fn({ tenantId, targetIds: [target.bkey], targetKind: kind, scope });
+      const res = await fn({ tenantId, targetIds: [target.okey], targetKind: kind, scope });
       downloadVcfResponse(res.data);
       await this.alertService.showToast(this.i18n.export_conf());
     } catch (e) {
@@ -120,7 +120,7 @@ export class VcardExportService {
     // `tenants, isArchived, parentKey`, so it can be filtered server-side; `workrels` and
     // `personal-rels` are not indexed by subject/object key, so — like WorkrelService /
     // PersonalRelService — we read the tenant-scoped list and filter in memory by key.
-    const subjectKey = `${kind}.${target.bkey}`;
+    const subjectKey = `${kind}.${target.okey}`;
     const [addresses, avatar, workrels, personalRels] = await Promise.all([
       this.firestoreService.getDataOnce<AddressModel>(AddressCollection, [...getSystemQuery(tenantId), { key: 'parentKey', operator: '==', value: subjectKey }], 'none'),
       firstValueFrom(this.firestoreService.readModel<AvatarModel>(AvatarCollection, subjectKey)),
@@ -137,10 +137,10 @@ export class VcardExportService {
     }
 
     const hasWorkRels = kind === 'person'
-      ? (workrels ?? []).some((w) => w.subjectKey === target.bkey)
-      : (workrels ?? []).some((w) => w.objectKey === target.bkey);
+      ? (workrels ?? []).some((w) => w.subjectKey === target.okey)
+      : (workrels ?? []).some((w) => w.objectKey === target.okey);
     const hasPersonalRels = kind === 'person'
-      && (personalRels ?? []).some((r) => r.subjectKey === target.bkey || r.objectKey === target.bkey);
+      && (personalRels ?? []).some((r) => r.subjectKey === target.okey || r.objectKey === target.okey);
 
     return {
       addresses: CHANNEL_ORDER.filter((c) => channelSet.has(c)),

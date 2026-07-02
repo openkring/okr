@@ -126,7 +126,7 @@ export class UploadService {
    * 1) Let's the user pick a document from the local file system
    * 2) upload the file into Firestorage in tenant/[tenantId]/document/[hash]
    * 3) generates an initial document object in the database with attributes derived from the file
-   * 4) return the an initial document model (including the hash as bkey and the download URL)
+   * 4) return the an initial document model (including the hash as okey and the download URL)
    * The idea is that the calling function then navigates to the document details page so that the user can add additional metadata.
    * @param mimeTypes 
    * @param storagePath 

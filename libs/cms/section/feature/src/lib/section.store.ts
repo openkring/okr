@@ -231,7 +231,7 @@ export const _SectionStore = signalStore(
           if (section) {
             store.clearError();
             try {
-              const sectionId = section.bkey?.length === 0 ?
+              const sectionId = section.okey?.length === 0 ?
                 await store.sectionService.create(section, store.currentUser()) :
                 await store.sectionService.update(data, store.currentUser());
               this.reload();
@@ -277,7 +277,7 @@ export const _SectionStore = signalStore(
         if (!file) return;
 
         // 2) upload the image file into Firestorage
-        const storagePath = `tenant/${store.tenantId()}/section/${section.bkey}/image/${file.name}`;
+        const storagePath = `tenant/${store.tenantId()}/section/${section.okey}/image/${file.name}`;
         const downloadUrl = await store.uploadService.uploadFile(file, storagePath, 'Upload Section Image');
         if (!downloadUrl) return;
 
@@ -316,7 +316,7 @@ export const _SectionStore = signalStore(
         if (!file) return;
 
         // 2) upload the file into Firestorage
-        const storagePath = `tenant/${store.tenantId()}/section/${section.bkey}/file/${file.name}`;
+        const storagePath = `tenant/${store.tenantId()}/section/${section.okey}/file/${file.name}`;
         const downloadUrl = await store.uploadService.uploadFile(file, storagePath, 'Upload Section File');
         if (!downloadUrl) return;
 
@@ -341,14 +341,14 @@ export const _SectionStore = signalStore(
 
       /**
        * Export the currently-filtered sections. `type === 'csv'` downloads a CSV
-       * (bkey, name, type, state, tags); any other value downloads pretty JSON.
+       * (okey, name, type, state, tags); any other value downloads pretty JSON.
        */
       async export(type: string): Promise<void> {
         const sections = store.filteredSections() ?? [];
         if (type === 'csv') {
           const rows = [
-            ['bkey', 'name', 'type', 'state', 'tags'],
-            ...sections.map(s => [s.bkey ?? '', s.name ?? '', s.type ?? '', s.state ?? '', s.tags ?? ''])
+            ['okey', 'name', 'type', 'state', 'tags'],
+            ...sections.map(s => [s.okey ?? '', s.name ?? '', s.type ?? '', s.state ?? '', s.tags ?? ''])
           ];
           await exportCsv(rows, getExportFileName('sections', 'csv'));
         } else {

@@ -145,7 +145,7 @@ export class GraphPage {
   public showMenu = input(true);
 
   // derived signals
-  protected popupId = computed(() => 'c_graphpage_' + this.store.page()?.bkey);
+  protected popupId = computed(() => 'c_graphpage_' + this.store.page()?.okey);
 
   /** Expand the whole sitemap once, as soon as the tree has loaded. */
   private hasAutoExpanded = false;
@@ -199,7 +199,7 @@ export class GraphPage {
         await this.store.edit(node.model as PageModel, false);
         break;
       case 'section':
-        this.sectionStore.setSectionId((node.model as SectionModel).bkey);
+        this.sectionStore.setSectionId((node.model as SectionModel).okey);
         await this.sectionStore.edit(node.model as SectionModel, false);
         break;
     }

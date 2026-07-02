@@ -48,12 +48,12 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
           </ion-grid>
           @if(orphanedSections().length > 0) {
             <ion-list lines="inset">
-              @for(section of orphanedSections(); track section.bkey) {
+              @for(section of orphanedSections(); track section.okey) {
                 <ion-item (click)="showSectionActions(section)" button>
                   <ion-icon slot="start" src="{{'section' | svgIcon }}" color="warning" />
                   <ion-label>
                     <h3>{{ section.name }}</h3>
-                    <p>{{ section.bkey }}</p>
+                    <p>{{ section.okey }}</p>
                   </ion-label>
                 </ion-item>
               }
@@ -83,7 +83,7 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
                   <ion-icon slot="start" src="{{'section' | svgIcon }}" color="danger" />
                   <ion-label>
                     <h3>{{ ref.resolvedKey }}</h3>
-                    <p>{{ ref.page.name }} ({{ ref.page.bkey }})</p>
+                    <p>{{ ref.page.name }} ({{ ref.page.okey }})</p>
                   </ion-label>
                 </ion-item>
               }
@@ -115,7 +115,7 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
                   </ion-thumbnail>
                   <ion-label>
                     <h3>{{ fileName(image.fullPath) }}</h3>
-                    <p>{{ image.section.name }} ({{ image.section.bkey }})</p>
+                    <p>{{ image.section.name }} ({{ image.section.okey }})</p>
                   </ion-label>
                 </ion-item>
               }
@@ -140,12 +140,12 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
           </ion-grid>
           @if(orphanedMenus().length > 0) {
             <ion-list lines="inset">
-              @for(menuItem of orphanedMenus(); track menuItem.bkey) {
+              @for(menuItem of orphanedMenus(); track menuItem.okey) {
                 <ion-item (click)="showMenuActions(menuItem)" button>
                   <ion-icon slot="start" src="{{'menu' | svgIcon }}" color="warning" />
                   <ion-label>
                     <h3>{{ menuItem.name }}</h3>
-                    <p>{{ menuItem.bkey }}</p>
+                    <p>{{ menuItem.okey }}</p>
                   </ion-label>
                 </ion-item>
               }
@@ -175,7 +175,7 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
                   <ion-icon slot="start" src="{{'menu' | svgIcon }}" color="danger" />
                   <ion-label>
                     <h3>{{ ref.missingKey }}</h3>
-                    <p>{{ ref.parent.name }} ({{ ref.parent.bkey }})</p>
+                    <p>{{ ref.parent.name }} ({{ ref.parent.okey }})</p>
                   </ion-label>
                 </ion-item>
               }
@@ -317,7 +317,7 @@ export class AocContent {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons.push(createActionSheetButton('content.actionsheet.section.edit', this.store.i18n.content_section_edit(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('content.actionsheet.section.delete', this.store.i18n.content_section_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
@@ -332,8 +332,8 @@ export class AocContent {
       case 'content.actionsheet.section.delete':
         await this.store.removeSection(section);
         break;
-      case 'content.actionsheet.copy.bkey':
-        await copyToClipboardWithConfirmation(this.toastController, section.bkey ?? '');
+      case 'content.actionsheet.copy.okey':
+        await copyToClipboardWithConfirmation(this.toastController, section.okey ?? '');
         break;
     }
   }
@@ -343,7 +343,7 @@ export class AocContent {
     options.buttons.push(createActionSheetButton('content.actionsheet.page.edit', this.store.i18n.content_page_edit(), this.imgixBaseUrl, 'page'));
     options.buttons.push(createActionSheetButton('content.actionsheet.section.create', this.store.i18n.content_section_create(), this.imgixBaseUrl, 'section'));
     options.buttons.push(createActionSheetButton('content.actionsheet.section.removeRef', this.store.i18n.content_section_removeref(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
 
@@ -362,7 +362,7 @@ export class AocContent {
       case 'content.actionsheet.section.removeRef':
         await this.store.removeSectionRefFromPage(ref);
         break;
-      case 'content.actionsheet.copy.bkey':
+      case 'content.actionsheet.copy.okey':
         await copyToClipboardWithConfirmation(this.toastController, ref.resolvedKey);
         break;
     }
@@ -372,7 +372,7 @@ export class AocContent {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons.push(createActionSheetButton('content.actionsheet.menu.create', this.store.i18n.content_menu_create(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('content.actionsheet.menu.removeRef', this.store.i18n.content_menu_removeref(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
@@ -387,7 +387,7 @@ export class AocContent {
       case 'content.actionsheet.menu.removeRef':
         await this.store.removeMissingMenuRef(ref);
         break;
-      case 'content.actionsheet.copy.bkey':
+      case 'content.actionsheet.copy.okey':
         await copyToClipboardWithConfirmation(this.toastController, ref.missingKey);
         break;
     }
@@ -397,7 +397,7 @@ export class AocContent {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons.push(createActionSheetButton('content.actionsheet.menu.edit', this.store.i18n.content_menu_edit(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('content.actionsheet.menu.delete', this.store.i18n.content_menu_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.bkey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
@@ -412,8 +412,8 @@ export class AocContent {
       case 'content.actionsheet.menu.delete':
         await this.store.removeMenu(menuItem);
         break;
-      case 'content.actionsheet.copy.bkey':
-        await copyToClipboardWithConfirmation(this.toastController, menuItem.bkey ?? '');
+      case 'content.actionsheet.copy.okey':
+        await copyToClipboardWithConfirmation(this.toastController, menuItem.okey ?? '');
         break;
     }
   }

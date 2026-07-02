@@ -13,7 +13,7 @@ export const DEFAULT_INVITATION_ROLE: InvitationRole = 'info';
  * Person    invited to       CalEvent
  */
 export class InvitationModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

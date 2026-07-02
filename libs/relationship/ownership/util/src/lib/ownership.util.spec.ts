@@ -40,7 +40,7 @@ describe('Ownership Utils', () => {
     vi.clearAllMocks();
 
     ownership = new OwnershipModel(tenantId);
-    ownership.bkey = 'ownership-1';
+    ownership.okey = 'ownership-1';
     ownership.ownerKey = 'person-1';
     ownership.ownerName1 = 'John';
     ownership.ownerName2 = 'Doe';
@@ -51,24 +51,24 @@ describe('Ownership Utils', () => {
     ownership.validFrom = '20230101';
 
     person = new PersonModel(tenantId);
-    person.bkey = 'person-1';
+    person.okey = 'person-1';
     person.firstName = 'Jane';
     person.lastName = 'Doe';
     person.gender = 'female';
 
     org = new OrgModel(tenantId);
-    org.bkey = 'org-1';
+    org.okey = 'org-1';
     org.name = 'Rowing Club';
     org.type = 'association';
 
     resource = new ResourceModel(tenantId);
-    resource.bkey = 'resource-1';
+    resource.okey = 'resource-1';
     resource.name = 'Single Scull';
     resource.type = 'rboat';
     resource.subType = 'b1x';
 
     account = new AccountModel(tenantId);
-    account.bkey = 'account-1';
+    account.okey = 'account-1';
     account.name = 'Club Fees';
     account.type = 'asset';
   });
@@ -98,10 +98,10 @@ describe('Ownership Utils', () => {
       expect(result.resourceType).toBe('asset');
     });
 
-    it('should call die if owner bkey is missing', () => {
-      person.bkey = '';
+    it('should call die if owner okey is missing', () => {
+      person.okey = '';
       newOwnership(person, resource, tenantId);
-      expect(mockDie).toHaveBeenCalledWith('ownership.util.newOwnership(): owner.bkey is mandatory.');
+      expect(mockDie).toHaveBeenCalledWith('ownership.util.newOwnership(): owner.okey is mandatory.');
     });
   });
 

@@ -58,7 +58,7 @@ import { AocRolesStore } from './aoc-roles.store';
                 <ion-label>{{ person.firstName }} {{ person.lastName }}</ion-label>
               </ion-col>
               <ion-col size="3">
-                <ion-label>{{ person.bkey }}</ion-label>
+                <ion-label>{{ person.okey }}</ion-label>
               </ion-col>
               <ion-col size="3">
                 <ion-label>{{ person.favEmail }}</ion-label>
@@ -73,7 +73,7 @@ import { AocRolesStore } from './aoc-roles.store';
                 <ion-label>{{ user.firstName }} {{ user.lastName }}</ion-label>
               </ion-col>
               <ion-col size="3">
-                <ion-label>{{ user.bkey }}</ion-label>
+                <ion-label>{{ user.okey }}</ion-label>
               </ion-col>
               <ion-col size="3">
                 <ion-label>{{ user.loginEmail }}</ion-label>
@@ -241,7 +241,7 @@ export class AocRoles {
     const person = this.aocRolesStore.selectedPerson();
     if (person) {
       return {
-        key: person.bkey,
+        key: person.okey,
         name1: person.firstName,
         name2: person.lastName,
         label: '',

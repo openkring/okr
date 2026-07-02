@@ -97,7 +97,7 @@ import { MembershipStore } from './membership.store';
         <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
-          @for(membership of filteredMemberships(); track membership.bkey) {
+          @for(membership of filteredMemberships(); track membership.okey) {
             <ion-item (click)="showActions(membership)">
               <ion-avatar slot="start">
                 <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />

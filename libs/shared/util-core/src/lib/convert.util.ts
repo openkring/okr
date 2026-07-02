@@ -282,28 +282,28 @@ export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | U
   switch (modelType) {
     case 'person':
       const person = model as PersonModel;
-      return newAvatarInfo(person.bkey, person.firstName, person.lastName, 'person', person.gender, '', person.firstName + ' ' + person.lastName);
+      return newAvatarInfo(person.okey, person.firstName, person.lastName, 'person', person.gender, '', person.firstName + ' ' + person.lastName);
     case 'org':
       const org = model as OrgModel;
-      return newAvatarInfo(org.bkey, '', org.name, 'org', org.type, '', org.name);
+      return newAvatarInfo(org.okey, '', org.name, 'org', org.type, '', org.name);
     case 'group':
       const group = model as GroupModel;
-      return newAvatarInfo(group.bkey, '', group.name, 'group', 'group', '', group.name);
+      return newAvatarInfo(group.okey, '', group.name, 'group', 'group', '', group.name);
     case 'resource':
       const resource = model as ResourceModel;
-      return newAvatarInfo(resource.bkey, '', resource.name, 'resource', resource.type, resource.subType, resource.name);
+      return newAvatarInfo(resource.okey, '', resource.name, 'resource', resource.type, resource.subType, resource.name);
     case 'membership':
       const member = model as MembershipModel;
       return newAvatarInfo(member.memberKey, member.memberName1, member.memberName2, member.memberModelType, member.memberType, '', '');
     case 'user':
       const user = model as UserModel;
-      return newAvatarInfo(user.bkey, user.firstName, user.lastName, 'user', '', '', user.firstName + ' ' + user.lastName);
+      return newAvatarInfo(user.okey, user.firstName, user.lastName, 'user', '', '', user.firstName + ' ' + user.lastName);
     case 'user-person':
       const u_p = model as UserModel;
       return newAvatarInfo(u_p.personKey, u_p.firstName, u_p.lastName, 'person', '', '', u_p.firstName + ' ' + u_p.lastName);
     case 'account':
       const account = model as AccountModel;
-      return newAvatarInfo(account.bkey, '', account.name, 'account', account.type, '', account.name);
+      return newAvatarInfo(account.okey, '', account.name, 'account', account.type, '', account.name);
   }
 }
 

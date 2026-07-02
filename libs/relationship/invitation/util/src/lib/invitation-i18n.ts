@@ -36,9 +36,9 @@ export const INVITATION_I18N_KEYS = {
   list_header_inviter:              PFX + 'list.header.inviter',
   list_header_state:                PFX + 'list.header.state',
 
-  bkey_label:                       PFX + 'bkey.label',
-  bkey_placeholder:                 PFX + 'bkey.placeholder',
-  bkey_helper:                      PFX + 'bkey.helper',
+  bkey_label:                       PFX + 'okey.label',
+  bkey_placeholder:                 PFX + 'okey.placeholder',
+  bkey_helper:                      PFX + 'okey.helper',
 
   invitee:                          PFX + 'invitee',
   inviter:                          PFX + 'inviter',

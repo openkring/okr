@@ -41,11 +41,11 @@ if (typeof window !== 'undefined') {
         [debounce]="200"
       />
       <ion-list>
-        @for (loc of filteredLocations(); track loc.bkey) {
+        @for (loc of filteredLocations(); track loc.okey) {
           <ion-item
             button
-            [color]="selectedKey() === loc.bkey ? 'primary' : ''"
-            (click)="select(loc.bkey)"
+            [color]="selectedKey() === loc.okey ? 'primary' : ''"
+            (click)="select(loc.okey)"
           >
             <ion-label>{{ loc.name }}</ion-label>
           </ion-item>
@@ -88,8 +88,8 @@ export class LocationSelect implements OnDestroy {
     return this.locations().filter(l => !term || l.name.toLowerCase().includes(term));
   });
 
-  protected select(bkey: string): void {
-    this.locationChange.emit(bkey);
+  protected select(okey: string): void {
+    this.locationChange.emit(okey);
   }
 
   protected onViewChange(event: CustomEvent): void {
@@ -119,7 +119,7 @@ export class LocationSelect implements OnDestroy {
 
     await this.map.setOnMarkerClickListener(async (marker: any) => {
       const loc = this.locations().find(l => l.name === marker.title);
-      if (loc) this.select(loc.bkey);
+      if (loc) this.select(loc.okey);
     });
   }
 

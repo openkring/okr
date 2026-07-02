@@ -19,7 +19,7 @@ export class SessionService {
   private readonly HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000; // must stay < 30-min orphan cleanup threshold
 
   public get hasActiveSession(): boolean {
-    return this.session !== null && !!this.session.bkey;
+    return this.session !== null && !!this.session.okey;
   }
 
   public async startSession(): Promise<void> {
@@ -38,7 +38,7 @@ export class SessionService {
       session.index = getSessionIndex(session);
       const key = await this.firestoreService.createModel<SessionModel>(SessionCollection, session, undefined, undefined);
       if (key) {
-        session.bkey = key;
+        session.okey = key;
         this.session = session;
         this.startHeartbeat();
       }
@@ -49,8 +49,8 @@ export class SessionService {
 
   public async upgradeSession(user: UserModel): Promise<void> {
     if (!this.session) return;
-    if (this.session.userKey === user.bkey) return;  // already upgraded, skip redundant write
-    this.session.userKey = user.bkey;
+    if (this.session.userKey === user.okey) return;  // already upgraded, skip redundant write
+    this.session.userKey = user.okey;
     this.session.userEmail = user.loginEmail;
     this.session.index = getSessionIndex(this.session);
     await this.firestoreService.updateModel<SessionModel>(SessionCollection, this.session, undefined);
@@ -116,7 +116,7 @@ export class SessionService {
     const region = 'europe-west6';
     const projectId = this.env.firebase.projectId;
     const url = `https://${region}-${projectId}.cloudfunctions.net/endSession`;
-    const payload = JSON.stringify({ sessionKey: session.bkey, tenantId: this.env.tenantId });
+    const payload = JSON.stringify({ sessionKey: session.okey, tenantId: this.env.tenantId });
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -86,7 +86,7 @@ export const AocUserAccountStore = signalStore(
         defaultOrg: store.appStore.defaultOrg()
       }),
       stream: ({params}) => {
-        const orgKey = params.defaultOrg?.bkey;
+        const orgKey = params.defaultOrg?.okey;
         if (!orgKey) return store.firestoreService.searchData<MembershipModel>(MembershipCollection, [], 'memberName2', 'asc').pipe(
           debugListLoaded('MembershipStore.activeMembers (no org)', params.currentUser)
         );
@@ -129,7 +129,7 @@ export const AocUserAccountStore = signalStore(
         const activeMembers = state.activeMembers();
 
         // Fast lookup maps
-        const userByUid      = new Map(allUsers.map(u => [u.bkey, u]));
+        const userByUid      = new Map(allUsers.map(u => [u.okey, u]));
         const memberByPerson = new Map(activeMembers.map(m => [m.memberKey, m]));
 
         const result: UserAccount[] = [];
@@ -176,11 +176,11 @@ export const AocUserAccountStore = signalStore(
         for (const user of allUsers) {
           // ignore users of other tenants
           if (!user.tenants.includes(state.appStore.tenantId())) continue;
-          if (seenUids.has(user.bkey)) continue;
-          seenUids.add(user.bkey);
+          if (seenUids.has(user.okey)) continue;
+          seenUids.add(user.okey);
           const membership = memberByPerson.get(user.personKey);
           result.push({
-            uid:                user.bkey,
+            uid:                user.okey,
             loginEmail:         user.loginEmail,
             firstName:          user.firstName,
             lastName:           user.lastName,
@@ -320,7 +320,7 @@ export const AocUserAccountStore = signalStore(
           const existingUser = await firstValueFrom(store.userService.read(uid));
           if (!existingUser) {
             const user = new UserModel(store.appStore.tenantId());
-            user.bkey = uid;
+            user.okey = uid;
             user.loginEmail = account.loginEmail;
             user.personKey = account.personKey;
             user.firstName = account.firstName;
@@ -338,7 +338,7 @@ export const AocUserAccountStore = signalStore(
       async deleteUser(account: UserAccount): Promise<void> {
         const confirmed = await confirm(store.alertController, store.i18n.account_user_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (confirmed === true) {
-          const user = store.allUsers().find(u => u.bkey === account.uid);
+          const user = store.allUsers().find(u => u.okey === account.uid);
           if (user) {
             await store.userService.delete(user, store.currentUser());
             this.reload();

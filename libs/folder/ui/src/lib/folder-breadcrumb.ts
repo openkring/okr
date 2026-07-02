@@ -11,8 +11,8 @@ import { FolderService } from '@okr/folder-data-access';
   template: `
     @if(breadcrumbs().length > 0) {
       <ion-breadcrumbs>
-        @for(folder of breadcrumbs(); track folder.bkey; let last = $last) {
-          <ion-breadcrumb [active]="last" (click)="!last && folderSelected.emit(folder.bkey)">
+        @for(folder of breadcrumbs(); track folder.okey; let last = $last) {
+          <ion-breadcrumb [active]="last" (click)="!last && folderSelected.emit(folder.okey)">
             {{ folder.name }}
           </ion-breadcrumb>
         }

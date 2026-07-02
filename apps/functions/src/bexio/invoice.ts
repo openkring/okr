@@ -236,12 +236,12 @@ async function persistInvoices(invoices: BexioInvoice[], tenantId: string, nowSt
 
     const batch = db.batch();
     chunk.forEach((inv, idx) => {
-      const bkey = String(inv.id);
+      const okey = String(inv.id);
       const totalCents = Math.round(parseFloat(inv.total) * 100);
       const receiver = inv.contact_id != null ? receiverMap.get(String(inv.contact_id)) : undefined;
       const title = inv.title ?? inv.document_nr;
       if (inv.contact_id != null && !receiver) {
-        logger.warn(`persistInvoices: no local person/org found for Bexio contact ${inv.contact_id} (invoice ${bkey})`);
+        logger.warn(`persistInvoices: no local person/org found for Bexio contact ${inv.contact_id} (invoice ${okey})`);
       }
 
       const doc: Record<string, unknown> = {
@@ -265,7 +265,7 @@ async function persistInvoices(invoices: BexioInvoice[], tenantId: string, nowSt
       };
       if (receiver) doc.receiver = receiver;
 
-      batch.set(db.collection('invoices').doc(bkey), doc, { merge: true });
+      batch.set(db.collection('invoices').doc(okey), doc, { merge: true });
     });
 
     await batch.commit();
@@ -292,7 +292,7 @@ async function runInvoiceSync(fromDate: string, tenantId: string, label: string)
 /**
  * Fetch the PDF for a single invoice from Bexio.
  * Returns the PDF as a base64-encoded string in the `content` field.
- * Input: { invoiceId: string } — the Bexio invoice ID (= invoice.bkey in Firestore)
+ * Input: { invoiceId: string } — the Bexio invoice ID (= invoice.okey in Firestore)
  */
 export const showInvoicePdf = onCall(
   {

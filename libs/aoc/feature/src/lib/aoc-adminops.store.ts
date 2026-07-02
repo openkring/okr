@@ -81,7 +81,7 @@ export const AocAdminOpsStore = signalStore(
               const org = store.appStore.getOrg(pkey);
               name = org?.name || '';
             }
-                log.push({ id: address.bkey, name: name, message: address.iban });
+                log.push({ id: address.okey, name: name, message: address.iban });
           });
           patchState(store, { log, logTitle: 'IBAN List' });
         }); 
@@ -111,11 +111,11 @@ export const AocAdminOpsStore = signalStore(
                 const name = getFullName(m.memberName1, m.memberName2);
                 const age = getAge(m.memberDateOfBirth, false, refYear);
                 const message = age < 0 ? nodob : `${title}}: ${m.memberDateOfBirth} -> ${age}`;
-                if (age < 0) return { id: m.bkey, name: name, message: nodob };
-                return { id: m.bkey, name: name, message: message };
+                if (age < 0) return { id: m.okey, name: name, message: nodob };
+                return { id: m.okey, name: name, message: message };
               }
               const m = model as BkModel;
-              return { id: m.bkey, name: '', message: 'not a membership ?' };
+              return { id: m.okey, name: '', message: 'not a membership ?' };
             });
           patchState(store, { log: log, logTitle: store.i18n.title() });
         } else {

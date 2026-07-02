@@ -50,7 +50,7 @@ export const PersonalRelStore = signalStore(
       }),
       stream: ({params}) => {
         const personalRels$ = params.person ?
-          store.personalRelService.listPersonalRelsOfPerson(params.person.bkey) :  
+          store.personalRelService.listPersonalRelsOfPerson(params.person.okey) :  
           store.personalRelService.list();        
         return personalRels$.pipe(
           debugListLoaded('PersonalRelStore.personalRels', store.appStore.currentUser())
@@ -126,12 +126,12 @@ export const PersonalRelStore = signalStore(
         const person = store.person();
         if (!person) return;
         const newPersonalRel = new PersonalRelModel(store.tenantId());
-        newPersonalRel.subjectKey = person.bkey;
+        newPersonalRel.subjectKey = person.okey;
         newPersonalRel.subjectFirstName = person.firstName;
         newPersonalRel.subjectLastName = person.lastName;
         newPersonalRel.subjectGender = person.gender;
 
-        newPersonalRel.objectKey = person.bkey;
+        newPersonalRel.objectKey = person.okey;
         newPersonalRel.objectFirstName = person.firstName;
         newPersonalRel.objectLastName = person.lastName;
         newPersonalRel.objectGender = person.gender;
@@ -162,7 +162,7 @@ export const PersonalRelStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isPersonalRel(data, store.tenantId())) {
-            await (!data.bkey ? 
+            await (!data.okey ? 
               store.personalRelService.create(data, store.currentUser()) : 
               store.personalRelService.update(data, store.currentUser()));
             this.reload();

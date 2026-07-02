@@ -32,7 +32,7 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
   `],
   template: `
     @if (hero(); as hero) {
-      <div class="hero" [id]="hero.bkey" (click)="sectionClick.emit(hero.bkey)">
+      <div class="hero" [id]="hero.okey" (click)="sectionClick.emit(hero.okey)">
         @if (editMode()) {
           <div class="section-wrapper editable">
             <bk-section-dispatcher [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
@@ -43,8 +43,8 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
       </div>
     }
     <div class="article-grid">
-      @for (section of restSections(); track section.bkey) {
-        <div class="article-item" [id]="section.bkey" (click)="sectionClick.emit(section.bkey)">
+      @for (section of restSections(); track section.okey) {
+        <div class="article-item" [id]="section.okey" (click)="sectionClick.emit(section.okey)">
           @if (editMode()) {
             <div class="section-wrapper editable">
               <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />

@@ -26,13 +26,13 @@ import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 // ---------------------------------------------------------------------------
 
 export interface ContextDiagramNode {
-  id: string;           // "modelType.bkey"
+  id: string;           // "modelType.okey"
   name: string;
   symbolSize: number;
   symbolUrl: string;    // resolved avatar or svg icon URL — passed as "image://url" in ECharts
   category: 'person' | 'org' | 'group';
   modelType: string;
-  bkey: string;
+  okey: string;
   isCenter: boolean;
 }
 
@@ -47,7 +47,7 @@ export interface ContextDiagramEdge {
 // ---------------------------------------------------------------------------
 
 type ContextDiagramState = {
-  startElement: string;   // "modelType.bkey" — original from section config
+  startElement: string;   // "modelType.okey" — original from section config
   config: ContextDiagramConfig;
   currentCenter: string;  // current center node; updated on navigation
 };
@@ -88,7 +88,7 @@ type NodeRelations = {
   responsibilities: ResponsibilityModel[];
 };
 
-// keyed by "modelType.bkey"
+// keyed by "modelType.okey"
 type RelationsData = Record<string, NodeRelations>;
 
 // ---------------------------------------------------------------------------
@@ -426,7 +426,7 @@ function buildNode(
     symbolUrl: avatarService.getAvatarUrl(id, fallbackIcon),
     category,
     modelType: category,
-    bkey: id.includes('.') ? id.split('.')[1] : id,
+    okey: id.includes('.') ? id.split('.')[1] : id,
     isCenter,
   };
 }

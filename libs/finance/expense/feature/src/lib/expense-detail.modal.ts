@@ -64,7 +64,7 @@ import { ExpenseDocumentService } from '@okr/finance-expense-data-access';
 
       @if (docs().length > 0) {
         <ion-list>
-          @for (doc of docs(); track doc.bkey; let i = $index) {
+          @for (doc of docs(); track doc.okey; let i = $index) {
             <ion-item>
               <ion-label>Beleg {{ i + 1 }}</ion-label>
             </ion-item>
@@ -83,7 +83,7 @@ export class ExpenseDetailModal {
   protected readonly toCHF = centsToCHF;
 
   private readonly docsResource = rxResource<ExpenseDocumentModel[], unknown>({
-    stream: () => this.expenseDocService.listForExpense(this.expense().bkey),
+    stream: () => this.expenseDocService.listForExpense(this.expense().okey),
   });
 
   protected docs(): ExpenseDocumentModel[] {

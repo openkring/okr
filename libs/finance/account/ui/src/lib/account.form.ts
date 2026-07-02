@@ -27,7 +27,7 @@ export type { AccountI18n };
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                    <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                   </ion-col>
                 </ion-row>
               }
@@ -72,7 +72,7 @@ export class AccountForm {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   protected bkeyI18n = computed(() => ({
-    name: 'bkey', label: this.i18n().bkey(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
+    name: 'okey', label: this.i18n().okey(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
   } as TextInputI18n));
 
   protected idI18n = computed(() => ({
@@ -108,7 +108,7 @@ export class AccountForm {
   protected label = linkedSignal(() => this.formData().label ?? '');
   protected parentId = linkedSignal(() => this.formData().parentKey ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

@@ -8,7 +8,7 @@ import { AvatarInfo } from './avatar-info';
  * The entries of this list are deleted when creating the invoice in Bexio (upload of the data to Bexio)
  */
 export class ScsMemberFeesModel implements BkModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

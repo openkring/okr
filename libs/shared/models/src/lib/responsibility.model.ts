@@ -3,7 +3,7 @@ import { AvatarInfo } from './avatar-info';
 import { BkModel, NamedModel, SearchableModel } from './base.model';
 
 export class ResponsibilityModel implements BkModel, SearchableModel, NamedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;
@@ -25,7 +25,7 @@ export class ResponsibilityModel implements BkModel, SearchableModel, NamedModel
   //             course_k    / Einsteigerkurse               (Antrag/Anmeldung)
   //             course_j    / Kurse Jugendliche
 
-  public parentKey = '';   // "modelType.bkey" of the parent org/group/person this responsibility belongs to
+  public parentKey = '';   // "modelType.okey" of the parent org/group/person this responsibility belongs to
 
   public responsibleAvatar: AvatarInfo | undefined;   // Person or Group
 

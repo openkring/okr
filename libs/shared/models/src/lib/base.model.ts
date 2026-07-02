@@ -12,15 +12,15 @@
 
 import { Roles } from './roles';
 
-// this is how the models are stored in the database (Firestore Document ID instead of bkey)
+// this is how the models are stored in the database (Firestore Document ID instead of okey)
 export interface PersistedModel {
   tenants: string[];
   isArchived: boolean;
 }
 
-// for models in the application, we add the Firestore Document ID as bkey
+// for models in the application, we add the Firestore Document ID as okey
 export interface BkModel extends PersistedModel {
-  bkey: string;
+  okey: string;
 }
 
 export interface NamedModel {
@@ -60,7 +60,7 @@ export interface FieldDescription {
 }
 
 export function isBaseModel(obj: unknown): obj is BkModel {
-  return typeof obj === 'object' && obj !== null && 'bkey' in obj;
+  return typeof obj === 'object' && obj !== null && 'okey' in obj;
 }
 
 export function isNamedModel(obj: unknown): obj is NamedModel {

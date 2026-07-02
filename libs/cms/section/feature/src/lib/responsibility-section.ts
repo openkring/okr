@@ -62,7 +62,7 @@ export class ResponsibilitySectionComponent {
   public editMode = input(false);
   public color = input(ColorIonic.Light);
 
-  protected readonly config = computed(() => this.section()?.properties ?? { bkey: '', showAvatar: true, showName: true, showDescription: true });
+  protected readonly config = computed(() => this.section()?.properties ?? { okey: '', showAvatar: true, showName: true, showDescription: true });
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly responsibility = computed(() => this.store.responsibility());
   protected readonly label = computed(() => this.responsibility()?.name ?? '');

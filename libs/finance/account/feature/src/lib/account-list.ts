@@ -51,8 +51,8 @@ import { AccountStore } from './account.store';
           [value]="store.selectedRootKey()"
           (ionChange)="onRootSelected($event)"
           interface="popover">
-          @for(root of store.rootAccounts(); track root.bkey) {
-            <ion-select-option [value]="root.bkey">{{ root.name }}</ion-select-option>
+          @for(root of store.rootAccounts(); track root.okey) {
+            <ion-select-option [value]="root.okey">{{ root.name }}</ion-select-option>
           }
         </ion-select>
       </ion-item>
@@ -77,12 +77,12 @@ import { AccountStore } from './account.store';
       <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
-        @for(node of visibleNodes(); track node.account.bkey) {
+        @for(node of visibleNodes(); track node.account.okey) {
           <ion-item (click)="showActions(node)" [style.padding-inline-start.px]="node.depth * 16">
             <ion-icon
               slot="start"
               [src]="expandIconName(node) | svgIcon"
-              (click)="onToggleExpand($event, node.account.bkey)"
+              (click)="onToggleExpand($event, node.account.okey)"
             />
             <ion-label>
               <strong>{{ node.account.id }}</strong>&nbsp;{{ node.account.name }}
@@ -113,9 +113,9 @@ export class AccountList {
   }
 
   /*-------------------------- tree expansion --------------------------------*/
-  protected onToggleExpand(event: Event, bkey: string): void {
+  protected onToggleExpand(event: Event, okey: string): void {
     event.stopPropagation();
-    this.store.toggleExpand(bkey);
+    this.store.toggleExpand(okey);
   }
 
   /*-------------------------- popover menu --------------------------------*/
@@ -126,7 +126,7 @@ export class AccountList {
       case 'export': await this.store.exportPlan(); break;
       case 'delete':
         if (this.store.selectedRootKey()) {
-          const root = this.store.rootAccounts().find(r => r.bkey === this.store.selectedRootKey());
+          const root = this.store.rootAccounts().find(r => r.okey === this.store.selectedRootKey());
           if (root) await this.store.delete(root, this.readOnly());
         }
         break;
@@ -171,7 +171,7 @@ export class AccountList {
           await this.store.edit(account, this.readOnly());
           break;
         case 'account.add':
-          await this.store.addChild(account.bkey);
+          await this.store.addChild(account.okey);
           break;
         case 'account.delete':
           await this.store.delete(account, this.readOnly());

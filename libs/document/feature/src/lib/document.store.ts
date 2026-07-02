@@ -321,7 +321,7 @@ export const DocumentStore = signalStore(
       // add a new version of the document
       async update(document: DocumentModel, readOnly = true): Promise<void> {
         if (!document || readOnly) return;
-        await this.add(document.bkey);
+        await this.add(document.okey);
         //store.documentsResource.reload();
       },
 
@@ -382,7 +382,7 @@ export const DocumentStore = signalStore(
 
       async save(doc?: DocumentModel): Promise<void> {
         if (!doc) return;
-        await (!doc.bkey ? 
+        await (!doc.okey ? 
           store.documentService.create(doc, store.currentUser()) : 
           store.documentService.update(doc, store.currentUser()));
         store.appNavigationService.back();

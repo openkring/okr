@@ -28,7 +28,7 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
           @if(hasRole('admin')) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
               </ion-col>
             </ion-row>
           }
@@ -170,7 +170,7 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
 ` 
 })
 export class AddressForm {
-  protected bkeyI18n              = computed(() => ({ name: 'bkey',              label: this.i18n().bkey_label(),              placeholder: this.i18n().bkey_placeholder(),              helper: this.i18n().bkey_helper()              } as TextInputI18n));
+  protected bkeyI18n              = computed(() => ({ name: 'okey',              label: this.i18n().bkey_label(),              placeholder: this.i18n().bkey_placeholder(),              helper: this.i18n().bkey_helper()              } as TextInputI18n));
   protected addressChannelLabelI18n = computed(() => ({ name: 'addressChannelLabel', label: this.i18n().channel_label(), placeholder: this.i18n().channel_placeholder(), helper: this.i18n().channel_helper() } as TextInputI18n));
   protected addressUsageLabelI18n = computed(() => ({ name: 'addressUsageLabel', label: this.i18n().usage_label(), placeholder: this.i18n().usage_placeholder(), helper: this.i18n().usage_helper() } as TextInputI18n));
   protected streetNameI18n        = computed(() => ({ name: 'streetName',        label: this.i18n().streetName_label(),        placeholder: this.i18n().streetName_placeholder(),        helper: this.i18n().streetName_helper()        } as TextInputI18n));
@@ -236,7 +236,7 @@ export class AddressForm {
   protected isFavorable = computed(() => this.formData()?.isCc === false);
   protected notes = linkedSignal(() => this.formData()?.notes ?? DEFAULT_NOTES);
   protected tags = linkedSignal(() => this.formData()?.tags ?? DEFAULT_TAGS);
-  protected bkey = linkedSignal(() => this.formData()?.bkey ?? '');
+  protected okey = linkedSignal(() => this.formData()?.okey ?? '');
 
    protected swissCity = computed(() => {
     return {

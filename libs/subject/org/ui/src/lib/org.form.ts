@@ -26,7 +26,7 @@ import { OrgI18n, orgValidations } from '@okr/subject-org-util';
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -78,7 +78,7 @@ import { OrgI18n, orgValidations } from '@okr/subject-org-util';
 })
 export class OrgForm {
   public readonly i18n = input.required<OrgI18n>();
-  protected bkeyI18n   = computed(() => ({ name: 'bkey',   label: this.i18n().bkey_label(),   placeholder: this.i18n().bkey_placeholder(),   helper: this.i18n().bkey_helper()   } as TextInputI18n));
+  protected bkeyI18n   = computed(() => ({ name: 'okey',   label: this.i18n().bkey_label(),   placeholder: this.i18n().bkey_placeholder(),   helper: this.i18n().bkey_helper()   } as TextInputI18n));
   protected nameI18n   = computed(() => ({ name: 'name',   label: this.i18n().name_label(),   placeholder: this.i18n().name_placeholder(),   helper: this.i18n().name_helper()   } as TextInputI18n));
   protected taxIdI18n  = computed(() => ({ name: 'taxId',  label: this.i18n().taxId_label(),  placeholder: this.i18n().taxId_placeholder(),  helper: this.i18n().taxId_helper()  } as TextInputI18n));
   protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() } as TextInputI18n));
@@ -117,7 +117,7 @@ export class OrgForm {
   protected bexioId = linkedSignal(() => this.formData().bexioId ?? '');
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
 
   // passing constants to template
   protected bexioMask = BexioIdMask;

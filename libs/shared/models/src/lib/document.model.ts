@@ -16,12 +16,12 @@ export const EZS_DIR = 'ezs';
  * fullPath is set explicitly. All other parts can be derived from fullPath.
  */
 export class DocumentModel implements BkModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
-  public folderKeys: string[] = []; // the FolderModel bkeys this document belongs to.
+  public folderKeys: string[] = []; // the FolderModel okeys this document belongs to.
   // a document can belong to multiple folders (many-to-many).
   // use listId prefix 'f:' + folderKey to filter by folder.
 

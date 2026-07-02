@@ -21,7 +21,7 @@ describe('comment.util', () => {
       const comment = createComment(authorKey, authorName, commentStr, parentKey, tenant);
 
       expect(comment).toBeInstanceOf(CommentModel);
-      expect(comment.bkey).toBe('random12345678901234');
+      expect(comment.okey).toBe('random12345678901234');
       expect(comment.authorKey).toBe(authorKey);
       expect(comment.authorName).toBe(authorName);
       expect(comment.creationDateTime).toBe('20240117');

@@ -61,7 +61,7 @@ export class AvatarService {
       const avatarList = avatars();      
       const newCache = new Map<string, string | null>();
       for (const avatar of avatarList) {
-        newCache.set(avatar.bkey, avatar.storagePath || null);
+        newCache.set(avatar.okey, avatar.storagePath || null);
       }
       
       this.storagePathCache.set(newCache);

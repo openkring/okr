@@ -137,7 +137,7 @@ export const GroupStore = signalStore(
       const visibleKeys = currentUser ? new Set(getVisibleGroupKeys(allGroups, memberGroupIds, currentUser)) : new Set<string>();
       const result: GroupModel[] = [];
       for (const g of allGroups) {
-        if (memberGroupIds.has(g.bkey) || visibleKeys.has(g.bkey)) {
+        if (memberGroupIds.has(g.okey) || visibleKeys.has(g.okey)) {
           result.push(g);
         }
       }
@@ -212,11 +212,11 @@ export const GroupStore = signalStore(
             // group name. This avoids the org/group key collision on polymorphic FKs
             // (MembershipModel.orgKey/memberKey point to org OR group) and keeps the derived
             // folder/page/section/room/calendar ids stable even when the group is renamed.
-            data.bkey = generateRandomString(20);
-            data.filesFolder = data.hasFiles ? `f_${data.bkey}` : '';
-            data.albumFolder = data.hasAlbum ? `a_${data.bkey}` : '';
+            data.okey = generateRandomString(20);
+            data.filesFolder = data.hasFiles ? `f_${data.okey}` : '';
+            data.albumFolder = data.hasAlbum ? `a_${data.okey}` : '';
             await store.groupService.create(data, store.currentUser());
-            this.setGroupKey(data.bkey);
+            this.setGroupKey(data.okey);
             await this.ensureAllAdminsAreMember(data);
 
             // create default calendar segment
@@ -229,7 +229,7 @@ export const GroupStore = signalStore(
             // create default chat section/page and chat room
             const chatId = await this.createChatSection(data);
             await this.createGroupPage(data, 'chat', store.i18n.chat_group_name(), chatId);
-            await store.chatService.createGroupRoom(data.bkey, [], store.i18n.chat_group_name() + ': ' + data.name);
+            await store.chatService.createGroupRoom(data.okey, [], store.i18n.chat_group_name() + ': ' + data.name);
           } else {
             await store.groupService.update(data, store.currentUser());
             await this.ensureAllAdminsAreMember(data);
@@ -240,9 +240,9 @@ export const GroupStore = signalStore(
     },
 
     async view(group?: GroupModel, readOnly = true): Promise<void> {
-      if (!group?.bkey || group.bkey.length === 0) return;
+      if (!group?.okey || group.okey.length === 0) return;
       store.appNavigationService.pushLink('/group/all/c-test-groups');
-      await navigateByUrl(store.router, `/group-view/${group.bkey}`, { readOnly });
+      await navigateByUrl(store.router, `/group-view/${group.okey}`, { readOnly });
     },
 
     async delete(group?: GroupModel, readOnly = true): Promise<void> {
@@ -261,7 +261,7 @@ export const GroupStore = signalStore(
 
     async save(group?: GroupModel): Promise<void> {
       if (!group) return;
-      await (!group.bkey ? 
+      await (!group.okey ? 
         store.groupService.create(group, store.currentUser()) : 
         store.groupService.update(group, store.currentUser()));
     },
@@ -269,7 +269,7 @@ export const GroupStore = signalStore(
     async saveAvatar(photo: Photo): Promise<void> {
       const group = store.group();
       if (!group) return;
-      await store.avatarService.saveAvatarPhoto(photo, group.bkey, store.tenantId(), GroupModelName);
+      await store.avatarService.saveAvatarPhoto(photo, group.okey, store.tenantId(), GroupModelName);
     },
 
     /******************************* cms: page & sections *************************************** */
@@ -285,7 +285,7 @@ export const GroupStore = signalStore(
 
     async createGroupPage(group: GroupModel, postfix: string, name: string, sectionId?: string): Promise<void> {
       const page = new PageModel(store.tenantId());
-      page.bkey = `${group.bkey}_${postfix}`;
+      page.okey = `${group.okey}_${postfix}`;
       page.name = name;
       page.type = postfix;
       page.state = 'published';
@@ -297,9 +297,9 @@ export const GroupStore = signalStore(
     },
 
     async createChatSection(group: GroupModel): Promise<string | undefined> {
-      const name = `${group.bkey}_chat`;
+      const name = `${group.okey}_chat`;
       const section = {
-        bkey: name,
+        okey: name,
         type: 'chat',
         name: name,
         title: store.i18n.chat_name(),
@@ -315,7 +315,7 @@ export const GroupStore = signalStore(
         },
         properties: {
           description: store.i18n.chat_group_description(),
-          id: `group-chat-${group.bkey}`,
+          id: `group-chat-${group.okey}`,
           name: store.i18n.chat_group_name(),
           showChannelList: true,
           type: 'messaging',
@@ -331,10 +331,10 @@ export const GroupStore = signalStore(
 
     async createArticleSection(group: GroupModel): Promise<string | undefined> {
       const section = {
-        bkey: `g-${group.bkey}`,
+        okey: `g-${group.okey}`,
         type: 'article',
         state: 'published',
-        name: `group-intro-${group.bkey}`,
+        name: `group-intro-${group.okey}`,
         title: store.i18n.article_title(),
         subTitle: '',
         index: '',
@@ -375,10 +375,10 @@ export const GroupStore = signalStore(
     /******************************* events / calendar *************************************** */
     async createGroupCalendar(group: GroupModel): Promise<void> {
       const cal = new CalendarModel(store.tenantId());
-      cal.bkey = group.bkey;
+      cal.okey = group.okey;
       cal.name = group.name;
-      cal.description = store.i18n.calendar_name + group.bkey;
-      cal.owner = `${GroupModelName}.${group.bkey}`;
+      cal.description = store.i18n.calendar_name + group.okey;
+      cal.owner = `${GroupModelName}.${group.okey}`;
       await store.firestoreService.createModel<CalendarModel>(CalendarCollection, cal, 
         store.i18n.calendar_create_conf(), store.i18n.calendar_create_error(), store.currentUser());
     },

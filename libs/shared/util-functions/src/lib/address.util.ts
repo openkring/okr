@@ -48,7 +48,7 @@ export async function updateFavoriteAddressInfo(firestore: Firestore, address: A
 /**
  * Extracts the favorite address info for a given person or org. 
  * @param firestore a handle to firestore database
- * @param parentKey  the key to the parent document of the address (e.g. person.{bkey} or org.{bkey})
+ * @param parentKey  the key to the parent document of the address (e.g. person.{okey} or org.{okey})
  * @returns FavoriteAddressInfo, i.e. the data that is cached in teh parent document.
  */
 async function getFavoriteAddressInfo(firestore: Firestore, parentKey: string): Promise<FavoriteAddressInfo> {
@@ -60,7 +60,7 @@ async function getFavoriteAddressInfo(firestore: Firestore, parentKey: string): 
     logger.info(`getFavoriteAddressInfo: no favorite addresses found for ${parentKey}`);
   } else {
     const favoriteAddresses = snapshot.docs.map(doc => {
-      return { ...doc.data(), bkey: doc.id } as AddressModel;
+      return { ...doc.data(), okey: doc.id } as AddressModel;
     });
     logger.info(`getFavoriteAddressInfo: found ${favoriteAddresses.length} favorite addresses for ${parentKey}`);
     for (const favoriteAddress of favoriteAddresses) {

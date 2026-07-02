@@ -33,7 +33,7 @@ import { VatCodeStore } from './vat-code.store';
         <p>{{ store.i18n.empty() }}</p>
       } @else {
         <ion-list>
-          @for (code of store.vatCodes(); track code.bkey) {
+          @for (code of store.vatCodes(); track code.okey) {
             <ion-item (click)="store.openEdit(code, store.isReadOnly())">
               <ion-label>
                 <h3>{{ code.code }} — {{ code.name }}</h3>

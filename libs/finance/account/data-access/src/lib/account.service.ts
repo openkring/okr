@@ -70,10 +70,10 @@ export class AccountService {
    * @returns 
    */
   private collectSubtree(accounts: AccountModel[], key: string): AccountModel[] {
-    const node = accounts.find(a => a.bkey === key);
+    const node = accounts.find(a => a.okey === key);
     if (!node) return [];
     const children = accounts.filter(a => a.parentKey === key);
-    return [node, ...children.flatMap(c => this.collectSubtree(accounts, c.bkey))];
+    return [node, ...children.flatMap(c => this.collectSubtree(accounts, c.okey))];
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

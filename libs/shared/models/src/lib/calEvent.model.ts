@@ -8,7 +8,7 @@ export type Attendee = {
 }
 
 export class CalEventModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY; // unique key of the model in the database
+  public okey = DEFAULT_KEY; // unique key of the model in the database
   public tenants: string[] = DEFAULT_TENANTS; // tenant IDs that this model belongs to
   public isArchived = false; // whether the model is archived
   public name = DEFAULT_NAME; // a meaningful name for the event, will be used as its title

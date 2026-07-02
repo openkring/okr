@@ -27,7 +27,7 @@ function makeService(overrides: unknown[] = []) {
     searchData: vi.fn(() => of(overrides)),
   };
   const appStore = {
-    currentUser: vi.fn(() => ({ bkey: 'u1' })),
+    currentUser: vi.fn(() => ({ okey: 'u1' })),
     env: { tenantId: 'scs' },
   };
   const svc = new I18nOverrideService(

@@ -69,7 +69,7 @@ async function resolveAirportCoords(
     const lat = parseFloat(airport.latitude);
     const lng = parseFloat(airport.longitude);
     if (isNaN(lat) || isNaN(lng)) return undefined;
-    // Cache without bkey (stripped per project convention — re-attached on read)
+    // Cache without okey (stripped per project convention — re-attached on read)
     await db.collection('locations').doc(iata).set({
       type: 'airport',
       tenants: ['_global'],

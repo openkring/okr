@@ -7,7 +7,7 @@ import { booleanValidations, dateValidations, numberValidations, stringValidatio
 export const transferValidations = staticSuite((model: TransferModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
   booleanValidations('isArchived', model.isArchived);
   stringValidations('index', model.index, SHORT_NAME_LENGTH);
   //tagValidations('tags', model.tags);

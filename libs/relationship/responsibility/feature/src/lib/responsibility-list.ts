@@ -72,11 +72,11 @@ import { ResponsibilityStore } from './responsibility.store';
           <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-grid>
-            @for(r of store.filteredResponsibilities(); track r.bkey) {
+            @for(r of store.filteredResponsibilities(); track r.okey) {
               <ion-row (click)="showActions(r)">
                 <ion-col size="4">
                     <ion-label>
-                      <ion-note color="medium" style="font-size:0.75rem">{{ r.bkey }}</ion-note>
+                      <ion-note color="medium" style="font-size:0.75rem">{{ r.okey }}</ion-note>
                       <div>{{ r.name }}</div>
                     </ion-label>
                 </ion-col>

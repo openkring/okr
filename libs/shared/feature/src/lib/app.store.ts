@@ -194,8 +194,8 @@ export const AppStore = signalStore(
   }),
 
   withComputed((state) => ({
-    defaultOrg: computed(() => state.allOrgs().find((org: OrgModel) => org.bkey === state.tenantId())),
-    defaultResource: computed(() => state.allResources().find((resource: ResourceModel) => resource.bkey === state.appConfig().defaultResourceId)),
+    defaultOrg: computed(() => state.allOrgs().find((org: OrgModel) => org.okey === state.tenantId())),
+    defaultResource: computed(() => state.allResources().find((resource: ResourceModel) => resource.okey === state.appConfig().defaultResourceId)),
     privacySettings: computed(() => {
         return {
           showName: state.appConfig().showName,
@@ -223,7 +223,7 @@ export const AppStore = signalStore(
   })),
 
   withComputed((state) => ({
-    currentPerson: computed(() => state.allPersons().find((person: PersonModel) => person.bkey === state.currentUser()?.personKey)),
+    currentPerson: computed(() => state.allPersons().find((person: PersonModel) => person.okey === state.currentUser()?.personKey)),
 
     isAuthenticated: computed(() => state.fbUser() !== null && state.fbUser() !== undefined),
     firebaseUid: computed(() => state.fbUser()?.uid ?? undefined),
@@ -274,7 +274,7 @@ export const AppStore = signalStore(
     return {
       getPerson(key: string): PersonModel | undefined {
         if (!key) return undefined;
-        return store.allPersons()?.find(p => p.bkey === key);
+        return store.allPersons()?.find(p => p.okey === key);
       },
 
       getPersonByAttribute(attributeName: string, attributeValue: string): PersonModel | undefined {
@@ -306,7 +306,7 @@ export const AppStore = signalStore(
       },
       getOrg(key: string) {
         if (!key) return undefined;
-        return store.allOrgs()?.find(p => p.bkey === key);
+        return store.allOrgs()?.find(p => p.okey === key);
       },
 
       getOrgByAttribute(attributeName: string, attributeValue: string): OrgModel | undefined {
@@ -316,11 +316,11 @@ export const AppStore = signalStore(
 
       getGroup(key: string) {
         if (!key) return undefined;
-        return store.allGroups()?.find(p => p.bkey === key);
+        return store.allGroups()?.find(p => p.okey === key);
       },
       getResource(key: string) {
         if (!key) return undefined;
-        return store.allResources()?.find(p => p.bkey === key);
+        return store.allResources()?.find(p => p.okey === key);
       },
 
       replacePlaceholders(text: string): string {

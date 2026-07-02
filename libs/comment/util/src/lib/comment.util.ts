@@ -13,7 +13,7 @@ import { DateFormat, generateRandomString, getTodayStr } from "@okr/shared-util-
    */
 export function createComment(authorKey: string, authorName: string, commentStr: string, parentKey: string, tenant: string): CommentModel {
   const comment = new CommentModel();
-  comment.bkey = generateRandomString(20);
+  comment.okey = generateRandomString(20);
   comment.authorKey = authorKey;
   comment.authorName = authorName;
   comment.creationDateTime = getTodayStr(DateFormat.StoreDateTime);

@@ -33,7 +33,7 @@ export class OrgService  {
   /*-------------------------- CRUD operations --------------------------------*/
   /**
    * Create a new organization in the database.
-   * @param org the OrgModel to store in the database. It must contain a valid bkey.
+   * @param org the OrgModel to store in the database. It must contain a valid okey.
    * @param currentUser the current user who performs the operation
    * @returns the unique key of the created organization or undefined if the operation failed
    */
@@ -89,7 +89,7 @@ export class OrgService  {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(org: OrgModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${org.bkey}: ${org.name}/${org.type}`;
+    const payload = `${org.okey}: ${org.name}/${org.type}`;
     await this.firestoreService.deleteModel<OrgModel>(OrgCollection, org, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('org', 'delete', currentUser, payload);
   }

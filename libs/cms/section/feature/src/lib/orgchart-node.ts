@@ -42,17 +42,17 @@ import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
         <span slot="start" class="expand-icon" style="display:inline-block"></span>
       }
 
-      <!-- avatar — org uses 'org.bkey | avatar' with fallback 'org'; group uses 'group.bkey | avatar' with fallback group.icon -->
+      <!-- avatar — org uses 'org.okey | avatar' with fallback 'org'; group uses 'group.okey | avatar' with fallback group.icon -->
       @if (node().modelType === 'org') {
         <ion-img
           slot="start"
-          [src]="('org.' + node().bkey) | avatar:'org'"
+          [src]="('org.' + node().okey) | avatar:'org'"
           (click)="onGroupClick($event)"
         />
       } @else {
         <ion-img
           slot="start"
-          [src]="('group.' + node().bkey) | avatar:node().icon"
+          [src]="('group.' + node().okey) | avatar:node().icon"
           (click)="onGroupClick($event)"
         />
       }
@@ -64,7 +64,7 @@ import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
 
     @if (expanded() && children().length > 0) {
       <ion-list lines="none" [class.children-horizontal]="display() === 'horizontal'">
-        @for (child of children(); track child.bkey) {
+        @for (child of children(); track child.okey) {
           <bk-orgchart-node
             [node]="child"
             [depth]="display() === 'horizontal' ? 0 : depth() + 1"
@@ -95,8 +95,8 @@ export class OrgchartNodeComponent {
   /** Direct children of this node, live-computed from the shared store signal. */
   protected children = computed(() =>
     this.orgchartStore.allGroups()
-      .filter(g => g.parentKey === this.node().bkey)
-      .map(g => ({ name: g.name, bkey: g.bkey, modelType: 'group' as const, icon: g.icon, children: [] }))
+      .filter(g => g.parentKey === this.node().okey)
+      .map(g => ({ name: g.name, okey: g.okey, modelType: 'group' as const, icon: g.icon, children: [] }))
   );
   protected indent = computed(() => `${this.depth() * 20}px`);
 

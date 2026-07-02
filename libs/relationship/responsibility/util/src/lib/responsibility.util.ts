@@ -7,7 +7,7 @@ export function isResponsibility(obj: unknown, tenantId: string): obj is Respons
 
 export function getResponsibilityIndex(r: ResponsibilityModel): string {
   let index = '';
-  index = addIndexElement(index, 'k', r.bkey);  
+  index = addIndexElement(index, 'k', r.okey);  
   if (r.responsibleAvatar) {
     index = addIndexElement(index, 'rn', `${r.responsibleAvatar.name1} ${r.responsibleAvatar.name2}`);
     index = addIndexElement(index, 'rk', r.responsibleAvatar.key);

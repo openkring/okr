@@ -23,7 +23,7 @@ import { SectionI18n } from '@okr/cms-section-util';
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
+              <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
             </ion-col>
             <ion-col size="12" size-md="4">
               <bk-checkbox [i18n]="showAvatarI18n()" [checked]="showAvatar()" (checkedChange)="onFieldChange('showAvatar', $event)" [readOnly]="isReadOnly()" />
@@ -48,13 +48,13 @@ export class ResponsibilityConfiguration {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public readonly i18n = input.required<SectionI18n>();
 
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
   protected showAvatar = computed(() => this.formData().showAvatar ?? true);
   protected showName = computed(() => this.formData().showName ?? true);
   protected showDescription = computed(() => this.formData().showDescription ?? true);
 
   protected bkeyI18n = computed(() => ({
-    name: 'bkey',
+    name: 'okey',
     label: this.i18n().responsibility_bkey_label(),
     placeholder: this.i18n().responsibility_bkey_placeholder(),
     helper: this.i18n().responsibility_bkey_helper(),

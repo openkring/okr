@@ -137,7 +137,7 @@ export class ReservationApplyModal {
           if (!vm) return vm;
           return {
             ...vm,
-            caleventKey: data.bkey,
+            caleventKey: data.okey,
             startDate: data.startDate,
             endDate: data.endDate ?? data.startDate,
           };

@@ -89,7 +89,7 @@ const AocTripStore = signalStore(
         ...trip,
         state: 'deleted',
         deletedAt: new Date().toISOString(),
-        deletedBy: store.appStore.currentUser()?.bkey ?? null,
+        deletedBy: store.appStore.currentUser()?.okey ?? null,
       } as TripModel;
       await store.tripService.update(updated, store.appStore.currentUser());
       store.allTripsResource.reload();
@@ -130,7 +130,7 @@ const AocTripStore = signalStore(
               }
             </ion-item>
             <ion-list slot="content">
-              @for (trip of store.trashTrips(); track trip.bkey) {
+              @for (trip of store.trashTrips(); track trip.okey) {
                 <ion-item>
                   <ion-label>
                     <strong>{{ formatTime(trip.startTime) }} {{ trip.resource?.name1 }}</strong>
@@ -156,7 +156,7 @@ const AocTripStore = signalStore(
               }
             </ion-item>
             <ion-list slot="content">
-              @for (trip of store.notesTrips(); track trip.bkey) {
+              @for (trip of store.notesTrips(); track trip.okey) {
                 <ion-item button (click)="store.openEditModal(trip)">
                   <ion-label>
                     <strong>{{ formatTime(trip.startTime) }} {{ trip.resource?.name1 }}</strong>
@@ -176,7 +176,7 @@ const AocTripStore = signalStore(
               }
             </ion-item>
             <ion-list slot="content">
-              @for (trip of store.zeroKmTrips(); track trip.bkey) {
+              @for (trip of store.zeroKmTrips(); track trip.okey) {
                 <ion-item button (click)="store.openEditModal(trip)">
                   <ion-label>
                     <strong>{{ formatTime(trip.startTime) }} {{ trip.resource?.name1 }}</strong>
@@ -196,7 +196,7 @@ const AocTripStore = signalStore(
               }
             </ion-item>
             <ion-list slot="content">
-              @for (trip of store.flaggedTrips(); track trip.bkey) {
+              @for (trip of store.flaggedTrips(); track trip.okey) {
                 <ion-item>
                   <ion-label>
                     <strong>{{ formatTime(trip.startTime) }} {{ trip.resource?.name1 }}</strong>

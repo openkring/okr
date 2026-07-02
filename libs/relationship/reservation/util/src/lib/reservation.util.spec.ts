@@ -36,7 +36,7 @@ describe('Reservation Utils', () => {
     vi.clearAllMocks();
 
     reservation = new ReservationModel(tenantId);
-    reservation.bkey = 'res-1';
+    reservation.okey = 'res-1';
     reservation.name = 'Team Training';
     const reserverAvatar = {
       key: 'person-1',
@@ -62,23 +62,23 @@ describe('Reservation Utils', () => {
     // tbd: calevent
 
     person = new PersonModel(tenantId);
-    person.bkey = 'person-1';
+    person.okey = 'person-1';
     person.firstName = 'Jane';
     person.lastName = 'Doe';
     person.gender = 'female';
 
     org = new OrgModel(tenantId);
-    org.bkey = 'org-1';
+    org.okey = 'org-1';
     org.name = 'Rowing Club';
 
     resource = new ResourceModel(tenantId);
-    resource.bkey = 'resource-1';
+    resource.okey = 'resource-1';
     resource.name = 'Single Scull';
     resource.type = 'rboat';
     resource.subType = 'b1x';
 
     currentUser = new UserModel(tenantId);
-    currentUser.bkey = 'user-1';
+    currentUser.okey = 'user-1';
   });
 
   describe('isReservation', () => {

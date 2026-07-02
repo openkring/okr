@@ -76,7 +76,7 @@ export class AddressService {
     const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, 
       this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const value = getAddressValueByChannel(address);
-    const payload = `${address.bkey}: ${address.addressChannel} = ${value}`;
+    const payload = `${address.okey}: ${address.addressChannel} = ${value}`;
     void this.activityService.log('address', 'update', currentUser, payload);
     return key;
   }
@@ -92,7 +92,7 @@ export class AddressService {
   public async delete(address: AddressModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<AddressModel>(AddressCollection, address, 
       this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
-    const payload = `${address.bkey}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
+    const payload = `${address.okey}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
     void this.activityService.log('address', 'delete', currentUser, payload);
   }
 
@@ -107,11 +107,11 @@ export class AddressService {
     if (address.isFavorite) {
       conf = this.i18n.favorite_disable_conf();
       error = this.i18n.favorite_disable_error();
-      payload = `${address.bkey}: ${address.addressChannel} = fav disabled`;
+      payload = `${address.okey}: ${address.addressChannel} = fav disabled`;
     } else {
       conf = this.i18n.favorite_enable_conf();
       error = this.i18n.favorite_enable_error();
-      payload = `${address.bkey}: ${address.addressChannel} = fav enabled`;
+      payload = `${address.okey}: ${address.addressChannel} = fav enabled`;
     }
     address.isFavorite = !address.isFavorite; // toggle
     const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, conf, error, currentUser);
@@ -150,7 +150,7 @@ export class AddressService {
 
   /**
    * Returns the favourite postal address for a subject (person or org), or undefined.
-   * @param parentKey the subject's bkey (AddressModel.parentKey)
+   * @param parentKey the subject's okey (AddressModel.parentKey)
    */
   public getFavoritePostalAddress(parentKey: string): Observable<AddressModel | undefined> {
     const query = getSystemQuery(this.env.tenantId);

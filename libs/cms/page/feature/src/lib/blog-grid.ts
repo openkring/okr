@@ -30,8 +30,8 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
   `],
   template: `
     <div class="blog-grid">
-      @for (section of sections(); track section.bkey) {
-        <div class="grid-item" [id]="section.bkey" (click)="sectionClick.emit(section.bkey)">
+      @for (section of sections(); track section.okey) {
+        <div class="grid-item" [id]="section.okey" (click)="sectionClick.emit(section.okey)">
           @if (editMode()) {
             <div class="section-wrapper editable">
               <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />

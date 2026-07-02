@@ -10,7 +10,7 @@ export type ExchangeRateType = 'daily' | 'monthly_avg' | 'yearly_avg';
 // toCurrency is always the functional currency of the tenant (typically 'CHF').
 // SNB rates are written by the fetchSnbRates Cloud Function; manual entries override for a specific date.
 export class ExchangeRateModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 

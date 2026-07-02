@@ -33,7 +33,7 @@ export type MissingMenuRef = {
 export type MissingSectionRef = {
   page: PageModel;         // page that references the missing section
   rawKey: string;          // as stored in page.sections (may contain @TID@)
-  resolvedKey: string;     // fully resolved bkey
+  resolvedKey: string;     // fully resolved okey
 };
 
 /** A section image file that exists in Firebase Storage but has no docs DB entry. */
@@ -178,7 +178,7 @@ export const AocContentStore = signalStore(
               }
             }
           }
-          const orphaned = sections.filter(s => s.bkey && !referencedKeys.has(s.bkey));
+          const orphaned = sections.filter(s => s.okey && !referencedKeys.has(s.okey));
           patchState(store, { orphanedSections: orphaned });
         });
       },
@@ -214,7 +214,7 @@ export const AocContentStore = signalStore(
         if (ok) {
           await store.sectionService.delete(section, store.currentUser());
           patchState(store, {
-            orphanedSections: store.orphanedSections().filter(s => s.bkey !== section.bkey),
+            orphanedSections: store.orphanedSections().filter(s => s.okey !== section.okey),
           });
         }
       },
@@ -226,7 +226,7 @@ export const AocContentStore = signalStore(
           .getDataOnce<PageModel>(PageCollection, getSystemQuery(tenantId), 'name', 'asc'));
 
         forkJoin([sections$, pages$]).subscribe(([sections, pages]) => {
-          const existingKeys = new Set(sections.map(s => s.bkey).filter(Boolean));
+          const existingKeys = new Set(sections.map(s => s.okey).filter(Boolean));
           const refs: MissingSectionRef[] = [];
           for (const page of pages) {
             for (const rawKey of (page.sections ?? [])) {
@@ -285,7 +285,7 @@ export const AocContentStore = signalStore(
         if (ok) {
           await store.menuService.delete(menuItem, store.currentUser());
           patchState(store, {
-            orphanedMenus: store.orphanedMenus().filter(m => m.bkey !== menuItem.bkey),
+            orphanedMenus: store.orphanedMenus().filter(m => m.okey !== menuItem.okey),
           });
         }
       },
@@ -316,7 +316,7 @@ export const AocContentStore = signalStore(
         if (!ok) return;
         const updated = { ...ref.parent, menuItems: (ref.parent.menuItems ?? []).filter(k => k !== ref.missingKey) };
         await store.menuService.update(updated as MenuItemModel, store.currentUser());
-        patchState(store, { missingMenuRefs: store.missingMenuRefs().filter(r => !(r.parent.bkey === ref.parent.bkey && r.missingKey === ref.missingKey)) });
+        patchState(store, { missingMenuRefs: store.missingMenuRefs().filter(r => !(r.parent.okey === ref.parent.okey && r.missingKey === ref.missingKey)) });
       },
 
       async createMissingSection(ref: MissingSectionRef): Promise<void> {
@@ -324,7 +324,7 @@ export const AocContentStore = signalStore(
         const tags = store.appStore.getTags('section_default');
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');
-        const newSection = { bkey: '', type: 'article', state: 'active', name: ref.resolvedKey, title: '', tenants: [store.appStore.env.tenantId] } as unknown as SectionModel;
+        const newSection = { okey: '', type: 'article', state: 'active', name: ref.resolvedKey, title: '', tenants: [store.appStore.env.tenantId] } as unknown as SectionModel;
         const modal = await store.modalController.create({
           component: SectionEditModal,
           cssClass: 'full-modal',
@@ -347,7 +347,7 @@ export const AocContentStore = signalStore(
         if (!ok) return;
         const updatedSections = (ref.page.sections ?? []).filter(k => k !== ref.rawKey);
         await store.pageService.update({ ...ref.page, sections: updatedSections }, store.currentUser());
-        patchState(store, { missingSectionRefs: store.missingSectionRefs().filter(r => !(r.page.bkey === ref.page.bkey && r.rawKey === ref.rawKey)) });
+        patchState(store, { missingSectionRefs: store.missingSectionRefs().filter(r => !(r.page.okey === ref.page.okey && r.rawKey === ref.rawKey)) });
       },
 
       clearOrphanedSections(): void {
@@ -367,7 +367,7 @@ export const AocContentStore = signalStore(
       },
 
       async editPage(page: PageModel): Promise<void> {
-        await navigateByUrl(store.router, `/private/${page.bkey}/c-contentpage`, { readOnly: false });
+        await navigateByUrl(store.router, `/private/${page.okey}/c-contentpage`, { readOnly: false });
       },
 
       /******************************** section images without a docs entry ******************************************* */
@@ -383,8 +383,8 @@ export const AocContentStore = signalStore(
 
         const refs: SectionImageRef[] = [];
         await Promise.all(sections.map(async (section) => {
-          if (!section.bkey) return;
-          const dir = `tenant/${tenantId}/section/${section.bkey}`;
+          if (!section.okey) return;
+          const dir = `tenant/${tenantId}/section/${section.okey}`;
           const items = await listStorageImages(store.storage, dir);
           await Promise.all(items
             .filter(item => !existingPaths.has(item.fullPath))
@@ -420,7 +420,7 @@ export const AocContentStore = signalStore(
           componentProps: {
             fullPath: image.fullPath,
             extraRows: [
-              { label: 'Sektion', value: `${image.section.name} (${image.section.bkey})` },
+              { label: 'Sektion', value: `${image.section.name} (${image.section.okey})` },
               { label: 'Typ', value: image.section.type },
             ],
           },
@@ -484,7 +484,7 @@ export const AocContentStore = signalStore(
       // array so it shows up in the section detail list and the rendered slider.
       // Only article and slider sections expose a properties.images list.
       async linkImageToSection(image: SectionImageRef, label: string): Promise<void> {
-        const key = image.section.bkey;
+        const key = image.section.okey;
         if (!key) return;
         const fresh = await firstValueFrom(store.sectionService.read(key));
         if (!fresh || (fresh.type !== 'article' && fresh.type !== 'slider')) return;

@@ -296,7 +296,7 @@ export class ReservationList {
   protected readonly years = computed(() => getYearList(getYear() + 1, 7));
   protected title = computed(() => this.getTitle());
   protected resourceName = computed(() => this.store.currentResource()?.name);
-  protected resourceKey = computed(() => this.store.currentResource()?.bkey ?? '');
+  protected resourceKey = computed(() => this.store.currentResource()?.okey ?? '');
   protected isReservationFromPerson = computed(() => this.listId().startsWith('p_') || this.listId() === 'my');
   protected isReservationFromOrg = computed(() => this.listId().startsWith('o_'));
   protected isReservationOfResource = computed(() => this.listId().startsWith('r_'));

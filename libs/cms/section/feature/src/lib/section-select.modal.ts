@@ -28,10 +28,10 @@ import { SectionStore } from './section.store';
       @if (isLoading()) {
         <bk-spinner />
       } @else {
-        @for (section of filteredSections(); track section.bkey) {
+        @for (section of filteredSections(); track section.okey) {
           <ion-list>
-            <ion-item lines="none" (click)="select(section.bkey)">
-              <ion-label class="ion-hide-md-down">{{ section.bkey }}</ion-label>
+            <ion-item lines="none" (click)="select(section.okey)">
+              <ion-label class="ion-hide-md-down">{{ section.okey }}</ion-label>
               <ion-label>{{ section.name }}</ion-label>
               <ion-label>{{ section.type }}</ion-label>
             </ion-item>

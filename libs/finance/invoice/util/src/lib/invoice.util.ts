@@ -19,9 +19,9 @@ export function getInvoiceIndex(invoice: InvoiceModel): string {
 }
 
 export function getInvoiceExportData(invoices: InvoiceModel[]): string[][] {
-  const headers = ['bkey', 'invoiceId', 'title', 'invoiceDate', 'dueDate', 'amount', 'currency', 'state', 'paymentDate', 'receiver'];
+  const headers = ['okey', 'invoiceId', 'title', 'invoiceDate', 'dueDate', 'amount', 'currency', 'state', 'paymentDate', 'receiver'];
   const rows = invoices.map(inv => [
-    inv.bkey ?? '',
+    inv.okey ?? '',
     inv.invoiceId,
     inv.title,
     inv.invoiceDate,

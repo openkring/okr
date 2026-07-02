@@ -27,7 +27,7 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -92,7 +92,7 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 })
 export class PersonForm {
   public readonly i18n = input.required<PersonI18n>();
-  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
+  protected bkeyI18n = computed(() => ({ name: 'okey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
   protected firstNameI18n = computed(() => ({ name: 'firstName', label: this.i18n().firstName_label(), placeholder: this.i18n().firstName_placeholder(), helper: this.i18n().firstName_helper() } as TextInputI18n));
   protected lastNameI18n = computed(() => ({ name: 'lastName', label: this.i18n().lastName_label(), placeholder: this.i18n().lastName_placeholder(), helper: this.i18n().lastName_helper() } as TextInputI18n));
   protected ssnIdI18n = computed(() => ({ name: 'ssnId', label: this.i18n().ssnId_label(), placeholder: this.i18n().ssnId_placeholder(), helper: this.i18n().ssnId_helper() } as TextInputI18n));
@@ -132,7 +132,7 @@ export class PersonForm {
   protected bexioId = linkedSignal(() => this.formData().bexioId ?? DEFAULT_ID);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
   protected areNotesVisible = computed(() => areNotesVisible(this.currentUser(), this.priv(), this.notes(), this.isReadOnly()));
 
   // passing constants to template

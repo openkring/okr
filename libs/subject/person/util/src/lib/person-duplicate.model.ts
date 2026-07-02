@@ -28,7 +28,7 @@ export interface FindPersonDuplicatesRequest {
 
 /** A matching person returned by findPersonDuplicates. No attribute is stripped (memberAdmin-gated). */
 export interface PersonDuplicateCandidate {
-  bkey: string;
+  okey: string;
   firstName: string;
   lastName: string;
   gender: string;
@@ -54,5 +54,5 @@ export interface MergePersonIntoTenantRequest {
 }
 
 export interface MergePersonIntoTenantResponse {
-  bkey: string;
+  okey: string;
 }

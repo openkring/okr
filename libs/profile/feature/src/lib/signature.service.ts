@@ -49,8 +49,8 @@ export class SignatureService {
   // Resource params key off these stable primitive strings, not the org/person objects:
   // appStore re-emits new person/org object references on every Firestore tick, which would
   // otherwise repeatedly reset the address resources (and flicker the resolved phone/address).
-  private readonly orgKey = computed(() => this.defaultOrg()?.bkey ?? '');
-  private readonly personKey = computed(() => this.currentPerson()?.bkey ?? '');
+  private readonly orgKey = computed(() => this.defaultOrg()?.okey ?? '');
+  private readonly personKey = computed(() => this.currentPerson()?.okey ?? '');
 
   /** The default org's addresses, used to compose the postal address line + logo website link. */
   private readonly orgAddressResource = rxResource({

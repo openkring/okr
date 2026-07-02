@@ -60,7 +60,7 @@ export class ResponsibilityEditModal {
   protected formData = linkedSignal(() => safeStructuredClone(this.responsibility()));
 
   // fields
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(false, this.responsibility()?.bkey));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(false, this.responsibility()?.okey));
   protected showConfirmation = computed(() => this.formDirty() && this.formValid());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected readonly tenantId = computed(() => this.store.tenantId());
@@ -107,7 +107,7 @@ export class ResponsibilityEditModal {
     this.formData.update(vm => ({
       ...vm,
       responsibleAvatar: {
-        key: person.bkey ?? '',
+        key: person.okey ?? '',
         name1: person.firstName,
         name2: person.lastName,
         modelType: 'person',
@@ -125,7 +125,7 @@ export class ResponsibilityEditModal {
     this.formData.update(vm => ({
       ...vm,
       delegateAvatar: {
-        key: person.bkey ?? '',
+        key: person.okey ?? '',
         name1: person.firstName,
         name2: person.lastName,
         modelType: 'person',

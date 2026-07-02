@@ -12,7 +12,7 @@ import { PaymentOrderModel, UserModel } from '@okr/shared-models';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ readOnly() ? 'View Payment Order' : (order().bkey ? 'Edit' : 'New Payment Order') }}</ion-title>
+        <ion-title>{{ readOnly() ? 'View Payment Order' : (order().okey ? 'Edit' : 'New Payment Order') }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="dismiss()">Cancel</ion-button>
           @if (!readOnly()) { <ion-button (click)="save()" [disabled]="!isValid">Save</ion-button> }

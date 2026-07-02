@@ -70,12 +70,12 @@ export class ReservationService {
 
   /**
    * Delete an existing reservation.
-   * @param reservation the reservation to delete, its bkey needs to be valid so that we can find it in the database.
+   * @param reservation the reservation to delete, its okey needs to be valid so that we can find it in the database.
    * @param currentUser the user who is deleting the reservation
    * @returns a Promise that resolves when the deletion is complete 
    */
   public async delete(reservation: ReservationModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${reservation.bkey}: ${getFullName(reservation.reserver?.name1, reservation.reserver?.name2)} of ${reservation.resource?.key}/${reservation.resource?.name2} on ${reservation.startDate}`;
+    const payload = `${reservation.okey}: ${getFullName(reservation.reserver?.name1, reservation.reserver?.name2)} of ${reservation.resource?.key}/${reservation.resource?.name2} on ${reservation.startDate}`;
     await this.firestoreService.deleteModel<ReservationModel>(ReservationCollection, reservation, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('reservation', 'delete', currentUser, payload);
   }

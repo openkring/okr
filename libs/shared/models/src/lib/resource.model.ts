@@ -6,7 +6,7 @@ import { BaseProperty, BkModel, NamedModel, SearchableModel, TaggedModel } from 
  * If a resource has its own type, it should be a separate model (e.g. rowingBoat has boatType, boatUsage, etc.)
  */
 export class ResourceModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public name = DEFAULT_NAME; // e.g. id like Kasten-Nr, Key Nr, Plate

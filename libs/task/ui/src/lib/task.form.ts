@@ -26,7 +26,7 @@ import { TaskI18n, taskValidations } from '@okr/task-util';
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -112,14 +112,14 @@ export class TaskForm {
   protected importance = linkedSignal(() => this.formData().importance);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
 
   // passing constants to template
   protected nameLength = LONG_NAME_LENGTH;
 
   // i18n
   protected bkeyI18n = computed(() => ({
-    name: 'bkey',
+    name: 'okey',
     label: this.i18n().bkey_label(),
     placeholder: this.i18n().bkey_placeholder(),
     helper: this.i18n().bkey_helper()

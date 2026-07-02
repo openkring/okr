@@ -51,7 +51,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
-            @for(event of calevents(); track event.bkey) {
+            @for(event of calevents(); track event.okey) {
               <ion-item (click)="showActions(event)">
                 <ion-icon src="{{ getIcon(event) | svgIcon }}" color="{{ getIconColor(event) }}" slot="start" />
                 <ion-label>{{ event.startDate | weekday | translate | async }} {{ event.startDate | prettyDate:false }} {{event.name}}</ion-label>
@@ -137,12 +137,12 @@ export class EventsSectionComponent implements OnInit {
   }
 
   protected getIcon(event: CalEventModel): string {
-    const state = event.isOpen ? this.store.states()[event.bkey] : this.store.invitationStates()[event.bkey];
+    const state = event.isOpen ? this.store.states()[event.okey] : this.store.invitationStates()[event.okey];
     return getAttendanceIcon(state);
   }
 
   protected getIconColor(event: CalEventModel): string {
-    const state = event.isOpen ? this.store.states()[event.bkey] : this.store.invitationStates()[event.bkey];
+    const state = event.isOpen ? this.store.states()[event.okey] : this.store.invitationStates()[event.okey];
     return getAttendanceColor(state);
   }
 
@@ -163,7 +163,7 @@ export class EventsSectionComponent implements OnInit {
       }
     } else {  // invitation
       // get invitation for current user
-      const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.bkey);
+      const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.okey);
       if (inv) {
         if (inv.state !== 'accepted') {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.calevent_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
@@ -219,7 +219,7 @@ export class EventsSectionComponent implements OnInit {
           await this.store.unsubscribe(calEvent);
           break;
         case 'calevent.downloadIcs':
-          await this.download(calEvent.bkey);
+          await this.download(calEvent.okey);
         break;
       }
     }
@@ -250,7 +250,7 @@ export class EventsSectionComponent implements OnInit {
     if (calevent) {
       const allCalendars = this.store.allCalendars();
       for (const calKey of calevent.calendars) {
-        const cal = allCalendars.find(c => c.bkey === calKey);
+        const cal = allCalendars.find(c => c.okey === calKey);
         if (cal?.owner?.startsWith('group.')) {
           const group = this.store.appStore.getGroup(cal.owner.substring(6));
           return isAdminMember(group, personKey);

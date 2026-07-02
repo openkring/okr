@@ -28,7 +28,7 @@ describe('Membership Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     membership = new MembershipModel(tenantId);
-    membership.bkey = 'membership-1';
+    membership.okey = 'membership-1';
     membership.memberKey = 'person-1';
     membership.memberName1 = 'John';
     membership.memberName2 = 'Doe';

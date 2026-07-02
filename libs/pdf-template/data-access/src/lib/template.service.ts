@@ -74,13 +74,13 @@ export class TemplateService {
       collection(this.firestoreService.firestore, TemplateCollection, templateKey, TemplateVersionSubcollection),
       orderBy('version', 'desc')
     );
-    return collectionData(q, { idField: 'bkey' }) as Observable<TemplateVersionModel[]>;
+    return collectionData(q, { idField: 'okey' }) as Observable<TemplateVersionModel[]>;
   }
 
   public readVersion(templateKey: string, version: number): Observable<TemplateVersionModel | undefined> {
     return docData(
       doc(this.firestoreService.firestore, TemplateCollection, templateKey, TemplateVersionSubcollection, String(version)),
-      { idField: 'bkey' }
+      { idField: 'okey' }
     ) as Observable<TemplateVersionModel | undefined>;
   }
 
@@ -90,8 +90,8 @@ export class TemplateService {
     currentUser?: UserModel
   ): Promise<string | undefined> {
     const versionPath = `${TemplateCollection}/${templateKey}/${TemplateVersionSubcollection}`;
-    const { bkey, ...data } = version;
-    data['createdBy'] = currentUser?.bkey ?? '';
+    const { okey, ...data } = version;
+    data['createdBy'] = currentUser?.okey ?? '';
     data['createdAt'] = getTodayStr(DateFormat.StoreDate);
     return this.firestoreService.createObject(
       versionPath,
@@ -108,7 +108,7 @@ export class TemplateService {
     const draft = template.draftVersion;
     if (!draft) return;
     await this.firestoreService.deleteObject(
-      `${TemplateCollection}/${template.bkey}/${TemplateVersionSubcollection}`,
+      `${TemplateCollection}/${template.okey}/${TemplateVersionSubcollection}`,
       String(draft)
     );
     await this.update(
@@ -142,7 +142,7 @@ export class TemplateService {
     currentUser?: UserModel
   ): Promise<void> {
     const now = getTodayStr(DateFormat.StoreDate);
-    const userKey = currentUser?.bkey ?? '';
+    const userKey = currentUser?.okey ?? '';
     const fs = this.firestoreService.firestore;
 
     await updateDoc(

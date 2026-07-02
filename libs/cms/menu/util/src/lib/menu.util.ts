@@ -30,7 +30,7 @@ export function isMenuItem(menuItem: unknown, tenantId: string): menuItem is Men
 
 /*-------------------------- SEARCH --------------------------------*/
 export function getMenuIndex(menuItem: MenuItemModel): string {
-  return 'n:' + menuItem.name + ' a:' + menuItem.action + ' k:' + menuItem.bkey;
+  return 'n:' + menuItem.name + ' a:' + menuItem.action + ' k:' + menuItem.okey;
 }
 
 export function getMenuIndexInfo(): string {

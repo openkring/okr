@@ -8,7 +8,7 @@ import { dateValidations, isAfterOrEqualDate, stringValidations } from '@okr/sha
 export const personalRelValidations = staticSuite((model: PersonalRelModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
   //tagValidations('tags', model.tags);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
 

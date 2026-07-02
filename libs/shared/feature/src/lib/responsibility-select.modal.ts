@@ -33,7 +33,7 @@ import { ResponsibilitySelectStore } from './responsibility-select.store';
           <bk-empty-list [message]="store.i18n.responsibility_empty()" />
         } @else {
           <ion-list lines="none">
-            @for(responsibility of filteredResponsibilities(); track responsibility.bkey) {
+            @for(responsibility of filteredResponsibilities(); track responsibility.okey) {
               <ion-item class="item" (click)="select(responsibility)">
                 <ion-label>{{ responsibility.name }}</ion-label>
               </ion-item>

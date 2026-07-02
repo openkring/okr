@@ -49,7 +49,7 @@ export class FolderService {
   }
 
   public async delete(folder: FolderModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${folder.bkey}:${folder.name}`
+    const payload = `${folder.okey}:${folder.name}`
     await this.firestoreService.deleteModel<FolderModel>(FolderCollection, folder, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('folder', 'delete', currentUser, payload);
   }
@@ -69,9 +69,9 @@ export class FolderService {
 
   /*-------------------------- GROUP FOLDER --------------------------------*/
   /**
-   * Ensure a FolderModel with bkey = groupKey exists for the GroupView files tab.
+   * Ensure a FolderModel with okey = groupKey exists for the GroupView files tab.
    * Creates it lazily the first time the files segment is opened.
-   * @param groupKey the group bkey — also used as the folder bkey
+   * @param groupKey the group okey — also used as the folder okey
    * @param groupName the group display name — used as the folder name
    * @param tenantId the tenant the folder belongs to
    * @param currentUser the user creating the folder (if it doesn't exist yet)
@@ -80,7 +80,7 @@ export class FolderService {
     const existing = await firstValueFrom(this.firestoreService.readModel<FolderModel>(FolderCollection, groupKey));
     if (existing) return;
     const folder = newFolderModel(tenantId, groupName);
-    folder.bkey = groupKey;
+    folder.okey = groupKey;
     await this.create(folder, currentUser);
   }
 

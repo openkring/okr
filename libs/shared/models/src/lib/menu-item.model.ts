@@ -4,7 +4,7 @@ import { BaseProperty, BkModel, NamedModel, SearchableModel, TaggedModel } from 
 export type RoleName = 'none' | 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin' | 'public' | 'groupAdmin' | 'kiosk' | 'auditor' | 'tester';
 
 export class MenuItemModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY; // unique key of the model in the database
+  public okey = DEFAULT_KEY; // unique key of the model in the database
   public name = DEFAULT_NAME; //  name: e.g. aoc, help, members ...
   public index = DEFAULT_INDEX; // the index of the menu item (to search for)
   public action = DEFAULT_MENU_ACTION; // the action that should be taken when the menu item is clicked

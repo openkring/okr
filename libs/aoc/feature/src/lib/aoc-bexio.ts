@@ -294,10 +294,10 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 <ion-col size="3"><strong>BK Bexio ID</strong></ion-col>
                 <ion-col size="3"><strong>Bexio ID</strong></ion-col>
               </ion-row>
-              @for(item of filteredIndex(); track item.key + '_' + item.bkey + '_' + item.bx_id) {
+              @for(item of filteredIndex(); track item.key + '_' + item.okey + '_' + item.bx_id) {
                 <ion-row style="cursor: pointer" (click)="edit(item)">
-                  <ion-col size="5" [class.bexio-only]="!item.bkey">
-                    @if(item.bkey) {
+                  <ion-col size="5" [class.bexio-only]="!item.okey">
+                    @if(item.okey) {
                       <bk-avatar-label
                         [key]="avatarKey(item)"
                         [label]="displayName(item)"
@@ -475,11 +475,11 @@ export class AocBexio implements OnInit {
   });
 
   protected avatarKey(item: BexioIndex): string {
-    return `${item.type}.${item.bkey}`;
+    return `${item.type}.${item.okey}`;
   }
 
   protected displayName(item: BexioIndex): string {
-    if (item.bkey) return getFullName(item.name1, item.name2) || item.name1;
+    if (item.okey) return getFullName(item.name1, item.name2) || item.name1;
     return getFullName(item.bx_name1, item.bx_name2) || item.bx_name1;
   }
 

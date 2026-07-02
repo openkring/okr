@@ -144,7 +144,7 @@ export const OrgStore = signalStore(
      */
     async exportVcard(org: OrgModel): Promise<void> {
       await store.vcardExportService.exportSingle(
-        { bkey: org.bkey, displayName: org.name },
+        { okey: org.okey, displayName: org.name },
         'org',
         store.currentUser()?.roles,
         store.tenantId()
@@ -206,7 +206,7 @@ export const OrgStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
         if (isOrg(data, store.tenantId())) {
-          data.bkey?.length === 0 ? 
+          data.okey?.length === 0 ? 
             await store.orgService.create(data, store.currentUser()) : 
             await store.orgService.update(data, store.currentUser());
           this.reload();

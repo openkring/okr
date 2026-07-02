@@ -12,7 +12,7 @@ import { SectionService } from './section.service';
 const tenantId = 'p13';
 
 function section(): SectionModel {
-  return { ...IFRAME_SECTION_SHAPE, bkey: 's1', tenants: [tenantId] } as SectionModel;
+  return { ...IFRAME_SECTION_SHAPE, okey: 's1', tenants: [tenantId] } as SectionModel;
 }
 
 function createFirestoreMock() {
@@ -82,10 +82,10 @@ describe('SectionService', () => {
   });
 
   it('searchByKeys() caps the number of read sections to the given limit', async () => {
-    const sections = ['a', 'b', 'c'].map((k) => ({ ...IFRAME_SECTION_SHAPE, bkey: k }));
+    const sections = ['a', 'b', 'c'].map((k) => ({ ...IFRAME_SECTION_SHAPE, okey: k }));
     firestore.searchData.mockReturnValue(of(sections));
     const result = await firstValueFrom(service.searchByKeys(['a', 'b', 'c'], 2));
-    expect(result.map((s) => s.bkey)).toEqual(['a', 'b']);
+    expect(result.map((s) => s.okey)).toEqual(['a', 'b']);
   });
 
   it('propagates errors from the underlying write', async () => {

@@ -10,7 +10,7 @@ import { RoleName } from './menu-item.model';
  * index format: t:<timestamp> c:<scope> a:<action> p:<author-name>
  */
 export class ActivityModel implements BkModel, SearchableModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 

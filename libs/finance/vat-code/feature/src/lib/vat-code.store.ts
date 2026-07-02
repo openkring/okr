@@ -45,7 +45,7 @@ export const VatCodeStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !store.isReadOnly()) {
         const code = data as VatCodeModel;
-        if (code.bkey?.length > 0) {
+        if (code.okey?.length > 0) {
           await store.vatCodeService.update(code, store.currentUser());
         } else {
           await store.vatCodeService.create(code, store.currentUser());

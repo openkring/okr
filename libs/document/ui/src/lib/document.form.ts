@@ -39,7 +39,7 @@ import { DocumentI18n, documentValidations } from '@okr/document-util';
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               }
               <ion-col size="12" >
@@ -174,10 +174,10 @@ export class DocumentForm {
   protected version = linkedSignal(() => this.formData().version ?? '');
   protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
 
   protected bkeyI18n = computed(() => ({
-    name: 'bkey',
+    name: 'okey',
     label: this.i18n().bkey_label(),
     placeholder: this.i18n().bkey_placeholder(),
     helper: this.i18n().bkey_helper()

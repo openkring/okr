@@ -17,7 +17,7 @@ export function getMainEmailAddresses(persons: PersonModel[]): EmailEntry[] {
     .filter(p => !!p.favEmail)
     .map(p => ({
       email: p.favEmail!,
-      memberKey: p.bkey ?? '',
+      memberKey: p.okey ?? '',
       memberName: getFullName(p.firstName, p.lastName),
       lastName: p.lastName ?? '',
     }))
@@ -29,14 +29,14 @@ export function getMainEmailAddresses(persons: PersonModel[]): EmailEntry[] {
  * set of AddressModel records (must be pre-filtered for addressChannel='email' and isCc=true).
  */
 export function getCcEmailAddresses(persons: PersonModel[], allCcAddresses: AddressModel[]): EmailEntry[] {
-  const parentKeySet = new Set(persons.map(p => `person.${p.bkey}`));
+  const parentKeySet = new Set(persons.map(p => `person.${p.okey}`));
   return allCcAddresses
     .filter(a => parentKeySet.has(a.parentKey) && !!a.email)
     .map(a => {
-      const person = persons.find(p => `person.${p.bkey}` === a.parentKey);
+      const person = persons.find(p => `person.${p.okey}` === a.parentKey);
       return {
         email: a.email,
-        memberKey: person?.bkey ?? '',
+        memberKey: person?.okey ?? '',
         memberName: getFullName(person?.firstName, person?.lastName),
         lastName: person?.lastName ?? '',
       };

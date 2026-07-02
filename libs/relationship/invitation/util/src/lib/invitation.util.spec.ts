@@ -7,7 +7,7 @@ describe('invitation.util', () => {
   const tenantId = 'tenant-123';
 
   const mockInvitation: InvitationModel = {
-    bkey: 'inv-1',
+    okey: 'inv-1',
     tenants: [tenantId],
     isArchived: false,
     index: '',

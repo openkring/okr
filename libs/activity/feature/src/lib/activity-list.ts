@@ -42,7 +42,7 @@ import { ActivityStore } from './activity.store';
         <bk-empty-list message="{{ store.i18n.empty() }}" />
       } @else {
         <ion-list lines="inset">
-          @for(activity of store.activities(); track activity.bkey) {
+          @for(activity of store.activities(); track activity.okey) {
             <ion-item (click)="showActions(activity)">
               <ion-icon slot="start" src="{{ getScopeIcon(activity) | svgIcon }}" />
               <ion-label class="scope">{{ activity.scope }}</ion-label>

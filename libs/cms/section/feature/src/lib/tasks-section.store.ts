@@ -95,7 +95,7 @@ export const TasksStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
         if (isTask(data, store.tenantId())) {
-          data.bkey?.length === 0 ? 
+          data.okey?.length === 0 ? 
             await store.taskService.create(data, store.currentUser()) : 
             await store.taskService.update(data, store.currentUser());
           this.reload();

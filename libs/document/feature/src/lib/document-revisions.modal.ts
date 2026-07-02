@@ -20,7 +20,7 @@ import { DocumentStore } from './document.store';
     <bk-header [i18n]="{ title: 'store.i18n.revisions()' }" [isModal]="true" />
     <ion-content>
       <ion-list>
-        @for (doc of revisions(); track doc.bkey) {
+        @for (doc of revisions(); track doc.okey) {
           <ion-item>
             <ion-label>
               <h3>{{ doc.version }}</h3>

@@ -58,7 +58,7 @@ export class FolderEditModal {
   // derived
   protected readonly headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view_label();
-    return this.folder().bkey ? this.i18n.edit_label() : this.i18n.create_label();
+    return this.folder().okey ? this.i18n.edit_label() : this.i18n.create_label();
   });
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({

@@ -26,7 +26,7 @@ describe('Task Utils', () => {
     assignee = { key: 'assignee-1', name1: 'Assignee Name', name2: '', modelType: 'person', label: '', type: 'person', subType: 'female' };
 
     task = new TaskModel(tenantId);
-    task.bkey = 'task-1';
+    task.okey = 'task-1';
     task.name = 'Test Task';
     task.notes = 'Some notes';
     task.tags = 'test,task';

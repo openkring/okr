@@ -78,7 +78,7 @@ import { MenuStore } from './menu.store';
           <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
-            @for(menuItem of visibleMenuItems(); track menuItem.bkey) {
+            @for(menuItem of visibleMenuItems(); track menuItem.okey) {
                 <ion-item (click)="showActions(menuItem)">
                   <ion-label>{{ menuItem.name }}</ion-label>
                   @if(menuItem.action === 'sub') {

@@ -70,7 +70,7 @@ export class OwnershipService {
   }
 
   public async delete(ownership: OwnershipModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${ownership.bkey}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
+    const payload = `${ownership.okey}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
     await this.firestoreService.deleteModel<OwnershipModel>(OwnershipCollection, ownership, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('ownership', 'delete', currentUser, payload);
   }

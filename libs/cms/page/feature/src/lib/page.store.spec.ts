@@ -89,8 +89,8 @@ describe('PageStore', () => {
 
   it('filteredPages filters the loaded pages by search term', async () => {
     const pages = [
-      { bkey: '1', index: 'home', name: 'Home', type: 'content', state: 'published', tags: '', sections: [] },
-      { bkey: '2', index: 'about', name: 'About', type: 'content', state: 'published', tags: '', sections: [] }
+      { okey: '1', index: 'home', name: 'Home', type: 'content', state: 'published', tags: '', sections: [] },
+      { okey: '2', index: 'about', name: 'About', type: 'content', state: 'published', tags: '', sections: [] }
     ];
     store = makeStore(pageServiceMock(pages));
     await TestBed.inject(ApplicationRef).whenStable();

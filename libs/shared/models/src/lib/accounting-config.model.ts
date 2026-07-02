@@ -22,13 +22,13 @@ export interface VatRateEntry {
   accommodationRate: number;  // e.g. 3.8
 }
 
-// One document per accounting tenant. bkey = accountingTenantId.
+// One document per accounting tenant. okey = accountingTenantId.
 export class AccountingConfigModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 
-  public accountingTenantId = '';                     // = org.bkey; also stored as bkey
+  public accountingTenantId = '';                     // = org.okey; also stored as okey
   public accountingBackend: AccountingBackend = 'native'; // 'native' = full CRUD; 'bexio'/'datev' = read-only cache
   public functionalCurrency: CurrencyCode = 'CHF';
   public secondaryCurrency: CurrencyCode | undefined; // optional display currency in reports
@@ -48,7 +48,7 @@ export class AccountingConfigModel implements BkModel {
   constructor(tenantId: string, accountingTenantId: string) {
     this.tenants = [tenantId];
     this.accountingTenantId = accountingTenantId;
-    this.bkey = accountingTenantId;
+    this.okey = accountingTenantId;
   }
 }
 

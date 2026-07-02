@@ -33,13 +33,13 @@ import { CalendarSelectStore } from './calendar-select.store';
         <bk-empty-list [message]="store.i18n.calendar_empty()" />
       } @else {
         <ion-list lines="full">
-          @for (calendar of filteredCalendars(); track calendar.bkey) {
+          @for (calendar of filteredCalendars(); track calendar.okey) {
             <ion-item (click)="select(calendar)">
               <ion-grid>
                 <ion-row>
                   <ion-col size="5">
                     <ion-label>
-                      <p class="key">{{ calendar.bkey }}</p>
+                      <p class="key">{{ calendar.okey }}</p>
                       <h2>{{ calendar.name }}</h2>
                     </ion-label>
                   </ion-col>
@@ -72,6 +72,6 @@ export class CalendarSelectModal {
   }
 
   public select(calendar: CalendarModel): Promise<boolean> {
-    return this.modalController.dismiss(calendar.bkey, 'confirm');
+    return this.modalController.dismiss(calendar.okey, 'confirm');
   }
 }

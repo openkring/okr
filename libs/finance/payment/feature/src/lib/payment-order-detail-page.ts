@@ -29,7 +29,7 @@ import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-a
         <ion-item><ion-label>Approved by: {{ order.approvedBy }}</ion-label></ion-item>
       }
       <ion-list>
-        @for (payment of paymentsResource.value() ?? []; track payment.bkey) {
+        @for (payment of paymentsResource.value() ?? []; track payment.okey) {
           <ion-item>
             <ion-label>
               <h3>{{ payment.recipientName }} — {{ payment.amount?.amount }}</h3>

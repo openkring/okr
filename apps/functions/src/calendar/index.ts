@@ -9,7 +9,7 @@ export { getPublicCalEvents } from './public-calevents';
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CalEventDoc {
-  bkey: string;
+  okey: string;
   name: string;
   description: string;
   startDate: string;   // yyyyMMdd
@@ -156,7 +156,7 @@ function buildICS(calendarName: string, events: CalEventDoc[]): string {
   ];
 
   for (const e of events) {
-    const uid = `${e.bkey}@bkaiser.ch`;
+    const uid = `${e.okey}@bkaiser.ch`;
     const dtstart = e.fullDay
       ? `DTSTART;VALUE=DATE:${toIcsDate(e.startDate)}`
       : `DTSTART:${toIcsDateTime(e.startDate, e.startTime)}`;
@@ -211,8 +211,8 @@ export const generateCalendarICS = onRequest(
 
     const db = getFirestore();
 
-    // Separate single-event keys (e:<bkey>) from calendar keys
-    const eventBkeys = calendarKeys.filter(k => k.startsWith('e:')).map(k => k.slice(2));
+    // Separate single-event keys (e:<okey>) from calendar keys
+    const eventOkeys = calendarKeys.filter(k => k.startsWith('e:')).map(k => k.slice(2));
     const calKeys    = calendarKeys.filter(k => !k.startsWith('e:'));
 
     // Fetch calendar names for all calendar keys in parallel (best-effort — fall back to key)
@@ -246,7 +246,7 @@ export const generateCalendarICS = onRequest(
           .where('isArchived', '==', false)
           .get();
         for (const doc of snap.docs) {
-          if (!seen.has(doc.id)) { seen.add(doc.id); events.push({ bkey: doc.id, ...doc.data() } as CalEventDoc); }
+          if (!seen.has(doc.id)) { seen.add(doc.id); events.push({ okey: doc.id, ...doc.data() } as CalEventDoc); }
         }
       } else if (calKeys.length > 1) {
         // array-contains-any supports up to 30 values; chunk if needed
@@ -262,20 +262,20 @@ export const generateCalendarICS = onRequest(
         );
         for (const snap of snapshots) {
           for (const doc of snap.docs) {
-            if (!seen.has(doc.id)) { seen.add(doc.id); events.push({ bkey: doc.id, ...doc.data() } as CalEventDoc); }
+            if (!seen.has(doc.id)) { seen.add(doc.id); events.push({ okey: doc.id, ...doc.data() } as CalEventDoc); }
           }
         }
       }
 
-      // Direct single-event lookups (e:<bkey>)
-      if (eventBkeys.length > 0) {
+      // Direct single-event lookups (e:<okey>)
+      if (eventOkeys.length > 0) {
         const eventDocs = await Promise.all(
-          eventBkeys.map(bkey => db.collection('calevents').doc(bkey).get())
+          eventOkeys.map(okey => db.collection('calevents').doc(okey).get())
         );
         for (const doc of eventDocs) {
           if (doc.exists && !seen.has(doc.id)) {
             seen.add(doc.id);
-            events.push({ bkey: doc.id, ...doc.data() } as CalEventDoc);
+            events.push({ okey: doc.id, ...doc.data() } as CalEventDoc);
           }
         }
       }

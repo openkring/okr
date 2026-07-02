@@ -2,7 +2,7 @@ import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_ADDRESS_USAGE, DEFAULT_EMAIL, DEFAULT_
 import { BkModel, TaggedModel } from './base.model';
 
 export class AddressModel implements BkModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
 
   // new
   public addressChannel = DEFAULT_ADDRESS_CHANNEL;

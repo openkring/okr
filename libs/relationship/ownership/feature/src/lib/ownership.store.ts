@@ -347,7 +347,7 @@ export const OwnershipStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isOwnership(data, store.tenantId())) {
-            await (!data.bkey ? 
+            await (!data.okey ? 
               store.ownershipService.create(data, store.currentUser()) : 
               store.ownershipService.update(data, store.currentUser()));
           }
@@ -359,7 +359,7 @@ export const OwnershipStore = signalStore(
        * End an existing Ownership.
        * We do not archive ownerships as we want to make them visible in the lists.
        * Therefore, we end an ownership by setting its validTo date.
-       * @param ownership the Ownership to delete, its bkey needs to be valid so that we can find it in the database. 
+       * @param ownership the Ownership to delete, its okey needs to be valid so that we can find it in the database. 
        */
       async end(ownership: OwnershipModel, readOnly = true): Promise<void> {
         if (!readOnly && ownership) {

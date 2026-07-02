@@ -22,7 +22,7 @@ interface StoredImage {
 }
 
 interface ArticleSectionDoc {
-  bkey: string;
+  okey: string;
   name: string;
   title: string;
   subTitle: string;
@@ -113,7 +113,7 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
         return;
       }
 
-      const doc = { bkey: snap.docs[0].id, ...snap.docs[0].data() } as ArticleSectionDoc;
+      const doc = { okey: snap.docs[0].id, ...snap.docs[0].data() } as ArticleSectionDoc;
       const sanitize = await getHtmlSanitizer();
       setCacheHeaders(res);
       res.json(sectionToNewsDetail(doc, sanitize));
@@ -124,7 +124,7 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
     const limit = isNaN(limitParam) || limitParam < 1 ? 50 : Math.min(limitParam, 200);
     const tag = (req.query['tag'] as string)?.trim();
 
-    // Load the 'news' page by its document ID to get the ordered list of section bkeys
+    // Load the 'news' page by its document ID to get the ordered list of section okeys
     const pageDoc = await db.collection('pages').doc('news').get();
     if (!pageDoc.exists) {
       res.status(404).json({ error: { code: 'not_found', message: 'News page not found' } });
@@ -148,7 +148,7 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
 
     let docs = sectionDocs
       .filter(d => d.exists)
-      .map(d => ({ bkey: d.id, ...d.data() } as ArticleSectionDoc))
+      .map(d => ({ okey: d.id, ...d.data() } as ArticleSectionDoc))
       .filter(d => d.type === 'article' && !d.isArchived);
 
     if (tag) {

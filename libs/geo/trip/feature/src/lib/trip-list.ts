@@ -106,7 +106,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
             <ion-item-divider>
               <ion-label>{{ getWeekdayI18n(day.date) | translate | async }}, {{ day.date | prettyDate}}</ion-label>
             </ion-item-divider>
-            @for (trip of day.trips; track trip.bkey) {
+            @for (trip of day.trips; track trip.okey) {
               <ion-item button (click)="showActions(trip)">
                 <ion-label>
                   {{ formatTime(trip.startTime) }}

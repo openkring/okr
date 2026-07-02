@@ -51,7 +51,7 @@ export class ResponsibilityService {
   }
 
   public async delete(responsibility: ResponsibilityModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${responsibility.bkey}: ${getFullName(responsibility.responsibleAvatar?.name1, responsibility.responsibleAvatar?.name2)} = ${responsibility.name}`;
+    const payload = `${responsibility.okey}: ${getFullName(responsibility.responsibleAvatar?.name1, responsibility.responsibleAvatar?.name2)} = ${responsibility.name}`;
     await this.firestoreService.deleteModel<ResponsibilityModel>(ResponsibilityCollection, responsibility, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('responsibility', 'delete', currentUser, payload);
   }

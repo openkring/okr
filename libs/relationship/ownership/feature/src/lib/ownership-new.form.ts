@@ -142,7 +142,7 @@ export class OwnershipNewForm {
       if (isPerson(data, this.appStore.tenantId())) {
         this.formData.update((vm) => ({
           ...vm,
-          ownerKey: data.bkey,
+          ownerKey: data.okey,
           ownerName1: data.firstName,
           ownerName2: data.lastName,
           ownerModelType: 'person',
@@ -167,7 +167,7 @@ export class OwnershipNewForm {
       if (isOrg(data, this.appStore.tenantId())) {
         this.formData.update((vm) => ({
           ...vm,
-          ownerKey: data.bkey,
+          ownerKey: data.okey,
           ownerName1: '',
           ownerName2: data.name,
           ownerModelType: 'org',
@@ -192,7 +192,7 @@ export class OwnershipNewForm {
       if (isResource(data, this.appStore.tenantId())) {
         this.formData.update((vm) => ({
           ...vm,
-          resourceKey: data.bkey,
+          resourceKey: data.okey,
           resourceModelType: 'resource',
           resourceType: data.type,
           resourceSubType: data.subType,
@@ -210,7 +210,7 @@ export class OwnershipNewForm {
     if (ownership.resourceModelType !== undefined && ownership.resourceKey) {
       return getAvatarKey(ownership.resourceModelType, ownership.resourceKey, ownership.resourceType, ownership.resourceSubType);
     }
-    return `${ResourceModelName}.${this.appStore.defaultResource()?.bkey}`; // default avatar
+    return `${ResourceModelName}.${this.appStore.defaultResource()?.okey}`; // default avatar
   }
 
   protected getIcon(ownership: OwnershipModel): string {

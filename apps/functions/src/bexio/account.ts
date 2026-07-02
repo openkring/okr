@@ -23,7 +23,7 @@ interface BexioAccount {
   is_locked: boolean;
 }
 
-// by default, the tenant id is used as the id of the root as well as the prefix on each id (bkey, parentId)
+// by default, the tenant id is used as the id of the root as well as the prefix on each id (okey, parentId)
 // this is to ensure different namespaces per account chart (Kontoplan)
 // also, we pad every id with leading 0 to make the ids sortable
 
@@ -53,11 +53,11 @@ async function persistAccounts(
   const BATCH_SIZE = 100;
 
   type AccountDoc = Record<string, unknown>;
-  const docs: Array<{ bkey: string; data: AccountDoc }> = [];
+  const docs: Array<{ okey: string; data: AccountDoc }> = [];
 
   // 1) root
   docs.push({
-    bkey: tenantId,
+    okey: tenantId,
     data: {
       tenants: [tenantId],
       isArchived: false,
@@ -78,7 +78,7 @@ async function persistAccounts(
     let parentId = tenantId; 
     if (g.parent_fibu_account_group_id) parentId = parentId + String(g.parent_fibu_account_group_id).padStart(4, '0');
     docs.push({
-      bkey: tenantId + String(g.id).padStart(4, '0'),
+      okey: tenantId + String(g.id).padStart(4, '0'),
       data: {
         tenants: [tenantId],
         isArchived: false,
@@ -100,7 +100,7 @@ async function persistAccounts(
     let parentId = tenantId;
     if (a.fibu_account_group_id) parentId = parentId + String(a.fibu_account_group_id).padStart(4, '0');
     docs.push({
-      bkey: tenantId + String(a.id).padStart(4, '0'),
+      okey: tenantId + String(a.id).padStart(4, '0'),
       data: {
         tenants: [tenantId],
         isArchived: false,
@@ -121,8 +121,8 @@ async function persistAccounts(
   for (let i = 0; i < docs.length; i += BATCH_SIZE) {
     const chunk = docs.slice(i, i + BATCH_SIZE);
     const batch = db.batch();
-    for (const { bkey, data } of chunk) {
-      batch.set(col.doc(bkey), data, { merge: true });
+    for (const { okey, data } of chunk) {
+      batch.set(col.doc(okey), data, { merge: true });
     }
     await batch.commit();
     logger.info(`persistAccounts: committed chunk ${Math.floor(i / BATCH_SIZE) + 1}, docs ${i + 1}-${i + chunk.length}`);
@@ -145,7 +145,7 @@ async function runAccountSync(tenantId: string, label: string): Promise<{ groups
  * Manual one-shot account sync (onCall).
  * Downloads account_groups and accounts from Bexio and writes them into
  * the Firestore 'accounts' collection as a hierarchical AccountModel tree.
- * Root: bkey='bexio_root'. Groups and accounts use the Bexio integer id as bkey.
+ * Root: okey='bexio_root'. Groups and accounts use the Bexio integer id as okey.
  */
 export const syncBexioAccounts = onCall(
   {

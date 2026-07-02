@@ -46,9 +46,9 @@ export const RESERVATION_I18N_KEYS = {
   list_header_duration:           PFX + 'list.header.duration',
   list_header_category:           PFX + 'list.header.category',
 
-  bkey_label:                     PFX + 'bkey.label',
-  bkey_placeholder:               PFX + 'bkey.placeholder',
-  bkey_helper:                    PFX + 'bkey.helper',
+  bkey_label:                     PFX + 'okey.label',
+  bkey_placeholder:               PFX + 'okey.placeholder',
+  bkey_helper:                    PFX + 'okey.helper',
 
   name_label:                     PFX + 'name.label',
   name_placeholder:               PFX + 'name.placeholder',

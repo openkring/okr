@@ -93,7 +93,7 @@ export function removeProperty(obj: object, key: string): object {
 }
 
 export function removeKeyFromBkModel<T extends BkModel>(model: T): T {
-  return removeProperty(model, 'bkey') as T;
+  return removeProperty(model, 'okey') as T;
 }
 
 /**
@@ -488,7 +488,7 @@ export function isObjectWithId<T>(obj: T): obj is T {
 }
 
 export function isObjectWithKeyAndName<T>(obj: T): obj is T {
-  return isObject(obj) && hasProperty(obj, 'bkey') && hasProperty(obj, 'name');
+  return isObject(obj) && hasProperty(obj, 'okey') && hasProperty(obj, 'name');
 }
 
 export function validateNumberRange(value: unknown, min: number, max: number): boolean {

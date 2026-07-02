@@ -8,7 +8,7 @@ import { blobToFile, die, getPartsOfTupel } from '@okr/shared-util-core';
 export function newAvatarModel(tenantIds: string[], modelType: string, key: string, fileName: string): AvatarModel {
   const [fn, ext] = getPartsOfTupel(fileName);
   return {
-    bkey: modelType + '.' + key,
+    okey: modelType + '.' + key,
     tenants: tenantIds,
     storagePath: `tenant/${tenantIds[0]}/${modelType}/${key}/${AvatarDirectory}/${fn}.${ext}`,
     isArchived: false,

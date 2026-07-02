@@ -29,7 +29,7 @@ describe('CalEvent Utils', () => {
     mockGetTodayStr.mockReturnValue('20250903');
 
     baseCalEvent = new CalEventModel(tenantId);
-    baseCalEvent.bkey = 'event-1';
+    baseCalEvent.okey = 'event-1';
     baseCalEvent.name = 'Test Event';
     baseCalEvent.type = 'socialEvent';
     baseCalEvent.startDate = '20251010';

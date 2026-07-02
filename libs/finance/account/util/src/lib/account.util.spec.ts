@@ -19,7 +19,7 @@ describe('Account Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     account = new AccountModel(tenantId);
-    account.bkey = 'acc-1';
+    account.okey = 'acc-1';
     account.name = 'Assets';
     account.id = '1000';
     account.type = 'root';
@@ -56,19 +56,19 @@ describe('Account Utils', () => {
 
     beforeEach(() => {
       const root = new AccountModel(tenantId);
-      root.bkey = 'root-1';
+      root.okey = 'root-1';
       root.name = 'Root';
       root.type = 'root';
       root.parentKey = '';
 
       const group = new AccountModel(tenantId);
-      group.bkey = 'group-1';
+      group.okey = 'group-1';
       group.name = 'Group';
       group.type = 'group';
       group.parentKey = 'root-1';
 
       const leaf = new AccountModel(tenantId);
-      leaf.bkey = 'leaf-1';
+      leaf.okey = 'leaf-1';
       leaf.name = 'Leaf';
       leaf.type = 'leaf';
       leaf.parentKey = 'group-1';
@@ -79,7 +79,7 @@ describe('Account Utils', () => {
     it('should return only the root when nothing is expanded', () => {
       const nodes = flattenAccountTree(accounts, rootKey, []);
       expect(nodes).toHaveLength(1);
-      expect(nodes[0].account.bkey).toBe('root-1');
+      expect(nodes[0].account.okey).toBe('root-1');
       expect(nodes[0].depth).toBe(0);
       expect(nodes[0].hasChildren).toBe(true);
       expect(nodes[0].isExpanded).toBe(false);
@@ -88,16 +88,16 @@ describe('Account Utils', () => {
     it('should show root and group when root is expanded', () => {
       const nodes = flattenAccountTree(accounts, rootKey, ['root-1']);
       expect(nodes).toHaveLength(2);
-      expect(nodes[0].account.bkey).toBe('root-1');
+      expect(nodes[0].account.okey).toBe('root-1');
       expect(nodes[0].isExpanded).toBe(true);
-      expect(nodes[1].account.bkey).toBe('group-1');
+      expect(nodes[1].account.okey).toBe('group-1');
       expect(nodes[1].depth).toBe(1);
     });
 
     it('should show all three when root and group are expanded', () => {
       const nodes = flattenAccountTree(accounts, rootKey, ['root-1', 'group-1']);
       expect(nodes).toHaveLength(3);
-      expect(nodes[2].account.bkey).toBe('leaf-1');
+      expect(nodes[2].account.okey).toBe('leaf-1');
       expect(nodes[2].depth).toBe(2);
       expect(nodes[2].hasChildren).toBe(false);
     });

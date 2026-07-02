@@ -126,7 +126,7 @@ export interface SrvIndex {
   lastName: string;
 
   // Main membership (m prefix) — orgKey = tenantId
-  mKey: string;        // m.bkey
+  mKey: string;        // m.okey
   personKey: string;   // m.memberKey
   mDateOfExit: string; // StoreDate
   dateOfBirth: string; // StoreDate
@@ -140,7 +140,7 @@ export interface SrvIndex {
   mCity: string;
 
   // Parent membership (p prefix) — orgKey = 'srv'
-  pKey: string;        // p.bkey
+  pKey: string;        // p.okey
   memberId: string;    // p.memberId = SRV serviceId stored in BK
   pDateOfExit: string; // StoreDate
   pState: string;

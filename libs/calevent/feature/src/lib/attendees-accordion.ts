@@ -159,13 +159,13 @@ export class AttendeesAccordion {
     if (role === 'confirm') {
       if (data && isPerson(data, this.tenantId())) {
         const calevent = this.calevent();
-        if (calevent.attendees.find(att => att.person.key === data.bkey)) {
+        if (calevent.attendees.find(att => att.person.key === data.okey)) {
           error(this.toastController, this.i18n.attendance_exists());
           return;
         }
         const attendee: Attendee = {
             person: {
-                key: data.bkey,
+                key: data.okey,
                 name1: data.firstName,
                 name2: data.lastName,
                 modelType: 'person',

@@ -255,7 +255,7 @@ export class FormBuilderEditor {
     const current = this.formData();
     this.formData.set({
       ...current, ...incoming,
-      bkey: current.bkey, tenants: current.tenants, formKey: current.formKey,
+      okey: current.okey, tenants: current.tenants, formKey: current.formKey,
       version: current.version, createdAt: current.createdAt, createdBy: current.createdBy,
       fields,
     });

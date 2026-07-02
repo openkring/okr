@@ -80,7 +80,7 @@ export const CalendarStore = signalStore(
     }),
   })),
   
-  // returns bkeys of groups visible to the current user via the group's visibility roles (not by membership)
+  // returns okeys of groups visible to the current user via the group's visibility roles (not by membership)
   withProps((store) => ({
     visibleGroupsResource: rxResource({
       params: () => ({
@@ -92,7 +92,7 @@ export const CalendarStore = signalStore(
         return store.appStore.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc').pipe(
           map((groups: GroupModel[]) => {
             const memberKeys = new Set((store.membershipsForCurrentUserResource.value() ?? []).map(k => {
-              // orgKeys are stored as 'group.<bkey>' — strip the prefix
+              // orgKeys are stored as 'group.<okey>' — strip the prefix
               const parts = k.split('.');
               return parts.length > 1 ? parts.slice(1).join('.') : k;
             }));
@@ -120,7 +120,7 @@ export const CalendarStore = signalStore(
             const calendarKeys: string[] = [];
             for (const cal of calendars) {
               if (memberOrgKeys.includes(cal.owner) || visibleGroupKeys.includes(cal.owner)) {
-                calendarKeys.push(cal.bkey);
+                calendarKeys.push(cal.okey);
               }
             }
             return calendarKeys;
@@ -156,8 +156,8 @@ export const CalendarStore = signalStore(
               const today = getTodayStr();
               const result: CalEventModel[] = [];
               for (const e of events) {
-                // Deduplicate by bkey (always)
-                if (seen.has(e.bkey)) {
+                // Deduplicate by okey (always)
+                if (seen.has(e.okey)) {
                   continue;
                 }
                 // Filter by calendar(s)
@@ -177,7 +177,7 @@ export const CalendarStore = signalStore(
                 if (store.showUpcomingEvents() === false && isAfterOrEqualDate(e.startDate, today)) {
                   continue;
                 }
-                seen.add(e.bkey);
+                seen.add(e.okey);
                 result.push(e);
                 if (maxEvents && result.length >= maxEvents) break;
               }
@@ -275,7 +275,7 @@ export const CalendarStore = signalStore(
         if (calEvent.isOpen) {
           await this.changeAttendanceState(calEvent, 'accepted');
         } else {
-          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.bkey);
+          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
           if (inv) {
             await this.changeInvitationState(inv, 'accepted');
           }
@@ -286,7 +286,7 @@ export const CalendarStore = signalStore(
         if (calEvent.isOpen) {
           await this.changeAttendanceState(calEvent, 'declined');
         } else {
-          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.bkey);
+          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
           if (inv) {
             await this.changeInvitationState(inv, 'declined');
           }

@@ -47,7 +47,7 @@ export class SectionImageService {
       if (ok !== true) return undefined;
     }
 
-    const basePath = `tenant/${tenantId}/section/${section.bkey}`;
+    const basePath = `tenant/${tenantId}/section/${section.okey}`;
     const files = slot.multi
       ? await this.uploadService.pickMultipleFiles(IMAGE_MIMETYPES)
       : [await this.uploadService.pickFile(IMAGE_MIMETYPES)].filter((f): f is File => !!f);

@@ -5,7 +5,7 @@ import { BkModel, NamedModel } from './base.model';
 export type DepreciationMethod = 'linear' | 'declining' | 'performance' | 'immediate' | 'manual';
 
 export class AssetCategoryModel implements BkModel, NamedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 

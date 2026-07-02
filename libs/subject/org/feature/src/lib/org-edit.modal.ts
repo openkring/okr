@@ -109,13 +109,13 @@ export class OrgEditModal {
   protected showForm = signal(true);
 
   // derived 
-  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.org()?.bkey));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.org()?.okey));
   protected toolbarTitle = computed(() => this.org()?.name ?? DEFAULT_TITLE);
   protected readonly parentKey = computed(() => `${OrgModelName}.${this.orgKey()}`);
-  protected path = computed(() => getDocumentStoragePath(this.env.tenantId, 'org', this.org()?.bkey));
-  protected orgKey = computed(() => this.org()?.bkey ?? '');
+  protected path = computed(() => getDocumentStoragePath(this.env.tenantId, 'org', this.org()?.okey));
+  protected orgKey = computed(() => this.org()?.okey ?? '');
   protected orgType = computed((): 'org' | 'group' => this.org()?.type === 'group' ? 'group' : 'org');
-  protected isNew = computed(() => !this.org()?.bkey.length);
+  protected isNew = computed(() => !this.org()?.okey.length);
   protected listId = computed(() => 'o_' + this.orgKey());
   protected priv = computed(() => this.store.privacySettings());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());

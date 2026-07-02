@@ -2,7 +2,7 @@ import { DEFAULT_CURRENCY, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_INVOICE_POSITION_T
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 export class InvoicePositionModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public name = DEFAULT_NAME; // a meaningful name for the trip (i18n)

@@ -68,7 +68,7 @@ export class MembershipService {
   }
 
   public async delete(membership: MembershipModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${membership.bkey}: ${getFullName(membership.memberName1, membership.memberName2)} in ${membership.orgName}`;
+    const payload = `${membership.okey}: ${getFullName(membership.memberName1, membership.memberName2)} in ${membership.orgName}`;
     await this.firestoreService.deleteModel<MembershipModel>(MembershipCollection, membership, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('membership', 'delete', currentUser, payload);
   }
@@ -114,7 +114,7 @@ export class MembershipService {
 
     // add a comment about the category change to the current membership
     const message = getMembershipCategoryChangeComment(oldMembership.category, membershipChange.membershipCategoryNew);;
-    const comment = createComment(currentUser.bkey, currentUser.firstName + ' ' + currentUser.lastName, message, MembershipCollection + '.' + oldMembership.bkey, this.env.tenantId);
+    const comment = createComment(currentUser.okey, currentUser.firstName + ' ' + currentUser.lastName, message, MembershipCollection + '.' + oldMembership.okey, this.env.tenantId);
     await this.firestoreService.saveComment(comment);
 
     // create a new membership with the new type and the start date
@@ -139,7 +139,7 @@ export class MembershipService {
    */
   public copyMembershipWithNewType(oldMembership: MembershipModel, membershipChange: CategoryChangeFormModel, membershipCategory: CategoryListModel): MembershipModel {
     const newMembership = structuredClone(oldMembership);
-    newMembership.bkey = '';  // the new membership gets a new key (generated in create method)
+    newMembership.okey = '';  // the new membership gets a new key (generated in create method)
     newMembership.category = membershipChange.membershipCategoryNew ?? 'active';
 
     // finds the mcat category and returns its state attribute (mapping the category to its state)
@@ -363,7 +363,7 @@ export class MembershipService {
         { key: 'subjectKey', operator: '==', value: scsMember.subjectKey },
       ], 'validFrom', 'desc');     // the sorting is to select the last membership
       
-      //this.dataService.readModel(CollectionNames.Membership, scsMember.bkey);
+      //this.dataService.readModel(CollectionNames.Membership, scsMember.okey);
       const person$ = this.dataService.readModel(CollectionNames.Subject, scsMember.subjectKey);
       return await firstValueFrom(combineLatest([srvMember$, person$]).pipe(map(([srvMembers, person]) => {
         if (srvMembers.length > 0) {
@@ -380,7 +380,7 @@ export class MembershipService {
         { key: 'subjectKey', operator: '==', value: srvMember.subjectKey },
       ], 'validFrom', 'desc');   // the sorting is to select the last membership
       
-      //this.dataService.readModel(CollectionNames.Membership, scsMember.bkey);
+      //this.dataService.readModel(CollectionNames.Membership, scsMember.okey);
       const person$ = this.dataService.readModel(CollectionNames.Subject, srvMember.subjectKey);
       return await firstValueFrom(combineLatest([scsMember$, person$]).pipe(map(([scsMembers, person]) => {
         if (isMembership(scsMembers[0]) && isSubject(person)) {
@@ -401,8 +401,8 @@ export class MembershipService {
         const person = await firstValueFrom(this.dataService.readModel(CollectionNames.Subject, member.subjectKey)) as SubjectModel;
         if (person) {
           table.push([
-            person.bkey!,
-            member.bkey!,
+            person.okey!,
+            member.okey!,
             person.firstName,
             person.name,
             person.favStreetName,
@@ -428,7 +428,7 @@ export class MembershipService {
        const member = item as MembershipSubjectModel;
        table.push([
          member.subjectKey,
-         member.bkey!,
+         member.okey!,
          member.subjectName2, 
          member.subjectName, 
          member.subjectStreet, 

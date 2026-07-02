@@ -57,7 +57,7 @@ import { I18nDefaultEditModal } from './i18n-default-edit.modal';
             </ion-item>
           }
           <ion-list lines="inset">
-            @for (item of store.filteredItems(); track item.bkey) {
+            @for (item of store.filteredItems(); track item.okey) {
               <ion-item (click)="showActions(item)" button>
                 <ion-icon slot="start" src="{{ 'globe' | svgIcon }}" />
                 <ion-label>

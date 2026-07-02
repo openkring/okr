@@ -58,8 +58,8 @@ describe('TripStatsService', () => {
 
   it('getHistory calls searchData with the correct collection path', async () => {
     const history: YearStats[] = [
-      { bkey: '2025', totalKm: 100, tripCount: 4 },
-      { bkey: '2026', totalKm: 150, tripCount: 6 },
+      { okey: '2025', totalKm: 100, tripCount: 4 },
+      { okey: '2026', totalKm: 150, tripCount: 6 },
     ];
     mockSearchData.mockReturnValue(of(history));
     const result = await firstValueFrom(service.getHistory('boats', 'B1'));

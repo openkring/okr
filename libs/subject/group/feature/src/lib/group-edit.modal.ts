@@ -64,7 +64,7 @@ export class GroupEditModal {
   protected showForm = signal(true);
 
   // derived
-  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.group().bkey));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.group().okey));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
@@ -93,7 +93,7 @@ export class GroupEditModal {
     personAvatar.name1 = person.firstName ?? '';
     personAvatar.name2 = person.lastName ?? '';
     personAvatar.type = person.gender ?? '';
-    personAvatar.key = person.bkey ?? '';
+    personAvatar.key = person.okey ?? '';
     personAvatar.modelType = PersonModelName;
 
     this.formData.update((vm) => {

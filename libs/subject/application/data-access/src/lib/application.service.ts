@@ -85,7 +85,7 @@ export class ApplicationService {
       ApplicationCollection, application, this.i18n.create_conf(), this.i18n.create_error(), currentUser
     );
     if (!key) return undefined;
-    application.bkey = key;
+    application.okey = key;
 
     const taskKey = await this.createApplicationTask(application, currentUser);
     if (taskKey) {
@@ -107,7 +107,7 @@ export class ApplicationService {
       ApplicationCollection, application, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser
     );
     void this.activityService.log('application', 'update', currentUser,
-      `${application.bkey}: ${application.lastName}/${application.firstName} (${application.applicationAs}) → ${application.state}`);
+      `${application.okey}: ${application.lastName}/${application.firstName} (${application.applicationAs}) → ${application.state}`);
     return key;
   }
 
@@ -117,7 +117,7 @@ export class ApplicationService {
       ApplicationCollection, application, false, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser
     );
     void this.activityService.log('application', 'delete', currentUser,
-      `${application.bkey}: ${application.lastName}/${application.firstName}`);
+      `${application.okey}: ${application.lastName}/${application.firstName}`);
   }
 
   /*----------- Workflow ----------- */
@@ -129,7 +129,7 @@ export class ApplicationService {
     application.reviewer   = reviewer;
     await this.update(application, currentUser);
     void this.activityService.log('application', 'begin-review', currentUser,
-      `${application.bkey}: ${application.lastName}/${application.firstName}`);
+      `${application.okey}: ${application.lastName}/${application.firstName}`);
   }
 
   public async accept(application: ApplicationModel, currentUser?: UserModel): Promise<string | undefined> {
@@ -154,7 +154,7 @@ export class ApplicationService {
 
     void this.sendDecisionMail('application.accepted', application, currentUser);
     void this.activityService.log('application', 'accept', currentUser,
-      `${application.bkey}: ${application.lastName}/${application.firstName} (${application.applicationAs}) → closed.approved`);
+      `${application.okey}: ${application.lastName}/${application.firstName} (${application.applicationAs}) → closed.approved`);
     return kidsKey;
   }
 
@@ -162,13 +162,13 @@ export class ApplicationService {
     await this.closeApplication(application, 'closed.denied', reason, currentUser);
     void this.sendDecisionMail('application.denied', application, currentUser);
     void this.activityService.log('application', 'deny', currentUser,
-      `${application.bkey}: ${application.lastName}/${application.firstName} → closed.denied`);
+      `${application.okey}: ${application.lastName}/${application.firstName} → closed.denied`);
   }
 
   public async cancel(application: ApplicationModel, reason: string, currentUser?: UserModel): Promise<void> {
     await this.closeApplication(application, 'closed.cancelled', reason, currentUser);
     void this.activityService.log('application', 'cancel', currentUser,
-      `${application.bkey}: ${application.lastName}/${application.firstName} → closed.cancelled`);
+      `${application.okey}: ${application.lastName}/${application.firstName} → closed.cancelled`);
   }
 
   /*----------- Private helpers ----------- */

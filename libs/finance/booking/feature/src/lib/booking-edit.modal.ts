@@ -21,7 +21,7 @@ import { AvatarSelect } from '@okr/avatar-ui';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ readOnly() ? 'View' : (editBooking.bkey ? 'Edit' : 'New') }} Booking</ion-title>
+        <ion-title>{{ readOnly() ? 'View' : (editBooking.okey ? 'Edit' : 'New') }} Booking</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="dismiss()">Cancel</ion-button>
           @if (!readOnly()) {
@@ -67,8 +67,8 @@ import { AvatarSelect } from '@okr/avatar-ui';
             <ion-label position="stacked">VAT Code</ion-label>
             <ion-select [(ngModel)]="line.vatCodeKey" [disabled]="readOnly()">
               <ion-select-option value="">— none —</ion-select-option>
-              @for (vc of vatCodes; track vc.bkey) {
-                <ion-select-option [value]="vc.bkey">{{ vc.code }} {{ vc.rate }}%</ion-select-option>
+              @for (vc of vatCodes; track vc.okey) {
+                <ion-select-option [value]="vc.okey">{{ vc.code }} {{ vc.rate }}%</ion-select-option>
               }
             </ion-select>
           </ion-item>
@@ -128,7 +128,7 @@ export class BookingEditModal implements OnInit {
       this.editBooking.tenants[0] ?? '',
       this.editBooking.accountingTenantId
     );
-    blank.bookingKey = this.editBooking.bkey;
+    blank.bookingKey = this.editBooking.okey;
     blank.debitAmount  = { amount: 0, currency: 'CHF', periodicity: 'one-time' };
     blank.creditAmount = { amount: 0, currency: 'CHF', periodicity: 'one-time' };
     blank.amountFx     = { amount: 0, currency: 'EUR', periodicity: 'one-time' };

@@ -3,7 +3,7 @@ import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model'
 import { AvatarInfo } from './avatar-info';
 
 export class TripModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public name = DEFAULT_NAME; // a meaningful name for the trip
@@ -14,11 +14,11 @@ export class TripModel implements BkModel, NamedModel, SearchableModel, TaggedMo
   public startTime = DEFAULT_TIME; // time when the trip starts
   public endDate = DEFAULT_DATE; // date when the trip ends
   public endTime = DEFAULT_TIME; // time when the trip ends
-  public resource?: AvatarInfo; // resource.bkey: the resource used for the trip
-  public locations: AvatarInfo[] = []; // location.bkey: the locations visited during the trip, ordered by visit
+  public resource?: AvatarInfo; // resource.okey: the resource used for the trip
+  public locations: AvatarInfo[] = []; // location.okey: the locations visited during the trip, ordered by visit
   public customLocationLabel: string = '';
   public distance: number = 0; // calculated or manual with other locaiton
-  public participants: AvatarInfo[] = []; // person.bkey: the persons participating in the trip
+  public participants: AvatarInfo[] = []; // person.okey: the persons participating in the trip
   public state = 'draft';
   
   // soft delete pattern

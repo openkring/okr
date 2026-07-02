@@ -51,7 +51,7 @@ export interface OwnershipFormI18n {
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                    <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                   </ion-col>
                 </ion-row>
               }
@@ -113,7 +113,7 @@ export interface OwnershipFormI18n {
 })
 export class OwnershipForm {
   // i18n - all translations come from the i18n input
-  protected bkeyI18n          = computed(() => ({ name: 'bkey',          label: this.i18n().bkey_label(),          placeholder: this.i18n().bkey_placeholder()} as TextInputI18n));
+  protected bkeyI18n          = computed(() => ({ name: 'okey',          label: this.i18n().bkey_label(),          placeholder: this.i18n().bkey_placeholder()} as TextInputI18n));
   protected ownerName1I18n    = computed(() => ({ name: 'ownerName1',    label: this.i18n().ownerName1_label(),    placeholder: this.i18n().ownerName1_placeholder()} as TextInputI18n));
   protected ownerName2I18n    = computed(() => ({ name: 'ownerName2',    label: this.i18n().ownerName2_label(),    placeholder: this.i18n().ownerName2_placeholder()} as TextInputI18n));
   protected validFromI18n     = computed(() => ({ name: 'validFrom',     label: this.i18n().validFrom_label(),     placeholder: this.i18n().validFrom_placeholder()} as DateInputI18n));
@@ -150,7 +150,7 @@ export class OwnershipForm {
   protected currency = linkedSignal(() => this.price()?.currency ?? DEFAULT_CURRENCY);
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

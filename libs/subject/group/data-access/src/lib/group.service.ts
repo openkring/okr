@@ -75,7 +75,7 @@ export class GroupService  {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(group: GroupModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${group.bkey}: ${group.name}`;
+    const payload = `${group.okey}: ${group.name}`;
     await this.firestoreService.deleteModel<GroupModel>(GroupCollection, group, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('group', 'delete', currentUser, payload);
   }

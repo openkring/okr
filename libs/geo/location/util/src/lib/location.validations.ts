@@ -8,7 +8,7 @@ import { baseValidations, numberValidations, stringValidations } from '@okr/shar
 export const locationValidations = staticSuite((model: LocationModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, tenants, tags, field);  // bkey, tenants, isArchived
+  baseValidations(model, tenants, tags, field);  // okey, tenants, isArchived
   stringValidations('index', model.index, SHORT_NAME_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
   stringValidations('address', model.address, LONG_NAME_LENGTH);

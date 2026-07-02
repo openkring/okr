@@ -30,11 +30,11 @@ export const PFX = '@cms/section/feature.';
                   <ion-label>{{ this.i18n().default_type() }}: {{ type() }}</ion-label>
                 </ion-item>
               </ion-col>
-              @if(bkey(); as bkey) {
+              @if(okey(); as okey) {
                 <ion-col size="6">
                   <ion-item lines="none">
-                    <ion-label>Section Key: {{ bkey }}</ion-label>
-                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="bkey" />
+                    <ion-label>Section Key: {{ okey }}</ion-label>
+                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
                   </ion-item>
                 </ion-col>
               }
@@ -92,7 +92,7 @@ export class SectionConfiguration {
   public readonly i18n = input.required<SectionI18n>();
 
   // fields
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected title = linkedSignal(() => this.formData().title ?? '');
   protected subTitle = linkedSignal(() => this.formData().subTitle ?? '');

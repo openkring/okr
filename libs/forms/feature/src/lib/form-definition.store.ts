@@ -115,7 +115,7 @@ export const FormDefinitionStore = signalStore(
       if (!store.canWrite()) return;
       const copy: FormDefinitionModel = {
         ...form,
-        bkey: '',
+        okey: '',
         name: form.name + ' (Kopie)',
         formKey: '',
         version: 1,
@@ -132,13 +132,13 @@ export const FormDefinitionStore = signalStore(
       const { getFirestore, collection, getDocs, query, where } = await import('firebase/firestore');
       const db = getFirestore();
 
-      type SubmissionDoc = Record<string, unknown> & { bkey: string };
+      type SubmissionDoc = Record<string, unknown> & { okey: string };
       let docsData: SubmissionDoc[];
 
       if (submissionId) {
         const { doc, getDoc } = await import('firebase/firestore');
         const snap = await getDoc(doc(db, form.target.collectionName, submissionId));
-        docsData = snap.exists() ? [{ ...snap.data(), bkey: snap.id } as SubmissionDoc] : [];
+        docsData = snap.exists() ? [{ ...snap.data(), okey: snap.id } as SubmissionDoc] : [];
       } else {
         const snap = await getDocs(
           query(
@@ -146,7 +146,7 @@ export const FormDefinitionStore = signalStore(
             where('tenants', 'array-contains', store.appStore.tenantId()),
           )
         );
-        docsData = snap.docs.map(d => ({ ...d.data(), bkey: d.id }) as SubmissionDoc);
+        docsData = snap.docs.map(d => ({ ...d.data(), okey: d.id }) as SubmissionDoc);
       }
 
       if (docsData.length === 0) return;
@@ -179,7 +179,7 @@ export const FormDefinitionStore = signalStore(
           return `<div class="page">
             <h2 style="margin:0 0 12px;">${form.name}</h2>
             <table style="border-collapse:collapse;width:100%;">${rows}</table>
-            <p style="color:#888;font-size:11px;margin-top:16px;">ID: ${data['bkey']} · Eingereicht: ${String(data['submittedAt'] ?? '')}</p>
+            <p style="color:#888;font-size:11px;margin-top:16px;">ID: ${data['okey']} · Eingereicht: ${String(data['submittedAt'] ?? '')}</p>
           </div>`;
         };
 

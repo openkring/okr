@@ -36,7 +36,7 @@ describe('Workrel Utils', () => {
     vi.clearAllMocks();
 
     workrel = new WorkrelModel(tenantId);
-    workrel.bkey = 'wrel-1';
+    workrel.okey = 'wrel-1';
     workrel.subjectKey = 'person-1';
     workrel.subjectName1 = 'John';
     workrel.subjectName2 = 'Doe';
@@ -46,18 +46,18 @@ describe('Workrel Utils', () => {
     workrel.validFrom = '20230101';
 
     person = new PersonModel(tenantId);
-    person.bkey = 'person-1';
+    person.okey = 'person-1';
     person.firstName = 'John';
     person.lastName = 'Doe';
     person.gender = 'male';
 
     org = new OrgModel(tenantId);
-    org.bkey = 'org-1';
+    org.okey = 'org-1';
     org.name = 'ACME Inc.';
     org.type = 'legalEntity';
 
     currentUser = new UserModel(tenantId);
-    currentUser.bkey = 'user-1';
+    currentUser.okey = 'user-1';
   });
 
   describe('isWorkrel', () => {

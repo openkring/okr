@@ -8,7 +8,7 @@ export type VatDirection = 'input' | 'output';
 // A VAT code defines the rate and booking account for one type of VAT treatment.
 // Historical codes (expired validTo) remain to support past-period reporting.
 export class VatCodeModel implements BkModel, NamedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 

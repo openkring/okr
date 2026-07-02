@@ -11,7 +11,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
   standalone: true,
   imports: [SvgIconPipe, IonIcon, IonButton],
   template: `
-    @if (bkey()) {
+    @if (okey()) {
       <ion-button fill="clear" (click)="download()">
         <ion-icon src="{{'calendar-number' | svgIcon }}" />
       </ion-button>
@@ -19,10 +19,10 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
   `
 })
 export class IcsDownload {
-  public readonly bkey = input.required<string>();
+  public readonly okey = input.required<string>();
 
   protected async download(): Promise<void> {
-    const url = `${ICS_FUNCTION_URL}?calendar=e:${this.bkey()}`;
+    const url = `${ICS_FUNCTION_URL}?calendar=e:${this.okey()}`;
     await Browser.open({ url, windowName: '_blank' });
   }
 }

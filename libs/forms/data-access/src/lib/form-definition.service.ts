@@ -33,8 +33,8 @@ export class FormDefinitionService {
     );
   }
 
-  public read(bkey: string): Observable<FormDefinitionModel | undefined> {
-    return findByKey<FormDefinitionModel>(this.list(), bkey);
+  public read(okey: string): Observable<FormDefinitionModel | undefined> {
+    return findByKey<FormDefinitionModel>(this.list(), okey);
   }
 
   public readByFormKey(formKey: string): Observable<FormDefinitionModel | undefined> {
@@ -52,7 +52,7 @@ export class FormDefinitionService {
     form.honeypotKey = generateFormKey('field').replace(/-[a-z0-9]{4}$/, '');  // random slug, no suffix
     form.createdAt = new Date().toISOString();
     form.updatedAt = new Date().toISOString();
-    form.createdBy = currentUser?.bkey ?? '';
+    form.createdBy = currentUser?.okey ?? '';
     return this.firestoreService.createModel<FormDefinitionModel>(
       FormDefinitionCollection,
       form,

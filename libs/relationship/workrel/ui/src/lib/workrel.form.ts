@@ -31,7 +31,7 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -156,7 +156,7 @@ export class WorkrelForm {
   public selectOrg = output<void>();
 
   // i18n
-  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
+  protected bkeyI18n = computed(() => ({ name: 'okey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
   protected labelI18n = computed(() => ({ name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper() } as TextInputI18n));
   protected currencyI18n = computed(() => ({ name: 'currency', label: this.i18n().currency_label(), placeholder: this.i18n().currency_placeholder(), helper: this.i18n().currency_helper() } as TextInputI18n));
   protected orderI18n = computed(() => ({ name: 'order', label: this.i18n().order_label(), placeholder: this.i18n().order_placeholder(), helper: this.i18n().order_helper() } as NumberInputI18n));
@@ -190,7 +190,7 @@ export class WorkrelForm {
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? 'monthly');
   protected order = linkedSignal(() => this.formData().order ?? DEFAULT_ORDER);
   protected state = linkedSignal(() => this.formData().state ?? DEFAULT_WORKREL_STATE);
-  protected bkey = computed(() => this.formData().bkey ?? DEFAULT_KEY);
+  protected okey = computed(() => this.formData().okey ?? DEFAULT_KEY);
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

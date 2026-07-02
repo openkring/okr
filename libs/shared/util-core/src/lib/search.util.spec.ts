@@ -150,14 +150,14 @@ describe('search.util', () => {
 
   describe('findByKey', () => {
     interface TestModel extends BkModel {
-      bkey: string;
+      okey: string;
       name: string;
     }
 
     const testModels: TestModel[] = [
-      { bkey: 'key1', name: 'Model 1' } as TestModel,
-      { bkey: 'key2', name: 'Model 2' } as TestModel,
-      { bkey: 'key3', name: 'Model 3' } as TestModel
+      { okey: 'key1', name: 'Model 1' } as TestModel,
+      { okey: 'key2', name: 'Model 2' } as TestModel,
+      { okey: 'key3', name: 'Model 3' } as TestModel
     ];
 
     it('should find model by existing key', () => {
@@ -228,9 +228,9 @@ describe('search.util', () => {
 
     it('should find first matching item when duplicates exist', () => {
       const duplicateModels: TestModel[] = [
-        { bkey: 'key1', name: 'First Model 1' } as TestModel,
-        { bkey: 'key2', name: 'Model 2' } as TestModel,
-        { bkey: 'key1', name: 'Second Model 1' } as TestModel
+        { okey: 'key1', name: 'First Model 1' } as TestModel,
+        { okey: 'key2', name: 'Model 2' } as TestModel,
+        { okey: 'key1', name: 'Second Model 1' } as TestModel
       ];
 
       testScheduler.run(({ cold, expectObservable }) => {
@@ -567,7 +567,7 @@ describe('search.util', () => {
 
       // Then use findByKey on results
       const mockResults: BkModel[] = [
-        { bkey: 'result1', name: 'Test Item' } as unknown as BkModel
+        { okey: 'result1', name: 'Test Item' } as unknown as BkModel
       ];
 
       testScheduler.run(({ cold, expectObservable }) => {
@@ -597,14 +597,14 @@ describe('search.util', () => {
     it('should demonstrate typical service usage pattern', () => {
       // Simulate service workflow
       interface ServiceModel extends BkModel {
-        bkey: string;
+        okey: string;
         name: string;
         category: string;
       }
 
       const serviceData: ServiceModel[] = [
-        { bkey: 'item1', name: 'Service Item 1', category: 'A' } as ServiceModel,
-        { bkey: 'item2', name: 'Service Item 2', category: 'B' } as ServiceModel
+        { okey: 'item1', name: 'Service Item 1', category: 'A' } as ServiceModel,
+        { okey: 'item2', name: 'Service Item 2', category: 'B' } as ServiceModel
       ];
 
       testScheduler.run(({ cold, expectObservable }) => {

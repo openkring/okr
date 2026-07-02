@@ -21,7 +21,7 @@ import { CalEventStore } from './calevent.store';
           <thead>
             <tr>
               <th class="member-col"></th>
-              @for (event of proposedEvents(); track event.bkey) {
+              @for (event of proposedEvents(); track event.okey) {
                 <th class="date-col">
                   <div>{{ formatDayName(event.startDate) }}</div>
                   <div class="date-sub">{{ formatShortDate(event.startDate) }}</div>
@@ -40,21 +40,21 @@ import { CalEventStore } from './calevent.store';
                     <span class="member-name">{{ member.firstName }} {{ member.lastName }}</span>
                   </div>
                 </td>
-                @for (event of proposedEvents(); track event.bkey) {
+                @for (event of proposedEvents(); track event.okey) {
                   <td
                     [class.tappable]="member.key === currentUserKey()"
-                    (click)="member.key === currentUserKey() ? toggleResponse(event.bkey) : null"
+                    (click)="member.key === currentUserKey() ? toggleResponse(event.okey) : null"
                   >
-                    {{ responseIcon(member.key, event.bkey) }}
+                    {{ responseIcon(member.key, event.okey) }}
                   </td>
                 }
               </tr>
             }
             <tr class="count-row">
               <td>Zusagen</td>
-              @for (event of proposedEvents(); track event.bkey) {
-                <td [class.best]="isBestDate(event.bkey)">
-                  {{ acceptanceCount(event.bkey) }}{{ isBestDate(event.bkey) ? ' ★' : '' }}
+              @for (event of proposedEvents(); track event.okey) {
+                <td [class.best]="isBestDate(event.okey)">
+                  {{ acceptanceCount(event.okey) }}{{ isBestDate(event.okey) ? ' ★' : '' }}
                 </td>
               }
             </tr>
@@ -104,7 +104,7 @@ export class ScheduleTableModal {
 
   protected readonly invitations = computed(() =>
     this.store.seriesInvitations().filter(inv =>
-      this.proposedEvents().some(e => e.bkey === inv.caleventKey)
+      this.proposedEvents().some(e => e.okey === inv.caleventKey)
     )
   );
 
@@ -149,26 +149,26 @@ export class ScheduleTableModal {
     return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase();
   }
 
-  protected responseIcon(memberKey: string, eventBkey: string): string {
-    const inv = this.invitations().find(i => i.inviteeKey === memberKey && i.caleventKey === eventBkey);
+  protected responseIcon(memberKey: string, eventOkey: string): string {
+    const inv = this.invitations().find(i => i.inviteeKey === memberKey && i.caleventKey === eventOkey);
     if (!inv || inv.state === 'pending') return '–';
     if (inv.state === 'accepted') return '✓';
     return '✗';
   }
 
-  protected acceptanceCount(eventBkey: string): number {
-    return this.invitations().filter(i => i.caleventKey === eventBkey && i.state === 'accepted').length;
+  protected acceptanceCount(eventOkey: string): number {
+    return this.invitations().filter(i => i.caleventKey === eventOkey && i.state === 'accepted').length;
   }
 
-  protected isBestDate(eventBkey: string): boolean {
-    const counts = this.proposedEvents().map(e => this.acceptanceCount(e.bkey));
+  protected isBestDate(eventOkey: string): boolean {
+    const counts = this.proposedEvents().map(e => this.acceptanceCount(e.okey));
     const max = Math.max(...counts);
-    return max > 0 && this.acceptanceCount(eventBkey) === max;
+    return max > 0 && this.acceptanceCount(eventOkey) === max;
   }
 
-  protected toggleResponse(eventBkey: string): void {
+  protected toggleResponse(eventOkey: string): void {
     const inv = this.invitations().find(
-      i => i.inviteeKey === this.currentUserKey() && i.caleventKey === eventBkey
+      i => i.inviteeKey === this.currentUserKey() && i.caleventKey === eventOkey
     );
     if (!inv) return;
     const next = inv.state === 'accepted' ? 'declined' : 'accepted';

@@ -7,7 +7,7 @@ import { booleanValidations, categoryValidations, stringValidations } from '@okr
 export const baseSectionValidations = staticSuite((model: SectionModel, field?: string) => {
   if (field) only(field);
 
-  stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
   stringValidations('type', model.type, WORD_LENGTH);
   // tbd: tagValidations('tags', model.tags);

@@ -74,7 +74,7 @@ export type LocationSelectResult =
               <ion-list lines="none">
                 <ion-item class="item" (click)="select(location)">
                   <ion-avatar slot="start">
-                    <ion-img src="{{ 'location.' + location.bkey | avatar:defaultIcon }}" alt="Avatar Logo" />
+                    <ion-img src="{{ 'location.' + location.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
                   </ion-avatar>
                   <ion-label>{{location.name}}</ion-label>
                 </ion-item>

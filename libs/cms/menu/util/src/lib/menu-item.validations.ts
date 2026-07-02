@@ -8,7 +8,7 @@ import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberVa
 export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
 //  tenantValidations(model.tenants);
   stringValidations('action', model.action, WORD_LENGTH, 3, true);

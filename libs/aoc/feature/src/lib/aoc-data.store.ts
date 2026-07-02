@@ -179,7 +179,7 @@ export const AocDataStore = signalStore(
        * This implementation is for BkModels where we know the model.
        */
       async fixCustomIssues<T>(doc: T): Promise<T> {
-        console.log(`  - custom fixes of document ${(doc as any).bkey} ...`);
+        console.log(`  - custom fixes of document ${(doc as any).okey} ...`);
         const d = doc as any;
         if (!Array.isArray(d.admins)) d.admins = [];
         if (d.mainContact?.key && !isAdminMember(d, d.mainContact.key)) {
@@ -242,7 +242,7 @@ export const AocDataStore = signalStore(
        * @param fieldsToCheck format: s:string, n:number, b:boolean m:map {} a:array []
        */
       fixUndefinedFields<T>(doc: T, fieldsToCheck: string[]): T {
-        console.log(`  - fixing undefined fields of document ${(doc as any).bkey} ...`);
+        console.log(`  - fixing undefined fields of document ${(doc as any).okey} ...`);
         for (const field of fieldsToCheck) {
           // Support syntax: n:priority=1, s:name=foo, etc.
           let type = '', attr = '', defaultValue: any = undefined;
@@ -292,7 +292,7 @@ export const AocDataStore = signalStore(
        * @param fieldsToFix Array of field definitions, e.g. s:fieldName, n:amount
        */
       fixTypes<T>(doc: T, fieldsToFix: string[]): T {
-        console.log(`  - fixing types of document ${(doc as any).bkey} ...`);
+        console.log(`  - fixing types of document ${(doc as any).okey} ...`);
         for (const field of fieldsToFix) {
           const [type, attr] = field.split(':');
           if (!attr) continue;
@@ -340,7 +340,7 @@ export const AocDataStore = signalStore(
        * @param mappingRules 
        */
       convertToAvatar(doc: any, mappingRules: string[]): AvatarInfo {
-        console.log(`  - converting document ${(doc as any).bkey} to avatar...`);
+        console.log(`  - converting document ${(doc as any).okey} to avatar...`);
         const avatarInfo = AVATAR_INFO_SHAPE;
         for (const rule of mappingRules) {
           const [sourceField, avatarField] = rule.split(':');
@@ -353,16 +353,16 @@ export const AocDataStore = signalStore(
 
       /**
        * Save a document to the database. The document is created (if not yet existing) or updated (if existing).
-       * No bkey/id check is performed here.
+       * No okey/id check is performed here.
        */
       async saveDoc<T>(collectionName: string, doc: T, isDryRun = true): Promise<void> {
-        console.log(`  - saving document ${collectionName}/${(doc as any).bkey ?? ''} ...`);
+        console.log(`  - saving document ${collectionName}/${(doc as any).okey ?? ''} ...`);
         if (isDryRun) {
           console.log(doc);
         } else {
-          const key = (doc as any)['bkey'];
-          // updateObject does not remove the bkey property from the stored object. So we need to remove it here.
-          const storedModel = removeProperty(doc as any, 'bkey');
+          const key = (doc as any)['okey'];
+          // updateObject does not remove the okey property from the stored object. So we need to remove it here.
+          const storedModel = removeProperty(doc as any, 'okey');
           await store.appStore.firestoreService.updateObject<T>(collectionName, key, storedModel as any, true);
         }
       },
@@ -417,7 +417,7 @@ export const AocDataStore = signalStore(
             this.executeValidation<ResourceModel>(ResourceCollection, resourceValidations, tenants, store.appStore.getTags('resource'));
             break;
           case 'task':
-            this.executeValidation<TaskModel>(TaskCollection, taskValidations, tenants, store.appStore.getTags('task'), 'bkey');
+            this.executeValidation<TaskModel>(TaskCollection, taskValidations, tenants, store.appStore.getTags('task'), 'okey');
             break;
           case 'transfer':
             this.executeValidation<TransferModel>(TransferCollection, transferValidations, tenants, store.appStore.getTags('transfer'), 'dateOfTransfer');
@@ -426,7 +426,7 @@ export const AocDataStore = signalStore(
             this.executeValidation<UserModel>(UserCollection, userValidations, tenants, store.appStore.getTags('user'), 'loginEmail');
             break;
           case 'workrel':
-            this.executeValidation<WorkrelModel>(WorkrelCollection, workrelValidations, tenants, store.appStore.getTags('workrel'), 'bkey');
+            this.executeValidation<WorkrelModel>(WorkrelCollection, workrelValidations, tenants, store.appStore.getTags('workrel'), 'okey');
             break;
           case 'category':
             this.executeValidation<CategoryModel>(CategoryCollection, categoryListValidations, tenants, store.appStore.getTags('category'));
@@ -466,10 +466,10 @@ export const AocDataStore = signalStore(
         from(store.appStore.firestoreService.getDataOnce<T>(collection, dbQuery, orderBy, 'asc'))
           .subscribe(async (data) => {
             for (const model of data) {
-              console.log(`Validating model ${collection}/${(model as any).bkey}...`);
+              console.log(`Validating model ${collection}/${(model as any).okey}...`);
               const validationResult = suite(model, tenants, tags);
               if (validationResult.hasErrors()) {
-                console.log(`Model ${collection}/${(model as any).bkey} has validation errors:`);
+                console.log(`Model ${collection}/${(model as any).okey} has validation errors:`);
                 console.log(validationResult.getErrors());
               }
             }
@@ -495,7 +495,7 @@ export const AocDataStore = signalStore(
 
         const mismatches: FavMismatch[] = [];
         for (const person of persons) {
-          const personAddresses = addresses.filter(a => a.parentKey === `person.${person.bkey}`);
+          const personAddresses = addresses.filter(a => a.parentKey === `person.${person.okey}`);
           const fav = computeFavoriteAddressInfo(personAddresses);
 
  /*          console.log(person);
@@ -511,7 +511,7 @@ export const AocDataStore = signalStore(
           ];
           for (const [field, cached, fromAddress] of checks) {
             if (cached !== fromAddress) {
-              mismatches.push({ personKey: person.bkey, personName: name, field, cached, fromAddress });
+              mismatches.push({ personKey: person.okey, personName: name, field, cached, fromAddress });
             }
           }
         }
@@ -641,7 +641,7 @@ export const AocDataStore = signalStore(
           .subscribe(async (data) => {
             for (const model of data) {
               const oldIndex = (model as any).index;
-              console.log(`Generating index for model ${collection}/${(model as any).bkey}...`);
+              console.log(`Generating index for model ${collection}/${(model as any).okey}...`);
               const newIndex = generateIndexFn(model);
               if (oldIndex !== newIndex) {
                 (model as any).index = newIndex;

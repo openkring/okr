@@ -33,7 +33,7 @@ export class UserService  {
   /* ---------------------- Standard CRUD operations -------------------------------*/
   /**
    * Save a new document into the database and return its uid.
-   * The document ID should be assigned to the value of the firebase user id (for both bkey and document id).
+   * The document ID should be assigned to the value of the firebase user id (for both okey and document id).
    * @param user the new document to save
    * @param currentUser the current user who performs the operation
    * @returns a Promise of the key of the newly stored model or undefined if the operation
@@ -100,7 +100,7 @@ export class UserService  {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(user: UserModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${user.bkey}: ${user.loginEmail}: ${getFullName(user.firstName, user.lastName)}`;
+    const payload = `${user.okey}: ${user.loginEmail}: ${getFullName(user.firstName, user.lastName)}`;
     await this.firestoreService.deleteModel<UserModel>(UserCollection, user, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('user', 'delete', currentUser, payload);
   }

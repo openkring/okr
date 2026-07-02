@@ -32,15 +32,15 @@ export class BookingLineService {
 
   public addLinesToBatch(lines: BookingLineModel[], batch: WriteBatch): void {
     for (const line of lines) {
-      const { bkey, ...data } = line as BookingLineModel & { bkey: string };
-      const ref = doc(this.firestoreService.firestore, BookingLineCollection, bkey);
+      const { okey, ...data } = line as BookingLineModel & { okey: string };
+      const ref = doc(this.firestoreService.firestore, BookingLineCollection, okey);
       batch.set(ref, data, { merge: false });
     }
   }
 
   public deleteLinesToBatch(lines: BookingLineModel[], batch: WriteBatch): void {
     for (const line of lines) {
-      const ref = doc(this.firestoreService.firestore, BookingLineCollection, (line as BookingLineModel & { bkey: string }).bkey);
+      const ref = doc(this.firestoreService.firestore, BookingLineCollection, (line as BookingLineModel & { okey: string }).okey);
       batch.delete(ref);
     }
   }

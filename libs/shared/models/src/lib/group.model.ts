@@ -8,7 +8,7 @@ import { AVATAR_INFO_SHAPE, AvatarInfo } from './avatar-info';
  * Groups can be administered by a GroupAdmin. This person can open additional groups and add/remove members.
  */
 export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY; // unique
+  public okey = DEFAULT_KEY; // unique
   public name = DEFAULT_NAME;
 
   public notes = DEFAULT_NOTES;

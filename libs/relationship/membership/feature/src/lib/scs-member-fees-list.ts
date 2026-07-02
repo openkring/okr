@@ -333,7 +333,7 @@ export class ScsMemberFees {
       opts.buttons.push(createActionSheetButton('invoice.download', imgixBaseUrl, 'download', this.store.i18n.invoice_download()));
       opts.buttons.push(createActionSheetButton('invoice.paid', imgixBaseUrl, 'checkmark', this.store.i18n.invoice_paid()));
       opts.buttons.push(createActionSheetDivider());
-      if (fee.bkey) {
+      if (fee.okey) {
         opts.buttons.push(createActionSheetButton('invoice.delete', imgixBaseUrl, 'trash', this.store.i18n.invoice_delete()));
         opts.buttons.push(createActionSheetDivider());
       }

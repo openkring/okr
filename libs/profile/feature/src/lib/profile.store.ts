@@ -106,7 +106,7 @@ export const ProfileStore = signalStore(
       async saveAvatar(photo: Photo): Promise<void> {
         const person = store.person();
         if (!person) return;
-        await store.avatarService.saveAvatarPhoto(photo, person.bkey, store.appStore.env.tenantId, PersonModelName);
+        await store.avatarService.saveAvatarPhoto(photo, person.okey, store.appStore.env.tenantId, PersonModelName);
       },
 
       getTitleLabel(readOnly: boolean, key?: string): string {

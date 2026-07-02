@@ -33,7 +33,7 @@ import { ExpenseStore } from './expense.store';
         <p style="text-align:center; padding:16px;">Keine Auslagen gefunden</p>
       } @else {
         <ion-list>
-          @for (expense of store.expenses(); track expense.bkey) {
+          @for (expense of store.expenses(); track expense.okey) {
             <ion-item (click)="store.openDetail(expense)">
               <ion-label>
                 <h3>{{ expense.abstract }}</h3>

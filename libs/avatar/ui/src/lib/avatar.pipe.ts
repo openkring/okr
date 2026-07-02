@@ -17,7 +17,7 @@ export class AvatarPipe implements PipeTransform {
 
 
 function getDefaultIcon(key: string): string {
-  const [modelType, bkey] = key.split('.');
+  const [modelType, okey] = key.split('.');
   switch (modelType) {
     case 'person':
     case 'org':

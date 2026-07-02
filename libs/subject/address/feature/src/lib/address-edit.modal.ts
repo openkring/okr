@@ -64,7 +64,7 @@ export class AddressEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.address().bkey));
+  protected readonly headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.address().okey));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 

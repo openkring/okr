@@ -71,7 +71,7 @@ export class ModelSelectService {
     }
     const person = result.person;
     return {
-      key: person.bkey,
+      key: person.okey,
       name1: person.firstName,
       name2: person.lastName,
       label,
@@ -105,7 +105,7 @@ export class ModelSelectService {
     const org = await this.selectOrg(selectedTag);
     if (org) {
       return {
-        key: org.bkey,
+        key: org.okey,
         name1: '',
         name2: org.name,
         label,
@@ -142,7 +142,7 @@ export class ModelSelectService {
     const resource = await this.selectResource(selectedTag, title);
     if (resource) {
       return {
-        key: resource.bkey,
+        key: resource.okey,
         name1: '',
         name2: resource.name,
         label,

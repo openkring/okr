@@ -107,11 +107,11 @@ export class PersonEditModal {
   protected showForm = signal(true);
 
   // derived signals and fields
-  protected personKey = computed(() => this.person()?.bkey ?? '');
+  protected personKey = computed(() => this.person()?.okey ?? '');
   protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.personKey()));
   protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
   protected readonly parentKey = computed(() => PersonModelName + '.' + this.personKey());
-  protected path = computed(() => getDocumentStoragePath(this.tenantId(), 'person', this.person()?.bkey));
+  protected path = computed(() => getDocumentStoragePath(this.tenantId(), 'person', this.person()?.okey));
   protected listId = computed(() => 'p_' + this.personKey());
   protected priv = computed(() => this.store.privacySettings());
   protected defaultResource = computed(() => this.store.defaultResource());
@@ -140,7 +140,7 @@ export class PersonEditModal {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    await this.store.saveAvatar(photo, this.person().bkey);
+    await this.store.saveAvatar(photo, this.person().okey);
   }
 
   /******************************* helpers *************************************** */

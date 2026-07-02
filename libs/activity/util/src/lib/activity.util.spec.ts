@@ -20,7 +20,7 @@ describe('isActivity', () => {
     expect(isActivity(makeActivity(), TENANT)).toBe(true);
   });
   it('returns false for a plain object', () => {
-    expect(isActivity({ bkey: '' }, TENANT)).toBe(false);
+    expect(isActivity({ okey: '' }, TENANT)).toBe(false);
   });
 });
 

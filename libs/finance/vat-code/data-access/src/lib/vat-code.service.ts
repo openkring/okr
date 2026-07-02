@@ -9,7 +9,7 @@ import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 import { PFX } from './scope';
 
 // Standard Swiss VAT codes seeded on tenant creation
-export const CH_STANDARD_VAT_CODES: Omit<VatCodeModel, 'bkey' | 'tenants' | 'isArchived' | 'accountingTenantId'>[] = [
+export const CH_STANDARD_VAT_CODES: Omit<VatCodeModel, 'okey' | 'tenants' | 'isArchived' | 'accountingTenantId'>[] = [
   { name: 'MWST 8.1% Umsatzsteuer',  code: 'UST_81',  rate: 8.1,  validFrom: '20240101', validTo: '', accountKey: '2200', method: 'effective', direction: 'output' },
   { name: 'MWST 2.6% Sondersteuer',  code: 'UST_26',  rate: 2.6,  validFrom: '20240101', validTo: '', accountKey: '2200', method: 'effective', direction: 'output' },
   { name: 'MWST 3.8% Beherbergung',  code: 'UST_38',  rate: 3.8,  validFrom: '20240101', validTo: '', accountKey: '2200', method: 'effective', direction: 'output' },
@@ -70,7 +70,7 @@ export class VatCodeService {
     for (const template of CH_STANDARD_VAT_CODES) {
       const code = new VatCodeModel(tenantId, accountingTenantId);
       Object.assign(code, template);
-      code.bkey = `${accountingTenantId}-${template.code}`;
+      code.okey = `${accountingTenantId}-${template.code}`;
       await this.create(code, currentUser);
     }
   }

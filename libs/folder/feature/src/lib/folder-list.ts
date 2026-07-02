@@ -55,7 +55,7 @@ import { FolderStore } from './folder.store';
           <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list>
-            @for(folder of filteredFolders(); track folder.bkey) {
+            @for(folder of filteredFolders(); track folder.okey) {
               <ion-item (click)="showActions(folder)">
                 <ion-icon slot="start" src="{{ 'folder' | svgIcon }}" />
                 <ion-label>

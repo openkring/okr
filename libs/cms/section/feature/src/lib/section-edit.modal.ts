@@ -65,14 +65,14 @@ export class SectionEditModal {
   protected initialData = signal<SectionModel | undefined>(undefined);
   protected formDirty = linkedSignal(() => {
     const fd = this.formData();
-    return fd ? !fd.bkey || fd.bkey.length === 0 : false;
+    return fd ? !fd.okey || fd.okey.length === 0 : false;
   });
   protected formData = linkedSignal(() => safeStructuredClone(this.section()));
   protected formValid = signal(true);
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.section().bkey));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.section().okey));
   protected tenantId = computed(() => this.store.tenantId());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 

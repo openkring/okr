@@ -7,7 +7,7 @@ import { addIndexElement } from '@okr/shared-util-core';
  * Create a new FolderModel populated with the given values.
  * @param tenantId the tenant the folder belongs to
  * @param name the display name of the folder
- * @param parentKeys optional list of parent FolderModel bkeys for hierarchy nesting
+ * @param parentKeys optional list of parent FolderModel okeys for hierarchy nesting
  */
 export function newFolderModel(tenantId: string, name = DEFAULT_NAME, parentKeys: string[] = []): FolderModel {
   const folder = new FolderModel(tenantId);

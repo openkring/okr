@@ -133,7 +133,7 @@ export const CalEventStore = signalStore(
             const calendarKeys: string[] = [];
             for (const cal of calendars) {
               if (orgKeys.includes(cal.owner)) {
-                calendarKeys.push(cal.bkey);
+                calendarKeys.push(cal.okey);
               }
             }
             return calendarKeys;
@@ -170,8 +170,8 @@ export const CalEventStore = signalStore(
             const seen = new Set<string>();
             const result: CalEventModel[] = [];
             for (const e of events) {
-              // Deduplicate by bkey (always)
-              if (seen.has(e.bkey)) {
+              // Deduplicate by okey (always)
+              if (seen.has(e.okey)) {
                 continue;
               }
               // Filter by calendar(s)
@@ -191,7 +191,7 @@ export const CalEventStore = signalStore(
               if (store.showUpcomingEvents() === false && isAfterOrEqualDate(e.startDate, store.startDate())) {
                 continue;
               }
-              seen.add(e.bkey);
+              seen.add(e.okey);
               result.push(e);
               if (maxEvents && result.length >= maxEvents) break;
             }
@@ -219,7 +219,7 @@ export const CalEventStore = signalStore(
         seriesId: store.scheduleSeriesId(),
         proposedEventKeys: (store.caleventsResource.value() ?? [])
           .filter((e: CalEventModel) => e.seriesId === store.scheduleSeriesId() && e.state === 'proposed')
-          .map((e: CalEventModel) => e.bkey),
+          .map((e: CalEventModel) => e.okey),
         tenantId: store.appStore.env.tenantId,
       }),
       stream: ({ params }) => {
@@ -240,7 +240,7 @@ export const CalEventStore = signalStore(
       calendar: computed(() => {
         const calName = state.calendarName();
         if (calName.length === 0 || calName === 'all' || calName === 'my') return undefined;
-        return state.calendarsResource.value()?.find((cal: CalendarModel) => cal.bkey === calName);
+        return state.calendarsResource.value()?.find((cal: CalendarModel) => cal.okey === calName);
       }),
       isLoading: computed(() => state.caleventsResource.isLoading() || state.calendarsResource.isLoading()),
     }
@@ -329,7 +329,7 @@ export const CalEventStore = signalStore(
       isGroupCalevent(calEvent: CalEventModel): boolean {
         const calendars = store.calendarsResource.value() ?? [];
         return (calEvent.calendars ?? []).some(calKey =>
-          calendars.find(c => c.bkey === calKey)?.owner?.startsWith('group.') === true
+          calendars.find(c => c.okey === calKey)?.owner?.startsWith('group.') === true
         );
       },
 
@@ -378,7 +378,7 @@ export const CalEventStore = signalStore(
         for (const isoDate of data.dates) {
           const startDate = isoDate.replace(/-/g, '').substring(0, 8);
           const calevent = new CalEventModel(store.tenantId());
-          calevent.bkey = seriesId + index.toString().padStart(2, '0');
+          calevent.okey = seriesId + index.toString().padStart(2, '0');
           calevent.seriesId = seriesId;
           calevent.name = data.name;
           calevent.description = data.description;
@@ -403,14 +403,14 @@ export const CalEventStore = signalStore(
         const seriesId = selectedEvent.seriesId;
         const batch = store.firestoreService.getBatch();
 
-        const selectedRef = doc(store.firestoreService.firestore, `calevents/${selectedEvent.bkey}`);
+        const selectedRef = doc(store.firestoreService.firestore, `calevents/${selectedEvent.okey}`);
         batch.update(selectedRef, { state: 'definitive', seriesId: '' });
 
         const others = store.calEvents().filter(
-          e => e.seriesId === seriesId && e.bkey !== selectedEvent.bkey && e.state === 'proposed'
+          e => e.seriesId === seriesId && e.okey !== selectedEvent.okey && e.state === 'proposed'
         );
         for (const other of others) {
-          const ref = doc(store.firestoreService.firestore, `calevents/${other.bkey}`);
+          const ref = doc(store.firestoreService.firestore, `calevents/${other.okey}`);
           batch.update(ref, { isArchived: true });
         }
 
@@ -515,7 +515,7 @@ export const CalEventStore = signalStore(
 
       /******************************* CRUD on calevent series *************************************** */
       async createNewEventSeries(calevent: CalEventModel): Promise<void> {
-        calevent.seriesId = generateRandomString(18); // all members of the series will get this seriesId plus an index as their bkey
+        calevent.seriesId = generateRandomString(18); // all members of the series will get this seriesId plus an index as their okey
         let index = 0;
         const dates = calculateRecurringDates(calevent.startDate, calevent.repeatUntilDate, calevent.periodicity);
         if (dates.length > MAX_DATES_PER_SERIES) {
@@ -523,8 +523,8 @@ export const CalEventStore = signalStore(
           return;
         }
         for (const date of dates) {
-          const bkey = calevent.seriesId + (index).toString().padStart(2, '0');
-          const inst = { ...calevent, startDate: date, bkey };
+          const okey = calevent.seriesId + (index).toString().padStart(2, '0');
+          const inst = { ...calevent, startDate: date, okey };
           await store.calEventService.create(inst, store.currentUser());
           index++;
         }
@@ -544,7 +544,7 @@ export const CalEventStore = signalStore(
         for (const inst of store.seriesEvents()) {
           const shouldUpdate = scope === 'all' || (scope === 'future' && isAfterOrEqualDate(inst.startDate, calevent.startDate));
           if (!shouldUpdate) continue;
-          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.bkey}`);
+          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.okey}`);
 
           // Update in series
           const storedModel = removeKeyFromBkModel(structuredClone(calevent));
@@ -578,7 +578,7 @@ export const CalEventStore = signalStore(
         for (const inst of store.seriesEvents()) {
           const shouldUpdate = scope === 'all' || (scope === 'future' && isAfterOrEqualDate(inst.startDate, calevent.startDate));
           if (!shouldUpdate) continue;
-          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.bkey}`);
+          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.okey}`);
           batch.update(ref, { ...inst, isArchived: true });
         }
         await batch.commit();
@@ -596,12 +596,12 @@ export const CalEventStore = signalStore(
           console.log('Calevent calendars array:', calevent.calendars);
 
           if (calevent.calendars.length === 0) {
-            warn(`CalEventStore.inviteGroupMembers: calevent ${calevent.bkey} has no assigned calendars.`); 
+            warn(`CalEventStore.inviteGroupMembers: calevent ${calevent.okey} has no assigned calendars.`); 
             return; 
           }
           if (calendars.length > 1) {
             // tbd: CalEventStore.inviteGroupMembers: handle multiple calendars better, let user decide which one to use (or all ?)
-            warn(`CalEventStore.inviteGroupMembers: calevent ${calevent.bkey} is assigned to multiple calendars, using the first one.`); 
+            warn(`CalEventStore.inviteGroupMembers: calevent ${calevent.okey} is assigned to multiple calendars, using the first one.`); 
           }
           const calName = calevent.calendars[0];
           this.setCalendarName(calName);
@@ -609,7 +609,7 @@ export const CalEventStore = signalStore(
         }
         // check that we are in a group calendar and get the group id from the calendar owner
         const groupId = store.groupCalendarId();
-        console.log(`Inviting members of group ${groupId} to calevent ${calevent.bkey}`);
+        console.log(`Inviting members of group ${groupId} to calevent ${calevent.okey}`);
         if (groupId.length === 0) {
           warn(`CalEventStore.inviteGroupMembers: calendar ${store.calendarName()} is not a group calendar.`);
           return;
@@ -629,7 +629,7 @@ export const CalEventStore = signalStore(
           inv.inviterKey = store.currentUser()?.personKey || '';
           inv.inviterFirstName = store.currentUser()?.firstName || '';
           inv.inviterLastName = store.currentUser()?.lastName || '';
-          inv.caleventKey = calevent.bkey;
+          inv.caleventKey = calevent.okey;
           inv.name = calevent.name;
           inv.date = calevent.startDate;
           inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
@@ -652,7 +652,7 @@ export const CalEventStore = signalStore(
           inv.inviterKey = store.currentUser()?.personKey || '';
           inv.inviterFirstName = store.currentUser()?.firstName || '';
           inv.inviterLastName = store.currentUser()?.lastName || '';
-          inv.caleventKey = calevent.bkey;
+          inv.caleventKey = calevent.okey;
           inv.name = calevent.name;
           inv.date = calevent.startDate;
           inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
@@ -665,7 +665,7 @@ export const CalEventStore = signalStore(
         if (calEvent.isOpen) {
           await this.changeAttendanceState(calEvent, 'accepted');
         } else {
-          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.bkey);
+          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
           if (inv) {
             await this.changeInvitationState(inv, 'accepted');
           }
@@ -676,7 +676,7 @@ export const CalEventStore = signalStore(
         if (calEvent.isOpen) {
           await this.changeAttendanceState(calEvent, 'declined');
         } else {
-          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.bkey);
+          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
           if (inv) {
             await this.changeInvitationState(inv, 'declined');
           }

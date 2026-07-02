@@ -5,7 +5,7 @@ import { BkModel, SearchableModel, TaggedModel } from './base.model';
 export type ExpenseStatus = 'draft' | 'processing' | 'validated' | 'error' | 'posted';
 
 export class ExpenseModel implements BkModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

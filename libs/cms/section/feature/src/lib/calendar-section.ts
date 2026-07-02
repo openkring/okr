@@ -81,7 +81,7 @@ export class CalendarSectionComponent implements OnInit {
   protected calendarEvents = computed<EventInput[]>(() => {
     return this.filteredEvents().map(event => ({
       ...convertCalEventToFullCalendar(event),
-      extendedProps: { eventKey: event.bkey },
+      extendedProps: { eventKey: event.okey },
       backgroundColor: '#3788d8',
       borderColor: '#3788d8'
     }));
@@ -172,7 +172,7 @@ export class CalendarSectionComponent implements OnInit {
     if (this.editMode()) { arg.revert(); return; }
     const eventKey = arg.event.extendedProps?.eventKey as string;
     if (!eventKey) { arg.revert(); return; }
-    const calevent = this.filteredEvents().find((e: CalEventModel) => e.bkey === eventKey);
+    const calevent = this.filteredEvents().find((e: CalEventModel) => e.okey === eventKey);
     if (!calevent) { arg.revert(); return; }
     const start = arg.event.start as Date;
     const updated: CalEventModel = { ...calevent, startDate: format(start, DateFormat.StoreDate), startTime: format(start, 'HH:mm') };
@@ -185,7 +185,7 @@ export class CalendarSectionComponent implements OnInit {
     if (this.editMode()) { arg.revert(); return; }
     const eventKey = arg.event.extendedProps?.eventKey as string;
     if (!eventKey) { arg.revert(); return; }
-    const calevent = this.filteredEvents().find((e: CalEventModel) => e.bkey === eventKey);
+    const calevent = this.filteredEvents().find((e: CalEventModel) => e.okey === eventKey);
     if (!calevent) { arg.revert(); return; }
     const start = arg.event.start as Date;
     const end = arg.event.end as Date;

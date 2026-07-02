@@ -26,7 +26,7 @@ import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)" [readOnly]="true" [copyable]=true />
+                <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [readOnly]="true" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-text-input [i18n]="personKeyI18n()" [value]="personKey()" (valueChange)="onFieldChange('personKey', $event)" [readOnly]="isReadOnly()" [copyable]=true />
@@ -65,7 +65,7 @@ export class UserModelForm {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   protected bkeyI18n = computed(() => ({
-    name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
+    name: 'okey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
   } as TextInputI18n));
 
   protected personKeyI18n = computed(() => ({
@@ -102,7 +102,7 @@ export class UserModelForm {
   private readonly validationResult = computed(() => userModelFormValidations(this.formData()));
 
   // fields
-  protected bkey = linkedSignal(() => this.formData().bkey);
+  protected okey = linkedSignal(() => this.formData().okey);
   protected tenants = linkedSignal(() => {
     const tenants = this.formData().tenants;
     return Array.isArray(tenants) ? tenants.join(',') : tenants;

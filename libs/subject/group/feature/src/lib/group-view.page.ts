@@ -159,7 +159,7 @@ export class GroupViewPage implements ViewWillEnter {
   protected selectedSegment = computed(() => this.store.segment());
   protected group = computed(() => this.store.group());
   protected name = computed(() => this.formData()?.name ?? DEFAULT_NAME);
-  protected id = computed(() => this.formData()?.bkey ?? DEFAULT_ID);
+  protected id = computed(() => this.formData()?.okey ?? DEFAULT_ID);
   protected hasContent = computed(() => this.formData()?.hasContent ?? true);
   protected hasChat = computed(() => this.formData()?.hasChat ?? true);
   protected hasCalendar = computed(() => this.formData()?.hasCalendar ?? true);
@@ -167,7 +167,7 @@ export class GroupViewPage implements ViewWillEnter {
   protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
   protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
-  protected path = computed(() => getDocumentStoragePath(this.store.tenantId(), 'group', this.group()?.bkey));
+  protected path = computed(() => getDocumentStoragePath(this.store.tenantId(), 'group', this.group()?.okey));
   protected groupTags = computed(() => this.store.getTags());
   protected color = computed(() => this.id().startsWith('notfall') ? 'danger' : 'light');
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());

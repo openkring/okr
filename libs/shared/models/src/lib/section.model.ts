@@ -35,7 +35,7 @@ export interface OrgchartSection extends BaseSection {
 }
 
 export interface OrgchartConfig {
-  topElement: string;  // root element in the form "modelType.bkey" (modelType: 'group' | 'org')
+  topElement: string;  // root element in the form "modelType.okey" (modelType: 'group' | 'org')
   showAvatar: boolean;
   showName: boolean;
   display: 'vertical' | 'horizontal';
@@ -48,7 +48,7 @@ export interface ContextDiagramSection extends BaseSection {
 }
 
 export interface ContextDiagramConfig {
-  startElement: string;           // "modelType.bkey" — org | person | group
+  startElement: string;           // "modelType.okey" — org | person | group
   showAvatar: boolean;            // default: true
   showName: boolean;              // default: true
   showMembers: boolean;           // default: false — show members of centered org/group
@@ -98,7 +98,7 @@ export interface TripStatsConfig {
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 export interface BaseSection {
-  bkey: string;
+  okey: string;
   type: SectionType;
   state: string;
   name: string;
@@ -434,7 +434,7 @@ export interface ResponsibilitySection extends BaseSection {
 }
 
 export interface ResponsibilityConfig {
-  bkey: string;           // bkey of the ResponsibilityModel to display
+  okey: string;           // okey of the ResponsibilityModel to display
   showAvatar: boolean;    // default: true — show avatar of responsible person
   showName: boolean;      // default: true — show name of responsible person
   showDescription: boolean; // default: true — clicking opens a modal with responsibility.notes

@@ -79,7 +79,7 @@ import { InvoiceStore } from './invoice.store';
         <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
-          @for(invoice of filteredInvoices(); track invoice.bkey) {
+          @for(invoice of filteredInvoices(); track invoice.okey) {
             <ion-row (click)="showActions(invoice)">
               <ion-col size="2" class="ion-align-self-center">{{ formatDate(invoice.invoiceDate) }}</ion-col>
               <ion-col size="1">
@@ -185,7 +185,7 @@ export class InvoiceList {
     const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
     const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm' && data) {
-      this.store.setListId(data.bkey);
+      this.store.setListId(data.okey);
       const name = [data.firstName, data.lastName].filter(Boolean).join(' ');
       this.selectedPersonName.set(name);
       this.cdr.markForCheck();

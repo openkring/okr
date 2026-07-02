@@ -102,7 +102,7 @@ export class PersonEditPage implements ViewWillEnter   {
 
   // derived signals
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
-  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.person()?.bkey ?? ''));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.person()?.okey ?? ''));
   protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
   protected parentKey = computed(() => PersonModelName + '.' + this.personKey());
   protected priv = computed(() => this.store.privacySettings());
@@ -112,7 +112,7 @@ export class PersonEditPage implements ViewWillEnter   {
   protected tags = computed(() => this.store.getTags());
   protected tenantId = computed(() => this.store.tenantId());
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
-  protected listId = computed(() => 'p_' + this.store.person()?.bkey);
+  protected listId = computed(() => 'p_' + this.store.person()?.okey);
   protected hideAddButton = computed(() => {
     if (this.hasRole('resourceAdmin')) return false;
     return this.isReadOnly();

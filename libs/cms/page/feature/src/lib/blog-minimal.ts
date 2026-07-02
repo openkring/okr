@@ -28,9 +28,9 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
   template: `
     <div class="blog-minimal">
       <ion-grid>
-        @for (section of sections(); track section.bkey) {
+        @for (section of sections(); track section.okey) {
           <ion-row>
-            <ion-col size="12" [id]="section.bkey" (click)="sectionClick.emit(section.bkey)">
+            <ion-col size="12" [id]="section.okey" (click)="sectionClick.emit(section.okey)">
               @if (editMode()) {
                 <div class="section-wrapper editable">
                   <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />

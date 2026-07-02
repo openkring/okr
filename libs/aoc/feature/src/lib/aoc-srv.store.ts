@@ -70,7 +70,7 @@ function buildIndexEntry(
     firstName,
     lastName,
 
-    mKey:        m?.bkey ?? '',
+    mKey:        m?.okey ?? '',
     personKey:   m?.memberKey ?? '',
     mDateOfExit: m?.dateOfExit ?? '',
     dateOfBirth: m?.memberDateOfBirth ?? '',
@@ -83,7 +83,7 @@ function buildIndexEntry(
     mZipCode:    postal?.zipCode ?? person?.favZipCode ?? '',
     mCity:       postal?.city ?? '',
 
-    pKey:        p?.bkey ?? '',
+    pKey:        p?.okey ?? '',
     memberId:    p?.memberId ?? '',
     pDateOfExit: p?.dateOfExit ?? '',
     pState:      p?.state ?? '',
@@ -294,7 +294,7 @@ export const AocSrvStore = signalStore(
       // ── Process main memberships ─────────────────────────────────────────
       for (const m of mainMemberships) {
         const p = parentByMemberKey.get(m.memberKey);
-        if (p?.bkey) processedParentKeys.add(p.bkey);
+        if (p?.okey) processedParentKeys.add(p.okey);
 
         let r: SrvContact | undefined;
         if (p?.memberId) r = regasoftByServiceId.get(p.memberId);
@@ -311,7 +311,7 @@ export const AocSrvStore = signalStore(
 
       // ── Orphan parent memberships (no matching main) ─────────────────────
       for (const p of parentMemberships) {
-        if (p.bkey && processedParentKeys.has(p.bkey)) continue;
+        if (p.okey && processedParentKeys.has(p.okey)) continue;
 
         let r: SrvContact | undefined;
         if (p.memberId) r = regasoftByServiceId.get(p.memberId);
@@ -439,7 +439,7 @@ export const AocSrvStore = signalStore(
     },
 
     async editMember(mKey: string): Promise<void> {
-      const membership = store.mainMemberships().find(m => m.bkey === mKey);
+      const membership = store.mainMemberships().find(m => m.okey === mKey);
       const mcat = store.mcat();
       if (!membership || !mcat) return;
       const modal = await store.modalController.create({
@@ -464,7 +464,7 @@ export const AocSrvStore = signalStore(
     },
 
     async editParentMember(pKey: string): Promise<void> {
-      const membership = store.parentMemberships().find(m => m.bkey === pKey);
+      const membership = store.parentMemberships().find(m => m.okey === pKey);
       const mcat = store.mcat();
       if (!membership || !mcat) return;
       const modal = await store.modalController.create({
@@ -492,10 +492,10 @@ export const AocSrvStore = signalStore(
       const person = store.appStore.getPerson(item.personKey);
       const org = store.appStore.getOrg(PARENT_ORG);
       if (person && org) {
-        const cat = store.appStore.getCategoryItemByAbbreviation('mcat_' + org.bkey, item.rCategory);
+        const cat = store.appStore.getCategoryItemByAbbreviation('mcat_' + org.okey, item.rCategory);
         if (cat) {
           const defaultDateOfEntry = getYear() + '0101'; // first day of the current year
-          const membership = newMembershipForPerson(person, org.bkey, org.name, cat, defaultDateOfEntry);
+          const membership = newMembershipForPerson(person, org.okey, org.name, cat, defaultDateOfEntry);
           membership.memberId = item.rServiceId;
           store.membershipService.create(membership, store.currentUser());
         }

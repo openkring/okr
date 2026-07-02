@@ -66,7 +66,7 @@ import { UserStore } from './user.store';
         <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
-          @for(user of filteredUsers(); track user.bkey) {
+          @for(user of filteredUsers(); track user.okey) {
               <ion-item (click)="showActions(user)">
                 <ion-label>{{user.loginEmail}}</ion-label>      
                 <ion-label>{{user.firstName | fullName:user.lastName}}</ion-label>      

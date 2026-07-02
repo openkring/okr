@@ -84,7 +84,7 @@ import { LocationStore } from './location.store';
       <bk-empty-list [message]="store.i18n.empty()" />
     } @else {
       <ion-list lines="inset">
-        @for(location of filteredLocations(); track location.bkey) {
+        @for(location of filteredLocations(); track location.okey) {
           <ion-item (click)="showActions(location)">
             <ion-label>{{ location.name }}</ion-label>
             <ion-label>{{ location.type }}</ion-label>

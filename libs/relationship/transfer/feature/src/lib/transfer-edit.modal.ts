@@ -78,9 +78,9 @@ export class TransferEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.transfer()?.bkey));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.transfer()?.okey));
   protected readonly parentKey = computed(() => `${TransferModelName}.${this.transferKey()}`);
-  protected readonly transferKey = computed(() => this.transfer().bkey ?? '');
+  protected readonly transferKey = computed(() => this.transfer().okey ?? '');
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));

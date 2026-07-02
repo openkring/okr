@@ -19,7 +19,7 @@ import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model'
  * - board membership
  */
 export class WorkrelModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public name = DEFAULT_NAME; // name of the work relationship, e.g. project name, job title, description of activity

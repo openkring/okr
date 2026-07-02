@@ -9,7 +9,7 @@ import { CategoryChangeFormModel } from './category-change-form.model';
 export const categoryChangeFormValidations = staticSuite((model: CategoryChangeFormModel, field?: string) => {
   if (field) only(field);
 
-  stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
   stringValidations('memberName', model.memberName, SHORT_NAME_LENGTH);
   stringValidations('orgName', model.orgName, SHORT_NAME_LENGTH);
   dateValidations('dateOfChange', model.dateOfChange);

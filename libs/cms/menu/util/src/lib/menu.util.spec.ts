@@ -30,7 +30,7 @@ describe('Menu Utils', () => {
     vi.clearAllMocks();
 
     rootMenuItem = new MenuItemModel(tenantId);
-    rootMenuItem.bkey = 'root-1';
+    rootMenuItem.okey = 'root-1';
     rootMenuItem.name = 'Main Menu';
     rootMenuItem.label = '@menu.main';
     rootMenuItem.action = 'navigate';
@@ -38,7 +38,7 @@ describe('Menu Utils', () => {
     rootMenuItem.menuItems = ['child-1'];
 
     childMenuItem = new MenuItemModel(tenantId);
-    childMenuItem.bkey = 'child-1';
+    childMenuItem.okey = 'child-1';
     childMenuItem.name = 'Sub Menu';
     childMenuItem.label = '@menu.sub';
     childMenuItem.action = 'navigate';
@@ -46,7 +46,7 @@ describe('Menu Utils', () => {
     childMenuItem.menuItems = [];
 
     const anotherRoot = new MenuItemModel(tenantId);
-    anotherRoot.bkey = 'root-2';
+    anotherRoot.okey = 'root-2';
     anotherRoot.name = 'Another Menu';
     anotherRoot.label = '@menu.another';
     anotherRoot.menuItems = [];

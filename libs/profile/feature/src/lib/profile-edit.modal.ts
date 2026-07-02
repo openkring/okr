@@ -115,7 +115,7 @@ export class ProfileEditModal {
   protected showForm = signal(true);
 
   // derived signals and fields
-  protected headerTitle = computed(() => this.store.getTitleLabel(false, this.currentUser()?.bkey));
+  protected headerTitle = computed(() => this.store.getTitleLabel(false, this.currentUser()?.okey));
   protected currentUser = computed(() => this.store.currentUser());
   protected currentPerson = computed(() => this.store.person());
   protected personKey = computed(() => this.currentUser()?.personKey ?? '');
@@ -130,7 +130,7 @@ export class ProfileEditModal {
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected readonly headerI18n = computed(() => ({
-    title: this.store.getTitleLabel(false, this.currentUser()?.bkey),
+    title: this.store.getTitleLabel(false, this.currentUser()?.okey),
     placeholder: this.store.i18n.search_placeholder()
   }));
 

@@ -75,7 +75,7 @@ export class WorkrelService {
    * @returns a promise that resolves when the deletion is complete
    */
   public async delete(workrel: WorkrelModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${workrel.bkey}: ${getFullName(workrel.subjectName1, workrel.subjectName2)}/${workrel.name} in ${workrel.objectName}`;
+    const payload = `${workrel.okey}: ${getFullName(workrel.subjectName1, workrel.subjectName2)}/${workrel.name} in ${workrel.objectName}`;
     await this.firestoreService.deleteModel<WorkrelModel>(WorkrelCollection, workrel, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('workrel', 'delete', currentUser, payload);
   }

@@ -17,7 +17,7 @@ import { PrettyDatePipe } from '@okr/shared-pipes';
         <ion-col size="12"><small>{{ empty() }}</small></ion-col>
       </ion-row>
     } @else {
-      @for (comment of comments(); track comment.bkey) {
+      @for (comment of comments(); track comment.okey) {
         <ion-row>
           <ion-col size="4" class="ion-hide-md-up"><small>{{ comment.creationDateTime | prettyDate }}</small></ion-col>
           <ion-col size="4" class="ion-hide-md-down"><small>{{ comment.creationDateTime | prettyDate }}/{{ comment.authorName }}</small></ion-col>

@@ -55,7 +55,7 @@ export function convertUserToDisplayForm(user: UserModel): UserDisplayFormModel 
 
 export function convertUserToModelForm(user: UserModel, firstName = '', lastName = ''): UserModelFormModel {
   return {
-    bkey: user.bkey ?? die('UserUtil.convertUserToForm: user.bkey is mandatory.'),
+    okey: user.okey ?? die('UserUtil.convertUserToForm: user.okey is mandatory.'),
     personKey: user.personKey ?? die('UserUtil.convertUserToForm: user.personKey is mandatory.'),
     firstName: user.firstName ?? firstName,
     lastName: user.lastName ?? lastName,
@@ -120,7 +120,7 @@ export function convertDisplayFormToUser(vm: UserDisplayFormModel, user?: UserMo
 }
 export function convertModelFormToUser(vm: UserModelFormModel, user?: UserModel): UserModel {
   if (!user) die('user.util.convertModelFormToUser: User is mandatory.');
-  user.bkey = vm.bkey ?? user.bkey;
+  user.okey = vm.okey ?? user.okey;
   user.personKey = vm.personKey ?? user.personKey;
   user.firstName = vm.firstName ?? user.firstName;
   user.lastName = vm.lastName ?? user.lastName;
@@ -165,7 +165,7 @@ export function isUser(user: unknown, tenantId: string): user is UserModel {
    * @returns the index string
    */
 export function getUserIndex(user: UserModel): string {
-  return `n:${user.firstName} ${user.lastName} l:${user.loginEmail} p:${user.personKey} u:${user.bkey}`;
+  return `n:${user.firstName} ${user.lastName} l:${user.loginEmail} p:${user.personKey} u:${user.okey}`;
 }
 
 export function getUserIndexInfo(): string {

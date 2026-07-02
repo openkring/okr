@@ -70,7 +70,7 @@ export interface ExpenseFormI18n {
             <ion-item>
               <ion-label>{{ i18n().iban_label() }}</ion-label>
               <ion-select [value]="ibanSelectValue()" (ionChange)="setIbanSelect($event.detail.value)">
-                @for (addr of ibans(); track addr.bkey) {
+                @for (addr of ibans(); track addr.okey) {
                   <ion-select-option [value]="addr.iban">
                     {{ addr.isFavorite ? '★ ' : '' }}{{ formatIban(addr.iban) }}
                   </ion-select-option>

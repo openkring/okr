@@ -144,12 +144,12 @@ export class OrgchartSectionComponent {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected onChartNodeClick(event: any): void {
-    const bkey = event?.data?.value as string | undefined;
-    if (!bkey) return;
+    const okey = event?.data?.value as string | undefined;
+    if (!okey) return;
     const root = this.store.rootNode();
-    if (root?.bkey === bkey) { this.handleNodeClick(root); return; }
-    const group = this.store.allGroups().find(g => g.bkey === bkey);
-    if (group) this.handleNodeClick({ name: group.name, bkey: group.bkey, modelType: 'group', icon: group.icon, children: [] });
+    if (root?.okey === okey) { this.handleNodeClick(root); return; }
+    const group = this.store.allGroups().find(g => g.okey === okey);
+    if (group) this.handleNodeClick({ name: group.name, okey: group.okey, modelType: 'group', icon: group.icon, children: [] });
   }
 
   protected async showActions(node: OrgchartTreeNode): Promise<void> {
@@ -169,10 +169,10 @@ export class OrgchartSectionComponent {
     if (!data?.action) return;
     switch (data.action) {
       case 'orgchart.addNewGroup':
-        await this.store.addNewGroup(node.bkey);
+        await this.store.addNewGroup(node.okey);
         break;
       case 'orgchart.addExistingGroup':
-        await this.store.addExistingGroup(node.bkey);
+        await this.store.addExistingGroup(node.okey);
         break;
       case 'orgchart.editGroup':
         await this.store.editGroup(node);
@@ -197,12 +197,12 @@ interface EChartsTreeNode {
 }
 
 function toEchartsNode(node: OrgchartTreeNode, avatarService: AvatarService): EChartsTreeNode {
-  const avatarKey = `${node.modelType}.${node.bkey}`;
+  const avatarKey = `${node.modelType}.${node.okey}`;
   const fallback = node.modelType === 'org' ? 'org' : node.icon;
   const url = avatarService.getAvatarUrl(avatarKey, fallback);
   return {
     name: node.name,
-    value: node.bkey,
+    value: node.okey,
     symbol: `image://${url}`,
     symbolSize: 24,
     children: node.children.map(child => toEchartsNode(child, avatarService)),

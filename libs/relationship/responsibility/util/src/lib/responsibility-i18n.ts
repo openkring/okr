@@ -40,9 +40,9 @@ export const RESPONSIBILITY_I18N_KEYS = {
   list_header_validTo:            PFX + 'list.header.validTo',
   list_header_category:           PFX + 'list.header.category',
 
-  bkey_label:                     PFX + 'bkey.label',
-  bkey_placeholder:               PFX + 'bkey.placeholder',
-  bkey_helper:                    PFX + 'bkey.helper',
+  bkey_label:                     PFX + 'okey.label',
+  bkey_placeholder:               PFX + 'okey.placeholder',
+  bkey_helper:                    PFX + 'okey.helper',
 
   notes_label:                    PFX + 'notes.label',
   notes_placeholder:              PFX + 'notes.placeholder',

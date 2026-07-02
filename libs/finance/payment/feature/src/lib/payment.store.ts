@@ -34,7 +34,7 @@ export const PaymentStore = signalStore(
     orders: computed(() => store.ordersResource.value() ?? []),
     isLoading: computed(() => store.ordersResource.isLoading()),
     currentUser: computed(() => store.appStore.currentUser()),
-    currentUserKey: computed(() => store.appStore.currentUser()?.bkey ?? ''),
+    currentUserKey: computed(() => store.appStore.currentUser()?.okey ?? ''),
     isReadOnly: computed(() => store.accountingStore.isExternallyManaged()),
     accountingTenantId: computed(() => store.accountingStore.accountingTenantId()),
   })),
@@ -55,7 +55,7 @@ export const PaymentStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data) {
         const o = data as PaymentOrderModel;
-        if (o.bkey?.length > 0) {
+        if (o.okey?.length > 0) {
           await store.paymentOrderService.update(o, store.currentUser() ?? undefined);
         } else {
           await store.paymentOrderService.create(o, store.currentUser() ?? undefined);

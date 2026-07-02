@@ -128,7 +128,7 @@ export const LocationStore = signalStore(
               console.warn('LocationStore.edit: location conversion failed, saving without enrichment', error);
               await store.alertService.showToast(store.i18n.convert_error());
             }
-            data.bkey?.length > 0 ?
+            data.okey?.length > 0 ?
               await store.locationService.update(data, store.currentUser()) :
               await store.locationService.create(data, store.currentUser());
           }
@@ -179,13 +179,13 @@ export const LocationStore = signalStore(
             .filter(l => l.latitude !== 0 || l.longitude !== 0);
           if (locations.length === 0) return;
 
-          const center = locations.find(l => l.bkey === store.appStore.tenantId()) ?? locations[0];
+          const center = locations.find(l => l.okey === store.appStore.tenantId()) ?? locations[0];
           const lats = locations.map(l => l.latitude);
           const lngs = locations.map(l => l.longitude);
           const latSpan = Math.max(...lats) - Math.min(...lats);
           const lngSpan = Math.max(...lngs) - Math.min(...lngs);
           const otherMarkers = locations
-            .filter(l => l.bkey !== center.bkey)
+            .filter(l => l.okey !== center.okey)
             .map(l => ({ lat: l.latitude, lng: l.longitude, title: l.name, what3words: l.what3words, distance: l.distance }));
 
           const modal = await store.modalController.create({

@@ -7,7 +7,7 @@ import { booleanValidations, stringValidations } from '@okr/shared-util-core';
 export const groupValidations = staticSuite((model: GroupModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
+  stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   //tagValidations('tags', model.tags);

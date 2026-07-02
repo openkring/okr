@@ -65,7 +65,7 @@ export const AddressStore = signalStore(
     folderService: inject(FolderService),
     i18n: inject(I18nService).translateAll(ADDRESSES_I18N_KEYS),
     storage: inject(STORAGE),
-    qrBillFn: httpsCallable<{ tenantId: string; addressBkey: string; data: Record<string, unknown> }, { storagePath: string }>(
+    qrBillFn: httpsCallable<{ tenantId: string; addressOkey: string; data: Record<string, unknown> }, { storagePath: string }>(
       getFunctions(getApp(), 'europe-west6'),
       'generateQrBill'
     )
@@ -182,7 +182,7 @@ export const AddressStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data && !readOnly) {
         if (isAddress(data, store.tenantId())) {
-            await (!data.bkey ? 
+            await (!data.okey ? 
               store.addressService.create(data, store.currentUser()) : 
               store.addressService.update(data, store.currentUser()));
             this.reload();
@@ -274,7 +274,7 @@ export const AddressStore = signalStore(
 
         // Resolve debtor: defaultOrg when parent != defaultOrg, else currentPerson
         const defaultOrg = store.defaultOrg() as OrgModel | undefined;
-        const isCreditorDefaultOrg = parentModelType === 'org' && parentKey === defaultOrg?.bkey;
+        const isCreditorDefaultOrg = parentModelType === 'org' && parentKey === defaultOrg?.okey;
         let debtorName = '';
         let debtorZip = '';
         let debtorPostal: AddressModel | undefined;
@@ -282,11 +282,11 @@ export const AddressStore = signalStore(
           const person = store.currentPerson() as PersonModel | undefined;
           debtorName = person ? `${person.firstName} ${person.lastName}` : '';
           debtorZip = person?.favZipCode ?? '';
-          if (person?.bkey) debtorPostal = await fetchPostal('person.' + person.bkey);
+          if (person?.okey) debtorPostal = await fetchPostal('person.' + person.okey);
         } else {
           debtorName = defaultOrg?.name ?? '';
           debtorZip = defaultOrg?.favZipCode ?? '';
-          if (defaultOrg?.bkey) debtorPostal = await fetchPostal('org.' + defaultOrg.bkey);
+          if (defaultOrg?.okey) debtorPostal = await fetchPostal('org.' + defaultOrg.okey);
         }
         const debtorStreet = debtorPostal?.streetName ?? '';
         const debtorStreetNumber = debtorPostal?.streetNumber ?? '';
@@ -312,7 +312,7 @@ export const AddressStore = signalStore(
           },
         };
 
-        const result = await store.qrBillFn({ tenantId, addressBkey: address.bkey, data });
+        const result = await store.qrBillFn({ tenantId, addressOkey: address.okey, data });
         const { storagePath } = result.data;
 
         // Get download URL via client SDK
@@ -368,7 +368,7 @@ export const AddressStore = signalStore(
           case 'linkedin': return browseUrl(address.url, 'https://www.linkedin.com/in/');
           case 'instagram': return browseUrl(address.url, 'https://www.instagram.com/');
           case 'bankaccount': return await downloadToBrowser(address.url);
-          default: warn('AddressesAccordionStore.use: unsupported address channel ' + address.addressChannel + ' for address ' + address.parentKey + '/' + address.bkey);
+          default: warn('AddressesAccordionStore.use: unsupported address channel ' + address.addressChannel + ' for address ' + address.parentKey + '/' + address.okey);
         }
       },
 

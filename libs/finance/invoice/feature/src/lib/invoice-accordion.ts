@@ -22,7 +22,7 @@ import { InvoiceStore } from './invoice.store';
       </ion-item>
       <div slot="content">
         <ion-list lines="inset">
-          @for(invoice of myInvoices(); track invoice.bkey) {
+          @for(invoice of myInvoices(); track invoice.okey) {
             <ion-item>
               <ion-label>
                 <strong>{{ invoice.invoiceId }}</strong> {{ invoice.title }}

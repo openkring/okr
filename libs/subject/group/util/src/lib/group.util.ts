@@ -20,7 +20,7 @@ export function isAdminMember(group?: GroupModel, personKey?: string): boolean {
 export function getGroupIndex(group: GroupModel): string {
   let index = '';
   index = addIndexElement(index, 'n', group.name);
-  index = addIndexElement(index, 'k', group.bkey);
+  index = addIndexElement(index, 'k', group.okey);
   return index;
 }
 
@@ -29,7 +29,7 @@ export function getGroupIndex(group: GroupModel): string {
  * This can be used in info boxes on the GUI.
  */
 export function getGroupIndexInfo(): string {
-  return 'n:name k:bkey';
+  return 'n:name k:okey';
 }
 
 /*-------------------------- visibility --------------------------------*/
@@ -55,11 +55,11 @@ export function userMatchesGroupVisibility(group: GroupModel, user: UserModel): 
 }
 
 /**
- * Returns the bkeys of all groups whose `visibility` gives the user access,
+ * Returns the okeys of all groups whose `visibility` gives the user access,
  * excluding groups where the user is already a member (those are handled separately).
  *
  * @param allGroups   All groups loaded from Firestore for this tenant.
- * @param memberKeys  Set of group bkeys the user is already a member of.
+ * @param memberKeys  Set of group okeys the user is already a member of.
  * @param user        The current user.
  */
 export function getVisibleGroupKeys(
@@ -68,8 +68,8 @@ export function getVisibleGroupKeys(
   user: UserModel,
 ): string[] {
   return allGroups
-    .filter(g => !memberKeys.has(g.bkey) && userMatchesGroupVisibility(g, user))
-    .map(g => g.bkey);
+    .filter(g => !memberKeys.has(g.okey) && userMatchesGroupVisibility(g, user))
+    .map(g => g.okey);
 }
 
 /**

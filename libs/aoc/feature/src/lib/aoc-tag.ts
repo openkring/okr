@@ -59,15 +59,15 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
                   </ion-item>
                 }
                 <ion-list lines="inset">
-                  @for(tag of filteredTags(); track tag.bkey) {
+                  @for(tag of filteredTags(); track tag.okey) {
                     <ion-item
-                      [color]="selectedTagKey() === tag.bkey ? 'light' : ''"
+                      [color]="selectedTagKey() === tag.okey ? 'light' : ''"
                       (click)="showTagActions(tag)"
                       button>
                       <ion-icon slot="start" src="{{ 'tags' | svgIcon }}" />
                       <ion-label>
                         <h3>{{ tag.tagModel }}</h3>
-                        <p>bkey: {{ tag.bkey }}</p>
+                        <p>okey: {{ tag.okey }}</p>
                       </ion-label>
                       <ion-note slot="end">{{ tagCount(tag) }}</ion-note>
                     </ion-item>

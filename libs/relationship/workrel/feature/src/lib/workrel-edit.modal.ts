@@ -81,10 +81,10 @@ export class WorkrelEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.workrel().bkey));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.workrel().okey));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
-  protected readonly parentKey = computed(() => `${WorkrelModelName}.${this.workrel().bkey}`);
+  protected readonly parentKey = computed(() => `${WorkrelModelName}.${this.workrel().okey}`);
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -115,7 +115,7 @@ export class WorkrelEditModal {
       if (!vm) return vm;
       return { 
         ...vm, 
-        subjectKey: person.bkey, 
+        subjectKey: person.okey, 
         subjectName1: person.firstName,
         subjectName2: person.lastName,
         subjectType: person.gender
@@ -131,8 +131,8 @@ export class WorkrelEditModal {
       if (!vm) return vm;
       return {
         ...vm,
-        bkey: vm.bkey ?? '', // Ensure bkey is always a string
-        objectKey: org.bkey,
+        okey: vm.okey ?? '', // Ensure okey is always a string
+        objectKey: org.okey,
         objectName: org.name,
         objectType: org.type,
       };

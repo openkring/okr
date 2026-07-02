@@ -262,10 +262,10 @@ import { PageStore } from './page.store';
         } @else {     <!-- page contains sections -->
           <ion-grid>
             <ion-row>
-              @for(section of sections(); track section.bkey) {
+              @for(section of sections(); track section.okey) {
                 @if(getColSizes(section.colSize); as colSizes) {
                   <ion-col size="{{colSizes.size}}" 
-                    class="section-item" (click)="showActions(section.bkey)"
+                    class="section-item" (click)="showActions(section.okey)"
                     [class.edit-mode]="editMode()"
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
@@ -287,7 +287,7 @@ import { PageStore } from './page.store';
         } @else {
           <ion-grid>
             <ion-row>
-              @for(section of sections(); track section.bkey) {
+              @for(section of sections(); track section.okey) {
                 @if(getColSizes(section.colSize); as colSizes) {
                   <ion-col size="{{colSizes.size}}" 
                     class="section-item"
@@ -320,7 +320,7 @@ export class DashboardPage {
 
   // derived signals
   protected tenantId = computed(() => this.store.tenantId());
-  protected popupId = computed(() => 'c_contentpage_' + this.store.page()?.bkey);
+  protected popupId = computed(() => 'c_contentpage_' + this.store.page()?.okey);
   protected editMode = signal(false);
   protected page = computed(() => this.store.page());
   // Accordion sections are not supported in Dashboard pages. Makes the implementation easier.

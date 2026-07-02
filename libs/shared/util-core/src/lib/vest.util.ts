@@ -7,7 +7,7 @@ import { AddressableModel, AvatarInfo, BkModel, isAddressableModel, isBaseModel,
 export function baseValidations(model: BkModel, givenTenants: string, givenTags: string, field?: string) {
 
   omitWhen(!isBaseModel(model), () => {
-    stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
+    stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
   });
 
   omitWhen(!isNamedModel(model), () => {

@@ -8,7 +8,7 @@ describe('locationValidations', () => {
 
   function makeLocation(): LocationModel {
     const location = new LocationModel(tenantId);
-    location.bkey = 'loc-1';
+    location.okey = 'loc-1';
     location.name = 'Main Office';
     location.type = 'address';
     return location;

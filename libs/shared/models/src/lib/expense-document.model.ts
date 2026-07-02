@@ -5,7 +5,7 @@ import { BkModel } from './base.model';
 export type OcrStatus = 'pending' | 'completed' | 'failed' | 'manual';
 
 export class ExpenseDocumentModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 

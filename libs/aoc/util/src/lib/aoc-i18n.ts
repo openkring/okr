@@ -236,7 +236,7 @@ export const AOC_I18N_KEYS = {
   content_menu_missing_hide:                PFX + 'content.menu.missing.hide',
   content_menu_missing_show:                PFX + 'content.menu.missing.show',
 
-  content_copy_bkey:                        PFX + 'content.copy.bkey',
+  content_copy_bkey:                        PFX + 'content.copy.okey',
   content_page_edit:                        PFX + 'content.page.edit',
 
   content_section_images_title:             PFX + 'content.section.images.title',

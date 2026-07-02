@@ -160,9 +160,9 @@ describe('isTripEditable', () => {
 
 describe('groupTripsByDay', () => {
   it('groups trips by startDate descending', () => {
-    const t1 = makeTrip({ startDate: '20240601', bkey: 't1' });
-    const t2 = makeTrip({ startDate: '20240601', bkey: 't2' });
-    const t3 = makeTrip({ startDate: '20240602', bkey: 't3' });
+    const t1 = makeTrip({ startDate: '20240601', okey: 't1' });
+    const t2 = makeTrip({ startDate: '20240601', okey: 't2' });
+    const t3 = makeTrip({ startDate: '20240602', okey: 't3' });
     const groups = groupTripsByDay([t1, t2, t3]);
     expect(groups).toHaveLength(2);
     expect(groups[0].date).toBe('20240602');

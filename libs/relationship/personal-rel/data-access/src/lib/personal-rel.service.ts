@@ -71,7 +71,7 @@ export class PersonalRelService {
   }
 
   public async delete(personalRel: PersonalRelModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${personalRel.bkey}: ${getFullName(personalRel.subjectFirstName, personalRel.subjectLastName)} ${personalRel.type} ${getFullName(personalRel.objectFirstName, personalRel.objectLastName)}`;
+    const payload = `${personalRel.okey}: ${getFullName(personalRel.subjectFirstName, personalRel.subjectLastName)} ${personalRel.type} ${getFullName(personalRel.objectFirstName, personalRel.objectLastName)}`;
     await this.firestoreService.deleteModel<PersonalRelModel>(PersonalRelCollection, personalRel, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('personalrel', 'delete', currentUser, payload);
   }
@@ -109,7 +109,7 @@ export class PersonalRelService {
         const _filteredRels = personalRels.filter((personalRel: PersonalRelModel) => {
           return (personalRel.subjectKey === personKey || personalRel.objectKey === personKey);
         });
-        return removeDuplicatesFromArray<PersonalRelModel>(_filteredRels, 'bkey');
+        return removeDuplicatesFromArray<PersonalRelModel>(_filteredRels, 'okey');
       })
     );
   }

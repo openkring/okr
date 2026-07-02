@@ -84,7 +84,7 @@ import { CalEventStore } from './calevent.store';
         <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
-          @for(event of filteredCalEvents(); track event.bkey) {
+          @for(event of filteredCalEvents(); track event.okey) {
             <ion-item (click)="showActions(event)">
               <ion-label>{{event.name}}</ion-label>
               <ion-label class="ion-hide-md-down"><bk-avatar-display [avatars]="event.responsiblePersons" [showName]="true" /></ion-label>

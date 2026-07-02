@@ -34,7 +34,7 @@ export const EDITOR_CONFIG_SHAPE = {
 
 // --------------------------------------- ABSTRACT BASE SECTION SHAPE ----------------------------------------
 export const BASE_SECTION_SHAPE = {
-  bkey: DEFAULT_KEY,
+  okey: DEFAULT_KEY,
   type: DEFAULT_SECTION_TYPE,
   state: DEFAULT_CONTENT_STATE,
   name: DEFAULT_NAME,
@@ -298,7 +298,7 @@ export const PEOPLE_SECTION_SHAPE = {
 
 // --------------------------------------- RESPONSIBILITY ----------------------------------------
 export const RESPONSIBILITY_CONFIG_SHAPE = {
-  bkey: '',
+  okey: '',
   showAvatar: true,
   showName: true,
   showDescription: true,

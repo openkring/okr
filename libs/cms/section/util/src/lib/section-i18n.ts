@@ -417,9 +417,9 @@ export const SECTION_I18N_KEYS = {
 
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',
-  responsibility_bkey_label:                PFX + 'responsibility.bkey.label',
-  responsibility_bkey_placeholder:          PFX + 'responsibility.bkey.placeholder',
-  responsibility_bkey_helper:               PFX + 'responsibility.bkey.helper',
+  responsibility_bkey_label:                PFX + 'responsibility.okey.label',
+  responsibility_bkey_placeholder:          PFX + 'responsibility.okey.placeholder',
+  responsibility_bkey_helper:               PFX + 'responsibility.okey.helper',
   responsibility_show_avatar_label:         PFX + 'responsibility.show.avatar.label',
   responsibility_show_avatar_helper:        PFX + 'responsibility.show.avatar.helper',
   responsibility_show_name_label:           PFX + 'responsibility.show.name.label',

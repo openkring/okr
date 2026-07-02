@@ -48,7 +48,7 @@ export class InvoiceService {
 
   public async delete(invoice: InvoiceModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<InvoiceModel>(InvoiceCollection, invoice, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
-    void this.activityService.log('invoice', 'delete', currentUser, `${invoice.bkey}: ${invoice.invoiceId}`);
+    void this.activityService.log('invoice', 'delete', currentUser, `${invoice.okey}: ${invoice.invoiceId}`);
   }
 
   public async nextInvoiceNo(year: number, accountingTenantId: string): Promise<number> {

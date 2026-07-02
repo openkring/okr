@@ -28,7 +28,7 @@ import { PeriodStore } from './period.store';
         <p>{{ store.i18n.empty() }}</p>
       } @else {
         <ion-list>
-          @for (period of store.periods(); track period.bkey) {
+          @for (period of store.periods(); track period.okey) {
             <ion-item>
               <ion-label>
                 <h3>{{ period.year }}{{ period.month > 0 ? '-' + period.month : '' }}</h3>

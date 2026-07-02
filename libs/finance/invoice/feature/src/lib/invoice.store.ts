@@ -206,7 +206,7 @@ export const InvoiceStore = signalStore(
       const fn = httpsCallable<{ invoiceId: string }, { content: string }>(
         store.functions, 'showInvoicePdf'
       );
-      const result = await fn({ invoiceId: invoice.bkey });
+      const result = await fn({ invoiceId: invoice.okey });
       const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);

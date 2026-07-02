@@ -10,7 +10,7 @@ describe('PersonModel', () => {
 
   it('should have default property values', () => {
     const model = new PersonModel('tenant-xyz');
-    expect(model.bkey).toBe(DEFAULT_KEY);
+    expect(model.okey).toBe(DEFAULT_KEY);
     expect(model.isArchived).toBe(false);
     expect(model.index).toBe(DEFAULT_INDEX);
     expect(model.tags).toBe(DEFAULT_TAGS);

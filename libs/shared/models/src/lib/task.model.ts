@@ -3,7 +3,7 @@ import { AvatarInfo } from './avatar-info';
 import { BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from './base.model';
 
 export class TaskModel implements BkModel, PersistedModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public name = DEFAULT_NAME;
@@ -11,8 +11,8 @@ export class TaskModel implements BkModel, PersistedModel, NamedModel, Searchabl
   public tags = DEFAULT_TAGS; // topics used to categorize the tasks (input with tag::name)
   public notes = DEFAULT_NOTES;
 
-  public author: AvatarInfo | undefined; // person.bkey: the person who created the task
-  public assignee: AvatarInfo | undefined; // person.bkey: the person responsible for execution
+  public author: AvatarInfo | undefined; // person.okey: the person who created the task
+  public assignee: AvatarInfo | undefined; // person.okey: the person responsible for execution
 
   public state = DEFAULT_TASK_STATE;
   public dueDate = DEFAULT_DATE; // date when the task should be completed

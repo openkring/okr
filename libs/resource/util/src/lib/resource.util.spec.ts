@@ -16,7 +16,7 @@ describe('Resource Utils', () => {
 
   beforeEach(() => {
     resource = new ResourceModel(tenantId);
-    resource.bkey = 'res-1';
+    resource.okey = 'res-1';
     resource.name = 'My Boat';
     resource.type = 'rboat';
     resource.subType = 'b1x';

@@ -28,22 +28,22 @@ export function addIndexElement(index: string, key: string, value: string | numb
 
 
   /**
-   * For each event, returns a map of (calevent.bkey, attendance state) for the current user (personKey).
+   * For each event, returns a map of (calevent.okey, attendance state) for the current user (personKey).
    * If the user is not listed as an attendee, returns 'invited' by default.
    * use like this:  
    *     const states = calendarStore.getAttendanceStates(filteredEvents(), currentUser.personKey);
-   *     const state = states[calevent.bkey] ?? 'invited';
+   *     const state = states[calevent.okey] ?? 'invited';
    * for closed calevents, state is undefined (ie the calevent is not listed in the result)
    * @param calevents Array of CalEventModel
    * @param personKey Person key, typically of the current user
-   * @returns Map of [calevent.bkey, state] for all attendances
+   * @returns Map of [calevent.okey, state] for all attendances
    */
   export function getAttendanceStates(calevents: CalEventModel[], personKey: string): Record<string, string> {
     const result: Record<string, string> = {};
     for (const event of calevents) {
       const state = getAttendanceState(event, personKey);
       if (state) {
-        result[event.bkey] = state;
+        result[event.okey] = state;
       }
     }
     return result;
@@ -104,17 +104,17 @@ export function addIndexElement(index: string, key: string, value: string | numb
   }
 
   /**
-   * For each event, returns a map of (calevent.bkey, invitation state).
+   * For each event, returns a map of (calevent.okey, invitation state).
    * Matches invitations to events by caleventKey.
    * @param calevents Array of CalEventModel
-   * @returns Map of calevent.bkey to invitation state (string)
+   * @returns Map of calevent.okey to invitation state (string)
    */
   export function getInvitationStates(calevents: CalEventModel[], invitations: InvitationModel[]): Record<string, string> {
     const result: Record<string, string> = {};
     for (const event of calevents) {
-      const invitation = invitations.find(inv => inv.caleventKey === event.bkey);
+      const invitation = invitations.find(inv => inv.caleventKey === event.okey);
       if (invitation) {
-        result[event.bkey] = invitation.state ?? 'pending';
+        result[event.okey] = invitation.state ?? 'pending';
       }
     }
     return result;

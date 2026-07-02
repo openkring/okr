@@ -94,7 +94,7 @@ describe('searchData', () => {
     expect(result).toEqual([]);
   });
 
-  it('should map the snapshot docs to an array of data with bkey', async () => {
+  it('should map the snapshot docs to an array of data with okey', async () => {
     const mockDocs = [
       { id: 'doc1', data: () => ({ name: 'Test 1' }) },
       { id: 'doc2', data: () => ({ name: 'Test 2' }) },
@@ -104,8 +104,8 @@ describe('searchData', () => {
     const result = await searchData(mockFirestore, 'test-collection', []);
 
     expect(result).toEqual([
-      { name: 'Test 1', bkey: 'doc1' },
-      { name: 'Test 2', bkey: 'doc2' },
+      { name: 'Test 1', okey: 'doc1' },
+      { name: 'Test 2', okey: 'doc2' },
     ]);
     expect(result.length).toBe(2);
   });

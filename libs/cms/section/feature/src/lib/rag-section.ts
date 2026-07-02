@@ -125,7 +125,7 @@ import { RagStore } from './rag-section.store';
                     <!-- RAG document list (edit mode + contentAdmin only) -->
                     @if (editMode() && isContentAdmin() && documents().length > 0) {
                         <ion-list lines="inset">
-                            @for (doc of documents(); track doc.bkey) {
+                            @for (doc of documents(); track doc.okey) {
                                 <ion-item>
                                     <ion-icon slot="start" src="{{ 'document' | svgIcon }}" />
                                     <ion-label>

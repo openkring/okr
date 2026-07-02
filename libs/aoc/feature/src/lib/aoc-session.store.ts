@@ -130,12 +130,12 @@ export const AocSessionStore = signalStore(
         return;
       }
       const fmt = (sdt: string) => sdt ? convertDateFormatToString(sdt, DateFormat.StoreDateTime, DateFormat.ViewDateTime) : '';
-      const header = ['userEmail', 'browser', 'os', 'status', 'startedAt', 'endedAt', 'lastSeenAt', 'durationSeconds', 'userKey', 'bkey'];
+      const header = ['userEmail', 'browser', 'os', 'status', 'startedAt', 'endedAt', 'lastSeenAt', 'durationSeconds', 'userKey', 'okey'];
       const now = Date.now();
       const rows = sessions.map(s => [
         s.userEmail, s.browser, s.os, getSessionStatus(s, now),
         fmt(s.startedAt), fmt(s.endedAt), fmt(s.lastSeenAt),
-        String(s.durationSeconds), s.userKey, s.bkey,
+        String(s.durationSeconds), s.userKey, s.okey,
       ]);
       await exportCsv([header, ...rows], getExportFileName('sessions', 'csv'));
       showToast(store.toastController, store.i18n.session_export_conf());

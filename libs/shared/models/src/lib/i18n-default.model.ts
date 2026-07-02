@@ -2,7 +2,7 @@ import { DEFAULT_KEY } from '@okr/shared-constants';
 import { BkModel } from './base.model';
 
 export class I18nDefaultModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = [];
   public module = DEFAULT_KEY;
   public key = DEFAULT_KEY;

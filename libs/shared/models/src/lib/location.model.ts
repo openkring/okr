@@ -2,7 +2,7 @@ import { DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LOCATION_TYPE, DEFAULT_
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 export class LocationModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

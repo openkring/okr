@@ -18,7 +18,7 @@ describe('Org Utils', () => {
 
   beforeEach(() => {
     org = new OrgModel(tenantId);
-    org.bkey = 'org-key-1';
+    org.okey = 'org-key-1';
     org.name = 'Test Org';
     org.type = 'association';
     org.favZipCode = '8000';

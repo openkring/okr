@@ -116,7 +116,7 @@ export class ProfileEditPage {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => this.store.getTitleLabel(false, this.currentUser()?.bkey));
+  protected headerTitle = computed(() => this.store.getTitleLabel(false, this.currentUser()?.okey));
   protected currentUser = computed(() => this.store.currentUser());
   protected currentPerson = computed(() => this.store.person());
   protected personKey = computed(() => this.currentUser()?.personKey || '');

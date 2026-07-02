@@ -86,7 +86,7 @@ export class ResourceEditPage {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.resource()?.bkey ?? '', this.type()));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.resource()?.okey ?? '', this.type()));
   protected toolbarTitle = computed(() => this.formData()?.name ?? DEFAULT_TITLE);
   protected readonly parentKey = computed(() => `${ResourceModelName}.${this.resourceKey()}`);
   protected currentUser = computed(() => this.store.currentUser());

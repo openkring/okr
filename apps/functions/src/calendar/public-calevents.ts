@@ -6,7 +6,7 @@ import corsLib from 'cors';
 const cors = corsLib({ origin: true });
 
 interface CalEventDoc {
-  bkey: string;
+  okey: string;
   name: string;
   description: string;
   startDate: string;
@@ -54,7 +54,7 @@ export const getPublicCalEvents = onRequest(
           const tenants = doc.data()['tenants'];
           return Array.isArray(tenants) && tenants.includes(tenantId);
         })
-        .map(doc => ({ bkey: doc.id, ...doc.data() } as CalEventDoc));
+        .map(doc => ({ okey: doc.id, ...doc.data() } as CalEventDoc));
 
       logger.info('getPublicCalEvents: found events', { tenantId, count: events.length });
 

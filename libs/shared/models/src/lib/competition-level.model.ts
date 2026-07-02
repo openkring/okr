@@ -2,7 +2,7 @@ import { DEFAULT_COMPETITION_LEVEL, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX,
 import { BkModel, SearchableModel } from './base.model';
 
 export class CompetitionLevelModel implements BkModel, SearchableModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

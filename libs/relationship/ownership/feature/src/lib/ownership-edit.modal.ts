@@ -86,8 +86,8 @@ export class OwnershipEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.ownership()?.bkey));
-  protected readonly parentKey = computed(() => `${OwnershipModelName}.${this.bkey()}`);
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.ownership()?.okey));
+  protected readonly parentKey = computed(() => `${OwnershipModelName}.${this.okey()}`);
   protected readonly tags = computed(() => this.store.getTags());
   protected readonly name = computed(() => getOwnerName(this.ownership()));
   protected readonly resourceTypes = computed(() => this.store.appStore.getCategory('resource_type'));
@@ -100,7 +100,7 @@ export class OwnershipEditModal {
     const o = this.ownership();
     return newAvatarInfo(o.resourceKey, '', o.resourceName, o.resourceModelType, o.resourceType, o.resourceSubType, o.resourceName);
   });
-  protected bkey = computed(() => this.ownership().bkey);
+  protected okey = computed(() => this.ownership().okey);
   protected readonly subjectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
   protected readonly objectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(this.ownerAvatar()?.modelType));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());

@@ -45,7 +45,7 @@ describe('Transfer Utils', () => {
     person = new PersonModel(tenantId);
     org = new OrgModel(tenantId);
     resource = new ResourceModel(tenantId);
-    resource.bkey = 'res-1';
+    resource.okey = 'res-1';
     resource.name = 'Test Resource';
 
     subjectAvatar = [{ key: 'person-1', name1: '', name2: 'Subject Person', modelType: PersonModelName, type: DEFAULT_GENDER, subType: '', label: ''   }];
@@ -53,7 +53,7 @@ describe('Transfer Utils', () => {
     resourceInfo = { key: 'res-1', name1: '', name2: 'Test Resource', modelType: ResourceModelName, type: DEFAULT_RESOURCE_TYPE, subType: '', label: '' };
 
     transfer = new TransferModel(tenantId);
-    transfer.bkey = 'transfer-1';
+    transfer.okey = 'transfer-1';
     transfer.name = 'Initial Transfer';
     transfer.subjects = subjectAvatar;
     transfer.objects = objectAvatar;

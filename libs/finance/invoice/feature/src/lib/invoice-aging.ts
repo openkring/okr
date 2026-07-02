@@ -58,7 +58,7 @@ function agingBuckets(invoices: InvoiceModel[]): AgingBucket[] {
             {{ bucket.invoices.length }}
           </ion-badge>
         </ion-item>
-        @for (inv of bucket.invoices; track inv.bkey) {
+        @for (inv of bucket.invoices; track inv.okey) {
           <ion-item>
             <ion-label style="padding-left:16px">
               <h3>{{ inv.title }}</h3>

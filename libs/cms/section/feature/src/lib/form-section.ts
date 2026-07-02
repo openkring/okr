@@ -177,7 +177,7 @@ export class FormSectionComponent {
       const processedValues = await this.uploadFiles(values, def);
       await this.store.submitForm(
         def.formKey,
-        this.section().bkey ?? '',
+        this.section().okey ?? '',
         processedValues,
         this.pageLoadedAt,
         def.honeypotKey || 'website',

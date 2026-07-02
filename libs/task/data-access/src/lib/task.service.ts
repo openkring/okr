@@ -75,7 +75,7 @@ export class TaskService {
    * @returns a promise that resolves when the task is deleted
    */
   public async delete(task: TaskModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${task.bkey}: ${task.name}/${task.state}`;
+    const payload = `${task.okey}: ${task.name}/${task.state}`;
     await this.firestoreService.deleteModel<TaskModel>(TaskCollection, task, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('task', 'delete', currentUser, payload);
   }
@@ -120,7 +120,7 @@ export class TaskService {
     task.name = name;
     task.author = author;
     task.assignee = group.admins[0] ?? author;
-    task.calendars = [group.bkey];  // task is assigned to the group calendar
+    task.calendars = [group.okey];  // task is assigned to the group calendar
     await this.create(task, currentUser);
   }
 }

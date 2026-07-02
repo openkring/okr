@@ -5,14 +5,14 @@ import { BkModel } from './base.model';
 // An accounting period (monthly or annual). Created automatically on first booking.
 // Locked periods reject new bookings; corrections go into the current open period.
 export class PeriodModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 
   public year = 0;                    // fiscal year, e.g. 2026
   public month = 0;                   // 1–12 for monthly period; 0 = annual period
   public isLocked = false;
-  public lockedBy = '';               // bkey of user who locked the period
+  public lockedBy = '';               // okey of user who locked the period
   public lockedAt = DEFAULT_DATE;     // StoreDate yyyymmdd
   public accountingTenantId = '';
 
@@ -22,7 +22,7 @@ export class PeriodModel implements BkModel {
     this.year = year;
     this.month = month;
     if (year > 0) {
-      this.bkey = month > 0
+      this.okey = month > 0
         ? `${accountingTenantId}-${year}-${String(month).padStart(2, '0')}`
         : `${accountingTenantId}-${year}`;
     }

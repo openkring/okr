@@ -75,7 +75,7 @@ export const ResponsibilityStore = signalStore(
         const value = listId.substring(2);
         switch (prefix) {
           case 'k_':
-            filtered = filtered.filter(r => r.bkey === value);
+            filtered = filtered.filter(r => r.okey === value);
             break;
           case 'r_':
             filtered = filtered.filter(r => r.responsibleAvatar?.key === value || r.delegateAvatar?.key === value);
@@ -133,12 +133,12 @@ export const ResponsibilityStore = signalStore(
       if (role === 'confirm' && data) {
         if (isResponsibility(data, store.tenantId())) {
           if (isNew) {
-          // bkey is user-defined. Therefore, we need to check for duplicates when creating a new responsibility.
-            const existingResp = store.allResponsibilities()?.find((r: ResponsibilityModel) => r.bkey === data.bkey);
+          // okey is user-defined. Therefore, we need to check for duplicates when creating a new responsibility.
+            const existingResp = store.allResponsibilities()?.find((r: ResponsibilityModel) => r.okey === data.okey);
             if (existingResp) {
               const alert = await store.alertController.create({
                 header: store.i18n.update_header(),
-                message: store.i18n.update_message1() + data.bkey + store.i18n.update_message2(),
+                message: store.i18n.update_message1() + data.okey + store.i18n.update_message2(),
                 buttons: [store.i18n.ok()]
               });
               await alert.present();

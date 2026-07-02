@@ -101,7 +101,7 @@ export const AocRolesStore = signalStore(
         const users = store.users();
         const person = params.person;
         if (!person || !users) return of(undefined);
-        return of(findUserByPersonKey(users, person.bkey));
+        return of(findUserByPersonKey(users, person.okey));
       },
     }),
   })),
@@ -113,7 +113,7 @@ export const AocRolesStore = signalStore(
         const user = state.userResource.value();
         if (!user) return undefined;
         return {
-          id: user.bkey,
+          id: user.okey,
           name: user.loginEmail,
           imageUrl: '',
         };
@@ -129,7 +129,7 @@ export const AocRolesStore = signalStore(
       stream: ({ params }) => {
         const selectedUser = params.selectedUser;
         if (!selectedUser) return of(undefined);
-        return from(getFirebaseUser(selectedUser.bkey));
+        return from(getFirebaseUser(selectedUser.okey));
       },
     }),
   })),
@@ -194,7 +194,7 @@ export const AocRolesStore = signalStore(
           return;
         }
         try {
-          patchState(store, { log: [], logTitle: `creating account for ${person.firstName} ${person.lastName}/${person.bkey}/${person.favEmail}` });
+          patchState(store, { log: [], logTitle: `creating account for ${person.firstName} ${person.lastName}/${person.okey}/${person.favEmail}` });
           const user = createUserFromPerson(person, store.appStore.env.tenantId);
           if (!user.loginEmail || user.loginEmail.length === 0 || !isValidEmail(user.loginEmail)) {
             console.warn('RolesStore.createAccountAndUser: loginEmail is missing or invalid - can not register this user');
@@ -214,7 +214,7 @@ export const AocRolesStore = signalStore(
             const existingUser = await firstValueFrom(store.userService.read(uid));
             console.log(`RolesStore.createAccountAndUser: read user ${uid}`, existingUser);
             if (!existingUser) {
-              user.bkey = uid;
+              user.okey = uid;
               console.log('RolesStore.createAccountAndUser: creating user: ', user);
               await store.userService.create(user, store.currentUser());
               store.usersResource.reload();
@@ -280,8 +280,8 @@ export const AocRolesStore = signalStore(
         } else {
           // a user is selected
           try {
-            patchState(store, { log: [], logTitle: `setting new password for user ${user.bkey}` });
-            setPassword(user.bkey, generatedPwd, store.appStore.env.useEmulators);
+            patchState(store, { log: [], logTitle: `setting new password for user ${user.okey}` });
+            setPassword(user.okey, generatedPwd, store.appStore.env.useEmulators);
           } catch (ex) {
             error(store.toastController, 'RolesStore.setPassword -> error: ' + JSON.stringify(ex));
           }
@@ -327,8 +327,8 @@ export const AocRolesStore = signalStore(
           return;
         }
         const email = person.favEmail;
-        patchState(store, { log: [], logTitle: `checking authorisation for ${person.firstName} ${person.lastName}/${person.bkey}/${email}` });
-        patchState(store, { log: logMessage(log, 'person ID: ' + person.bkey) });
+        patchState(store, { log: [], logTitle: `checking authorisation for ${person.firstName} ${person.lastName}/${person.okey}/${email}` });
+        patchState(store, { log: logMessage(log, 'person ID: ' + person.okey) });
         patchState(store, { log: logMessage(log, 'person tenants: ' + person.tenants.join(', ')) });
         if (!email || email.length === 0) {
           patchState(store, { log: logMessage(log, 'The person does not have an email address. Therefore, an account can not be opened.') });
@@ -339,12 +339,12 @@ export const AocRolesStore = signalStore(
           if (!user) {
             patchState(store, { log: logMessage(log, 'user is missing') });
           } else {
-            patchState(store, { log: logMessage(log, 'user ID: ' + user.bkey) });
+            patchState(store, { log: logMessage(log, 'user ID: ' + user.okey) });
             patchState(store, { log: logMessage(log, 'user email: ' + user.loginEmail) });
             patchState(store, { log: logMessage(log, 'isArchived: ' + user.isArchived) });
             patchState(store, { log: logMessage(log, 'user tenants: ' + user.tenants.join(', ')) });
             patchState(store, { log: logMessage(log, 'roles: ' + Object.keys(user.roles)) });
-            patchState(store, { log: logMessage(log, 'user-person link: ' + (user.personKey === person.bkey ? 'OK' : 'ERROR: ' + user.personKey + ' != ' + person.bkey)) });
+            patchState(store, { log: logMessage(log, 'user-person link: ' + (user.personKey === person.okey ? 'OK' : 'ERROR: ' + user.personKey + ' != ' + person.okey)) });
           }
           const fbUser = store.selectedFbUser();
           if (!fbUser) {
@@ -354,7 +354,7 @@ export const AocRolesStore = signalStore(
             patchState(store, { log: logMessage(log, 'firebase user ID: ' + fbUser.uid) });
             patchState(store, { log: logMessage(log, 'firebase email: ' + fbUser.email) });
             if (user) {
-              patchState(store, { log: logMessage(log, 'fbUser-user link: ' + (fbUser.uid === user.bkey ? 'OK' : 'ERROR: ' + fbUser.uid + ' != ' + user.bkey)) });
+              patchState(store, { log: logMessage(log, 'fbUser-user link: ' + (fbUser.uid === user.okey ? 'OK' : 'ERROR: ' + fbUser.uid + ' != ' + user.okey)) });
             }
           }
           // tbd: check for all users that have the same email address (and different tenants)
@@ -373,7 +373,7 @@ export const AocRolesStore = signalStore(
           patchState(store, { log: logMessage(log, 'AocRolesStore.impersonateUser: no user, please select a person first') });
           return;
         } else {
-          patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: user <${user.bkey}/${user.loginEmail}> exists`) });
+          patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: user <${user.okey}/${user.loginEmail}> exists`) });
         }
         try {
           // Get a reference to the Firebase Functions service.
@@ -382,13 +382,13 @@ export const AocRolesStore = signalStore(
             connectFunctionsEmulator(functions, 'localhost', 5001);
           }
           const createCustomTokenFunction = httpsCallable(functions, 'createCustomToken');
-          const result = await createCustomTokenFunction({ uid: user.bkey });
+          const result = await createCustomTokenFunction({ uid: user.okey });
           patchState(store, { log: [], logTitle: `AocRolesStore.impersonateUser: createCustomToken was successful: ${result}` });
           const token = result.data as string;
           patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: impersonation token <${token}>`) });
           // Now we can use the impersonation token to sign in the user
           await store.authService.loginWithToken(token, 'public/welcome');
-          patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: user <${user.bkey}/${user.loginEmail}> is now impersonated`) });
+          patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: user <${user.okey}/${user.loginEmail}> is now impersonated`) });
         } catch (ex) {
           console.error('AocRolesStore.impersonateUser: Error calling impersonateUser function:', ex);
         }

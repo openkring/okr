@@ -7,7 +7,7 @@ import { DepreciationMethod } from './asset-category.model';
 // Financial fixed asset. Physical description lives in an optionally linked ResourceModel.
 // See spec §0.5 for the ResourceModel ↔ AssetModel design decision.
 export class AssetModel implements BkModel, NamedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 

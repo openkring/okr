@@ -25,7 +25,7 @@ describe('Page Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     page = new PageModel(tenantId);
-    page.bkey = 'page-1';
+    page.okey = 'page-1';
     page.name = 'Home Page';
     page.tags = 'home,main';
     page.title = 'Welcome to the Home Page';

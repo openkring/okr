@@ -109,7 +109,7 @@ export class MembershipEditModal {
   protected memberKey = computed(() => this.formData()?.memberKey ?? '');
   protected currentMcat = computed<CategoryListModel>(() => {
     const orgKey = (this.formData() ?? this.membership()).orgKey;
-    const org = this.appStore.allOrgs().find(o => o.bkey === orgKey);
+    const org = this.appStore.allOrgs().find(o => o.okey === orgKey);
     return this.appStore.tryGetCategory(org?.membershipCategoryKey ?? 'mcat_default') ?? this.mcat();
   });
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());

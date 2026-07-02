@@ -84,7 +84,7 @@ export class ResourceEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.resource()?.bkey));
+  protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.resource()?.okey));
   protected toolbarTitle = computed(() => this.formData()?.name);
   protected readonly parentKey = computed(() => `${ResourceModelName}.${this.resourceKey()}`);
   protected currentUser = computed(() => this.store.currentUser());
@@ -94,7 +94,7 @@ export class ResourceEditModal {
   protected tags = computed(() => this.store.getTags(this.type()));
   protected tenantId = computed(() => this.store.tenantId());
   protected type = linkedSignal(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
-  protected resourceKey = computed(() => this.resource()?.bkey ?? '');
+  protected resourceKey = computed(() => this.resource()?.okey ?? '');
   protected listId = computed(() => `r_${this.resourceKey()}`);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));

@@ -114,7 +114,7 @@ function storeToView(d: string): string {
       </ion-card>
 
       <!-- Accordions -->
-      @if(calevent().bkey) {
+      @if(calevent().okey) {
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="documents">
@@ -142,7 +142,7 @@ export class CalEventViewModal {
   public periodicities = input.required<CategoryListModel>();
   public locale = input.required<string>();
 
-  protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().bkey}`);
+  protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
 
   private get wdAbbr() {
     return {

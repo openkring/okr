@@ -80,7 +80,7 @@ import { PersonStore } from './person.store';
           @for(person of filteredPersons(); track $index) {
             <ion-item (click)="showActions(person)">
               <ion-avatar slot="start">
-                <ion-img src="{{ personModelName + '.' + person.bkey | avatar:personModelName }}" alt="Avatar Logo" />
+                <ion-img src="{{ personModelName + '.' + person.okey | avatar:personModelName }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{person.firstName | fullName:person.lastName:nameDisplay()}}</ion-label>      
               <ion-label class="ion-hide-sm-down">
@@ -179,7 +179,7 @@ export class PersonList {
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // all users
-    if (await this.store.isPersonUser(person.bkey)) {
+    if (await this.store.isPersonUser(person.okey)) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.send_message(), this.imgixBaseUrl, 'chatbubbles'));
     }
     if (person.favEmail) {

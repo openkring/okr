@@ -41,7 +41,7 @@ describe('User Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     user = new UserModel(tenantId);
-    user.bkey = 'user-1';
+    user.okey = 'user-1';
     user.personKey = 'person-1';
     user.firstName = 'John';
     user.lastName = 'Doe';
@@ -91,7 +91,7 @@ describe('User Utils', () => {
 
     it('convertUserToModelForm should convert user to model form model', () => {
       const form = convertUserToModelForm(user, 'John', 'Doe');
-      expect(form.bkey).toBe('user-1');
+      expect(form.okey).toBe('user-1');
       expect(form.loginEmail).toBe('john.doe@example.com');
     });
 

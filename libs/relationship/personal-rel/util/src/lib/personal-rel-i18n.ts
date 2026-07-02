@@ -38,9 +38,9 @@ export const PERSONAL_REL_I18N_KEYS = {
   list_header_person2:            PFX + 'list.header.person2',
   list_header_type:               PFX + 'list.header.type',
 
-  bkey_label:                      PFX + 'bkey.label',
-  bkey_placeholder:                PFX + 'bkey.placeholder',
-  bkey_helper:                     PFX + 'bkey.helper',
+  bkey_label:                      PFX + 'okey.label',
+  bkey_placeholder:                PFX + 'okey.placeholder',
+  bkey_helper:                     PFX + 'okey.helper',
 
   label_label:                     PFX + 'label.label',
   label_placeholder:               PFX + 'label.placeholder',

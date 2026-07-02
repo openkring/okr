@@ -73,11 +73,11 @@ export const AccountStore = signalStore(
     },
 
     /*-------------------------- tree expansion --------------------------------*/
-    toggleExpand(bkey: string): void {
+    toggleExpand(okey: string): void {
       const current = store.expandedKeys();
-      const next = current.includes(bkey)
-        ? current.filter(k => k !== bkey)
-        : [...current, bkey];
+      const next = current.includes(okey)
+        ? current.filter(k => k !== okey)
+        : [...current, okey];
       patchState(store, { expandedKeys: next });
     },
 
@@ -113,7 +113,7 @@ export const AccountStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data) {
         if (isAccount(data, store.appStore.tenantId())) {
-          if (data.bkey?.length > 0) {
+          if (data.okey?.length > 0) {
             await store.accountService.update(data, store.currentUser());
           } else {
             const newKey = await store.accountService.create(data, store.currentUser());
@@ -138,8 +138,8 @@ export const AccountStore = signalStore(
      */
     async delete(account: AccountModel, readOnly = true): Promise<void> {
       if (readOnly) return;
-      await store.accountService.deleteTree(account.bkey, store.accountingStore.accountingTenantId(), store.currentUser());
-      if (store.selectedRootKey() === account.bkey) {
+      await store.accountService.deleteTree(account.okey, store.accountingStore.accountingTenantId(), store.currentUser());
+      if (store.selectedRootKey() === account.okey) {
         patchState(store, { selectedRootKey: '', expandedKeys: [] });
       }
       store.accountsResource.reload();

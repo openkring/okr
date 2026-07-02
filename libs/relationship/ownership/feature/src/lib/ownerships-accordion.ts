@@ -71,7 +71,7 @@ export class OwnershipAccordion {
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.store.setOwner(this.owner().bkey, this.ownerModelType()));
+    effect(() => this.store.setOwner(this.owner().okey, this.ownerModelType()));
   }
 
   /******************************* getters *************************************** */

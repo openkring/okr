@@ -96,7 +96,7 @@ export class ExpenseNewModal {
   private readonly ibansResource = rxResource({
     stream: () => {
       const user = this.appStore.currentUser();
-      return this.addressService.listBankAccounts(user?.bkey ?? '');
+      return this.addressService.listBankAccounts(user?.okey ?? '');
     },
   });
 

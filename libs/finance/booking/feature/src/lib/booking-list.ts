@@ -29,8 +29,8 @@ import { BookingStore } from './booking.store';
         <p>{{ store.i18n.empty() }}</p>
       } @else {
         <ion-list>
-          @for (booking of store.bookings(); track booking.bkey) {
-            <ion-item (click)="store.openEdit(booking, store.linesByBooking().get(booking.bkey) ?? [], store.isReadOnly())">
+          @for (booking of store.bookings(); track booking.okey) {
+            <ion-item (click)="store.openEdit(booking, store.linesByBooking().get(booking.okey) ?? [], store.isReadOnly())">
               <ion-label>
                 <h3>{{ booking.bookingNo }} — {{ booking.title }}</h3>
                 <p>{{ booking.date }}</p>

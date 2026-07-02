@@ -32,10 +32,10 @@ import { PageI18n, pageValidations } from '@okr/cms-page-util';
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                @if(bkey(); as bkey) {
+                @if(okey(); as okey) {
                   <ion-item lines="none">
-                    <ion-label>Page Key: {{ bkey }}</ion-label>
-                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="bkey" />
+                    <ion-label>Page Key: {{ okey }}</ion-label>
+                    <bk-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
                   </ion-item>
                 }
               </ion-col>
@@ -107,7 +107,7 @@ export class PageForm {
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
 
   // fields
-  protected bkey = computed(() => this.formData().bkey ?? DEFAULT_KEY);
+  protected okey = computed(() => this.formData().okey ?? DEFAULT_KEY);
   protected sections = linkedSignal(() => this.formData().sections ?? []);
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected title = linkedSignal(() => this.formData().title ?? DEFAULT_TITLE);

@@ -47,7 +47,7 @@ function buildPersonIndex(p: FsData): string {
 
 function toCandidate(id: string, d: FsData): PersonDuplicateCandidate {
   return {
-    bkey: id,
+    okey: id,
     firstName: d.firstName ?? '',
     lastName: d.lastName ?? '',
     gender: d.gender ?? '',
@@ -150,6 +150,6 @@ export const mergePersonIntoTenant = onCall(
       tenants: FieldValue.arrayUnion(tenantId),
       index: buildPersonIndex(merged),
     });
-    return { bkey: personKey };
+    return { okey: personKey };
   },
 );

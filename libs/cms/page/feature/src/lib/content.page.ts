@@ -163,7 +163,7 @@ import { PageStore } from './page.store';
         } @else {     <!-- page contains sections -->
           <ion-grid>
             <ion-row>
-              @for(section of visibleSections(); track section.bkey) {
+              @for(section of visibleSections(); track section.okey) {
                 @if(getColSizes(section.colSize); as colSizes) {
                   <ion-col size="{{colSizes.size}}" 
                     class="section-item" (click)="showActions(section)"
@@ -190,8 +190,8 @@ import { PageStore } from './page.store';
           </ion-item>
         } @else {
           <div class="print-content" #printContent>
-            @for(section of visibleSections(); track section.bkey) {
-              <div [id]="section.bkey">
+            @for(section of visibleSections(); track section.okey) {
+              <div [id]="section.okey">
                 <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
               </div>
             }
@@ -226,7 +226,7 @@ export class ContentPage {
   // derived signals
   protected tenantId = computed(() => this.store.tenantId());
   protected showDebugInfo = computed(() => this.store.showDebugInfo());
-  protected popupId = computed(() => 'c_contentpage_' + this.store.page()?.bkey);
+  protected popupId = computed(() => 'c_contentpage_' + this.store.page()?.okey);
   protected editMode = signal(false);
   protected page = computed(() => this.store.page());
   protected sections = computed(() => this.store.pageSections());
@@ -263,7 +263,7 @@ export class ContentPage {
     
     return this.sections().filter(s => {
       // Exclude nested sections
-      if (nested.has(s.bkey)) return false;
+      if (nested.has(s.okey)) return false;
       
       // ContentAdmin and group admins see all sections
       if (this.isEditable()) return true;
@@ -375,7 +375,7 @@ export class ContentPage {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'page.removesection':    await this.store.removeSectionById(section.bkey);             break;
+        case 'page.removesection':    await this.store.removeSectionById(section.okey);             break;
         case 'section.edit':          await this.sectionStore.edit(section, false);                     break;
         case 'section.send':          await this.sectionStore.send(section);                            break;
         case 'section.image.upload':  await this.sectionStore.uploadImage(section as ArticleSection);   break;
@@ -403,7 +403,7 @@ export class ContentPage {
       .map(item => item.key)
       .filter(id => id !== undefined) as string[];
     
-    const nestedSections = this.store.pageSections().filter(s => sectionIds.includes(s.bkey));
+    const nestedSections = this.store.pageSections().filter(s => sectionIds.includes(s.okey));
     
     // ContentAdmin and group admins see all nested sections
     if (this.isEditable()) return nestedSections;

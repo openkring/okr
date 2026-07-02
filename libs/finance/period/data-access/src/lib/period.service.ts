@@ -38,7 +38,7 @@ export class PeriodService {
 
   public async lock(period: PeriodModel, currentUser: UserModel): Promise<string | undefined> {
     period.isLocked = true;
-    period.lockedBy = currentUser.bkey ?? '';
+    period.lockedBy = currentUser.okey ?? '';
     period.lockedAt = convertDateFormatToString(getTodayStr(DateFormat.IsoDate), DateFormat.IsoDate, DateFormat.StoreDate);
     return await this.update(period, currentUser);
   }

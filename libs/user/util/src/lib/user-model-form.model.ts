@@ -1,7 +1,7 @@
 import { DEFAULT_EMAIL, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 
 export type UserModelFormModel = {
-  bkey: string,         // user key
+  okey: string,         // user key
   personKey: string,
   firstName: string,
   lastName: string,
@@ -15,7 +15,7 @@ export type UserModelFormModel = {
 
 export const USER_FORM_SHAPE: UserModelFormModel = {
 
-  bkey: DEFAULT_KEY,
+  okey: DEFAULT_KEY,
   personKey: DEFAULT_KEY,
   firstName: DEFAULT_NAME,
   lastName: DEFAULT_NAME,

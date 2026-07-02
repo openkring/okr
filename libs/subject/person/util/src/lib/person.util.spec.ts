@@ -19,7 +19,7 @@ describe('Person Utils', () => {
 
   beforeEach(() => {
     person = new PersonModel(tenantId);
-    person.bkey = 'person-1';
+    person.okey = 'person-1';
     person.firstName = 'John';
     person.lastName = 'Doe';
     person.gender = 'male';

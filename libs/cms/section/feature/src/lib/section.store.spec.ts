@@ -87,14 +87,14 @@ describe('SectionStore', () => {
 
   it('filteredSections filters the loaded sections by search term', async () => {
     const sections = [
-      { bkey: '1', index: 'hero', type: 'article', state: 'published', tags: '' },
-      { bkey: '2', index: 'intro', type: 'article', state: 'published', tags: '' }
+      { okey: '1', index: 'hero', type: 'article', state: 'published', tags: '' },
+      { okey: '2', index: 'intro', type: 'article', state: 'published', tags: '' }
     ];
     store = makeStore(sectionServiceMock(sections));
     await TestBed.inject(ApplicationRef).whenStable();
     expect(store.sectionsCount()).toBe(2);
     store.setSearchTerm('hero');
-    expect(store.filteredSections()?.map((s) => s.bkey)).toEqual(['1']);
+    expect(store.filteredSections()?.map((s) => s.okey)).toEqual(['1']);
   });
 
   it('starts without an error and exposes error state (withErrorState)', () => {

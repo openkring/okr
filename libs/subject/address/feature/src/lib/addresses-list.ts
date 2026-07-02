@@ -72,7 +72,7 @@ import { AddressStore } from './addresses.store';
       } @else {
         @if(selectedChannel()) {
           <ion-list lines="inset">
-            @for(address of filteredAddresses(); track address.bkey) {
+            @for(address of filteredAddresses(); track address.okey) {
               <ion-item (click)="showActions(address)">
                 <ion-avatar slot="start">
                   <ion-img src="{{ address.parentKey | avatar }}" alt="Avatar Logo" />
@@ -103,7 +103,7 @@ import { AddressStore } from './addresses.store';
                 </ion-item>
                 <div slot="content">
                   <ion-list lines="inset">
-                    @for(address of groupedAddresses().get(parentKey) ?? []; track address.bkey) {
+                    @for(address of groupedAddresses().get(parentKey) ?? []; track address.okey) {
                       <ion-item (click)="showActions(address)">
                         <ion-label class="addresses">
                           <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
@@ -348,9 +348,9 @@ export class AddressesList {
   }
 
   protected async goto(parentKey: string): Promise<void> {
-    const [modelType, bkey] = parentKey.split('.');
+    const [modelType, okey] = parentKey.split('.');
     if (!parentKey || parentKey.length === 0) return;
     if (modelType === '')
-    await navigateByUrl(this.store.router, `/${modelType}/${bkey}`);
+    await navigateByUrl(this.store.router, `/${modelType}/${okey}`);
   }
 }

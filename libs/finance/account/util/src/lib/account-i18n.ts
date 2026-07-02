@@ -13,9 +13,9 @@ export const ACCOUNT_I18N_KEYS = {
   update:               PFX + 'update',
   view:                 PFX + 'view',
 
-  bkey:                 PFX + 'bkey.label',
-  bkey_placeholder:     PFX + 'bkey.placeholder',
-  bkey_helper:          PFX + 'bkey.helper',
+  okey:                 PFX + 'okey.label',
+  bkey_placeholder:     PFX + 'okey.placeholder',
+  bkey_helper:          PFX + 'okey.helper',
 
   id:                   PFX + 'id.label',
   id_placeholder:       PFX + 'id.placeholder',

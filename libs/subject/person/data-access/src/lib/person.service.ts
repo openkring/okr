@@ -103,7 +103,7 @@ export class PersonService {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(person: PersonModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${person.bkey}: ${getFullName(person.firstName, person.lastName)}`;
+    const payload = `${person.okey}: ${getFullName(person.firstName, person.lastName)}`;
     await this.firestoreService.deleteModel<PersonModel>(PersonCollection, person, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('person', 'delete', currentUser, payload);
   }
@@ -136,7 +136,7 @@ export class PersonService {
     const fn = httpsCallable<MergePersonIntoTenantRequest, MergePersonIntoTenantResponse>(
       this.functions, 'mergePersonIntoTenant');
     const result = await fn({ personKey, tenantId, resolvedFields });
-    return result.data.bkey;
+    return result.data.okey;
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

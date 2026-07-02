@@ -26,7 +26,7 @@ export async function searchData<T>(firestore: Firestore, collectionName: string
     return [];
   }
   return snapshot.docs.map(doc => {
-    return { ...doc.data(), bkey: doc.id } as T;
+    return { ...doc.data(), okey: doc.id } as T;
   });
 }
 

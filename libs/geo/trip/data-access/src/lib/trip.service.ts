@@ -50,7 +50,7 @@ export class TripService {
 
   public async softDelete(trip: TripModel, reason: string, photoUrl: string | undefined, currentUser?: UserModel): Promise<void> {
     trip.deletedAt = new Date().toISOString();
-    trip.deletedBy = currentUser?.bkey ?? null;
+    trip.deletedBy = currentUser?.okey ?? null;
     trip.state = 'deleted';
     trip.notes = trip.notes
       ? `${trip.notes}\n[Gelöscht: ${reason}${photoUrl ? ` | ${photoUrl}` : ''}]`

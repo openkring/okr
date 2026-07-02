@@ -8,7 +8,7 @@ export type BookingStatus = 'draft' | 'posted' | 'cancelled';
 // Header record for a double-entry booking. All amounts live in BookingLineModel.
 // Every booking has at least two BookingLineModel entries (debit + credit sides).
 export class BookingModel implements BkModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;
@@ -22,7 +22,7 @@ export class BookingModel implements BkModel, SearchableModel, TaggedModel {
   public periodKey = '';                  // ref to PeriodModel
   public documentKey = '';               // ref to DocumentModel (voucher)
   public status: BookingStatus = 'draft';
-  public accountingTenantId = '';        // = org.bkey of the accounting tenant
+  public accountingTenantId = '';        // = org.okey of the accounting tenant
   public counterparty: AvatarInfo | undefined;  // external party of the booking (Gutschrift sender, donor, invoice receiver)
 
   constructor(tenantId: string, accountingTenantId: string) {

@@ -1,7 +1,7 @@
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME } from "@okr/shared-constants";
 
 export type CategoryChangeFormModel = {
-  bkey: string,
+  okey: string,
   memberName: string,    // firstName lastName
   orgName: string,
   dateOfChange: string,     // the first day of the new category
@@ -10,7 +10,7 @@ export type CategoryChangeFormModel = {
 };
 
 export const CATEGORY_CHANGE_FORM_SHAPE: CategoryChangeFormModel = {
-  bkey: DEFAULT_KEY,
+  okey: DEFAULT_KEY,
   memberName: DEFAULT_NAME,
   orgName: DEFAULT_NAME,
   dateOfChange: DEFAULT_DATE,

@@ -7,7 +7,7 @@ import { AvatarInfo } from './avatar-info';
  * Bill = Lieferantenrechnung (Kreditor) in Bexio
  */
 export class BillModel implements BkModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;
@@ -31,7 +31,7 @@ export class BillModel implements BkModel, SearchableModel, TaggedModel {
   // bill sender (person or org) Rechnungssteller
   public vendor: AvatarInfo | undefined;
 
-  public accountingTenantId = '';   // = org.bkey of the accounting tenant
+  public accountingTenantId = '';   // = org.okey of the accounting tenant
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

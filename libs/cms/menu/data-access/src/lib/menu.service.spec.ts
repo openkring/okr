@@ -58,7 +58,7 @@ describe('MenuService', () => {
 
   it('update() updates the collection (not overwrite) and returns the id', async () => {
     const item = new MenuItemModel(tenantId);
-    item.bkey = 'm1';
+    item.okey = 'm1';
     const id = await service.update(item);
     expect(id).toBe('updated-id');
     expect(firestore.updateModel).toHaveBeenCalledTimes(1);
@@ -68,7 +68,7 @@ describe('MenuService', () => {
 
   it('delete() (soft archive) calls deleteModel on the collection', async () => {
     const item = new MenuItemModel(tenantId);
-    item.bkey = 'm1';
+    item.okey = 'm1';
     await service.delete(item);
     expect(firestore.deleteModel).toHaveBeenCalledTimes(1);
     expect(firestore.deleteModel.mock.calls[0][0]).toBe(MenuItemCollection);

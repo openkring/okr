@@ -48,7 +48,7 @@ const PUSH_GATEWAY_BASE = process.env.MATRIX_PUSH_GATEWAY_BASE || 'https://scs-a
 
 /**
  * Resolve the Matrix user localpart for a Firebase UID, requiring a provisioned
- * user. The localpart is Person.bkey (via users/{uid}.personKey), which is the
+ * user. The localpart is Person.okey (via users/{uid}.personKey), which is the
  * single consistent identity across all chat scenarios (group chat, direct chat,
  * chat overview).
  *
@@ -120,10 +120,10 @@ async function requireProvisionedUser(
 
 /**
  * Single source of truth for a group's Matrix room alias localpart.
- * Matrix alias localparts may only contain [a-z0-9._~-]; the group bkey may contain
+ * Matrix alias localparts may only contain [a-z0-9._~-]; the group okey may contain
  * uppercase/spaces/other characters, so it is lowercased and sanitised. ALL CFs must
  * derive the alias through this helper — divergent derivation was a cause of S5
- * duplicate rooms (some CFs used the raw `#group_<bkey>`).
+ * duplicate rooms (some CFs used the raw `#group_<okey>`).
  */
 function groupRoomAliasLocalpart(groupId: string): string {
   return `group_${groupId.toLowerCase().replace(/[^a-z0-9._~-]/g, '_')}`;
@@ -301,7 +301,7 @@ export const getMatrixCredentials = onCall(
 
       console.log(`Getting Matrix credentials for Firebase user: ${firebaseUid}`);
 
-      // Derive Matrix user ID from Person.bkey (consistent across all chat scenarios).
+      // Derive Matrix user ID from Person.okey (consistent across all chat scenarios).
       // SEC-3: requireMatrixLocalpart is the provisioning gate — throws for any caller
       // without a users/{uid}.personKey instead of minting a UID-based duplicate account.
       const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
@@ -590,7 +590,7 @@ export const requestGroupRoomAccess = onCall(
 );
 
 /**
- * Provision a Matrix account for a target user by their Person.bkey (personKey).
+ * Provision a Matrix account for a target user by their Person.okey (personKey).
  * Called when the current user wants to start a direct chat with someone who
  * hasn't logged in yet and therefore has no Matrix account.
  * Uses the Synapse admin API, so no password or login from the target user is needed.

@@ -47,7 +47,7 @@ export interface IconEditFormI18n {
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                  <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               }
               <ion-col size="12" size-md="6">
@@ -120,7 +120,7 @@ export class IconEditForm {
   constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
 
   // fields
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected type = linkedSignal(() => this.formData().type ?? '');
   protected fullPath = linkedSignal(() => this.formData().fullPath ?? '');
@@ -131,7 +131,7 @@ export class IconEditForm {
   protected updated = linkedSignal(() => this.formData().updated ?? '');
 
   protected bkeyI18n = computed(() => ({
-    name: 'bkey',
+    name: 'okey',
     label: this.i18n().bkey_label(),
     placeholder: this.i18n().bkey_placeholder(),
     helper: this.i18n().bkey_helper()

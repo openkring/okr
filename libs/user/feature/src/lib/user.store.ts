@@ -166,7 +166,7 @@ export const UserStore = signalStore(
       },
 
       async save(user: UserModel): Promise<void> {
-        await (!user.bkey ?
+        await (!user.okey ?
           store.userService.create(user, store.currentUser()) :
           store.userService.update(user, store.currentUser()));
         store.appNavigationService.back();

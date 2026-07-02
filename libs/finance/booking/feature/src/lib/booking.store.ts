@@ -67,7 +67,7 @@ export const BookingStore = signalStore(
     tenantId: computed(() => store.appStore.tenantId()),
     accountIdByKey: computed(() => {
       const map = new Map<string, string>();
-      for (const a of store.accountsResource.value() ?? []) map.set(a.bkey, a.id);
+      for (const a of store.accountsResource.value() ?? []) map.set(a.okey, a.id);
       return map;
     }),
     linesByBooking: computed(() => {
@@ -100,8 +100,8 @@ export const BookingStore = signalStore(
       await modal.present();
       const { data, role } = await modal.onDidDismiss<{ booking: BookingModel; lines: BookingLineModel[] }>();
       if (role === 'confirm' && data && !store.isReadOnly()) {
-        const bkey = (data.booking as BookingModel & { bkey: string }).bkey;
-        if (bkey?.length > 0) {
+        const okey = (data.booking as BookingModel & { okey: string }).okey;
+        if (okey?.length > 0) {
           await store.bookingService.update(data.booking, data.lines, store.currentUser());
         } else {
           await store.bookingService.create(data.booking, data.lines, store.currentUser());
@@ -119,7 +119,7 @@ export const BookingStore = signalStore(
     },
 
     availableActions(booking: BookingModel): BookingAction[] {
-      const lines = store.linesByBooking().get(booking.bkey) ?? [];
+      const lines = store.linesByBooking().get(booking.okey) ?? [];
       const accountIds = lines
         .map((l) => store.accountIdByKey().get(l.accountKey))
         .filter((id): id is string => !!id);
@@ -132,7 +132,7 @@ export const BookingStore = signalStore(
         await this.toast(store.i18n.action_counterpartyRequired());
         return;
       }
-      const lines = store.linesByBooking().get(booking.bkey) ?? [];
+      const lines = store.linesByBooking().get(booking.okey) ?? [];
       const line = lines.find(
         (l) => store.accountIdByKey().get(l.accountKey) === action.trigger.accountId,
       );
@@ -171,7 +171,7 @@ export const BookingStore = signalStore(
             outputFormat: action.outputFormat ?? 'pdf',
             storageMode: 'persist',
             margin: { top: '0', right: '0', bottom: '0', left: '0' },
-            metadata: { entityType: 'booking', entityId: booking.bkey },
+            metadata: { entityType: 'booking', entityId: booking.okey },
           },
         });
         window.open(res.url, '_blank');

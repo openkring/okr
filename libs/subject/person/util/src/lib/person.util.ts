@@ -10,7 +10,7 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 // new person
 export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {
   const model = { ...PERSON_NEW_FORM_SHAPE };
-  model.orgKey = org?.bkey ?? DEFAULT_KEY;
+  model.orgKey = org?.okey ?? DEFAULT_KEY;
   model.orgName = org?.name ?? DEFAULT_NAME;
   model.membershipCategory = 'active';
   return model;
@@ -18,7 +18,7 @@ export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {
 
 export function convertFormToNewPerson(vm: PersonNewFormModel, tenantId: string): PersonModel {
   const person = new PersonModel(tenantId);
-  person.bkey = DEFAULT_KEY;
+  person.okey = DEFAULT_KEY;
   person.firstName = vm.firstName ?? DEFAULT_NAME;
   person.lastName = vm.lastName ?? DEFAULT_NAME;
   person.gender = vm.gender ?? DEFAULT_GENDER;

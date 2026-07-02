@@ -25,7 +25,7 @@ import { MembershipEditModal } from '@okr/relationship-membership-feature';
 export interface BexioIndex {
   // person or org
   key: string;      // getFullName(name1, name2).trim().toLowerCase(), the trim is important to remove the leading bank in orgs
-  bkey: string;     // BK document key (person.bkey or org.bkey)
+  okey: string;     // BK document key (person.okey or org.okey)
   name1: string;   // first name (person) or '' (org)
   name2: string;   // last name (person) or company name (org)
   type: 'person' | 'org'; 
@@ -38,7 +38,7 @@ export interface BexioIndex {
   phone: string,    // BK favPhone
 
   // membership
-  mkey: string;     // membership bkey
+  mkey: string;     // membership okey
   mname: string;          // membership full name (getFullName(memberName1, memberName2))
   memberModelType: string; // membership.memberModelType ('person' | 'org')
   mbexioId: string; // membership.memberBexioId
@@ -142,7 +142,7 @@ export const AocBexioStore = signalStore(
       const memberships = allMemberships.filter(m => m.orgKey === store.tenantId()); // only members of defaultOrg
 
       // 2b. Load favorite postal addresses (street/number/zip/city are no longer cached on person/org,
-      //     they live in the separate address collection). Map them by parentKey (person.{bkey} / org.{bkey}).
+      //     they live in the separate address collection). Map them by parentKey (person.{okey} / org.{okey}).
       const allAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, getSystemQuery(store.tenantId()), 'none');
       const favPostalByParent = new Map<string, AddressModel>();
       for (const address of allAddresses) {
@@ -155,11 +155,11 @@ export const AocBexioStore = signalStore(
 
       // 3. Build index from persons
       for (const person of persons) {
-        const membership = memberships.find(m => m.memberKey === person.bkey);
-        const postal = favPostalByParent.get(`person.${person.bkey}`);
+        const membership = memberships.find(m => m.memberKey === person.okey);
+        const postal = favPostalByParent.get(`person.${person.okey}`);
         index.push({
           key: getFullName(person.firstName ?? '', person.lastName ?? '').trim().toLowerCase(),
-          bkey: person.bkey ?? '',
+          okey: person.okey ?? '',
           name1: person.firstName ?? '',
           name2: person.lastName ?? '',
           type: 'person',
@@ -171,7 +171,7 @@ export const AocBexioStore = signalStore(
           email: person.favEmail,
           phone: person.favPhone,
 
-          mkey: membership?.bkey ?? '',
+          mkey: membership?.okey ?? '',
           mname: membership ? getFullName(membership.memberName1, membership.memberName2) : '',
           memberModelType: membership?.memberModelType ?? '',
           mbexioId: membership?.memberBexioId ?? '',
@@ -194,11 +194,11 @@ export const AocBexioStore = signalStore(
       // 4. Add orgs to index
       let i = 0;
       for (const org of orgs) {
-        const membership = memberships.find(m => m.memberKey === org.bkey);
-        const postal = favPostalByParent.get(`org.${org.bkey}`);
+        const membership = memberships.find(m => m.memberKey === org.okey);
+        const postal = favPostalByParent.get(`org.${org.okey}`);
         index.push({
           key: org.name.toLowerCase(),
-          bkey: org.bkey ?? '',
+          okey: org.okey ?? '',
           name1: '',
           name2: org.name,
           type: 'org',
@@ -210,7 +210,7 @@ export const AocBexioStore = signalStore(
           email: org.favEmail,
           phone: org.favPhone,
 
-          mkey: membership?.bkey ?? '',
+          mkey: membership?.okey ?? '',
           mname: membership ? getFullName(membership.memberName1, membership.memberName2) : '',
           memberModelType: membership?.memberModelType ?? '',
           mbexioId: membership?.memberBexioId ?? '',
@@ -237,10 +237,10 @@ export const AocBexioStore = signalStore(
       // 5b. Reconcile bbexioid (person/org.bexioId) <-> mbexioid (membership.memberBexioId)
       const currentUser = store.currentUser();
       for (const item of index) {
-        if (!item.bkey || !item.mkey) continue; // only reconcile if both BK record and membership exist
+        if (!item.okey || !item.mkey) continue; // only reconcile if both BK record and membership exist
         if (item.bexioId && !item.mbexioId) {
           // person/org has bexioId set, but membership.memberBexioId is missing -> update membership
-          const membership = memberships.find(m => m.bkey === item.mkey);
+          const membership = memberships.find(m => m.okey === item.mkey);
           if (membership) {
             membership.memberBexioId = item.bexioId;
             await store.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, undefined, undefined, currentUser);
@@ -249,14 +249,14 @@ export const AocBexioStore = signalStore(
         } else if (!item.bexioId && item.mbexioId) {
           // membership has memberBexioId set, but person/org.bexioId is missing -> update person/org
           if (item.type === 'person') {
-            const person = persons.find(p => p.bkey === item.bkey);
+            const person = persons.find(p => p.okey === item.okey);
             if (person) {
               person.bexioId = item.mbexioId;
               await store.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, undefined, currentUser);
               item.bexioId = item.mbexioId;
             }
           } else {
-            const org = orgs.find(o => o.bkey === item.bkey);
+            const org = orgs.find(o => o.okey === item.okey);
             if (org) {
               org.bexioId = item.mbexioId;
               await store.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, undefined, undefined, currentUser);
@@ -322,7 +322,7 @@ export const AocBexioStore = signalStore(
             } else {
               index.push({
                 key: bxKey,
-                bkey: '',
+                okey: '',
                 name1: '',
                 name2: '',
                 type: contact.contact_type_id === 1 ? 'org' : 'person',
@@ -397,25 +397,25 @@ export const AocBexioStore = signalStore(
       // write the bexioId back into the person or org (use a copy — signal state is immutable)
       const currentUser = store.currentUser();
       if (item.type === 'person') {
-        const person = store.appStore.getPerson(item.bkey);
+        const person = store.appStore.getPerson(item.okey);
         if (person) {
           await store.firestoreService.updateModel<PersonModel>(PersonCollection, { ...person, bexioId: bxid }, false, undefined, undefined, currentUser);
         } else {
-          console.error('addToBexio: person not found for bkey', item.bkey);
+          console.error('addToBexio: person not found for okey', item.okey);
         }
       } else {
-        const org = store.appStore.getOrg(item.bkey);
+        const org = store.appStore.getOrg(item.okey);
         if (org) {
           await store.firestoreService.updateModel<OrgModel>(OrgCollection, { ...org, bexioId: bxid }, false, undefined, undefined, currentUser);
         } else {
-          console.error('addToBexio: org not found for bkey', item.bkey);
+          console.error('addToBexio: org not found for okey', item.okey);
         }
       }
 
       // also update the membership.memberBexioId if a membership exists
       if (item.mkey) {
         const allMemberships = await store.firestoreService.getDataOnce<MembershipModel>(MembershipCollection, getSystemQuery(store.tenantId()), 'memberName2', 'asc');
-        const membership = allMemberships.find(m => m.bkey === item.mkey);
+        const membership = allMemberships.find(m => m.okey === item.mkey);
         if (membership) {
           await store.firestoreService.updateModel<MembershipModel>(MembershipCollection, { ...membership, memberBexioId: bxid }, false, undefined, undefined, currentUser);
         }
@@ -488,15 +488,15 @@ export const AocBexioStore = signalStore(
 
     async addToBk(item: BexioIndex): Promise<void> {
       const currentUser = store.currentUser();
-      let bkey: string | undefined;
+      let okey: string | undefined;
 
       if (item.type === 'person') {
         const person = new PersonModel(store.tenantId());
         person.firstName = item.bx_name1;
         person.lastName = item.bx_name2;
         person.bexioId = item.bx_id;
-        bkey = await store.firestoreService.createModel<PersonModel>(PersonCollection, person, undefined, undefined, currentUser);
-        const avatarKey = 'person.' + bkey;
+        okey = await store.firestoreService.createModel<PersonModel>(PersonCollection, person, undefined, undefined, currentUser);
+        const avatarKey = 'person.' + okey;
         if (item.bx_email) {
           await this.saveAddress(createFavoriteAddress('email', 'home', item.bx_email, store.tenantId()), avatarKey);
         }
@@ -506,19 +506,19 @@ export const AocBexioStore = signalStore(
         const org = new OrgModel(store.tenantId());
         org.name = item.bx_name2;
         org.bexioId = item.bx_id;
-        bkey = await store.firestoreService.createModel<OrgModel>(OrgCollection, org, undefined, undefined, currentUser);
-        const avatarKey = 'org.' + bkey;
+        okey = await store.firestoreService.createModel<OrgModel>(OrgCollection, org, undefined, undefined, currentUser);
+        const avatarKey = 'org.' + okey;
         if (item.bx_email) {
           await this.saveAddress(createFavoriteAddress('email', 'work', item.bx_email, store.tenantId()), avatarKey);
         }
         await this.saveAddress(createFavoriteAddress('postal', 'work', item.bx_streetName, store.tenantId(), item.bx_streetNumber, '', item.bx_zipCode, item.bx_city, 'CH'), avatarKey);
       }
 
-      if (bkey) {
+      if (okey) {
         patchState(store, {
           index: store.index().map(i => i.key === item.key
             ? { ...i, 
-              bkey, 
+              okey, 
               name1: item.bx_name1, 
               name2: item.bx_name2,
               type: item.bx_type,
@@ -544,9 +544,9 @@ export const AocBexioStore = signalStore(
      * the cached fav* fields on the person/org are kept in sync by the address Cloud Function trigger.
      */
     async updateInBk(item: BexioIndex): Promise<void> {
-      if (!item.bkey) return;
+      if (!item.okey) return;
       const currentUser = store.currentUser();
-      const avatarKey = `${item.type}.${item.bkey}`;
+      const avatarKey = `${item.type}.${item.okey}`;
       const usage = item.type === 'org' ? 'work' : 'home';
 
       // load this contact's addresses
@@ -643,7 +643,7 @@ export const AocBexioStore = signalStore(
       for (const p of persons) {
         if (p.bexioId) {
           const key = String(Number(String(p.bexioId).trim()));
-          lookup.set(key, { key: p.bkey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
+          lookup.set(key, { key: p.okey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
         }
       }
 
@@ -651,7 +651,7 @@ export const AocBexioStore = signalStore(
       for (const o of orgs) {
         if (o.bexioId) {
           const key = String(Number(o.bexioId.trim()));
-          lookup.set(key, { key: o.bkey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
+          lookup.set(key, { key: o.okey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
         }
       }
 
@@ -788,11 +788,11 @@ export const AocBexioStore = signalStore(
         where('type', '==', 'root')
       ));
       if (rootSnap.empty) return 0;
-      const rootBkey = rootSnap.docs[0].id;
+      const rootOkey = rootSnap.docs[0].id;
 
-      // 2. BFS to collect all bkeys in the tree
-      const allBkeys: string[] = [rootBkey];
-      const frontier: string[] = [rootBkey];
+      // 2. BFS to collect all okeys in the tree
+      const allOkeys: string[] = [rootOkey];
+      const frontier: string[] = [rootOkey];
       while (frontier.length > 0) {
         // Firestore 'in' supports max 30 values per query
         const chunk = frontier.splice(0, 30);
@@ -802,21 +802,21 @@ export const AocBexioStore = signalStore(
           where('parentId', 'in', chunk)
         ));
         for (const d of childSnap.docs) {
-          allBkeys.push(d.id);
+          allOkeys.push(d.id);
           frontier.push(d.id);
         }
       }
 
       // 3. Delete in batches of 500
       const BATCH_SIZE = 500;
-      for (let i = 0; i < allBkeys.length; i += BATCH_SIZE) {
+      for (let i = 0; i < allOkeys.length; i += BATCH_SIZE) {
         const batch = writeBatch(db);
-        for (const bkey of allBkeys.slice(i, i + BATCH_SIZE)) {
-          batch.delete(doc(db, 'accounts', bkey));
+        for (const okey of allOkeys.slice(i, i + BATCH_SIZE)) {
+          batch.delete(doc(db, 'accounts', okey));
         }
         await batch.commit();
       }
-      return allBkeys.length;
+      return allOkeys.length;
     },
 
     async linkBillVendors(): Promise<void> {
@@ -831,11 +831,11 @@ export const AocBexioStore = signalStore(
       const lookup = new Map<string, AvatarInfo>();
       for (const p of persons) {
         const name = getFullName(p.firstName ?? '', p.lastName ?? '').trim().toLowerCase();
-        if (name) lookup.set(name, { key: p.bkey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
+        if (name) lookup.set(name, { key: p.okey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
       }
       for (const o of orgs) {
         const name = (o.name ?? '').trim().toLowerCase();
-        if (name) lookup.set(name, { key: o.bkey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
+        if (name) lookup.set(name, { key: o.okey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
       }
 
       // 2) load all bills with notes (= unresolved vendor name)
@@ -907,7 +907,7 @@ export const AocBexioStore = signalStore(
 
     /** Open the standard person edit modal for the BK person behind this index entry. */
     async editPerson(item: BexioIndex): Promise<void> {
-      const person = store.appStore.getPerson(item.bkey);
+      const person = store.appStore.getPerson(item.okey);
       if (!person) return;
       const modal = await store.modalController.create({
         component: PersonEditModal,
@@ -929,7 +929,7 @@ export const AocBexioStore = signalStore(
 
     /** Open the standard org edit modal for the BK org behind this index entry. */
     async editOrg(item: BexioIndex): Promise<void> {
-      const org = store.appStore.getOrg(item.bkey);
+      const org = store.appStore.getOrg(item.okey);
       if (!org) return;
       const modal = await store.modalController.create({
         component: OrgEditModal,

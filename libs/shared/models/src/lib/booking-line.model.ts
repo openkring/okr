@@ -6,7 +6,7 @@ import { BkModel } from './base.model';
 // One side of a double-entry booking line. Every BookingModel has ≥2 lines.
 // Invariant: Σ debitAmount = Σ creditAmount across all lines of a booking (in functional currency).
 export class BookingLineModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 

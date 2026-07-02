@@ -142,10 +142,10 @@ import { PageStore } from './page.store';
         } @else {     <!-- page contains sections -->
           <ion-grid>
             <ion-row>
-              @for(section of sections(); track section.bkey) {
+              @for(section of sections(); track section.okey) {
                 @if(getColSizes(section.colSize); as colSizes) {
                   <ion-col size="{{colSizes.size}}" 
-                    class="section-item" (click)="showActions(section.bkey)"
+                    class="section-item" (click)="showActions(section.okey)"
                     [class.edit-mode]="editMode()"
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
@@ -169,7 +169,7 @@ import { PageStore } from './page.store';
           </ion-item>
         } @else {
           <div class="print-content" #printContent>
-            @for(section of sections(); track section.bkey) {
+            @for(section of sections(); track section.okey) {
               <bk-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
             } 
           </div>
@@ -192,7 +192,7 @@ export class FilesPage {
 
   // derived signals
   protected tenantId = computed(() => this.store.tenantId());
-  protected popupId = computed(() => 'c_blogpage_' + this.store.page()?.bkey);
+  protected popupId = computed(() => 'c_blogpage_' + this.store.page()?.okey);
   protected editMode = signal(false);
   protected page = computed(() => this.store.page());
   // Accordion sections are not supported in Blog pages. Makes the implementation easier.

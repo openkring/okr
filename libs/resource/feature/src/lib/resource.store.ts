@@ -198,7 +198,7 @@ export const ResourceStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isResource(data, store.tenantId())) {
-            resource.bkey === '' ?
+            resource.okey === '' ?
               await store.resourceService.create(data, store.currentUser()) : 
               await store.resourceService.update(data, store.currentUser());
           }
@@ -214,7 +214,7 @@ export const ResourceStore = signalStore(
 
       async save(resource?: ResourceModel): Promise<void> {
         if (!resource) return;
-        await (!resource.bkey ? 
+        await (!resource.okey ? 
           store.resourceService.create(resource, store.currentUser()) : 
           store.resourceService.update(resource, store.currentUser()));
       },

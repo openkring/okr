@@ -446,7 +446,7 @@ export class SectionForm {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // derived linked signals
-  protected sectionKey = computed(() => this.formData().bkey);
+  protected sectionKey = computed(() => this.formData().okey);
   protected directory = linkedSignal(() => this.formData().type === 'album' ? (this.formData() as any).directory ?? '' : '' );
   protected content = linkedSignal(() => this.getContent());
   protected albumConfig = linkedSignal(() => this.getAlbumConfig());
@@ -985,14 +985,14 @@ export class SectionForm {
   public async selectGroup(): Promise<void> {
     const group = await this.modelSelectService.selectGroup();
     if (group) {
-      this.onPeopleConfigChange({ ...this.peopleConfig(), groupId: group.bkey } as PeopleConfig);
+      this.onPeopleConfigChange({ ...this.peopleConfig(), groupId: group.okey } as PeopleConfig);
     }
   }
 
   public async selectResponsibility(): Promise<void> {
     const responsibility = await this.modelSelectService.selectResponsibility();
     if (responsibility) {
-      this.onPeopleConfigChange({ ...this.peopleConfig(), responsibilityId: responsibility.bkey } as PeopleConfig);
+      this.onPeopleConfigChange({ ...this.peopleConfig(), responsibilityId: responsibility.okey } as PeopleConfig);
     }
   }
 }

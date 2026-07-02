@@ -68,7 +68,7 @@ export class PersonNewModal {
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   constructor() {
-    effect(() => this.store.setOrgId(this.org()?.bkey));
+    effect(() => this.store.setOrgId(this.org()?.okey));
   }
 
   /******************************* actions *************************************** */
@@ -99,10 +99,10 @@ export class PersonNewModal {
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isOrg(data, this.tenantId())) {
-        this.store.setOrgId(data.bkey); // Use newly selected org
+        this.store.setOrgId(data.okey); // Use newly selected org
         this.formData.update((vm) => ({
           ...vm,
-          orgKey: data.bkey,
+          orgKey: data.okey,
           orgName: data.name,
         }));
       }

@@ -98,7 +98,7 @@ export async function buildDocumentModel(
   const hash = await getFileHash(file);
   const now = getTodayStr();
   const doc = new DocumentModel(tenantId);
-  doc.bkey = hash;
+  doc.okey = hash;
   doc.hash = hash;
   doc.title = file.name;
   doc.altText = file.name;

@@ -7,7 +7,7 @@ import { BkModel, SearchableModel, TaggedModel } from './base.model';
  * Invoice = Kundenrechnung (Debitor) in Bexio
  */
 export class InvoiceModel implements BkModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;
@@ -29,7 +29,7 @@ export class InvoiceModel implements BkModel, SearchableModel, TaggedModel {
   // invoice receiver (Person or Org) Rechnungsempfänger
   public receiver: AvatarInfo | undefined;
 
-  public accountingTenantId = '';   // = org.bkey of the accounting tenant
+  public accountingTenantId = '';   // = org.okey of the accounting tenant
   public invoiceNo = 0;             // sequential per fiscal year + accountingTenantId
   public bookingKey = '';           // ref to BookingModel; set when invoice is paid
 

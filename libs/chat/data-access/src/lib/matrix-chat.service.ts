@@ -1685,7 +1685,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
 
   /**
    * Create a new direct message room, or return an existing one if it already exists.
-   * @param userId full Matrix user ID (@localpart:server) or a Person.bkey (converted automatically)
+   * @param userId full Matrix user ID (@localpart:server) or a Person.okey (converted automatically)
    */
   async createDirectRoom(userId: string): Promise<Room> {
     if (!this.client) throw new Error('Client not initialized');
@@ -1694,7 +1694,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
     // makes findExistingDirectRoom() return nothing and we create a duplicate DM (S2).
     await this.waitForSync();
 
-    // If userId is a Person.bkey (no leading @), convert to @localpart:server
+    // If userId is a Person.okey (no leading @), convert to @localpart:server
     let matrixUserId = userId;
     if (!userId.startsWith('@')) {
       const hostname = new URL(this.client.baseUrl).hostname.replace('matrix.', '');

@@ -14,7 +14,7 @@ import { BkModel, SearchableModel, TaggedModel } from './base.model';
  */
 export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   // base
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

@@ -94,7 +94,7 @@ import { AocSessionStore } from './aoc-session.store';
           <bk-empty-list [message]="store.i18n.session_empty()" />
         } @else {
           <ion-list lines="inset">
-            @for (session of sessions(); track session.bkey) {
+            @for (session of sessions(); track session.okey) {
               <ion-item button (click)="showActions(session)">
                 <ion-label>{{ session.userEmail || store.i18n.session_anonymous() }}</ion-label>
                 <ion-label>{{ session.browser }}</ion-label>

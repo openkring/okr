@@ -48,9 +48,9 @@ export function extractContextMenuName(url: string): string | undefined {
   return m?.[2];
 }
 
-/** Lookup a menu item by bkey first, then by name (handles both storage variants). */
+/** Lookup a menu item by okey first, then by name (handles both storage variants). */
 function findMenuItem(key: string, items: MenuItemModel[]): MenuItemModel | undefined {
-  return items.find(i => i.bkey === key) ?? items.find(i => i.name === key);
+  return items.find(i => i.okey === key) ?? items.find(i => i.name === key);
 }
 
 function menuColor(action: string): string {
@@ -82,14 +82,14 @@ function buildSectionNodes(
   visitedPages: Set<string>,
   sectionTypes: CategoryListModel
 ): DependencyNode[] {
-  const pageSections = allSections.filter(s => page.sections.includes(s.bkey) && !s.isArchived)
+  const pageSections = allSections.filter(s => page.sections.includes(s.okey) && !s.isArchived)
   return page.sections
-    .map(key => pageSections.find(s => s.bkey === key))
+    .map(key => pageSections.find(s => s.okey === key))
     .filter((s): s is SectionModel => !!s)
     .map(s => ({
-      id: `section-${s.bkey}`,
+      id: `section-${s.okey}`,
       nodeType: 'section' as DependencyNodeType,
-      name: s.name || s.title || s.bkey,
+      name: s.name || s.title || s.okey,
       subType: s.type,
       color: 'warning',
       icon: getCategoryIcon(sectionTypes, s.type),
@@ -116,7 +116,7 @@ function buildPageNode(
     const ctxItem = allMenuItems.find(i => i.name === contextMenuName);
     if (ctxItem) {
       children.push({
-        id: `menu-ctx-${ctxItem.bkey}`,
+        id: `menu-ctx-${ctxItem.okey}`,
         nodeType: 'menu',
         name: ctxItem.name,
         subType: 'context',
@@ -135,7 +135,7 @@ function buildPageNode(
   children.push(...buildSectionNodes(page, allSections, visitedPages, sectionTypes));
 
   return {
-    id: `page-${page.bkey}`,
+    id: `page-${page.okey}`,
     nodeType: 'page',
     name: page.name,
     subType: page.type,
@@ -159,9 +159,9 @@ function buildMenuNode(
   sectionTypes: CategoryListModel
 ): DependencyNode {
   // Guard against circular references
-  if (visitedMenus.has(item.bkey)) {
+  if (visitedMenus.has(item.okey)) {
     return {
-      id: `menu-loop-${item.bkey}`,
+      id: `menu-loop-${item.okey}`,
       nodeType: 'menu',
       name: `${item.name} [circular]`,
       subType: item.action,
@@ -174,7 +174,7 @@ function buildMenuNode(
       isExpanded: false,
     };
   }
-  visitedMenus.add(item.bkey);
+  visitedMenus.add(item.okey);
 
   const children: DependencyNode[] = [];
 
@@ -193,7 +193,7 @@ function buildMenuNode(
     const pageId = extractPageId(item.url);
     const ctxName = extractContextMenuName(item.url);
     if (pageId && !visitedPages.has(pageId)) {
-      const page = allPages.find(p => p.bkey === pageId);
+      const page = allPages.find(p => p.okey === pageId);
       if (page) {
         visitedPages.add(pageId);
         children.push(buildPageNode(page, ctxName, allMenuItems, allSections, visitedPages, sectionTypes));
@@ -202,7 +202,7 @@ function buildMenuNode(
   }
 
   return {
-    id: `menu-${item.bkey}`,
+    id: `menu-${item.okey}`,
     nodeType: 'menu',
     name: item.name,
     subType: item.action,

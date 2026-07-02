@@ -385,7 +385,7 @@ export const listBkUsers = functions.onCall(
       .collection('users')
       .where('isArchived', '==', false)
       .get();
-    const users = snap.docs.map(doc => ({ bkey: doc.id, ...doc.data() }));
+    const users = snap.docs.map(doc => ({ okey: doc.id, ...doc.data() }));
 
     logger.info(`${CF_NAME}: returned ${users.length} users`);
     return { users };

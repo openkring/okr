@@ -86,7 +86,7 @@ export class InviteesAccordion {
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.store.setScope(this.calevent().bkey, '', this.showOnlyCurrent()));
+    effect(() => this.store.setScope(this.calevent().okey, '', this.showOnlyCurrent()));
   }
 
   /******************************* actions *************************************** */

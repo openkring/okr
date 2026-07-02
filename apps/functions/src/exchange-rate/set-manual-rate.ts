@@ -19,8 +19,8 @@ export const setManualRate = onCall(
       throw new HttpsError('invalid-argument', 'fromCurrency, toCurrency, rate (positive number), and date are required');
     }
     const storeDate = convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate);
-    const bkey = `${fromCurrency}-${toCurrency}-${storeDate}-manual`;
-    await admin.firestore().collection('exchange-rates').doc(bkey).set({
+    const okey = `${fromCurrency}-${toCurrency}-${storeDate}-manual`;
+    await admin.firestore().collection('exchange-rates').doc(okey).set({
       tenants: ['scs'],  // server-controlled, not from client
       isArchived: false,
       fromCurrency,
@@ -30,7 +30,7 @@ export const setManualRate = onCall(
       source: 'manual',
       rateType: 'daily',
     }, { merge: true });
-    logger.info(`setManualRate: wrote ${bkey} rate=${rate}`);
-    return { bkey };
+    logger.info(`setManualRate: wrote ${okey} rate=${rate}`);
+    return { okey };
   }
 );

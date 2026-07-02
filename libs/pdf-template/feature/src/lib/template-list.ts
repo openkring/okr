@@ -52,7 +52,7 @@ import { TemplateStore } from './template.store';
         <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-grid>
-          @for(tmpl of store.filteredTemplates(); track tmpl.bkey) {
+          @for(tmpl of store.filteredTemplates(); track tmpl.okey) {
             <ion-row (click)="showActions(tmpl)">
               <ion-col size="5">
                 <ion-label>
@@ -125,10 +125,10 @@ export class TemplateList {
     if (!data) return;
     switch (data.action) {
       case 'template.edit':
-        await this.router.navigate(['/templates', tmpl.bkey]);
+        await this.router.navigate(['/templates', tmpl.okey]);
         break;
       case 'template.view':
-        await this.router.navigate(['/templates', tmpl.bkey], { queryParams: { mode: 'view' } });
+        await this.router.navigate(['/templates', tmpl.okey], { queryParams: { mode: 'view' } });
         break;
       case 'template.revert':
         await this.store.revertToLastVersion(tmpl);

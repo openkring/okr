@@ -63,7 +63,7 @@ export class IconEditModal {
   // derived
   protected readonly headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view();
-    return this.icon()?.bkey ? this.i18n.update() : this.i18n.create();
+    return this.icon()?.okey ? this.i18n.update() : this.i18n.create();
   });
   protected tenantId = computed(() => this.appStore.tenantId());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());

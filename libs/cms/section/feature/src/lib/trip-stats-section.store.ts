@@ -51,11 +51,11 @@ export const TripStatsSectionStore = signalStore(
       if (store.contentType() === 'boat') {
         return store.appStore.allResources()
           .filter((r: ResourceModel) => r.type === 'rboat')
-          .map((r: ResourceModel) => r.bkey)
+          .map((r: ResourceModel) => r.okey)
           .filter((k): k is string => !!k);
       }
       return store.appStore.allPersons()
-        .map((p: PersonModel) => p.bkey)
+        .map((p: PersonModel) => p.okey)
         .filter((k): k is string => !!k);
     }),
   })),
@@ -112,9 +112,9 @@ export const TripStatsSectionStore = signalStore(
         .map(({ key, stats }: { key: string; stats: YearStats | undefined }) => {
           let name: string;
           if (contentType === 'boat') {
-            name = store.appStore.allResources().find((r: ResourceModel) => r.bkey === key)?.name ?? key;
+            name = store.appStore.allResources().find((r: ResourceModel) => r.okey === key)?.name ?? key;
           } else {
-            const p = store.appStore.allPersons().find((p: PersonModel) => p.bkey === key);
+            const p = store.appStore.allPersons().find((p: PersonModel) => p.okey === key);
             name = p ? `${p.firstName} ${p.lastName}`.trim() : key;
           }
           return { key, name, km: stats?.totalKm ?? 0, trips: stats?.tripCount ?? 0 };
@@ -133,8 +133,8 @@ export const TripStatsSectionStore = signalStore(
       const yearMap = new Map<string, number>();
       for (const { history } of raw as { key: string; history: YearStats[] }[]) {
         for (const h of history) {
-          if (!h.bkey) continue;
-          yearMap.set(h.bkey, (yearMap.get(h.bkey) ?? 0) + h.totalKm);
+          if (!h.okey) continue;
+          yearMap.set(h.okey, (yearMap.get(h.okey) ?? 0) + h.totalKm);
         }
       }
       const years = [...yearMap.keys()].sort();

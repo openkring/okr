@@ -103,7 +103,7 @@ export const FolderStore = signalStore(
       modal.present();
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
-        data.bkey?.length === 0
+        data.okey?.length === 0
           ? await store.folderService.create(data, store.currentUser())
           : await store.folderService.update(data, store.currentUser());
         this.reload();

@@ -5,7 +5,7 @@ import { computePersonFieldDiffs } from './person-field-diff.util';
 
 function candidate(overrides: Partial<PersonDuplicateCandidate> = {}): PersonDuplicateCandidate {
   return {
-    bkey: 'p1', firstName: 'Anna', lastName: 'Muster', gender: 'female',
+    okey: 'p1', firstName: 'Anna', lastName: 'Muster', gender: 'female',
     dateOfBirth: '', dateOfDeath: '', ssnId: '', favEmail: '', favPhone: '',
     favZipCode: '', bexioId: '', tenants: ['t1'], ...overrides,
   };

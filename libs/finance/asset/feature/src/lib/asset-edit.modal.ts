@@ -13,7 +13,7 @@ import { AssetStore } from './asset.store';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ readOnly() ? store.i18n.view() : (asset().bkey ? store.i18n.update() : store.i18n.create()) }}</ion-title>
+        <ion-title>{{ readOnly() ? store.i18n.view() : (asset().okey ? store.i18n.update() : store.i18n.create()) }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="dismiss()">{{ store.i18n.cancel() }}</ion-button>
           @if (!readOnly()) { <ion-button (click)="save()">{{ store.i18n.save() }}</ion-button> }
@@ -32,8 +32,8 @@ import { AssetStore } from './asset.store';
       <ion-item>
         <ion-label position="stacked">{{ store.i18n.category() }}</ion-label>
         <ion-select [(ngModel)]="edit.categoryKey" [disabled]="readOnly()">
-          @for (cat of categories(); track cat.bkey) {
-            <ion-select-option [value]="cat.bkey">{{ cat.name }}</ion-select-option>
+          @for (cat of categories(); track cat.okey) {
+            <ion-select-option [value]="cat.okey">{{ cat.name }}</ion-select-option>
           }
         </ion-select>
       </ion-item>

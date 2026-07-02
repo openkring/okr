@@ -33,7 +33,7 @@ describe('PersonalRel Utils', () => {
     vi.clearAllMocks();
 
     personalRel = new PersonalRelModel(tenantId);
-    personalRel.bkey = 'rel-1';
+    personalRel.okey = 'rel-1';
     personalRel.subjectKey = 'person-1';
     personalRel.subjectFirstName = 'John';
     personalRel.subjectLastName = 'Doe';
@@ -44,19 +44,19 @@ describe('PersonalRel Utils', () => {
     personalRel.validFrom = '20230101';
 
     subject = new PersonModel(tenantId);
-    subject.bkey = 'person-1';
+    subject.okey = 'person-1';
     subject.firstName = 'John';
     subject.lastName = 'Doe';
     subject.gender = 'male';
 
     object = new PersonModel(tenantId);
-    object.bkey = 'person-2';
+    object.okey = 'person-2';
     object.firstName = 'Jane';
     object.lastName = 'Smith';
     object.gender = 'female';
 
     currentUser = new UserModel(tenantId);
-    currentUser.bkey = 'user-1';
+    currentUser.okey = 'user-1';
   });
 
   describe('Search Index functions', () => {

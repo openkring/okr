@@ -100,10 +100,10 @@ export class ReservationEditModal {
   protected readonly parentKey = computed(() => `${ReservationModelName}.${this.reservationKey()}`);
   
   // derived signals
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.reservation()?.bkey));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.reservation()?.okey));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
-  protected readonly reservationKey = computed(() => this.reservation().bkey ?? '');
+  protected readonly reservationKey = computed(() => this.reservation().okey ?? '');
   protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.reserver);
   protected readonly reserverName = computed(() => this.reserverAvatar() ? getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay) : '');
   protected readonly resourceAvatar = computed<AvatarInfo | undefined>(() => this.reservation().resource);
@@ -143,13 +143,13 @@ export class ReservationEditModal {
       if (!vm) return vm;
       return {
         ...vm,
-        reserverKey: person.bkey,
+        reserverKey: person.okey,
         reserverName: person.firstName,
         reserverName2: person.lastName,
         reserverModelType: 'person',
         reserverType: person.gender,
         reserver: {
-          key: person.bkey ?? '',
+          key: person.okey ?? '',
           name1: person.firstName,
           name2: person.lastName,
           modelType: 'person',
@@ -169,7 +169,7 @@ export class ReservationEditModal {
       if (!vm) return vm;
       return {
         ...vm,
-        caleventKey: calevent.bkey,
+        caleventKey: calevent.okey,
         startDate: calevent.startDate,
         endDate: calevent.endDate ?? calevent.startDate,
       };
@@ -183,7 +183,7 @@ export class ReservationEditModal {
       if (!vm) return vm;
       return {
         ...vm,
-        resourceKey: resource.bkey,
+        resourceKey: resource.okey,
         resourceName: resource.name,
         resourceModelType: 'resource',
         resourceType: resource.type,

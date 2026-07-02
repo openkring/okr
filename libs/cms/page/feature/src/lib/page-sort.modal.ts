@@ -24,7 +24,7 @@ import { PageStore } from './page.store';
       @if (sections(); as sections) {
         <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->
         <ion-reorder-group disabled="false" (ionItemReorder)="reorder($any($event))">
-          @for(section of sections; track section.bkey) {
+          @for(section of sections; track section.okey) {
             <ion-item>              
               {{ section.name}}  ({{ section.type }})
               <ion-reorder slot="start" />

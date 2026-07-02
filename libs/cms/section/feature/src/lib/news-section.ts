@@ -37,7 +37,7 @@ import { NewsStore } from './news-section.store';
             <bk-empty-list [message]="store.i18n.empty()" />
           } @else {
             <ion-list lines="none">
-              @for (article of news(); track article.bkey) {
+              @for (article of news(); track article.okey) {
                 <ion-item (click)="navigateToArticle(article)">
                   @if (article.properties.images.length > 0 && article.properties.images[0].url) {
                     <ion-thumbnail slot="start">
@@ -151,6 +151,6 @@ export class NewsSectionComponent implements OnInit {
     if (this.editMode()) return;
     const url = this.moreUrl();
     if (!url) return;
-    this.router.navigate([url], { fragment: article.bkey });
+    this.router.navigate([url], { fragment: article.okey });
   }
 }

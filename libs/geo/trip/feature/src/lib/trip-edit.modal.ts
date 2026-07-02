@@ -145,7 +145,7 @@ export class TripEditModal {
       const locations = this.formData()?.locations;
       if (!locations) return;
       const locationAvatar: AvatarInfo = {
-        key: result.location.bkey,
+        key: result.location.okey,
         name1: result.location.distance + '',
         name2: result.location.name,
         label: '',

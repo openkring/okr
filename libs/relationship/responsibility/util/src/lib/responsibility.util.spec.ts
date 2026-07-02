@@ -25,7 +25,7 @@ function makeAvatar(key: string, name1: string, name2: string, modelType: Avatar
 
 function makeResp(overrides: Partial<ResponsibilityModel> = {}): ResponsibilityModel {
   const r = new ResponsibilityModel(TENANT);
-  r.bkey = 'resp-1';
+  r.okey = 'resp-1';
   r.parentKey = 'org.sub-1';
   r.responsibleAvatar = makeAvatar('per-1', 'Jane', 'Doe', 'person');
   r.validFrom = '20200101';

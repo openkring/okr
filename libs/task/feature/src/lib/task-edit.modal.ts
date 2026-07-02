@@ -103,8 +103,8 @@ export class TaskEditModal {
 
   // derived
   protected defaultAvatar = computed(() => newAvatarInfo(this.currentUser()!.personKey, this.currentUser()!.firstName, this.currentUser()!.lastName, 'person', '', '', ''));
-  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.task().bkey, ));
-  protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().bkey}`);
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.task().okey, ));
+  protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().okey}`);
   protected calendars = linkedSignal(() => (this.formData()?.calendars ?? []) as string[]);
   protected author = linkedSignal(() => this.formData()?.author ?? this.defaultAvatar());
   protected assignee = linkedSignal(() => this.formData()?.assignee ?? this.defaultAvatar());
@@ -142,7 +142,7 @@ export class TaskEditModal {
   protected async selectPerson(type: 'author' | 'assignee'): Promise<void> {
     const person = await this.store.selectPerson();
     if (!person) return;
-    const avatar = newAvatarInfo(person.bkey, person.firstName, person.lastName, 'person', person.gender, '', '');
+    const avatar = newAvatarInfo(person.okey, person.firstName, person.lastName, 'person', person.gender, '', '');
     this.formData.update((vm) => {
       if (!vm) return vm;
       return ({...vm, [type]: avatar });

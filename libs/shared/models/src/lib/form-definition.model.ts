@@ -80,7 +80,7 @@ export const FormDefinitionCollection = 'formDefinitions';
 export const FormDefinitionModelName = 'formDefinition';
 
 export class FormDefinitionModel implements BkModel, NamedModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public name = DEFAULT_NAME;

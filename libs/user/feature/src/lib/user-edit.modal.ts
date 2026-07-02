@@ -81,11 +81,11 @@ export class UserEditModal {
   // derived
   protected readonly headerTitle = computed(() => {
     if (this.readOnly()) return this.i18n.view();
-    const key = this.user()?.bkey;
+    const key = this.user()?.okey;
     return (key && key.length > 0) ? this.i18n.update() : this.i18n.create();
   });
   protected readonly toolbarTitle = computed(() => getFullName(this.user().firstName, this.user().lastName, this.user().nameDisplay));
-  protected readonly parentKey = computed(() => `${UserModelName}.${this.user().bkey}`);
+  protected readonly parentKey = computed(() => `${UserModelName}.${this.user().okey}`);
   protected readonly avatarKey = computed(() => `person.${this.user().personKey}`);
   protected readonly allTags = computed(() => this.appStore.getTags('user'));
   protected readonly currentUser = computed(() => this.appStore.currentUser());
@@ -137,7 +137,7 @@ export class UserEditModal {
     const user = this.user();
     if (!user) return;
     const file = await readAsFile(photo, this.platform);
-    const avatar = newAvatarModel([this.appStore.tenantId()], 'user', user.bkey, file.name);
+    const avatar = newAvatarModel([this.appStore.tenantId()], 'user', user.okey, file.name);
     const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, this.i18n.upload_avatar());
 
     if (downloadUrl) {

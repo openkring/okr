@@ -66,7 +66,7 @@ export class ResourceService {
 
   /**
    * Update the values of an existing ResourceModel in the database.
-   * @param resource the new values. Must contain a key in field bkey so that we are able to find the existing ResourceModel.
+   * @param resource the new values. Must contain a key in field okey so that we are able to find the existing ResourceModel.
    * @param currentUser the user who is updating the resource
    * @returns the document id of the updated Resource or undefined if the operation failed
    */
@@ -81,11 +81,11 @@ export class ResourceService {
 
   /**
    * Archive a ResourceModel in the database.
-   * @param resource the ResourceModel to archive. Its bkey must be valid so that we can find it in the database.
+   * @param resource the ResourceModel to archive. Its okey must be valid so that we can find it in the database.
    * @param currentUser the user who is archiving the resource
    */
   public async delete(resource: ResourceModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${resource.bkey}: ${resource.name}/${resource.type}/${resource.subType}`;
+    const payload = `${resource.okey}: ${resource.name}/${resource.type}/${resource.subType}`;
     await this.firestoreService.deleteModel<ResourceModel>(ResourceCollection, resource,
       this.getI18n('delete', 'conf', resource.type), this.getI18n('delete', 'error', resource.type), currentUser);
     void this.activityService.log('resource', 'delete', currentUser, payload);

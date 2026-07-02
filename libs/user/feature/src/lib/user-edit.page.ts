@@ -67,11 +67,11 @@ export class UserEditPage{
   protected showForm = signal(true);
 
   // derived
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.user()?.bkey));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.readOnly(), this.user()?.okey));
   protected readonly toolbarTitle = computed(() => getFullName(this.user().firstName, this.user().lastName, this.user().nameDisplay));
   protected readonly parentKey = computed(() => `${UserModelName}.${this.userKey()}`);
   protected readonly user = computed(() => this.store.user());
-  protected readonly avatarKey = computed(() => `person.${this.user().bkey}`);
+  protected readonly avatarKey = computed(() => `person.${this.user().okey}`);
   protected readonly allTags = computed(() => this.store.getTags());
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
@@ -118,7 +118,7 @@ export class UserEditPage{
     const user = this.user();
     if (!user) return;
     const file = await readAsFile(photo, this.platform);
-    const avatar = newAvatarModel([this.env.tenantId], 'user', user.bkey, file.name);
+    const avatar = newAvatarModel([this.env.tenantId], 'user', user.okey, file.name);
     const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, this.store.i18n.upload_avatar())
 
     if (downloadUrl) {

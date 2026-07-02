@@ -74,7 +74,7 @@ async function persistBills(bills: BexioBill[], tenantId: string, nowStr: string
   const batch = db.batch();
 
   for (const bill of bills) {
-    const bkey = String(bill.id);
+    const okey = String(bill.id);
     const gross = parseFloat(bill.gross) || 0;
     const doc: Record<string, unknown> = {
       tenants: [tenantId],
@@ -94,7 +94,7 @@ async function persistBills(bills: BexioBill[], tenantId: string, nowStr: string
       attachments: bill.attachment_ids.map(String),
       accountingTenantId: tenantId,
     };
-    batch.set(db.collection('bills').doc(bkey), doc, { merge: true });
+    batch.set(db.collection('bills').doc(okey), doc, { merge: true });
   }
 
   batch.set(db.collection('config').doc('bexioSync'), { lastBillSyncedAt: nowStr }, { merge: true });

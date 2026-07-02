@@ -16,7 +16,7 @@ import { VatCodeModel, UserModel } from '@okr/shared-models';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ readOnly() ? 'View VAT Code' : (vatCode().bkey ? 'Edit VAT Code' : 'New VAT Code') }}</ion-title>
+        <ion-title>{{ readOnly() ? 'View VAT Code' : (vatCode().okey ? 'Edit VAT Code' : 'New VAT Code') }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="dismiss()">Cancel</ion-button>
           @if (!readOnly()) {

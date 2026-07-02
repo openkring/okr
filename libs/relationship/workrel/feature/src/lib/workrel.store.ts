@@ -169,13 +169,13 @@ export const WorkrelStore = signalStore(
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
         const newWorkrel = new WorkrelModel(store.appStore.tenantId());
-        newWorkrel.subjectKey = store.currentPerson().bkey;
+        newWorkrel.subjectKey = store.currentPerson().okey;
         newWorkrel.subjectName1 = store.currentPerson().firstName;
         newWorkrel.subjectName2 = store.currentPerson().lastName;
         newWorkrel.subjectModelType = 'person';
         newWorkrel.subjectType = store.currentPerson().gender;
 
-        newWorkrel.objectKey = store.currentOrg().bkey;
+        newWorkrel.objectKey = store.currentOrg().okey;
         newWorkrel.objectName = store.currentOrg().name;
         newWorkrel.objectType = store.currentOrg().type;
 
@@ -207,7 +207,7 @@ export const WorkrelStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isWorkrel(data, store.appStore.tenantId())) {
-            await (!data.bkey ?
+            await (!data.okey ?
               store.workrelService.create(data, store.appStore.currentUser()) :
               store.workrelService.update(data, store.appStore.currentUser()));
             this.reload();
@@ -217,7 +217,7 @@ export const WorkrelStore = signalStore(
 
      /**
        * End an existing workrel.
-       * @param workrel the work relationship to delete, its bkey needs to be valid so that we can find it in the database. 
+       * @param workrel the work relationship to delete, its okey needs to be valid so that we can find it in the database. 
        */
       async end(workrel?: WorkrelModel, readOnly = true): Promise<void> {
         if (workrel && !readOnly) {

@@ -22,9 +22,9 @@ export const ORG_I18N_KEYS = {
   ok:                              '@ok',
   save:                            '@save.label',
 
-  bkey_label:                      PFX + 'bkey.label',
-  bkey_placeholder:                PFX + 'bkey.placeholder',
-  bkey_helper:                     PFX + 'bkey.helper',
+  bkey_label:                      PFX + 'okey.label',
+  bkey_placeholder:                PFX + 'okey.placeholder',
+  bkey_helper:                     PFX + 'okey.helper',
   name_label:                      PFX + 'name.label',
   name_placeholder:                PFX + 'name.placeholder',
   name_helper:                     PFX + 'name.helper',

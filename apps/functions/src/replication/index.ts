@@ -29,14 +29,14 @@ async function syncRelations(
   label: string,
   sourceId: string,
   collection: string,
-  relations: { bkey: string }[],
+  relations: { okey: string }[],
   newData: Record<string, unknown>
 ): Promise<void> {
   try {
     for (const relation of relations) {
       if (hasChanged(relation, newData)) {
-        await admin.firestore().doc(`${collection}/${relation.bkey}`).update(newData);
-        logger.info(`Successfully updated ${label} ${relation.bkey} for ${sourceId}`);
+        await admin.firestore().doc(`${collection}/${relation.okey}`).update(newData);
+        logger.info(`Successfully updated ${label} ${relation.okey} for ${sourceId}`);
       }
     }
   } catch (error) {
@@ -123,9 +123,9 @@ export const onResourceChange = onDocumentWritten(
         const ownerships = await getAllOwnershipsOfResource(firestore, resourceId, 'resource')
         for (const ownership of ownerships) {
           if (hasChanged(ownership, newOwnershipData)) {
-            const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.bkey}`);
+            const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.okey}`);
             await ownershipRef.update(newOwnershipData);
-            logger.info(`Successfully updated ownership ${ownership.bkey} for resource ${resourceId}`);
+            logger.info(`Successfully updated ownership ${ownership.okey} for resource ${resourceId}`);
           }
         }
 
@@ -139,9 +139,9 @@ export const onResourceChange = onDocumentWritten(
         const reservations = await getAllReservationsOfResource(firestore, resourceId, 'resource');
         for (const reservation of reservations) {
           if (hasChanged(reservation, newReservationData)) {
-            const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.bkey}`);
+            const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.okey}`);
             await resRef.update(newReservationData);
-            logger.info(`Successfully updated reservation ${reservation.bkey} for resource ${resourceId} (resource)`);
+            logger.info(`Successfully updated reservation ${reservation.okey} for resource ${resourceId} (resource)`);
           }
         }
       } else {
@@ -262,9 +262,9 @@ export const onOrgChange = onDocumentWritten(
         const ownerships = await getAllOwnershipsOfOwner(firestore, orgId, 'org');
         for (const ownership of ownerships) {
           if (hasChanged(ownership, newOwner)) {
-            const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.bkey}`);
+            const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.okey}`);
             await ownershipRef.update(newOwner);
-            logger.info(`Successfully updated ownership ${ownership.bkey} for org ${orgId} (owner)`);
+            logger.info(`Successfully updated ownership ${ownership.okey} for org ${orgId} (owner)`);
           }
         }
 
@@ -281,9 +281,9 @@ export const onOrgChange = onDocumentWritten(
         const memberships = await getAllMembershipsOfMember(firestore, orgId, 'org');
         for (const membership of memberships) {
           if (hasChanged(membership, newMember)) {
-            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
+            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.okey}`);
             await membershipRef.update(newMember);
-            logger.info(`Successfully updated membership ${membership.bkey} for org ${orgId} (member)`);
+            logger.info(`Successfully updated membership ${membership.okey} for org ${orgId} (member)`);
           }
         }
 
@@ -291,11 +291,11 @@ export const onOrgChange = onDocumentWritten(
         const memberOrgs = await getAllMembershipsOfOrg(firestore, orgId, 'org');
         for (const membership of memberOrgs) {
           if (membership.orgName !== org.name) {
-            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
+            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.okey}`);
             await membershipRef.update({
               orgName: org.name,
             });
-            logger.info(`Successfully updated membership ${membership.bkey} for org ${orgId} (org)`);
+            logger.info(`Successfully updated membership ${membership.okey} for org ${orgId} (org)`);
           }
         }
 
@@ -303,12 +303,12 @@ export const onOrgChange = onDocumentWritten(
         const workRels = await getAllWorkrelsOfObject(firestore, orgId);
         for (const workRel of workRels) {
           if (workRel.objectName !== org.name || workRel.objectType !== org.type) {
-            const workRelRef = admin.firestore().doc(`${WorkrelCollection}/${workRel.bkey}`);
+            const workRelRef = admin.firestore().doc(`${WorkrelCollection}/${workRel.okey}`);
             await workRelRef.update({
               objectName: org.name,
               objectType: org.type,
             });
-            logger.info(`Successfully updated workingRel ${workRel.bkey} for org ${orgId} (object)`);
+            logger.info(`Successfully updated workingRel ${workRel.okey} for org ${orgId} (object)`);
           }
         }
 
@@ -322,9 +322,9 @@ export const onOrgChange = onDocumentWritten(
         const orgReservations = await getAllReservationsOfReserver(firestore, orgId, 'org');
         for (const reservation of orgReservations) {
           if (hasChanged(reservation, newReserver)) {
-            const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.bkey}`);
+            const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.okey}`);
             await resRef.update(newReserver);
-            logger.info(`Successfully updated reservation ${reservation.bkey} for org ${orgId} (reserver)`);
+            logger.info(`Successfully updated reservation ${reservation.okey} for org ${orgId} (reserver)`);
           }
         }
       } else {
@@ -365,9 +365,9 @@ export const onGroupChange = onDocumentWritten(
         const memberships = await getAllMembershipsOfMember(firestore, groupId, 'group');
         for (const membership of memberships) {
           if (hasChanged(membership, newMember)) {
-            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
+            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.okey}`);
             await membershipRef.update(newMember);
-            logger.info(`Successfully updated membership ${membership.bkey} for group ${groupId} (member)`);
+            logger.info(`Successfully updated membership ${membership.okey} for group ${groupId} (member)`);
           }
         }
 
@@ -375,11 +375,11 @@ export const onGroupChange = onDocumentWritten(
         const memberOrgs = await getAllMembershipsOfOrg(firestore, groupId, 'group');
         for (const membership of memberOrgs) {
           if (membership.orgName !== group.name) {
-            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
+            const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.okey}`);
             await membershipRef.update({
               orgName: group.name,
             });
-            logger.info(`Successfully updated membership ${membership.bkey} for group ${groupId} (org)`);
+            logger.info(`Successfully updated membership ${membership.okey} for group ${groupId} (org)`);
           }
         }
       } else {

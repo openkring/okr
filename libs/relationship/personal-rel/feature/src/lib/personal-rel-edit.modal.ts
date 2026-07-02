@@ -81,10 +81,10 @@ export class PersonalRelEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.personalRel()?.bkey));
+  protected readonly headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.personalRel()?.okey));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
-  protected readonly parentKey = computed(() => `${PersonalRelModelName}.${this.personalRel().bkey ?? ''}`);
+  protected readonly parentKey = computed(() => `${PersonalRelModelName}.${this.personalRel().okey ?? ''}`);
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -108,7 +108,7 @@ export class PersonalRelEditModal {
     if (!person) return;
     
     const personData = {
-      bkey: person.bkey ?? '',
+      okey: person.okey ?? '',
       firstName: person.firstName ?? '',
       lastName: person.lastName ?? '',
       gender: person.gender ?? ''
@@ -119,7 +119,7 @@ export class PersonalRelEditModal {
         if (!vm) return vm;
         return {
           ...vm, 
-          subjectKey: personData.bkey, 
+          subjectKey: personData.okey, 
           subjectFirstName: personData.firstName,
           subjectLastName: personData.lastName,
           subjectGender: personData.gender,
@@ -130,7 +130,7 @@ export class PersonalRelEditModal {
         if (!vm) return vm;
         return {
           ...vm, 
-          objectKey: personData.bkey, 
+          objectKey: personData.okey, 
           objectFirstName: personData.firstName,
           objectLastName: personData.lastName,
           objectGender: personData.gender,

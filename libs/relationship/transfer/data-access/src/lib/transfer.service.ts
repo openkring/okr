@@ -74,7 +74,7 @@ export class TransferService  {
    * @returns a promise that resolves when the transfer is deleted
    */
   public async delete(transfer: TransferModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${transfer.bkey}: ${transfer.name}/${transfer.type} on ${transfer.dateOfTransfer}`;
+    const payload = `${transfer.okey}: ${transfer.name}/${transfer.type} on ${transfer.dateOfTransfer}`;
     await this.firestoreService.deleteModel<TransferModel>(TransferCollection, transfer, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('transfer', 'delete', currentUser, payload);
   }

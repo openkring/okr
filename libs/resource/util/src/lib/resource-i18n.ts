@@ -22,9 +22,9 @@ export const RESOURCE_I18N_KEYS = {
   ok:                       '@ok',
   save:                     '@save.label',
 
-  bkey_label:               PFX + 'bkey.label',
-  bkey_placeholder:         PFX + 'bkey.placeholder',
-  bkey_helper:              PFX + 'bkey.helper',
+  bkey_label:               PFX + 'okey.label',
+  bkey_placeholder:         PFX + 'okey.placeholder',
+  bkey_helper:              PFX + 'okey.helper',
 
   color_label:              PFX + 'color.label',
 

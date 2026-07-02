@@ -68,10 +68,10 @@ export class DocumentEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected documentKey = computed(() => this.document()?.bkey ?? '');
+  protected documentKey = computed(() => this.document()?.okey ?? '');
   protected headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view();
-    const key = this.document()?.bkey;
+    const key = this.document()?.okey;
     return (key && key.length > 0) ? this.i18n.update() : this.i18n.create();
   });
 

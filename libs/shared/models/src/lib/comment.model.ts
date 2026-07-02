@@ -2,7 +2,7 @@ import { DEFAULT_DATETIME, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOT
 import { BkModel, SearchableModel } from './base.model';
 
 export class CommentModel implements BkModel, SearchableModel {
-  bkey = DEFAULT_KEY;
+  okey = DEFAULT_KEY;
   index = DEFAULT_INDEX;
   authorKey = DEFAULT_KEY;
   authorName = DEFAULT_NAME;

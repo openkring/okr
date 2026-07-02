@@ -7,7 +7,7 @@ import { FirestoreService } from './firestore.service';
 
 /** Minimal shape of AppStore used by this service (avoids circular dep with shared-feature). */
 export interface AppStoreMin {
-  currentUser: () => { bkey: string } | undefined;
+  currentUser: () => { okey: string } | undefined;
   env: { tenantId: string };
 }
 

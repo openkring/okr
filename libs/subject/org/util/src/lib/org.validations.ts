@@ -25,7 +25,7 @@ export const orgValidations = staticSuite((model: OrgModel, tenants: string, tag
   });
 
   // cross collection validations
-  // tbd: cross reference bkey in subjects
+  // tbd: cross reference okey in subjects
   // tbd: match zipcode and city from swisscities dictionary
 
 });

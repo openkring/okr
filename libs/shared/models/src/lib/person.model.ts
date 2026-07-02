@@ -3,7 +3,7 @@ import { AddressableModel, BkModel, SearchableModel, TaggedModel } from './base.
 import { PrivacyUsage } from './enums/privacy-usage.enum';
 
 export class PersonModel implements BkModel, AddressableModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

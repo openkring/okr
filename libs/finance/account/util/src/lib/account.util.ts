@@ -26,8 +26,8 @@ export function getAccountIndexInfo(): string {
  * Build a flat, ordered list of visible account nodes for tree display.
  * Only children of expanded nodes are included.
  * @param accounts flat list of all accounts
- * @param rootKey bkey of the root account to start from
- * @param expandedKeys set of bkeys that are currently expanded
+ * @param rootKey okey of the root account to start from
+ * @param expandedKeys set of okeys that are currently expanded
  */
 export function flattenAccountTree(
   accounts: AccountModel[],
@@ -37,15 +37,15 @@ export function flattenAccountTree(
   const nodes: FlatAccountNode[] = [];
   if (!rootKey) return nodes;
 
-  const root = accounts.find(a => a.bkey === rootKey);
+  const root = accounts.find(a => a.okey === rootKey);
   if (!root) return nodes;
 
   function addNode(account: AccountModel, depth: number): void {
-    const hasChildren = accounts.some(a => a.parentKey === account.bkey);
-    const isExpanded = expandedKeys.includes(account.bkey);
+    const hasChildren = accounts.some(a => a.parentKey === account.okey);
+    const isExpanded = expandedKeys.includes(account.okey);
     nodes.push({ account, depth, hasChildren, isExpanded });
     if (isExpanded) {
-      const children = accounts.filter(a => a.parentKey === account.bkey);
+      const children = accounts.filter(a => a.parentKey === account.okey);
       for (const child of children) {
         addNode(child, depth + 1);
       }

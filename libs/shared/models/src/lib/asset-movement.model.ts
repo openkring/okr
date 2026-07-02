@@ -12,7 +12,7 @@ export type AssetMovementType =
   | 'transfer';          // change of cost centre, location, or category
 
 export class AssetMovementModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 

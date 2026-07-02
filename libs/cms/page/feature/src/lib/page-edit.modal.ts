@@ -67,7 +67,7 @@ export class PageEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.page()?.bkey));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.page()?.okey));
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */

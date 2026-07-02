@@ -17,7 +17,7 @@ import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model'
  * - withdrawal/deposit from/to bank account
  */
 export class TransferModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public name = DEFAULT_NAME; // e.g. the reason for the transfer, e.g. "xmas" for a gift

@@ -10,7 +10,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { Header } from '@okr/shared-ui';
 
 export interface EmailEvent {
-  bkey: string;
+  okey: string;
   event: string;
   message_id?: string;
   email?: string;
@@ -69,7 +69,7 @@ const EVENT_TYPES = ['delivery', 'open', 'click', 'bounce', 'spam', 'reject', 'u
       </ion-toolbar>
 
       <ion-list>
-        @for (ev of filteredEvents(); track ev.bkey) {
+        @for (ev of filteredEvents(); track ev.okey) {
           <ion-item>
             <ion-badge slot="start" [color]="eventColor(ev.event)"
               style="min-width: 76px; text-align: center; margin-right: 12px;">

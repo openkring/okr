@@ -5,7 +5,7 @@ export type BlogLayoutType = 'minimal' | 'grid' | 'classic' | 'magazine' | 'bent
 export const DEFAULT_BLOG_LAYOUT_TYPE: BlogLayoutType = DEFAULT_BLOG_TYPE;
 
 export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public name = DEFAULT_NAME; // a meaningful name for the trip
@@ -22,7 +22,7 @@ export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedMo
   public type = DEFAULT_PAGE_TYPE;
   public state = DEFAULT_CONTENT_STATE; // the state of the page
   public notes = DEFAULT_NOTES; // a detailed description of the trip
-  public sections = DEFAULT_SECTIONS; // section.bkey, section.name
+  public sections = DEFAULT_SECTIONS; // section.okey, section.name
   public isPrivate = true; // if true, page requires authentication and should not be accessible via /public/ routes
   public blogType: BlogLayoutType = DEFAULT_BLOG_LAYOUT_TYPE; // layout type for blog pages
 

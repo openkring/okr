@@ -20,7 +20,7 @@ import { BillStore } from './bill.store';
       </ion-item>
       <div slot="content">
         <ion-list lines="inset">
-          @for(bill of myBills(); track bill.bkey) {
+          @for(bill of myBills(); track bill.okey) {
             <ion-item (click)="showActions(bill)" button detail="false">
               <ion-label>
                 <strong>{{ bill.billId }}</strong> {{ bill.title }}

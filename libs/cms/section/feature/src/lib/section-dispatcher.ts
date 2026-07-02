@@ -170,7 +170,7 @@ import { SectionStore } from './section.store';
       }
     } @else {
       <ion-item color="warning">
-        <ion-label>Missing type on section {{ section().bkey }}</ion-label>
+        <ion-label>Missing type on section {{ section().okey }}</ion-label>
       </ion-item>
     }
   `

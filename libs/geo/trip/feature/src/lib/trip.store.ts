@@ -185,7 +185,7 @@ export const TripStore = signalStore(
         });
         const file = await readAsFile(photo, store.platform);
         if (file) {
-          const fullPath = `${store.tenantId()}/trips/${trip.bkey}/images/delete_${Date.now()}.jpg`;
+          const fullPath = `${store.tenantId()}/trips/${trip.okey}/images/delete_${Date.now()}.jpg`;
           photoUrl = await store.uploadService.uploadFile(file, fullPath, 'Löschfoto');
         }
       } catch {
@@ -249,7 +249,7 @@ export const TripStore = signalStore(
         });
         const file = await readAsFile(photo, store.platform);
         if (file) {
-          const fullPath = `${store.tenantId()}/trips/${trip.bkey}/images/flag_${Date.now()}.jpg`;
+          const fullPath = `${store.tenantId()}/trips/${trip.okey}/images/flag_${Date.now()}.jpg`;
           photoUrl = await store.uploadService.uploadFile(file, fullPath, 'Verdacht-Foto');
         }
       } catch {

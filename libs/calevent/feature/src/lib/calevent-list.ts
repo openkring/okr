@@ -174,7 +174,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           </ion-card>
         } @else {
           <ion-list lines="inset">
-            @for(event of filteredCalEvents(); track event.bkey; let i = $index) {
+            @for(event of filteredCalEvents(); track event.okey; let i = $index) {
               <ion-item [id]="'calevent-' + i" (click)="showActions(event)" [class]="getCalEventCssClass(event.state)">
                 <ion-label>{{ event | calEventDuration }}</ion-label>
                 <ion-label>{{event.name}}</ion-label>
@@ -241,17 +241,17 @@ export class CalEventList implements OnInit {
       const cssClass = getCalEventCssClass(event.state);
       const isProposed = event.state === 'proposed';
       const acceptanceCount = isProposed
-        ? this.store.seriesInvitations().filter(inv => inv.caleventKey === event.bkey && inv.state === 'accepted').length
+        ? this.store.seriesInvitations().filter(inv => inv.caleventKey === event.okey && inv.state === 'accepted').length
         : 0;
       const invitedCount = isProposed
-        ? this.store.seriesInvitations().filter(inv => inv.caleventKey === event.bkey).length
+        ? this.store.seriesInvitations().filter(inv => inv.caleventKey === event.okey).length
         : 0;
 
       const commonProps: Partial<EventInput> = {
         title: event.name,
         classNames: cssClass ? [cssClass] : [],
         extendedProps: {
-          eventKey: event.bkey,
+          eventKey: event.okey,
           state: event.state,
           acceptanceCount,
           invitedCount,
@@ -518,7 +518,7 @@ export class CalEventList implements OnInit {
         if (!cal) {
           error(undefined, 'all or my calendars can not be exported');
         } else {
-          const url = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS?calendar=' + cal.bkey;
+          const url = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS?calendar=' + cal.okey;
           Browser.open({ url: url, windowName: '_blank' });
         }
         break;
@@ -560,7 +560,7 @@ export class CalEventList implements OnInit {
       }
     } else {  // invitation
       // get invitation for current user
-      const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.bkey);
+      const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.okey);
       if (inv) {
         if (inv.state !== 'accepted') {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
@@ -618,7 +618,7 @@ export class CalEventList implements OnInit {
           await this.store.unsubscribe(calEvent);
           break;
         case 'calevent.downloadIcs':
-          await this.download(calEvent.bkey);
+          await this.download(calEvent.okey);
         break;
         case 'calevent.delete': {
           const isGrid = !this.isListView();
@@ -747,7 +747,7 @@ export class CalEventList implements OnInit {
     if (!this.canChange()) { arg.revert(); return; }
     const eventKey = arg.event.extendedProps?.eventKey as string;
     if (!eventKey) { arg.revert(); return; }
-    const calevent = this.filteredCalEvents().find(e => e.bkey === eventKey);
+    const calevent = this.filteredCalEvents().find(e => e.okey === eventKey);
     if (!calevent) { arg.revert(); return; }
     const start = arg.event.start as Date;
     const newStartDate = format(start, DateFormat.StoreDate);
@@ -761,7 +761,7 @@ export class CalEventList implements OnInit {
   protected async onEventResize(arg: any): Promise<void> {
     const eventKey = arg.event.extendedProps?.eventKey as string;
     if (!eventKey) { arg.revert(); return; }
-    const calevent = this.filteredCalEvents().find(e => e.bkey === eventKey);
+    const calevent = this.filteredCalEvents().find(e => e.okey === eventKey);
     if (!calevent || !this.canChange(calevent)) { arg.revert(); return; }
     const start = arg.event.start as Date;
     const end = arg.event.end as Date;
@@ -778,7 +778,7 @@ export class CalEventList implements OnInit {
     const eventKey = arg.event.extendedProps.eventKey as string;
     debugData<string>('CaleventList.onEventClick: event selected: ', eventKey, this.currentUser());
     const calevents = this.filteredCalEvents();
-    const calevent = calevents.find(e => e.bkey === eventKey);
+    const calevent = calevents.find(e => e.okey === eventKey);
     if (calevent) {
       await this.showActions(calevent);
     } else {
@@ -821,7 +821,7 @@ export class CalEventList implements OnInit {
     if (calevent) {
       const allCalendars = this.store.calendarsResource.value() ?? [];
       for (const calKey of calevent.calendars) {
-        const cal = allCalendars.find(c => c.bkey === calKey);
+        const cal = allCalendars.find(c => c.okey === calKey);
         if (cal?.owner?.startsWith('group.')) {
           const group = this.store.appStore.getGroup(cal.owner.substring(6));
           return isAdminMember(group, personKey);        }

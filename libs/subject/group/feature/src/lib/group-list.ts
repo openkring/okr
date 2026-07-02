@@ -79,7 +79,7 @@ import { GroupStore } from './group.store';
           @for(group of filteredGroups(); track $index) {
             <ion-item (click)="showActions(group)">
               <ion-avatar slot="start">
-                <ion-img src="{{ 'group.' + group.bkey | avatar:group.icon }}" alt="Group Avatar Logo" />
+                <ion-img src="{{ 'group.' + group.okey | avatar:group.icon }}" alt="Group Avatar Logo" />
               </ion-avatar>
               <ion-label>{{group.name}}</ion-label>
               <bk-avatar-display [avatars]="(group | memberAvatars | async) ?? []" [showName]="false" />
@@ -161,7 +161,7 @@ export class GroupList {
     actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.store.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      if (await this.store.doesGroupContentPageExist(group.bkey) === false) {
+      if (await this.store.doesGroupContentPageExist(group.okey) === false) {
         actionSheetOptions.buttons.push(createActionSheetButton('as_addPage', this.store.i18n.add_page(), this.imgixBaseUrl, 'add'));
       }
       actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));

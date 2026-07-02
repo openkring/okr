@@ -4,7 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { setCacheHeaders, storeDateToIso, locationName, mapCategory } from '../utils';
 
 interface CalEventDoc {
-  bkey: string;
+  okey: string;
   name: string;
   description: string;
   startDate: string;
@@ -19,7 +19,7 @@ interface CalEventDoc {
 
 function docToApiEvent(doc: CalEventDoc) {
   return {
-    id: doc.bkey,
+    id: doc.okey,
     date: storeDateToIso(doc.startDate),
     time: doc.startTime || undefined,
     topic: { de: doc.name },
@@ -55,7 +55,7 @@ export async function calendarRouter(req: Request, res: Response): Promise<void>
         const data = d.data();
         return Array.isArray(data['tenants']) && (data['tenants'] as string[]).includes(tenantId);
       })
-      .map(d => ({ bkey: d.id, ...d.data() } as CalEventDoc));
+      .map(d => ({ okey: d.id, ...d.data() } as CalEventDoc));
 
     docs = docs.filter(d => {
       if (d.startDate < from) return false;

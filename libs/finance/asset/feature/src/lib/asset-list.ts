@@ -22,7 +22,7 @@ import { AssetStore } from './asset.store';
       @else if (store.assets().length === 0) { <p>{{ store.i18n.empty() }}</p> }
       @else {
         <ion-list>
-          @for (asset of store.assets(); track asset.bkey) {
+          @for (asset of store.assets(); track asset.okey) {
             <ion-item (click)="store.openEdit(asset, store.isReadOnly())">
               <ion-label>
                 <h3>{{ asset.assetNo }} — {{ asset.name }}</h3>

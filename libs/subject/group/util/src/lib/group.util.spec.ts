@@ -8,7 +8,7 @@ describe('Group Utils', () => {
 
   beforeEach(() => {
     group = new GroupModel(tenantId);
-    group.bkey = 'group-key-1';
+    group.okey = 'group-key-1';
     group.name = 'Test Group';
     group.id = 'TG1';
     group.tags = 'test,group';
@@ -34,7 +34,7 @@ describe('Group Utils', () => {
 
 function makeGroup(visibility: string, notifyType: 'memberOnly' | 'membersAndMatchingVisibility' = 'memberOnly'): GroupModel {
   const g = new GroupModel('t1');
-  g.bkey = 'g1';
+  g.okey = 'g1';
   g.visibility = visibility;
   g.notifyType = notifyType;
   return g;
@@ -80,9 +80,9 @@ describe('userMatchesGroupVisibility', () => {
 
 describe('getVisibleGroupKeys', () => {
   it('returns groups visible via role, excluding member groups', () => {
-    const g1 = makeGroup('registered'); g1.bkey = 'g1';
-    const g2 = makeGroup('registered'); g2.bkey = 'g2';
-    const g3 = makeGroup(''); g3.bkey = 'g3';
+    const g1 = makeGroup('registered'); g1.okey = 'g1';
+    const g2 = makeGroup('registered'); g2.okey = 'g2';
+    const g3 = makeGroup(''); g3.okey = 'g3';
     const user = makeUser({ registered: true });
     // g1 is already a member group → excluded; g2 visible; g3 empty visibility → excluded
     const result = getVisibleGroupKeys([g1, g2, g3], new Set(['g1']), user);
@@ -90,7 +90,7 @@ describe('getVisibleGroupKeys', () => {
   });
 
   it('returns empty array when no groups match', () => {
-    const g1 = makeGroup('privileged'); g1.bkey = 'g1';
+    const g1 = makeGroup('privileged'); g1.okey = 'g1';
     const user = makeUser({ registered: true, privileged: false });
     expect(getVisibleGroupKeys([g1], new Set(), user)).toEqual([]);
   });

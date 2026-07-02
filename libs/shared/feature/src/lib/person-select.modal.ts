@@ -57,7 +57,7 @@ export type PersonSelectResult =
             <ion-list lines="none">
               <ion-item class="item" (click)="select(person)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'person.' + person.bkey | avatar:defaultIcon }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'person.' + person.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>
               </ion-item>

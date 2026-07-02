@@ -49,7 +49,7 @@ export class ProfileService {
   /** Profile can not be deleted. */
 
   public listAddresses(person: PersonModel): Observable<AddressModel[]> {
-    const collection = `${PersonCollection}/${person.bkey}/${AddressCollection}`;
+    const collection = `${PersonCollection}/${person.okey}/${AddressCollection}`;
     return this.firestoreService.searchData<AddressModel>(collection, getSystemQuery(this.env.tenantId), 'name', 'asc');
   }
 }

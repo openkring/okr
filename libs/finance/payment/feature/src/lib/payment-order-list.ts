@@ -24,8 +24,8 @@ import { PaymentStore } from './payment.store';
       @else if (store.orders().length === 0) { <p>{{ store.i18n.empty() }}</p> }
       @else {
         <ion-list>
-          @for (order of store.orders(); track order.bkey) {
-            <ion-item (click)="navigate(order.bkey)">
+          @for (order of store.orders(); track order.okey) {
+            <ion-item (click)="navigate(order.okey)">
               <ion-label>
                 <h3>{{ order.messageId }}</h3>
                 <p>{{ order.executionDate }} | {{ order.deliveryMethod }}</p>

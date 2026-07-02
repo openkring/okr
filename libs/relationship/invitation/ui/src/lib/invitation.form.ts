@@ -31,7 +31,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
                 @if(hasRole('admin')) {
                   <ion-row>
                     <ion-col size="12" size-md="6">
-                      <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                      <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                     </ion-col>
                   </ion-row>
                 }
@@ -110,7 +110,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
 })
 export class InvitationForm {
   public readonly i18n = input.required<InvitationI18n>();
-  protected bkeyI18n = computed(() => ({ name: 'bkey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
+  protected bkeyI18n = computed(() => ({ name: 'okey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
   protected sentAtI18n = computed(() => ({ name: 'sentAt', label: this.i18n().sentAt_label(), placeholder: this.i18n().sentAt_placeholder(), helper: this.i18n().sentAt_helper() } as DateInputI18n));
   protected respondedAtI18n = computed(() => ({ name: 'respondedAt', label: this.i18n().respondedAt_label(), placeholder: this.i18n().respondedAt_placeholder(), helper: this.i18n().respondedAt_helper() } as DateInputI18n));
@@ -148,7 +148,7 @@ export class InvitationForm {
   protected respondedAt = linkedSignal(() => this.formData().respondedAt ?? DEFAULT_DATE);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected okey = computed(() => this.formData().okey ?? '');
 
   // passing constants to template
   protected nameLength = NAME_LENGTH;

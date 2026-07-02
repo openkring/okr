@@ -102,8 +102,8 @@ import { DocumentStore } from './document.store';
       @if(isListView() === true) {
         <ion-grid>
           <!-- subfolders -->
-          @for(folder of subFolders(); track folder.bkey) {
-            <ion-row (click)="onSubfolderClick(folder.bkey)">
+          @for(folder of subFolders(); track folder.okey) {
+            <ion-row (click)="onSubfolderClick(folder.okey)">
               <ion-col size="12">
                 <ion-item lines="none">
                   <ion-thumbnail slot="start">
@@ -111,14 +111,14 @@ import { DocumentStore } from './document.store';
                   </ion-thumbnail>
                   <ion-label>
                     <h3>{{ folder.title || folder.name }}</h3>
-                    <p>{{ folderDocumentCounts().get(folder.bkey) ?? 0 }} Dateien</p>
+                    <p>{{ folderDocumentCounts().get(folder.okey) ?? 0 }} Dateien</p>
                   </ion-label>
                 </ion-item>
               </ion-col>
             </ion-row>
           }
           <!-- don't use 'document' here as it leads to confusions with HTML document -->
-          @for(doc of filteredDocuments(); track doc.bkey) {
+          @for(doc of filteredDocuments(); track doc.okey) {
             <ion-row (click)="showActions(doc)">
               <ion-col size="12" size-sm="8">
                 <ion-item lines="none">
@@ -152,18 +152,18 @@ import { DocumentStore } from './document.store';
         <ion-grid>
           <ion-row>
             <!-- subfolders -->
-            @for(folder of subFolders(); track folder.bkey) {
-              <ion-col size="6" size-md="4" size-xl="3" (click)="onSubfolderClick(folder.bkey)">
+            @for(folder of subFolders(); track folder.okey) {
+              <ion-col size="6" size-md="4" size-xl="3" (click)="onSubfolderClick(folder.okey)">
                 <div style="position: relative; width: 100%; padding-bottom: 80%; overflow: hidden; border-radius: 4px; background: var(--ion-color-light);">
                   <ion-thumbnail style="position: absolute; inset: 0; --size: 100%; width: 100%; height: 100%;">
                     <ion-icon style="width: 60%; height: 60%; margin: 20%;" src="{{ 'folder' | svgIcon }}" />
                   </ion-thumbnail>
                 </div>
-                <p style="font-size: 0.75rem; margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ folder.title || folder.name }} ({{ folderDocumentCounts().get(folder.bkey) ?? 0 }})</p>
+                <p style="font-size: 0.75rem; margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ folder.title || folder.name }} ({{ folderDocumentCounts().get(folder.okey) ?? 0 }})</p>
               </ion-col>
             }
             <!-- documents -->
-            @for(doc of filteredDocuments(); track doc.bkey) {
+            @for(doc of filteredDocuments(); track doc.okey) {
               <ion-col size="6" size-md="4" size-xl="3" (click)="showActions(doc)">
                 <div style="position: relative; width: 100%; padding-bottom: 80%; overflow: hidden; border-radius: 4px;">
                   <ion-thumbnail style="position: absolute; inset: 0; --size: 100%; width: 100%; height: 100%;">

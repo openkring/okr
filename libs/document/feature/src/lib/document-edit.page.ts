@@ -61,7 +61,7 @@ export class DocumentEditPage {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.document()?.bkey));
+  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.document()?.okey));
   protected currentUser = computed(() => this.store.currentUser());
   protected tags = computed(() => this.store.getTags());
   protected types = computed(() => this.store.getTypes());

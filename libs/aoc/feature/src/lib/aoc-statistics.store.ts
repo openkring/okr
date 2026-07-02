@@ -97,7 +97,7 @@ export const AocStatisticsStore = signalStore(
           // section does not exist -> create a new section
           section = TABLE_SECTION_SHAPE;
           section.tenants = [store.appStore.env.tenantId];
-          section.bkey = sectionKey;
+          section.okey = sectionKey;
           section.title = 'aoc.statistics.ageByGender.title';
         }
         section!.subTitle = getTodayStr(DateFormat.ViewDate);
@@ -153,7 +153,7 @@ export const AocStatisticsStore = signalStore(
         const section = await firstValueFrom(store.firestoreService.readModel<SectionModel>(SectionCollection, sectionKey));
         if (!section) { // section does not exist -> create a new section 
           section = new SectionModel(store.appStore.env.tenantId);
-          section.bkey = sectionKey;
+          section.okey = sectionKey;
           section.title = 'aoc.statistics.categoryByGender.title';
           section.subTitle = getTodayStr(DateFormat.ViewDate)
           section.properties.table.config = {
@@ -218,7 +218,7 @@ export const AocStatisticsStore = signalStore(
 
         // get the zipcodes of all active members of the default organisation...
         const query = getSystemQuery(store.appStore.env.tenantId);
-        query.push({ key: 'objectKey', operator: '==', value: defaultOrg.bkey });
+        query.push({ key: 'objectKey', operator: '==', value: defaultOrg.okey });
         query.push({ key: 'membershipState', operator: '==', value: 'active' });
         return store.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberZipCode', 'asc');
       },
@@ -274,7 +274,7 @@ export const AocStatisticsStore = signalStore(
   }
  */
 /*   private async checkAndCreateMissingCompetitionLevels(scsMember: RelationshipModel): Promise<number> {
-    console.log('checking ' + scsMember.bkey + '/' + scsMember.subjectName2 + ' ' + scsMember.subjectName);
+    console.log('checking ' + scsMember.okey + '/' + scsMember.subjectName2 + ' ' + scsMember.subjectName);
     const clItem = await firstValueFrom(this.dataService.readModel(CollectionNames.CompetitionLevel, scsMember.subjectKey));
     if (clItem === undefined) {
       const birthdate = scsMember.properties.dateOfBirth;

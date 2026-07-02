@@ -226,17 +226,17 @@ export const PersonStore = signalStore(
             if (role !== 'confirm') return;
 
             await store.personService.mergeIntoTenant(
-                candidate.bkey, store.tenantId(),
+                candidate.okey, store.tenantId(),
                 (resolved ?? {}) as Partial<Record<ReconcilableField, string>>);
 
             // Non-destructive: add contact channels not already represented by the person's fav fields.
-            const avatarKey = `person.${candidate.bkey}`;
+            const avatarKey = `person.${candidate.okey}`;
             if ((p.email ?? '').length > 0 && p.email !== candidate.favEmail) this.saveSecondaryAddress(convertNewPersonFormToEmailAddress(p, store.tenantId()), avatarKey);
             if ((p.phone ?? '').length > 0 && p.phone !== candidate.favPhone) this.saveSecondaryAddress(convertNewPersonFormToPhoneAddress(p, store.tenantId()), avatarKey);
             if ((p.web ?? '').length > 0) this.saveSecondaryAddress(convertNewPersonFormToWebAddress(p, store.tenantId()), avatarKey);
             if ((p.city ?? '').length > 0) this.saveSecondaryAddress(convertNewPersonFormToPostalAddress(p, store.tenantId()), avatarKey);
             if (p.shouldAddMembership && (p.orgKey ?? '').length > 0 && (p.membershipCategory ?? '').length > 0) {
-                await this.saveMembership(p, candidate.bkey);
+                await this.saveMembership(p, candidate.okey);
             }
             this.reload();
         },
@@ -259,7 +259,7 @@ export const PersonStore = signalStore(
         },
 
         async save(person: PersonModel): Promise<void> {
-            await (!person.bkey ? 
+            await (!person.okey ? 
             store.personService.create(person, store.currentUser()) : 
             store.personService.update(person, store.currentUser()));
         },
@@ -275,9 +275,9 @@ export const PersonStore = signalStore(
             this.saveAddress(address, avatarKey);
         },
 
-        async saveAvatar(photo: Photo, bkey: string): Promise<void> {
-          if (!bkey) return;
-          await store.avatarService.saveAvatarPhoto(photo, bkey, store.appStore.env.tenantId, PersonModelName);
+        async saveAvatar(photo: Photo, okey: string): Promise<void> {
+          if (!okey) return;
+          await store.avatarService.saveAvatarPhoto(photo, okey, store.appStore.env.tenantId, PersonModelName);
           store.personResource.reload();
         },
 
@@ -292,7 +292,7 @@ export const PersonStore = signalStore(
         async exportVcard(person: PersonModel): Promise<void> {
             const displayName = `${person.firstName ?? ''} ${person.lastName ?? ''}`.trim() || person.lastName;
             await store.vcardExportService.exportSingle(
-                { bkey: person.bkey, displayName, dateOfBirth: person.dateOfBirth },
+                { okey: person.okey, displayName, dateOfBirth: person.dateOfBirth },
                 'person',
                 store.currentUser()?.roles,
                 store.tenantId()
@@ -316,7 +316,7 @@ export const PersonStore = signalStore(
             const { data, role } = await modal.onDidDismiss();
             if (role === 'confirm' && data && !readOnly) {
                 if (isPerson(data, store.tenantId())) {
-                data.bkey?.length === 0 ? 
+                data.okey?.length === 0 ? 
                     await store.personService.create(data, store.currentUser()) : 
                     await store.personService.update(data, store.currentUser());
                 this.reload();
@@ -397,11 +397,11 @@ export const PersonStore = signalStore(
             // Await the idempotent, promise-cached init so opening a direct chat works even
             // before the user has visited the chat overview (which otherwise primes the client).
             await store.matrixService.ensureInitialized();
-            const room = await store.matrixService.createDirectRoom(person.bkey);
+            const room = await store.matrixService.createDirectRoom(person.okey);
             await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
           } catch (error) {
             const msg = error instanceof Error ? error.message : 'Could not start chat';
-            void store.activityService.log('chat', 'createdirect', store.currentUser(), `ERROR: ${person.bkey} ${msg}`);
+            void store.activityService.log('chat', 'createdirect', store.currentUser(), `ERROR: ${person.okey} ${msg}`);
             await showToast(store.toastController, msg);
           }
         },
@@ -413,7 +413,7 @@ export const PersonStore = signalStore(
         async showOnMap(person?: PersonModel): Promise<void> {
             if (!person) return;
             const postalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
-              { key: 'parentKey', operator: '==', value: 'person.' + person.bkey },
+              { key: 'parentKey', operator: '==', value: 'person.' + person.okey },
               { key: 'addressChannel', operator: '==', value: 'postal' },
               { key: 'isFavorite', operator: '==', value: true }
             ], 'none');

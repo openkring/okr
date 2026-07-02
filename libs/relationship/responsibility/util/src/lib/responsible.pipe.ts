@@ -18,7 +18,7 @@ export class ResponsiblePipe implements PipeTransform {
   ): string {
     if (!id || id.length === 0) return '';
 
-    const resp = responsibilities.find(r => r.bkey === id );
+    const resp = responsibilities.find(r => r.okey === id );
     if (!resp) return '';
 
     const name = getFullName(resp.responsibleAvatar?.name1, resp.responsibleAvatar?.name2);

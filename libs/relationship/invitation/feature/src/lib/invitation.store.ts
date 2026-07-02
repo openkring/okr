@@ -146,7 +146,7 @@ export const InvitationStore = signalStore(
           inv.inviterKey = store.currentUser()?.personKey || '';
           inv.inviterFirstName = store.currentUser()?.firstName || '';
           inv.inviterLastName = store.currentUser()?.lastName || '';
-          inv.caleventKey = calevent.bkey;
+          inv.caleventKey = calevent.okey;
           inv.name = calevent.name;
           inv.date = calevent.startDate;
           inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
@@ -175,7 +175,7 @@ export const InvitationStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isInvitation(data, store.tenantId())) {
-            await (!data.bkey ? 
+            await (!data.okey ? 
               store.invitationService.create(data, store.currentUser()) : 
               store.invitationService.update(data, store.currentUser()));
           }

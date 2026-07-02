@@ -55,7 +55,7 @@ export class AccountEditModal {
 
   protected headerTitle = computed(() => {
     if (this.isReadOnly()) return this.store.i18n.view();
-    const key = this.account().bkey;
+    const key = this.account().okey;
     return (key && key.length > 0) ? this.store.i18n.update() : this.store.i18n.create();
   });
   protected types = computed(() => this.store.appStore.getCategory('account_type'));

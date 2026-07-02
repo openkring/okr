@@ -100,7 +100,7 @@ import { GraphPage } from "./graph.page";
                     }
                 }
                 @case ('error') {
-                    <bk-error-page [errorName]="page.bkey" />
+                    <bk-error-page [errorName]="page.okey" />
                 }
                 @default {
                     <bk-error-page errorName="unknownPageType" />

@@ -107,7 +107,7 @@ export const CategoryStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isCategoryList(data, store.appStore.tenantId())) {
-            category.bkey === '' ?
+            category.okey === '' ?
               await store.categoryService.create(data, store.currentUser()) : 
               await store.categoryService.update(data, store.currentUser());
           }

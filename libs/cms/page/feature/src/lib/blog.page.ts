@@ -132,7 +132,7 @@ export class BlogPage {
   public showMenu = input(true);
 
   protected tenantId = computed(() => this.store.tenantId());
-  protected popupId = computed(() => 'c_blogpage_' + this.store.page()?.bkey);
+  protected popupId = computed(() => 'c_blogpage_' + this.store.page()?.okey);
   protected editMode = signal(false);
   protected sections = computed(() => this.store.pageSections().filter(s => s.state === 'published' || this.hasRole('contentAdmin')));
   protected isEmptyPage = computed(() => this.sections().length === 0);
@@ -189,7 +189,7 @@ export class BlogPage {
   protected async showActions(sectionId: string): Promise<void> {
     if (!this.editMode()) return;
     const id = replaceSubstring(sectionId, '@TID@', this.tenantId());
-    const section = this.sectionStore.sections()?.find(s => s.bkey === id);
+    const section = this.sectionStore.sections()?.find(s => s.okey === id);
     if (!section) return;
     this.sectionStore.setSectionId(id);
 
@@ -220,7 +220,7 @@ export class BlogPage {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'page.removesection': await this.store.removeSectionById(section.bkey); break;
+        case 'page.removesection': await this.store.removeSectionById(section.okey); break;
         case 'section.edit':       await this.sectionStore.edit(this.sectionStore.section(), false); break;
         case 'section.send':       await this.sectionStore.send(section); break;
         case 'section.image.upload': await this.sectionStore.uploadImage(this.sectionStore.section() as ArticleSection); break;

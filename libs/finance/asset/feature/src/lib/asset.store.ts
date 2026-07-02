@@ -64,7 +64,7 @@ export const AssetStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data) {
         const a = data as AssetModel;
-        if (a.bkey?.length > 0) {
+        if (a.okey?.length > 0) {
           await store.assetService.update(a, store.currentUser());
         } else {
           await store.assetService.create(a, store.currentUser());

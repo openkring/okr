@@ -40,7 +40,7 @@ import { OrgSelectStore } from './org-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(org)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'org.' + org.bkey | avatar:defaultIcon }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'org.' + org.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ org.name }}</ion-label>
               </ion-item>

@@ -30,7 +30,7 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
           @if(expertMode()) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input [i18n]="bkeyI18n()" [value]="bkey()" [readOnly]="true" [copyable]="true" />
+                <bk-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-text-input [i18n]="seriesIdI18n()" [value]="seriesId()" [readOnly]="true" [copyable]="true" />
@@ -162,7 +162,7 @@ export class CalEventForm {
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
-  protected bkey = linkedSignal(() => this.formData().bkey ?? '');
+  protected okey = linkedSignal(() => this.formData().okey ?? '');
   protected seriesId = linkedSignal(() => this.formData().seriesId ?? '');
   protected type = linkedSignal(() => this.formData().type ?? DEFAULT_CALEVENT_TYPE);
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
@@ -196,7 +196,7 @@ export class CalEventForm {
   protected nameLength = NAME_LENGTH;
 
   protected bkeyI18n = computed(() => ({
-    name: 'bkey',
+    name: 'okey',
     label: this.i18n().bkey_label(),
     placeholder: this.i18n().bkey_placeholder(),
     helper: this.i18n().bkey_helper()

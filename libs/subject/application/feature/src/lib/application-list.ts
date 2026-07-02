@@ -40,7 +40,7 @@ import { ApplicationStore } from './application.store';
       <bk-empty-list [message]="store.i18n.list_empty()" />
     } @else {
       <ion-list lines="inset">
-        @for(app of store.filteredApplications(); track app.bkey) {
+        @for(app of store.filteredApplications(); track app.okey) {
           <ion-item button (click)="store.editApplication(app)">
             <ion-label>
               <h2>{{ app.lastName }}, {{ app.firstName }}</h2>

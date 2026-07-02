@@ -132,7 +132,7 @@ export class AuthService {
   }
 
   public async logout(currentUser: UserModel | undefined): Promise<boolean> {
-    const msg = currentUser ? currentUser.bkey + ': ' + currentUser.firstName + ' ' + currentUser.lastName : 'undefined';
+    const msg = currentUser ? currentUser.okey + ': ' + currentUser.firstName + ' ' + currentUser.lastName : 'undefined';
     const result = await this.alertService.confirm(this.i18n.logout_confirm(), true);
     if (result === true) {
       try {

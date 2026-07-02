@@ -66,7 +66,7 @@ export class SessionDetailModal {
       { label: 'Ended', value: fmt(s.endedAt) },
       { label: i.session_col_duration(), value: String(s.durationSeconds) },
       { label: 'userKey', value: s.userKey },
-      { label: 'bkey', value: s.bkey },
+      { label: 'okey', value: s.okey },
       { label: 'tenants', value: s.tenants.join(', ') },
     ];
   });

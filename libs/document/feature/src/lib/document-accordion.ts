@@ -38,7 +38,7 @@ import { DocumentStore } from './document.store';
           <bk-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="none">
-            @for(document of documents; track document.bkey) {
+            @for(document of documents; track document.okey) {
               <ion-item (click)="showActions(document)">
                 <ion-icon src="{{ document.fullPath | fileLogo }}"></ion-icon>&nbsp;
                 <ion-label>
@@ -138,7 +138,7 @@ export class DocumentsAccordion {
         case 'document.showRevisions':
           const revisions = await this.store.getRevisions(document);
           for (const rev of revisions) {
-            console.log(` - revision: ${rev.bkey} / version: ${rev.version} / last update: ${rev.dateOfDocLastUpdate}`);
+            console.log(` - revision: ${rev.okey} / version: ${rev.version} / last update: ${rev.dateOfDocLastUpdate}`);
           }
           break;
       }

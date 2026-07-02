@@ -10,7 +10,7 @@ import { MEMBER_NEW_FORM_SHAPE, MemberNewFormModel } from './member-new-form.mod
 
 export function createGroupMembership(group: GroupModel, person: PersonModel, tenantId: string): MembershipModel {
   const membership = new MembershipModel(tenantId);
-  membership.memberKey = person.bkey;
+  membership.memberKey = person.okey;
   membership.memberName1 = person.firstName;
   membership.memberName2 = person.lastName;
   membership.memberModelType = 'person';
@@ -19,7 +19,7 @@ export function createGroupMembership(group: GroupModel, person: PersonModel, te
   membership.memberDateOfDeath = person.dateOfDeath;
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
-  membership.orgKey = group.bkey ?? DEFAULT_KEY;
+  membership.orgKey = group.okey ?? DEFAULT_KEY;
   membership.orgName = group.name ?? DEFAULT_NAME;
   membership.orgModelType = 'group';
   membership.dateOfEntry = getTodayStr();
@@ -34,7 +34,7 @@ export function newMembershipForPerson(person: PersonModel, orgKey: string, orgN
   const membership = new MembershipModel('dummy');
   membership.tenants = person.tenants;
 
-  membership.memberKey = person.bkey ?? die('membership.util.newMembershipForPerson: person.bkey is undefined');
+  membership.memberKey = person.okey ?? die('membership.util.newMembershipForPerson: person.okey is undefined');
   membership.memberName1 = person.firstName;
   membership.memberName2 = person.lastName;
   membership.memberModelType = 'person';
@@ -64,7 +64,7 @@ export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: stri
   const membership = new MembershipModel('dummy');
   membership.tenants = org.tenants;
 
-  membership.memberKey = org.bkey ?? die('membership.util.newMembershipForOrg: org.bkey is undefined');
+  membership.memberKey = org.okey ?? die('membership.util.newMembershipForOrg: org.okey is undefined');
   membership.memberName1 = DEFAULT_NAME;
   membership.memberName2 = org.name;
   membership.memberModelType = 'org';
@@ -92,7 +92,7 @@ export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: stri
 
 export function convertMembershipToCategoryChangeForm(membership: MembershipModel): CategoryChangeFormModel {
   return {
-    bkey: membership.bkey ?? DEFAULT_KEY, // readonly
+    okey: membership.okey ?? DEFAULT_KEY, // readonly
     memberName: membership.memberName1 + ' ' + membership.memberName2, // readonly
     orgName: membership.orgName ?? DEFAULT_NAME, // readonly
     dateOfChange: getTodayStr(DateFormat.StoreDate),
@@ -120,7 +120,7 @@ export function convertMemberAndOrgToMembership(
       membership = addGroupInfoToMembership(membership, member as GroupModel);
       break;
   }
-  membership.orgKey = org.bkey;
+  membership.orgKey = org.okey;
   membership.orgName = org.name;
   membership.orgModelType = orgModelType;
   membership.dateOfEntry = getTodayStr();
@@ -130,7 +130,7 @@ export function convertMemberAndOrgToMembership(
 }
 
 export function addPersonInfoToMembership(membership: MembershipModel, person: PersonModel): MembershipModel {
-  membership.memberKey = person.bkey;
+  membership.memberKey = person.okey;
   membership.memberName1 = person.firstName;
   membership.memberName2 = person.lastName;
   membership.memberModelType = PersonModelName;
@@ -143,7 +143,7 @@ export function addPersonInfoToMembership(membership: MembershipModel, person: P
 }
 
 export function addOrgInfoToMembership(membership: MembershipModel, org: OrgModel): MembershipModel {
-  membership.memberKey = org.bkey;
+  membership.memberKey = org.okey;
   membership.memberName1 = DEFAULT_NAME;
   membership.memberName2 = org.name;
   membership.memberModelType = OrgModelName;
@@ -156,7 +156,7 @@ export function addOrgInfoToMembership(membership: MembershipModel, org: OrgMode
 }
 
 export function addGroupInfoToMembership(membership: MembershipModel, group: GroupModel): MembershipModel {
-  membership.memberKey = group.bkey;
+  membership.memberKey = group.okey;
   membership.memberName1 = DEFAULT_NAME;
   membership.memberName2 = group.name;
   membership.memberModelType = GroupModelName;
@@ -220,7 +220,7 @@ export function getMembershipIndexInfo(): string {
   export function getMemberEmailAddresses(memberships: MembershipModel[], persons: PersonModel[]): string[] {
     const memberKeys = new Set(memberships.map(m => m.memberKey));
     return persons
-      .filter(p => p.bkey && memberKeys.has(p.bkey))
+      .filter(p => p.okey && memberKeys.has(p.okey))
       .map(p => p.favEmail)
       .filter(email => !!email);   // remove empty/null
   }
@@ -298,7 +298,7 @@ export function getMembershipIndexInfo(): string {
           comment
         ];
       } else {  // no SCS and no SRV membership -> should not happen / ignore
-        console.warn(`MembershipUtil.convertToSrvDataRow: person ${person.bkey} has no SCS and no SRV membership`);
+        console.warn(`MembershipUtil.convertToSrvDataRow: person ${person.okey} has no SCS and no SRV membership`);
         return [];
       }
     }
@@ -319,7 +319,7 @@ export function getMembershipIndexInfo(): string {
   // ---------------------- Raw List -------------------------------
   export function convertToRawDataRow(membership: MembershipModel): string[] {
     return [
-      membership.bkey,
+      membership.okey,
       membership.tenants.join('|'),
       membership.isArchived.toString(),
       membership.index,
@@ -505,7 +505,7 @@ export function createNewMemberFormModel(org?: OrgModel): MemberNewFormModel {
   const model = { ...MEMBER_NEW_FORM_SHAPE };
   console.log('createNewMemberFormModel, org:', org);
   console.log('createNewMemberFormModel, model before setting org:', model);
-  model.orgKey = org?.bkey ?? DEFAULT_KEY;
+  model.orgKey = org?.okey ?? DEFAULT_KEY;
   model.orgName = org?.name ?? DEFAULT_NAME;
   model.category = 'active';
   console.log('createNewMemberFormModel, model after setting org:', model);
@@ -514,7 +514,7 @@ export function createNewMemberFormModel(org?: OrgModel): MemberNewFormModel {
 
 export function convertFormToNewPerson(vm: MemberNewFormModel, tenantId: string): PersonModel {
   const person = new PersonModel(tenantId);
-  person.bkey = DEFAULT_KEY;
+  person.okey = DEFAULT_KEY;
   person.firstName = vm.firstName ?? DEFAULT_NAME;
   person.lastName = vm.lastName ?? DEFAULT_NAME;
   person.gender = vm.gender ?? DEFAULT_GENDER;
@@ -591,8 +591,8 @@ export function getGroupsOfMember(memberships: MembershipModel[], memberKey?: st
   const groups: GroupModel[] = [];
   const seen = new Set<string>();
   for (const m of ms) {
-    if (!seen.has(m.bkey)) {
-      seen.add(m.bkey);
+    if (!seen.has(m.okey)) {
+      seen.add(m.okey);
       groups.push();
     }
   }

@@ -11,7 +11,7 @@ export type PaymentDeliveryMethod = 'pain001_download' | 'bexio_api' | 'ebics';
 // Groups one or more PaymentModel entries into a single bank submission.
 // One PaymentOrderModel = one pain.001 file (or equivalent for other delivery methods).
 export class PaymentOrderModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
 
@@ -21,8 +21,8 @@ export class PaymentOrderModel implements BkModel {
   public debitAccountKey = '';                             // ref to AccountModel (own bank account)
   public executionDate = DEFAULT_DATE;                     // StoreDate yyyymmdd (RequestedExecutionDate)
   public pain001Xml = '';                                  // populated for pain001_download after approval
-  public createdBy = '';                                   // bkey of creating user
-  public approvedBy = '';                                  // bkey of approving user (four-eyes)
+  public createdBy = '';                                   // okey of creating user
+  public approvedBy = '';                                  // okey of approving user (four-eyes)
   public accountingTenantId = '';
 
   constructor(tenantId: string, accountingTenantId: string) {

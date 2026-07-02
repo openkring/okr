@@ -26,7 +26,7 @@ import { MoneyModel } from './money.model';
  */
 export class ReservationModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   // base
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

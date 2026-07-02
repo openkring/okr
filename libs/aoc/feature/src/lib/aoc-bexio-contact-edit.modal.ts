@@ -37,7 +37,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
         </ion-row>
         <ion-row> <!-- key -->
           <ion-col size="3" class="row-label">Key</ion-col>
-          <ion-col size="3">{{bx.bkey}}</ion-col>
+          <ion-col size="3">{{bx.okey}}</ion-col>
           <ion-col size="3">{{bx.mkey}}</ion-col>
           <ion-col size="3">{{bx.bx_id}}</ion-col>
         </ion-row>
@@ -88,7 +88,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
         <ion-row class="sync-row">
           <ion-col size="3"></ion-col>
           <ion-col size="3">
-            @if(bx.bkey) {
+            @if(bx.okey) {
               @if(bx.type === 'person') {
                 <ion-button fill="outline" (click)="dismiss('editPerson')">{{ i18n.bexio_edit_person() }}</ion-button>
               } @else {
@@ -193,15 +193,15 @@ export class AocBexioContactEditModal {
   });
 
   // BK-modifying actions (shown under the Person/Org column)
-  protected showDownload = computed(() => !this.bexioIndex().bkey && !!this.bexioIndex().bx_id);
-  protected showUpdateBk = computed(() => !!this.bexioIndex().bkey && !!this.bexioIndex().bx_id && this.anyMismatch() && this.bexioHasAddress());
+  protected showDownload = computed(() => !this.bexioIndex().okey && !!this.bexioIndex().bx_id);
+  protected showUpdateBk = computed(() => !!this.bexioIndex().okey && !!this.bexioIndex().bx_id && this.anyMismatch() && this.bexioHasAddress());
   // Bexio-modifying actions (shown under the Bexio column)
-  protected showCreate = computed(() => !!this.bexioIndex().bkey && !this.bexioIndex().bx_id);
-  protected showUpdateBexio = computed(() => !!this.bexioIndex().bkey && !!this.bexioIndex().bx_id && this.anyMismatch());
+  protected showCreate = computed(() => !!this.bexioIndex().okey && !this.bexioIndex().bx_id);
+  protected showUpdateBexio = computed(() => !!this.bexioIndex().okey && !!this.bexioIndex().bx_id && this.anyMismatch());
 
   protected syncStatus = computed<SyncStatus>(() => {
     const bx = this.bexioIndex();
-    const hasBk = !!bx.bkey;
+    const hasBk = !!bx.okey;
     const hasBexio = !!bx.bx_id;
 
     if (!hasBk && hasBexio) return 'bexio-only';

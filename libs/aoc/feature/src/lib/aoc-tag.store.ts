@@ -14,7 +14,7 @@ import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
 /**
  * TagModel as it arrives from Firestore.
- * FirestoreService attaches `bkey` (document ID) at runtime; this interface makes that explicit.
+ * FirestoreService attaches `okey` (document ID) at runtime; this interface makes that explicit.
  */
 export interface TagItem extends BkModel {
   tagModel: string;
@@ -65,11 +65,11 @@ export const AocTagStore = signalStore(
     selectedTag: computed((): TagItem | undefined => {
       const key = store.selectedTagKey();
       if (!key) return undefined;
-      return ((store.tagsResource.value() ?? []) as TagItem[]).find(t => t.bkey === key);
+      return ((store.tagsResource.value() ?? []) as TagItem[]).find(t => t.okey === key);
     }),
     tagStrings: computed((): string[] => {
       const key = store.selectedTagKey();
-      const tag = key ? ((store.tagsResource.value() ?? []) as TagItem[]).find(t => t.bkey === key) : undefined;
+      const tag = key ? ((store.tagsResource.value() ?? []) as TagItem[]).find(t => t.okey === key) : undefined;
       if (!tag?.tags) return [];
       return tag.tags.split(',').map(s => s.trim()).filter(Boolean);
     }),
@@ -80,7 +80,7 @@ export const AocTagStore = signalStore(
     },
 
     selectTag(tag: TagItem): void {
-      patchState(store, { selectedTagKey: tag.bkey });
+      patchState(store, { selectedTagKey: tag.okey });
     },
 
     deselectTag(): void {
@@ -94,13 +94,13 @@ export const AocTagStore = signalStore(
       const tag = new TagModel(tenantId);
       tag.tagModel = modelName.trim();
       tag.tags = '';
-      await store.firestoreService.createModel<TagItem>(TagCollection, { ...tag, bkey: '' }, store.i18n.tag_create_conf(), store.i18n.tag_create_error(), store.appStore.currentUser());
+      await store.firestoreService.createModel<TagItem>(TagCollection, { ...tag, okey: '' }, store.i18n.tag_create_conf(), store.i18n.tag_create_error(), store.appStore.currentUser());
     },
 
     async archiveTagDocument(tag: TagItem): Promise<void> {
       const ok = await confirm(store.alertController, store.i18n.tag_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!ok) return;
-      if (store.selectedTagKey() === tag.bkey) {
+      if (store.selectedTagKey() === tag.okey) {
         patchState(store, { selectedTagKey: undefined });
       }
       await store.firestoreService.deleteModel<TagItem>(TagCollection, { ...tag }, store.i18n.tag_delete_conf(), store.i18n.tag_delete_error(), store.appStore.currentUser());

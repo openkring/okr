@@ -9,7 +9,7 @@ import { OrgNewFormModel } from './org-new-form.model';
 /*-------------------------- NEW ORG --------------------------------*/
 export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgModel {
   const org = new OrgModel(tenantId);
-  org.bkey = DEFAULT_KEY;
+  org.okey = DEFAULT_KEY;
   org.name = vm.name ?? DEFAULT_NAME;
   org.type = vm.type ?? DEFAULT_ORG_TYPE;
   org.dateOfFoundation = vm.dateOfFoundation ?? DEFAULT_DATE;

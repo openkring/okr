@@ -44,19 +44,19 @@ export class ExpenseService {
     return this.firestoreService.readModel<ExpenseModel>(ExpenseCollection, key);
   }
 
-  public listAll(orderBy = 'bkey', sortOrder = 'desc'): Observable<ExpenseModel[]> {
+  public listAll(orderBy = 'okey', sortOrder = 'desc'): Observable<ExpenseModel[]> {
     return this.firestoreService.searchData<ExpenseModel>(
       ExpenseCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder
     );
   }
 
-  public listForUser(userId: string, orderBy = 'bkey', sortOrder = 'desc'): Observable<ExpenseModel[]> {
+  public listForUser(userId: string, orderBy = 'okey', sortOrder = 'desc'): Observable<ExpenseModel[]> {
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'userId', operator: '==', value: userId });
     return this.firestoreService.searchData<ExpenseModel>(ExpenseCollection, query, orderBy, sortOrder);
   }
 
-  public listForTenant(accountingTenantId: string, orderBy = 'bkey', sortOrder = 'desc'): Observable<ExpenseModel[]> {
+  public listForTenant(accountingTenantId: string, orderBy = 'okey', sortOrder = 'desc'): Observable<ExpenseModel[]> {
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'accountingTenantId', operator: '==', value: accountingTenantId });
     return this.firestoreService.searchData<ExpenseModel>(ExpenseCollection, query, orderBy, sortOrder);

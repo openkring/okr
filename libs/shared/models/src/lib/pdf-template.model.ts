@@ -19,7 +19,7 @@ export interface TemplateAssetRef {
 }
 
 export class TemplateModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;
@@ -52,7 +52,7 @@ export class TemplateModel implements BkModel {
 
 /** Immutable content snapshot of one template version stored as a subcollection document. */
 export class TemplateVersionModel {
-  public bkey = DEFAULT_KEY;  // string representation of version number
+  public okey = DEFAULT_KEY;  // string representation of version number
 
   public version = 1;
   public html = '';
@@ -68,7 +68,7 @@ export class TemplateVersionModel {
 }
 
 export class DocGenerationModel implements BkModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

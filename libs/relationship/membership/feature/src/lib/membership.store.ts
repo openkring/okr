@@ -125,7 +125,7 @@ export const _MembershipStore = signalStore(
         return store.firestoreService.searchData<OwnershipModel>(
           OwnershipCollection,
           [
-            { key: 'ownerKey', operator: '==', value: params.member.bkey },
+            { key: 'ownerKey', operator: '==', value: params.member.okey },
             { key: 'ownerModelType', operator: '==', value: 'person' },
             { key: 'state', operator: '==', value: 'active' },
             { key: 'tenants', operator: 'array-contains', value: store.appStore.tenantId() }
@@ -162,7 +162,7 @@ export const _MembershipStore = signalStore(
       memberships: computed(() => {
         if (!state.member() || !state.modelType) return [];
         return state.allMemberships()?.filter((membership: MembershipModel) => 
-          membership.memberKey === state.member()?.bkey && 
+          membership.memberKey === state.member()?.okey && 
           membership.memberModelType === state.modelType()) ?? []
       }),
 
@@ -179,7 +179,7 @@ export const _MembershipStore = signalStore(
   withComputed((state) => {
     return {
       orgName: computed(() => state.org()?.name ?? ''),
-      groupsOfMember: computed(() => getGroupsOfMember(state.memberships(), state.member()?.bkey) ?? []),
+      groupsOfMember: computed(() => getGroupsOfMember(state.memberships(), state.member()?.okey) ?? []),
 
       membershipCategoryKey: computed(() => {
         if (state.orgType() === 'group') return undefined;
@@ -352,7 +352,7 @@ export const _MembershipStore = signalStore(
 
       /******************************** setters (filter) ******************************************* */
       setOrgId(orgId?: string, orgType: 'org' | 'group' = 'org') {
-        if (!orgId) orgId = store.appStore.defaultOrg()?.bkey;
+        if (!orgId) orgId = store.appStore.defaultOrg()?.okey;
         // Only reset filters if orgId actually changed
         if (store.orgId() !== orgId) {
           patchState(store, { 
@@ -449,7 +449,7 @@ export const _MembershipStore = signalStore(
         const org = store.org();
         if (!member) { console.log('MembershipStore.add: no member.'); return; }
         if (!org) { console.log('MembershipStore.add: no org.'); return; }
-        this.setOrgId(org.bkey);
+        this.setOrgId(org.okey);
         const membership = convertMemberAndOrgToMembership(member, PersonModelName, org, OrgModelName, store.tenantId());
         this.edit(membership, readOnly, true);
       },
@@ -594,7 +594,7 @@ export const _MembershipStore = signalStore(
           if (isMembership(data, store.tenantId())) {
             const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), data.category);
             data.relLog = getRelLogEntry(data.dateOfEntry, mcatAbbreviation);
-            if (!data.bkey) {
+            if (!data.okey) {
               // create new membership
               store.membershipService.create(data, store.currentUser());
               if (data.orgModelType === OrgModelName) { // do not add a task for a group membership
@@ -668,7 +668,7 @@ export const _MembershipStore = signalStore(
         if (!membership) return;
         const kind = membership.memberModelType === PersonModelName ? 'person' : 'org';
         const target: VcardExportTarget = {
-          bkey: membership.memberKey,
+          okey: membership.memberKey,
           displayName: kind === 'person'
             ? getFullName(membership.memberName1, membership.memberName2)
             : (membership.memberName2 || membership.memberName1),
@@ -682,7 +682,7 @@ export const _MembershipStore = signalStore(
        * The task is assigned to the group and the author is the current user. 
        * The task is initially assigned to the mainContact of the group resourceAdmin.
        * If the mainContact does not exist, the author is assigned, but can be changed in the task edit modal.
-       * This is currently only implemented for memberships in Seeclub Stäfa (bkey = 'scs').
+       * This is currently only implemented for memberships in Seeclub Stäfa (okey = 'scs').
        * @param membership the membership for which to create the task. We need the membership to get the group (org) for which the task is created and to check if it is a SCS membership.
        * @param group the group to which the task is assigned.
        * @param name the name of the task to create. It should contain all relevant information about the reason for creating the task, so that the responsible person can directly act on it without having to look up additional information.
@@ -823,17 +823,17 @@ export const _MembershipStore = signalStore(
         const allMemberships = store.allMembershipsResource.value() ?? [];
         for (const person of persons) {
           // Current SCS membership (active, orgKey = SCS org, memberModelType = 'person')
-          const currentScs = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'scs' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
+          const currentScs = allMemberships.find(m => m.memberKey === person.okey && m.orgKey === 'scs' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
           // SCS exit in last year
           const lastYear = (new Date()).getFullYear() - 1;
-          const lastYearExit = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'scs' && m.dateOfExit?.startsWith(lastYear.toString()));
+          const lastYearExit = allMemberships.find(m => m.memberKey === person.okey && m.orgKey === 'scs' && m.dateOfExit?.startsWith(lastYear.toString()));
 
           // Current SRV membership (active, orgKey = SRV org, memberModelType = 'person')
-          const currentSrv = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'srv' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
+          const currentSrv = allMemberships.find(m => m.memberKey === person.okey && m.orgKey === 'srv' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
 
           // we export a row for each person with a current SCS membership or an exit in the last year or a current SRV membership
           if (currentScs || currentSrv) {
-            table.push(convertToSrvDataRow(person, currentScs, lastYearExit, currentSrv, postalByPersonKey.get(person.bkey)));
+            table.push(convertToSrvDataRow(person, currentScs, lastYearExit, currentSrv, postalByPersonKey.get(person.okey)));
           }
         }
       },
@@ -866,7 +866,7 @@ export const _MembershipStore = signalStore(
         }
 
         const memberKeySet = new Set(filteredMemberships.map(m => m.memberKey));
-        const filteredPersons = persons.filter(p => p.bkey && memberKeySet.has(p.bkey));
+        const filteredPersons = persons.filter(p => p.okey && memberKeySet.has(p.okey));
 
         const mainEmails = getMainEmailAddresses(filteredPersons);
 

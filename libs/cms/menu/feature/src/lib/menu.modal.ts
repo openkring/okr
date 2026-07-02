@@ -72,7 +72,7 @@ export class MenuModal {
   // derived signals
   protected headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view();
-    return this.menuItem().bkey?.length > 0 ? this.i18n.edit() : this.i18n.create();
+    return this.menuItem().okey?.length > 0 ? this.i18n.edit() : this.i18n.create();
   });
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save() } as ChangeConfirmationI18n));
 

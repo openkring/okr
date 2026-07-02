@@ -125,8 +125,8 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
             (ionChange)="selectedGroupKey.set($any($event).detail.value)"
             placeholder="Alle Gruppen">
             <ion-select-option value="all">Alle Gruppen</ion-select-option>
-            @for(group of groups(); track group.bkey) {
-              <ion-select-option [value]="group.bkey">{{ group.name }}</ion-select-option>
+            @for(group of groups(); track group.okey) {
+              <ion-select-option [value]="group.okey">{{ group.name }}</ion-select-option>
             }
           </ion-select>
         </ion-item>
@@ -146,11 +146,11 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
 
     <ion-content>
       <ion-list>
-        @for(user of filteredUsers(); track user.bkey) {
+        @for(user of filteredUsers(); track user.okey) {
           <ion-item>
             <ion-checkbox slot="start"
-              [checked]="checkedKeys().has(user.bkey) && (user.newsDelivery === DT.EmailAttachment || user.newsDelivery === DT.EmailNotification)"
-              (ionChange)="toggle(user.bkey, $any($event).detail.checked)" />
+              [checked]="checkedKeys().has(user.okey) && (user.newsDelivery === DT.EmailAttachment || user.newsDelivery === DT.EmailNotification)"
+              (ionChange)="toggle(user.okey, $any($event).detail.checked)" />
             @if(currentUser(); as cu) {
               <bk-avatar [avatarInfo]="toAvatarInfo(user)" [currentUser]="cu" layout="horizontal" />
             }
@@ -201,7 +201,7 @@ export class MessageCenterModal {
   });
 
   protected checkedKeys = linkedSignal(() =>
-    new Set(this.usersResource.value()?.map(u => u.bkey) ?? [])
+    new Set(this.usersResource.value()?.map(u => u.okey) ?? [])
   );
 
   protected DT = DeliveryType;
@@ -232,13 +232,13 @@ export class MessageCenterModal {
 
   protected isAllSelected = computed(() => {
     const filtered = this.filteredUsers();
-    return filtered.length > 0 && filtered.every(u => this.checkedKeys().has(u.bkey));
+    return filtered.length > 0 && filtered.every(u => this.checkedKeys().has(u.okey));
   });
 
   protected isIndeterminate = computed(() => {
     const filtered = this.filteredUsers();
     const keys = this.checkedKeys();
-    const checkedCount = filtered.filter(u => keys.has(u.bkey)).length;
+    const checkedCount = filtered.filter(u => keys.has(u.okey)).length;
     return checkedCount > 0 && checkedCount < filtered.length;
   });
 
@@ -246,7 +246,7 @@ export class MessageCenterModal {
     this.checkedKeys.update(keys => {
       const updated = new Set(keys);
       for (const user of this.filteredUsers()) {
-        checked ? updated.add(user.bkey) : updated.delete(user.bkey);
+        checked ? updated.add(user.okey) : updated.delete(user.okey);
       }
       return updated;
     });
@@ -262,7 +262,7 @@ export class MessageCenterModal {
 
   protected toAvatarInfo(user: UserModel) {
     return {
-      key: user.personKey || user.bkey,
+      key: user.personKey || user.okey,
       name1: user.firstName,
       name2: user.lastName,
       modelType: 'person' as const,
@@ -288,7 +288,7 @@ export class MessageCenterModal {
     const allUsers = this.usersResource.value() ?? [];
     const checkedKeys = this.checkedKeys();
     const selectedEmails = allUsers
-      .filter(u => checkedKeys.has(u.bkey))
+      .filter(u => checkedKeys.has(u.okey))
       .map(u => u.loginEmail)
       .filter(Boolean);
 

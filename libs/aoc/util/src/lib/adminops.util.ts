@@ -187,10 +187,10 @@ export function generatePassword(password?: string): string {
  * @returns user model that corresponds to the given person
  */
 export function createUserFromPerson(person: PersonModel, tenantId: string): UserModel {
-  if (!person.bkey) die('AdminOpsUtil.createUserFromPerson: person must have a bkey.');
+  if (!person.okey) die('AdminOpsUtil.createUserFromPerson: person must have a okey.');
   const user = new UserModel(tenantId);
   user.loginEmail = person.favEmail;
-  user.personKey = person.bkey;
+  user.personKey = person.okey;
   user.firstName = person.firstName;
   user.lastName = person.lastName;
   user.gravatarEmail = person.favEmail;
@@ -203,10 +203,10 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
     if (!sig.modelValidationType) return Promise.resolve();
     const validationResults = validateModel(sig.modelValidationType, sig.model);
   if (validationResults && validationResults.hasErrors()) {
-    console.log(`validation errors on ${sig.model.bkey}: `, validationResults.getErrors());
-    sig.logInfo.push(getLogInfo(sig.model.bkey, sig.model.name, `${validationResults.errorCount} validation errors`));
+    console.log(`validation errors on ${sig.model.okey}: `, validationResults.getErrors());
+    sig.logInfo.push(getLogInfo(sig.model.okey, sig.model.name, `${validationResults.errorCount} validation errors`));
   } else {
-    sig.logInfo.push(getLogInfo(sig.model.bkey, sig.model.name, 'ok'));
+    sig.logInfo.push(getLogInfo(sig.model.okey, sig.model.name, 'ok'));
   }
   return Promise.resolve();
 } */
@@ -218,7 +218,7 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
   if (!sig.dataService) return Promise.resolve()
   const membership = sig.model;
   if (isMembership(membership) && membership.modelType === 'relationship' 
-    && membership.category === 'membership' && membership.bkey) {
+    && membership.category === 'membership' && membership.okey) {
       const bexioId = membership.properties.bexioId;
     // if the membership has a bexioId
     if (bexioId) {
@@ -227,20 +227,20 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
       // add the bexioID into the subject
       subject.bexioId = bexioId;
       try {
-        console.log(`AOC.fixFunction: updating subject ${subject.bkey} with bexioId ${subject.bexioId}`);
+        console.log(`AOC.fixFunction: updating subject ${subject.okey} with bexioId ${subject.bexioId}`);
         //await sig.dataService.updateModel(ModelValidationType.Subject, subject);
       }
       catch(error) {
-        console.log(`AOC.fixFunction: error updating subject ${subject.bkey}: `, error);
+        console.log(`AOC.fixFunction: error updating subject ${subject.okey}: `, error);
       }
       // delete the property bexioId from the memberships
       membership.properties.bexioId = deleteField() as unknown as string;
       try {
-        console.log(`AOC.fixFunction: deleting bexioId ${bexioId} from membership ${membership.bkey}` )
+        console.log(`AOC.fixFunction: deleting bexioId ${bexioId} from membership ${membership.okey}` )
         //await sig.dataService.updateModel(ModelValidationType.Membership, membership);
       }
       catch(error) {
-        console.log(`AOC.fixFunction: error updating membership ${membership.bkey}: `, error);
+        console.log(`AOC.fixFunction: error updating membership ${membership.okey}: `, error);
       }
     }
   }
@@ -251,22 +251,22 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
    try {
      if (modelValidationType === ModelValidationType.Address) { // CollectionGroup
        // BEWARE: this is destructive !
-       //await setDoc(doc(getFirestore(), `${CollectionNames.Subject}/${newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), newModel);
-       // usually, do it non-destructive like this (in this case, newModel must contain a bkey. This is removed in the updateModel function): 
+       //await setDoc(doc(getFirestore(), `${CollectionNames.Subject}/${newModel.parentKey}/${modelValidationType}`, oldModel['okey']), newModel);
+       // usually, do it non-destructive like this (in this case, newModel must contain a okey. This is removed in the updateModel function): 
        // await dataService.updateModel(`${CollectionNames.Subject}/${newModel.parentKey}/${modelValidationType}`, newModel);
      } else if (modelValidationType === ModelValidationType.Comment) { // CollectionGroup
-       console.log(`set comment on ${newModel.parentCollection}/${newModel.parentKey}/${modelValidationType}/${oldModel['bkey']}`);
+       console.log(`set comment on ${newModel.parentCollection}/${newModel.parentKey}/${modelValidationType}/${oldModel['okey']}`);
        // BEWARE: this is destructive !
-       //await setDoc(doc(getFirestore(), `${newModel.parentCollection}/${newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), newModel);
-       // usually, do it non-destructive like this (in this case, newModel must contain a bkey. This is removed in the updateModel function):
+       //await setDoc(doc(getFirestore(), `${newModel.parentCollection}/${newModel.parentKey}/${modelValidationType}`, oldModel['okey']), newModel);
+       // usually, do it non-destructive like this (in this case, newModel must contain a okey. This is removed in the updateModel function):
        // await dataService.updateModel(`${newModel.parentCollection}/${newModel.parentKey}/${modelValidationType}`, newModel);
-     } else {    // Collection (in this case, newModel must contain a bkey. This is removed in the updateModel function)
+     } else {    // Collection (in this case, newModel must contain a okey. This is removed in the updateModel function)
        // await dataService.updateModel(modelValidationType, model);
      }
-     // logInfo.push(getLogInfo(model.bkey, model.name, 'fixed'));  
+     // logInfo.push(getLogInfo(model.okey, model.name, 'fixed'));  
    }
    catch (error) {
-     console.log('error on ' + newModel.parentKey + '/' + oldModel['bkey'] + ': ', error);
+     console.log('error on ' + newModel.parentKey + '/' + oldModel['okey'] + ': ', error);
    }
  }
  return Promise.resolve();
@@ -276,12 +276,12 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
 /*   export const listIbanFunction = async (sig: OpSignature): Promise<void> => {
   const _env = inject(ENV);
   if (isSubject(sig.model)) {
-    const _collName = CollectionNames.Subject + '/' + sig.model.bkey + '/' + CollectionNames.Address;
+    const _collName = CollectionNames.Subject + '/' + sig.model.okey + '/' + CollectionNames.Address;
     const addresses = await firstValueFrom(listModelsBySingleQuery(getFirestore(), _collName, _env.auth.tenantId, 'category', 'bankaccount', '==', 'name', 'asc')) as AddressModel[];
     if (addresses?.length > 0) {
       for (const element of addresses) {
-        console.log(sig.model.bkey, sig.model.firstName + ' ' + sig.model.name, element.name);
-        sig.logInfo.push(getLogInfo(sig.model.bkey, sig.model.firstName + ' ' + sig.model.name, element.name));
+        console.log(sig.model.okey, sig.model.firstName + ' ' + sig.model.name, element.name);
+        sig.logInfo.push(getLogInfo(sig.model.okey, sig.model.firstName + ' ' + sig.model.name, element.name));
       }
     }
   }
@@ -293,7 +293,7 @@ export const checkJuniorEntryFunction = async (sig: OpSignature): Promise<void> 
     const refYear = parseInt(sig.model.validFrom.substring(0, 4));
     const dateOfBirth = sig.model.properties.dateOfBirth;
     if (!dateOfBirth) {
-      sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), 'SCS member has no dateOfBirth'));
+      sig.logInfo.push(getLogInfo(sig.model.okey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), 'SCS member has no dateOfBirth'));
     } else if(getAge(dateOfBirth, false, refYear) < 19) {
       const mCat = getCategoryAbbreviation(ScsMemberTypes, sig.model.subType);
       const birthYear = parseInt(dateOfBirth.substring(0, 4));
@@ -302,15 +302,15 @@ export const checkJuniorEntryFunction = async (sig: OpSignature): Promise<void> 
       if (sig.model.validTo === END_FUTURE_DATE_STR) {
         // if activEntry > today, then the membership is still active
         if (compareDate(activEntry, getTodayStr(DateFormat.StoreDate)) > 0) {
-          sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + '-99991231'));
+          sig.logInfo.push(getLogInfo(sig.model.okey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + '-99991231'));
         } else {
-          sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + ', ' + mCat + ':' + activEntry + '-99991231'));
+          sig.logInfo.push(getLogInfo(sig.model.okey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + ', ' + mCat + ':' + activEntry + '-99991231'));
         }
       } else 
       if (compareDate(sig.model.validTo, activEntry) > 0) {    // validTo > _activEntry
-        sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + ', ' + mCat + ':' + activEntry + '-' + sig.model.validTo));
+        sig.logInfo.push(getLogInfo(sig.model.okey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + ', ' + mCat + ':' + activEntry + '-' + sig.model.validTo));
       } else {
-        sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + '-' + sig.model.validTo));
+        sig.logInfo.push(getLogInfo(sig.model.okey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + '-' + sig.model.validTo));
       }  
     }
   }
@@ -326,7 +326,7 @@ export const checkJuniorEntryFunction = async (sig: OpSignature): Promise<void> 
       } else {
         sig.model.price = 0;
       }
-      sig.logInfo.push(getLogInfo(sig.model.bkey, sig.model.subjectName2 + ' ' + sig.model.subjectName, sig.model.price + ''));
+      sig.logInfo.push(getLogInfo(sig.model.okey, sig.model.subjectName2 + ' ' + sig.model.subjectName, sig.model.price + ''));
       // tbd: only update for currently active memberships (validTo > today)
       // await dataService.updateModel(modelValidationType, model);
     }
@@ -336,12 +336,12 @@ export const checkJuniorEntryFunction = async (sig: OpSignature): Promise<void> 
 export const updateMembershipAttributes = async (sig: OpSignature): Promise<void> => {
   const dataService = sig.dataService;
   if (!dataService) return Promise.resolve()
-  if (isSubject(sig.model) && sig.model.modelType === 'person' && sig.model.bkey) {
+  if (isSubject(sig.model) && sig.model.modelType === 'person' && sig.model.okey) {
 
     // 1) get all relationships of the subject
-    dataService.listModelsBySingleQuery(CollectionNames.Membership, 'subjectKey', sig.model.bkey, '==', 'validFrom', 'asc').pipe(take(1))
+    dataService.listModelsBySingleQuery(CollectionNames.Membership, 'subjectKey', sig.model.okey, '==', 'validFrom', 'asc').pipe(take(1))
       .subscribe(async (relationships: BaseModel[]) => {
-        console.log('fixing person: ' + sig.model.bkey + '/' + sig.model.firstName + ' ' + sig.model.name);
+        console.log('fixing person: ' + sig.model.okey + '/' + sig.model.firstName + ' ' + sig.model.name);
 
         console.log('  SCS:');
         updateMembershipAttributesPerOrg(relationships as RelationshipModel[], OrgKey.SCS, dataService);
@@ -366,7 +366,7 @@ export const updateMembershipAttributes = async (sig: OpSignature): Promise<void
       snapshot.forEach((doc) => {
         //if (counter > 3) return;
         const model = doc.data();
-        model['bkey'] = doc.id;
+        model['okey'] = doc.id;
         if (modelValidationType === ModelValidationType.Address) {
           // check for parentCollections (we want to ensure that we do not change anything in old Collection subjects. 
           // Only Collection subjects2 should be changed.)

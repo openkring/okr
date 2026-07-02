@@ -88,7 +88,7 @@ import { OrgStore } from './org.store';
           @for(org of filteredOrgs(); track $index) {
             <ion-item (click)="showActions(org)">
               <ion-avatar slot="start">
-                <ion-img src="{{ 'org.' + org.bkey | avatar:'org' }}" alt="Avatar Logo" />
+                <ion-img src="{{ 'org.' + org.okey | avatar:'org' }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{org.name}}</ion-label>      
               <ion-label class="ion-hide-sm-down">

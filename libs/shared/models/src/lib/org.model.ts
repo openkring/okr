@@ -7,7 +7,7 @@ import { AddressableModel, BkModel, NamedModel, SearchableModel, TaggedModel } f
  * Hierarchies or orgcharts can be built using memberships.
  */
 export class OrgModel implements BkModel, NamedModel, AddressableModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
+  public okey = DEFAULT_KEY;
   public name = DEFAULT_NAME;
   public type = DEFAULT_ORG_TYPE;
   public dateOfFoundation = DEFAULT_DATE;

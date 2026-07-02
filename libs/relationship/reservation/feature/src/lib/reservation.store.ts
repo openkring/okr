@@ -346,7 +346,7 @@ export const ReservationStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isReservation(data, store.tenantId())) {
-            await (!data.bkey ? 
+            await (!data.okey ? 
               store.reservationService.create(data, store.currentUser()) : 
               store.reservationService.update(data, store.currentUser()));
             this.reload();

@@ -97,10 +97,10 @@ export const _PageStore = signalStore(
           debugItemLoaded<PageModel>(`PageStore.pageResource (page only)`, params.currentUser),
           switchMap(page => {
             if (!page || !page.sections || page.sections.length === 0) {
-              debugData('PageStore.pageResource: No sections to load', { page: page?.bkey, sectionCount: page?.sections?.length }, params.currentUser);
+              debugData('PageStore.pageResource: No sections to load', { page: page?.okey, sectionCount: page?.sections?.length }, params.currentUser);
               return of({ page, sections: [] as SectionModel[] });
             }
-            debugData('PageStore.pageResource: Loading sections', { page: page.bkey, sectionIds: page.sections }, params.currentUser);
+            debugData('PageStore.pageResource: Loading sections', { page: page.okey, sectionIds: page.sections }, params.currentUser);
             // Load all sections for this page - use combineLatest to get live updates
             const sectionObservables = page.sections.map(sectionId => 
               store.sectionService.read(sectionId.replace('@TID@', store.tenantId()))
@@ -109,10 +109,10 @@ export const _PageStore = signalStore(
               map(sections => {
                 const filteredSections = sections.filter(s => s !== undefined) as SectionModel[];
                 debugData('PageStore.pageResource: Sections loaded', { 
-                  page: page.bkey, 
+                  page: page.okey, 
                   requestedCount: page.sections.length,
                   loadedCount: filteredSections.length,
-                  sectionIds: filteredSections.map(s => s.bkey)
+                  sectionIds: filteredSections.map(s => s.okey)
                 }, params.currentUser);
                 return {
                   page,
@@ -267,7 +267,7 @@ export const _PageStore = signalStore(
           if (isPage(data, store.tenantId())) {
             store.clearError();
             try {
-              page.bkey === '' ?
+              page.okey === '' ?
                 await store.pageService.create(data, store.currentUser()) :
                 await store.pageService.update(data, store.currentUser());
               this.reload();
@@ -343,7 +343,7 @@ export const _PageStore = signalStore(
         modal.present();
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data) { // data = sorted list of SectionModels
-          const sortedSections = (data as SectionModel[]).map((section: SectionModel) => section.bkey ?? die('PageStore.sortSections: sectionKey is mandatory.'));
+          const sortedSections = (data as SectionModel[]).map((section: SectionModel) => section.okey ?? die('PageStore.sortSections: sectionKey is mandatory.'));
           const page = store.page() ?? die('PageStore.sortSections: page is mandatory.');
           page.sections = sortedSections;
           store.clearError();
@@ -395,9 +395,9 @@ export const _PageStore = signalStore(
 
       /******************************** external  ******************************************* */
       async show(page: PageModel, readOnly = true): Promise<void> {
-        if (!page.bkey) return;
+        if (!page.okey) return;
         //  store.appStore.appNavigationService.pushLink('page/all/c-' + store.tenantId() + '-pages');
-          await navigateByUrl(store.router, `/private/${page.bkey}/c-contentpage`, { readOnly });
+          await navigateByUrl(store.router, `/private/${page.okey}/c-contentpage`, { readOnly });
       },
 
       async navigateByUrl(url: string): Promise<void> {
@@ -406,14 +406,14 @@ export const _PageStore = signalStore(
 
       /**
        * Export the currently-filtered pages. `type === 'csv'` downloads a CSV
-       * (bkey, name, type, state, tags); any other value downloads pretty JSON.
+       * (okey, name, type, state, tags); any other value downloads pretty JSON.
        */
       async export(type: string): Promise<void> {
         const pages = store.filteredPages() ?? [];
         if (type === 'csv') {
           const rows = [
-            ['bkey', 'name', 'type', 'state', 'tags'],
-            ...pages.map(p => [p.bkey ?? '', p.name ?? '', p.type ?? '', p.state ?? '', p.tags ?? ''])
+            ['okey', 'name', 'type', 'state', 'tags'],
+            ...pages.map(p => [p.okey ?? '', p.name ?? '', p.type ?? '', p.state ?? '', p.tags ?? ''])
           ];
           await exportCsv(rows, getExportFileName('pages', 'csv'));
         } else {

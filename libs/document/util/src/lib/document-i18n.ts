@@ -35,9 +35,9 @@ export const DOCUMENT_I18N_KEYS = {
   image_type_label: '@document/feature.image.type.label',
   image_type_helper: '@document/feature.image.type.helper',
 
-  bkey_label:                    '@document/feature.bkey.label',
-  bkey_placeholder:              '@document/feature.bkey.placeholder',
-  bkey_helper:                   '@document/feature.bkey.helper',
+  bkey_label:                    '@document/feature.okey.label',
+  bkey_placeholder:              '@document/feature.okey.placeholder',
+  bkey_helper:                   '@document/feature.okey.helper',
 
   label_label:                   '@document/feature.label.label',
   label_placeholder:             '@document/feature.label.placeholder',

@@ -38,8 +38,8 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
   `],
   template: `
     <div class="bento-grid">
-      @for (section of sections(); track section.bkey; let i = $index) {
-        <div class="bento-item" [id]="section.bkey" [class.featured]="i === 0" (click)="sectionClick.emit(section.bkey)">
+      @for (section of sections(); track section.okey; let i = $index) {
+        <div class="bento-item" [id]="section.okey" [class.featured]="i === 0" (click)="sectionClick.emit(section.okey)">
           @if (editMode()) {
             <div class="section-wrapper editable">
               <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />

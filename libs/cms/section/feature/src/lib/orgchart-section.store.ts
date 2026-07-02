@@ -17,21 +17,21 @@ import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export interface OrgchartTreeNode {
   name: string;
-  bkey: string;
+  okey: string;
   modelType: 'group' | 'org';
   icon: string;
   children: OrgchartTreeNode[];
 }
 
 function groupToNode(group: GroupModel): OrgchartTreeNode {
-  return { name: group.name, bkey: group.bkey, modelType: 'group', icon: group.icon, children: [] };
+  return { name: group.name, okey: group.okey, modelType: 'group', icon: group.icon, children: [] };
 }
 
 function buildTreeNode(node: OrgchartTreeNode, allGroups: GroupModel[]): OrgchartTreeNode {
   return {
     ...node,
     children: allGroups
-      .filter(g => g.parentKey === node.bkey)
+      .filter(g => g.parentKey === node.okey)
       .map(child => buildTreeNode(groupToNode(child), allGroups)),
   };
 }
@@ -82,11 +82,11 @@ export const OrgchartStore = signalStore(
     rootNode: computed((): OrgchartTreeNode | undefined => {
       const { modelType, key } = parseTopElement(state.topElement());
       if (modelType === 'org') {
-        const org = state.appStore.allOrgs().find(o => o.bkey === key);
+        const org = state.appStore.allOrgs().find(o => o.okey === key);
         if (!org) return undefined;
-        return { name: org.name, bkey: org.bkey, modelType: 'org', icon: 'org', children: [] };
+        return { name: org.name, okey: org.okey, modelType: 'org', icon: 'org', children: [] };
       }
-      const group = (state.groupsResource.value() ?? []).find(g => g.bkey === key);
+      const group = (state.groupsResource.value() ?? []).find(g => g.okey === key);
       if (!group) return undefined;
       return groupToNode(group);
     }),
@@ -95,11 +95,11 @@ export const OrgchartStore = signalStore(
       const { modelType, key } = parseTopElement(state.topElement());
       let root: OrgchartTreeNode | undefined;
       if (modelType === 'org') {
-        const org = state.appStore.allOrgs().find(o => o.bkey === key);
+        const org = state.appStore.allOrgs().find(o => o.okey === key);
         if (!org) return undefined;
-        root = { name: org.name, bkey: org.bkey, modelType: 'org', icon: 'org', children: [] };
+        root = { name: org.name, okey: org.okey, modelType: 'org', icon: 'org', children: [] };
       } else {
-        const group = allGroups.find(g => g.bkey === key);
+        const group = allGroups.find(g => g.okey === key);
         if (!group) return undefined;
         root = groupToNode(group);
       }
@@ -165,7 +165,7 @@ export const OrgchartStore = signalStore(
 
     async editGroup(node: OrgchartTreeNode): Promise<void> {
       if (node.modelType !== 'group') return;
-      const group = store.allGroups().find(g => g.bkey === node.bkey);
+      const group = store.allGroups().find(g => g.okey === node.okey);
       if (!group) return;
       const modal = await store.modalController.create({
         component: store.groupEditModal,
@@ -188,7 +188,7 @@ export const OrgchartStore = signalStore(
 
     async viewNode(node: OrgchartTreeNode): Promise<void> {
       if (node.modelType === 'org') {
-        const org = store.appStore.allOrgs().find(o => o.bkey === node.bkey);
+        const org = store.appStore.allOrgs().find(o => o.okey === node.okey);
         if (!org) return;
         const modal = await store.modalController.create({
           component: OrgEditModal,
@@ -206,7 +206,7 @@ export const OrgchartStore = signalStore(
         await modal.present();
         await modal.onWillDismiss();
       } else {
-        const group = store.allGroups().find(g => g.bkey === node.bkey);
+        const group = store.allGroups().find(g => g.okey === node.okey);
         if (!group) return;
         const modal = await store.modalController.create({
           component: store.groupEditModal,
@@ -227,7 +227,7 @@ export const OrgchartStore = signalStore(
 
     async removeGroup(node: OrgchartTreeNode): Promise<void> {
       if (node.modelType !== 'group') return;
-      const group = store.allGroups().find(g => g.bkey === node.bkey);
+      const group = store.allGroups().find(g => g.okey === node.okey);
       if (!group) return;
       const ok = await confirm(store.alertController, store.i18n.orgchart_group_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (ok) {

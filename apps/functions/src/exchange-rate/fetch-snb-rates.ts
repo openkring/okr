@@ -46,8 +46,8 @@ export const fetchSnbRatesScheduled = onSchedule(
     let batchCount = 0;
     for (const row of rows) {
       const storeDate = convertDateFormatToString(row.date, DateFormat.IsoDate, DateFormat.StoreDate);
-      const bkey = `CHF-${row.currency}-${storeDate}-snb`;
-      const ref = db.collection('exchange-rates').doc(bkey);
+      const okey = `CHF-${row.currency}-${storeDate}-snb`;
+      const ref = db.collection('exchange-rates').doc(okey);
       batch.set(ref, {
         tenants: ['scs'],
         isArchived: false,

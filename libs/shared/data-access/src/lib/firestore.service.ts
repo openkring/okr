@@ -67,7 +67,7 @@ export class FirestoreService {
 
   /**
    * Save a model as a new Firestore document into the database. 
-   * If bkey is not set, the document ID is automatically assigned, otherwise bkey is used as the document ID in Firestore.
+   * If okey is not set, the document ID is automatically assigned, otherwise okey is used as the document ID in Firestore.
    * This function uses setdoc() to overwrite a document with the same ID. If the document does not exist, it will be created.
    * If the document does exist, its contents will be overwritten with the newly provided data.
    * @param collectionName the name of the Firestore collection to create the model in
@@ -91,13 +91,13 @@ export class FirestoreService {
       return this.bkError(undefined, 'FirestoreService.createModel: model is mandatory.', true);
     }
       
-    let key = model.bkey;
-    // if bkey is not set, we auto-generate a random key for the document ID in firestore.
+    let key = model.okey;
+    // if okey is not set, we auto-generate a random key for the document ID in firestore.
     if (key?.length === 0) key = generateRandomString(20);
     const path = `${collectionName}/${key}`;
     const ref = doc(this.firestore, path);
 
-    // we delete the bkey from the model because we don't want to store it in the database (ref.id is available instead)
+    // we delete the okey from the model because we don't want to store it in the database (ref.id is available instead)
     const persistedModel = removeKeyFromBkModel(model);
     persistedModel.tenants = [this.env.tenantId];   // ensure that the tenant is set
 
@@ -109,7 +109,7 @@ export class FirestoreService {
       }
       if (currentUser) {
         debugMessage(`FirestoreService.createModel(${collectionName}/${ref.id}) -> OK`, currentUser);
-        const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), this.i18n.comment_initial_conf(), collectionName + '.' +ref.id, this.env.tenantId);
+        const comment = createComment(currentUser.okey, getFullName(currentUser.firstName, currentUser.lastName), this.i18n.comment_initial_conf(), collectionName + '.' +ref.id, this.env.tenantId);
         await this.saveComment(comment);
       }
       return Promise.resolve(ref.id);
@@ -183,8 +183,8 @@ export class FirestoreService {
       return of(this.bkError(undefined, 'FirestoreService.readModel: key is mandatory.', true));
     }
     try {
-      // we need to add the firestore document id as bkey into the model
-      return docData(doc(this.firestore, `${collectionName}/${key}`), { idField: 'bkey' }) as Observable<T>;
+      // we need to add the firestore document id as okey into the model
+      return docData(doc(this.firestore, `${collectionName}/${key}`), { idField: 'okey' }) as Observable<T>;
     }
     catch (ex) {
       console.error(`FirestoreService.readModel(${collectionName}/${key}) -> ERROR: `, ex);
@@ -249,12 +249,12 @@ export class FirestoreService {
     if (!model.tenants || model.tenants.length === 0) {
       return this.bkError(undefined, 'FirestoreService.updateModel: model.tenants is mandatory.', true);
     }
-    const key = model.bkey;
+    const key = model.okey;
     if (!key || key.length === 0) {
-      return this.bkError(undefined, 'FirestoreService.updateModel: model.bkey is mandatory.', true);
+      return this.bkError(undefined, 'FirestoreService.updateModel: model.okey is mandatory.', true);
     }
 
-    // we delete attribute bkey from the model because we don't want to store it in the database (_ref.id is available instead)
+    // we delete attribute okey from the model because we don't want to store it in the database (_ref.id is available instead)
     const storedModel = removeKeyFromBkModel(structuredClone(model));
     const updateModel = removeUndefinedFields(storedModel);
     try {
@@ -270,7 +270,7 @@ export class FirestoreService {
       }
       if (currentUser) {
         debugMessage(`FirestoreService.updateModel(${collectionName}/${key}) -> OK`, currentUser);
-        const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), this.i18n.comment_update_conf(), collectionName + '.' + key, this.env.tenantId);
+        const comment = createComment(currentUser.okey, getFullName(currentUser.firstName, currentUser.lastName), this.i18n.comment_update_conf(), collectionName + '.' + key, this.env.tenantId);
         await this.saveComment(comment);
       }
       return Promise.resolve(key);
@@ -435,7 +435,7 @@ export class FirestoreService {
       const queryRef = query(collectionRef, ...queries);
 
       // shareReplay to cache and share the latest emitted value among multiple subscribers
-      const data$ = collectionData(queryRef, { idField: 'bkey' }).pipe(
+      const data$ = collectionData(queryRef, { idField: 'okey' }).pipe(
         shareReplay({ bufferSize: 1, refCount: true })
       ) as Observable<T[]>;
 
@@ -474,17 +474,17 @@ export class FirestoreService {
       const collectionRef = collection(this.firestore, collectionName);
       const queryRef = query(collectionRef, ...queries);
       const snapshot = await getDocs(queryRef);
-      return snapshot.docs.map(d => ({ ...d.data(), bkey: d.id })) as T[];
+      return snapshot.docs.map(d => ({ ...d.data(), okey: d.id })) as T[];
     } catch (err) {
       console.error('FirestoreService.getDataOnce error:', err);
       return [];
     }
   }
 
-  public listAllObjects<T>(collectionName: string, addBkey = false): Observable<T[]> {
+  public listAllObjects<T>(collectionName: string, addOkey = false): Observable<T[]> {
     const collectionRef = collection(this.firestore, collectionName);
     const queryRef = query(collectionRef);
-    const data$ = addBkey ? collectionData(queryRef, { idField: 'bkey' }) as Observable<T[]> : collectionData(queryRef) as Observable<T[]>;
+    const data$ = addOkey ? collectionData(queryRef, { idField: 'okey' }) as Observable<T[]> : collectionData(queryRef) as Observable<T[]>;
     return data$;
   }
 

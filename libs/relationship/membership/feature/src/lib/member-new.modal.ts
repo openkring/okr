@@ -98,7 +98,7 @@ export class MemberNewModal {
     if (role === 'confirm') {
       if (isOrg(data, this.tenantId())) {
         // Get the full org from AppStore to extract membershipCategoryKey
-        const selectedOrg = this.appStore.getOrg(data.bkey);
+        const selectedOrg = this.appStore.getOrg(data.okey);
         const membershipCategoryKey = selectedOrg?.membershipCategoryKey;
 
         // Resilient lookup: tryGetCategory returns undefined (instead of crashing
@@ -114,7 +114,7 @@ export class MemberNewModal {
 
         this.formData.update((vm) => ({
           ...vm,
-          orgKey: data.bkey,
+          orgKey: data.okey,
           orgName: data.name,
           category: getDefaultCategoryName(this.selectedMembershipCategory()),
         }));

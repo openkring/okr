@@ -58,7 +58,7 @@ describe('PageService', () => {
 
   it('update() updates the collection (not overwrite) and returns the id', async () => {
     const page = new PageModel(tenantId);
-    page.bkey = 'p1';
+    page.okey = 'p1';
     const id = await service.update(page);
     expect(id).toBe('updated-id');
     expect(firestore.updateModel).toHaveBeenCalledTimes(1);
@@ -68,7 +68,7 @@ describe('PageService', () => {
 
   it('delete() (soft archive) calls deleteModel on the collection', async () => {
     const page = new PageModel(tenantId);
-    page.bkey = 'p1';
+    page.okey = 'p1';
     await service.delete(page);
     expect(firestore.deleteModel).toHaveBeenCalledTimes(1);
     expect(firestore.deleteModel.mock.calls[0][0]).toBe(PageCollection);
@@ -86,7 +86,7 @@ describe('PageService', () => {
   it('propagates errors from the underlying write', async () => {
     firestore.updateModel.mockRejectedValueOnce(new Error('boom'));
     const page = new PageModel(tenantId);
-    page.bkey = 'p1';
+    page.okey = 'p1';
     await expect(service.update(page)).rejects.toThrow('boom');
   });
 });

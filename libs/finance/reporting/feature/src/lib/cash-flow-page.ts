@@ -19,7 +19,7 @@ import { ReportingService } from '@okr/finance-reporting-data-access';
       @if (journalResource.isLoading()) { <p>Loading...</p> }
       @else {
         <ion-list>
-          @for (b of journalResource.value() ?? []; track b.bkey) {
+          @for (b of journalResource.value() ?? []; track b.okey) {
             <ion-item>
               <ion-label>{{ b.date }} — {{ b.title }}</ion-label>
             </ion-item>

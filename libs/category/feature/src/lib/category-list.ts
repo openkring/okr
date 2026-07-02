@@ -76,7 +76,7 @@ import { CategoryStore } from './category.store';
         <bk-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
-          @for(cat of filteredCategories(); track cat.bkey) {
+          @for(cat of filteredCategories(); track cat.okey) {
             <ion-item (click)="showActions(cat)">
               <ion-label>{{cat.name}}</ion-label>      
               <ion-label class="ion-hide-lg-down">{{cat.i18n}}</ion-label>      
