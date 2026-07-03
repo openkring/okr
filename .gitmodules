@@ -1,0 +1,21 @@
+[submodule "apps/scs-app"]
+	path = apps/scs-app
+	url = git@github.com:bkaiser-org/scs-app.git
+[submodule "apps/scs-website"]
+	path = apps/scs-website
+	url = git@github.com:bkaiser-org/scs-website.git
+[submodule "apps/p13-website"]
+	path = apps/p13-website
+	url = git@github.com:bkaiser-org/p13-website.git
+[submodule "apps/kring-website"]
+	path = apps/kring-website
+	url = git@github.com:bkaiser-org/kring-website.git
+[submodule "apps/okr-website"]
+	path = apps/okr-website
+	url = git@github.com:bkaiser-org/okr-website.git
+[submodule "planning"]
+	path = planning
+	url = git@github.com:bkaiser-org/okr-planning.git
+[submodule ".claude/skills"]
+	path = .claude/skills
+	url = git@github.com:bkaiser-org/okr-skills.git
