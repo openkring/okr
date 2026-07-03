@@ -10,7 +10,7 @@ Creates `apps/acme-app/` (bootstrap + auth + CMS page/section/menu + profile; do
 features stripped). Then generate its environment and build:
 
     source ./apps/acme-app/.env
-    NX_TASK_TARGET_PROJECT=acme-app ts-node ./set-env.js
+    NX_TASK_TARGET_PROJECT=acme-app node ./set-env.js
     pnpm nx build acme-app
 
 The full tenant setup (Firebase Web App, AppConfig, .env, starter content) is driven by the

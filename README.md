@@ -51,7 +51,7 @@ Each app reads its secrets from a git-ignored `.env`; `set-env.js` writes
 
 ```sh
 cp apps/scs-app/.env.example apps/scs-app/.env   # then edit
-source ./apps/scs-app/.env && ts-node ./set-env.js
+source ./apps/scs-app/.env && node ./set-env.js
 ```
 
 Never commit `.env`, `environment.ts`, or `set-env.js` — they are git-ignored.

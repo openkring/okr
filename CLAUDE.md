@@ -60,7 +60,7 @@ pnpm nx lint <project>            # lint specific project
 
 # Environment setup (required before first run)
 source ./apps/<app-dir>/.env      # load env vars (never commit .env)
-ts-node ./set-env.js              # generate environment.ts from env vars
+node ./set-env.js              # generate environment.ts from env vars
 
 # Serve locally
 pnpm nx serve <app>               # serve a specific app (e.g. test-app) locally in development environment
