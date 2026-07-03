@@ -5,14 +5,14 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 import { provideServiceWorker } from '@angular/service-worker';
 
 import * as Sentry from '@sentry/angular';
-import { ENV } from '@bk2/shared-config';
-import { isBrowser, httpBreadcrumbInterceptor, VersionCheckService } from '@bk2/shared-util-angular';
-import { AppStore, SentryContextService } from '@bk2/shared-feature';
-import { GroupEditModal } from '@bk2/subject-group-feature';
-import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
-import { PersonEditModal } from '@bk2/subject-person-feature';
-import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
-import { AnalyticsLoaderService } from '@bk2/consent-data-access';
+import { ENV } from '@okr/shared-config';
+import { isBrowser, httpBreadcrumbInterceptor, VersionCheckService } from '@okr/shared-util-angular';
+import { AppStore, SentryContextService } from '@okr/shared-feature';
+import { GroupEditModal } from '@okr/subject-group-feature';
+import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
+import { PersonEditModal } from '@okr/subject-person-feature';
+import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
+import { AnalyticsLoaderService } from '@okr/consent-data-access';
 import { environment } from '../environments/environment';
 
 import { appRoutes } from './app.routes';
@@ -21,8 +21,8 @@ import { appRoutes } from './app.routes';
 import { initializeApp } from 'firebase/app';
 
 // i18n with transloco
-import { APP_STORE_MIN, I18nOverrideService } from '@bk2/shared-data-access';
-import { I18nService, TranslocoHttpLoader } from '@bk2/shared-i18n';
+import { APP_STORE_MIN, I18nOverrideService } from '@okr/shared-data-access';
+import { I18nService, TranslocoHttpLoader } from '@okr/shared-i18n';
 import { provideTransloco } from '@jsverse/transloco';
 import { TranslateModule } from '@ngx-translate/core';
 

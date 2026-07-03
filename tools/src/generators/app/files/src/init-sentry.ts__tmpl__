@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/angular';
-import { buildSentryOptions } from '@bk2/shared-util-angular';
+import { buildSentryOptions } from '@okr/shared-util-angular';
 import { environment } from './environments/environment';
 
 // Initialize Sentry before anything else. No-op when no sentry config / DSN is present

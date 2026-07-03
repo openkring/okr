@@ -4,16 +4,16 @@ import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@
 import { filter, map, startWith } from 'rxjs/operators';
 import { IonApp, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonMenu, IonRouterOutlet, IonSplitPane, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { RoleName } from '@bk2/shared-models';
-import { Spinner, ConnectionStatusButton, AvatarUser } from '@bk2/shared-ui';
-import { coerceBoolean, getImgixUrlWithAutoParams, hasRole } from '@bk2/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
+import { RoleName } from '@okr/shared-models';
+import { Spinner, ConnectionStatusButton, AvatarUser } from '@okr/shared-ui';
+import { coerceBoolean, getImgixUrlWithAutoParams, hasRole } from '@okr/shared-util-core';
 
-import { AuthInfo } from '@bk2/auth-ui';
-import { Menu } from '@bk2/cms-menu-feature';
-import { ProfileEditModal } from '@bk2/profile-feature';
-import { CookieBanner } from '@bk2/consent-ui';
-import { ConsentService } from '@bk2/consent-data-access';
+import { AuthInfo } from '@okr/auth-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { ProfileEditModal } from '@okr/profile-feature';
+import { CookieBanner } from '@okr/consent-ui';
+import { ConsentService } from '@okr/consent-data-access';
 
 @Component({
   imports: [

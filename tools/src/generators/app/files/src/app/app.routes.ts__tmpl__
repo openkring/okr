@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { isAppReadyGuard, isAuthenticatedGuard, isPrivilegedGuard } from '@bk2/auth-feature';
+import { isAppReadyGuard, isAuthenticatedGuard, isPrivilegedGuard } from '@okr/auth-feature';
 
 // CMS-minimal feature routes. Navigation is activation-gated by isAppReadyGuard on the
 // wrapping parent below; the <ion-router-outlet> is never removed from the DOM (gating it
@@ -8,58 +8,58 @@ const featureRoutes: Route[] = [
   {
     path: 'public',
     children: [
-      { path: ':id/:contextMenuName', loadComponent: () => import('@bk2/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
-      { path: ':id', loadComponent: () => import('@bk2/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
+      { path: ':id/:contextMenuName', loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
+      { path: ':id', loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
     ],
   },
   {
     path: 'private',
     canActivate: [isAuthenticatedGuard],
     children: [
-      { path: ':id/:contextMenuName', loadComponent: () => import('@bk2/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
-      { path: ':id', loadComponent: () => import('@bk2/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
+      { path: ':id/:contextMenuName', loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
+      { path: ':id', loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
     ],
   },
   {
     path: 'auth',
     children: [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
-      { path: 'login', loadComponent: () => import('@bk2/auth-feature').then(m => m.LoginPage) },
-      { path: 'pwdreset', loadComponent: () => import('@bk2/auth-feature').then(m => m.PasswordResetPage) },
-      { path: 'confirm', loadComponent: () => import('@bk2/auth-feature').then(m => m.ConfirmPasswordResetPage) },
+      { path: 'login', loadComponent: () => import('@okr/auth-feature').then(m => m.LoginPage) },
+      { path: 'pwdreset', loadComponent: () => import('@okr/auth-feature').then(m => m.PasswordResetPage) },
+      { path: 'confirm', loadComponent: () => import('@okr/auth-feature').then(m => m.ConfirmPasswordResetPage) },
     ],
   },
   {
     path: 'person',
     canActivate: [isAuthenticatedGuard],
     children: [
-      { path: ':listId/:contextMenuName', loadComponent: () => import('@bk2/subject-person-feature').then(m => m.PersonList) },
-      { path: 'profile', loadComponent: () => import('@bk2/profile-feature').then(m => m.ProfileEditPage), data: { preload: true } },
-      { path: ':personKey', loadComponent: () => import('@bk2/subject-person-feature').then(m => m.PersonEditPage) },
+      { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/subject-person-feature').then(m => m.PersonList) },
+      { path: 'profile', loadComponent: () => import('@okr/profile-feature').then(m => m.ProfileEditPage), data: { preload: true } },
+      { path: ':personKey', loadComponent: () => import('@okr/subject-person-feature').then(m => m.PersonEditPage) },
     ],
   },
   {
     path: 'page',
     canActivate: [isAuthenticatedGuard],
     children: [
-      { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@bk2/cms-page-feature').then(m => m.PageList) },
+      { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageList) },
     ],
   },
   {
     path: 'section',
     canActivate: [isAuthenticatedGuard],
     children: [
-      { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@bk2/cms-section-feature').then(m => m.SectionAllList) },
+      { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-section-feature').then(m => m.SectionAllList) },
     ],
   },
   {
     path: 'menu',
     canActivate: [isAuthenticatedGuard],
     children: [
-      { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@bk2/cms-menu-feature').then(m => m.MenuList) },
+      { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-menu-feature').then(m => m.MenuList) },
     ],
   },
-  { path: '**', loadComponent: () => import('@bk2/cms-page-feature').then(m => m.ErrorPage), data: { errorName: 'pageNotFound' } },
+  { path: '**', loadComponent: () => import('@okr/cms-page-feature').then(m => m.ErrorPage), data: { errorName: 'pageNotFound' } },
 ];
 
 export const appRoutes: Route[] = [
