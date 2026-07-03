@@ -1,7 +1,7 @@
 # User Domain
 
 ## Overview
-`UserModel` links a Firebase Authentication account to a `PersonModel` and stores application-level settings and role-based authorization. Every user belongs to exactly one tenant. The `bkey` matches the Firebase Auth UID.
+`UserModel` links a Firebase Authentication account to a `PersonModel` and stores application-level settings and role-based authorization. Every user belongs to exactly one tenant. The `okey` matches the Firebase Auth UID.
 
 The user domain covers two concerns:
 1. **Admin management** — `UserList` + `UserListStore` + `UserEditPage` + `UserEditStore` for admins to view and edit all user accounts.
@@ -13,10 +13,10 @@ Collection name: `users`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID = Firebase Auth UID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID = Firebase Auth UID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; always exactly one tenant per user |
 | `loginEmail` | string | Firebase Auth login email address |
-| `personKey` | string | Foreign key to the linked `PersonModel.bkey` |
+| `personKey` | string | Foreign key to the linked `PersonModel.okey` |
 | `firstName` | string | Denormalized first name (copied from linked person) |
 | `lastName` | string | Denormalized last name (copied from linked person) |
 | `roles` | Roles | Role map; keys are role names, values are `true` when assigned |
@@ -75,7 +75,7 @@ Loads all users for the current tenant ordered by `loginEmail`.
 #### Key Methods
 | Method | Description |
 |---|---|
-| `edit(user, readOnly)` | Navigates to `/user/<bkey>` |
+| `edit(user, readOnly)` | Navigates to `/user/<okey>` |
 | `delete(user, readOnly)` | Deletes the user document |
 | `export(type)` | Exports users as XLSX (`'raw'` or `'users'` format) |
 

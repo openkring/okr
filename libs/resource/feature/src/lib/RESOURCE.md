@@ -12,7 +12,7 @@ Collection name: `resources`
 
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `name` | string | Display name / identifier (e.g. locker number, key number, plate) |

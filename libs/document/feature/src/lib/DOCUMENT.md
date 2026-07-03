@@ -14,12 +14,12 @@ Collection name: `docs`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `index` | string | Search index string |
 | `tags` | string | Comma-separated tags |
-| `folderKeys` | string[] | `FolderModel` bkeys this document belongs to (many-to-many) |
+| `folderKeys` | string[] | `FolderModel` okeys this document belongs to (many-to-many) |
 | `fullPath` | string | Firebase Storage path: `{/dir}/baseName.extension` |
 | `description` | string | Human-readable, translatable file name |
 | `title` | string | Short display title |
@@ -29,13 +29,13 @@ Collection name: `docs`
 | `url` | string | Public download URL or URL of the original external file |
 | `mimeType` | string | MIME type from Firebase Storage `contentType` |
 | `size` | number | File size in bytes |
-| `authorKey` | string | `bkey` of the `PersonModel` who authored the document |
+| `authorKey` | string | `okey` of the `PersonModel` who authored the document |
 | `authorName` | string | Denormalised author display name |
 | `dateOfDocCreation` | string | Date the document was originally created |
 | `dateOfDocLastUpdate` | string | Date the document was last modified |
 | `locationKey` | string | Optional reference to a location (e.g. where a photo was taken) |
 | `hash` | string | SHA-256 hash of the file for integrity checking |
-| `priorVersionKey` | string | `bkey` of the previous version of this document (version chain) |
+| `priorVersionKey` | string | `okey` of the previous version of this document (version chain) |
 | `version` | string | Arbitrary version string (e.g. `1.0`, `2024-03-01`) |
 
 ## Firebase Storage Layout
@@ -56,9 +56,9 @@ Notable store actions:
 - `add(priorVersionKey?)` — picks a file, uploads to Storage, creates `DocumentModel`, navigates to the detail page; sets `version = '1.0'` for new files
 - `addFiles()` — batch upload: picks multiple files, uploads each, creates a `DocumentModel` per file, assigned to the current folder
 - `addFolder()` — prompts for a name, creates a nested `FolderModel`, then navigates into it
-- `update(document)` — starts a new version chain entry by calling `add(document.bkey)`
+- `update(document)` — starts a new version chain entry by calling `add(document.okey)`
 - `getRevisions(document)` — follows `priorVersionKey` backwards to build the full version history
-- `edit(document)` — navigates to `/document/<bkey>` detail page
+- `edit(document)` — navigates to `/document/<okey>` detail page
 - `delete(document)` — confirmation-guarded deletion
 - `preview(document)` — opens `document.url` in the Capacitor browser
 - `download(document)` — opens `document.url` in a new browser tab
@@ -75,4 +75,4 @@ Notable store actions:
 `DocumentService` (`@okr/document-data-access`) and `FolderService` (`@okr/folder-data-access`) are the Firestore gateways. `UploadService` (`@okr/avatar-data-access`) handles Firebase Storage uploads.
 
 ## Version Chain
-Documents form an optional linked list: `priorVersionKey` points to the previous version's `bkey`. `getRevisions()` traverses this chain and returns all versions ordered from newest to oldest. The `version` field holds a human-readable version identifier.
+Documents form an optional linked list: `priorVersionKey` points to the previous version's `okey`. `getRevisions()` traverses this chain and returns all versions ordered from newest to oldest. The `version` field holds a human-readable version identifier.

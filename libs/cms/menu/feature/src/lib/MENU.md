@@ -11,11 +11,11 @@ Collection name: `menuItems`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `name` | string | Internal unique name used as a lookup key (e.g. `aoc`, `help`, `members`) |
-| `index` | string | Search index — format `n:<name> a:<action> k:<bkey>` |
+| `index` | string | Search index — format `n:<name> a:<action> k:<okey>` |
 | `label` | string | i18n key displayed to the user in the menu (may contain `@VERSION@` placeholder) |
 | `icon` | string | Ion-icon name shown next to the label (default: `help-circle`) |
 | `action` | string | The action type (see Actions below) |
@@ -61,7 +61,7 @@ The `MenuStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
 - `create / update / delete` — write operations guarded by the store
 
 ## Search Index Format
-`n:<name> a:<action> k:<bkey>`
+`n:<name> a:<action> k:<okey>`
 
 ## Dynamic Label Tokens
 A menu item's `label` may contain dynamic tokens that are expanded at render time by

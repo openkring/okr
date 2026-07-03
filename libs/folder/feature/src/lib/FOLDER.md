@@ -3,7 +3,7 @@
 ## Overview
 The Folder domain provides hierarchical grouping of `DocumentModel` records. A `FolderModel` stores its ancestor keys in `parents`, enabling arbitrary nesting. The document-to-folder relationship is many-to-many: a `DocumentModel` holds an array of `folderKeys` referencing one or more folders.
 
-A `FolderModel` is implicitly created with `bkey = groupKey` the first time a group's files are accessed (GroupView convention). Folders can also be created explicitly via the admin list or from within `DocumentStore.addFolder()`.
+A `FolderModel` is implicitly created with `okey = groupKey` the first time a group's files are accessed (GroupView convention). Folders can also be created explicitly via the admin list or from within `DocumentStore.addFolder()`.
 
 ## Firestore Collection
 Collection name: `folders`
@@ -11,13 +11,13 @@ Collection name: `folders`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `name` | string | Display name of the folder |
 | `description` | string | Human-readable notes |
 | `title` | string | Short title |
-| `parents` | string[] | `FolderModel` bkeys of ancestor folders; empty for root folders |
+| `parents` | string[] | `FolderModel` okeys of ancestor folders; empty for root folders |
 | `tags` | string | Comma-separated tags |
 | `index` | string | Search index string |
 

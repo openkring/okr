@@ -11,11 +11,11 @@ Collection name: `pages`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `name` | string | Internal name of the page |
-| `index` | string | Search index — format `n:<name> k:<bkey>` |
+| `index` | string | Search index — format `n:<name> k:<okey>` |
 | `title` | string | Page title used for SEO (`<title>` tag) |
 | `subTitle` | string | Secondary title |
 | `abstract` | string | Short description shown on landing and error pages |
@@ -154,4 +154,4 @@ This pattern applies to any page that should be embeddable. Add `showMenu: false
 to the route `data` in `app.routes.ts`.
 
 ## Search Index Format
-`n:<name> k:<bkey>`
+`n:<name> k:<okey>`

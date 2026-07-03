@@ -11,7 +11,7 @@ Collection name: `addresses`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `parentKey` | string | Reference to the owning subject: `modelType.key` (e.g. `org.abc`, `person.xyz`) |
 | `addressChannel` | string | Channel type: `email`, `phone`, `postal`, `web`, `twitter`, `xing`, `facebook`, `linkedin`, `instagram`, `bankaccount`, `twint` |

@@ -20,7 +20,7 @@ The `AvatarModel` is a lightweight metadata record that points to the Firebase S
 
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID — conventionally `<modelType>.<modelKey>`, e.g. `person.abc123` |
+| `okey` | string | Firestore document ID — conventionally `<modelType>.<modelKey>`, e.g. `person.abc123` |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `storagePath` | string | Relative path to the image in Firebase Storage |
 | `isArchived` | boolean | Soft-delete flag |

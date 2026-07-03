@@ -1,7 +1,7 @@
 # Org Domain
 
 ## Overview
-`OrgModel` represents an organization or company. The type field distinguishes subtypes (e.g. club, company, association). Orgs support membership hierarchies and can own resources, hold reservations, and maintain document archives. Addresses are stored separately in the `addresses` collection with `parentKey = 'org.<bkey>'`.
+`OrgModel` represents an organization or company. The type field distinguishes subtypes (e.g. club, company, association). Orgs support membership hierarchies and can own resources, hold reservations, and maintain document archives. Addresses are stored separately in the `addresses` collection with `parentKey = 'org.<okey>'`.
 
 A denormalized snapshot of the primary contact details (favorite email, phone, and postal address) is stored directly on the `OrgModel` to avoid extra reads in list views.
 
@@ -11,7 +11,7 @@ Collection name: `orgs`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `name` | string | Legal or display name of the organization |
 | `type` | string | Org type category (category: `org_type`, e.g. club, company) |

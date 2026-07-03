@@ -11,7 +11,7 @@ Collection name: `groups`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID; user-defined on creation — must be unique; stripped on write, re-attached on read |
+| `okey` | string | Firestore document ID; user-defined on creation — must be unique; stripped on write, re-attached on read |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `name` | string | Human-readable group name |
 | `notes` | string | Free-text notes |
@@ -19,14 +19,14 @@ Collection name: `groups`
 | `icon` | string | Icon name (default: `'group'`) |
 | `isArchived` | boolean | Soft-delete flag |
 | `index` | string | Search index string |
-| `hasContent` | boolean | Group has a CMS content page (page id = group bkey + `_content`) |
-| `hasChat` | boolean | Group has a Matrix chat room (section id = group bkey + `_chat`) |
-| `hasCalendar` | boolean | Group has a calendar (calendar id = group bkey) |
-| `hasTasks` | boolean | Group has a task list (task id = group bkey) |
-| `hasFiles` | boolean | Group has a file folder (root path: `groups/<bkey>`) |
-| `filesFolder` | string | Storage folder key for files (set to `bkey` when `hasFiles = true`) |
+| `hasContent` | boolean | Group has a CMS content page (page id = group okey + `_content`) |
+| `hasChat` | boolean | Group has a Matrix chat room (section id = group okey + `_chat`) |
+| `hasCalendar` | boolean | Group has a calendar (calendar id = group okey) |
+| `hasTasks` | boolean | Group has a task list (task id = group okey) |
+| `hasFiles` | boolean | Group has a file folder (root path: `groups/<okey>`) |
+| `filesFolder` | string | Storage folder key for files (set to `okey` when `hasFiles = true`) |
 | `hasAlbum` | boolean | Group has a photo album folder |
-| `albumFolder` | string | Storage folder key for album (set to `a_<bkey>` when `hasAlbum = true`) |
+| `albumFolder` | string | Storage folder key for album (set to `a_<okey>` when `hasAlbum = true`) |
 | `hasMembers` | boolean | Group has a members list |
 | `admins` | AvatarInfo[] | Ordered list of group admin persons. The first element (`admins[0]`) is the main contact. Use `getMainContact(group)` and `isAdminMember(group, personKey)` from `@okr/subject-group-util`. |
 | `parentKey` | string | Key of the parent org or group |

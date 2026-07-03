@@ -12,7 +12,7 @@ Collection name: `workrels`
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `index` | string | Full-text search index |

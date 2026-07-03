@@ -1,7 +1,7 @@
 # Person Domain
 
 ## Overview
-`PersonModel` represents a natural person. Persons are the central subject entity of the application: they can be members of organizations and groups, linked to user accounts, hold addresses, have ownerships and reservations, and appear as contacts. Addresses are stored separately in the `addresses` collection with `parentKey = 'person.<bkey>'`.
+`PersonModel` represents a natural person. Persons are the central subject entity of the application: they can be members of organizations and groups, linked to user accounts, hold addresses, have ownerships and reservations, and appear as contacts. Addresses are stored separately in the `addresses` collection with `parentKey = 'person.<okey>'`.
 
 A denormalized snapshot of the primary contact details (favorite email, phone, and postal address) is stored directly on `PersonModel` to avoid extra reads in list views.
 
@@ -11,7 +11,7 @@ Collection name: `persons`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `firstName` | string | First name |
 | `lastName` | string | Last name |
@@ -49,7 +49,7 @@ Manages the full list of persons. Persons are sourced from `AppStore.allPersons(
 | Method | Description |
 |---|---|
 | `add(readOnly)` | Opens `PersonNewModal`; on confirm creates person + optional initial addresses + optional membership |
-| `edit(person, readOnly)` | Navigates to `/person/<bkey>` with `readOnly` state |
+| `edit(person, readOnly)` | Navigates to `/person/<okey>` with `readOnly` state |
 | `delete(person, readOnly)` | Confirms then deletes the person |
 | `copyEmailAddresses()` | Copies all visible persons' favorite emails to clipboard |
 | `sendEmail(email)` | Opens `mailto:` link |

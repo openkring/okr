@@ -11,7 +11,7 @@ Collection name: `categories`
 ## CategoryListModel Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `name` | string | Internal identifier, matches the key used in `getCategory()` calls (e.g. `section_type`, `page_type`) |

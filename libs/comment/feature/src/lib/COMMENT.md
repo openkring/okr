@@ -1,7 +1,7 @@
 # Comment Domain
 
 ## Overview
-The Comment domain provides a simple threaded annotation capability that can be attached to any model. A `CommentModel` references its parent via `parentKey` (a composite key of the form `<modelType>.<bkey>`). Comments are shown in two UI patterns: an accordion that collapses/expands the list, and an embedded card view.
+The Comment domain provides a simple threaded annotation capability that can be attached to any model. A `CommentModel` references its parent via `parentKey` (a composite key of the form `<modelType>.<okey>`). Comments are shown in two UI patterns: an accordion that collapses/expands the list, and an embedded card view.
 
 Comments are intentionally lightweight: no edit/delete is exposed to end users — only adding new comments via a prompt dialog. Administrative deletion is possible through the store.
 
@@ -11,11 +11,11 @@ Collection name: `comments`
 ## Field Semantics
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `index` | string | Search index string |
-| `authorKey` | string | `bkey` of the `UserModel` who wrote the comment |
+| `authorKey` | string | `okey` of the `UserModel` who wrote the comment |
 | `authorName` | string | Display name of the author (denormalised for read performance) |
 | `creationDateTime` | string | ISO-8601 timestamp of when the comment was created |
 | `parentKey` | string | Composite reference to the parent model (e.g. `person.abc123`) |

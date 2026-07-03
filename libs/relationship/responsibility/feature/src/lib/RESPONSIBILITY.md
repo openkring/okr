@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `Responsibility` entity models who is responsible for a named function within the organisation. Each record names the responsible person or group, an optional temporary delegate, and the validity period. The `bkey` is user-defined (e.g. `president`, `treasurer`, `boat_comm`) so that other parts of the system can reference a responsibility by a well-known key.
+The `Responsibility` entity models who is responsible for a named function within the organisation. Each record names the responsible person or group, an optional temporary delegate, and the validity period. The `okey` is user-defined (e.g. `president`, `treasurer`, `boat_comm`) so that other parts of the system can reference a responsibility by a well-known key.
 
 ## Firestore Collection
 
@@ -12,7 +12,7 @@ Collection name: `responsibilities`
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `bkey` | string | User-defined Firestore document ID (e.g. `president`, `keys`, `infra_rental`). Stripped on write, re-attached on read. |
+| `okey` | string | User-defined Firestore document ID (e.g. `president`, `keys`, `infra_rental`). Stripped on write, re-attached on read. |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `index` | string | Full-text search index |
@@ -33,9 +33,9 @@ When a `delegateAvatar` is set and the current date falls within `[delegateValid
 
 ## Well-Known Responsibility Keys
 
-Examples of user-defined `bkey` values used in the SCS context:
+Examples of user-defined `okey` values used in the SCS context:
 
-| bkey | Description |
+| okey | Description |
 | --- | --- |
 | `president` | President |
 | `treasurer` | Treasurer / Kassier |
@@ -55,7 +55,7 @@ An NgRx Signal Store managing all responsibilities for a tenant.
 
 | Field | Description |
 | --- | --- |
-| `listId` | Filter format: `k_<bkey>`, `r_<responsibleKey>`, or `all` |
+| `listId` | Filter format: `k_<okey>`, `r_<responsibleKey>`, or `all` |
 | `showOnlyCurrent` | When true, shows only responsibilities currently valid (via `isValidAt`) |
 | `searchTerm` | Free-text filter on the index field |
 
@@ -72,7 +72,7 @@ An NgRx Signal Store managing all responsibilities for a tenant.
 
 | Prefix | Filters by |
 | --- | --- |
-| `k_` | `bkey` (exact match) |
+| `k_` | `okey` (exact match) |
 | `r_` | `responsibleAvatar.key` or `delegateAvatar.key` |
 | `all` | No filter |
 
@@ -81,7 +81,7 @@ An NgRx Signal Store managing all responsibilities for a tenant.
 | Method | Description |
 | --- | --- |
 | `add(readOnly)` | Creates an empty `ResponsibilityModel` and opens the edit modal in new mode |
-| `edit(responsibility, isNew)` | Opens `ResponsibilityEditModal`; on create checks for duplicate bkeys |
+| `edit(responsibility, isNew)` | Opens `ResponsibilityEditModal`; on create checks for duplicate okeys |
 | `delete(responsibility?, readOnly)` | Confirms and hard-deletes a responsibility |
 | `setListId(listId)` | Sets the list filter and reloads |
 | `setShowMode(showOnlyCurrent)` | Toggles current/all view |
@@ -91,7 +91,7 @@ An NgRx Signal Store managing all responsibilities for a tenant.
 
 ### `ResponsibilityEditModal`
 
-An Ionic modal for creating or editing a `ResponsibilityModel`. When creating (`isNew = true`), the `bkey` is entered by the user; the store checks for duplicates before saving.
+An Ionic modal for creating or editing a `ResponsibilityModel`. When creating (`isNew = true`), the `okey` is entered by the user; the store checks for duplicates before saving.
 
 ### `ResponsibilityList`
 

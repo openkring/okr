@@ -18,7 +18,7 @@ Collection name: `calevents`
 
 | Field | Type | Description |
 |---|---|---|
-| `bkey` | string | Firestore document ID (stripped on write, re-attached on read) |
+| `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag; archived events are hidden by default |
 | `name` | string | Display name / title of the event |
@@ -35,7 +35,7 @@ Collection name: `calevents`
 | `repeatUntilDate` | string | Last date for generating series instances |
 | `seriesId` | string | Shared ID for all instances of a recurring series |
 | `locationKey` | string | `name@key` reference to a `LocationModel` |
-| `calendars` | string[] | List of calendar `bkey` values this event belongs to |
+| `calendars` | string[] | List of calendar `okey` values this event belongs to |
 | `url` | string | External link (album, website, document) |
 | `responsiblePersons` | AvatarInfo[] | Persons responsible for the event |
 | `isOpen` | boolean | If true, attendees can self-register; if false, use invitations |
@@ -44,7 +44,7 @@ Collection name: `calevents`
 ## Recurring Series Logic
 
 - A series is created by generating one `CalEventModel` document per computed recurrence date.
-- All series members share the same `seriesId` and use `seriesId + paddedIndex` as their `bkey` (e.g. `abc12300`, `abc12301`).
+- All series members share the same `seriesId` and use `seriesId + paddedIndex` as their `okey` (e.g. `abc12300`, `abc12301`).
 - When editing a recurring event, the user chooses scope via `RegressionSelectionModal`:
   - `current` — decouple this instance from the series (clears `seriesId`, sets `periodicity = 'once'`).
   - `future` — update/delete this and all later instances in the series.
@@ -61,7 +61,7 @@ NgRx Signal Store. Key state:
 
 | State field | Description |
 |---|---|
-| `calendarName` | `'all'`, `'my'`, or a specific calendar `bkey` |
+| `calendarName` | `'all'`, `'my'`, or a specific calendar `okey` |
 | `seriesId` | Used internally when batch-updating/deleting a series |
 | `maxEvents` | Optional cap on events returned |
 | `showPastEvents` | Whether to include events before today |

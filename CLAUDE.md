@@ -135,7 +135,7 @@ Feature-level stores (e.g. `PageStore`, `MatrixChatStore`) are in their respecti
 
 `FirestoreService` (`@okr/shared-data-access`) is the single gateway for all Firestore CRUD. It enforces `isPlatformBrowser` guards (SSR safety), caches query Observables via `shareReplay`, and uses `rxfire/firestore` `collectionData`/`docData` for real-time streams.
 
-All models stored in Firestore use `bkey` (document ID) that is stripped before write and re-attached on read. Every model has a `tenants: string[]` field for multi-tenancy isolation — queries always filter by `tenantId`.
+All models stored in Firestore use `okey` (document ID) that is stripped before write and re-attached on read. Every model has a `tenants: string[]` field for multi-tenancy isolation — queries always filter by `tenantId`.
 
 ### CMS / Page-Section pattern
 

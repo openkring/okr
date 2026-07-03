@@ -46,7 +46,7 @@ All resources only fire when both `fbUser` and `tenantId` are truthy (auth-gate)
 | `currentUser` | First `UserModel` matched by `loginEmail`; warns/errors on 0 or 2+ results |
 | `allPersons` / `allOrgs` / `allGroups` / `allResources` / `allTags` / `allCategories` | Typed arrays of reference data |
 | `appConfig` | `AppConfig` or a default instance |
-| `defaultOrg` | Org whose `bkey === tenantId` |
+| `defaultOrg` | Org whose `okey === tenantId` |
 | `defaultResource` | Resource matching `appConfig.defaultResourceId` |
 | `privacySettings` | `PrivacySettings` object derived from `appConfig` |
 | `currentPerson` | `PersonModel` matching `currentUser.personKey` |
