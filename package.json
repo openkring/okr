@@ -1,5 +1,5 @@
 {
-  "name": "bk2monorepo",
+  "name": "okr",
   "version": "6.4.65",
   "packageManager": "pnpm@11.9.0",
   "license": "MIT",
@@ -12,7 +12,7 @@
     "deploy:functions": "node scripts/deploy-functions.mjs",
     "serve": "nx serve",
     "test": "nx test",
-    "testlibs": "NODE_OPTIONS='--max-old-space-size=8192' pnpm nx run-many --target=test --all --exclude=bk2monorepo,scs-app",
+    "testlibs": "NODE_OPTIONS='--max-old-space-size=8192' pnpm nx run-many --target=test --all --exclude=okr,scs-app",
     "lint": "NODE_OPTIONS='--max-old-space-size=8192' nx lint",
     "e2e": "nx e2e",
     "dev": "nx serve scs-app",
