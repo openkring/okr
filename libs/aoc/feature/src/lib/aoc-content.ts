@@ -317,7 +317,7 @@ export class AocContent {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons.push(createActionSheetButton('content.actionsheet.section.edit', this.store.i18n.content_section_edit(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('content.actionsheet.section.delete', this.store.i18n.content_section_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_okey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
@@ -343,7 +343,7 @@ export class AocContent {
     options.buttons.push(createActionSheetButton('content.actionsheet.page.edit', this.store.i18n.content_page_edit(), this.imgixBaseUrl, 'page'));
     options.buttons.push(createActionSheetButton('content.actionsheet.section.create', this.store.i18n.content_section_create(), this.imgixBaseUrl, 'section'));
     options.buttons.push(createActionSheetButton('content.actionsheet.section.removeRef', this.store.i18n.content_section_removeref(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_okey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
 
@@ -372,7 +372,7 @@ export class AocContent {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons.push(createActionSheetButton('content.actionsheet.menu.create', this.store.i18n.content_menu_create(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('content.actionsheet.menu.removeRef', this.store.i18n.content_menu_removeref(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_okey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
@@ -397,7 +397,7 @@ export class AocContent {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons.push(createActionSheetButton('content.actionsheet.menu.edit', this.store.i18n.content_menu_edit(), this.imgixBaseUrl, 'edit'));
     options.buttons.push(createActionSheetButton('content.actionsheet.menu.delete', this.store.i18n.content_menu_delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_bkey(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('content.actionsheet.copy.okey', this.store.i18n.content_copy_okey(), this.imgixBaseUrl, 'copy'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);

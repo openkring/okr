@@ -26,7 +26,7 @@ import { TaskI18n, taskValidations } from '@okr/task-util';
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                  <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -118,11 +118,11 @@ export class TaskForm {
   protected nameLength = LONG_NAME_LENGTH;
 
   // i18n
-  protected bkeyI18n = computed(() => ({
+  protected okeyI18n = computed(() => ({
     name: 'okey',
-    label: this.i18n().bkey_label(),
-    placeholder: this.i18n().bkey_placeholder(),
-    helper: this.i18n().bkey_helper()
+    label: this.i18n().okey_label(),
+    placeholder: this.i18n().okey_placeholder(),
+    helper: this.i18n().okey_helper()
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({

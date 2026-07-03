@@ -26,7 +26,7 @@ import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [readOnly]="true" [copyable]=true />
+                <okr-text-input [i18n]="okeyI18n()" [value]="okey()" (valueChange)="onFieldChange('okey', $event)" [readOnly]="true" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="personKeyI18n()" [value]="personKey()" (valueChange)="onFieldChange('personKey', $event)" [readOnly]="isReadOnly()" [copyable]=true />
@@ -64,8 +64,8 @@ export class UserModelForm {
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected bkeyI18n = computed(() => ({
-    name: 'okey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
+  protected okeyI18n = computed(() => ({
+    name: 'okey', label: this.i18n().okey_label(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper()
   } as TextInputI18n));
 
   protected personKeyI18n = computed(() => ({

@@ -31,7 +31,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
                 @if(hasRole('admin')) {
                   <ion-row>
                     <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                      <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                     </ion-col>
                   </ion-row>
                 }
@@ -110,7 +110,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
 })
 export class InvitationForm {
   public readonly i18n = input.required<InvitationI18n>();
-  protected bkeyI18n = computed(() => ({ name: 'okey', label: this.i18n().bkey_label(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper() } as TextInputI18n));
+  protected okeyI18n = computed(() => ({ name: 'okey', label: this.i18n().okey_label(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper() } as TextInputI18n));
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
   protected sentAtI18n = computed(() => ({ name: 'sentAt', label: this.i18n().sentAt_label(), placeholder: this.i18n().sentAt_placeholder(), helper: this.i18n().sentAt_helper() } as DateInputI18n));
   protected respondedAtI18n = computed(() => ({ name: 'respondedAt', label: this.i18n().respondedAt_label(), placeholder: this.i18n().respondedAt_placeholder(), helper: this.i18n().respondedAt_helper() } as DateInputI18n));

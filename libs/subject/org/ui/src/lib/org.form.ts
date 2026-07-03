@@ -26,7 +26,7 @@ import { OrgI18n, orgValidations } from '@okr/subject-org-util';
             @if(hasRole('admin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                  <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -78,7 +78,7 @@ import { OrgI18n, orgValidations } from '@okr/subject-org-util';
 })
 export class OrgForm {
   public readonly i18n = input.required<OrgI18n>();
-  protected bkeyI18n   = computed(() => ({ name: 'okey',   label: this.i18n().bkey_label(),   placeholder: this.i18n().bkey_placeholder(),   helper: this.i18n().bkey_helper()   } as TextInputI18n));
+  protected okeyI18n   = computed(() => ({ name: 'okey',   label: this.i18n().okey_label(),   placeholder: this.i18n().okey_placeholder(),   helper: this.i18n().okey_helper()   } as TextInputI18n));
   protected nameI18n   = computed(() => ({ name: 'name',   label: this.i18n().name_label(),   placeholder: this.i18n().name_placeholder(),   helper: this.i18n().name_helper()   } as TextInputI18n));
   protected taxIdI18n  = computed(() => ({ name: 'taxId',  label: this.i18n().taxId_label(),  placeholder: this.i18n().taxId_placeholder(),  helper: this.i18n().taxId_helper()  } as TextInputI18n));
   protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() } as TextInputI18n));

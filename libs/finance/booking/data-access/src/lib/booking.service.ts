@@ -29,7 +29,7 @@ export class BookingService {
     }
     const batch = this.firestoreService.getBatch();
     const okey = booking.okey?.length > 0 ? booking.okey : crypto.randomUUID();
-    const { okey: _bkey, ...headerData } = { ...booking, okey } as BookingModel & { okey: string };
+    const { okey: _okey, ...headerData } = { ...booking, okey } as BookingModel & { okey: string };
     const headerRef = doc(this.firestoreService.firestore, BookingCollection, okey);
     batch.set(headerRef, headerData);
     this.bookingLineService.addLinesToBatch(lines, batch);
@@ -50,7 +50,7 @@ export class BookingService {
     const oldLines = await firstValueFrom(this.bookingLineService.listForBooking(okey, booking.accountingTenantId));
     const batch = this.firestoreService.getBatch();
     this.bookingLineService.deleteLinesToBatch(oldLines, batch);
-    const { okey: _bkey, ...headerData } = { ...booking } as BookingModel & { okey: string };
+    const { okey: _okey, ...headerData } = { ...booking } as BookingModel & { okey: string };
     const headerRef = doc(this.firestoreService.firestore, BookingCollection, okey);
     batch.set(headerRef, headerData, { merge: false });
     this.bookingLineService.addLinesToBatch(lines, batch);

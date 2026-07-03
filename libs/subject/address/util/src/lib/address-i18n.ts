@@ -163,9 +163,9 @@ export const ADDRESSES_I18N_KEYS = {
   ok:                              '@ok',
   save:                            '@save.label',
 
-  bkey_label:                      PFX + 'okey.label',
-  bkey_placeholder:                PFX + 'okey.placeholder',
-  bkey_helper:                     PFX + 'okey.helper',
+  okey_label:                      PFX + 'okey.label',
+  okey_placeholder:                PFX + 'okey.placeholder',
+  okey_helper:                     PFX + 'okey.helper',
   streetName_label:                PFX + 'streetName.label',
   streetName_placeholder:          PFX + 'streetName.placeholder',
   streetName_helper:               PFX + 'streetName.helper',

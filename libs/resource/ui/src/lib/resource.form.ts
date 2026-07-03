@@ -32,7 +32,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
@@ -76,7 +76,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
@@ -118,7 +118,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
@@ -159,7 +159,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
@@ -193,7 +193,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
@@ -219,7 +219,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
@@ -252,7 +252,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
@@ -282,7 +282,7 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
@@ -370,11 +370,11 @@ export class ResourceForm {
   protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
   protected okey = computed(() => this.formData().okey ?? DEFAULT_NAME);
 
-  protected bkeyI18n = computed(() => ({
+  protected okeyI18n = computed(() => ({
     name: 'okey',
-    label: this.i18n().bkey_label(),
-    placeholder: this.i18n().bkey_placeholder(),
-    helper: this.i18n().bkey_helper()
+    label: this.i18n().okey_label(),
+    placeholder: this.i18n().okey_placeholder(),
+    helper: this.i18n().okey_helper()
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({

@@ -10,7 +10,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, subDuration, warn } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, subDuration, warn } from '@okr/shared-util-core';
 import { error, navigateByUrl, confirm } from '@okr/shared-util-angular';
 import { yearMatches } from '@okr/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@okr/shared-constants';
@@ -547,7 +547,7 @@ export const CalEventStore = signalStore(
           const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.okey}`);
 
           // Update in series
-          const storedModel = removeKeyFromBkModel(structuredClone(calevent));
+          const storedModel = removeKeyFromOkrModel(structuredClone(calevent));
           batch.update(ref, {
             ...storedModel,
             startDate: inst.startDate, // keep original date
@@ -633,7 +633,7 @@ export const CalEventStore = signalStore(
           inv.name = calevent.name;
           inv.date = calevent.startDate;
           inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-          const inv2 = removeKeyFromBkModel(structuredClone(inv));
+          const inv2 = removeKeyFromOkrModel(structuredClone(inv));
           console.log(`Creating invitation on ${InvitationCollection}/${key}${pad(index, 2)}`, inv2);
           const ref = doc(store.firestoreService.firestore, `${InvitationCollection}/${key + pad(index, 2)}`);
           batch.set(ref, inv2);

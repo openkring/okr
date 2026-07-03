@@ -27,7 +27,7 @@ export type { AccountI18n };
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                    <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                   </ion-col>
                 </ion-row>
               }
@@ -71,8 +71,8 @@ export class AccountForm {
   public readonly i18n = input.required<AccountI18n>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected bkeyI18n = computed(() => ({
-    name: 'okey', label: this.i18n().okey(), placeholder: this.i18n().bkey_placeholder(), helper: this.i18n().bkey_helper()
+  protected okeyI18n = computed(() => ({
+    name: 'okey', label: this.i18n().okey(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper()
   } as TextInputI18n));
 
   protected idI18n = computed(() => ({

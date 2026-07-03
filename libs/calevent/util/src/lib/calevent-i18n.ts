@@ -139,9 +139,9 @@ export const CALEVENT_I18N_KEYS = {
   date:                           '@date',
   url:                            '@url.label',
 
-  bkey_label:                     PFX + 'okey.label',
-  bkey_placeholder:               PFX + 'okey.placeholder',
-  bkey_helper:                    PFX + 'okey.helper',
+  okey_label:                     PFX + 'okey.label',
+  okey_placeholder:               PFX + 'okey.placeholder',
+  okey_helper:                    PFX + 'okey.helper',
 
   calendar_title:                 PFX + 'calendar.title',
   calendar_add:                   PFX + 'calendar.add',

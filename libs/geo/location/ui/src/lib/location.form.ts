@@ -9,9 +9,9 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { locationValidations } from '@okr/location-util';
 
 export interface LocationFormI18n {
-  bkey_label:           Signal<string>;
-  bkey_placeholder:     Signal<string>;
-  bkey_helper:          Signal<string>;
+  okey_label:           Signal<string>;
+  okey_placeholder:     Signal<string>;
+  okey_helper:          Signal<string>;
   name_label:           Signal<string>;
   name_placeholder:     Signal<string>;
   name_helper:          Signal<string>;
@@ -61,7 +61,7 @@ export interface LocationFormI18n {
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                    <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                   </ion-col>
                 </ion-row>
               }
@@ -163,11 +163,11 @@ export class LocationForm {
   protected caseInsensitiveWordMask = CaseInsensitiveWordMask;
 
   // i18n computed getters
-  protected bkeyI18n = computed(() => ({
+  protected okeyI18n = computed(() => ({
     name: 'okey',
-    label: this.i18n().bkey_label(),
-    placeholder: this.i18n().bkey_placeholder(),
-    helper: this.i18n().bkey_helper()
+    label: this.i18n().okey_label(),
+    placeholder: this.i18n().okey_placeholder(),
+    helper: this.i18n().okey_helper()
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({

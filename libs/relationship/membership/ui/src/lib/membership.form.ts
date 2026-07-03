@@ -82,7 +82,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
                   @if(hasRole('admin')) {
                     <ion-row>
                       <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                        <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                       </ion-col>
                     </ion-row>
                   }
@@ -172,7 +172,7 @@ export class MembershipForm {
   private readonly appStore = inject(AppStore);
 
   // i18n — all field translations come from the i18n input
-  protected bkeyI18n = computed(() => ({ name: 'okey', label: this.i18n().key(), placeholder: '', helper: '' }) as TextInputI18n);
+  protected okeyI18n = computed(() => ({ name: 'okey', label: this.i18n().key(), placeholder: '', helper: '' }) as TextInputI18n);
   protected memberIdI18n = computed(() => ({ name: 'memberId', label: this.i18n().memberId_label(), placeholder: this.i18n().memberId_placeholder(), helper: this.i18n().memberId_helper() }) as TextInputI18n);
   protected memberBexioIdI18n = computed(() => ({ name: 'member_bexioid', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() }) as TextInputI18n);
   protected memberAbbreviationI18n = computed(() => ({ name: 'memberAbbreviation', label: this.i18n().abbreviation_label(), placeholder: this.i18n().abbreviation_placeholder(), helper: this.i18n().abbreviation_helper() }) as TextInputI18n);

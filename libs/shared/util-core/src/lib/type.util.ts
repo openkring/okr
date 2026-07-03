@@ -92,7 +92,7 @@ export function removeProperty(obj: object, key: string): object {
   // or const copy = structuredClone(obj); delete copy[key]; return copy;
 }
 
-export function removeKeyFromBkModel<T extends OkrModel>(model: T): T {
+export function removeKeyFromOkrModel<T extends OkrModel>(model: T): T {
   return removeProperty(model, 'okey') as T;
 }
 

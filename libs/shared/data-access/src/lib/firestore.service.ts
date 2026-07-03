@@ -29,7 +29,7 @@ import { firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 
 import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
-import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromBkModel, removeUndefinedFields } from '@okr/shared-util-core';
+import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 import { I18nService } from "@okr/shared-i18n";
 
@@ -98,7 +98,7 @@ export class FirestoreService {
     const ref = doc(this.firestore, path);
 
     // we delete the okey from the model because we don't want to store it in the database (ref.id is available instead)
-    const persistedModel = removeKeyFromBkModel(model);
+    const persistedModel = removeKeyFromOkrModel(model);
     persistedModel.tenants = [this.env.tenantId];   // ensure that the tenant is set
 
     try {
@@ -255,7 +255,7 @@ export class FirestoreService {
     }
 
     // we delete attribute okey from the model because we don't want to store it in the database (_ref.id is available instead)
-    const storedModel = removeKeyFromBkModel(structuredClone(model));
+    const storedModel = removeKeyFromOkrModel(structuredClone(model));
     const updateModel = removeUndefinedFields(storedModel);
     try {
       if (forceOverwrite) {

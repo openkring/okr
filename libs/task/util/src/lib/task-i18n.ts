@@ -43,9 +43,9 @@ export const TASK_I18N_KEYS = {
   list_header_assignee:           PFX + 'list.header.assignee',
   list_header_state:              PFX + 'list.header.state',
 
-  bkey_label:                      PFX + 'okey.label',
-  bkey_placeholder:                PFX + 'okey.placeholder',
-  bkey_helper:                     PFX + 'okey.helper',
+  okey_label:                      PFX + 'okey.label',
+  okey_placeholder:                PFX + 'okey.placeholder',
+  okey_helper:                     PFX + 'okey.helper',
 
   name_label:                      PFX + 'name.label',
   name_placeholder:                PFX + 'name.placeholder',

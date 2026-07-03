@@ -9,9 +9,9 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
 export interface IconEditFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
+  okey_label: Signal<string>;
+  okey_placeholder: Signal<string>;
+  okey_helper: Signal<string>;
   name_label: Signal<string>;
   name_placeholder: Signal<string>;
   name_helper: Signal<string>;
@@ -47,7 +47,7 @@ export interface IconEditFormI18n {
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                  <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               }
               <ion-col size="12" size-md="6">
@@ -130,11 +130,11 @@ export class IconEditForm {
   protected size = linkedSignal(() => this.formData().size ?? 0);
   protected updated = linkedSignal(() => this.formData().updated ?? '');
 
-  protected bkeyI18n = computed(() => ({
+  protected okeyI18n = computed(() => ({
     name: 'okey',
-    label: this.i18n().bkey_label(),
-    placeholder: this.i18n().bkey_placeholder(),
-    helper: this.i18n().bkey_helper()
+    label: this.i18n().okey_label(),
+    placeholder: this.i18n().okey_placeholder(),
+    helper: this.i18n().okey_helper()
   } as TextInputI18n));
 
   protected nameI18n = computed(() => ({

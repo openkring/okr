@@ -10,9 +10,9 @@ export const PERSON_I18N_KEYS = {
     misc:                       PFX + 'misc',
 
     // person form field keys (from @subject/person/ui)
-    bkey_label:                 PFX + 'okey.label',
-    bkey_placeholder:           PFX + 'okey.placeholder',
-    bkey_helper:                PFX + 'okey.helper',
+    okey_label:                 PFX + 'okey.label',
+    okey_placeholder:           PFX + 'okey.placeholder',
+    okey_helper:                PFX + 'okey.helper',
 
     firstName_label:            PFX + 'firstName.label',
     firstName_placeholder:      PFX + 'firstName.placeholder',

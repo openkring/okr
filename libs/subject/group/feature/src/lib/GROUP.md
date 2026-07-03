@@ -39,11 +39,11 @@ Collection name: `groups`
 When a new group is created, the store automatically provisions:
 | Collection | Document key | Purpose |
 |---|---|---|
-| `calendars` | `<groupBkey>` | Group calendar |
-| `sections` | `g-<groupBkey>` | Default article section for the content page |
-| `sections` | `<groupBkey>_chat` | Chat section |
-| `pages` | `<groupBkey>_content` | Content page linking to the article section |
-| `pages` | `<groupBkey>_chat` | Chat page linking to the chat section |
+| `calendars` | `<groupOkey>` | Group calendar |
+| `sections` | `g-<groupOkey>` | Default article section for the content page |
+| `sections` | `<groupOkey>_chat` | Chat section |
+| `pages` | `<groupOkey>_content` | Content page linking to the article section |
+| `pages` | `<groupOkey>_chat` | Chat page linking to the chat section |
 | Matrix room | — | Matrix group chat room via `MatrixChatService` |
 
 ## Store: `GroupStore`

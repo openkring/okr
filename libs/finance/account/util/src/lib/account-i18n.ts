@@ -14,8 +14,8 @@ export const ACCOUNT_I18N_KEYS = {
   view:                 PFX + 'view',
 
   okey:                 PFX + 'okey.label',
-  bkey_placeholder:     PFX + 'okey.placeholder',
-  bkey_helper:          PFX + 'okey.helper',
+  okey_placeholder:     PFX + 'okey.placeholder',
+  okey_helper:          PFX + 'okey.helper',
 
   id:                   PFX + 'id.label',
   id_placeholder:       PFX + 'id.placeholder',

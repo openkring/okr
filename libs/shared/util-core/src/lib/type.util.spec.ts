@@ -66,7 +66,7 @@ import {
     numberMatches,
     // Utility functions
     removeDuplicatesFromArray,
-    removeKeyFromBkModel,
+    removeKeyFromOkrModel,
     removeProperty,
     removeUndefinedFields,
     replaceEndingSlash,
@@ -273,10 +273,10 @@ describe('type.util', () => {
       });
     });
 
-    describe('removeKeyFromBkModel', () => {
+    describe('removeKeyFromOkrModel', () => {
       it('should remove okey property from OkrModel', () => {
         const model = { okey: 'test-key', name: 'Test Model', value: 123 } as unknown as OkrModel;
-        const result = removeKeyFromBkModel(model);
+        const result = removeKeyFromOkrModel(model);
         
         expect(result).toEqual({ name: 'Test Model', value: 123 });
         expect(result).not.toHaveProperty('okey');

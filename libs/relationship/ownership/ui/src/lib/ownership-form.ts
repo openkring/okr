@@ -9,9 +9,9 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { ownershipValidations } from '@okr/relationship-ownership-util';
 
 export interface OwnershipFormI18n {
-  bkey_label: Signal<string>;
-  bkey_placeholder: Signal<string>;
-  bkey_helper: Signal<string>;
+  okey_label: Signal<string>;
+  okey_placeholder: Signal<string>;
+  okey_helper: Signal<string>;
   ownerName1_label: Signal<string>;
   ownerName1_placeholder: Signal<string>;
   ownerName1_helper: Signal<string>;
@@ -51,7 +51,7 @@ export interface OwnershipFormI18n {
               @if(hasRole('admin')) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                    <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
                   </ion-col>
                 </ion-row>
               }
@@ -113,7 +113,7 @@ export interface OwnershipFormI18n {
 })
 export class OwnershipForm {
   // i18n - all translations come from the i18n input
-  protected bkeyI18n          = computed(() => ({ name: 'okey',          label: this.i18n().bkey_label(),          placeholder: this.i18n().bkey_placeholder()} as TextInputI18n));
+  protected okeyI18n          = computed(() => ({ name: 'okey',          label: this.i18n().okey_label(),          placeholder: this.i18n().okey_placeholder()} as TextInputI18n));
   protected ownerName1I18n    = computed(() => ({ name: 'ownerName1',    label: this.i18n().ownerName1_label(),    placeholder: this.i18n().ownerName1_placeholder()} as TextInputI18n));
   protected ownerName2I18n    = computed(() => ({ name: 'ownerName2',    label: this.i18n().ownerName2_label(),    placeholder: this.i18n().ownerName2_placeholder()} as TextInputI18n));
   protected validFromI18n     = computed(() => ({ name: 'validFrom',     label: this.i18n().validFrom_label(),     placeholder: this.i18n().validFrom_placeholder()} as DateInputI18n));

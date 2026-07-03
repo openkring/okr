@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Social Feed domain provides an infinite-scrolling feed of social posts. It is a prototype/demo feature — the data is fetched from an external REST API (`http://localhost:3333/api/feed`) rather than Firestore, and `SocialPostModel` is a plain TypeScript interface (not a Firestore-backed `BkModel`).
+The Social Feed domain provides an infinite-scrolling feed of social posts. It is a prototype/demo feature — the data is fetched from an external REST API (`http://localhost:3333/api/feed`) rather than Firestore, and `SocialPostModel` is a plain TypeScript interface (not a Firestore-backed `OkrModel`).
 
 The feed uses a `linkedSignal` accumulation pattern so that each infinite-scroll load appends new posts to the existing list without replacing it.
 

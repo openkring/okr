@@ -55,9 +55,9 @@ export const OWNERSHIP_I18N_KEYS = {
   list_privateBoats_title:          PFX + 'list.privateBoats.title',
   list_scsBoats_title:              PFX + 'list.scsBoats.title',
 
-  bkey_label:                       PFX + 'okey.label',
-  bkey_placeholder:                 PFX + 'okey.placeholder',
-  bkey_helper:                      PFX + 'okey.helper',
+  okey_label:                       PFX + 'okey.label',
+  okey_placeholder:                 PFX + 'okey.placeholder',
+  okey_helper:                      PFX + 'okey.helper',
 
   ownerName1_label:                 PFX + 'ownerName1.label',
   ownerName1_placeholder:           PFX + 'ownerName1.placeholder',

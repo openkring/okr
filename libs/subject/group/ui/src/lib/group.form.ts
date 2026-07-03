@@ -36,7 +36,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
             <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="bkeyI18n()"
+                  <okr-text-input [i18n]="okeyI18n()"
                     [value]="okey()"
                     [readOnly]="true"
                     [copyable]="true"
@@ -204,7 +204,7 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
 })
 export class GroupForm {
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
-  protected bkeyI18n      = computed(() => ({ name: 'okey',       label: this.i18n().bkey_label(),       placeholder: this.i18n().bkey_placeholder(),       helper: this.i18n().bkey_helper()       } as TextInputI18n));
+  protected okeyI18n      = computed(() => ({ name: 'okey',       label: this.i18n().okey_label(),       placeholder: this.i18n().okey_placeholder(),       helper: this.i18n().okey_helper()       } as TextInputI18n));
   protected groupIdI18n   = computed(() => ({ name: 'groupId',    label: this.i18n().id_label(),    placeholder: this.i18n().id_placeholder(),    helper: this.i18n().id_helper()    } as TextInputI18n));
   protected nameI18n      = computed(() => ({ name: 'groupName',  label: this.i18n().name_label(),       placeholder: this.i18n().name_placeholder(),       helper: this.i18n().name_helper()       } as TextInputI18n));
   protected iconI18n      = computed(() => ({ name: 'icon',       label: this.i18n().icon_label(),       placeholder: this.i18n().icon_placeholder(),       helper: this.i18n().icon_helper()       } as TextInputI18n));
@@ -241,7 +241,7 @@ export class GroupForm {
   // validation and errors
   private readonly validationResult = computed(() => groupValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
-  protected bkeyErrors = computed(() => this.validationResult().getErrors('okey'));
+  protected okeyErrors = computed(() => this.validationResult().getErrors('okey'));
 
   // fields
   protected name = linkedSignal(() => this.formData().name ?? '');

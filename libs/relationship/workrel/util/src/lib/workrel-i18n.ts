@@ -36,9 +36,9 @@ export const WORKREL_I18N_KEYS = {
 
   selectLabel:                      PFX + 'select.label',
 
-  bkey_label:                       PFX + 'okey.label',
-  bkey_placeholder:                 PFX + 'okey.placeholder',
-  bkey_helper:                      PFX + 'okey.helper',
+  okey_label:                       PFX + 'okey.label',
+  okey_placeholder:                 PFX + 'okey.placeholder',
+  okey_helper:                      PFX + 'okey.helper',
 
   label_label:                      PFX + 'label.label',
   label_placeholder:                PFX + 'label.placeholder',

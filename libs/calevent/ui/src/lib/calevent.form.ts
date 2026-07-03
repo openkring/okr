@@ -30,7 +30,7 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
           @if(expertMode()) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="bkeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
+                <okr-text-input [i18n]="okeyI18n()" [value]="okey()" [readOnly]="true" [copyable]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="seriesIdI18n()" [value]="seriesId()" [readOnly]="true" [copyable]="true" />
@@ -195,11 +195,11 @@ export class CalEventForm {
   protected calendarMask = LowercaseWordMask;
   protected nameLength = NAME_LENGTH;
 
-  protected bkeyI18n = computed(() => ({
+  protected okeyI18n = computed(() => ({
     name: 'okey',
-    label: this.i18n().bkey_label(),
-    placeholder: this.i18n().bkey_placeholder(),
-    helper: this.i18n().bkey_helper()
+    label: this.i18n().okey_label(),
+    placeholder: this.i18n().okey_placeholder(),
+    helper: this.i18n().okey_helper()
   } as TextInputI18n));
 
   protected seriesIdI18n = computed(() => ({

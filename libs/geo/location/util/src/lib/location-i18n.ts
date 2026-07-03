@@ -40,9 +40,9 @@ export const LOCATION_I18N_KEYS = {
   view:                         PFX + 'view.label',
 
 
-  bkey_label:           PFX + 'okey.label',
-  bkey_placeholder:     PFX + 'okey.placeholder',
-  bkey_helper:          PFX + 'okey.helper',
+  okey_label:           PFX + 'okey.label',
+  okey_placeholder:     PFX + 'okey.placeholder',
+  okey_helper:          PFX + 'okey.helper',
 
   name_label:           PFX + 'name.label',
   name_placeholder:     PFX + 'name.placeholder',
