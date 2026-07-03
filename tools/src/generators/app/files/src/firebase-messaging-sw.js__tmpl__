@@ -18,11 +18,18 @@ messaging.onBackgroundMessage(payload => {
 
   // Set the app icon badge (PWA Badging API — supported on iOS 16.4+ and Android Chrome).
   // badgeCount is sent by the Cloud Function as the total number of pending items
-  // (unread chat messages + open tasks, etc.). Falls back to 1 if not provided.
-  if (self.navigator?.setAppBadge) {
+  // (unread chat messages + open tasks, etc.). A count of 0 clears the badge — do NOT
+  // floor to 1, otherwise a badge can never be driven back down to zero from a push.
+  {
     const raw = payload.data?.badgeCount;
-    const count = raw !== undefined ? Math.max(1, parseInt(raw, 10) || 1) : 1;
-    self.navigator.setAppBadge(count).catch(() => {});
+    if (raw !== undefined) {
+      const count = Math.max(0, parseInt(raw, 10) || 0);
+      if (count > 0 && self.navigator?.setAppBadge) {
+        self.navigator.setAppBadge(count).catch(() => {});
+      } else if (self.navigator?.clearAppBadge) {
+        self.navigator.clearAppBadge().catch(() => {});
+      }
+    }
   }
 
   // Title and body come from data (data-only message) or fall back to notification field

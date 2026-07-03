@@ -147,17 +147,33 @@ export class MatrixInitializationService {
         // Keep the PWA app icon badge in sync with the total unread count (chat + future: tasks).
         // This covers the foreground case; the service worker handles the background case.
         if ('setAppBadge' in navigator) {
+          const applyBadge = (count: number) => {
+            const nav = navigator as Navigator & {
+              setAppBadge?: (n: number) => Promise<void>;
+              clearAppBadge?: () => Promise<void>;
+            };
+            if (count > 0) {
+              nav.setAppBadge?.(count).catch(() => {});
+            } else {
+              nav.clearAppBadge?.().catch(() => {});
+            }
+          };
+
           runInInjectionContext(this.injector, () =>
-            toObservable(this.matrixChatStore.totalUnreadCount).subscribe(count => {
-              if (count > 0) {
-                (navigator as Navigator & { setAppBadge: (n: number) => Promise<void> })
-                  .setAppBadge(count).catch(() => {});
-              } else {
-                (navigator as Navigator & { clearAppBadge: () => Promise<void> })
-                  .clearAppBadge().catch(() => {});
-              }
-            })
+            toObservable(this.matrixChatStore.totalUnreadCount).subscribe(applyBadge)
           );
+
+          // Reconcile the badge whenever the PWA becomes visible again. A background push
+          // (or a message read on another device) can leave the OS icon badge out of sync
+          // with the real unread count while the app is closed — the reported "badge won't
+          // disappear after reading" bug. Forcing it back to the true total on resume fixes
+          // that; if Matrix hasn't finished syncing yet, the totalUnreadCount subscription
+          // above corrects it again once the count settles.
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              applyBadge(this.matrixChatStore.totalUnreadCount());
+            }
+          });
         }
       }
 

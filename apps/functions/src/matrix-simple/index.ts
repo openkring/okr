@@ -1557,6 +1557,46 @@ export const registerMatrixPusher = onCall(
     }
     const { access_token } = await loginResp.json() as { access_token: string };
 
+    const appIdToUse = appId || PUSH_APP_ID;
+    const deviceName = (deviceDisplayName || 'Unknown').substring(0, 100);
+
+    // Prune stale pushers for THIS device before registering the new one. The FCM token
+    // ("pushkey") rotates (SW reinstall, browser eviction, reinstall), and because the
+    // pushkey is part of a pusher's identity, each rotation leaves an orphaned pusher
+    // behind — Synapse's append:false only replaces an *identical* pushkey+app_id. The
+    // orphans accumulate, so one chat message fans out to every stale pushkey and the user
+    // is notified multiple times (the "notified twice" complaint). We delete pushers with
+    // the same app_id + device_display_name but a different pushkey, converging each
+    // physical device to a single active pusher while preserving genuine multi-device use.
+    try {
+      const listResp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/pushers`, {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      if (listResp.ok) {
+        const { pushers } = (await listResp.json()) as {
+          pushers?: Array<{ app_id: string; pushkey: string; device_display_name?: string }>;
+        };
+        const stale = (pushers ?? []).filter(
+          (p) => p.app_id === appIdToUse && p.device_display_name === deviceName && p.pushkey !== pushkey
+        );
+        await Promise.all(
+          stale.map((p) =>
+            fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/pushers/set`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' },
+              // kind:null deletes the pusher (Matrix spec).
+              body: JSON.stringify({ app_id: p.app_id, pushkey: p.pushkey, kind: null }),
+            })
+          )
+        );
+        if (stale.length) {
+          console.log(`registerMatrixPusher: pruned ${stale.length} stale pusher(s) for ${matrixUserId}`);
+        }
+      }
+    } catch (err) {
+      console.warn('registerMatrixPusher: stale-pusher pruning failed (non-critical):', err);
+    }
+
     // The URL path MUST be exactly /_matrix/push/v1/notify (Synapse validation); the secret
     // travels as a query param (excluded from the path) and is verified by matrixPushGateway.
     const url = `${PUSH_GATEWAY_BASE}/_matrix/push/v1/notify?secret=${encodeURIComponent(pushGatewaySecret.value())}`;
@@ -1567,9 +1607,9 @@ export const registerMatrixPusher = onCall(
         headers: { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           kind: 'http',
-          app_id: appId || PUSH_APP_ID,
+          app_id: appIdToUse,
           app_display_name: 'BK2 Chat',
-          device_display_name: (deviceDisplayName || 'Unknown').substring(0, 100),
+          device_display_name: deviceName,
           pushkey,
           lang: lang || 'de',
           data: { url },
@@ -1638,6 +1678,19 @@ export const matrixPushGateway = onRequest(
         return;
       }
 
+      // Synapse sends a "clearing"/badge-update notification (no event_id, empty room_id)
+      // whenever the unread count changes — e.g. right after the user reads a message on
+      // any device. We must NOT forward it as an FCM message: doing so (a) re-set the app
+      // icon badge to 1 moments after the in-app read had cleared it (the "badge won't
+      // disappear" bug) and (b) rendered a bogus "Neue Nachricht" banner with no content.
+      // The badge is reconciled to the true unread total client-side on app resume, so
+      // dropping these pushes is safe. See MatrixInitializationService (badge reconcile).
+      if (!notification.event_id) {
+        console.log('matrixPushGateway: dropped clearing/badge-only notification (no event_id)');
+        res.status(200).json({ rejected: [] });
+        return;
+      }
+
       const senderName = notification.sender_display_name ?? notification.sender ?? 'Unbekannt';
       const roomName   = notification.room_name ?? notification.room_alias ?? '';
       const unread     = notification.counts?.unread ?? 1;
@@ -1672,7 +1725,11 @@ export const matrixPushGateway = onRequest(
                   alert: { title, body: msgBody },
                   badge: Math.max(1, unread),
                   sound: 'default',
-                  'content-available': 1,
+                  // NOTE: intentionally NO 'content-available': 1 here. Combining a
+                  // user-facing `alert` with the background/silent `content-available`
+                  // flag is undefined per Apple and on some iOS versions causes the push
+                  // to be delivered twice (OS banner + background wake) — the "notified
+                  // twice" complaint. Chat pushes only need the visible banner.
                 },
               },
             },
