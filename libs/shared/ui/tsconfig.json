@@ -11,10 +11,8 @@
   "angularCompilerOptions": {
     "strictTemplates": true,
     "strictInjectionParameters": true,
-    "fullTemplateTypeCheck": true,
     "disableTypeScriptVersionCheck": true,
-    "compileNonExportedClasses": true,
-    "skipTemplateCodegen": false
+    "compileNonExportedClasses": true
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts", "../../cms/section/feature/src/lib/card-select.modal.ts"],
   "exclude": ["dist/**/*"],

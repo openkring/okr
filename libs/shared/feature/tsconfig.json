@@ -11,10 +11,8 @@
   "angularCompilerOptions": {
     "strictTemplates": true,
     "strictInjectionParameters": true,
-    "fullTemplateTypeCheck": true,
     "disableTypeScriptVersionCheck": true,
-    "compileNonExportedClasses": true,
-    "skipTemplateCodegen": false
+    "compileNonExportedClasses": true
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts", "../data-access/src/lib/app-config.service.ts"],
   "exclude": ["dist/**/*"],

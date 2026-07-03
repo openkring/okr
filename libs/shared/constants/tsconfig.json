@@ -8,10 +8,8 @@
   "angularCompilerOptions": {
     "strictTemplates": true,
     "strictInjectionParameters": true,
-    "fullTemplateTypeCheck": true,
     "disableTypeScriptVersionCheck": true,
-    "compileNonExportedClasses": true,
-    "skipTemplateCodegen": false
+    "compileNonExportedClasses": true
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"]
