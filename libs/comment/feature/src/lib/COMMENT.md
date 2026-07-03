@@ -35,7 +35,7 @@ The store exposes a single action:
 |---|---|---|
 | `CommentsAccordion` | `bk-comments-accordion` | Collapsible accordion wrapping the comment list; shows add button for non-read-only users |
 | `CommentsCard` | `bk-comments-card` | Inline card embedding the comment list |
-| `CommentsList` | (from `@bk2/comment-ui`) | Presentational list rendering individual comments |
+| `CommentsList` | (from `@okr/comment-ui`) | Presentational list rendering individual comments |
 
 ### CommentsAccordion Inputs
 | Input | Type | Default | Description |
@@ -46,6 +46,6 @@ The store exposes a single action:
 | `color` | string | `light` | Ionic color for the accordion header |
 
 ## Data Access
-`CommentService` (`@bk2/comment-data-access`) is the Firestore gateway:
+`CommentService` (`@okr/comment-data-access`) is the Firestore gateway:
 - `list(parentKey)` — real-time stream of comments for a given parent
 - `create(parentKey, text, currentUser)` — creates a new comment, setting author info and timestamp

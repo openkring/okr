@@ -62,9 +62,9 @@ Key actions:
 
 | Library | Path |
 |---|---|
-| `@bk2/location-data-access` | `LocationService` — Firestore CRUD for LocationModel |
-| `@bk2/location-util` | `getLocationIndex`, `locationValidations`, `isLocation` |
+| `@okr/location-data-access` | `LocationService` — Firestore CRUD for LocationModel |
+| `@okr/location-util` | `getLocationIndex`, `locationValidations`, `isLocation` |
 
 ## Library Path
 
-`@bk2/location-feature` (`libs/location/feature/src/lib/`)
+`@okr/location-feature` (`libs/location/feature/src/lib/`)

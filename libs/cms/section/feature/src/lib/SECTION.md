@@ -105,7 +105,7 @@ Notable store actions:
 | `RagSectionComponent` | `bk-rag-section` | RAG chat interface |
 
 ## Data Access
-`SectionService` (`@bk2/cms-section-data-access`) is the Firestore gateway:
+`SectionService` (`@okr/cms-section-data-access`) is the Firestore gateway:
 - `list()` — real-time stream of all sections for the tenant
 - `read(id)` — real-time stream for a single section
 - `searchByKeys(keys)` — one-time fetch of multiple sections by key (used by `PageSortModal`)

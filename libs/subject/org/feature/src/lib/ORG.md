@@ -77,7 +77,7 @@ When creating a new org via `OrgNewModal`, the form (`OrgNewFormModel`) collects
 | `MembersAccordion` | `privileged` role or write mode |
 | `CommentsAccordion` | `privileged` role or write mode |
 
-## Validation (`@bk2/subject-org-util`)
+## Validation (`@okr/subject-org-util`)
 Vest suites: `org` (full model), `orgNewForm` (new-org creation form).
 
 ## Authorization

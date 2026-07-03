@@ -57,10 +57,10 @@ NgRx Signal Store (provided at component level). Key behaviours:
 
 | Library | Purpose |
 |---|---|
-| `@bk2/avatar-data-access` | `AvatarService` (storage URL resolution), `UploadService` (camera/upload) |
-| `@bk2/avatar-ui` | `AvatarDisplay`, `AvatarSelect` — presentational avatar widgets |
-| `@bk2/avatar-util` | `getDefaultIcon(modelType)` — maps model types to fallback SVG icon names |
+| `@okr/avatar-data-access` | `AvatarService` (storage URL resolution), `UploadService` (camera/upload) |
+| `@okr/avatar-ui` | `AvatarDisplay`, `AvatarSelect` — presentational avatar widgets |
+| `@okr/avatar-util` | `getDefaultIcon(modelType)` — maps model types to fallback SVG icon names |
 
 ## Library Path
 
-`@bk2/avatar-feature` (`libs/avatar/feature/src/lib/`)
+`@okr/avatar-feature` (`libs/avatar/feature/src/lib/`)

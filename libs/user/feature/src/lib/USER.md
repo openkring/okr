@@ -100,7 +100,7 @@ Manages a single user detail page. Loaded by `userKey` input.
 | `UserEditPage` | Full edit page for a single user's settings and roles |
 | `FbuserEditModal` | Ionic modal to view/edit raw Firebase Auth account fields |
 
-## Validation (`@bk2/user-util`)
+## Validation (`@okr/user-util`)
 Vest suites: `user` (full model), `userModelForm`, `userAuthForm`, `userNotificationForm`, `userPrivacyForm`, `userDisplayForm`, `fbuserForm`.
 
 ## Authorization

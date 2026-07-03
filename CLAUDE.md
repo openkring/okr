@@ -13,7 +13,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | Skill | Use when… |
 | --- | --- |
 | `new-feature` | scaffolding a brand-new feature/entity — shared model (`FEATUREModelName`/`FEATURECollection`), the four layer libs (data-access/feature/ui/util), list + optional detail-page route, and the navigate/call/context `menuItems`. |
-| `provision-tenant` | spinning up a brand-new tenant app — new Firebase Web App + AppCheck, `app-config/{tenantId}` doc, `@bk2/tools:app` scaffold, starter CMS content, git-ignored `.env`, and the first admin user (shared Firebase project). |
+| `provision-tenant` | spinning up a brand-new tenant app — new Firebase Web App + AppCheck, `app-config/{tenantId}` doc, `@okr/tools:app` scaffold, starter CMS content, git-ignored `.env`, and the first admin user (shared Firebase project). |
 | `tenant-model` | reasoning about multi-tenancy — the `tenants[]` isolation field, tenant-scoped queries, `app-config`, persons shared across tenants vs. single-tenant `users/{uid}`, and the roles model. |
 | `address-model` | creating/reading contact details — the flat `addresses` collection, `parentKey` link, `addressChannel` (email/phone/postal/web/bank) → value-field mapping, and favorite-address → `favEmail`/`favPhone` replication. |
 | `i18n` | adding/translating/wiring any i18n string (keys, store wiring, labels to forms/ui, new-lib `de.json`, tenant overrides). |
@@ -93,9 +93,17 @@ When making changes to TypeScript files, always run `npx tsc --noEmit` or the pr
 
 ### Monorepo structure (Nx)
 
-- `apps` —  Angular/Ionic applications
-- `apps/functions` — Firebase Cloud Functions (Node.js/esbuild)
-- `libs/` — feature libraries following the `@bk2/<domain>-<layer>` import alias convention
+This is a **public core + private submodules** repository (`openkring/okr`). The core
+(libs, functions, rules, public docs) is public; the tenant apps, planning docs, and
+skills are private git submodules under `bkaiser-org` (empty for non-members).
+
+- `apps` —  Angular/Ionic applications (`apps/scs-app`, `apps/*-website` are **private submodules**)
+- `apps/functions` — Firebase Cloud Functions (Node.js/esbuild) — part of the public core
+- `libs/` — feature libraries following the `@okr/<domain>-<layer>` import alias convention (public core)
+- `planning/` — specs, plans, ideas, video-producer — **private submodule** (`bkaiser-org/okr-planning`)
+- `.claude/skills` — project skills — **private submodule** (`bkaiser-org/okr-skills`)
+
+Members clone with `git clone --recurse-submodules git@github.com:openkring/okr.git`.
 
 ### Library layer convention
 
@@ -110,11 +118,11 @@ Each domain is split into layers:
 
 Cross-cutting domains: `shared/models`, `shared/config`, `shared/data-access`, `shared/feature`, `shared/ui`, `shared/util-core`, `shared/util-angular`, `shared/util-functions`, `shared/i18n`, `shared/pipes`.
 
-Import paths are defined in `tsconfig.base.json` and all follow `@bk2/<library-name>`.
+Import paths are defined in `tsconfig.base.json` and all follow `@okr/<library-name>`.
 
 ### State management
 
-All global and feature state uses **NgRx Signal Stores** (`@ngrx/signals`). The root `AppStore` (in `@bk2/shared-feature`) holds:
+All global and feature state uses **NgRx Signal Stores** (`@ngrx/signals`). The root `AppStore` (in `@okr/shared-feature`) holds:
 
 - Firebase auth state (via `rxfire/auth`)
 - Current user (`UserModel`) and their roles
@@ -125,7 +133,7 @@ Feature-level stores (e.g. `PageStore`, `MatrixChatStore`) are in their respecti
 
 ### Data persistence
 
-`FirestoreService` (`@bk2/shared-data-access`) is the single gateway for all Firestore CRUD. It enforces `isPlatformBrowser` guards (SSR safety), caches query Observables via `shareReplay`, and uses `rxfire/firestore` `collectionData`/`docData` for real-time streams.
+`FirestoreService` (`@okr/shared-data-access`) is the single gateway for all Firestore CRUD. It enforces `isPlatformBrowser` guards (SSR safety), caches query Observables via `shareReplay`, and uses `rxfire/firestore` `collectionData`/`docData` for real-time streams.
 
 All models stored in Firestore use `bkey` (document ID) that is stripped before write and re-attached on read. Every model has a `tenants: string[]` field for multi-tenancy isolation — queries always filter by `tenantId`.
 
@@ -134,7 +142,7 @@ All models stored in Firestore use `bkey` (document ID) that is stripped before 
 Content is structured as Pages → Sections:
 
 - A `PageModel` holds an ordered list of section keys and has a `type` (e.g. `content`, `dashboard`, `blog`, `chat`, `landing`).
-- `PageDispatcher` (in `@bk2/cms-page-feature`) reads the route param, loads the page from `PageStore`, and switches on `page.type` to render the correct page component.
+- `PageDispatcher` (in `@okr/cms-page-feature`) reads the route param, loads the page from `PageStore`, and switches on `page.type` to render the correct page component.
 - Each page type renders a list of sections. `SectionDispatcher` switches on `section.type` (20+ types: `article`, `gallery`, `calendar`, `chat`, `map`, `people`, `tracker`, etc.) to render the correct section component.
 
 ### Authentication & authorization
@@ -211,8 +219,8 @@ See the **`firebase-deploy` skill** for all deployment commands and guidelines (
 
 ### Patterns
 
-- for date conversions in Cloud Functions and libs, always use `convertDateFormatToString` / `convertDateFormat` / `DateFormat` from `@bk2/shared-util-core`. Never write custom date helpers (e.g. no `toStoreDate` in bexio/shared.ts or similar).
-- use Angular Signal Forms (`@angular/forms/signals`) for all forms. Build the form in the `*.form.ts` (ui component) with `form(this.formData, (path) => validateVestTree(path, <suite>))`, binding controls via `[control]`. Keep validation logic in Vest suites in the feature's `util` component and bridge them with `validateVestTree` from `@bk2/shared-util-angular`. (Do NOT use `ngx-vest-forms` / `scVestForm` / `validationConfig` — that dependency was removed in the 2026-06 Signal Forms migration.)
+- for date conversions in Cloud Functions and libs, always use `convertDateFormatToString` / `convertDateFormat` / `DateFormat` from `@okr/shared-util-core`. Never write custom date helpers (e.g. no `toStoreDate` in bexio/shared.ts or similar).
+- use Angular Signal Forms (`@angular/forms/signals`) for all forms. Build the form in the `*.form.ts` (ui component) with `form(this.formData, (path) => validateVestTree(path, <suite>))`, binding controls via `[control]`. Keep validation logic in Vest suites in the feature's `util` component and bridge them with `validateVestTree` from `@okr/shared-util-angular`. (Do NOT use `ngx-vest-forms` / `scVestForm` / `validationConfig` — that dependency was removed in the 2026-06 Signal Forms migration.)
 - do only create form models if needed
 - a feature typically consists of FEATURE-list.ts (a list view of FEATURE[]), FEATURE-edit.modal.ts (the detail view) using FEATURE.form.ts (in ui component of the feature) as well as FEATURE.store.ts (feature related store).
 - for all icon work (rendering, choosing a name, icon sets), use the **`icons` skill**. Core rule: always `<ion-icon src="{{ 'name' | svgIcon }}" />`, never the `name` attribute.
@@ -224,7 +232,7 @@ See the **`firebase-deploy` skill** for all deployment commands and guidelines (
 - api calls for external integrations should use a firebase cloud function where possible. This Cloud functions stores the access token securely and caches token as well as data for later requests.
 - do not try to find icon assets in the code — the icons reside in the database and are loaded via url (see the **`icons` skill**).
 - Always git commit directly to main. Do not create feature branches or worktrees.
-- When creating a new library layer or feature (data-access, feature, ui, util), always create three files: `tsconfig.json`, update `tsconfig.lib.json` with `references`, and create `package.json`. Use an existing sibling lib (e.g. `libs/folder/<layer>/`) as a template. The `tsconfig.json` lists all `@bk2/*` dependencies as references; the `tsconfig.lib.json` lists only intra-domain sibling lib references; the `package.json` must have `"name": "@bk2/<lib-name>"` (with the `@bk2/` scope) and all `@bk2/*` dependencies listed. Missing or mis-named `package.json` (without `@bk2/` scope) causes `TS6059 rootDir` build errors in dependent libs because Nx can't redirect imports to the compiled declaration files.
+- When creating a new library layer or feature (data-access, feature, ui, util), always create three files: `tsconfig.json`, update `tsconfig.lib.json` with `references`, and create `package.json`. Use an existing sibling lib (e.g. `libs/folder/<layer>/`) as a template. The `tsconfig.json` lists all `@okr/*` dependencies as references; the `tsconfig.lib.json` lists only intra-domain sibling lib references; the `package.json` must have `"name": "@okr/<lib-name>"` (with the `@okr/` scope) and all `@okr/*` dependencies listed. Missing or mis-named `package.json` (without `@okr/` scope) causes `TS6059 rootDir` build errors in dependent libs because Nx can't redirect imports to the compiled declaration files.
 - when creating a new libray layer or feature, create a route for the list component (*.list) and for the detail component(*.page). Use existing routes as examples and ask user about guard permissions, if you are not sure.
 
 ## Working Style

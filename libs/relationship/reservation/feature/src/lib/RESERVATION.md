@@ -113,7 +113,7 @@ An Ionic modal for creating or editing a `ReservationModel`. Receives `reservati
 
 ### `ReservationApplyModal` (`bk-reservation-apply-modal`)
 
-A public-facing modal that allows a user to submit a booking/application for the default resource. Uses `ReservationApplyForm` from `@bk2/relationship-reservation-ui`. A confirmation toolbar is shown once the form is valid and `isConfirmed` is set. On confirm, converts `ReservationApplyModel` to `ReservationModel` via `convertApplyToReservation()`.
+A public-facing modal that allows a user to submit a booking/application for the default resource. Uses `ReservationApplyForm` from `@okr/relationship-reservation-ui`. A confirmation toolbar is shown once the form is valid and `isConfirmed` is set. On confirm, converts `ReservationApplyModel` to `ReservationModel` via `convertApplyToReservation()`.
 
 ### `ReservationList`
 

@@ -1,10 +1,10 @@
-# @bk2/tools
+# @okr/tools
 
 Workspace tooling. Contains the `app` generator that scaffolds a new CMS-minimal tenant app.
 
 ## Scaffold a new tenant app
 
-    pnpm nx g @bk2/tools:app --tenantId=acme --appName="Acme" [--force] [--dry-run]
+    pnpm nx g @okr/tools:app --tenantId=acme --appName="Acme" [--force] [--dry-run]
 
 Creates `apps/acme-app/` (bootstrap + auth + CMS page/section/menu + profile; domain
 features stripped). Then generate its environment and build:

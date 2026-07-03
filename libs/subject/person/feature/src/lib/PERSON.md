@@ -87,7 +87,7 @@ Manages a single person detail page. Loaded by `personKey` input.
 ## Computed Subsets
 The `PersonListStore` exposes both `filteredPersons` (all persons matching filters) and `filteredDeceased` (deceased persons matching filters, i.e. `dateOfDeath` is non-empty).
 
-## Validation (`@bk2/subject-person-util`)
+## Validation (`@okr/subject-person-util`)
 Vest suites: `person` (full model), `personNewForm` (new-person creation form), `ssn` (Swiss AHV number).
 
 ## Privacy Settings

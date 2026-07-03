@@ -79,6 +79,6 @@ The `AocDataStore` supports operations over the following collections:
 
 ## Library Path
 
-`@bk2/aoc-feature` (`libs/aoc/feature/src/lib/`)
+`@okr/aoc-feature` (`libs/aoc/feature/src/lib/`)
 
-Utilities: `@bk2/aoc-util` (`libs/aoc/util/src/`) — exports `adminops.util` and `statistics.util`.
+Utilities: `@okr/aoc-util` (`libs/aoc/util/src/`) — exports `adminops.util` and `statistics.util`.

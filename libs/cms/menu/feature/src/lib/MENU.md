@@ -55,7 +55,7 @@ The `MenuStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
 | `MenuItemModal` | (modal) | Edit/view modal for a single menu item |
 
 ## Data Access
-`MenuService` (`@bk2/cms-menu-data-access`) is the Firestore gateway. It exposes:
+`MenuService` (`@okr/cms-menu-data-access`) is the Firestore gateway. It exposes:
 - `list()` — real-time stream of all menu items for the tenant
 - `read(name)` — real-time stream for a single item by name
 - `create / update / delete` — write operations guarded by the store
@@ -65,7 +65,7 @@ The `MenuStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
 
 ## Dynamic Label Tokens
 A menu item's `label` may contain dynamic tokens that are expanded at render time by
-`expandMenuTokens(label, ctx)` (`@bk2/cms-menu-util`, see `menu-tokens.ts`). The token registry
+`expandMenuTokens(label, ctx)` (`@okr/cms-menu-util`, see `menu-tokens.ts`). The token registry
 is the single source of truth:
 
 | Token | Expands to | Context field |

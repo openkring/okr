@@ -10,7 +10,7 @@ Angular 20 / Ionic 8 monorepo (Nx, pnpm, Firebase backend) — a multi-tenant CM
 
 ## Feature domains (`libs/`)
 
-Each follows the `data-access | feature | ui | util` layer convention with `@bk2/<domain>-<layer>` import aliases.
+Each follows the `data-access | feature | ui | util` layer convention with `@okr/<domain>-<layer>` import aliases.
 
 | Domain | Purpose |
 |---|---|

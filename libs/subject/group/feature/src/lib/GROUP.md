@@ -28,7 +28,7 @@ Collection name: `groups`
 | `hasAlbum` | boolean | Group has a photo album folder |
 | `albumFolder` | string | Storage folder key for album (set to `a_<bkey>` when `hasAlbum = true`) |
 | `hasMembers` | boolean | Group has a members list |
-| `admins` | AvatarInfo[] | Ordered list of group admin persons. The first element (`admins[0]`) is the main contact. Use `getMainContact(group)` and `isAdminMember(group, personKey)` from `@bk2/subject-group-util`. |
+| `admins` | AvatarInfo[] | Ordered list of group admin persons. The first element (`admins[0]`) is the main contact. Use `getMainContact(group)` and `isAdminMember(group, personKey)` from `@okr/subject-group-util`. |
 | `parentKey` | string | Key of the parent org or group |
 | `parentName` | string | Name of the parent org or group |
 | `parentModelType` | `'org'` \| `'group'` | Type of the parent |
@@ -94,7 +94,7 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 
 `GroupEditModal` is also consumed by `cms-section-feature` (OrgchartSection, ContextDiagramSection) to let users edit groups directly from diagrams. To avoid a circular library dependency (`cms-section-feature` → `subject-group-feature` → `cms-page-feature` → `cms-section-feature`), the component is not imported directly there.
 
-Instead, an `InjectionToken<Type<unknown>>` called `GROUP_EDIT_MODAL` is defined in `@bk2/subject-group-ui` (a lower-level lib that both sides can depend on). The consuming stores inject the token and pass it as the `component` to Ionic's `ModalController.create()`. The concrete `GroupEditModal` is provided once in `app.config.ts`:
+Instead, an `InjectionToken<Type<unknown>>` called `GROUP_EDIT_MODAL` is defined in `@okr/subject-group-ui` (a lower-level lib that both sides can depend on). The consuming stores inject the token and pass it as the `component` to Ionic's `ModalController.create()`. The concrete `GroupEditModal` is provided once in `app.config.ts`:
 
 ```typescript
 { provide: GROUP_EDIT_MODAL, useValue: GroupEditModal }

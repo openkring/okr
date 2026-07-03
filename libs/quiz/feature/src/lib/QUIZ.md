@@ -45,4 +45,4 @@ Standalone Ionic page component. Iterates over `quizStore.questions()` and rende
 
 ## Library Path
 
-`@bk2/quiz-feature` (`libs/quiz/feature/src/lib/`)
+`@okr/quiz-feature` (`libs/quiz/feature/src/lib/`)

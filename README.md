@@ -1,120 +1,84 @@
-# Bk2
+# openkring
 
-bk2 is your <a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a> [Nx workspace](https://nx.dev).
+The open-source core of the **Kring** platform — a multi-tenant club / association
+management app built with Angular, Ionic, and Firebase, organised as an
+[Nx](https://nx.dev) monorepo.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `pnpm nx graph` to visually explore what was created. 
+## Repository topology
 
-## Finish your CI setup
+This public repository (`openkring/okr`) contains the reusable **core**: the feature
+libraries (`libs/**`), Cloud Functions (`apps/functions`), Firestore/Storage rules,
+and public documentation (`docs/**`).
 
-[Click here to finish setting up your workspace with NX cloud build](https://cloud.nx.app/connect/UxFf98pK0u)
+The tenant applications, planning documents, and internal skills live in **private
+submodules** under the `bkaiser-org` organisation and are only populated for members:
 
+| Path | Submodule | Visibility |
+| --- | --- | --- |
+| `apps/scs-app` | `bkaiser-org/scs-app` | private |
+| `apps/scs-website` | `bkaiser-org/scs-website` | private |
+| `apps/p13-website` | `bkaiser-org/p13-website` | private |
+| `apps/kring-website` | `bkaiser-org/kring-website` | private |
+| `apps/okr-website` | `bkaiser-org/okr-website` | private |
+| `planning/` | `bkaiser-org/okr-planning` | private |
+| `.claude/skills` | `bkaiser-org/okr-skills` | private |
 
-## Run tasks
+Public contributors get a fully buildable core (libs + functions + rules); the
+submodule directories are empty pointers unless you have access.
 
-To run the dev server for your app, use:
+## Getting started
 
-```sh
-pnpm run serve [APP_ID]
-e.g. pnpm run serve test-app
-```
-
-To create a production bundle (with SSR and incremental hydration). This is what is called by AppHosting (see apphosting.yaml) as well. The AppHosting CI/CD pipeline is triggered by a commit into the public github repo. In this case, the APP_NAME is taken from the environment variable APP_ID:
-
-```sh
-pnpm run build  [APP_ID]
-e.g. pnpm run build test-app
-```
-
-To see all available targets to run for a project (can also be used for showing the graph), run:
-
-```sh
-pnpm nx show project [APP_ID]
-```
-
-To build the cloud functions, run:
+**Members** (access to the private submodules):
 
 ```sh
-pnpm run build:functions
+git clone --recurse-submodules git@github.com:openkring/okr.git
+cd okr
+nvm use 22.22.1
+pnpm install
 ```
 
-To build and deploy the cloud functions to Firebase, run:
+**Public contributors** (core only):
 
 ```sh
-pnpm run deploy:functions
+git clone git@github.com:openkring/okr.git   # submodule dirs stay empty
+cd okr && pnpm install
 ```
 
-To execute the unit tests for your app, use:
+### Environment
+
+Each app reads its secrets from a git-ignored `.env`; `set-env.js` writes
+`environment.ts` from it. Copy the template and fill in real values:
 
 ```sh
-pnpm run test [APP_ID]
-e.g. pnpm run test test-app
+cp apps/scs-app/.env.example apps/scs-app/.env   # then edit
+source ./apps/scs-app/.env && ts-node ./set-env.js
 ```
 
-To lint the whole project in the monorepo, use:
+Never commit `.env`, `environment.ts`, or `set-env.js` — they are git-ignored.
+
+## Common tasks
 
 ```sh
-pnpm run lint
+pnpm nx serve scs-app                                   # dev server
+pnpm nx build scs-app --configuration production        # production bundle
+pnpm nx build functions --configuration production      # Cloud Functions
+pnpm run deploy:functions                               # deploy functions
+pnpm run testlibs                                       # run all library unit tests
+pnpm run lint                                           # lint
+pnpm nx graph                                           # dependency graph
 ```
 
-To execute end to end tests for your app, use:
+See `pnpm nx show project <name>` for a project's available targets.
 
-```sh
-pnpm run e2e [APP_ID]
-e.g. pnpm run e2e test-app
-```
+## Architecture
 
-To generate the dependency graph (visible in the browser), use:
+- **Frontend:** Angular 20 (zoneless, standalone, signals), Ionic 8, Capacitor 7, SCSS
+- **Backend:** Firebase — Firestore, Auth, Storage, FCM, App Check; Cloud Functions (Node/esbuild)
+- **State:** NgRx Signal Stores
+- **i18n:** Transloco (default `de`), store-driven
+- **Libraries:** each domain split into `data-access` / `feature` / `ui` / `util`,
+  imported via the `@okr/<domain>-<layer>` path alias.
 
-```sh
-pnpm nx graph
-```
+## License
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
-
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Add new projects
-
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-Use the plugin's generator to create new projects.
-
-To generate a new application, use:
-
-```sh
-pnpm nx g @nx/angular:app demo
-```
-
-To generate a new library, use:
-
-```sh
-pnpm nx g @nx/angular:lib mylib
-```
-
-You can use `pnpm nx list` to get a list of installed plugins. Then, run `pnpm nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
-
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+MIT

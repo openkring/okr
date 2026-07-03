@@ -77,9 +77,9 @@ Key actions:
 
 | Library | Path |
 |---|---|
-| `@bk2/task-data-access` | `TaskService` — Firestore CRUD for TaskModel |
-| `@bk2/task-util` | `getTaskIndex`, `taskValidations`, `isTask` |
+| `@okr/task-data-access` | `TaskService` — Firestore CRUD for TaskModel |
+| `@okr/task-util` | `getTaskIndex`, `taskValidations`, `isTask` |
 
 ## Library Path
 
-`@bk2/task-feature` (`libs/task/feature/src/lib/`)
+`@okr/task-feature` (`libs/task/feature/src/lib/`)

@@ -88,10 +88,10 @@ Key resources:
 
 | Library | Path |
 |---|---|
-| `@bk2/calevent-data-access` | `CalEventService` — Firestore CRUD for CalEventModel |
-| `@bk2/calevent-util` | `getCaleventIndex`, `calEventValidations`, `isCalEvent`, recurrence helpers |
-| `@bk2/calevent-ui` | `RegressionSelectionModal` and other presentational components |
+| `@okr/calevent-data-access` | `CalEventService` — Firestore CRUD for CalEventModel |
+| `@okr/calevent-util` | `getCaleventIndex`, `calEventValidations`, `isCalEvent`, recurrence helpers |
+| `@okr/calevent-ui` | `RegressionSelectionModal` and other presentational components |
 
 ## Library Path
 
-`@bk2/calevent-feature` (`libs/calevent/feature/src/lib/`)
+`@okr/calevent-feature` (`libs/calevent/feature/src/lib/`)

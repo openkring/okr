@@ -38,7 +38,7 @@ Standalone component. Key behaviour:
 
 ## Data Access
 
-`SocialFeedService` (`@bk2/social-feed-data-access`):
+`SocialFeedService` (`@okr/social-feed-data-access`):
 
 ```
 GET http://localhost:3333/api/feed → SocialPostModel[]
@@ -50,9 +50,9 @@ This endpoint is expected to be a local development server (NestJS or similar). 
 
 | Library | Path |
 |---|---|
-| `@bk2/social-feed-data-access` | `SocialFeedService` — HTTP client wrapper |
-| `@bk2/social-feed-ui` | `SocialPost` — presentational post card component |
+| `@okr/social-feed-data-access` | `SocialFeedService` — HTTP client wrapper |
+| `@okr/social-feed-ui` | `SocialPost` — presentational post card component |
 
 ## Library Path
 
-`@bk2/social-feed-feature` (`libs/social-feed/feature/src/lib/`)
+`@okr/social-feed-feature` (`libs/social-feed/feature/src/lib/`)

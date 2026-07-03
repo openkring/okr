@@ -66,17 +66,17 @@ Notable store actions:
 ## Key Library Layers
 | Import alias | Purpose |
 |---|---|
-| `@bk2/icon-data-access` | `IconService` — Firestore CRUD for the `icons` collection |
-| `@bk2/icon-feature` | `IconStore`, `IconList`, `IconEditModal`, `IconSelectModal` |
-| `@bk2/icon-ui` | `IconEditForm` — form for editing icon metadata |
-| `@bk2/icon-util` | `getIconIndex`, `getIconStoragePath`, `buildIconModel`, `buildIconModelFromStorage`, `iconValidations` |
+| `@okr/icon-data-access` | `IconService` — Firestore CRUD for the `icons` collection |
+| `@okr/icon-feature` | `IconStore`, `IconList`, `IconEditModal`, `IconSelectModal` |
+| `@okr/icon-ui` | `IconEditForm` — form for editing icon metadata |
+| `@okr/icon-util` | `getIconIndex`, `getIconStoragePath`, `buildIconModel`, `buildIconModelFromStorage`, `iconValidations` |
 
 ## Data Access
-`IconService` (`@bk2/icon-data-access`) is the Firestore gateway:
+`IconService` (`@okr/icon-data-access`) is the Firestore gateway:
 - `list()` — real-time stream of all icons for the tenant, ordered by `name`
 - `create / update / delete` — write operations; `create` and `update` recompute `index` via `getIconIndex`
 
-`UploadService` (`@bk2/avatar-data-access`) handles Firebase Storage uploads for the `add` operation.
+`UploadService` (`@okr/avatar-data-access`) handles Firebase Storage uploads for the `add` operation.
 
 ## Icon Select Usage
 ```typescript

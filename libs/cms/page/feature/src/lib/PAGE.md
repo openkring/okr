@@ -110,7 +110,7 @@ Section IDs in `page.sections` may contain `@TID@`, which is resolved to the ten
 | `PageSortModal` | (modal) | Drag-to-reorder sections within a page |
 
 ## Data Access
-`PageService` (`@bk2/cms-page-data-access`) and `SectionService` (`@bk2/cms-section-data-access`) are the Firestore gateways. `PageStore` combines them: it first loads the `PageModel`, then fans out to individual section reads via `combineLatest`.
+`PageService` (`@okr/cms-page-data-access`) and `SectionService` (`@okr/cms-section-data-access`) are the Firestore gateways. `PageStore` combines them: it first loads the `PageModel`, then fans out to individual section reads via `combineLatest`.
 
 ## External / Embedded Access (showMenu)
 

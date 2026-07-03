@@ -9,4 +9,4 @@ Pure, framework-free helpers for the vCard export feature (spec 17):
 - shared request/response/scope types.
 
 Consumed both by the `vcardExport` Cloud Function (server-side assembly) and the
-`@bk2/vcard-feature` client lib so the encoding stays byte-identical.
+`@okr/vcard-feature` client lib so the encoding stays byte-identical.

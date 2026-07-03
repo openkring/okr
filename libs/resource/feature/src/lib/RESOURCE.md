@@ -90,9 +90,9 @@ Separate NgRx Signal Store for the edit page (`resource-edit.page.ts`) used when
 
 | Library | Path |
 |---|---|
-| `@bk2/resource-data-access` | `ResourceService` — Firestore CRUD |
-| `@bk2/resource-util` | `getResourceIndex`, `resourceValidations`, `isResource` |
+| `@okr/resource-data-access` | `ResourceService` — Firestore CRUD |
+| `@okr/resource-util` | `getResourceIndex`, `resourceValidations`, `isResource` |
 
 ## Library Path
 
-`@bk2/resource-feature` (`libs/resource/feature/src/lib/`)
+`@okr/resource-feature` (`libs/resource/feature/src/lib/`)

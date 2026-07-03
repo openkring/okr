@@ -91,12 +91,12 @@ Main chat UI component. Uses the `_MatrixChatStore` to render the room list, mes
 
 | Library | Path |
 |---|---|
-| `@bk2/chat-data-access` | `MatrixChatService` — matrix-js-sdk wrapper with Observable streams |
-| `@bk2/chat-util` | Helpers: `formatMatrixTimestamp`, `isMatrixPhotoUrl`, etc. |
+| `@okr/chat-data-access` | `MatrixChatService` — matrix-js-sdk wrapper with Observable streams |
+| `@okr/chat-util` | Helpers: `formatMatrixTimestamp`, `isMatrixPhotoUrl`, etc. |
 
 ## Library Path
 
-`@bk2/chat-feature` (`libs/chat/feature/src/lib/`)
+`@okr/chat-feature` (`libs/chat/feature/src/lib/`)
 
 ---
 
@@ -183,7 +183,7 @@ So media is resolved through `MatrixChatService.resolveMediaUrl(mxcUrl, mimeType
 
 ### File share (message action sheet → `shareFile`)
 
-A tap on an `m.file` row has **no own click handler** — it bubbles up to the message bubble's `messageClicked`, which opens the standard message **action sheet** (`MatrixChat.onMessageClicked`). For `m.file` messages with a resolved `mediaUrl`, that sheet includes a **`chat.message.share`** action (alongside copy/reply/react/…), plus a **`chat.message.download`** action **on web only** (`!isNativePlatform()` — native already saves via the share sheet). `share` runs `MatrixChat.shareFile()` → `downloadFile()` (share sheet); `download` runs `MatrixChat.downloadFileToDisk()` → `saveFile()` (straight `saveAs`, no share sheet). Both target **`message.mediaUrl`** (the authenticated blob URL); `downloadFile(url, fileName)` is the platform-aware helper in `@bk2/shared-util-angular`:
+A tap on an `m.file` row has **no own click handler** — it bubbles up to the message bubble's `messageClicked`, which opens the standard message **action sheet** (`MatrixChat.onMessageClicked`). For `m.file` messages with a resolved `mediaUrl`, that sheet includes a **`chat.message.share`** action (alongside copy/reply/react/…), plus a **`chat.message.download`** action **on web only** (`!isNativePlatform()` — native already saves via the share sheet). `share` runs `MatrixChat.shareFile()` → `downloadFile()` (share sheet); `download` runs `MatrixChat.downloadFileToDisk()` → `saveFile()` (straight `saveAs`, no share sheet). Both target **`message.mediaUrl`** (the authenticated blob URL); `downloadFile(url, fileName)` is the platform-aware helper in `@okr/shared-util-angular`:
 
 - **Native (iOS/Android Capacitor app)** — write bytes to `Directory.Cache` and present the OS share sheet via `@capacitor/share`.
 - **Mobile web (iOS Safari 15+, Android Chrome)** — Web Share API (`navigator.share({ files })`) for a real share sheet. Required on iOS Safari, which does **not** honor `<a download>` for `blob:` URLs (the `saveAs` fallback would open the file inline and drop the filename). `Capacitor.isNativePlatform()` is `false` for a PWA/browser tab, so this branch is what covers the webapp on a phone.

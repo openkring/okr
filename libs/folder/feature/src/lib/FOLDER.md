@@ -46,7 +46,7 @@ Notable store actions:
 | `FolderEditModal` | Edit/view modal for a single folder |
 
 ## Data Access
-`FolderService` (`@bk2/folder-data-access`) is the Firestore gateway:
+`FolderService` (`@okr/folder-data-access`) is the Firestore gateway:
 - `list()` — real-time stream of all folders for the tenant
 - `read(key)` — real-time stream for a single folder
 - `listByParent(parentKey)` — real-time stream of direct child folders

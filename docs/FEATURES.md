@@ -1,6 +1,6 @@
 # Feature Overview
 
-Angular 20 / Ionic 8 multi-tenant community platform on Firebase, organized as a Nx monorepo. Content is structured as **Pages → Sections** (CMS), and feature domains follow the `data-access | feature | ui | util` layer convention with `@bk2/<domain>-<layer>` import aliases.
+Angular 20 / Ionic 8 multi-tenant community platform on Firebase, organized as a Nx monorepo. Content is structured as **Pages → Sections** (CMS), and feature domains follow the `data-access | feature | ui | util` layer convention with `@okr/<domain>-<layer>` import aliases.
 
 ## Apps
 

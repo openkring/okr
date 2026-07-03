@@ -51,7 +51,7 @@ Notable store actions:
 | `CategoryEditModal` | Edit/view modal for a single category list and its items |
 
 ## Data Access
-`CategoryService` (`@bk2/category-data-access`) is the Firestore gateway:
+`CategoryService` (`@okr/category-data-access`) is the Firestore gateway:
 - `list()` — real-time stream of all category lists for the tenant
 - `create / update / delete` — write operations
 

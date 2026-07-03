@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `@bk2/shared-feature` library contains app-level cross-cutting state and selection utilities that are consumed by every feature in the application. It is the integration layer between Firebase, the environment configuration, and the rest of the domain feature libraries.
+The `@okr/shared-feature` library contains app-level cross-cutting state and selection utilities that are consumed by every feature in the application. It is the integration layer between Firebase, the environment configuration, and the rest of the domain feature libraries.
 
 ## AppStore
 
@@ -114,18 +114,18 @@ Re-usable, modal-ready NgRx Signal Stores for entity pickers. Each follows the s
 
 | Store | Entity | Collection | Import |
 |---|---|---|---|
-| `PersonSelectStore` | `PersonModel` | `persons` | `@bk2/shared-feature` |
-| `OrgSelectStore` | `OrgModel` | `orgs` | `@bk2/shared-feature` |
-| `GroupSelectStore` | `GroupModel` | `groups` | `@bk2/shared-feature` |
-| `ResourceSelectStore` | `ResourceModel` | `resources` | `@bk2/shared-feature` |
-| `CalendarSelectStore` | `CalendarModel` | `calendars` | `@bk2/shared-feature` |
+| `PersonSelectStore` | `PersonModel` | `persons` | `@okr/shared-feature` |
+| `OrgSelectStore` | `OrgModel` | `orgs` | `@okr/shared-feature` |
+| `GroupSelectStore` | `GroupModel` | `groups` | `@okr/shared-feature` |
+| `ResourceSelectStore` | `ResourceModel` | `resources` | `@okr/shared-feature` |
+| `CalendarSelectStore` | `CalendarModel` | `calendars` | `@okr/shared-feature` |
 
 Corresponding modals (`PersonSelectModal`, `OrgSelectModal`, etc.) wrap the store in a searchable list with tag filtering.
 
 ## ModelSelectService
 
-Convenience service (`@bk2/shared-feature`) that opens any selection modal and returns a typed result. Used across feature stores to pick persons, orgs, groups, resources, or calendars without duplicating modal-creation boilerplate.
+Convenience service (`@okr/shared-feature`) that opens any selection modal and returns a typed result. Used across feature stores to pick persons, orgs, groups, resources, or calendars without duplicating modal-creation boilerplate.
 
 ## Library Path
 
-`@bk2/shared-feature` (`libs/shared/feature/src/lib/`)
+`@okr/shared-feature` (`libs/shared/feature/src/lib/`)

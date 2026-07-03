@@ -72,7 +72,7 @@ Notable store actions:
 | `ImageSelectModal` | Modal for selecting an existing document/image to reference |
 
 ## Data Access
-`DocumentService` (`@bk2/document-data-access`) and `FolderService` (`@bk2/folder-data-access`) are the Firestore gateways. `UploadService` (`@bk2/avatar-data-access`) handles Firebase Storage uploads.
+`DocumentService` (`@okr/document-data-access`) and `FolderService` (`@okr/folder-data-access`) are the Firestore gateways. `UploadService` (`@okr/avatar-data-access`) handles Firebase Storage uploads.
 
 ## Version Chain
 Documents form an optional linked list: `priorVersionKey` points to the previous version's `bkey`. `getRevisions()` traverses this chain and returns all versions ordered from newest to oldest. The `version` field holds a human-readable version identifier.

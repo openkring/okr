@@ -85,11 +85,11 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 ## Components
 | Component | Description |
 |---|---|
-| `AddressEditModal` | Ionic modal; hosts `AddressForm` from `@bk2/subject-address-ui`; dismisses with `'confirm'` role |
+| `AddressEditModal` | Ionic modal; hosts `AddressForm` from `@okr/subject-address-ui`; dismisses with `'confirm'` role |
 | `AddressesList` | Standalone list with search/filter |
 | `AddressesAccordion` | Accordion panel embedded in org/person edit modals |
 
-## Validation (`@bk2/subject-address-util`)
+## Validation (`@okr/subject-address-util`)
 Vest validation suites cover: `email`, `phone`, `iban`, and the composite `address` suite.
 
 ## Authorization

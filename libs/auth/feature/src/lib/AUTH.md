@@ -8,7 +8,7 @@ There is no Firestore collection owned by this domain. After successful login th
 ## Pages and Components
 
 ### `LoginPage` (`login.page.ts`)
-Full-page login form. Displays the tenant's logo and welcome banner image (served via Imgix). Collects `loginEmail` + `loginPassword` via `LoginForm` from `@bk2/auth-ui`. On submit calls `AuthService.login()` which signs in with Firebase Auth and redirects to `AppConfig.rootUrl` on success, or back to `AppConfig.loginUrl` on failure.
+Full-page login form. Displays the tenant's logo and welcome banner image (served via Imgix). Collects `loginEmail` + `loginPassword` via `LoginForm` from `@okr/auth-ui`. On submit calls `AuthService.login()` which signs in with Firebase Auth and redirects to `AppConfig.rootUrl` on success, or back to `AppConfig.loginUrl` on failure.
 
 ### `LoginModal` (`login.modal.ts`)
 Ionic modal variant of the login form. Used when login needs to be embedded without full page navigation.
@@ -34,23 +34,23 @@ Handles the Firebase email-action link flow for completing a password reset.
 ### `isAdminGuard` (`isAdmin.guard.ts`)
 `CanActivateFn` factory. Returns `true` when `hasRole('admin', currentUser)` is true. Relies on `AppStore.currentUser()`.
 
-## AuthService (`@bk2/auth-data-access`)
+## AuthService (`@okr/auth-data-access`)
 The `AuthService` is injected by `LoginPage` and `PasswordResetPage`. Key responsibilities:
 - `login(credentials, rootUrl, loginUrl)` — Firebase `signInWithEmailAndPassword`; redirects on success/failure.
 - `resetPassword(email, loginUrl)` — Firebase `sendPasswordResetEmail`.
 
 ## Auth Credentials Model (`AuthCredentials`)
-Defined in `@bk2/shared-models`:
+Defined in `@okr/shared-models`:
 ```ts
 { loginEmail: string; loginPassword: string; }
 ```
-Validated by the `authCredentials` Vest suite in `@bk2/auth-util`.
+Validated by the `authCredentials` Vest suite in `@okr/auth-util`.
 
 ---
 
 ## Role System
 
-Roles are stored on `UserModel.roles` as a `Roles` object (a map of `boolean` flags). A user can hold multiple roles simultaneously. Checked via `hasRole(roleName, user)` from `@bk2/shared-util-core`.
+Roles are stored on `UserModel.roles` as a `Roles` object (a map of `boolean` flags). A user can hold multiple roles simultaneously. Checked via `hasRole(roleName, user)` from `@okr/shared-util-core`.
 
 ### Role Hierarchy
 
@@ -166,11 +166,11 @@ effectiveAccessor = stricterAccessor(appConfig.showXXX, privacyUsageToAccessor(u
 
 `stricterAccessor` picks whichever requires the higher role. If a person sets their date of birth to *Protected* (`privileged`) but the app default is `registered`, only `privileged` users and above will see it.
 
-This is computed by `AppStore.getPersonPrivacySettings(personUserModel?)` (`@bk2/shared-feature`), which returns a `PrivacySettings` object with the merged effective accessors.
+This is computed by `AppStore.getPersonPrivacySettings(personUserModel?)` (`@okr/shared-feature`), which returns a `PrivacySettings` object with the merged effective accessors.
 
 ### Visibility Check
 
-All views call `isVisibleToUser(privacyAccessor, currentUser)` from `@bk2/shared-util-core`:
+All views call `isVisibleToUser(privacyAccessor, currentUser)` from `@okr/shared-util-core`:
 
 ```ts
 // returns true if currentUser meets the minimum role required by privacyAccessor
