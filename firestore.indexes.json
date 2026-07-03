@@ -1,29 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "accounting-configs",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "bkey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
       "collectionGroup": "accounts",
       "queryScope": "COLLECTION",
       "fields": [
@@ -290,29 +267,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "bkey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "addresses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "channelType",
           "order": "ASCENDING"
         },
@@ -387,33 +341,6 @@
         },
         {
           "fieldPath": "addressChannel",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "addresses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "parentKey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "bkey",
           "order": "ASCENDING"
         },
         {
@@ -918,29 +845,6 @@
         {
           "fieldPath": "__name__",
           "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "bkey",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
         }
       ],
       "density": "SPARSE_ALL"
@@ -1777,29 +1681,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "bkey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "ownerships",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -2375,29 +2256,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "bkey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "tasks",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "dueDate",
           "order": "ASCENDING"
         },
@@ -2617,29 +2475,6 @@
         },
         {
           "fieldPath": "objectName",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "workrels",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "bkey",
           "order": "ASCENDING"
         },
         {
