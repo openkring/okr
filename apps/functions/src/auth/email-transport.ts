@@ -57,10 +57,11 @@ function mailtrapTestConfig() {
 }
 
 // ─── Mailtrap template UUID registry ─────────────────────────────────────────
-// Add UUIDs from Mailtrap Dashboard → Email Templates
+// UUIDs come from Mailtrap Dashboard → Email Templates. They are provisioned as
+// function env/secrets (never committed); add a MAILTRAP_TEMPLATE_* var per template.
 
-const MAILTRAP_TEMPLATE_UUIDS: Record<string, string> = {
-  scs_password_reset: 'REDACTED-MAILTRAP-TEMPLATE-UUID',
+const MAILTRAP_TEMPLATE_UUIDS: Record<string, string | undefined> = {
+  scs_password_reset: process.env['MAILTRAP_TEMPLATE_SCS_PASSWORD_RESET'],
 };
 
 // ─── Senders ─────────────────────────────────────────────────────────────────
