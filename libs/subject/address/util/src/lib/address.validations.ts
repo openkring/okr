@@ -42,52 +42,52 @@ export const addressValidations = staticSuite((model: AddressModel, tenants: str
 
   // cross validations
   omitWhen(model.addressChannel !== 'custom', () => {
-    test('addressChannelLabel', '@address.customChannelLabelMandatory', () => {
+    test('addressChannelLabel', 'addressCustomChannelLabelMandatory', () => {
       enforce(model.addressChannelLabel).isNotEmpty();
     })
   });
   omitWhen(model.addressUsage !== 'custom', () => {
-    test('addressUsageLabel', '@address.customUsageLabelMandatory', () => {
+    test('addressUsageLabel', 'addressCustomUsageLabelMandatory', () => {
       enforce(model.addressUsageLabel).isNotEmpty();
     })
   });
 
   // accept a valid number for any country (international '+' prefix or Swiss-local), only when present
   omitWhen(model.addressChannel !== 'phone' || !model.phone, () => {
-    test('phone', '@address.invalidPhoneFormat', () => {
+    test('phone', 'addressInvalidPhoneFormat', () => {
       enforce(isPhoneNumberValid(model.phone)).isTruthy();
     });
   });
 
   omitWhen(model.addressChannel !== 'postal', () => {
-    test('zipCode', '@address.zipCodeMandatory', () => {
+    test('zipCode', 'addressZipCodeMandatory', () => {
       enforce(model.zipCode).isNotEmpty();
     });
-    test('city', '@address.cityMandatory', () => {
+    test('city', 'addressCityMandatory', () => {
       enforce(model.city).isNotEmpty();
     });
-    test('countryCode', '@address.countryMandatory', () => {
+    test('countryCode', 'addressCountryMandatory', () => {
       enforce(model.countryCode).isNotEmpty();
     });
-    test('countryCode', '@address.countryUppercase', () => {
+    test('countryCode', 'addressCountryUppercase', () => {
       enforce(model.countryCode).equals(model.countryCode.toUpperCase());
     });
-    test('countryCode', '@address.countryLength', () => {
+    test('countryCode', 'addressCountryLength', () => {
       enforce(model.countryCode.length).equals(2);
     });
     omitWhen(model.countryCode !== 'CH', () => {
-      test('zipCode', '@address.swissZipCodeNumeric', () => {
+      test('zipCode', 'addressSwissZipCodeNumeric', () => {
         enforce(model.zipCode).isNumeric();
       });
-      test('zipCode', '@address.swissZipCodeLength', () => {
+      test('zipCode', 'addressSwissZipCodeLength', () => {
         enforce(model.zipCode.length).equals(4);
       })
     });
     omitWhen(model.countryCode !== 'DE', () => {
-      test('zipCode', '@address.germanZipCodeNumeric', () => {
+      test('zipCode', 'addressGermanZipCodeNumeric', () => {
         enforce(model.zipCode).isNumeric();
       });
-      test('zipCode', '@address.germanZipCodeLength', () => {
+      test('zipCode', 'addressGermanZipCodeLength', () => {
         enforce(model.zipCode.length).equals(5);
       });
     });
