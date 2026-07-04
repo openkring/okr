@@ -4,15 +4,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonContent, IonRouterOutlet } from '@ionic/angular/standalone';
 
 import { AccountingStore } from './accounting.store';
-import { ReadOnlyBanner } from './read-only-banner';
 
 @Component({
   selector: 'okr-accounting-shell',
   standalone: true,
-  imports: [IonContent, IonRouterOutlet, ReadOnlyBanner],
+  imports: [IonContent, IonRouterOutlet],
   template: `
     <ion-content>
-      <okr-read-only-banner />
       <ion-router-outlet />
     </ion-content>
   `,

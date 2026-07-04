@@ -3,6 +3,19 @@
         "title": "Buchungen"
     },
     "empty": "Keine Buchungen gefunden.",
+    "as": {
+        "title": "Buchung"
+    },
+    "cancel": {
+        "label": "Abbrechen"
+    },
+    "col": {
+        "date": "Datum",
+        "credit": "Haben",
+        "debit": "Soll",
+        "name": "Text",
+        "amount": "Betrag"
+    },
     "view": {
         "label": "Buchungsdetails anzeigen"
     },
@@ -20,5 +33,8 @@
         "counterpartyRequired": "Bitte zuerst den Absender (Gegenpartei) erfassen.",
         "noAddress": "Für die Gegenpartei ist keine Adresse hinterlegt.",
         "failed": "Das Dokument konnte nicht erstellt werden."
+    },
+    "readonly": {
+        "banner": "Diese Liste ist readonly. Die Buchungen werden in Bexio bewirtschaftet."
     }
 }

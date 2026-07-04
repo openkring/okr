@@ -1,13 +1,15 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
-import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { BookingLineModel, BookingModel } from '@okr/shared-models';
+import { getTodayStr, getYear } from '@okr/shared-util-core';
+import { exportCsv } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { AccountService } from '@okr/finance-account-data-access';
@@ -17,9 +19,14 @@ import {
   BookingAction,
   BOOKING_I18N_KEYS,
   BookingI18n,
+  bookingYear,
   buildReceiptPayload,
+  JournalRow,
+  journalToRows,
   matchActions,
+  matchesJournalSearch,
   ReceiptParty,
+  toJournalRow,
 } from '@okr/finance-booking-util';
 import { PersonService } from '@okr/subject-person-data-access';
 import { OrgService } from '@okr/subject-org-data-access';
@@ -30,8 +37,10 @@ import { BookingEditModal } from './booking-edit.modal';
 
 export type { BookingI18n };
 
+const ALL_YEARS = 99;   // sentinel emitted by okr-year-select for "all years"
+
 export const BookingStore = signalStore(
-  withState({ filter: '' }),
+  withState({ searchTerm: '', selectedYear: getYear() }),
   withProps(() => ({
     bookingService: inject(BookingService),
     bookingLineService: inject(BookingLineService),
@@ -80,7 +89,55 @@ export const BookingStore = signalStore(
       return map;
     }),
   })),
+  withComputed(store => ({
+    // Flattened journal rows for display, newest booking first.
+    journalRows: computed<JournalRow[]>(() => {
+      const accountIdByKey = store.accountIdByKey();
+      const linesByBooking = store.linesByBooking();
+      return store.bookings()
+        .map(b => toJournalRow(b, linesByBooking.get(b.okey) ?? [], accountIdByKey))
+        .sort((a, b) => (b.booking.date ?? '').localeCompare(a.booking.date ?? '') || b.booking.bookingNo - a.booking.bookingNo);
+    }),
+    // Distinct booking years (desc), always including the current year for the filter.
+    years: computed<number[]>(() => {
+      const set = new Set<number>([getYear()]);
+      for (const b of store.bookings()) {
+        const y = bookingYear(b);
+        if (y > 0) set.add(y);
+      }
+      return [...set].sort((a, b) => b - a);
+    }),
+  })),
+  withComputed(store => ({
+    // journalRows narrowed by the selected year and the free-text search term.
+    filteredRows: computed<JournalRow[]>(() => {
+      const year = store.selectedYear();
+      const term = store.searchTerm();
+      return store.journalRows()
+        .filter(r => year === ALL_YEARS || r.year === year)
+        .filter(r => matchesJournalSearch(r, term));
+    }),
+  })),
   withMethods(store => ({
+    setSearchTerm(term: string): void {
+      patchState(store, { searchTerm: term });
+    },
+
+    setSelectedYear(year: number): void {
+      patchState(store, { selectedYear: year });
+    },
+
+    async export(): Promise<void> {
+      const data = journalToRows(store.filteredRows(), {
+        date:   store.i18n.col_date(),
+        credit: store.i18n.col_credit(),
+        debit:  store.i18n.col_debit(),
+        name:   store.i18n.col_name(),
+        amount: store.i18n.col_amount(),
+      });
+      await exportCsv(data, `journal-${getTodayStr()}`);
+    },
+
     async openCreate(): Promise<void> {
       if (store.isReadOnly()) return;
       const tenantId = store.tenantId();

@@ -1,79 +1,169 @@
-import { Component, inject } from '@angular/core';
-import { ActionSheetButton, ActionSheetController, IonButton, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, inject, input } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { BookingModel } from '@okr/shared-models';
+import { BookingLineModel, BookingModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { EmptyList, Spinner } from '@okr/shared-ui';
+import { ListFilter } from '@okr/shared-ui';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { hasRole } from '@okr/shared-util-core';
 
+import { Menu } from '@okr/cms-menu-feature';
+import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+
+import { BookingAction, JournalRow } from '@okr/finance-booking-util';
 import { BookingStore } from './booking.store';
 
 @Component({
   selector: 'okr-booking-list',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonContent,
-    IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon,
-    IonButton,
     SvgIconPipe,
+    Spinner, EmptyList, Menu, ListFilter, ReadOnlyBanner,
+    IonHeader, IonToolbar, IonTitle, IonContent,
+    IonList, IonItem, IonLabel, IonIcon, IonButton, IonButtons, IonMenuButton,
+    IonPopover, IonBackdrop, IonGrid, IonRow, IonCol,
   ],
   providers: [BookingStore],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ store.i18n.list_title() }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content>
-      @if (store.isLoading()) {
-        <p>Loading...</p>
-      } @else if (store.bookings().length === 0) {
-        <p>{{ store.i18n.empty() }}</p>
-      } @else {
-        <ion-list>
-          @for (booking of store.bookings(); track booking.okey) {
-            <ion-item (click)="store.openEdit(booking, store.linesByBooking().get(booking.okey) ?? [], store.isReadOnly())">
-              <ion-label>
-                <h3>{{ booking.bookingNo }} — {{ booking.title }}</h3>
-                <p>{{ booking.date }}</p>
-              </ion-label>
-              @if (store.availableActions(booking).length > 0) {
-                <ion-button slot="end" fill="clear" (click)="openActions($event, booking)">
-                  <ion-icon src="{{ 'menu' | svgIcon }}" />
-                </ion-button>
-              }
-            </ion-item>
-          }
-        </ion-list>
+  <ion-header>
+    <ion-toolbar color="secondary" id="bkheader">
+      <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+      <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.list_title() }}</ion-title>
+      @if(hasRole('privileged') || hasRole('admin')) {
+        <ion-buttons slot="end">
+          <ion-button id="{{ popupId() }}">
+            <ion-icon slot="icon-only" src="{{ 'menu' | svgIcon }}" />
+          </ion-button>
+          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ng-template>
+              <ion-content>
+                <okr-menu [menuName]="contextMenuName()" />
+              </ion-content>
+            </ng-template>
+          </ion-popover>
+        </ion-buttons>
       }
-    </ion-content>
-    @if (!store.isReadOnly()) {
-      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-        <ion-fab-button (click)="store.openCreate()">
-          <ion-icon src="{{ 'add' | svgIcon }}" />
-        </ion-fab-button>
-      </ion-fab>
+    </ion-toolbar>
+
+    <!-- filters -->
+    <okr-list-filter
+      (searchTermChanged)="store.setSearchTerm($event)"
+      (yearChanged)="store.setSelectedYear($event)" [years]="years()" [selectedYear]="store.selectedYear()"
+    />
+
+    <!-- list header -->
+    <ion-toolbar color="primary">
+      <ion-grid>
+        <ion-row>
+          <ion-col size="3" size-md="2"><ion-label><strong>{{ store.i18n.col_date() }}</strong></ion-label></ion-col>
+          <ion-col size-md="2" class="ion-hide-sm-down"><ion-label><strong>{{ store.i18n.col_credit() }}</strong></ion-label></ion-col>
+          <ion-col size-md="2" class="ion-hide-sm-down"><ion-label><strong>{{ store.i18n.col_debit() }}</strong></ion-label></ion-col>
+          <ion-col size="5" size-md="4"><ion-label><strong>{{ store.i18n.col_name() }}</strong></ion-label></ion-col>
+          <ion-col size="4" size-md="2" class="ion-text-end"><ion-label><strong>{{ store.i18n.col_amount() }}</strong></ion-label></ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content>
+    <okr-read-only-banner [message]="store.i18n.read_only_banner()" />
+    @if(isLoading()) {
+      <okr-spinner />
+      <ion-backdrop />
+    } @else if(filteredCount() === 0) {
+      <okr-empty-list [message]="store.i18n.empty()" />
+    } @else {
+      <ion-list lines="inset">
+        @for(row of filtered(); track row.okey) {
+          <ion-item button [detail]="false" (click)="showActions(row)">
+            <ion-grid>
+              <ion-row>
+                <ion-col size="3" size-md="2">{{ row.date }}</ion-col>
+                <ion-col size-md="2" class="ion-hide-sm-down">{{ row.creditAccount }}</ion-col>
+                <ion-col size-md="2" class="ion-hide-sm-down">{{ row.debitAccount }}</ion-col>
+                <ion-col size="5" size-md="4">{{ row.accountName }}</ion-col>
+                <ion-col size="4" size-md="2" class="ion-text-end">{{ row.amount }}</ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-item>
+        }
+      </ion-list>
     }
+  </ion-content>
   `,
 })
 export class BookingList {
   protected readonly store = inject(BookingStore);
-  private readonly actionSheetCtrl = inject(ActionSheetController);
+  private readonly actionSheetController = inject(ActionSheetController);
+  private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  protected async openActions(event: Event, booking: BookingModel): Promise<void> {
-    event.stopPropagation();
+  public readonly contextMenuName = input.required<string>();
+
+  protected readonly popupId = computed(() => 'c_bookings');
+  protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly filtered = computed(() => this.store.filteredRows());
+  protected readonly filteredCount = computed(() => this.filtered().length);
+  protected readonly count = computed(() => this.store.bookings().length);
+  protected readonly years = computed(() => this.store.years());
+  protected readonly currentUser = computed(() => this.store.currentUser());
+  protected readonly readOnly = computed(() => this.store.isReadOnly());
+
+  /*-------------------------- popover context menu --------------------------------*/
+  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
+      case 'add':    await this.store.openCreate(); break;
+      case 'export': await this.store.export(); break;
+      default: error(undefined, `BookingList.onPopoverDismiss: unknown method ${selectedMethod}`);
+    }
+  }
+
+  /*-------------------------- per-item action sheet --------------------------------*/
+  protected async showActions(row: JournalRow): Promise<void> {
+    const booking = row.booking;
+    const lines = this.store.linesByBooking().get(booking.okey) ?? [];
     const actions = this.store.availableActions(booking);
-    const hasCounterparty = !!booking.counterparty;
-    const buttons: ActionSheetButton[] = [
-      ...actions.map((a) => ({
-        text: this.store.i18n.action_createReceipt(),
-        handler: hasCounterparty ? () => { this.store.runAction(a, booking); } : undefined,
-      })),
-      ...(hasCounterparty ? [] : [{ text: this.store.i18n.action_counterpartyRequired(), role: 'destructive' as const }]),
-      { text: 'Abbrechen', role: 'cancel' as const },
-    ];
-    const sheet = await this.actionSheetCtrl.create({
-      header: booking.title,
-      buttons,
-    });
-    await sheet.present();
+    const options = createActionSheetOptions(this.store.i18n.as_title());
+    this.addActionSheetButtons(options, actions);
+    await this.executeActions(options, booking, lines, actions);
+  }
+
+  private addActionSheetButtons(options: ActionSheetOptions, actions: BookingAction[]): void {
+    if (this.readOnly()) {
+      options.buttons.push(createActionSheetButton('booking.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+    } else {
+      options.buttons.push(createActionSheetButton('booking.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+      if (this.hasRole('admin')) {
+        options.buttons.push(createActionSheetButton('booking.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+      }
+    }
+    if (actions.length > 0) {
+      options.buttons.push(createActionSheetDivider());
+      actions.forEach((_, i) => {
+        options.buttons.push(createActionSheetButton(`booking.receipt.${i}`, this.store.i18n.action_createReceipt(), this.imgixBaseUrl, 'document'));
+      });
+    }
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+  }
+
+  private async executeActions(options: ActionSheetOptions, booking: BookingModel, lines: BookingLineModel[], actions: BookingAction[]): Promise<void> {
+    const actionSheet = await this.actionSheetController.create(options);
+    await actionSheet.present();
+    const { data } = await actionSheet.onDidDismiss();
+    if (!data) return;
+    const action: string = data.action;
+    if (action === 'booking.view')   { await this.store.openEdit(booking, lines, true); return; }
+    if (action === 'booking.edit')   { await this.store.openEdit(booking, lines, this.readOnly()); return; }
+    if (action === 'booking.delete') { await this.store.delete(booking); return; }
+    if (action.startsWith('booking.receipt.')) {
+      const idx = Number(action.substring('booking.receipt.'.length));
+      const bookingAction = actions[idx];
+      if (bookingAction) await this.store.runAction(bookingAction, booking);
+    }
+  }
+
+  protected hasRole(role: RoleName): boolean {
+    return hasRole(role, this.currentUser());
   }
 }
