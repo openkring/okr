@@ -17,3 +17,20 @@ export function getBillIndex(bill: BillModel): string {
   index = addIndexElement(index, 't', bill.title);
   return index;
 }
+
+export function getBillExportData(bills: BillModel[]): string[][] {
+  const headers = ['okey', 'billId', 'title', 'billDate', 'dueDate', 'amount', 'currency', 'state', 'paymentDate', 'vendor'];
+  const rows = bills.map(bill => [
+    bill.okey ?? '',
+    bill.billId,
+    bill.title,
+    bill.billDate,
+    bill.dueDate,
+    bill.totalAmount ? (bill.totalAmount.amount / 100).toFixed(2) : '',
+    bill.totalAmount?.currency ?? '',
+    bill.state,
+    bill.paymentDate,
+    bill.vendor ? (bill.vendor.label || bill.vendor.name1 || '') : '',
+  ]);
+  return [headers, ...rows];
+}

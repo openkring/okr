@@ -1,0 +1,145 @@
+import { Component, computed, effect, input, output } from '@angular/core';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+
+import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { BillModel, UserModel } from '@okr/shared-models';
+import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean } from '@okr/shared-util-core';
+
+import { BillI18n, billValidations } from '@okr/finance-bill-util';
+
+const BILL_STATES = ['draft', 'todo', 'paid', 'overdue'];
+
+@Component({
+  selector: 'okr-bill-edit-form',
+  standalone: true,
+  imports: [
+    TextInput, DateInput, NumberInput,
+    StringSelect, NotesInput,
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol,
+  ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  template: `
+    @if(showForm()) {
+      <form novalidate>
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <ion-grid>
+              <ion-row>
+                <ion-col size="4">
+                  <okr-text-input [i18n]="billIdI18n()" [value]="billId()" (valueChange)="onFieldChange('billId', $event)"
+                    [autofocus]="true" [maxLength]="30" [readOnly]="isReadOnly() || !isNew()" />
+                </ion-col>
+                <ion-col size="8">
+                  <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
+                    [maxLength]="100" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="6">
+                  <okr-date-input [i18n]="billDateI18n()" [storeDate]="billDate()" (storeDateChange)="onFieldChange('billDate', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+                <ion-col size="6">
+                  <okr-date-input [i18n]="dueDateI18n()" [storeDate]="dueDate()" (storeDateChange)="onFieldChange('dueDate', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="6">
+                  <okr-number-input [i18n]="amountI18n()" [value]="amountInCHF()" (valueChange)="onAmountChange($event)"
+                    [readOnly]="isReadOnly()" />
+                </ion-col>
+                <ion-col size="6">
+                  <okr-string-select [i18n]="stateI18n()" [stringList]="states" [selectedString]="state()"
+                    (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="6">
+                  <okr-date-input [i18n]="paymentDateI18n()" [storeDate]="paymentDate()" (storeDateChange)="onFieldChange('paymentDate', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12">
+                  <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+        </ion-card>
+      </form>
+    }
+  `
+})
+export class BillEditForm {
+  public readonly formData = input.required<BillModel>();
+  public readonly currentUser = input<UserModel | undefined>();
+  public readonly allTags = input(DEFAULT_TAGS);
+  public readonly readOnly = input(true);
+  public readonly isNew = input(false);
+  public readonly showForm = input(true);
+  public readonly i18n = input.required<BillI18n>();
+
+  protected billIdI18n = computed(() => ({
+    name: 'billId', label: this.i18n().id_label(), placeholder: this.i18n().id_placeholder(), helper: this.i18n().id_helper()
+  } as TextInputI18n));
+
+  protected titleI18n = computed(() => ({
+    name: 'title', label: this.i18n().title_label(), placeholder: this.i18n().title_placeholder(), helper: this.i18n().title_helper()
+  } as TextInputI18n));
+
+  protected amountI18n = computed(() => ({
+    name: 'amount', label: this.i18n().amount_label(), placeholder: this.i18n().amount_placeholder(), helper: this.i18n().amount_helper()
+  } as NumberInputI18n));
+
+  protected notesI18n = computed(() => ({
+    name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
+  } as NotesInputI18n));
+
+  protected billDateI18n = computed(() => ({ name: 'billDate', label: this.i18n().bill_date_label(), placeholder: this.i18n().bill_date_placeholder(), helper: this.i18n().bill_date_helper() } as DateInputI18n));
+  protected dueDateI18n = computed(() => ({ name: 'dueDate', label: this.i18n().due_date_label(), placeholder: this.i18n().due_date_placeholder(), helper: this.i18n().due_date_helper() } as DateInputI18n));
+  protected paymentDateI18n = computed(() => ({ name: 'paymentDate', label: this.i18n().payment_date_label(), placeholder: this.i18n().payment_date_placeholder(), helper: this.i18n().payment_date_helper() } as DateInputI18n));
+  protected stateI18n = computed(() => ({ name: 'state', label: this.i18n().state_label() } as StringSelectI18n));
+
+  public readonly formDataChange = output<BillModel>();
+  public readonly dirty = output<boolean>();
+  public readonly valid = output<boolean>();
+
+  protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  private readonly validationResult = computed(() =>
+    billValidations(this.formData(), '', this.allTags())
+  );
+
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+  }
+
+  protected readonly states = BILL_STATES;
+
+  protected readonly title = computed(() => this.formData()?.title ?? '');
+  protected readonly billId = computed(() => this.formData()?.billId ?? '');
+  protected readonly billDate = computed(() => this.formData()?.billDate ?? '');
+  protected readonly dueDate = computed(() => this.formData()?.dueDate ?? '');
+  protected readonly amountInCHF = computed(() => (this.formData()?.totalAmount?.amount ?? 0) / 100);
+  protected readonly state = computed(() => this.formData()?.state ?? 'draft');
+  protected readonly paymentDate = computed(() => this.formData()?.paymentDate ?? '');
+  protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
+    this.dirty.emit(true);
+    this.formDataChange.emit({ ...this.formData(), [fieldName]: fieldValue });
+  }
+
+  protected onAmountChange(amountInCHF: number | null): void {
+    const cents = Math.round((amountInCHF ?? 0) * 100);
+    const current = this.formData();
+    this.formDataChange.emit({
+      ...current,
+      totalAmount: {
+        amount: cents,
+        currency: current.totalAmount?.currency ?? 'CHF',
+        periodicity: current.totalAmount?.periodicity ?? 'one-time',
+      },
+    });
+    this.dirty.emit(true);
+  }
+}

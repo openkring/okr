@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "Die Kreditoren-Rechnung wurde erstellt.",
+    "error": "Die Kreditoren-Rechnung konnte nicht erstellt werden."
+  },
+  "update": {
+    "conf": "Die Kreditoren-Rechnung wurde geändert.",
+    "error": "Die Kreditoren-Rechnung konnte nicht geändert werden."
+  },
+  "delete": {
+    "conf": "Die Kreditoren-Rechnung wurde gelöscht.",
+    "error": "Die Kreditoren-Rechnung konnte nicht gelöscht werden."
+  }
+}

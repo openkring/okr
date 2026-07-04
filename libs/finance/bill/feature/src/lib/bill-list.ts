@@ -1,16 +1,15 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { ModalController } from '@ionic/angular/standalone';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input } from '@angular/core';
+import { ActionSheetController, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-
-import { BillModel } from '@okr/shared-models';
+import { BillModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
-import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { DateFormat, convertDateFormatToString, getYear, getYearList, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { BillStore } from './bill.store';
 
@@ -21,8 +20,8 @@ import { BillStore } from './bill.store';
   providers: [BillStore],
   imports: [
     SvgIconPipe, AvatarPipe,
-    Spinner, ListFilter, EmptyList,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+    Spinner, ListFilter, EmptyList, Menu, ReadOnlyBanner,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
     IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
   ],
   styles: [`
@@ -38,25 +37,31 @@ import { BillStore } from './bill.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }} {{ store.i18n.list_title() }}</ion-title>
-        <ion-buttons slot="end">
-          @if(listId() === 'all') {
-            @if(selectedVendorName()) {
-              <ion-button fill="clear" (click)="clearVendorFilter()">
-                {{ selectedVendorName() }}
-                <ion-icon src="{{ 'cancel-circle' | svgIcon }}" slot="end" />
-              </ion-button>
-            } @else {
-              <ion-button fill="clear" (click)="selectVendor()">
-                <ion-icon src="{{ 'person' | svgIcon }}" slot="icon-only" />
-              </ion-button>
-            }
-          }
-        </ion-buttons>
+        @if(canChange()) {
+          <ion-buttons slot="end">
+            <ion-button id="{{ popupId() }}">
+              <ion-icon slot="icon-only" src="{{ 'menu' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+              (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()" />
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          </ion-buttons>
+        }
       </ion-toolbar>
-      <okr-list-filter (searchTermChanged)="onSearchTermChange($event)" />
+      <okr-list-filter
+        (searchTermChanged)="onSearchTermChange($event)"
+        (stateChanged)="onStateSelected($event)" [states]="states()"
+        (yearChanged)="onYearSelected($event)" [years]="years()"
+      />
     </ion-header>
 
     <ion-content>
+      <okr-read-only-banner [message]="store.i18n.read_only_banner()" />
       @if(isLoading()) {
         <okr-spinner />
       } @else if(filteredBills().length === 0) {
@@ -95,18 +100,21 @@ import { BillStore } from './bill.store';
 export class BillList {
   protected readonly store = inject(BillStore);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly modalController = inject(ModalController);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  // inputs
   public readonly listId = input.required<string>();
+  public readonly contextMenuName = input.required<string>();
 
+  // computed
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly filteredBills = computed(() => this.store.filteredBills());
   protected readonly filteredCount = computed(() => this.filteredBills().length);
   protected readonly currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly imgixBaseUrl = computed(() => this.store.appStore.env.services.imgixBaseUrl);
-
-  protected readonly selectedVendorName = signal('');
+  protected readonly popupId = computed(() => `c_bills_${this.listId()}`);
+  protected years = computed(() => getYearList(getYear(), 8));
+  protected states = computed(() => this.store.states());
 
   constructor() {
     effect(() => {
@@ -115,35 +123,22 @@ export class BillList {
     });
   }
 
+  /******************************** setters (filter) ******************************************* */
   protected onSearchTermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }
 
+  protected onStateSelected(state: string): void {
+    this.store.setSelectedState(state);
+  }
+
+  protected onYearSelected(year: number): void {
+    this.store.setSelectedYear(year);
+  }
+
+  /******************************** getters ******************************************* */
   protected formatDate(storeDate: string): string {
     return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate) ?? storeDate;
-  }
-
-  protected async selectVendor(): Promise<void> {
-    const currentUser = this.currentUser();
-    if (!currentUser) return;
-    const modal = await this.modalController.create({
-      component: PersonSelectModal,
-      componentProps: { selectedTag: '', currentUser },
-    });
-    await modal.present();
-    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
-    const data = result?.kind === 'predefined' ? result.person : undefined;
-    if (role === 'confirm' && data) {
-      this.store.setListId(data.okey);
-      const name = [data.firstName, data.lastName].filter(Boolean).join(' ');
-      this.selectedVendorName.set(name);
-      this.cdr.markForCheck();
-    }
-  }
-
-  protected clearVendorFilter(): void {
-    this.store.setListId('all');
-    this.selectedVendorName.set('');
   }
 
   protected getAmount(cents?: number): string {
@@ -161,14 +156,32 @@ export class BillList {
     return '';
   }
 
+  /******************************* actions *************************************** */
+  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
+      case 'add': await this.store.add(); break;
+      case 'scan': await this.store.scan(); break;
+      case 'exportRaw': await this.store.export('raw', this.filteredBills()); break;
+      default: error(undefined, `BillList.onPopoverDismiss: unknown method ${selectedMethod}`);
+    }
+    this.cdr.markForCheck();
+  }
+
   protected async showActions(bill: BillModel): Promise<void> {
     const options = createActionSheetOptions(this.store.i18n.as_title());
     const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton('bill.view', base, 'eye-on', this.store.i18n.view()));
+    options.buttons.push(createActionSheetButton('bill.view', this.store.i18n.view(), base, 'eye-on'));
     if (bill.attachments.length > 0) {
-      options.buttons.push(createActionSheetButton('bill.download', base, 'download', this.store.i18n.download()));
+      options.buttons.push(createActionSheetButton('bill.download', this.store.i18n.download(), base, 'download'));
     }
-    options.buttons.push(createActionSheetButton('cancel', base, 'cancel', this.store.i18n.cancel()));
+    if (!this.store.isExternallyManaged() && this.canChange()) {
+      options.buttons.push(createActionSheetButton('bill.edit', this.store.i18n.update(), base, 'edit'));
+      if (this.hasRole('admin')) {
+        options.buttons.push(createActionSheetButton('bill.delete', this.store.i18n.delete(), base, 'trash'));
+      }
+    }
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), base, 'cancel'));
 
     const actionSheet = await this.actionSheetController.create(options);
     await actionSheet.present();
@@ -177,7 +190,18 @@ export class BillList {
     switch (data.action) {
       case 'bill.view': await this.store.view(bill); break;
       case 'bill.download': await this.store.showPdf(bill); break;
+      case 'bill.edit': await this.store.edit(bill); break;
+      case 'bill.delete': await this.store.delete(bill); break;
     }
     this.cdr.markForCheck();
+  }
+
+  /******************************* helpers *************************************** */
+  protected hasRole(role: RoleName): boolean {
+    return hasRole(role, this.currentUser());
+  }
+
+  protected canChange(): boolean {
+    return hasRole('treasurer', this.currentUser()) || hasRole('privileged', this.currentUser());
   }
 }

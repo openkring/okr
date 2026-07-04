@@ -3,30 +3,71 @@
   "plural": "Lieferanten-Rechnungen",
   "empty": "Keine Rechnungen gefunden",
 
-  "id": "Rechnungs-Nr.",
-  "title": "Betreff",
-  "date": {
-    "bill": {
-      "label": "Rechnungsdatum"
-    },
-    "due": {
-      "label": "zu zahlen bis"
-    },
-    "payment": {
-      "label": "Zahlungsdatum"
-    }
-  },
-  "amount": "Rechnungsbetrag",
-  "notes": "Notizen",
-  "state": "Status",
-
-  "download": {
-    "label":  "Rechnung herunterladen"
-  },
   "list": {
     "title": "Kreditoren-Rechnungen"
   },
+
+  "id": {
+    "label": "Rechnungs-Nr.",
+    "placeholder": "nnnnn",
+    "helper": "Die Rechnungsnummer des Lieferanten."
+  },
+  "title": {
+    "label": "Betreff",
+    "placeholder": "Text",
+    "helper": "Eine kurze Beschreibung worum es geht."
+  },
+  "date": {
+    "bill": {
+      "label": "Rechnungsdatum",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Das Datum an dem die Rechnung gestellt wurde."
+    },
+    "due": {
+      "label": "zu zahlen bis",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Das Datum bis zu dem die Rechnung bezahlt werden muss."
+    },
+    "payment": {
+      "label": "Zahlungsdatum",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Das Datum an dem die Rechnung bezahlt wurde."
+    }
+  },
+  "amount": {
+    "label": "Rechnungsbetrag",
+    "placeholder": "nn.nn",
+    "helper": "Der Rechnungsbetrag."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Freie Notizen zur Rechnung"
+  },
+  "state": {
+    "label": "Status"
+  },
+
+  "download": {
+    "label": "Rechnung herunterladen"
+  },
   "view": {
     "label": "Rechnung anzeigen"
+  },
+  "scan": {
+    "label": "Rechnung scannen"
+  },
+  "create": {
+    "label": "Rechnung hinzufügen"
+  },
+  "update": {
+    "label": "Rechnung ändern"
+  },
+  "delete": {
+    "label": "Rechnung löschen",
+    "confirm": "Soll die Rechnung wirklich gelöscht werden ?"
+  },
+
+  "readonly": {
+    "banner": "Diese Liste ist readonly. Die Kreditoren werden in Bexio bewirtschaftet."
   }
 }

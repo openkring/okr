@@ -91,6 +91,7 @@
       "@okr/finance-asset-util": ["libs/finance/asset/util/src/index.ts"],
       "@okr/finance-bill-data-access": ["libs/finance/bill/data-access/src/index.ts"],
       "@okr/finance-bill-feature": ["libs/finance/bill/feature/src/index.ts"],
+      "@okr/finance-bill-ui": ["libs/finance/bill/ui/src/index.ts"],
       "@okr/finance-bill-util": ["libs/finance/bill/util/src/index.ts"],
       "@okr/finance-booking-data-access": ["libs/finance/booking/data-access/src/index.ts"],
       "@okr/finance-booking-feature": ["libs/finance/booking/feature/src/index.ts"],

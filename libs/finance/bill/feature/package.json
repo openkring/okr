@@ -16,8 +16,10 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
     "@okr/avatar-ui": "*",
+    "@okr/cms-menu-feature": "*",
     "@okr/finance-accounting-feature": "*",
     "@okr/finance-bill-data-access": "*",
+    "@okr/finance-bill-ui": "*",
     "@okr/finance-bill-util": "*"
   }
 }
