@@ -5,7 +5,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 
 // Resolve the repo root relative to this script so it works regardless of cwd.
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -42,7 +42,12 @@ const ngswManifest = join(dir, 'ngsw.json');
 if (existsSync(ngswManifest)) {
   const ngswConfig = join(repoRoot, 'apps', app, 'ngsw-config.json');
   console.log('Regenerating ngsw.json after debug-id injection (avoids service-worker Hash mismatch)…');
-  execFileSync('npx', ['ngsw-config', dir, ngswConfig, '/'], { stdio: 'inherit' });
+  // The `ngsw-config` bin unconditionally does `path.join(process.cwd(), argv)` on both path args,
+  // so it requires cwd-relative paths — passing absolutes yields a doubled path (ENOENT). Convert.
+  const cwd = process.cwd();
+  execFileSync('npx', ['ngsw-config', relative(cwd, dir), relative(cwd, ngswConfig), '/'], {
+    stdio: 'inherit',
+  });
 }
 
 cli(['releases', 'new', release]);
