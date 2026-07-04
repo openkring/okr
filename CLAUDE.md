@@ -198,6 +198,8 @@ Saving function secrets and all other deployment steps are documented in the **`
 
 Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, `matrix-simple`, `oidc-bridge`, `replication`. Built with esbuild via `pnpm nx build functions --configuration production` and deployed with `pnpm run deploy:functions` (see the **`firebase-deploy` skill**).
 
+**When adding, removing, or changing a Cloud Function** (new integration gateway, new external API, new secret, changed trigger), update the architecture overview to match: both `planning/reference/architecture-overview.md` (inventory tables + Mermaid diagram) and its rendered twin `planning/reference/architecture-overview.html`.
+
 ### Security
 
 - CORS rules (Content security policies CSP) are configured in firebase.json in the project root.
