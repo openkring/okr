@@ -136,6 +136,10 @@
     "pdf": "Rechnung als PDF herunterladen"
   },
 
+  "readonly": {
+    "banner": "Diese Liste ist readonly. Die Debitoren werden in Bexio bewirtschaftet."
+  },
+
   "invoice_state": {
     "name": "Rechnungsstatus",
     "all": {

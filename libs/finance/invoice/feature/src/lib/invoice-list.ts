@@ -1,14 +1,14 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { ModalController } from '@ionic/angular/standalone';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { InvoiceModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getYear, getYearList, hasRole } from '@okr/shared-util-core';
-import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 
 import { AvatarPipe } from '@okr/avatar-ui';
+import { Menu } from '@okr/cms-menu-feature';
+import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { InvoiceStore } from './invoice.store';
 
@@ -19,8 +19,8 @@ import { InvoiceStore } from './invoice.store';
   providers: [InvoiceStore],
   imports: [
     SvgIconPipe, AvatarPipe,
-    Spinner, ListFilter, EmptyList,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+    Spinner, ListFilter, EmptyList, Menu, ReadOnlyBanner,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
     IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
   ],
   styles: [`
@@ -35,26 +35,13 @@ import { InvoiceStore } from './invoice.store';
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ store.i18n.list_title() }}</ion-title>
-        <ion-buttons slot="end">
-          @if(listId() === 'all') {
-            @if(selectedPersonName()) {
-              <ion-button fill="clear" (click)="clearPersonFilter()">
-                {{ selectedPersonName() }}
-                <ion-icon src="{{ 'cancel-circle' | svgIcon }}" slot="end" />
-              </ion-button>
-            } @else {
-              <ion-button fill="clear" (click)="selectPerson()">
-                <ion-icon src="{{ 'person' | svgIcon }}" slot="icon-only" />
-              </ion-button>
-            }
-          }
-<!-- currently, we don't want to show a context menu
-                     @if(canChange()) {
-            <ion-button [id]="popupId">
-              <ion-icon src="{{ 'menu' | svgIcon }}" slot="icon-only" />
+        <ion-title>{{ filteredCount() }} {{ store.i18n.list_title() }}</ion-title>
+        @if(canChange()) {
+          <ion-buttons slot="end">
+            <ion-button id="{{ popupId() }}">
+              <ion-icon slot="icon-only" src="{{ 'menu' | svgIcon }}" />
             </ion-button>
-            <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
               (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
@@ -62,8 +49,8 @@ import { InvoiceStore } from './invoice.store';
                 </ion-content>
               </ng-template>
             </ion-popover>
-          } -->
-        </ion-buttons>
+          </ion-buttons>
+        }
       </ion-toolbar>
       <okr-list-filter
         (searchTermChanged)="onSearchTermChange($event)"
@@ -73,6 +60,7 @@ import { InvoiceStore } from './invoice.store';
     </ion-header>
 
     <ion-content>
+      <okr-read-only-banner [message]="store.i18n.read_only_banner()" />
       @if(isLoading()) {
         <okr-spinner />
       } @else if(filteredInvoices().length === 0) {
@@ -111,7 +99,6 @@ import { InvoiceStore } from './invoice.store';
 export class InvoiceList {
   protected readonly store = inject(InvoiceStore);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly modalController = inject(ModalController);
   private readonly cdr = inject(ChangeDetectorRef);
 
   // inputs
@@ -119,7 +106,7 @@ export class InvoiceList {
   public readonly contextMenuName = input.required<string>();
 
   // computed
-  protected readonly popupId = crypto.randomUUID();
+  protected readonly popupId = computed(() => `c_invoices_${this.listId()}`);
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly filteredInvoices = computed(() => this.store.filteredInvoices());
   protected readonly filteredCount = computed(() => this.filteredInvoices().length);
@@ -127,9 +114,6 @@ export class InvoiceList {
   protected readonly imgixBaseUrl = computed(() => this.store.appStore.env.services.imgixBaseUrl);
   protected years = computed(() => getYearList(getYear(), 8));
   protected states = computed(() => this.store.states());
-
-  // signals
-  protected readonly selectedPersonName = signal('');
 
   /******************************** constructor ******************************************* */
   constructor() {
@@ -172,29 +156,6 @@ export class InvoiceList {
 
   protected formatDate(storeDate: string): string {
     return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate) ?? storeDate;
-  }
-
-  protected async selectPerson(): Promise<void> {
-    const currentUser = this.currentUser();
-    if (!currentUser) return;
-    const modal = await this.modalController.create({
-      component: PersonSelectModal,
-      componentProps: { selectedTag: '', currentUser },
-    });
-    await modal.present();
-    const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
-    const data = result?.kind === 'predefined' ? result.person : undefined;
-    if (role === 'confirm' && data) {
-      this.store.setListId(data.okey);
-      const name = [data.firstName, data.lastName].filter(Boolean).join(' ');
-      this.selectedPersonName.set(name);
-      this.cdr.markForCheck();
-    }
-  }
-
-  protected clearPersonFilter(): void {
-    this.store.setListId('all');
-    this.selectedPersonName.set('');
   }
 
   /******************************* actions *************************************** */

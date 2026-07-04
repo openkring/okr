@@ -141,6 +141,7 @@ export const InvoiceStore = signalStore(
 
     /******************************** actions ******************************************* */
     async add(): Promise<void> {
+      if (store.accountingStore.isExternallyManaged()) return;
       const invoice = newInvoice(store.appStore.tenantId());
       invoice.accountingTenantId = store.accountingStore.accountingTenantId();
       const modal = await store.modalController.create({
