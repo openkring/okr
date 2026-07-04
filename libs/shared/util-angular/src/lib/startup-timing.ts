@@ -42,18 +42,45 @@ export function reportStartupTiming(reason: string): void {
     return { label, atMs: Math.round(t), deltaMs };
   });
   const totalMs = entries.length ? Math.round(entries[entries.length - 1][1]) : 0;
+  // Time before the app's own JS started executing (bundle download + parse + SW), taken
+  // from the first mark's atMs. Big value => asset-delivery problem, not a Firebase one.
+  const firstScriptMs = entries.length ? Math.round(entries[0][1]) : 0;
+
+  // Display mode: separates an installed/standalone PWA from a normal browser tab so the two
+  // can be compared in Sentry. navigator.standalone is the iOS-only signal; the media query
+  // covers desktop/Android installs.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nav = navigator as any;
+  const displayMode: string =
+    (typeof matchMedia !== 'undefined' && matchMedia('(display-mode: standalone)').matches) || nav.standalone === true
+      ? 'standalone'
+      : 'browser';
+
+  // Network conditions (Chromium-only API; undefined on Safari, which is itself a signal).
+  // rttMs/downlink tell us whether the ~3s user-doc read is network-bound or long-poll setup.
+  const conn = nav.connection ?? {};
+  const net = {
+    effectiveType: conn.effectiveType as string | undefined,
+    downlinkMbps: conn.downlink as number | undefined,
+    rttMs: conn.rtt as number | undefined,
+    saveData: conn.saveData as boolean | undefined,
+  };
+
+  const context = { reason, totalMs, firstScriptMs, displayMode, net, marks, rows };
 
   // eslint-disable-next-line no-console
-  console.log(`[startup-timing] reason=${reason} total=${totalMs}ms`, rows);
+  console.log(`[startup-timing] mode=${displayMode} reason=${reason} total=${totalMs}ms firstScript=${firstScriptMs}ms`, context);
 
   addBreadcrumb({
     category: 'startup',
     level: 'info',
-    message: `startup-timing reason=${reason} total=${totalMs}ms`,
+    message: `startup-timing mode=${displayMode} reason=${reason} total=${totalMs}ms`,
     data: marks,
   });
-  captureMessage(`startup-timing total=${totalMs}ms reason=${reason}`, {
+  captureMessage(`startup-timing total=${totalMs}ms mode=${displayMode} reason=${reason}`, {
     level: 'info',
-    extra: { reason, totalMs, marks, rows },
+    // Tags are filterable/groupable in the Sentry dashboard (extra is not).
+    tags: { 'startup.mode': displayMode, 'startup.reason': reason, 'startup.net': net.effectiveType ?? 'unknown' },
+    extra: context,
   });
 }
