@@ -38,3 +38,41 @@ describe('addressValidations — phone format', () => {
     expect(addressValidations(address, tenantId, '').hasErrors('phone')).toBe(false);
   });
 });
+
+function postalAddress(countryCode: string, zipCode: string): AddressModel {
+  const address = new AddressModel(tenantId);
+  address.addressChannel = 'postal';
+  address.addressUsage = 'home';
+  address.streetName = 'Teststrasse';
+  address.streetNumber = '1';
+  address.city = 'Teststadt';
+  address.countryCode = countryCode;
+  address.zipCode = zipCode;
+  return address;
+}
+
+describe('addressValidations — country zip rules', () => {
+  it('accepts a 4-digit CH zip', () => {
+    expect(addressValidations(postalAddress('CH', '8001'), tenantId, '').hasErrors('zipCode')).toBe(false);
+  });
+
+  it('accepts a 5-digit DE zip', () => {
+    expect(addressValidations(postalAddress('DE', '10115'), tenantId, '').hasErrors('zipCode')).toBe(false);
+  });
+
+  it('rejects a 4-digit DE zip', () => {
+    expect(addressValidations(postalAddress('DE', '1011'), tenantId, '').hasErrors('zipCode')).toBe(true);
+  });
+
+  it('rejects a non-numeric DE zip', () => {
+    expect(addressValidations(postalAddress('DE', 'ABCDE'), tenantId, '').hasErrors('zipCode')).toBe(true);
+  });
+
+  it('accepts an alphanumeric GB postcode (permissive country)', () => {
+    expect(addressValidations(postalAddress('GB', 'SW1A 1AA'), tenantId, '').hasErrors('zipCode')).toBe(false);
+  });
+
+  it('accepts a 5-digit FR zip (permissive country)', () => {
+    expect(addressValidations(postalAddress('FR', '75001'), tenantId, '').hasErrors('zipCode')).toBe(false);
+  });
+});

@@ -1,9 +1,18 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CITY_LENGTH, COUNTRY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
+import { CITY_LENGTH, COUNTRY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AddressModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
 import { isPhoneNumberValid } from '@okr/shared-util-angular';
+
+// Max zip length per country (address-only; does not touch the shared ZIP_LENGTH constant,
+// which other forms still use as a Swiss 4-digit cap). Unknown countries -> permissive default.
+const ZIP_MAX_LENGTH: Record<string, number> = { CH: 4, DE: 5, AT: 4, IT: 5, FR: 5, US: 10, GB: 8 };
+const DEFAULT_ZIP_MAX_LENGTH = 10;
+
+function zipMaxLength(countryCode: string): number {
+  return ZIP_MAX_LENGTH[(countryCode ?? '').toUpperCase()] ?? DEFAULT_ZIP_MAX_LENGTH;
+}
 
 export const addressValidations = staticSuite((model: AddressModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
@@ -18,7 +27,7 @@ export const addressValidations = staticSuite((model: AddressModel, tenants: str
   stringValidations('streetName', model.streetName, NAME_LENGTH);
   stringValidations('streetNumber', model.streetNumber, NUMBER_LENGTH);
   stringValidations('addressValue2', model.addressValue2, SHORT_NAME_LENGTH);
-  stringValidations('zipCode', model.zipCode, ZIP_LENGTH);
+  stringValidations('zipCode', model.zipCode, zipMaxLength(model.countryCode));
   stringValidations('city', model.city, CITY_LENGTH);
   stringValidations('countryCode', model.countryCode, COUNTRY_LENGTH);
   urlValidations('url', model.url);
@@ -73,6 +82,14 @@ export const addressValidations = staticSuite((model: AddressModel, tenants: str
       test('zipCode', '@address.swissZipCodeLength', () => {
         enforce(model.zipCode.length).equals(4);
       })
+    });
+    omitWhen(model.countryCode !== 'DE', () => {
+      test('zipCode', '@address.germanZipCodeNumeric', () => {
+        enforce(model.zipCode).isNumeric();
+      });
+      test('zipCode', '@address.germanZipCodeLength', () => {
+        enforce(model.zipCode.length).equals(5);
+      });
     });
   });
 });
