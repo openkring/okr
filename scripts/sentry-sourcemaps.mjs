@@ -30,6 +30,21 @@ const cli = (args) => execFileSync('npx', ['sentry-cli', ...args], { stdio: 'inh
 
 console.log(`Uploading source maps for release ${release} from ${dir}`);
 cli(['sourcemaps', 'inject', dir]);
+
+// CRITICAL: `sourcemaps inject` rewrites every JS file in `dir` in place (it inserts a debug-id
+// snippet), changing each file's content and therefore its SHA-1. But `ng build` already wrote
+// `ngsw.json` with the PRE-injection hashes. If we deploy now, the Angular service worker fetches
+// each (injected) file, hashes it, compares against the stale manifest, and rejects it with
+// "Hash mismatch (cacheBustedFetchFromNetwork)" — so the update never installs and clients are
+// stuck on the old version. Fix: regenerate ngsw.json over the injected files so the manifest
+// matches exactly what ships. Only apps with a service worker have a ngsw.json to regenerate.
+const ngswManifest = join(dir, 'ngsw.json');
+if (existsSync(ngswManifest)) {
+  const ngswConfig = join(repoRoot, 'apps', app, 'ngsw-config.json');
+  console.log('Regenerating ngsw.json after debug-id injection (avoids service-worker Hash mismatch)…');
+  execFileSync('npx', ['ngsw-config', dir, ngswConfig, '/'], { stdio: 'inherit' });
+}
+
 cli(['releases', 'new', release]);
 cli(['sourcemaps', 'upload', '--release', release, dir]);
 cli(['releases', 'finalize', release]);
