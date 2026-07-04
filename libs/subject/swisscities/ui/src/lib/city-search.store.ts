@@ -20,7 +20,7 @@ export const CitySearchStore = signalStore(
       const term = state.searchTerm();
       if (!term) return [];
       return state.cities().filter((c: City) =>
-        c.name.toLowerCase().includes(term) || c.zipCode.startsWith(term));
+        c.name.toLowerCase().includes(term) || c.zipCode.toLowerCase().startsWith(term));
     }),
   })),
   withMethods((store) => ({
