@@ -24,6 +24,17 @@ describe('buildSentryOptions', () => {
     expect(o.sendDefaultPii).toBe(false);
     expect(o.beforeSend).toBe(beforeSend);
   });
+
+  it('suppresses transient aborted-request JSON-EOF noise across browsers', () => {
+    const patterns = (buildSentryOptions(cfg, []).ignoreErrors ?? []) as RegExp[];
+    const matches = (msg: string) => patterns.some((p) => p instanceof RegExp && p.test(msg));
+    // Safari, V8/Chrome and Firefox variants of an empty/truncated JSON body.
+    expect(matches('JSON Parse error: Unexpected EOF')).toBe(true);
+    expect(matches('Unexpected end of JSON input')).toBe(true);
+    expect(matches('JSON.parse: unexpected end of data')).toBe(true);
+    // Must NOT swallow a genuinely malformed-content parse error.
+    expect(matches('JSON Parse error: Unexpected token "<"')).toBe(false);
+  });
 });
 
 describe('beforeSend', () => {

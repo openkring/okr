@@ -41,7 +41,18 @@ export function buildSentryOptions(
     // Benign noise we never want as issues. Backstop only — the source helpers
     // (takePhoto/pickPhoto) already swallow camera cancellations; this guards any
     // call site that bypasses them. The Capacitor cancel message is "User cancelled photos app".
-    ignoreErrors: [/User cancelled photos app/i],
+    ignoreErrors: [
+      /User cancelled photos app/i,
+      // Transient transport artifact, not a content bug: when Safari aborts an in-flight
+      // request (reload / navigate-away / bfcache eviction) the Firebase SDK JSON-parses the
+      // empty/truncated body and throws an end-of-input error. Per-call-site try/catch guards
+      // (e.g. the AOC-bexio stat loaders) can't cover every in-flight request, so suppress the
+      // whole class centrally. These messages only mean "input ended early" (truncated/empty),
+      // never malformed content — a real bad response yields "Unexpected token …", and a failed
+      // Cloud Function rejects as a FirebaseError, so nothing actionable is hidden.
+      // Safari: "JSON Parse error: Unexpected EOF" · V8: "Unexpected end of JSON input" · Firefox: "unexpected end of data".
+      /Unexpected EOF|Unexpected end of JSON input|unexpected end of data/i,
+    ],
 
     tracesSampleRate: cfg.tracesSampleRate,
     tracePropagationTargets: [
