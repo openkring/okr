@@ -8,6 +8,8 @@ import { hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
+import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+
 import { FlatAccountNode } from '@okr/finance-account-util';
 import { AccountStore } from './account.store';
 
@@ -16,7 +18,7 @@ import { AccountStore } from './account.store';
   standalone: true,
   imports: [
     SvgIconPipe,
-    Spinner, EmptyList, Menu,
+    Spinner, EmptyList, Menu, ReadOnlyBanner,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem,
     IonBackdrop, IonList, IonPopover
@@ -53,6 +55,7 @@ import { AccountStore } from './account.store';
   </ion-header>
 
   <ion-content>
+    <okr-read-only-banner />
     @if(isLoading()) {
       <okr-spinner />
       <ion-backdrop />

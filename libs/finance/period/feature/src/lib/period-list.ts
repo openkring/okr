@@ -4,6 +4,8 @@ import { IonBadge, IonButton, IonContent, IonHeader, IonIcon,
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 
+import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
+
 import { PeriodStore } from './period.store';
 
 @Component({
@@ -12,7 +14,7 @@ import { PeriodStore } from './period.store';
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent,
     IonList, IonItem, IonLabel, IonBadge, IonButton, IonIcon,
-    SvgIconPipe,
+    SvgIconPipe, ReadOnlyBanner,
   ],
   providers: [PeriodStore],
   template: `
@@ -22,6 +24,7 @@ import { PeriodStore } from './period.store';
       </ion-toolbar>
     </ion-header>
     <ion-content>
+      <okr-read-only-banner />
       @if (store.isLoading()) {
         <p>Loading...</p>
       } @else if (store.periods().length === 0) {
