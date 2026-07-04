@@ -22,9 +22,24 @@ const DE_STATE = {
   'Saxony-Anhalt': 'ST', 'Schleswig-Holstein': 'SH', 'Thüringen': 'TH', 'Thuringia': 'TH',
 };
 
+// GB: map GeoNames nation name -> ONS nation code, used when state_code is missing/unrecognized.
+const GB_STATE = {
+  England: 'ENG',
+  Scotland: 'SCT',
+  Wales: 'WLS',
+  'Northern Ireland': 'NIR',
+};
+const GB_CODES = new Set(['ENG', 'SCT', 'WLS', 'NIR']);
+
 function stateCodeFor(cc, row) {
-  if (cc === 'DE') return DE_STATE[row.state] ?? row.state ?? '';
-  if (cc === 'US' || cc === 'GB') return row.state_code || row.state || ''; // already alpha
+  if (cc === 'DE') {
+    return DE_STATE[row.state] ?? DE_STATE[(row.state ?? '').replace(/^Land /, '')] ?? row.state ?? '';
+  }
+  if (cc === 'US') return row.state_code || row.state || ''; // already alpha
+  if (cc === 'GB') {
+    if (row.state_code && GB_CODES.has(row.state_code)) return row.state_code;
+    return GB_STATE[row.state] ?? '';
+  }
   return row.state || ''; // AT/IT/FR: best-effort full name
 }
 
