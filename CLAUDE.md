@@ -229,6 +229,7 @@ See the **`firebase-deploy` skill** for all deployment commands and guidelines (
 
 - never install a new dependency without asking first
 - never modify the database schema (shared-models) without asking first
+- whenever you add, remove, or change a model in `shared-models` (a new collection, a renamed/added/removed `*Key` foreign key, a changed relationship or `modelType`), update the data-model reference to match: `planning/reference/DATA_MODEL.md` and its self-contained diagram `planning/reference/data-model-er.html`. These are hand-maintained snapshots — they do not auto-update.
 - api calls for external integrations should use a firebase cloud function where possible. This Cloud functions stores the access token securely and caches token as well as data for later requests.
 - do not try to find icon assets in the code — the icons reside in the database and are loaded via url (see the **`icons` skill**).
 - Always git commit directly to main. Do not create feature branches or worktrees.
