@@ -189,3 +189,23 @@ export function isEqualPhoneNumber(stringifiedPhoneNumber1: string, stringifiedP
     return _phoneNumber1.isEqual(_phoneNumber2);
 }
 
+export interface CountryOption {
+  code: string;   // ISO 3166-1 alpha-2, uppercase
+  name: string;   // localized country name
+}
+
+/**
+ * Returns all ISO 3166-1 alpha-2 countries with their localized names,
+ * sorted alphabetically by name. Falls back to the native name when a
+ * localized name is not available for the given language.
+ */
+export function getSortedCountries(languageCode: string): CountryOption[] {
+  return Object.keys(countryDictionary.countries)
+    .map((code) => {
+      const upper = code.toUpperCase();
+      const localized = getCountryName(upper, languageCode);
+      return { code: upper, name: localized || getNativeCountryName(upper) };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
