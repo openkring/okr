@@ -66,6 +66,7 @@ export * from './lib/section.shapes';
 export * from './lib/session.model';
 export * from './lib/social-post.model';
 export * from './lib/swisscities.model';
+export * from './lib/city.model';
 export * from './lib/tag.model';
 export * from './lib/task.model';
 export * from './lib/transfer.model';
