@@ -1,10 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { IonButton, IonContent, IonHeader, IonItem, IonLabel,
   IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
+import { AppStore } from '@okr/shared-feature';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
 
@@ -43,6 +45,7 @@ import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-a
 })
 export class PaymentOrderDetailPage {
   private readonly route = inject(ActivatedRoute);
+  private readonly appStore = inject(AppStore);
   private readonly accountingStore = inject(AccountingStore);
   private readonly paymentOrderService = inject(PaymentOrderService);
   private readonly paymentService = inject(PaymentService);
@@ -50,12 +53,22 @@ export class PaymentOrderDetailPage {
   private readonly orderKey = this.route.snapshot.params['orderKey'] as string;
   private readonly accountingTenantId = this.accountingStore.accountingTenantId();
 
-  protected readonly orderResource = rxResource<PaymentOrderModel | undefined, void>({
-    stream: () => this.paymentOrderService.read(this.orderKey, this.accountingTenantId),
+  // Gate both real-time reads on currentUser so they don't fire before auth is
+  // resolved (which would hit the Firestore rules with request.auth == null).
+  protected readonly orderResource = rxResource({
+    params: () => this.appStore.currentUser(),
+    stream: ({ params: currentUser }) =>
+      currentUser && this.accountingTenantId
+        ? this.paymentOrderService.read(this.orderKey, this.accountingTenantId)
+        : of<PaymentOrderModel | undefined>(undefined),
   });
 
-  protected readonly paymentsResource = rxResource<PaymentModel[], void>({
-    stream: () => this.paymentService.listForOrder(this.orderKey, this.accountingTenantId),
+  protected readonly paymentsResource = rxResource({
+    params: () => this.appStore.currentUser(),
+    stream: ({ params: currentUser }) =>
+      currentUser && this.accountingTenantId
+        ? this.paymentService.listForOrder(this.orderKey, this.accountingTenantId)
+        : of<PaymentModel[]>([]),
   });
 
   protected generatePain001(): void {

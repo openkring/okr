@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -26,8 +27,17 @@ export const PaymentStore = signalStore(
   withProps(store => ({
     i18n: store.i18nService.translateAll(PAYMENT_I18N_KEYS),
     ordersResource: rxResource({
-      params: () => store.accountingStore.accountingTenantId(),
-      stream: ({ params: id }) => store.paymentOrderService.list(id),
+      params: () => ({
+        currentUser: store.appStore.currentUser(),
+        accountingTenantId: store.accountingStore.accountingTenantId(),
+      }),
+      // Guard on currentUser: the real-time listener must not fire while auth is
+      // unresolved (cold mobile load / token refresh after tab resume), or the
+      // Firestore rules see request.auth == null and return permission-denied.
+      stream: ({ params }) =>
+        params.currentUser && params.accountingTenantId
+          ? store.paymentOrderService.list(params.accountingTenantId)
+          : of([]),
     }),
   })),
   withComputed(store => ({

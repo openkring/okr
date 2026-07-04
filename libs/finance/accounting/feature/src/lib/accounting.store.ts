@@ -24,10 +24,16 @@ export const AccountingStore = signalStore(
   })),
   withProps(store => ({
     configResource: rxResource({
-      stream: () => {
-        const id = store.accountingTenantId();
-        return id ? store.configService.read(id) : of(undefined);
-      },
+      params: () => ({
+        currentUser: store.appStore.currentUser(),
+        accountingTenantId: store.accountingTenantId(),
+      }),
+      // Guard on currentUser so the config read waits for auth to resolve; without
+      // it a cold load fires with request.auth == null and hits permission-denied.
+      stream: ({ params }) =>
+        params.currentUser && params.accountingTenantId
+          ? store.configService.read(params.accountingTenantId)
+          : of(undefined),
     }),
   })),
   withComputed(store => ({
