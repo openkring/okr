@@ -19,4 +19,5 @@ export * from './lib/route.util';
 export * from './lib/version-check.service';
 export * from './lib/vest-bridge';
 export * from './lib/sentry';
+export * from './lib/startup-timing';
 

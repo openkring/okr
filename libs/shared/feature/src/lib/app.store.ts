@@ -9,7 +9,7 @@ import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, replacePlaceholders } from '@okr/shared-util-core';
-import { AppNavigationService, isBrowser, VersionCheckService } from '@okr/shared-util-angular';
+import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService } from '@okr/shared-util-angular';
 
 import { SessionService} from '@okr/session-data-access';
 
@@ -412,6 +412,18 @@ export const AppStore = signalStore(
 
       if (!isBrowser(store.platformId)) return;
 
+      // TEMPORARY startup instrumentation (remove after slow-startup investigation).
+      // Marks the auth/data boundaries; reportStartupTiming ships the gaps to Sentry.
+      effect(() => { if (store.fbUser()) markStartup('fbUser'); });
+      effect(() => { if (store.currentUser()) markStartup('user:loaded'); });
+      effect(() => { if (store.isDataReady()) markStartup('data-ready'); });
+      effect(() => {
+        if (store.isAppReady()) {
+          markStartup('app-ready');
+          reportStartupTiming(store.isDataReady() ? 'data-ready' : 'watchdog');
+        }
+      });
+
       // Start anonymous session immediately on bootstrap
       store.sessionService.startSession();
 
@@ -443,7 +455,7 @@ export const AppStore = signalStore(
           patchState(store, { readinessTimedOut: false });
           return;
         }
-        const handle = setTimeout(() => patchState(store, { readinessTimedOut: true }), READINESS_TIMEOUT_MS);
+        const handle = setTimeout(() => { markStartup('watchdog:fired'); patchState(store, { readinessTimedOut: true }); }, READINESS_TIMEOUT_MS);
         onCleanup(() => clearTimeout(handle));
       });
 
