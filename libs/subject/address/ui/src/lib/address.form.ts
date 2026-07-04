@@ -1,21 +1,22 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 
-import { AddressModel, CategoryListModel, RoleName, SwissCity, UserModel } from '@okr/shared-models';
+import { AddressModel, CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, getSortedCountries, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
 
-import { SwissCitySearch } from '@okr/subject-swisscities-ui';
+import { CitySearch } from '@okr/subject-swisscities-ui';
 import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
 
 @Component({
   selector: 'okr-address-form',
   standalone: true,
   imports: [
-    CategorySelect, TextInput, SwissCitySearch, NotesInput, Checkbox,
+    CategorySelect, TextInput, CitySearch, NotesInput, Checkbox,
     EmailInput, PhoneInput, IbanInput, ErrorNote, Chips,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonSelect, IonSelectOption
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -95,14 +96,20 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
               </ion-row>
               
               @if(!isReadOnly()) {
-                <okr-swisscity-search (citySelected)="onCitySelected($event)" />
+                <okr-city-search [countryCode]="countryCode()" (citySelected)="onCitySelected($event)" />
               }
 
               <ion-row>
                 <ion-col size="12" size-md="3">
-                <okr-text-input [i18n]="countryCodeI18n()" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
+                  <ion-select label="{{ countryCodeI18n().label }}" labelPlacement="stacked"
+                      interface="popover" [value]="countryCode()" [disabled]="isReadOnly()"
+                      (ionChange)="onFieldChange('countryCode', $event.detail.value)">
+                    @for (opt of countryOptions(); track opt.code) {
+                      <ion-select-option [value]="opt.code">{{ opt.code }} — {{ opt.name }}</ion-select-option>
+                    }
+                  </ion-select>
                 </ion-col>
-        
+
                 <ion-col size="12" size-md="3">
                   <okr-text-input [i18n]="zipCodeI18n()" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
@@ -238,17 +245,11 @@ export class AddressForm {
   protected tags = linkedSignal(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected okey = linkedSignal(() => this.formData()?.okey ?? '');
 
-   protected swissCity = computed(() => {
-    return {
-      countryCode: this.countryCode(),
-      zipCode: this.zipCode(),
-      name: this.city(),
-      stateCode: ''
-    };
-  });
+  private readonly i18nService = inject(I18nService);
+  protected readonly countryOptions = computed(() => getSortedCountries(this.i18nService.getActiveLang()));
 
   /******************************* actions *************************************** */
-  protected onCitySelected(city: SwissCity): void {
+  protected onCitySelected(city: City): void {
     this.dirty.emit(true);
     this.formData.update(data => ({
       ...data!,

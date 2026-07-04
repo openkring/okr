@@ -10,6 +10,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-categories": "*",
     "@okr/shared-constants": "*",
+    "@okr/shared-i18n": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
     "@okr/subject-address-util": "*",
