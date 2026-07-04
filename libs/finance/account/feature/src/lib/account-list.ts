@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { AccountModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
@@ -19,7 +19,7 @@ import { AccountStore } from './account.store';
     Spinner, EmptyList, Menu,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem,
-    IonBackdrop, IonList, IonPopover, IonSelect, IonSelectOption
+    IonBackdrop, IonList, IonPopover
   ],
   providers: [AccountStore],
   template: `
@@ -43,21 +43,6 @@ import { AccountStore } from './account.store';
       }
     </ion-toolbar>
 
-    <!-- root selector -->
-    <ion-toolbar>
-      <ion-item lines="none">
-        <ion-select
-          [label]="store.i18n.select_root()"
-          [value]="store.selectedRootKey()"
-          (ionChange)="onRootSelected($event)"
-          interface="popover">
-          @for(root of store.rootAccounts(); track root.okey) {
-            <ion-select-option [value]="root.okey">{{ root.name }}</ion-select-option>
-          }
-        </ion-select>
-      </ion-item>
-    </ion-toolbar>
-
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item color="primary" lines="none">
@@ -71,8 +56,6 @@ import { AccountStore } from './account.store';
     @if(isLoading()) {
       <okr-spinner />
       <ion-backdrop />
-    } @else if(!store.selectedRootKey()) {
-      <okr-empty-list [message]="store.i18n.select_hint()" />
     } @else if(visibleNodes().length === 0) {
       <okr-empty-list [message]="store.i18n.empty()" />
     } @else {
@@ -107,11 +90,6 @@ export class AccountList {
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  /*-------------------------- root selection --------------------------------*/
-  protected onRootSelected(event: CustomEvent): void {
-    this.store.selectRoot(event.detail.value);
-  }
-
   /*-------------------------- tree expansion --------------------------------*/
   protected onToggleExpand(event: Event, okey: string): void {
     event.stopPropagation();
@@ -124,12 +102,8 @@ export class AccountList {
     switch (selectedMethod) {
       case 'create': await this.store.addRoot(); break;
       case 'export': await this.store.exportPlan(); break;
-      case 'delete':
-        if (this.store.selectedRootKey()) {
-          const root = this.store.rootAccounts().find(r => r.okey === this.store.selectedRootKey());
-          if (root) await this.store.delete(root, this.readOnly());
-        }
-        break;
+      // Deleting a whole chart of accounts (root) is now done via that root row's action sheet,
+      // since there is no longer a selected root at the toolbar level.
       default: error(undefined, `AccountList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

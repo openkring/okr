@@ -9,19 +9,18 @@ import { I18nService } from '@okr/shared-i18n';
 import { AccountModel } from '@okr/shared-models';
 
 import { AccountService } from '@okr/finance-account-data-access';
-import { ACCOUNT_I18N_KEYS, AccountI18n, flattenAccountTree, isAccount } from '@okr/finance-account-util';
+import { ACCOUNT_I18N_KEYS, AccountI18n, flattenAccountForest, getDefaultExpandedKeys, isAccount } from '@okr/finance-account-util';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 
 export type { AccountI18n };
 
 export type AccountListState = {
-  selectedRootKey: string;
-  expandedKeys: string[];
+  // null = the user hasn't toggled anything yet -> the default 2-tier expansion is used.
+  userExpandedKeys: string[] | null;
 };
 
 export const initialState: AccountListState = {
-  selectedRootKey: '',
-  expandedKeys: [],
+  userExpandedKeys: null,
 };
 
 export const AccountStore = signalStore(
@@ -49,15 +48,15 @@ export const AccountStore = signalStore(
     isLoading: computed(() => state.accountsResource.isLoading()),
     currentUser: computed(() => state.appStore.currentUser()),
     isReadOnly: computed(() => state.accountingStore.isExternallyManaged()),
-    rootAccounts: computed(() =>
-      (state.accountsResource.value() ?? []).filter(a => a.type === 'root')
+    // Resolved expansion: the user's manual set once they've toggled, otherwise the default 2-tier set.
+    expandedKeys: computed(() =>
+      state.userExpandedKeys() ?? getDefaultExpandedKeys(state.accountsResource.value() ?? [])
     ),
+  })),
+
+  withComputed((state) => ({
     visibleNodes: computed(() =>
-      flattenAccountTree(
-        state.accountsResource.value() ?? [],
-        state.selectedRootKey(),
-        state.expandedKeys()
-      )
+      flattenAccountForest(state.accountsResource.value() ?? [], state.expandedKeys())
     ),
   })),
 
@@ -67,18 +66,13 @@ export const AccountStore = signalStore(
       store.accountsResource.reload();
     },
 
-    /*-------------------------- root selection --------------------------------*/
-    selectRoot(rootKey: string): void {
-      patchState(store, { selectedRootKey: rootKey, expandedKeys: [] });
-    },
-
     /*-------------------------- tree expansion --------------------------------*/
     toggleExpand(okey: string): void {
       const current = store.expandedKeys();
       const next = current.includes(okey)
         ? current.filter(k => k !== okey)
         : [...current, okey];
-      patchState(store, { expandedKeys: next });
+      patchState(store, { userExpandedKeys: next });
     },
 
     /*-------------------------- actions --------------------------------*/
@@ -120,7 +114,7 @@ export const AccountStore = signalStore(
             // auto-expand the parent so new child is visible
             if (newKey && data.parentKey) {
               patchState(store, {
-                expandedKeys: [...store.expandedKeys(), data.parentKey]
+                userExpandedKeys: [...store.expandedKeys(), data.parentKey]
               });
             }
           }
@@ -131,17 +125,13 @@ export const AccountStore = signalStore(
 
     /**
      * Deleting any node (leaf, group, root) cascades to all its descendants.
-     * If the deleted node happens to be the currently selected root, the selection is cleared.
-     * @param account 
-     * @param readOnly 
-     * @returns 
+     * @param account
+     * @param readOnly
+     * @returns
      */
     async delete(account: AccountModel, readOnly = true): Promise<void> {
       if (readOnly) return;
       await store.accountService.deleteTree(account.okey, store.accountingStore.accountingTenantId(), store.currentUser());
-      if (store.selectedRootKey() === account.okey) {
-        patchState(store, { selectedRootKey: '', expandedKeys: [] });
-      }
       store.accountsResource.reload();
     },
 

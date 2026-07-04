@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AccountModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { flattenAccountTree, getAccountIndex, isAccount } from './account.util';
+import { flattenAccountForest, flattenAccountTree, getAccountIndex, getDefaultExpandedKeys, isAccount } from './account.util';
 
 vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
@@ -110,6 +110,70 @@ describe('Account Utils', () => {
     it('should return empty array when rootKey is not found', () => {
       const nodes = flattenAccountTree(accounts, 'nonexistent', []);
       expect(nodes).toHaveLength(0);
+    });
+  });
+
+  describe('forest helpers', () => {
+    let accounts: AccountModel[];
+
+    beforeEach(() => {
+      const make = (okey: string, type: string, parentKey: string): AccountModel => {
+        const a = new AccountModel(tenantId);
+        a.okey = okey;
+        a.name = okey;
+        a.type = type;
+        a.parentKey = parentKey;
+        return a;
+      };
+
+      // two roots, each root -> one group (depth 1) -> one leaf (depth 2)
+      accounts = [
+        make('root-a', 'root', ''),
+        make('group-a', 'group', 'root-a'),
+        make('leaf-a', 'leaf', 'group-a'),
+        make('root-b', 'root', ''),
+        make('group-b', 'group', 'root-b'),
+        make('leaf-b', 'leaf', 'group-b'),
+      ];
+    });
+
+    describe('getDefaultExpandedKeys', () => {
+      it('should expand roots and their direct children by default (2 tiers)', () => {
+        const keys = getDefaultExpandedKeys(accounts);
+        expect(keys).toEqual(['root-a', 'group-a', 'root-b', 'group-b']);
+        expect(keys).not.toContain('leaf-a');
+      });
+
+      it('should expand only the roots when maxDepth is 1', () => {
+        const keys = getDefaultExpandedKeys(accounts, 1);
+        expect(keys).toEqual(['root-a', 'root-b']);
+      });
+
+      it('should return no keys when maxDepth is 0', () => {
+        expect(getDefaultExpandedKeys(accounts, 0)).toHaveLength(0);
+      });
+    });
+
+    describe('flattenAccountForest', () => {
+      it('should include every root at the top level', () => {
+        const nodes = flattenAccountForest(accounts, []);
+        expect(nodes.map(n => n.account.okey)).toEqual(['root-a', 'root-b']);
+        expect(nodes.every(n => n.depth === 0)).toBe(true);
+      });
+
+      it('should reveal children of expanded nodes across all roots', () => {
+        const nodes = flattenAccountForest(accounts, getDefaultExpandedKeys(accounts));
+        expect(nodes.map(n => n.account.okey)).toEqual([
+          'root-a', 'group-a', 'leaf-a',
+          'root-b', 'group-b', 'leaf-b',
+        ]);
+        expect(nodes.find(n => n.account.okey === 'leaf-a')?.depth).toBe(2);
+      });
+
+      it('should return an empty array when there are no roots', () => {
+        const noRoots = accounts.filter(a => a.type !== 'root');
+        expect(flattenAccountForest(noRoots, [])).toHaveLength(0);
+      });
     });
   });
 });
