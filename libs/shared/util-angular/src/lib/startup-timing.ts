@@ -66,21 +66,42 @@ export function reportStartupTiming(reason: string): void {
     saveData: conn.saveData as boolean | undefined,
   };
 
-  const context = { reason, totalMs, firstScriptMs, displayMode, net, marks, rows };
+  // Is THIS load served by the ngsw service worker? controller===null means the SW isn't in
+  // charge (first visit, or it failed/was evicted), so every asset came off the network — the
+  // prime suspect for a large firstScriptMs on repeat Safari/PWA loads.
+  const swControlled = typeof navigator !== 'undefined' && !!navigator.serviceWorker?.controller;
 
-  // eslint-disable-next-line no-console
-  console.log(`[startup-timing] mode=${displayMode} reason=${reason} total=${totalMs}ms firstScript=${firstScriptMs}ms`, context);
+  // storage.persisted() tells us whether the ngsw Cache Storage is protected from Safari's ITP
+  // eviction. If false on a repeat load with a large firstScriptMs, the cache was likely evicted
+  // and the app re-downloaded — pointing the fix at shrinking the cached footprint.
+  const persistedP: Promise<boolean | undefined> =
+    typeof navigator !== 'undefined' && nav.storage?.persisted
+      ? nav.storage.persisted().catch(() => undefined)
+      : Promise.resolve(undefined);
 
-  addBreadcrumb({
-    category: 'startup',
-    level: 'info',
-    message: `startup-timing mode=${displayMode} reason=${reason} total=${totalMs}ms`,
-    data: marks,
-  });
-  captureMessage(`startup-timing total=${totalMs}ms mode=${displayMode} reason=${reason}`, {
-    level: 'info',
-    // Tags are filterable/groupable in the Sentry dashboard (extra is not).
-    tags: { 'startup.mode': displayMode, 'startup.reason': reason, 'startup.net': net.effectiveType ?? 'unknown' },
-    extra: context,
+  persistedP.then((storagePersisted: boolean | undefined) => {
+    const context = { reason, totalMs, firstScriptMs, displayMode, swControlled, storagePersisted, net, marks, rows };
+
+    // eslint-disable-next-line no-console
+    console.log(`[startup-timing] mode=${displayMode} reason=${reason} total=${totalMs}ms firstScript=${firstScriptMs}ms sw=${swControlled} persisted=${storagePersisted}`, context);
+
+    addBreadcrumb({
+      category: 'startup',
+      level: 'info',
+      message: `startup-timing mode=${displayMode} reason=${reason} total=${totalMs}ms`,
+      data: marks,
+    });
+    captureMessage(`startup-timing total=${totalMs}ms mode=${displayMode} reason=${reason}`, {
+      level: 'info',
+      // Tags are filterable/groupable in the Sentry dashboard (extra is not).
+      tags: {
+        'startup.mode': displayMode,
+        'startup.reason': reason,
+        'startup.net': net.effectiveType ?? 'unknown',
+        'startup.sw': String(swControlled),
+        'startup.persisted': String(storagePersisted),
+      },
+      extra: context,
+    });
   });
 }
