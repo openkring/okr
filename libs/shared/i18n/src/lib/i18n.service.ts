@@ -4,6 +4,7 @@ import { HashMap, TranslocoService, getBrowserLang } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { selectLanguage } from './i18n.util';
+import { reportI18nIssue } from './i18n-sentry';
 
 import { AvailableLanguages } from '@okr/shared-models';
 
@@ -60,6 +61,10 @@ export class I18nService {
         // non-aborted attempt); keep dev visibility via a warning.
         catchError((err) => {
           if (isDevMode()) console.warn(`I18nService.translate: failed to load i18n scope '${prefix}'`, err);
+          // Report to Sentry (deduped per key). A genuinely broken scope (typo, missing
+          // de.json, forgotten sync-i18n-assets) surfaces as one persistent issue; the
+          // occasional benign navigation-abort at most one deduped event per scope.
+          reportI18nIssue(key, 'scope-load-failed');
           return of('');
         })
       );
