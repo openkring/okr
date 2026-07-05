@@ -4,6 +4,7 @@ import {
   checkAuthorization,
   hasRole,
   isAdmin,
+  isKioskOnly,
   isPrivileged,
   isPrivilegedOr,
   isVisibleToUser
@@ -343,6 +344,37 @@ describe('auth.util', () => {
       const user = createUserWithRoles({ privileged: true });
       const result = isVisibleToUser('registered', user);
       expect(result).toBe(true);
+    });
+  });
+
+  describe('isKioskOnly', () => {
+    it('returns true when kiosk is the only true role', () => {
+      const user = createUserWithRoles({ kiosk: true });
+      expect(isKioskOnly(user)).toBe(true);
+    });
+
+    it('returns false when the user is admin as well', () => {
+      const user = createUserWithRoles({ kiosk: true, admin: true });
+      expect(isKioskOnly(user)).toBe(false);
+    });
+
+    it('returns false when the user has another role besides kiosk', () => {
+      const user = createUserWithRoles({ kiosk: true, registered: true });
+      expect(isKioskOnly(user)).toBe(false);
+    });
+
+    it('returns false when the user has no kiosk role', () => {
+      const user = createUserWithRoles({ admin: true });
+      expect(isKioskOnly(user)).toBe(false);
+    });
+
+    it('returns false when the user has no roles at all', () => {
+      const user = createUserWithRoles({});
+      expect(isKioskOnly(user)).toBe(false);
+    });
+
+    it('returns false for an undefined user', () => {
+      expect(isKioskOnly(undefined)).toBe(false);
     });
   });
 });

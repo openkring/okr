@@ -61,6 +61,20 @@ export function isPrivilegedOr(roleName: RoleName, currentUser?: UserModel): boo
   return hasRole('privileged', currentUser) || hasRole(roleName, currentUser);
 }
 
+/**
+ * Determines whether the user's only role is `kiosk` (no other role flag is true).
+ * Such users are locked to the /trips page (see kioskLockGuard). An admin — who also
+ * has kiosk-level access — or a kiosk user with any additional role is NOT kiosk-only.
+ * @param currentUser the user to check
+ * @returns true if kiosk is the sole true role
+ */
+export function isKioskOnly(currentUser?: UserModel): boolean {
+  if (!currentUser) return false;
+  const roles = currentUser.roles;
+  if (roles.kiosk !== true) return false;
+  return Object.entries(roles).every(([key, value]) => key === 'kiosk' || value !== true);
+}
+
 // privacy access checks
 export function isVisibleToUser(privacyAccessor?: PrivacyAccessor, currentUser?: UserModel): boolean {
   if (!privacyAccessor) return false;
