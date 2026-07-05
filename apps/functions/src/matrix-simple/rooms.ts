@@ -15,6 +15,8 @@ import {
   ensureAdminInRoom,
   forceJoinUserToRoom,
   kickUserFromRoom,
+  requireParam,
+  checkRateLimit,
 } from './shared';
 
 /**
@@ -41,9 +43,9 @@ export const getRoomByName = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string }> => {
-    if (!request.auth?.uid) throw new Error('Not authenticated');
+    if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Not authenticated');
     const { name } = request.data as { name: string };
-    if (!name) throw new Error('name is required');
+    requireParam(name, 'name');
 
     const adminToken = matrixAdminToken.value();
     const searchResp = await fetch(
@@ -51,12 +53,12 @@ export const getRoomByName = onCall(
       { headers: { Authorization: `Bearer ${adminToken}` } }
     );
     if (!searchResp.ok) {
-      throw new Error(`Room search failed: ${await searchResp.text()}`);
+      throw new HttpsError('internal', `Room search failed: ${await searchResp.text()}`);
     }
     const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
     const exact = data.rooms?.find(r => r.name === name);
     if (!exact) {
-      throw new Error(`No room found with name "${name}"`);
+      throw new HttpsError('not-found', `No room found with name "${name}"`);
     }
     return { roomId: exact.room_id };
   }
@@ -86,6 +88,7 @@ export const requestGroupRoomAccess = onCall(
     // rooms) ensures non-system Matrix accounts still cannot reach the room.
     // SEC-3: the localpart MUST come from the personKey — no UID fallback, or this
     // becomes a second avenue for duplicate `@<uid>` accounts (S1).
+    checkRateLimit(firebaseUid, 'requestGroupRoomAccess', 30);
     const localpart = await requireMatrixLocalpart(firebaseUid, 'requestGroupRoomAccess');
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
@@ -189,8 +192,8 @@ export const invitePersonToGroupRoom = onCall(
     await requireRole(request, 'invitePersonToGroupRoom', ['admin', 'memberAdmin', 'groupAdmin']);
 
     const { groupId, personKey } = request.data as { groupId: string; personKey: string };
-    if (!groupId) throw new Error('groupId is required');
-    if (!personKey) throw new Error('personKey is required');
+    requireParam(groupId, 'groupId');
+    requireParam(personKey, 'personKey');
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
     const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
@@ -230,8 +233,8 @@ export const kickPersonFromGroupRoom = onCall(
     await requireRole(request, 'kickPersonFromGroupRoom', ['admin', 'memberAdmin', 'groupAdmin']);
 
     const { groupId, personKey } = request.data as { groupId: string; personKey: string };
-    if (!groupId) throw new Error('groupId is required');
-    if (!personKey) throw new Error('personKey is required');
+    requireParam(groupId, 'groupId');
+    requireParam(personKey, 'personKey');
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
     const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
@@ -271,15 +274,15 @@ export const renameMatrixRoom = onCall(
     await requireRole(request, 'renameMatrixRoom', ['admin']);
 
     const { groupId, name } = request.data as { groupId: string; name: string };
-    if (!groupId) throw new Error('groupId is required');
-    if (!name) throw new Error('name is required');
+    requireParam(groupId, 'groupId');
+    requireParam(name, 'name');
 
     const adminToken = matrixAdminToken.value();
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
 
     // Step 1: Resolve the group's room (do not create)
     const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: false });
-    if (!roomId) throw new Error(`No room found for group "${groupId}"`);
+    if (!roomId) throw new HttpsError('not-found', `No room found for group "${groupId}"`);
 
     // Step 2: Ensure the admin is in the room (needed to send state events; ARCH-5 helper)
     await ensureAdminInRoom(roomId, adminToken);
@@ -294,7 +297,7 @@ export const renameMatrixRoom = onCall(
       }
     );
     if (!nameResp.ok) {
-      throw new Error(`Failed to rename room ${roomId}: ${await nameResp.text()}`);
+      throw new HttpsError('internal', `Failed to rename room ${roomId}: ${await nameResp.text()}`);
     }
 
     console.log(`renameMatrixRoom: Room ${roomId} renamed to "${name}"`);
@@ -339,7 +342,7 @@ export const listMatrixRooms = onCall(
           `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?limit=${limit}&from=${from}`,
           { headers: { Authorization: `Bearer ${adminToken}` } }
         );
-        if (!resp.ok) throw new Error(`Failed to list rooms: ${await resp.text()}`);
+        if (!resp.ok) throw new HttpsError('internal', `Failed to list rooms: ${await resp.text()}`);
         const data = await resp.json() as {
           rooms: Array<{ room_id: string; name: string; canonical_alias?: string; joined_members: number; creator?: string; public: boolean }>;
           next_batch?: number;
@@ -365,7 +368,7 @@ export const listMatrixRooms = onCall(
       );
       if (!joinedResp.ok) {
         if (joinedResp.status === 404) return { rooms: [], total: 0 }; // user not found
-        throw new Error(`Failed to get joined rooms for ${matrixUserId}: ${await joinedResp.text()}`);
+        throw new HttpsError('internal', `Failed to get joined rooms for ${matrixUserId}: ${await joinedResp.text()}`);
       }
       const { joined_rooms: joinedRoomIds } = await joinedResp.json() as { joined_rooms: string[]; total: number };
       if (joinedRoomIds.length === 0) return { rooms: [], total: 0 };
@@ -427,7 +430,7 @@ export const getRoomDetails = onCall(
   async (request): Promise<RoomDetails> => {
     await requireRole(request, 'getRoomDetails', ['admin']);
     const { roomId } = request.data as { roomId: string };
-    if (!roomId) throw new Error('roomId is required');
+    requireParam(roomId, 'roomId');
 
     const adminToken = matrixAdminToken.value();
 
@@ -436,7 +439,7 @@ export const getRoomDetails = onCall(
       `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`,
       { headers: { Authorization: `Bearer ${adminToken}` } }
     );
-    if (!infoResp.ok) throw new Error(`Room not found: ${await infoResp.text()}`);
+    if (!infoResp.ok) throw new HttpsError('not-found', `Room not found: ${await infoResp.text()}`);
     const info = await infoResp.json() as {
       room_id: string; name: string; canonical_alias?: string;
       joined_members: number; creator: string; public: boolean;
@@ -493,14 +496,14 @@ export const getAllMembersFromRoom = onCall(
   async (request): Promise<{ members: RoomMemberInfo[]; total: number }> => {
     await requireRole(request, 'getAllMembersFromRoom', ['admin']);
     const { roomId } = request.data as { roomId: string };
-    if (!roomId) throw new Error('roomId is required');
+    requireParam(roomId, 'roomId');
 
     const adminToken = matrixAdminToken.value();
     const stateResp = await fetch(
       `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
       { headers: { Authorization: `Bearer ${adminToken}` } }
     );
-    if (!stateResp.ok) throw new Error(`Failed to get room state: ${await stateResp.text()}`);
+    if (!stateResp.ok) throw new HttpsError('internal', `Failed to get room state: ${await stateResp.text()}`);
 
     const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
     const events = stateData.state ?? [];
@@ -539,7 +542,7 @@ export const getMemberDetails = onCall(
   async (request): Promise<MemberDetails> => {
     await requireRole(request, 'getMemberDetails', ['admin']);
     const { userId, roomId } = request.data as { userId: string; roomId?: string };
-    if (!userId) throw new Error('userId is required');
+    requireParam(userId, 'userId');
 
     const adminToken = matrixAdminToken.value();
 
@@ -548,7 +551,7 @@ export const getMemberDetails = onCall(
       `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(userId)}`,
       { headers: { Authorization: `Bearer ${adminToken}` } }
     );
-    if (!userResp.ok) throw new Error(`User not found: ${await userResp.text()}`);
+    if (!userResp.ok) throw new HttpsError('not-found', `User not found: ${await userResp.text()}`);
     const user = await userResp.json() as { displayname?: string; avatar_url?: string };
     const displayName = user.displayname ?? userId.split(':')[0].substring(1);
 
@@ -601,7 +604,7 @@ export const deleteMatrixRoom = onCall(
     await requireRole(request, 'deleteMatrixRoom', ['admin']);
 
     const { roomId } = request.data as { roomId: string };
-    if (!roomId) throw new Error('roomId is required');
+    requireParam(roomId, 'roomId');
 
     const adminToken = matrixAdminToken.value();
 
@@ -621,7 +624,7 @@ export const deleteMatrixRoom = onCall(
     );
 
     if (!deleteResp.ok) {
-      throw new Error(`Failed to delete room ${roomId}: ${await deleteResp.text()}`);
+      throw new HttpsError('internal', `Failed to delete room ${roomId}: ${await deleteResp.text()}`);
     }
 
     const data = await deleteResp.json() as { delete_id: string };
@@ -645,8 +648,8 @@ export const addMatrixRoomAlias = onCall(
     await requireRole(request, 'addMatrixRoomAlias', ['admin']);
 
     const { roomId, aliasName } = request.data as { roomId: string; aliasName: string };
-    if (!roomId) throw new Error('roomId is required');
-    if (!aliasName) throw new Error('aliasName is required');
+    requireParam(roomId, 'roomId');
+    requireParam(aliasName, 'aliasName');
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
     // Sanitise: lowercase, replace spaces with hyphens, strip disallowed chars
@@ -666,7 +669,7 @@ export const addMatrixRoomAlias = onCall(
     );
 
     if (!resp.ok) {
-      throw new Error(`Failed to add alias ${fullAlias} to room ${roomId}: ${await resp.text()}`);
+      throw new HttpsError('internal', `Failed to add alias ${fullAlias} to room ${roomId}: ${await resp.text()}`);
     }
 
     console.log(`addMatrixRoomAlias: alias ${fullAlias} added to room ${roomId}`);

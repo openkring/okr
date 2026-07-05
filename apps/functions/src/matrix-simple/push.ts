@@ -15,6 +15,7 @@ import {
   PUSH_GATEWAY_BASE,
   requireMatrixLocalpart,
   requireProvisionedUser,
+  checkRateLimit,
 } from './shared';
 
 /**
@@ -32,6 +33,7 @@ export const sendCallNotification = onCall(
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Must be authenticated');
     }
+    checkRateLimit(request.auth.uid, 'sendCallNotification', 30);
 
     const { roomId, roomName, callerName, calleeMatrixUserIds } = request.data as {
       roomId: string;
@@ -159,6 +161,7 @@ export const registerMatrixPusher = onCall(
   },
   async (request): Promise<{ registered: boolean }> => {
     const uid = await requireProvisionedUser(request, 'registerMatrixPusher');
+    checkRateLimit(uid, 'registerMatrixPusher', 10);
     const { pushkey, deviceDisplayName, lang, appId } = request.data as {
       pushkey: string; deviceDisplayName?: string; lang?: string; appId?: string;
     };

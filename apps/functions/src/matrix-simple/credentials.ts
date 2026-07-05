@@ -3,7 +3,7 @@
 // Matrix account lifecycle: Firebase→Matrix token exchange, user provisioning,
 // profile sync, and deactivation.
 
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -13,6 +13,8 @@ import {
   requireMatrixLocalpart,
   requireProvisionedUser,
   requireRole,
+  requireParam,
+  checkRateLimit,
 } from './shared';
 
 export interface MatrixAuthResponse {
@@ -39,7 +41,7 @@ export const getMatrixCredentials = onCall(
       // Get Firebase ID token from request context
       const firebaseUid = request.auth?.uid;
       if (!firebaseUid) {
-        throw new Error('Not authenticated with Firebase');
+        throw new HttpsError('unauthenticated', 'Not authenticated with Firebase');
       }
 
       // Get full user record from Firebase
@@ -51,6 +53,7 @@ export const getMatrixCredentials = onCall(
       // SEC-3: requireMatrixLocalpart is the provisioning gate — throws for any caller
       // without a users/{uid}.personKey instead of minting a UID-based duplicate account.
       const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+      checkRateLimit(firebaseUid, 'getMatrixCredentials', 10); // token minting — tightest limit
       const localpart = await requireMatrixLocalpart(firebaseUid, 'getMatrixCredentials');
       const matrixUserId = `@${localpart}:${hostname}`;
 
@@ -58,7 +61,7 @@ export const getMatrixCredentials = onCall(
       let matrixUserExists = false;
       try {
         const checkUserResponse = await fetch(
-          `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${matrixUserId}`,
+          `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
           {
             method: 'GET',
             headers: {
@@ -81,7 +84,7 @@ export const getMatrixCredentials = onCall(
         const displayName = userRecord.displayName || userRecord.email?.split('@')[0] || firebaseUid;
         
         const createUserResponse = await fetch(
-          `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${matrixUserId}`,
+          `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
           {
             method: 'PUT',
             headers: {
@@ -99,7 +102,7 @@ export const getMatrixCredentials = onCall(
 
         if (!createUserResponse.ok) {
           const errorText = await createUserResponse.text();
-          throw new Error(`Failed to create Matrix user: ${errorText}`);
+          throw new HttpsError('internal', `Failed to create Matrix user: ${errorText}`);
         }
 
         console.log(`Created Matrix user: ${matrixUserId}`);
@@ -108,7 +111,7 @@ export const getMatrixCredentials = onCall(
       // Generate Matrix access token for the user
       // Note: This requires Synapse admin API to generate tokens
       const loginResponse = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${matrixUserId}/login`,
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/login`,
         {
           method: 'POST',
           headers: {
@@ -123,7 +126,7 @@ export const getMatrixCredentials = onCall(
 
       if (!loginResponse.ok) {
         const errorText = await loginResponse.text();
-        throw new Error(`Failed to generate Matrix access token: ${errorText}`);
+        throw new HttpsError('internal', `Failed to generate Matrix access token: ${errorText}`);
       }
 
       const loginData = await loginResponse.json() as {
@@ -192,9 +195,10 @@ export const provisionMatrixUser = onCall(
   async (request): Promise<{ matrixUserId: string }> => {
     // Provisioning a Matrix account for a person is part of the normal direct-chat
     // flow — any provisioned app user may do it (creating accounts only for real persons).
-    await requireProvisionedUser(request, 'provisionMatrixUser');
+    const callerUid = await requireProvisionedUser(request, 'provisionMatrixUser');
+    checkRateLimit(callerUid, 'provisionMatrixUser', 20);
     const { personKey } = request.data as { personKey: string };
-    if (!personKey) throw new Error('personKey is required');
+    requireParam(personKey, 'personKey');
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
     const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
@@ -218,7 +222,7 @@ export const provisionMatrixUser = onCall(
           }
         );
         if (!reactivateResp.ok) {
-          throw new Error(`Failed to reactivate ${matrixUserId}: ${await reactivateResp.text()}`);
+          throw new HttpsError('internal', `Failed to reactivate ${matrixUserId}: ${await reactivateResp.text()}`);
         }
         console.log(`provisionMatrixUser: ${matrixUserId} reactivated`);
       } else {
@@ -250,7 +254,7 @@ export const provisionMatrixUser = onCall(
     );
     if (!createResp.ok) {
       const errText = await createResp.text();
-      throw new Error(`Failed to provision Matrix user ${matrixUserId}: ${errText}`);
+      throw new HttpsError('internal', `Failed to provision Matrix user ${matrixUserId}: ${errText}`);
     }
 
     console.log(`provisionMatrixUser: Created Matrix user ${matrixUserId} (${displayName})`);
@@ -275,7 +279,7 @@ export const deactivateMatrixUser = onCall(
     await requireRole(request, 'deactivateMatrixUser', ['admin']);
 
     const { personKey, erase = false } = request.data as { personKey: string; erase?: boolean };
-    if (!personKey) throw new Error('personKey is required');
+    requireParam(personKey, 'personKey');
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
     const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
@@ -303,7 +307,7 @@ export const deactivateMatrixUser = onCall(
     );
 
     if (!deactivateResp.ok) {
-      throw new Error(`Failed to deactivate ${matrixUserId}: ${await deactivateResp.text()}`);
+      throw new HttpsError('internal', `Failed to deactivate ${matrixUserId}: ${await deactivateResp.text()}`);
     }
 
     console.log(`deactivateMatrixUser: ${matrixUserId} deactivated (erase=${erase})`);
@@ -327,17 +331,18 @@ export const syncFirebaseProfileToMatrix = onCall(
     try {
       const firebaseUid = request.auth?.uid;
       if (!firebaseUid) {
-        throw new Error('Not authenticated with Firebase');
+        throw new HttpsError('unauthenticated', 'Not authenticated with Firebase');
       }
 
       const userRecord = await getAuth().getUser(firebaseUid);
       const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+      checkRateLimit(firebaseUid, 'syncFirebaseProfileToMatrix', 10);
       const localpart = await requireMatrixLocalpart(firebaseUid, 'syncFirebaseProfileToMatrix');
       const matrixUserId = `@${localpart}:${hostname}`;
 
       // First, get Matrix access token for the user
       const loginResponse = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${matrixUserId}/login`,
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/login`,
         {
           method: 'POST',
           headers: {
@@ -351,7 +356,7 @@ export const syncFirebaseProfileToMatrix = onCall(
       );
 
       if (!loginResponse.ok) {
-        throw new Error('Failed to get Matrix access token for profile sync');
+        throw new HttpsError('internal', 'Failed to get Matrix access token for profile sync');
       }
 
       const { access_token } = await loginResponse.json() as { access_token: string };

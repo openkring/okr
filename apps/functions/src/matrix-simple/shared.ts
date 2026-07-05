@@ -99,6 +99,47 @@ export async function requireProvisionedUser(
 }
 
 /**
+ * Validate a required string parameter of a callable (C-hygiene, design review #6).
+ * Throws HttpsError('invalid-argument') when missing, not a string, empty, or
+ * unreasonably long (these values end up interpolated into Matrix ids/URLs).
+ */
+export function requireParam(value: unknown, name: string, maxLen = 512): string {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new HttpsError('invalid-argument', `${name} is required`);
+  }
+  if (value.length > maxLen) {
+    throw new HttpsError('invalid-argument', `${name} exceeds maximum length of ${maxLen}`);
+  }
+  return value;
+}
+
+/**
+ * Basic per-uid, per-function rate limiting (design review #6). In-memory sliding
+ * window — per Cloud Functions instance, reset on cold start. This is a burst brake
+ * against runaway clients and scripted abuse behind a valid App Check token, not a
+ * distributed quota (which would need a Firestore/Redis backend).
+ */
+const rateBuckets = new Map<string, number[]>();
+
+export function checkRateLimit(uid: string, fnName: string, max: number, windowMs = 60_000): void {
+  const now = Date.now();
+  const key = `${fnName}:${uid}`;
+  const hits = (rateBuckets.get(key) ?? []).filter((t) => now - t < windowMs);
+  if (hits.length >= max) {
+    console.warn(`${fnName}: rate limit exceeded for uid ${uid} (${hits.length}/${max} per ${windowMs}ms)`);
+    throw new HttpsError('resource-exhausted', 'Too many requests — please retry later.');
+  }
+  hits.push(now);
+  rateBuckets.set(key, hits);
+  // Opportunistic pruning so the map does not grow unboundedly on long-lived instances.
+  if (rateBuckets.size > 10_000) {
+    for (const [k, v] of rateBuckets) {
+      if (v.every((t) => now - t >= windowMs)) rateBuckets.delete(k);
+    }
+  }
+}
+
+/**
  * Single source of truth for a group's Matrix room alias localpart.
  * Matrix alias localparts may only contain [a-z0-9._~-]; the group okey may contain
  * uppercase/spaces/other characters, so it is lowercased and sanitised. ALL CFs must
@@ -306,7 +347,7 @@ export async function forceJoinUserToRoom(roomId: string, matrixUserId: string, 
     }
   );
   if (!joinResp.ok) {
-    throw new Error(`Failed to join ${matrixUserId} to room ${roomId}: ${await joinResp.text()}`);
+    throw new HttpsError('internal', `Failed to join ${matrixUserId} to room ${roomId}: ${await joinResp.text()}`);
   }
 }
 
@@ -326,7 +367,7 @@ export async function kickUserFromRoom(roomId: string, matrixUserId: string, adm
   if (!kickResp.ok) {
     const errText = await kickResp.text();
     if (errText.includes('M_NOT_IN_ROOM') || errText.includes('not in room')) return false;
-    throw new Error(`Failed to kick ${matrixUserId} from room ${roomId}: ${errText}`);
+    throw new HttpsError('internal', `Failed to kick ${matrixUserId} from room ${roomId}: ${errText}`);
   }
   return true;
 }
