@@ -7,6 +7,7 @@ export class TripModel implements OkrModel, NamedModel, SearchableModel, TaggedM
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
   public name = DEFAULT_NAME; // a meaningful name for the trip
+  public type = ''; // trip type / list partition (a `trip_type` category value, e.g. 'logbuch')
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
   public notes = DEFAULT_NOTES; // a detailed description of the trip

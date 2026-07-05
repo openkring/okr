@@ -31,6 +31,14 @@ describe('newTrip', () => {
     // newTrip stores the current time via getCurrentTime() in HH:mm format (DateFormat.Time)
     expect(trip.startTime).toMatch(/^\d{2}:\d{2}$/);
   });
+
+  it('defaults type to empty string', () => {
+    expect(newTrip(TENANT).type).toBe('');
+  });
+
+  it('sets the type when provided (list partition, e.g. logbuch)', () => {
+    expect(newTrip(TENANT, 'logbuch').type).toBe('logbuch');
+  });
 });
 
 describe('newTripName', () => {

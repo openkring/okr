@@ -6,10 +6,11 @@ import { addIndexElement, DateFormat, getCurrentTime, getTodayStr, parseDate } f
 /** Editing of an ended trip is allowed for this long after its endTime. */
 export const TRIP_EDIT_WINDOW_MS = 15 * 60 * 1000;
 
-export function newTrip(tenantId: string): TripModel {
+export function newTrip(tenantId: string, type = ''): TripModel {
   const trip = new TripModel(tenantId);
+  trip.type = type;
   trip.startDate = getTodayStr(DateFormat.StoreDate);
-  
+
   trip.startTime = getCurrentTime();
   trip.state = 'draft';
   return trip;

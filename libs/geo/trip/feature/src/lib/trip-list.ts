@@ -1,10 +1,12 @@
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonChip, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
+import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonChip, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { RoleName, TripModel } from '@okr/shared-models';
+
+import { Menu } from '@okr/cms-menu-feature';
 
 import { formatTripTime, isTripEditable } from '@okr/trip-util';
 import { TripStore } from './trip.store';
@@ -20,7 +22,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
   standalone: true,
   imports: [
     SvgIconPipe, PrettyDatePipe, TranslatePipe, AsyncPipe,
-    Spinner, EmptyList, ListFilter, AvatarDisplay,
+    Spinner, EmptyList, ListFilter, AvatarDisplay, Menu,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonMenuButton,
     IonIcon, IonContent, IonList, IonItem, IonLabel, IonItemDivider, IonPopover,
     IonChip, IonBackdrop, IonFab, IonFabButton
@@ -41,42 +43,14 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
           </ion-buttons>
           @if (store.canWrite()) {  <!-- kiosk or admin -->
             <ion-buttons slot="end">
-              <ion-button id="c-trip">
+              <ion-button id="{{ popupId() }}">
                 <ion-icon slot="icon-only" src="{{'menu' | svgIcon}}" />
               </ion-button>
-              <ion-popover trigger="c-trip" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+              <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
                 (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                 <ng-template>
                   <ion-content>
-                    <ion-list>
-                      <ion-item button (click)="dismissPopover('add')">
-                        <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
-                        <ion-label>{{ store.i18n.create() }}</ion-label>
-                      </ion-item>
-                      <ion-item button (click)="dismissPopover('reportDamage')">
-                        <ion-icon slot="start" src="{{'warning' | svgIcon}}" />
-                        <ion-label>{{ store.i18n.report_damage() }}</ion-label>
-                      </ion-item>
-                      <ion-item button (click)="dismissPopover('reportBug')">
-                        <ion-icon slot="start" src="{{'bug' | svgIcon}}" />
-                        <ion-label>{{ store.i18n.report_bug() }}</ion-label>
-                      </ion-item>
-                      <ion-item button (click)="dismissPopover('showBoatStatistics')">
-                        <ion-icon slot="start" src="{{'chart' | svgIcon}}" />
-                        <ion-label>{{ store.i18n.show_statistics_boatkm() }}</ion-label>
-                      </ion-item>
-                      <ion-item button (click)="dismissPopover('showPersonStatistics')">
-                        <ion-icon slot="start" src="{{'chart' | svgIcon}}" />
-                        <ion-label>{{ store.i18n.show_statistics_personkm() }}</ion-label>
-                      </ion-item>
-                      <!-- tbd: Statistiken zeigen, Anleitung -->
-                      @if(hasRole('admin')) {
-                        <ion-item button (click)="dismissPopover('exportRaw')">
-                          <ion-icon slot="start" src="{{'download' | svgIcon}}" />
-                          <ion-label>{{ store.i18n.export_raw() }}</ion-label>
-                        </ion-item>
-                      }
-                    </ion-list>
+                    <okr-menu [menuName]="contextMenuName()" />
                   </ion-content>
                 </ng-template>
               </ion-popover>
@@ -145,12 +119,15 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
 export class TripList {
   protected readonly store = inject(TripStore);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly popoverController = inject(PopoverController);
 
   // inputs
+  public listId = input('all');
   public contextMenuName = input.required<string>();
   public color = input('secondary');
   public showMenuButton = input<boolean>(true);
+
+  // derived
+  protected readonly popupId = computed(() => 'c_trips_' + this.listId());
 
   // filters
   protected selectedState = linkedSignal(() => this.store.selectedState());
@@ -165,11 +142,12 @@ export class TripList {
   protected readonly stateOptions = STATE_OPTIONS;
   protected readonly formatTime = formatTripTime;
 
-  /******************************* context menu *************************************** */
-  protected async dismissPopover(action: string): Promise<void> {
-    await this.popoverController.dismiss(action);
+  constructor() {
+    // the listId (a `trip_type` category value, e.g. 'logbuch') partitions the list by trip type
+    effect(() => this.store.setType(this.listId()));
   }
 
+  /******************************* context menu *************************************** */
   protected getWeekdayI18n(date: string): string {
     return getWeekdayI18nKey(date, false);
   }

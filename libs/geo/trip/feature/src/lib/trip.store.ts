@@ -50,13 +50,15 @@ export type TripState = {
   selectedState: string;
   selectedYear: number;
   locationType: string;
+  type: string; // trip type / list partition (a `trip_type` category value, driven by the list's listId)
 };
 
 const initialState: TripState = {
   searchTerm: '',
   selectedState: 'all',
   selectedYear: getYear(), // initialize to current year to match ListFilter default
-  locationType: 'logbuch'
+  locationType: 'logbuch',
+  type: 'logbuch'
 };
 
 export const TripStore = signalStore(
@@ -109,7 +111,10 @@ export const TripStore = signalStore(
   withComputed(store => ({
     filteredTrips: computed(() => {
       const searchTerm = normalizeTripSearchTerm(store.searchTerm());
+      const type = store.type();
       return store.trips().filter((trip: TripModel) =>
+        // legacy trips predate the `type` field — treat them as 'logbuch' (the original, sole type)
+        (trip.type || 'logbuch') === type &&
         nameMatches(trip.index, searchTerm) &&
         yearMatches(trip.startDate, store.selectedYear()) &&
         nameMatches(trip.state, store.selectedState())
@@ -134,6 +139,11 @@ export const TripStore = signalStore(
       patchState(store, { selectedYear });
     },
 
+    /** Set the trip type / list partition (the list's listId, a `trip_type` category value). */
+    setType(type: string) {
+      patchState(store, { type });
+    },
+
     /******************************* CRUD on single trip  *************************************** */
 
     async openTripModal(trip: TripModel, mode: 'add' | 'edit' | 'end' | 'view'): Promise<void> {
@@ -154,7 +164,7 @@ export const TripStore = signalStore(
 
     async createTrip(): Promise<void> {
       if (!store.canWrite()) return;
-      const trip = newTrip(store.tenantId());
+      const trip = newTrip(store.tenantId(), store.type());
       await this.openTripModal(trip, 'add');
     },
 
