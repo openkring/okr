@@ -20,7 +20,11 @@ import {
   ensureMatrixUserExists,
   resolveGroupRoom,
   requireRole,
-} from './index';
+  serverHostname,
+  ensureAdminInRoom,
+  forceJoinUserToRoom,
+  kickUserFromRoom,
+} from './shared';
 
 const MEMBERSHIP_COLLECTION = 'memberships';
 
@@ -50,87 +54,6 @@ function grantsChatAccess(doc: MembershipDoc | undefined): boolean {
   if (doc.isArchived) return false;
   const exit = doc.dateOfExit ?? '';
   return exit === '' || exit.startsWith('9999');
-}
-
-function serverHostname(): string {
-  return new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-}
-
-/**
- * Ensure the admin (whose token we hold) has joined the room, so subsequent
- * invite/kick client-API calls are permitted even in invite-only rooms (SEC-1).
- * Best-effort: failures are logged, not thrown (the follow-up call surfaces them).
- */
-async function ensureAdminInRoom(roomId: string, adminToken: string): Promise<void> {
-  const whoamiResp = await fetch(
-    `${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`,
-    { headers: { Authorization: `Bearer ${adminToken}` } }
-  );
-  if (!whoamiResp.ok) {
-    console.warn(`ensureAdminInRoom: whoami failed → ${whoamiResp.status}`);
-    return;
-  }
-  const { user_id: adminUserId } = await whoamiResp.json() as { user_id: string };
-  if (!adminUserId) return;
-  const joinResp = await fetch(
-    `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: adminUserId }),
-    }
-  );
-  if (!joinResp.ok) {
-    console.warn(`ensureAdminInRoom: join for ${adminUserId} → ${joinResp.status}: ${await joinResp.text()}`);
-  }
-}
-
-/**
- * Invite + admin-force-join a Matrix user into a room. Idempotent: invite errors
- * are ignored ("already invited/joined"), join errors throw.
- */
-async function forceJoinUserToRoom(roomId: string, matrixUserId: string, adminToken: string): Promise<void> {
-  // Invite first so the force-join succeeds on invite-only rooms (SEC-1).
-  await fetch(
-    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/invite`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: matrixUserId }),
-    }
-  );
-  const joinResp = await fetch(
-    `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: matrixUserId }),
-    }
-  );
-  if (!joinResp.ok) {
-    throw new Error(`Failed to join ${matrixUserId} to room ${roomId}: ${await joinResp.text()}`);
-  }
-}
-
-/**
- * Kick a Matrix user from a room. Idempotent: M_NOT_IN_ROOM is tolerated.
- * @returns true if a kick actually happened.
- */
-async function kickUserFromRoom(roomId: string, matrixUserId: string, adminToken: string, reason: string): Promise<boolean> {
-  const kickResp = await fetch(
-    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/kick`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: matrixUserId, reason }),
-    }
-  );
-  if (!kickResp.ok) {
-    const errText = await kickResp.text();
-    if (errText.includes('M_NOT_IN_ROOM') || errText.includes('not in room')) return false;
-    throw new Error(`Failed to kick ${matrixUserId} from room ${roomId}: ${errText}`);
-  }
-  return true;
 }
 
 /**
