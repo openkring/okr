@@ -28,12 +28,12 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { defineSecret } from 'firebase-functions/params';
 
-const matrixAdminToken = defineSecret('MATRIX_ADMIN_TOKEN');
+export const matrixAdminToken = defineSecret('MATRIX_ADMIN_TOKEN');
 // Shared secret embedded in the Matrix push-gateway URL (SEC-2). Synapse stores the
 // secret-bearing URL via registerMatrixPusher and POSTs to it; matrixPushGateway rejects
 // any call that does not carry this secret as a path segment. Never sent to the client.
 const pushGatewaySecret = defineSecret('MATRIX_PUSH_GATEWAY_SECRET');
-const MATRIX_HOMESERVER = process.env.MATRIX_HOMESERVER || 'https://matrix.bkchat.etke.host';
+export const MATRIX_HOMESERVER = process.env.MATRIX_HOMESERVER || 'https://matrix.bkchat.etke.host';
 
 /** App id used for the HTTP pusher; must match the value matrixPushGateway accepts. */
 const PUSH_APP_ID = 'bkaiser.scs.chat';
@@ -88,7 +88,7 @@ async function getCallerRoles(uid: string): Promise<Record<string, boolean>> {
 }
 
 /** Throw unless the authenticated caller holds at least one of `allowedRoles`. Returns the uid. */
-async function requireRole(
+export async function requireRole(
   request: { auth?: { uid?: string } },
   fnName: string,
   allowedRoles: string[],
@@ -134,7 +134,7 @@ function groupRoomAliasLocalpart(groupId: string): string {
  * admin API if missing. The display name is resolved from `persons/{personKey}` when a
  * personKey is given, else from the Firebase user record when a firebaseUid is given.
  */
-async function ensureMatrixUserExists(
+export async function ensureMatrixUserExists(
   matrixUserId: string,
   adminToken: string,
   opts: { personKey?: string; firebaseUid?: string } = {},
@@ -186,7 +186,7 @@ async function ensureMatrixUserExists(
  *
  * Returns undefined when the room cannot be found and `opts.create` is false.
  */
-async function resolveGroupRoom(
+export async function resolveGroupRoom(
   groupId: string,
   hostname: string,
   adminToken: string,

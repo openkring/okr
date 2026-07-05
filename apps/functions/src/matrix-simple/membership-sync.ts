@@ -1,0 +1,274 @@
+// apps/functions/src/matrix-simple/membership-sync.ts
+//
+// Server-side membership → Matrix-room synchronization (chat design review #3,
+// planning/specs/2026-07-05-chat-design-review-spec.md).
+//
+// Until now, group-chat invites/kicks were fired only from the browser
+// (MembershipStore → invitePersonToGroupRoom / kickPersonFromGroupRoom CFs), so a
+// membership written by an import, an admin script, or a client that crashed
+// mid-flow silently drifted from the Matrix room. The Firestore trigger below is
+// the guaranteed mechanism; the client calls remain a latency optimization (both
+// paths are idempotent — "already in room" / "not in room" are tolerated).
+
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { getFirestore } from 'firebase-admin/firestore';
+
+import {
+  MATRIX_HOMESERVER,
+  matrixAdminToken,
+  ensureMatrixUserExists,
+  resolveGroupRoom,
+  requireRole,
+} from './index';
+
+const MEMBERSHIP_COLLECTION = 'memberships';
+
+/** Matrix accounts that legitimately live in every room and must never be reported/kicked. */
+const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'bruno']);
+
+// Inlined subset of MembershipModel to avoid monorepo cross-bundle imports
+// (same pattern as task/index.ts and calendar/index.ts).
+interface MembershipDoc {
+  memberKey: string;
+  memberModelType: 'person' | 'org' | 'group';
+  orgKey: string;
+  orgModelType: 'org' | 'group';
+  dateOfExit?: string;
+  isArchived?: boolean;
+  tenants?: string[];
+}
+
+/**
+ * A membership grants group-chat access iff it links a person to a group and is
+ * neither archived nor ended. Active dateOfExit is '' (never set) or '9999*'
+ * (the "open end" convention checked by MembershipService.endMembershipByDate).
+ */
+function grantsChatAccess(doc: MembershipDoc | undefined): boolean {
+  if (!doc) return false;
+  if (doc.orgModelType !== 'group' || doc.memberModelType !== 'person') return false;
+  if (doc.isArchived) return false;
+  const exit = doc.dateOfExit ?? '';
+  return exit === '' || exit.startsWith('9999');
+}
+
+function serverHostname(): string {
+  return new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+}
+
+/**
+ * Ensure the admin (whose token we hold) has joined the room, so subsequent
+ * invite/kick client-API calls are permitted even in invite-only rooms (SEC-1).
+ * Best-effort: failures are logged, not thrown (the follow-up call surfaces them).
+ */
+async function ensureAdminInRoom(roomId: string, adminToken: string): Promise<void> {
+  const whoamiResp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (!whoamiResp.ok) {
+    console.warn(`ensureAdminInRoom: whoami failed → ${whoamiResp.status}`);
+    return;
+  }
+  const { user_id: adminUserId } = await whoamiResp.json() as { user_id: string };
+  if (!adminUserId) return;
+  const joinResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: adminUserId }),
+    }
+  );
+  if (!joinResp.ok) {
+    console.warn(`ensureAdminInRoom: join for ${adminUserId} → ${joinResp.status}: ${await joinResp.text()}`);
+  }
+}
+
+/**
+ * Invite + admin-force-join a Matrix user into a room. Idempotent: invite errors
+ * are ignored ("already invited/joined"), join errors throw.
+ */
+async function forceJoinUserToRoom(roomId: string, matrixUserId: string, adminToken: string): Promise<void> {
+  // Invite first so the force-join succeeds on invite-only rooms (SEC-1).
+  await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/invite`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: matrixUserId }),
+    }
+  );
+  const joinResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: matrixUserId }),
+    }
+  );
+  if (!joinResp.ok) {
+    throw new Error(`Failed to join ${matrixUserId} to room ${roomId}: ${await joinResp.text()}`);
+  }
+}
+
+/**
+ * Kick a Matrix user from a room. Idempotent: M_NOT_IN_ROOM is tolerated.
+ * @returns true if a kick actually happened.
+ */
+async function kickUserFromRoom(roomId: string, matrixUserId: string, adminToken: string, reason: string): Promise<boolean> {
+  const kickResp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/kick`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: matrixUserId, reason }),
+    }
+  );
+  if (!kickResp.ok) {
+    const errText = await kickResp.text();
+    if (errText.includes('M_NOT_IN_ROOM') || errText.includes('not in room')) return false;
+    throw new Error(`Failed to kick ${matrixUserId} from room ${roomId}: ${errText}`);
+  }
+  return true;
+}
+
+/**
+ * Firestore trigger: keep the group's Matrix room in sync with membership writes,
+ * regardless of who wrote them (app, import, admin script).
+ *
+ * Transitions handled:
+ *  - gains chat access (created active, un-ended, un-archived)      → provision + invite + force-join
+ *  - loses chat access (ended, archived, deleted)                   → kick
+ *  - re-keyed while active (memberKey or orgKey changed on update)  → kick old, join new
+ *
+ * Errors are logged, never thrown: a Matrix hiccup must not fail/retry-storm the
+ * Firestore write, and reconcileGroupRoomMembers can repair any missed transition.
+ */
+export const onMembershipWritten = onDocumentWritten(
+  {
+    document: `${MEMBERSHIP_COLLECTION}/{membershipId}`,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (event) => {
+    const before = event.data?.before?.exists ? (event.data.before.data() as MembershipDoc) : undefined;
+    const after = event.data?.after?.exists ? (event.data.after.data() as MembershipDoc) : undefined;
+
+    const had = grantsChatAccess(before);
+    const has = grantsChatAccess(after);
+    const rekeyed = had && has && (before!.memberKey !== after!.memberKey || before!.orgKey !== after!.orgKey);
+    if (had === has && !rekeyed) return; // no chat-relevant transition
+
+    const hostname = serverHostname();
+    const adminToken = matrixAdminToken.value();
+
+    try {
+      if ((had && !has) || rekeyed) {
+        const doc = before!;
+        const matrixUserId = `@${doc.memberKey.toLowerCase()}:${hostname}`;
+        const roomId = await resolveGroupRoom(doc.orgKey, hostname, adminToken, { create: false });
+        if (roomId) {
+          await ensureAdminInRoom(roomId, adminToken);
+          const kicked = await kickUserFromRoom(roomId, matrixUserId, adminToken, 'Membership ended');
+          console.log(`onMembershipWritten: ${matrixUserId} ${kicked ? 'kicked from' : 'was not in'} room ${roomId} (group ${doc.orgKey})`);
+        }
+      }
+      if ((has && !had) || rekeyed) {
+        const doc = after!;
+        const matrixUserId = `@${doc.memberKey.toLowerCase()}:${hostname}`;
+        await ensureMatrixUserExists(matrixUserId, adminToken, { personKey: doc.memberKey });
+        const roomId = await resolveGroupRoom(doc.orgKey, hostname, adminToken, { create: true });
+        if (!roomId) {
+          console.warn(`onMembershipWritten: no room resolvable for group ${doc.orgKey}`);
+          return;
+        }
+        await ensureAdminInRoom(roomId, adminToken);
+        await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+        console.log(`onMembershipWritten: ${matrixUserId} joined room ${roomId} (group ${doc.orgKey})`);
+      }
+    } catch (error) {
+      console.error(`onMembershipWritten: sync failed for membership ${event.params.membershipId}:`, error);
+    }
+  }
+);
+
+/**
+ * Repair drift for one group: force-join every person with an active group
+ * membership into the group's Matrix room.
+ *
+ * Deliberately additive-only: room members WITHOUT a membership are reported in
+ * `extras` but NOT kicked — requestGroupRoomAccess legitimately admits
+ * non-members (e.g. training-course participants), so pruning is a human call.
+ */
+export const reconcileGroupRoomMembers = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ roomId: string; joined: string[]; alreadyIn: string[]; extras: string[] }> => {
+    await requireRole(request, 'reconcileGroupRoomMembers', ['admin', 'memberAdmin', 'groupAdmin']);
+
+    const { groupId } = request.data as { groupId: string };
+    if (!groupId) throw new HttpsError('invalid-argument', 'groupId is required');
+
+    const hostname = serverHostname();
+    const adminToken = matrixAdminToken.value();
+
+    // Desired members: personKeys of active group memberships
+    const snap = await getFirestore()
+      .collection(MEMBERSHIP_COLLECTION)
+      .where('orgKey', '==', groupId)
+      .where('orgModelType', '==', 'group')
+      .where('memberModelType', '==', 'person')
+      .get();
+    const desired = new Set(
+      snap.docs
+        .map((d) => d.data() as MembershipDoc)
+        .filter((m) => grantsChatAccess(m))
+        .map((m) => m.memberKey.toLowerCase())
+    );
+
+    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: true });
+    if (!roomId) throw new HttpsError('not-found', `No room for group ${groupId}`);
+
+    // Actual members from room state (join or invite)
+    const stateResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!stateResp.ok) throw new HttpsError('internal', `Failed to get room state: ${await stateResp.text()}`);
+    const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+    const actual = new Set(
+      (stateData.state ?? [])
+        .filter((e) => e.type === 'm.room.member' && ['join', 'invite'].includes(e.content['membership'] as string))
+        .map((e) => e.state_key.split(':')[0].substring(1).toLowerCase())
+    );
+
+    await ensureAdminInRoom(roomId, adminToken);
+
+    const joined: string[] = [];
+    const alreadyIn: string[] = [];
+    for (const personKey of desired) {
+      if (actual.has(personKey)) {
+        alreadyIn.push(personKey);
+        continue;
+      }
+      const matrixUserId = `@${personKey}:${hostname}`;
+      try {
+        await ensureMatrixUserExists(matrixUserId, adminToken, { personKey });
+        await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+        joined.push(personKey);
+      } catch (error) {
+        console.error(`reconcileGroupRoomMembers: failed to join ${matrixUserId}:`, error);
+      }
+    }
+
+    const extras = [...actual].filter((lp) => !desired.has(lp) && !SERVICE_ACCOUNT_LOCALPARTS.has(lp));
+
+    console.log(`reconcileGroupRoomMembers: group=${groupId} room=${roomId} joined=${joined.length} alreadyIn=${alreadyIn.length} extras=${extras.length}`);
+    return { roomId, joined, alreadyIn, extras };
+  }
+);

@@ -9,6 +9,7 @@ import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
 import * as MatrixSimple from './matrix-simple';
+import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as Rag from './rag';
 import * as Email from './email';
 import * as Bexio from './bexio';
@@ -97,6 +98,9 @@ export const addMatrixRoomAlias = MatrixSimple.addMatrixRoomAlias;
 export const sendCallNotification = MatrixSimple.sendCallNotification;
 export const registerMatrixPusher = MatrixSimple.registerMatrixPusher;
 export const matrixPushGateway = MatrixSimple.matrixPushGateway;
+// membership → Matrix-room sync (server-side backstop; chat design review #3)
+export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
+export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
 
 // oidc-bridge removed (C-3): unused, insecure OIDC IdP. Matrix auth uses the
 // token-exchange approach (getMatrixCredentials in matrix-simple) instead.
