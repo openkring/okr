@@ -212,7 +212,7 @@ export const _PageStore = signalStore(
       },
 
       getRoles(): CategoryListModel {
-        return store.appStore.getCategory('role');
+        return store.appStore.getCategory('roles');
       },
 
       getConfigAttribute(key: keyof AppConfig): string | number | boolean {

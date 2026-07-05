@@ -227,7 +227,9 @@ export class AocRoles {
   protected readonly logTitle = computed(() => this.aocRolesStore.logTitle());
   protected readonly logInfo = computed(() => this.aocRolesStore.log());
   protected readonly isLoading = computed(() => this.aocRolesStore.isLoading());
-  protected readonly allRoles = computed(() => this.aocRolesStore.appStore.getCategory('roles'));
+  // tryGetCategory: the app-ready watchdog can let this page render before the categories
+  // resource has loaded (e.g. hung Firestore read); the chips just stay empty until it emits.
+  protected readonly allRoles = computed(() => this.aocRolesStore.appStore.tryGetCategory('roles'));
   protected readonly allRoleNames = computed(() => getCategoryItemNames(this.allRoles()));
 
   protected pwdLength = PASSWORD_MAX_LENGTH;

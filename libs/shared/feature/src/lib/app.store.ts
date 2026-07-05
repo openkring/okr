@@ -1,6 +1,7 @@
 import { computed, effect, inject, PLATFORM_ID } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
+import { captureMessage } from '@sentry/angular';
 import { authState } from 'rxfire/auth';
 import { of } from 'rxjs';
 import { App } from '@capacitor/app';
@@ -229,9 +230,10 @@ export const AppStore = signalStore(
     firebaseUid: computed(() => state.fbUser()?.uid ?? undefined),
     loginEmail: computed(() => state.fbUser()?.email ?? undefined),
     roles: computed(() => state.currentUser()?.roles ?? []),
-    // System reference data (categories) is read synchronously via getCategory();
-    // feature components must not render until it has loaded. True once the resource
-    // has settled (loaded or errored), so the app never hangs on a failed load.
+    // System reference data (categories) is read synchronously via getCategory(). True once
+    // the resource has settled (loaded or errored), so the app never hangs on a failed load.
+    // Note: rendering before readiness is tolerated — getCategory degrades to an empty
+    // category until the stream emits (the watchdog can open navigation without data).
     areCategoriesReady: computed(() => !state.categoriesResource.isLoading()),
     // True once the auth state is settled: either logged out (fbUser === null) or
     // logged in with the UserModel loaded. Undefined fbUser (auth still restoring) or
@@ -347,11 +349,18 @@ export const AppStore = signalStore(
       },
 
       getCategory(categoryName?: string): CategoryListModel {
-        // enforce that this function always returns the category (or it ends with an internal error)
-        if (!categoryName) { die('AppStore.getCategory: categoryName is mandatory.');
-        } else {
-          return store.allCategories()?.find(cat => cat.name === categoryName) ?? die(`AppStore.getCategory: category ${categoryName} not found.`);
+        if (!categoryName) { die('AppStore.getCategory: categoryName is mandatory.'); }
+        const cat = store.allCategories().find(c => c.name === categoryName);
+        if (cat) return cat;
+        // The app-ready watchdog opens navigation after READINESS_TIMEOUT_MS even when the
+        // categories resource never loaded (hung/failed Firestore read), so render-path callers
+        // can reach this with an empty allCategories(). Degrade to an empty category instead of
+        // crashing the page — computeds re-evaluate once the stream emits. A name missing from
+        // LOADED categories is real misconfiguration: report it, but still keep the page alive.
+        if (store.allCategories().length > 0) {
+          captureMessage(`AppStore.getCategory: category ${categoryName} not found.`, { level: 'warning' });
         }
+        return new CategoryListModel(store.tenantId());
       },
 
       tryGetCategory(categoryName?: string): CategoryListModel | undefined {

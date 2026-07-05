@@ -17,6 +17,7 @@
     "@okr/shared-ui": "*",
     "@okr/session-data-access": "*",
     "@capacitor/app": "*",
+    "@sentry/angular": "*",
     "@okr/relationship-responsibility-data-access": "*"
   }
 }
