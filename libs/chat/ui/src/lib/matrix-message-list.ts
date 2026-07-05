@@ -479,7 +479,6 @@ export class MatrixMessageList {
   // inputs
   messages = input.required<MatrixMessage[]>();
   currentUserId = input<string>();
-  homeserverUrl = input<string>('https://bkchat.etke.host');
   typingUsers = input<string[]>([]);
   threadReplyCounts = input<Map<string, number>>(new Map());
   receiptsByEventId = input<Map<string, MatrixReadReceipt[]>>(new Map());
@@ -583,12 +582,6 @@ export class MatrixMessageList {
       minute: '2-digit',
       hour12: false
     });
-  }
-
-  getMediaUrl(mxcUrl: string | undefined): string {
-    if (!mxcUrl || !mxcUrl.startsWith('mxc://')) return '';
-    const parts = mxcUrl.substring(6).split('/');
-    return `${this.homeserverUrl()}/_matrix/media/v3/download/${parts[0]}/${parts[1]}`;
   }
 
   isAudioFile(message: MatrixMessage): boolean {

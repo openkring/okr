@@ -374,7 +374,12 @@ export class MatrixMessageInput {
     });
 
     // Revoke all remaining object URLs on destroy
-    this._destroyRef.onDestroy(() => this.revokeObjectUrls());
+    this._destroyRef.onDestroy(() => {
+      this.revokeObjectUrls();
+      if (this.typingTimeout) {
+        clearTimeout(this.typingTimeout);
+      }
+    });
 
     // Attach cursor tracking directly to the native textarea inside ion-textarea's shadow DOM
     afterNextRender(() => {
@@ -383,7 +388,10 @@ export class MatrixMessageInput {
         const ta = getNative();
         if (ta) this.savedCursorPos = ta.selectionStart;
       };
-      // ion-textarea renders async; poll briefly until the native element appears
+      // ion-textarea renders async; poll briefly until the native element appears,
+      // but give up after 5 s (cursor tracking is a nice-to-have, not worth an
+      // immortal interval if the element never renders)
+      let attempts = 0;
       const interval = setInterval(() => {
         const ta = getNative();
         if (ta) {
@@ -391,8 +399,16 @@ export class MatrixMessageInput {
           ta.addEventListener('keyup', save);
           ta.addEventListener('mouseup', save);
           ta.addEventListener('touchend', save);
+          this._destroyRef.onDestroy(() => {
+            ta.removeEventListener('keyup', save);
+            ta.removeEventListener('mouseup', save);
+            ta.removeEventListener('touchend', save);
+          });
+        } else if (++attempts >= 100) {
+          clearInterval(interval);
         }
       }, 50);
+      this._destroyRef.onDestroy(() => clearInterval(interval));
     });
   }
 

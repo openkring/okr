@@ -493,20 +493,15 @@ export const requestGroupRoomAccess = onCall(
       throw new HttpsError('invalid-argument', 'groupId is required');
     }
 
-    const db = getFirestore();
-
     // Authorization: the only requirement for group-chat access is being a provisioned
     // system user. Group chats legitimately include non-members and past-members (e.g.
     // training-course participants), so membership is NOT required. SEC-1 (invite-only
     // rooms) ensures non-system Matrix accounts still cannot reach the room.
-    const userDoc = await db.collection('users').doc(firebaseUid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError('permission-denied', 'No user profile.');
-    }
-    const personKey = (userDoc.data()?.personKey as string | undefined) ?? '';
+    // SEC-3: the localpart MUST come from the personKey — no UID fallback, or this
+    // becomes a second avenue for duplicate `@<uid>` accounts (S1).
+    const localpart = await requireMatrixLocalpart(firebaseUid, 'requestGroupRoomAccess');
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    const localpart = personKey ? personKey.toLowerCase() : firebaseUid.toLowerCase();
     const matrixUserId = `@${localpart}:${hostname}`;
     const adminToken = matrixAdminToken.value();
 

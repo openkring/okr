@@ -23,7 +23,6 @@ import { PollCreateModal } from './poll-create.modal';
     Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
     IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge
   ],
-  providers: [MatrixChatStore],
   styles: [`
     :host {
       display: block;
@@ -358,7 +357,6 @@ import { PollCreateModal } from './poll-create.modal';
                   <okr-matrix-message-list
                     [messages]="messages()"
                     [currentUserId]="matrixUserId()"
-                    [homeserverUrl]="homeserverUrl()"
                     [typingUsers]="typingUsers()"
                     [threadReplyCounts]="threadReplyCounts()"
                     [receiptsByEventId]="receiptsByEventId()"
@@ -441,7 +439,6 @@ import { PollCreateModal } from './poll-create.modal';
                   <okr-matrix-message-list
                     [messages]="threadMessages()"
                     [currentUserId]="matrixUserId()"
-                    [homeserverUrl]="homeserverUrl()"
                     [typingUsers]="[]"
                     [i18n]="store.i18n"
                     (messageClicked)="onMessageClicked($event)"
@@ -525,7 +522,6 @@ export class MatrixChat implements OnDestroy {
   protected readonly currentRoomId = computed(() => this.store.currentRoomId());
   protected readonly totalUnreadCount = this.store.totalUnreadCount;
   protected readonly matrixUserId = computed(() => this.store.matrixUser()?.id);
-  protected readonly homeserverUrl = computed(() => this.store.homeServerUrl());
   private readonly currentUser = computed(() => this.store.currentUser());
 
   // Local state

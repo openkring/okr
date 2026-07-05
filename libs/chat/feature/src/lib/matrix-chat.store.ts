@@ -184,10 +184,6 @@ export const _MatrixChatStore = signalStore(
 
   withComputed((state) => {
     return {
-      homeServerUrl: computed(() => {
-        const url = state.appStore.env.services.matrixHomeserver;
-        return url.startsWith('https://') ? url : 'https://' + url;
-      }),
       matrixUser: computed((): MatrixUser | undefined => {
         const user = state.currentUser();
         if (!user) return undefined;
@@ -353,7 +349,7 @@ export const _MatrixChatStore = signalStore(
           componentProps: { 
             room, 
             currentUser: store.currentUser(),
-            header: 'room.update.header'
+            header: store.i18n.room_update_header()
           }
         });
         await modal.present();
