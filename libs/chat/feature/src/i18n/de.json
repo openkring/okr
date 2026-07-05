@@ -111,7 +111,8 @@
     "replies": {
       "one": "Antwort",
       "many": "Antworten"
-    }
+    },
+    "close": "Thread schliessen"
   },
   "video": {
     "incoming": "Eingehender Video-Anruf...",
@@ -175,5 +176,16 @@
     "sendError": "Datei(en) konnten nicht gesendet werden",
     "sendImagesError": "Bild(er) konnten nicht gesendet werden"
   },
-  "videoCallError": "Video-Call fehlgeschlagen"
+  "videoCallError": "Video-Call fehlgeschlagen",
+  "send": "Senden",
+  "emojiPicker": "Emoji auswählen",
+  "clearInput": "Eingabe löschen",
+  "removeImage": "Bild entfernen",
+  "toggleRoomList": "Raumliste ein-/ausblenden",
+  "roomInfo": "Raum-Informationen",
+  "call": {
+    "answer": "Anruf annehmen",
+    "hangup": "Anruf beenden"
+  },
+  "messagesLabel": "Chat-Nachrichten"
 }

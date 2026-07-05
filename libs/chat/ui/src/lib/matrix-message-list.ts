@@ -312,7 +312,7 @@ import { formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, Mat
     }
   `],
   template: `
-    <div class="messages-container" #messagesContainer (scroll)="onContainerScroll()">
+    <div class="messages-container" #messagesContainer role="log" [attr.aria-label]="i18n().messages_label()" (scroll)="onContainerScroll()">
       @if (loadingOlder()) {
         <div class="load-older-spinner">
           <ion-spinner name="dots" />
@@ -457,14 +457,14 @@ import { formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, Mat
                     @if (item.reactions && item.reactions.size > 0) {
                       <div class="message-reactions">
                         @for (reaction of getReactions(item); track reaction.emoji) {
-                          <ion-chip class="reaction-chip" (click)="reactionClicked.emit({ messageId: item.eventId, emoji: reaction.emoji })">
+                          <ion-chip class="reaction-chip" role="button" tabindex="0" [attr.aria-label]="reaction.emoji + ' ' + reaction.count" (click)="reactionClicked.emit({ messageId: item.eventId, emoji: reaction.emoji })">
                             {{ reaction.emoji }} {{ reaction.count }}
                           </ion-chip>
                         }
                       </div>
                     }
                     @if (threadReplyCounts().get(item.eventId); as replyCount) {
-                      <div class="thread-indicator" (click)="threadClicked.emit(item.eventId)">
+                      <div class="thread-indicator" role="button" tabindex="0" [attr.aria-label]="i18n().thread_open()" (click)="threadClicked.emit(item.eventId)" (keydown.enter)="threadClicked.emit(item.eventId)">
                         <ion-icon src="{{'chatbox' | svgIcon}}"></ion-icon>
                         {{ replyCount }} {{ replyCount === 1 ? i18n().thread_replies_one() : i18n().thread_replies_many() }}
                       </div>
@@ -479,7 +479,7 @@ import { formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, Mat
 
       @if (typingUsers().length > 0) {
         <div class="typing-bubble">
-          <div class="typing-dots">
+          <div class="typing-dots" aria-hidden="true">
             <span></span><span></span><span></span>
           </div>
           <span class="typing-label">{{ formatTypingLabel() }}</span>

@@ -90,6 +90,17 @@ export const MATRIX_CHAT_I18N_KEYS = {
   thread_reply_error:        PFX + 'thread.reply.error',
   thread_empty:              PFX + 'thread.empty',
 
+  send:                      PFX + 'send',
+  emoji_picker:              PFX + 'emojiPicker',
+  clear_input:               PFX + 'clearInput',
+  remove_image:              PFX + 'removeImage',
+  toggle_room_list:          PFX + 'toggleRoomList',
+  room_info:                 PFX + 'roomInfo',
+  thread_close:              PFX + 'thread.close',
+  call_answer:               PFX + 'call.answer',
+  call_hangup:               PFX + 'call.hangup',
+  messages_label:            PFX + 'messagesLabel',
+
   video_incoming:            PFX + 'video.incoming',
   video_connecting:          PFX + 'video.connecting',
 

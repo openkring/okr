@@ -216,6 +216,7 @@ import 'emoji-picker-element';
                 size="small"
                 color="danger"
                 class="pending-thumb-remove"
+                [attr.aria-label]="i18n().remove_image()"
                 (click)="removeImage.emit(i)"
               >
                 <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
@@ -232,7 +233,7 @@ import 'emoji-picker-element';
             <div class="reply-label">{{ i18n().msg_reply_to()}} {{ replyToMessage()?.senderName }}</div>
             <div class="reply-text">{{ replyToMessage()?.body }}</div>
           </div>
-          <ion-button fill="clear" size="small" (click)="cancelReply()">
+          <ion-button fill="clear" size="small" [attr.aria-label]="i18n().cancel()" (click)="cancelReply()">
             <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
           </ion-button>
         </div>
@@ -252,23 +253,23 @@ import 'emoji-picker-element';
       </div>
 
       @if (typingUsers().length > 0) {
-        <div class="typing-indicator">{{ getTypingText() }}</div>
+        <div class="typing-indicator" aria-live="polite">{{ getTypingText() }}</div>
       }
 
       <!-- Row 2: action buttons, always at the bottom -->
       <div class="buttons-row">
-        <ion-button fill="clear" class="action-button" (click)="showActions()">
+        <ion-button fill="clear" class="action-button" [attr.aria-label]="i18n().add_attachment()" (click)="showActions()">
           <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
         </ion-button>
 
-        <ion-button fill="clear" (click)="clearValue()">
+        <ion-button fill="clear" [attr.aria-label]="i18n().clear_input()" (click)="clearValue()">
           <ion-icon src="{{'cancel' | svgIcon }}" />
         </ion-button>
 
         <okr-button-copy [value]="messageText()" [i18n]="buttonCopyI18n()" />
 
         <div class="emoji-picker-wrapper">
-          <ion-button fill="clear" class="action-button" (click)="toggleEmojiPicker($event)">
+          <ion-button fill="clear" class="action-button" [attr.aria-label]="i18n().emoji_picker()" (click)="toggleEmojiPicker($event)">
             <ion-icon slot="icon-only" src="{{'smiley' | svgIcon}}"></ion-icon>
           </ion-button>
           @if (showEmojiPicker()) {
@@ -281,16 +282,18 @@ import 'emoji-picker-element';
         <span class="spacer"></span>
 
         <ion-button fill="clear" class="action-button" (click)="startRecording()"
-          title="{{ i18n().record_audio() }}">
+          title="{{ i18n().record_audio() }}"
+          [attr.aria-label]="i18n().record_audio()">
           <ion-icon slot="icon-only" src="{{'mic' | svgIcon}}"></ion-icon>
         </ion-button>
 
         <ion-button fill="clear" class="action-button" (click)="videoCallStarted.emit()"
-          title="{{ i18n().video_call() }}">
+          title="{{ i18n().video_call() }}"
+          [attr.aria-label]="i18n().video_call()">
           <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
         </ion-button>
 
-        <ion-button class="send-button" [disabled]="!canSend()" (click)="sendMessage()">
+        <ion-button class="send-button" [disabled]="!canSend()" [attr.aria-label]="i18n().send()" (click)="sendMessage()">
           <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
         </ion-button>
       </div>
@@ -299,7 +302,7 @@ import 'emoji-picker-element';
     <!-- Recording bar — replaces both rows while recording -->
     @if (isRecording()) {
       <div class="recording-container">
-        <ion-button fill="clear" class="action-button" color="medium" (click)="cancelRecording()">
+        <ion-button fill="clear" class="action-button" color="medium" [attr.aria-label]="i18n().cancel()" (click)="cancelRecording()">
           <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
         </ion-button>
         <div class="recording-indicator">
@@ -307,7 +310,7 @@ import 'emoji-picker-element';
           <span class="recording-duration">{{ formatRecordingDuration(recordingSeconds()) }}</span>
           <span class="recording-label">{{ i18n().recording() }}</span>
         </div>
-        <ion-button class="send-button" color="danger" (click)="stopRecording()">
+        <ion-button class="send-button" color="danger" [attr.aria-label]="i18n().send()" (click)="stopRecording()">
           <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
         </ion-button>
       </div>

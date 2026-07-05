@@ -289,14 +289,14 @@ import { PollCreateModal } from './poll-create.modal';
               <ion-header class="room-header">
                 <ion-toolbar>
                   <ion-buttons slot="start">
-                    <ion-button (click)="toggleRoomList()" [disabled]="!currentRoom()">
+                    <ion-button [attr.aria-label]="store.i18n.toggle_room_list()" (click)="toggleRoomList()" [disabled]="!currentRoom()">
                       <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
                     </ion-button>
                   </ion-buttons>
                   <ion-title>{{ store.i18n.rooms() }}</ion-title>
                   @if(hasRole('admin')) {
                     <ion-buttons slot="end">
-                      <ion-button (click)="onCreateRoom()">
+                      <ion-button [attr.aria-label]="store.i18n.room_create_header()" (click)="onCreateRoom()">
                         <ion-icon src="{{'add-circle' | svgIcon}}"></ion-icon>
                       </ion-button>
                     </ion-buttons>
@@ -331,7 +331,7 @@ import { PollCreateModal } from './poll-create.modal';
                   <ion-toolbar>
                     @if (!showRoomList() && !isGroupView()) {
                       <ion-buttons slot="start">
-                        <ion-button (click)="toggleRoomList(); $event.stopPropagation()">
+                        <ion-button [attr.aria-label]="store.i18n.toggle_room_list()" (click)="toggleRoomList(); $event.stopPropagation()">
                           <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
                         </ion-button>
                       </ion-buttons>
@@ -340,7 +340,7 @@ import { PollCreateModal } from './poll-create.modal';
                     <ion-title>{{ currentRoom()?.name }}</ion-title>
                     @if(hasRole('admin')) {
                       <ion-buttons slot="end">
-                        <ion-button (click)="onRoomInfo()">
+                        <ion-button [attr.aria-label]="store.i18n.room_info()" (click)="onRoomInfo()">
                           <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
                         </ion-button>
                       </ion-buttons>
@@ -421,7 +421,7 @@ import { PollCreateModal } from './poll-create.modal';
                   <ion-toolbar>
                     <ion-title>{{ store.i18n.thread_title() }}</ion-title>
                     <ion-buttons slot="end">
-                      <ion-button (click)="onCloseThread()">
+                      <ion-button [attr.aria-label]="store.i18n.thread_close()" (click)="onCloseThread()">
                         <ion-icon src="{{'cancel' | svgIcon}}"></ion-icon>
                       </ion-button>
                     </ion-buttons>
@@ -473,10 +473,10 @@ import { PollCreateModal } from './poll-create.modal';
             @if (callState() === 'ringing') {
               <div class="call-status-label">{{ store.i18n.video_incoming() }}</div>
               <div class="call-controls">
-                <ion-button class="call-fab" color="success" (click)="answerCall()">
+                <ion-button class="call-fab" color="success" [attr.aria-label]="store.i18n.call_answer()" (click)="answerCall()">
                   <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
                 </ion-button>
-                <ion-button class="call-fab" color="danger" (click)="hangupCall()">
+                <ion-button class="call-fab" color="danger" [attr.aria-label]="store.i18n.call_hangup()" (click)="hangupCall()">
                   <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
                 </ion-button>
               </div>
@@ -485,7 +485,7 @@ import { PollCreateModal } from './poll-create.modal';
                 <div class="call-status-label">{{ store.i18n.video_connecting() }}</div>
               }
               <div class="call-controls">
-                <ion-button class="call-fab" color="danger" (click)="hangupCall()">
+                <ion-button class="call-fab" color="danger" [attr.aria-label]="store.i18n.call_hangup()" (click)="hangupCall()">
                   <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
                 </ion-button>
               </div>
