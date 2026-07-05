@@ -6,5 +6,6 @@ export * from './lib/isPrivileged.guard';
 export * from './lib/kioskLock.guard';
 export * from './lib/login.modal';
 export * from './lib/login.page';
+export * from './lib/logout.page';
 export * from './lib/password-reset.page';
 export * from './lib/confirm-password-reset.page';
