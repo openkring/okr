@@ -1,18 +1,11 @@
-import { Component, input, output, Signal } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 
 import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail } from '@ionic/angular/standalone';
 
 import { MatrixRoom } from '@okr/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@okr/shared-pipes';
 
-import { formatMatrixTimestamp, isMatrixPhotoUrl } from '@okr/chat-util';
-
-export interface MatrixRoomListI18n {
-  isTypeing: Signal<string>;
-  areTypeing: Signal<string>;
-  severalTypeing: Signal<string>;
-  room_none: Signal<string>;
-}
+import { formatMatrixTimestamp, isMatrixPhotoUrl, MatrixChatI18n } from '@okr/chat-util';
 
 @Component({
   selector: 'okr-matrix-room-list',
@@ -115,23 +108,15 @@ export interface MatrixRoomListI18n {
 })
 export class MatrixRoomList {
   // inputs
-  public readonly i18n = input.required<MatrixRoomListI18n>();
+  public readonly i18n = input.required<MatrixChatI18n>();
   rooms = input.required<MatrixRoom[]>();
   selectedRoomId = input<string>();
 
   roomSelected = output<string>();
 
   isPhotoUrl = isMatrixPhotoUrl;
-  formatTimestamp = formatMatrixTimestamp;
 
-  getRoomInitial(name: string): string {
-    return name ? name.charAt(0).toUpperCase() : '?';
-  }
-
-  protected getTypingText(userIds: string[]): string {
-    if (userIds.length === 0) return '';
-    if (userIds.length === 1) return this.i18n().isTypeing();
-    if (userIds.length === 2) return userIds.length + this.i18n().areTypeing();
-    return this.i18n().severalTypeing();
+  protected formatTimestamp(timestamp: number): string {
+    return formatMatrixTimestamp(timestamp, this.i18n().date_yesterday());
   }
 }

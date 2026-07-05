@@ -1,18 +1,48 @@
+/** Single locale for all chat timestamp rendering (i18n consolidation, design review #5). */
+export const CHAT_LOCALE = 'de-DE';
+
 /**
- * Format a Matrix timestamp (ms since epoch) into a human-readable string.
- * Today → time, yesterday → "Yesterday", this week → weekday, older → date.
+ * Format a Matrix timestamp (ms since epoch) into a compact room-list string.
+ * Today → time, yesterday → yesterdayLabel, this week → weekday, older → date.
+ * @param yesterdayLabel resolved i18n label for "yesterday" (defaults to German)
  */
-export function formatMatrixTimestamp(timestamp: number): string {
+export function formatMatrixTimestamp(timestamp: number, yesterdayLabel = 'Gestern'): string {
   if (!timestamp) return '';
   const date = new Date(timestamp);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  if (days === 0) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  if (days === 1) return 'Yesterday';
-  if (days < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (days === 0) return formatMatrixTime(timestamp);
+  if (days === 1) return yesterdayLabel;
+  if (days < 7) return date.toLocaleDateString(CHAT_LOCALE, { weekday: 'short' });
+  return date.toLocaleDateString(CHAT_LOCALE, { month: 'short', day: 'numeric' });
+}
+
+/** Format a Matrix timestamp as a day heading: today/yesterday label, else full date. */
+export function formatMatrixDate(timestamp: number, todayLabel = 'Heute', yesterdayLabel = 'Gestern'): string {
+  const date = new Date(timestamp);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return todayLabel;
+  if (date.toDateString() === yesterday.toDateString()) return yesterdayLabel;
+  return date.toLocaleDateString(CHAT_LOCALE, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+/** Format a Matrix timestamp as HH:mm. */
+export function formatMatrixTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString(CHAT_LOCALE, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
 }
 
 /**

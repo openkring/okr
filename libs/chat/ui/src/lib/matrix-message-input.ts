@@ -643,9 +643,9 @@ export class MatrixMessageInput {
     const users = this.typingUsers();
     const t = this.i18n();
     if (users.length === 0) return '';
-    if (users.length === 1) return `${users[0]} ${t.isTypeing}`;
-    if (users.length === 2) return `${users[0]} ${t.and} ${users[1]} ${t.areTypeing}`;
-    return `${users[0]} ${t.and} ${users.length - 1} ${t.othersTypeing}`;
+    if (users.length === 1) return `${users[0]} ${t.isTyping()}`;
+    if (users.length === 2) return `${users[0]} ${t.and()} ${users[1]} ${t.areTyping()}`;
+    return `${users[0]} ${t.and()} ${users.length - 1} ${t.othersTyping()}`;
   }
 
   focus() {

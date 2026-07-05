@@ -322,7 +322,7 @@ import { PollCreateModal } from './poll-create.modal';
               @if(isDragOver()) {
                 <div class="drop-overlay">
                   <ion-icon src="{{'upload' | svgIcon}}"></ion-icon>
-                  <span>Dateien hierher ziehen</span>
+                  <span>{{ store.i18n.drop_files() }}</span>
                 </div>
               }
               @if (currentRoom()) {
@@ -414,12 +414,12 @@ import { PollCreateModal } from './poll-create.modal';
               @if(isThreadDragOver()) {
                 <div class="drop-overlay">
                   <ion-icon src="{{'upload' | svgIcon}}"></ion-icon>
-                  <span>Dateien hierher ziehen</span>
+                  <span>{{ store.i18n.drop_files() }}</span>
                 </div>
               }
                 <ion-header class="room-header">
                   <ion-toolbar>
-                    <ion-title>Thread</ion-title>
+                    <ion-title>{{ store.i18n.thread_title() }}</ion-title>
                     <ion-buttons slot="end">
                       <ion-button (click)="onCloseThread()">
                         <ion-icon src="{{'cancel' | svgIcon}}"></ion-icon>
@@ -843,14 +843,14 @@ export class MatrixChat implements OnDestroy {
     // authenticated blob URL produced by MatrixChatService.resolveMediaUrl — share that.
     const url = message.mediaUrl ?? message.content.url;
     if (!url || url.startsWith('mxc://')) {
-      await this.alertService.showToast('Datei nicht verfügbar');
+      await this.alertService.showToast(this.store.i18n.file_unavailable());
       return;
     }
     try {
       await downloadFile(url, message.body);
     } catch (error) {
       console.error('Failed to share chat attachment:', error);
-      await this.alertService.showToast('Datei konnte nicht geteilt werden');
+      await this.alertService.showToast(this.store.i18n.file_share_error());
     }
   }
 
@@ -858,14 +858,14 @@ export class MatrixChat implements OnDestroy {
   private async downloadFileToDisk(message: MatrixMessage): Promise<void> {
     const url = message.mediaUrl ?? message.content.url;
     if (!url || url.startsWith('mxc://')) {
-      await this.alertService.showToast('Datei nicht verfügbar');
+      await this.alertService.showToast(this.store.i18n.file_unavailable());
       return;
     }
     try {
       await saveFile(url, message.body);
     } catch (error) {
       console.error('Failed to download chat attachment:', error);
-      await this.alertService.showToast('Datei konnte nicht heruntergeladen werden');
+      await this.alertService.showToast(this.store.i18n.file_download_error());
     }
   }
 
@@ -883,7 +883,7 @@ export class MatrixChat implements OnDestroy {
     const results = await Promise.allSettled(files.map(f => this.store.sendFile(f)));
     const failures = results.filter(r => r.status === 'rejected').length;
     if (failures > 0) {
-      await this.alertService.showToast(`${failures} Bild(er) konnten nicht gesendet werden`);
+      await this.alertService.showToast(`${failures} ${this.store.i18n.images_send_error()}`);
     }
   }
 
@@ -975,7 +975,7 @@ export class MatrixChat implements OnDestroy {
       const results = await Promise.allSettled(otherFiles.map(f => this.store.sendFile(f)));
       const failures = results.filter(r => r.status === 'rejected').length;
       if (failures > 0) {
-        await this.alertService.showToast(`${failures} Datei(en) konnten nicht gesendet werden`);
+        await this.alertService.showToast(`${failures} ${this.store.i18n.files_send_error()}`);
       }
     }
   }
@@ -1003,7 +1003,7 @@ export class MatrixChat implements OnDestroy {
     const results = await Promise.allSettled(files.map(f => this.store.sendFile(f, threadId)));
     const failures = results.filter(r => r.status === 'rejected').length;
     if (failures > 0) {
-      await this.alertService.showToast(`${failures} Datei(en) konnten nicht gesendet werden`);
+      await this.alertService.showToast(`${failures} ${this.store.i18n.files_send_error()}`);
     }
   }
 
@@ -1026,7 +1026,7 @@ export class MatrixChat implements OnDestroy {
       await this.store.startVideoCall();
     } catch (error) {
       console.error('MatrixChat: Failed to start video call:', error);
-      await this.alertService.showToast('Video-Call fehlgeschlagen');
+      await this.alertService.showToast(this.store.i18n.video_call_error());
     }
   }
 

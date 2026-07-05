@@ -1,4 +1,4 @@
-{  
+{
   "roomId": {
     "label": "Raum-ID",
     "placeholder": "Raum-ID",
@@ -33,7 +33,6 @@
     "label": "Direktnachricht",
     "helper": "Eine Nachricht zwischen genau zwei Personen."
   },
-  
   "reconnecting": "Wieder verbinden...",
   "connectionError": "Verbindungsfehler",
   "connecting": "verbinden...",
@@ -46,7 +45,6 @@
   "recording": "Aufnahme läuft...",
   "addAttachment": "Anhang hinzufügen",
   "noMessagesStartConversation": "Es gibt noch keine Nachrichten. Starte die Konversation.",
-
   "room": {
     "rooms": "Chat-Räume",
     "empty": "Leerer Raum",
@@ -62,7 +60,6 @@
       "error": "Der Chat-Raum konnte nicht geändert werden."
     }
   },
-
   "message": {
     "edit": "Nachricht bearbeiten",
     "reply": {
@@ -102,7 +99,6 @@
       "error": "Die Nachricht konnte nicht gelöscht werden."
     }
   },
-
   "thread": {
     "open": "Thread öffnen",
     "reply": {
@@ -110,9 +106,13 @@
       "placeholder": "Schreibe deine Mitteilung...",
       "error": "Die Nachricht konnte nicht geschickt werden."
     },
-    "empty": "Es gibt noch keine Antworten. Starte den Thread!"
+    "empty": "Es gibt noch keine Antworten. Starte den Thread!",
+    "title": "Thread",
+    "replies": {
+      "one": "Antwort",
+      "many": "Antworten"
+    }
   },
-
   "video": {
     "incoming": "Eingehender Video-Anruf...",
     "connecting": "Verbindung wird hergestellt..."
@@ -135,7 +135,7 @@
     "results": {
       "show": "Abstimmungsergebnisse anzeigen",
       "title": "Abstimmungsergebnis"
-    },  
+    },
     "empty": "Noch keine Stimmen",
     "total": "Total Stimmen",
     "done": "Du hast abgestimmt",
@@ -154,13 +154,26 @@
     "position": "Position senden",
     "survey": "Umfrage erstellen"
   },
-  "isTypeing": "tippt...",
   "and": "und",
-  "areTypeing": "tippen...",
-  "othersTypeing": "andere tippen...",
-  "severalTypeing": "Mehrere Personen tippen...",
-
   "validation": {
     "nameRequired": "Der Name ist obligatorisch."
-  }
+  },
+  "isTyping": "tippt...",
+  "areTyping": "tippen...",
+  "othersTyping": "andere tippen...",
+  "severalTyping": "Mehrere Personen tippen...",
+  "date": {
+    "today": "Heute",
+    "yesterday": "Gestern"
+  },
+  "images": "Bilder",
+  "dropFiles": "Dateien hierher ziehen",
+  "file": {
+    "unavailable": "Datei nicht verfügbar",
+    "shareError": "Datei konnte nicht geteilt werden",
+    "downloadError": "Datei konnte nicht heruntergeladen werden",
+    "sendError": "Datei(en) konnten nicht gesendet werden",
+    "sendImagesError": "Bild(er) konnten nicht gesendet werden"
+  },
+  "videoCallError": "Video-Call fehlgeschlagen"
 }

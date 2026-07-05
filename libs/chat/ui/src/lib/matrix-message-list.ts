@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+import { formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
 
 @Component({
   selector: 'okr-matrix-message-list',
@@ -358,7 +358,7 @@ import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '
                     </div>
                   </div>
                   <div class="message-timestamp">
-                    {{ item.messages.length > 1 ? item.messages.length + ' Bilder · ' : '' }}{{ formatTime(item.timestamp) }}
+                    {{ item.messages.length > 1 ? item.messages.length + ' ' + i18n().images() + ' · ' : '' }}{{ formatTime(item.timestamp) }}
                   </div>
                   @if (receiptsByEventId().get(item.messages[0].eventId); as receipts) {
                     <okr-matrix-read-receipt-strip [receipts]="receipts" />
@@ -466,7 +466,7 @@ import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '
                     @if (threadReplyCounts().get(item.eventId); as replyCount) {
                       <div class="thread-indicator" (click)="threadClicked.emit(item.eventId)">
                         <ion-icon src="{{'chatbox' | svgIcon}}"></ion-icon>
-                        {{ replyCount }} {{ replyCount === 1 ? 'Antwort' : 'Antworten' }}
+                        {{ replyCount }} {{ replyCount === 1 ? i18n().thread_replies_one() : i18n().thread_replies_many() }}
                       </div>
                     }
                   </div>
@@ -602,31 +602,11 @@ export class MatrixMessageList {
   }
 
   formatDate(timestamp: number): string {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return 'Heute';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Gestern';
-    } else {
-      return date.toLocaleDateString('de-DE', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
+    return formatMatrixDate(timestamp, this.i18n().date_today(), this.i18n().date_yesterday());
   }
 
   formatTime(timestamp: number): string {
-    return new Date(timestamp).toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+    return formatMatrixTime(timestamp);
   }
 
   isAudioFile(message: MatrixMessage): boolean {
@@ -679,9 +659,10 @@ export class MatrixMessageList {
 
   formatTypingLabel(): string {
     const users = this.typingUsers();
-    if (users.length === 1) return `${users[0]} tippt…`;
-    if (users.length === 2) return `${users[0]} und ${users[1]} tippen…`;
-    return `${users[0]} und ${users.length - 1} weitere tippen…`;
+    const t = this.i18n();
+    if (users.length === 1) return `${users[0]} ${t.isTyping()}`;
+    if (users.length === 2) return `${users[0]} ${t.and()} ${users[1]} ${t.areTyping()}`;
+    return `${users[0]} ${t.and()} ${users.length - 1} ${t.othersTyping()}`;
   }
 
   getReactions(message: MatrixMessage): { emoji: string; count: number }[] {
