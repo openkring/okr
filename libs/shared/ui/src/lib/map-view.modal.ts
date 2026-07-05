@@ -81,7 +81,13 @@ export class MapViewModal implements AfterViewInit, OnDestroy {
   }
 
   private async initMap(): Promise<void> {
-    const L = this.leaflet ??= await import('leaflet');
+    if (!this.leaflet) {
+      // leaflet is CJS: the production (esbuild) chunk exposes it only as `default`,
+      // while dev serve (vite prebundling) exposes named exports — unwrap to support both.
+      const mod = await import('leaflet');
+      this.leaflet = (mod as { default?: typeof import('leaflet') }).default ?? mod;
+    }
+    const L = this.leaflet;
     const _container = this.el.nativeElement.querySelector('#okr-map-view-map') as HTMLElement | null;
     if (!_container) return;
 

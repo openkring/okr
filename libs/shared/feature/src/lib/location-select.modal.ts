@@ -174,7 +174,12 @@ export class LocationSelectModal implements OnDestroy {
   // ─── Leaflet ───────────────────────────────────────────────────────────────
 
   private async ensureLeaflet(): Promise<typeof import('leaflet')> {
-    this.leafletModule ??= await import('leaflet');
+    if (!this.leafletModule) {
+      // leaflet is CJS: the production (esbuild) chunk exposes it only as `default`,
+      // while dev serve (vite prebundling) exposes named exports — unwrap to support both.
+      const mod = await import('leaflet');
+      this.leafletModule = (mod as { default?: typeof import('leaflet') }).default ?? mod;
+    }
     return this.leafletModule;
   }
 
