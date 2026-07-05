@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
-import { ChangeConfirmation, ChangeConfirmationI18n } from '@okr/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { isAdminMember } from '@okr/subject-group-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@okr/shared-constants';
@@ -21,7 +21,7 @@ import { GroupStore } from './group.store';
   selector: 'okr-group-view-page',
   standalone: true,
   imports: [
-    ChangeConfirmation, PageDispatcher, CalEventList, MembershipList, DocumentList, TaskList,
+    ChangeConfirmation, DeferError, PageDispatcher, CalEventList, MembershipList, DocumentList, TaskList,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
     IonHeader, IonButtons, IonTitle, IonMenuButton
 ],
@@ -84,6 +84,8 @@ import { GroupStore } from './group.store';
               <okr-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
+            } @error {
+              <okr-defer-error />
             }
           }
           @case ('chat') {
@@ -91,6 +93,8 @@ import { GroupStore } from './group.store';
               <okr-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
+            } @error {
+              <okr-defer-error />
             }
           }
           @case ('calendar') {
@@ -98,6 +102,8 @@ import { GroupStore } from './group.store';
               <okr-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
+            } @error {
+              <okr-defer-error />
             }
           }
           @case ('tasks') {
@@ -105,6 +111,8 @@ import { GroupStore } from './group.store';
                <okr-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
+            } @error {
+              <okr-defer-error />
             }
           }
           @case ('files') {
@@ -112,6 +120,8 @@ import { GroupStore } from './group.store';
               <okr-document-list [listId]="listId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
+            } @error {
+              <okr-defer-error />
             }
           }
           @case ('album') {
@@ -119,6 +129,8 @@ import { GroupStore } from './group.store';
               <okr-document-list [listId]="albumId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
+            } @error {
+              <okr-defer-error />
             }
           }
           @case ('members') {
@@ -126,6 +138,8 @@ import { GroupStore } from './group.store';
               <okr-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
+            } @error {
+              <okr-defer-error />
             }
           }
         }

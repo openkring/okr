@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { ViewWillEnter } from '@ionic/angular';
 
 import { coerceBoolean, debugMessage, replaceSubstring } from "@okr/shared-util-core";
-import { Spinner } from "@okr/shared-ui";
+import { DeferError, Spinner } from "@okr/shared-ui";
 
 import { ContentPage } from "./content.page";
 import { PageStore } from "./page.store";
@@ -39,7 +39,7 @@ import { GraphPage } from "./graph.page";
   standalone: true,
   imports: [
     ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage, FilesPage, AlbumPage, GraphPage,
-    Spinner, ChatPage
+    Spinner, DeferError, ChatPage
 ],
   template: `
     @if(pageStore.isLoading()) {
@@ -55,6 +55,8 @@ import { GraphPage } from "./graph.page";
                         <okr-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [isGroupView]="isGroupView()" />
                     } @placeholder {
                         <okr-spinner />
+                    } @error {
+                        <okr-defer-error />
                     }
                 }
                 @case ('content') {
@@ -62,6 +64,8 @@ import { GraphPage } from "./graph.page";
                         <okr-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" [groupAdmin]="groupAdmin()" />
                     } @placeholder {
                         <okr-spinner />
+                    } @error {
+                        <okr-defer-error />
                     }
                 }
                 @case ('dashboard') {
@@ -69,6 +73,8 @@ import { GraphPage } from "./graph.page";
                         <okr-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <okr-spinner />
+                    } @error {
+                        <okr-defer-error />
                     }
                 }
                 @case ('blog') {
@@ -76,6 +82,8 @@ import { GraphPage } from "./graph.page";
                         <okr-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <okr-spinner />
+                    } @error {
+                        <okr-defer-error />
                     }
                 }
                 @case ('files') {
@@ -83,6 +91,8 @@ import { GraphPage } from "./graph.page";
                         <okr-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <okr-spinner />
+                    } @error {
+                        <okr-defer-error />
                     }
                 }
                 @case ('album') {
@@ -90,6 +100,8 @@ import { GraphPage } from "./graph.page";
                         <okr-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <okr-spinner />
+                    } @error {
+                        <okr-defer-error />
                     }
                 }
                 @case ('graph') {
@@ -97,6 +109,8 @@ import { GraphPage } from "./graph.page";
                         <okr-graph-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <okr-spinner />
+                    } @error {
+                        <okr-defer-error />
                     }
                 }
                 @case ('error') {

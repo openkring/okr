@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 
-import { ButtonCopyI18n, Spinner } from '@okr/shared-ui';
+import { ButtonCopyI18n, DeferError, Spinner } from '@okr/shared-ui';
 
 import { SectionStore } from './section.store';
 import { ArticleSectionComponent } from './article-section';
@@ -31,7 +31,7 @@ import { SliderSectionComponent } from './slider-section';
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, TrackerSectionComponent,
     HeroSectionComponent, SliderSectionComponent, ChartSectionComponent,
-    MissingSectionComponent, Spinner
+    MissingSectionComponent, Spinner, DeferError
   ],
   providers: [SectionStore],
   template: `
@@ -49,6 +49,8 @@ import { SliderSectionComponent } from './slider-section';
             <okr-calendar-section [section]="section" />
           } @placeholder {
             <okr-spinner />
+          } @error {
+            <okr-defer-error />
           }
         }
         @case('people') { <okr-people-section [section]="section" /> }
@@ -60,6 +62,8 @@ import { SliderSectionComponent } from './slider-section';
             <okr-chart-section [section]="section" />
           } @placeholder {
             <okr-spinner />
+          } @error {
+            <okr-defer-error />
           }
         }
         @default { <okr-missing-section [section]="section" /> }

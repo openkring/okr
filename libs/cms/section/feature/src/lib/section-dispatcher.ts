@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { RoleName, SectionModel, UserModel } from '@okr/shared-models';
-import { ButtonCopyI18n, Spinner } from '@okr/shared-ui';
+import { ButtonCopyI18n, DeferError, Spinner } from '@okr/shared-ui';
 import { hasRole } from '@okr/shared-util-core';
 
 import { AccordionSectionComponent } from './accordion-section';
@@ -52,7 +52,7 @@ import { SectionStore } from './section.store';
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
     InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent,
-    IonItem, IonLabel, Spinner,
+    IonItem, IonLabel, Spinner, DeferError,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
     TripStatsSectionComponent,
     FormSectionComponent,
@@ -78,6 +78,8 @@ import { SectionStore } from './section.store';
               <okr-calendar-section [section]="section" [editMode]="editMode()" />
             } @placeholder {
               <okr-spinner />
+            } @error {
+              <okr-defer-error />
             }
           }
           @case('chart') {
@@ -85,6 +87,8 @@ import { SectionStore } from './section.store';
               <okr-chart-section [section]="section" />
             } @placeholder {
               <okr-spinner />
+            } @error {
+              <okr-defer-error />
             }
           }
           @case('events') {
@@ -113,6 +117,8 @@ import { SectionStore } from './section.store';
               <okr-orgchart-section [section]="section" [editMode]="editMode()" />
             } @placeholder {
               <okr-spinner />
+            } @error {
+              <okr-defer-error />
             }
           }
           @case('people') {
@@ -126,6 +132,8 @@ import { SectionStore } from './section.store';
               <okr-context-diagram-section [section]="section" [editMode]="editMode()" />
             } @placeholder {
               <okr-spinner />
+            } @error {
+              <okr-defer-error />
             }
           }
           @case('rag') {
@@ -134,6 +142,8 @@ import { SectionStore } from './section.store';
           @case('slider') {
             @defer (on idle) {
               <okr-slider-section [section]="section" [editMode]="editMode()" />
+            } @error {
+              <okr-defer-error />
             }
           }
           @case('table') {

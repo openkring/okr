@@ -24,6 +24,7 @@ export * from './lib/editor-toolbar';
 export * from './lib/email-addresses.modal';
 export * from './lib/email-input';
 export * from './lib/empty-list';
+export * from './lib/defer-error';
 export * from './lib/error-banner';
 export * from './lib/error-note';
 export * from './lib/error-toolbar';

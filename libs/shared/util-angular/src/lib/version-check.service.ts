@@ -25,6 +25,15 @@ const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
  */
 const MIN_FOREGROUND_CHECK_INTERVAL_MS = 60 * 1000; // 1 minute
 
+/**
+ * sessionStorage key recording when we last auto-reloaded because the service
+ * worker declared its state unrecoverable (see handleUnrecoverableState).
+ */
+export const UNRECOVERABLE_RELOAD_KEY = 'okr-unrecoverable-reload-at';
+
+/** Never auto-reload twice within this window — guards against a reload loop. */
+const UNRECOVERABLE_RELOAD_MIN_INTERVAL_MS = 60 * 1000; // 1 minute
+
 @Injectable({ providedIn: 'root' })
 export class VersionCheckService {
   private readonly alertController = inject(AlertController);
@@ -91,6 +100,15 @@ export class VersionCheckService {
       }
     });
 
+    // The SW declares its state unrecoverable when an asset of the running
+    // version is neither in its cache nor on the server anymore (typical after a
+    // deploy replaced the hashed chunk files while this client kept the old
+    // version open). Lazy `@defer`/route chunks then fail to load (NG0750), so
+    // the only way forward is a reload, which fetches the current deployment.
+    this.swUpdate.unrecoverable.subscribe((event) => {
+      this.handleUnrecoverableState(event.reason);
+    });
+
     // Check immediately on startup. On iOS the home-screen PWA is suspended/killed
     // while backgrounded, so the periodic interval below almost never ticks; the
     // launch + foreground checks are what actually surface a new deployment there.
@@ -115,6 +133,24 @@ export class VersionCheckService {
     this.swUpdate.checkForUpdate().catch((error) => {
       console.error('VersionCheckService: checkForUpdate failed:', error);
     });
+  }
+
+  /**
+   * Recover from an unrecoverable service-worker state by reloading once.
+   * A sessionStorage timestamp guards against a reload loop in case the state
+   * persists across reloads (e.g. server unreachable).
+   */
+  private handleUnrecoverableState(reason: string): void {
+    console.error(`VersionCheckService: service worker state is unrecoverable (${reason}); reloading to fetch the current version`);
+    const lastReloadAt = Number(sessionStorage.getItem(UNRECOVERABLE_RELOAD_KEY) ?? 0);
+    if (Date.now() - lastReloadAt < UNRECOVERABLE_RELOAD_MIN_INTERVAL_MS) return;
+    sessionStorage.setItem(UNRECOVERABLE_RELOAD_KEY, String(Date.now()));
+    this.reloadPage();
+  }
+
+  /** Wrapper around location.reload so tests can intercept the reload. */
+  protected reloadPage(): void {
+    window.location.reload();
   }
 
   private compareVersions(v1: string, v2: string): number {
