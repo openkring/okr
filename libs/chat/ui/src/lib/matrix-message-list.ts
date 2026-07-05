@@ -1,6 +1,6 @@
-import { Component, computed, effect, input, output, viewChild, ElementRef, Signal } from '@angular/core';
+import { Component, computed, effect, input, output, signal, viewChild, ElementRef, Signal } from '@angular/core';
 
-import { IonIcon, IonChip, IonAvatar } from '@ionic/angular/standalone';
+import { IonIcon, IonChip, IonAvatar, IonSpinner } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
@@ -15,6 +15,7 @@ import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '
     IonIcon,
     IonChip,
     IonAvatar,
+    IonSpinner,
     SvgIconPipe,
     PollMessage,
     MatrixReadReceiptStrip
@@ -302,9 +303,21 @@ import { groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '
       color: var(--ion-color-medium);
       font-style: italic;
     }
+
+    .load-older-spinner {
+      display: flex;
+      justify-content: center;
+      padding: 4px 0;
+      flex-shrink: 0;
+    }
   `],
   template: `
-    <div class="messages-container" #messagesContainer>
+    <div class="messages-container" #messagesContainer (scroll)="onContainerScroll()">
+      @if (loadingOlder()) {
+        <div class="load-older-spinner">
+          <ion-spinner name="dots" />
+        </div>
+      }
       @if (messages().length === 0 && typingUsers().length === 0) {
         <div class="empty-state">
           <p>{{ i18n().no_messages_start_conversation() }}</p>
@@ -479,6 +492,8 @@ export class MatrixMessageList {
   // inputs
   messages = input.required<MatrixMessage[]>();
   currentUserId = input<string>();
+  /** C-5: whether older history may still be loaded by scrolling to the top. */
+  hasMoreHistory = input<boolean>(false);
   typingUsers = input<string[]>([]);
   threadReplyCounts = input<Map<string, number>>(new Map());
   receiptsByEventId = input<Map<string, MatrixReadReceipt[]>>(new Map());
@@ -491,8 +506,14 @@ export class MatrixMessageList {
   threadClicked = output<string>();
   pollVoteClicked = output<{ pollEventId: string; answerIds: string[] }>();
   pollEndClicked = output<{ pollEventId: string }>();
+  loadOlder = output<void>();
 
   messagesContainer = viewChild<ElementRef>('messagesContainer');
+
+  /** True while a scroll-up history load is in flight (shows the top spinner). */
+  protected readonly loadingOlder = signal(false);
+  /** Scroll height captured when loadOlder fired, to restore the viewport after prepend. */
+  private prevScrollHeight = 0;
 
   groupedMessages = computed(() => {
     const messages = this.messages();
@@ -525,10 +546,34 @@ export class MatrixMessageList {
       if (msgs.length > 0) {
         setTimeout(() => {
           const container = this.messagesContainer()?.nativeElement;
-          if (container) container.scrollTop = container.scrollHeight;
+          if (!container) return;
+          if (this.loadingOlder()) {
+            // Older messages were prepended (C-5) — keep the viewport anchored on the
+            // message the user was looking at instead of jumping to the bottom.
+            container.scrollTop += container.scrollHeight - this.prevScrollHeight;
+            this.loadingOlder.set(false);
+          } else {
+            container.scrollTop = container.scrollHeight;
+          }
         }, 50);
       }
     });
+
+    // If the room start was reached (or the room changed) while a load was pending,
+    // no new messages may arrive to clear the spinner — clear it here.
+    effect(() => {
+      if (!this.hasMoreHistory()) this.loadingOlder.set(false);
+    });
+  }
+
+  /** Near the top edge → ask the parent for older history (C-5 scroll-up pagination). */
+  protected onContainerScroll(): void {
+    if (!this.hasMoreHistory() || this.loadingOlder()) return;
+    const container = this.messagesContainer()?.nativeElement;
+    if (!container || container.scrollTop > 80) return;
+    this.prevScrollHeight = container.scrollHeight;
+    this.loadingOlder.set(true);
+    this.loadOlder.emit();
   }
 
   isOwnMessage(message: MatrixMessage): boolean {

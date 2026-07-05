@@ -357,10 +357,12 @@ import { PollCreateModal } from './poll-create.modal';
                   <okr-matrix-message-list
                     [messages]="messages()"
                     [currentUserId]="matrixUserId()"
+                    [hasMoreHistory]="store.hasMoreHistory()"
                     [typingUsers]="typingUsers()"
                     [threadReplyCounts]="threadReplyCounts()"
                     [receiptsByEventId]="receiptsByEventId()"
                     [i18n]="store.i18n"
+                    (loadOlder)="onLoadOlder()"
                     (messageClicked)="onMessageClicked($event)"
                     (imageClicked)="onImageClicked($event)"
                     (reactionClicked)="onReactionClicked($event)"
@@ -725,6 +727,12 @@ export class MatrixChat implements OnDestroy {
   }
 
   // Event handlers
+  onLoadOlder() {
+    this.store.loadOlderMessages().catch(err =>
+      console.warn('MatrixChat: loading older messages failed (non-critical):', err)
+    );
+  }
+
   onRoomSelected(roomId: string) {
     this.store.setCurrentRoom(roomId);
     if (isBrowser(this.platformId) && window.innerWidth < 768) {

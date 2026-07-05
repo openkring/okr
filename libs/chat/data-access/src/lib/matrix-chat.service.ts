@@ -765,9 +765,9 @@ export class MatrixChatService {
     try {
       const timeline = room.getLiveTimeline();
       const events = timeline.getEvents();
-      
+
       debugMessage(`MatrixChatService: Loading messages for room ${roomId}, found ${events.length} events in timeline`, this.appStore.currentUser());
-      
+
       // If we have few or no events, try to paginate back to load more
       if (events.length < 20) {
         debugMessage('MatrixChatService: Timeline has few events, attempting to paginate back', this.appStore.currentUser());
@@ -779,55 +779,91 @@ export class MatrixChatService {
           console.warn('MatrixChatService: Failed to paginate timeline:', paginateError);
         }
       }
-      
-      // Get all events from timeline and convert to messages, resolving media URLs
-      const allEvents = timeline.getEvents();
-      const messages = await Promise.all(
-        allEvents
-          .filter(e => {
-            // Include regular room messages (excluding edit events)
-            if (e.getType() === EventType.RoomMessage) {
-              const rel = e.getContent()?.['m.relates_to'];
-              return !(rel?.rel_type === RelationType.Replace && rel?.event_id);
-            }
-            // Include poll start events
-            if (e.getType() === 'org.matrix.msc3381.poll.start') return true;
-            return false;
-          })
-          .map(async e => {
-            const msg = this.mapEventToMessage(e, room);
-            const mxcUrl = msg.content.url ?? msg.content.file?.url;
-            const senderMember = room.getMember(e.getSender()!);
-            const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
-            const senderAvatar = senderAvatarMxc ? await this.resolveMediaUrl(senderAvatarMxc) : undefined;
 
-            // Attach poll tally and ended flag for poll.start events
-            if (e.getType() === 'org.matrix.msc3381.poll.start') {
-              const eventId = e.getId()!;
-              const { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds } = this.computePollTally(eventId, room);
-              await this.resolveVoterAvatars(pollVoters);
-              const pollEnded = this.isPollEnded(eventId, room);
-              return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds, pollEnded };
-            }
-
-            if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
-              return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl, msg.content.info?.mimetype) };
-            }
-            return { ...msg, senderAvatar: senderAvatar || undefined };
-          })
-      );
-
-      debugMessage(`MatrixChatService: Loaded ${messages.length} messages for room ${roomId}`, this.appStore.currentUser());
-
-      const subject = this.messages$.get(roomId);
-      if (subject) {
-        subject.next(messages);
-      }
+      await this.emitMessagesFromTimeline(room);
     } catch (error) {
       console.error('MatrixChatService: Error loading messages for room:', error);
     } finally {
       this.loadingRooms.delete(roomId);
     }
+  }
+
+  /**
+   * Load older messages for a room by paginating the live timeline backwards (C-5,
+   * scroll-up history). Re-emits the rebuilt message list so all subscribers update.
+   * @returns true if more history may be available, false once the start of the room
+   * is reached (no backwards pagination token left).
+   */
+  public async paginateRoomBackwards(roomId: string): Promise<boolean> {
+    if (!this.client) return false;
+    const room = this.client.getRoom(roomId);
+    if (!room) return false;
+    const timeline = room.getLiveTimeline();
+    if (!timeline.getPaginationToken(EventTimeline.BACKWARDS)) return false;
+    // C-3 guard: a load for this room is already in flight — report "maybe more"
+    // so the caller can simply retry on the next scroll.
+    if (this.loadingRooms.has(roomId)) return true;
+
+    this.loadingRooms.add(roomId);
+    try {
+      const hasMore = await this.client.paginateEventTimeline(timeline, { backwards: true, limit: 50 });
+      await this.emitMessagesFromTimeline(room);
+      return hasMore;
+    } catch (error) {
+      console.warn('MatrixChatService: Failed to paginate timeline backwards:', error);
+      return true; // transient failure — leave the door open for a retry
+    } finally {
+      this.loadingRooms.delete(roomId);
+    }
+  }
+
+  /**
+   * Rebuild the message list from the room's live timeline (resolving media and
+   * avatars) and emit it on the room's messages subject.
+   */
+  private async emitMessagesFromTimeline(room: Room): Promise<void> {
+    const roomId = room.roomId;
+    const timeline = room.getLiveTimeline();
+    // Get all events from timeline and convert to messages, resolving media URLs
+    const allEvents = timeline.getEvents();
+    const messages = await Promise.all(
+      allEvents
+        .filter(e => {
+          // Include regular room messages (excluding edit events)
+          if (e.getType() === EventType.RoomMessage) {
+            const rel = e.getContent()?.['m.relates_to'];
+            return !(rel?.rel_type === RelationType.Replace && rel?.event_id);
+          }
+          // Include poll start events
+          if (e.getType() === 'org.matrix.msc3381.poll.start') return true;
+          return false;
+        })
+        .map(async e => {
+          const msg = this.mapEventToMessage(e, room);
+          const mxcUrl = msg.content.url ?? msg.content.file?.url;
+          const senderMember = room.getMember(e.getSender()!);
+          const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
+          const senderAvatar = senderAvatarMxc ? await this.resolveMediaUrl(senderAvatarMxc) : undefined;
+
+          // Attach poll tally and ended flag for poll.start events
+          if (e.getType() === 'org.matrix.msc3381.poll.start') {
+            const eventId = e.getId()!;
+            const { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds } = this.computePollTally(eventId, room);
+            await this.resolveVoterAvatars(pollVoters);
+            const pollEnded = this.isPollEnded(eventId, room);
+            return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds, pollEnded };
+          }
+
+          if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
+            return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl, msg.content.info?.mimetype) };
+          }
+          return { ...msg, senderAvatar: senderAvatar || undefined };
+        })
+    );
+
+    debugMessage(`MatrixChatService: Loaded ${messages.length} messages for room ${roomId}`, this.appStore.currentUser());
+
+    this.messages$.get(roomId)?.next(messages);
   }
 
   /**

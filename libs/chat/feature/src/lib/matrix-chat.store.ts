@@ -26,6 +26,7 @@ export type MatrixChatState = {
   currentRoomId: string | undefined;
   selectedThreadId: string | undefined;
   replyToMessage: MatrixMessage | undefined;
+  hasMoreHistory: boolean;
 }
 
 export const _MatrixChatStore = signalStore(
@@ -36,6 +37,7 @@ export const _MatrixChatStore = signalStore(
     currentRoomId: undefined,
     selectedThreadId: undefined,
     replyToMessage: undefined,
+    hasMoreHistory: true,
   })),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -238,12 +240,23 @@ export const _MatrixChatStore = signalStore(
       },
 
       setCurrentRoom(roomId: string | undefined): void {
-        patchState(store, { currentRoomId: roomId });
+        patchState(store, { currentRoomId: roomId, hasMoreHistory: true });
         if (roomId) {
           store.matrixService.markRoomAsRead(roomId).catch(err =>
             console.warn('MatrixChatStore.setCurrentRoom: markRoomAsRead failed (non-critical):', err)
           );
         }
+      },
+
+      /**
+       * Load older messages for the current room (C-5 scroll-up pagination).
+       * Updates hasMoreHistory so the UI can stop asking once the room start is reached.
+       */
+      async loadOlderMessages(): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId) return;
+        const hasMore = await store.matrixService.paginateRoomBackwards(roomId);
+        patchState(store, { hasMoreHistory: hasMore });
       },
 
       markCurrentRoomAsRead(): void {
@@ -790,7 +803,7 @@ export const _MatrixChatStore = signalStore(
         // isMatrixInitialized computed reflects automatically (C-9); only the
         // local selection state needs resetting here.
         await store.matrixService.disconnect();
-        patchState(store, { currentRoomId: undefined, selectedThreadId: undefined });
+        patchState(store, { currentRoomId: undefined, selectedThreadId: undefined, hasMoreHistory: true });
       },
     };
   })
