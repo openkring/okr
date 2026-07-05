@@ -1,6 +1,6 @@
 
 import { effect, inject, Injectable } from '@angular/core';
-import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, createNewMatrixCall, CallEvent, type MatrixCall, type Store } from 'matrix-js-sdk';
+import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, type MatrixCall, type Store } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -13,17 +13,9 @@ import { debugData, debugMessage } from '@okr/shared-util-core';
 import { convertHeicToJpeg, initMatrixLogLevel } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 
-/**
- * Localparts of Matrix service/bot accounts to hide from user-facing lists (S1).
- * The admin/service-token holder is force-joined into rooms to perform admin operations;
- * it is not a real participant and must not appear in member lists, DM labels, read
- * receipts, or call notifications. 'bk2-bot' is the dedicated service bot; 'bruno' is the
- * legacy admin account that still lingers in many rooms from past force-joins.
- */
-const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'bruno']);
-
-/** P-1: max resolved media blob URLs kept in memory; evicted entries are revoked (LRU). */
-const MEDIA_CACHE_MAX = 200;
+import { isServiceAccount as isServiceAccountHelper } from './matrix-helpers';
+import { MatrixMediaService } from './matrix-media.service';
+import { MatrixCallService } from './matrix-call.service';
 
 export interface MatrixPollData {
   question: string;
@@ -65,18 +57,16 @@ export class MatrixChatService {
   private readonly roomListToggle$ = new Subject<void>();
   private readonly roomsUpdateTrigger$ = new Subject<void>();
   private roomsUpdateSub: Subscription | null = null;
-  private readonly _mediaCache = new Map<string, string>(); // mxc:// -> blob URL
   private readonly typingByRoom = new Map<string, string[]>(); // roomId -> typing userIds
   private readonly receipts$ = new Map<string, BehaviorSubject<Map<string, MatrixReadReceipt[]>>>();
   // Rooms joined via CF admin API that haven't appeared in a sync cycle yet.
   // updateRoomsList() re-injects stubs for these so the UI renders immediately.
   private readonly pendingRooms = new Map<string, string>(); // roomId → display name
 
-  // ─── WebRTC call state ─────────────────────────────────────────────────────
-  private readonly activeCall$ = new BehaviorSubject<MatrixCall | null>(null);
-  private readonly callState$ = new BehaviorSubject<string | null>(null);
-  /** Simplified feed info so consumers don't need a deep matrix-js-sdk import. */
-  private readonly callFeeds$ = new BehaviorSubject<{ stream: MediaStream; isLocal: boolean }[]>([]);
+  // ARCH-2 delegates (design review #4): media resolution and WebRTC call state
+  // live in their own services; this facade wires the client and forwards calls.
+  private readonly media = inject(MatrixMediaService);
+  private readonly calls = inject(MatrixCallService);
 
   constructor() {
     // Disconnect and clear rooms when the user logs out (fbUser becomes null).
@@ -254,16 +244,17 @@ export class MatrixChatService {
     this.roomListToggle$.next();
   }
 
+  // Call state lives in MatrixCallService (ARCH-2 delegate); forwarded for API stability.
   get activeCall(): Observable<MatrixCall | null> {
-    return this.activeCall$.asObservable();
+    return this.calls.activeCall;
   }
 
   get callState(): Observable<string | null> {
-    return this.callState$.asObservable();
+    return this.calls.callState;
   }
 
   get callFeeds(): Observable<{ stream: MediaStream; isLocal: boolean }[]> {
-    return this.callFeeds$.asObservable();
+    return this.calls.callFeeds;
   }
 
   /**
@@ -341,11 +332,12 @@ export class MatrixChatService {
       // See: matrixClient.on("Call.incoming", function(call){ call.answer(); });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (this.client as any).on('Call.incoming', (call: MatrixCall) => {
-        this.setupCallListeners(call);
-        this.activeCall$.next(call);
-        this.callState$.next('ringing');
-        // No local notice here — the caller already sent a persistent notice visible to all room members.
+        this.calls.handleIncomingCall(call);
       });
+
+      // Wire the ARCH-2 delegates to the live client
+      this.media.setClient(this.client);
+      this.calls.setClient(this.client);
 
       this.isInitialized$.next(true); // C-9: single source the store observes
     } catch (error) {
@@ -390,49 +382,12 @@ export class MatrixChatService {
   }
 
   /**
-   * Fetch a Matrix media URL with auth and return a blob URL.
-   * Caches results to avoid redundant fetches.
+   * Fetch a Matrix media URL with auth and return a blob URL (delegates to
+   * MatrixMediaService, which caches and LRU-bounds the blob URLs — P-1).
    * @param mimeTypeHint - expected MIME type; used to fix generic content-types returned by some homeservers
    */
-  private async resolveMediaUrl(mxcUrl: string | undefined, mimeTypeHint?: string): Promise<string> {
-    if (!this.client || !mxcUrl || !mxcUrl.startsWith('mxc://')) return '';
-    const cached = this._mediaCache.get(mxcUrl);
-    if (cached) {
-      // P-1: mark as most-recently-used (re-insert moves it to the end of the Map order).
-      this._mediaCache.delete(mxcUrl);
-      this._mediaCache.set(mxcUrl, cached);
-      return cached;
-    }
-    const httpUrl = this.client.mxcUrlToHttp(mxcUrl, undefined, undefined, undefined, false, true, true) ?? '';
-    if (!httpUrl) return '';
-    try {
-      const accessToken = this.client.getAccessToken();
-      const resp = await fetch(httpUrl, {
-        headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}
-      });
-      if (!resp.ok) return '';
-      const raw = await resp.blob();
-      // Some homeservers serve media with mismatched or generic content-types (e.g. application/octet-stream).
-      // Re-wrap with the known MIME type so browsers render it correctly (especially critical for SVG in <img>).
-      const blob = (mimeTypeHint && !raw.type.startsWith(mimeTypeHint.split(';')[0].trim()))
-        ? new Blob([await raw.arrayBuffer()], { type: mimeTypeHint })
-        : raw;
-      const blobUrl = URL.createObjectURL(blob);
-      // P-1: bound the cache — evict and revoke the least-recently-used entry when full,
-      // so long sessions in image-heavy rooms don't leak blob URLs unboundedly.
-      if (this._mediaCache.size >= MEDIA_CACHE_MAX) {
-        const oldestKey = this._mediaCache.keys().next().value as string | undefined;
-        if (oldestKey !== undefined) {
-          const oldestUrl = this._mediaCache.get(oldestKey);
-          if (oldestUrl?.startsWith('blob:')) URL.revokeObjectURL(oldestUrl);
-          this._mediaCache.delete(oldestKey);
-        }
-      }
-      this._mediaCache.set(mxcUrl, blobUrl);
-      return blobUrl;
-    } catch {
-      return '';
-    }
+  private resolveMediaUrl(mxcUrl: string | undefined, mimeTypeHint?: string): Promise<string> {
+    return this.media.resolveMediaUrl(mxcUrl, mimeTypeHint);
   }
 
   /**
@@ -441,10 +396,8 @@ export class MatrixChatService {
   async disconnect(): Promise<void> {
     this.roomsUpdateSub?.unsubscribe();
     this.roomsUpdateSub = null;
-    for (const url of this._mediaCache.values()) {
-      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
-    }
-    this._mediaCache.clear();
+    this.media.setClient(null);  // revokes + clears the blob-URL cache
+    this.calls.setClient(null);  // resets call state
     this.typingByRoom.clear();
     this.receipts$.clear();
     this.loadingRooms.clear();
@@ -659,8 +612,7 @@ export class MatrixChatService {
 
   /** True if the Matrix user ID belongs to a hidden service/bot account (S1). */
   private isServiceAccount(userId: string | undefined): boolean {
-    if (!userId) return false;
-    return SERVICE_ACCOUNT_LOCALPARTS.has(userId.split(':')[0].replace(/^@/, ''));
+    return isServiceAccountHelper(userId);
   }
 
   /**
@@ -1977,74 +1929,18 @@ private async buildAndEmitRoomsList(): Promise<void> {
     return (user as any).getAvatarUrl?.(this.client.baseUrl, width, height, 'crop');
   }
 
-  // ─── WebRTC calls ──────────────────────────────────────────────────────────
+  // ─── WebRTC calls — delegated to MatrixCallService (ARCH-2, design review #4) ──
 
-  async startVideoCall(roomId: string, currentUser: UserModel | undefined): Promise<void> {
-    if (!this.client) throw new Error('Matrix not initialized');
-    const call = createNewMatrixCall(this.client, roomId);
-    if (!call) {
-      void this.activityService.log('chat', 'startvideo', currentUser, `${roomId}: ERROR WebRTC not supported`);
-      throw new Error('WebRTC not supported or room not found');
-    } 
-    this.setupCallListeners(call);
-    this.activeCall$.next(call);
-    await call.placeVideoCall();
-    void this.activityService.log('chat', 'startvideo', currentUser, `${roomId}: SUCCESS`);
-    this.sendNotice(roomId, '📹 Video-Anruf gestartet');
-    // Notify other room members via FCM (non-blocking — failure must not abort the call)
-    this.notifyCallees(roomId).catch(err =>
-      console.warn('MatrixChatService.startVideoCall: FCM notification failed (non-critical):', err)
-    );
-  }
-
-  private async notifyCallees(roomId: string): Promise<void> {
-    const room = this.client?.getRoom(roomId);
-    const myUserId = this.client?.getUserId();
-    if (!room || !myUserId) return;
-
-    const calleeIds = room.getJoinedMembers()
-      .map(m => m.userId)
-      .filter(id => id !== myUserId && !this.isServiceAccount(id)); // don't ring service/bot accounts (S1)
-    if (calleeIds.length === 0) return;
-
-    const user = this.appStore.currentUser();
-    const callerName = user
-      ? `${user.firstName} ${user.lastName}`.trim()
-      : 'Unbekannt';
-
-    const functions = getFunctions(getApp(), 'europe-west6');
-    const fn = httpsCallable(functions, 'sendCallNotification');
-    await fn({ roomId, roomName: room.name || '', callerName, calleeMatrixUserIds: calleeIds });
+  startVideoCall(roomId: string, currentUser: UserModel | undefined): Promise<void> {
+    return this.calls.startVideoCall(roomId, currentUser);
   }
 
   hangupCall(): void {
-    const call = this.activeCall$.value;
-    if (!call) return;
-    this.sendNotice(call.roomId, '📹 Video-Anruf beendet');
-    call.hangup('user_hangup' as any, false);
+    this.calls.hangupCall();
   }
 
-  async answerCall(): Promise<void> {
-    const call = this.activeCall$.value;
-    if (call) await call.answer(true, true);
-  }
-
-  private setupCallListeners(call: MatrixCall): void {
-    call.on(CallEvent.FeedsChanged as any, (feeds: any[]) => {
-      this.callFeeds$.next(
-        feeds.map(f => ({ stream: f.stream as MediaStream, isLocal: f.isLocal() as boolean }))
-      );
-    });
-
-    call.on(CallEvent.State as any, (state: string) => {
-      this.callState$.next(state);
-    });
-
-    call.on(CallEvent.Hangup as any, () => {
-      this.activeCall$.next(null);
-      this.callState$.next(null);
-      this.callFeeds$.next([]);
-    });
+  answerCall(): Promise<void> {
+    return this.calls.answerCall();
   }
 
   /**
