@@ -33,7 +33,13 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
+      "path": "../../../shared/pipes/tsconfig.lib.json"
+    },
+    {
       "path": "../../../subject/person/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/person/data-access/tsconfig.lib.json"
     }
   ]
 }

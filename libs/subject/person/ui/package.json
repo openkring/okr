@@ -12,6 +12,8 @@
     "@okr/shared-categories": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
-    "@okr/subject-person-util": "*"
+    "@okr/shared-pipes": "*",
+    "@okr/subject-person-util": "*",
+    "@okr/subject-person-data-access": "*"
   }
 }
