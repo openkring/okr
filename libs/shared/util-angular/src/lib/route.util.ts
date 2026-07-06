@@ -39,7 +39,8 @@ export async function navigateByUrl(router: Router, url: string | undefined, que
       }
     }
     catch (ex: unknown) {
-        console.error(`route.util.navigateByUrl(${url}, ${JSON.stringify(queryParams)}) -> FAILED`, ex);
+        // Pass url/queryParams as arguments, not interpolated into the format string (CodeQL js/tainted-format-string).
+        console.error('route.util.navigateByUrl() -> FAILED', url, queryParams, ex);
     }
 }
 

@@ -223,6 +223,20 @@ describe('convert.util', () => {
         const result = stripHtml('<TEST>');
         expect(result).toEqual('');
     });
+    it('stripHtml neutralizes an unterminated tag (no closing ">")', () => {
+        // Would be parsed as an <img> by a browser if left intact; the residual "<" is escaped.
+        const result = stripHtml('<img src=x onerror=alert(1)');
+        expect(result).toEqual('&lt;img src=x onerror=alert(1)');
+        expect(result).not.toContain('<');
+    });
+    it('stripHtml escapes a lone "<" in prose rather than mangling it', () => {
+        expect(stripHtml('5 < 10')).toEqual('5 &lt; 10');
+    });
+    it('stripHtml removes nested tags completely (no reconstitution)', () => {
+        const result = stripHtml('<scr<script>ipt>safe');
+        expect(result).not.toContain('<script');
+        expect(result).not.toContain('<');
+    });
 
     describe('replacePlaceholders', () => {
         const fixedDate = new Date(2026, 4, 30, 14, 5); // 2026-05-30 14:05

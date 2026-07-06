@@ -404,8 +404,17 @@ export function getPlaceholderHelp(): PlaceholderHelpEntry[] {
  * @returns same string without the html or xml tags
  */
 export function stripHtml(value: string): string {
-    // Cap input before the global tag-strip regex to avoid polynomial ReDoS on pathological unterminated-tag input.
-    const safe = value.length > 50_000 ? value.slice(0, 50_000) : value;
-    return safe.replace(/<.*?>/g, ''); // replace tags
+    // Cap input to avoid polynomial ReDoS on pathological unterminated-tag input.
+    let out = value.length > 50_000 ? value.slice(0, 50_000) : value;
+    // Remove complete <...> tags repeatedly until stable, so nested tags that would
+    // reconstitute after a single pass (e.g. "<scr<script>ipt>") cannot survive.
+    let prev: string;
+    do {
+        prev = out;
+        out = out.replace(/<[^>]*>/g, '');
+    } while (out !== prev);
+    // Neutralize any residual '<' (e.g. an unterminated "<img ... onerror=") so it
+    // cannot be parsed as markup by a downstream HTML sink (CodeQL js/incomplete-multi-character-sanitization).
+    return out.replace(/</g, '&lt;');
 }
 
