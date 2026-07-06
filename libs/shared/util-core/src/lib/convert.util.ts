@@ -404,6 +404,8 @@ export function getPlaceholderHelp(): PlaceholderHelpEntry[] {
  * @returns same string without the html or xml tags
  */
 export function stripHtml(value: string): string {
-    return value.replace(/<.*?>/g, ''); // replace tags
+    // Cap input before the global tag-strip regex to avoid polynomial ReDoS on pathological unterminated-tag input.
+    const safe = value.length > 50_000 ? value.slice(0, 50_000) : value;
+    return safe.replace(/<.*?>/g, ''); // replace tags
 }
 

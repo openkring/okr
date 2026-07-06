@@ -24,7 +24,7 @@ interface ContactRequest {
 
 export function validateContact(body: Partial<ContactRequest>): string | null {
   if (!body.name || body.name.length < 2 || body.name.length > 100) return 'name must be 2-100 chars';
-  if (!body.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) return 'invalid email';
+  if (!body.email || body.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) return 'invalid email';
   if (!body.subject || !VALID_SUBJECTS.includes(body.subject as Subject)) return 'invalid subject';
   if (!body.message || body.message.length < 10 || body.message.length > 5000) return 'message must be 10-5000 chars';
   if (body.honeypot) return 'spam detected';

@@ -19,8 +19,8 @@ export function getLogInfo(key: string | undefined, name: string | undefined, me
  * Validate email format
  */
 export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  // Cap length (RFC 5321 max is 254) before the regex to avoid polynomial ReDoS backtracking.
+  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 /**

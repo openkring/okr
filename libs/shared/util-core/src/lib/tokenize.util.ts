@@ -28,7 +28,9 @@ export function deaccent(text: string): string {
  */
 export function buildSearchTokens(text: string | undefined, maxLength = 1000): string {
   if (!text) return '';
-  const withoutTags = text.replace(/<[^>]*>/g, ' '); // strip HTML, keep word boundaries
+  // Cap input before the tag-strip regex to avoid polynomial ReDoS; output is capped at maxLength anyway.
+  const capped = text.length > 50_000 ? text.slice(0, 50_000) : text;
+  const withoutTags = capped.replace(/<[^>]*>/g, ' '); // strip HTML, keep word boundaries
   const normalized = deaccent(withoutTags.toLowerCase());
   const tokens = normalized
     .split(/[^a-z0-9]+/)
