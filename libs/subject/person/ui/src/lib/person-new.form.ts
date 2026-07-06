@@ -11,14 +11,16 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { SwissCitySearch } from '@okr/subject-swisscities-ui';
 
-import { PersonNewFormModel, personNewFormValidations, PersonI18n } from '@okr/subject-person-util';
+import { PersonNewFormModel, personNewFormValidations, PersonI18n, PersonDirectoryResult, mergeDirectoryResultIntoForm } from '@okr/subject-person-util';
+
+import { PersonLookup } from './person-lookup';
 
 @Component({
   selector: 'okr-person-new-form',
   standalone: true,
   imports: [
     AvatarPipe, TextInput, DateInput, CategorySelect,
-    Chips, NotesInput, ErrorNote, PhoneInput, EmailInput, CategorySelect, Checkbox, SwissCitySearch,
+    Chips, NotesInput, ErrorNote, PhoneInput, EmailInput, CategorySelect, Checkbox, SwissCitySearch, PersonLookup,
     IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonImg, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
   styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
@@ -58,6 +60,18 @@ import { PersonNewFormModel, personNewFormValidations, PersonI18n } from '@okr/s
                 <okr-error-note [errors]="lastNameErrors()" />
               </ion-col>
             </ion-row>
+
+            @if (personLookupEnabled()) {
+              <ion-row>
+                <ion-col size="12">
+                  <okr-person-lookup
+                    [firstName]="firstName()"
+                    [lastName]="lastName()"
+                    [i18n]="lookupI18n()"
+                    (detailsLoaded)="onPersonSelected($event)" />
+                </ion-col>
+              </ion-row>
+            }
 
             <ion-row>
               <ion-col size="12" size-md="6">
@@ -266,6 +280,7 @@ export class PersonNewForm {
   public readonly genders = input.required<CategoryListModel>();
   public readonly locale = input<string>(DEFAULT_LOCALE);
   public readonly readOnly = input(true);
+  public readonly personLookupEnabled = input(false);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // composed i18n objects for child inputs
@@ -286,6 +301,12 @@ export class PersonNewForm {
   protected dateOfDeathI18n  = computed(() => ({ name: 'dateOfDeath',  label: this.i18n().dateOfDeath_label(),  placeholder: this.i18n().dateOfDeath_placeholder(),  helper: this.i18n().dateOfDeath_helper()  } as DateInputI18n));
   protected dateOfEntryI18n         = computed(() => ({ name: 'dateOfEntry',         label: this.i18n().dateOfEntry_label(),         placeholder: this.i18n().dateOfEntry_placeholder(),         helper: this.i18n().dateOfEntry_helper()         } as DateInputI18n));
   protected shouldAddMembershipI18n = computed(() => ({ name: 'shouldAddMembership', label: this.i18n().add_membership_confirm(), helper: this.i18n().add_membership_helper() } as CheckboxI18n));
+  protected lookupI18n = computed(() => ({
+    title: this.i18n().lookup_title(),
+    empty: this.i18n().lookup_empty(),
+    error: this.i18n().lookup_error(),
+    attribution: this.i18n().lookup_attribution(),
+  }));
 
   public membershipCategories = input.required<CategoryListModel>();
   // signals
@@ -343,6 +364,11 @@ export class PersonNewForm {
 
   protected onCitySelected(city: SwissCity): void {
     this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: city.zipCode }));
+  }
+
+  protected onPersonSelected(details: PersonDirectoryResult): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => mergeDirectoryResultIntoForm(vm, details));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {

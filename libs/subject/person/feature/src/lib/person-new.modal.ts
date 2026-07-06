@@ -36,6 +36,7 @@ import { PersonStore } from './person.store';
             [allTags]="tags()"
             [tenantId]="tenantId()"
             [readOnly]="false"
+            [personLookupEnabled]="personLookupEnabled()"
             [membershipCategories]="mcat"
             (selectClicked)="selectOrg()"
             (dirty)="formDirty.set($event)"
@@ -64,6 +65,7 @@ export class PersonNewModal {
   protected tags = computed(() => this.store.getTags());
   protected tenantId = computed(() => this.store.tenantId());
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
+  protected personLookupEnabled = computed(() => this.store.appStore.appConfig().personLookupEnabled ?? false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
