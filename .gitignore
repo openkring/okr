@@ -111,3 +111,6 @@ test-results/
 
 # okr: rendered helper videos are published to YouTube, not git
 planning/video-producer/**/*.mp4
+
+.nx/polygraph
+.claude/worktrees

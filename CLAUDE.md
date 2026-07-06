@@ -10,27 +10,27 @@ This is an Angular/Ionic project using TypeScript, Firebase, and pnpm. Use Angul
 
 Invoke the matching skill **before** starting work in its area — each one carries the project-specific conventions and overrides general defaults.
 
-| Skill | Use when… |
-| --- | --- |
-| `new-feature` | scaffolding a brand-new feature/entity — shared model (`FEATUREModelName`/`FEATURECollection`), the four layer libs (data-access/feature/ui/util), list + optional detail-page route, and the navigate/call/context `menuItems`. |
-| `provision-tenant` | spinning up a brand-new tenant app — new Firebase Web App + AppCheck, `app-config/{tenantId}` doc, `@okr/tools:app` scaffold, starter CMS content, git-ignored `.env`, and the first admin user (shared Firebase project). |
-| `tenant-model` | reasoning about multi-tenancy — the `tenants[]` isolation field, tenant-scoped queries, `app-config`, persons shared across tenants vs. single-tenant `users/{uid}`, and the roles model. |
-| `address-model` | creating/reading contact details — the flat `addresses` collection, `parentKey` link, `addressChannel` (email/phone/postal/web/bank) → value-field mapping, and favorite-address → `favEmail`/`favPhone` replication. |
-| `i18n` | adding/translating/wiring any i18n string (keys, store wiring, labels to forms/ui, new-lib `de.json`, tenant overrides). |
-| `icons` | rendering or choosing an icon, the `svgIcon` pipe, icon sets, or an icon shows blank. |
-| `generating-lists` | scaffolding a new feature list view (`FEATURE-list.ts`) — header, filters, list/grid, per-item ActionSheet actions. |
-| `building-forms` | building/scaffolding a form (`FEATURE.form.ts` or a form-builder form) — Signal Forms + Vest validation, shared/ui field primitives, `valid`/`dirty` outputs, no submit button (parent drives saving via change-confirmation), i18n, autofocus/tab order, `ion-card`/`ion-grid size-md` layout, guarded chips/notes. |
-| `new-section` | creating a new CMS section type. |
-| `firebase-deploy` | deploying app/hosting, Cloud Functions, Firestore/Storage rules, or managing function secrets. |
-| `release` | cutting a release — version bump + prod build + full test gate + hosting deploy + `app-version` update prompt + release commit/tag/push; or a functions/rules-only deploy. Orchestrates `firebase-deploy`. |
-| `website` | editing/deploying/debugging the static marketing site (`scs-website`) served at `/web` — embedded-static pattern, self-hosted fonts + OFL licensing, the immutable-CSS cache-bust trap, the service-worker `connect-src` CSP gotcha, and why a `/web` change needs a hosting redeploy but no version bump. |
-| `brand-styleguide` | creating/refreshing a tenant's `brand-styleguide.html` (logo, colors, typography, usage rules) — the bespoke `stage`/`card`/`grid`/`swatch`/`do-dont` CSS system, sourcing real logo/color/font inputs, and why not to wire it through the tenant site's Tailwind pipeline. |
-| `eslint` | linting or fixing lint errors (and the `nx lint` heap-OOM workaround). |
-| `fix-types` | type-checking after editing TypeScript files. |
-| `testing` | writing or running tests — Vitest unit tests (only for util functions and services) or Playwright e2e; includes the `@angular/compiler` JIT-error fix. |
-| `authoring-docs` | creating/saving a spec, design, or implementation plan doc. |
-| `pending-implementation` | creating/updating/regenerating `planning/PENDING_IMPLEMENTATION.md` — the TOC of specified-but-not-fully-implemented topics. |
-| `creating-help-videos` | creating/updating a step-by-step help/tutorial/onboarding video for end users (login, password reset, …) — German storyboard + Sprechertext + screenshot-capture guide per `tenant/topic`, for desktop and mobile. |
+| Skill                    | Use when…                                                                                                                                                                                                                                                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `new-feature`            | scaffolding a brand-new feature/entity — shared model (`FEATUREModelName`/`FEATURECollection`), the four layer libs (data-access/feature/ui/util), list + optional detail-page route, and the navigate/call/context `menuItems`.                                                                                     |
+| `provision-tenant`       | spinning up a brand-new tenant app — new Firebase Web App + AppCheck, `app-config/{tenantId}` doc, `@okr/tools:app` scaffold, starter CMS content, git-ignored `.env`, and the first admin user (shared Firebase project).                                                                                           |
+| `tenant-model`           | reasoning about multi-tenancy — the `tenants[]` isolation field, tenant-scoped queries, `app-config`, persons shared across tenants vs. single-tenant `users/{uid}`, and the roles model.                                                                                                                            |
+| `address-model`          | creating/reading contact details — the flat `addresses` collection, `parentKey` link, `addressChannel` (email/phone/postal/web/bank) → value-field mapping, and favorite-address → `favEmail`/`favPhone` replication.                                                                                                |
+| `i18n`                   | adding/translating/wiring any i18n string (keys, store wiring, labels to forms/ui, new-lib `de.json`, tenant overrides).                                                                                                                                                                                             |
+| `icons`                  | rendering or choosing an icon, the `svgIcon` pipe, icon sets, or an icon shows blank.                                                                                                                                                                                                                                |
+| `generating-lists`       | scaffolding a new feature list view (`FEATURE-list.ts`) — header, filters, list/grid, per-item ActionSheet actions.                                                                                                                                                                                                  |
+| `building-forms`         | building/scaffolding a form (`FEATURE.form.ts` or a form-builder form) — Signal Forms + Vest validation, shared/ui field primitives, `valid`/`dirty` outputs, no submit button (parent drives saving via change-confirmation), i18n, autofocus/tab order, `ion-card`/`ion-grid size-md` layout, guarded chips/notes. |
+| `new-section`            | creating a new CMS section type.                                                                                                                                                                                                                                                                                     |
+| `firebase-deploy`        | deploying app/hosting, Cloud Functions, Firestore/Storage rules, or managing function secrets.                                                                                                                                                                                                                       |
+| `release`                | cutting a release — version bump + prod build + full test gate + hosting deploy + `app-version` update prompt + release commit/tag/push; or a functions/rules-only deploy. Orchestrates `firebase-deploy`.                                                                                                           |
+| `website`                | editing/deploying/debugging the static marketing site (`scs-website`) served at `/web` — embedded-static pattern, self-hosted fonts + OFL licensing, the immutable-CSS cache-bust trap, the service-worker `connect-src` CSP gotcha, and why a `/web` change needs a hosting redeploy but no version bump.           |
+| `brand-styleguide`       | creating/refreshing a tenant's `brand-styleguide.html` (logo, colors, typography, usage rules) — the bespoke `stage`/`card`/`grid`/`swatch`/`do-dont` CSS system, sourcing real logo/color/font inputs, and why not to wire it through the tenant site's Tailwind pipeline.                                          |
+| `eslint`                 | linting or fixing lint errors (and the `nx lint` heap-OOM workaround).                                                                                                                                                                                                                                               |
+| `fix-types`              | type-checking after editing TypeScript files.                                                                                                                                                                                                                                                                        |
+| `testing`                | writing or running tests — Vitest unit tests (only for util functions and services) or Playwright e2e; includes the `@angular/compiler` JIT-error fix.                                                                                                                                                               |
+| `authoring-docs`         | creating/saving a spec, design, or implementation plan doc.                                                                                                                                                                                                                                                          |
+| `pending-implementation` | creating/updating/regenerating `planning/PENDING_IMPLEMENTATION.md` — the TOC of specified-but-not-fully-implemented topics.                                                                                                                                                                                         |
+| `creating-help-videos`   | creating/updating a step-by-step help/tutorial/onboarding video for end users (login, password reset, …) — German storyboard + Sprechertext + screenshot-capture guide per `tenant/topic`, for desktop and mobile.                                                                                                   |
 
 ### Documentation layout (`docs/`)
 
@@ -71,7 +71,6 @@ For all deployment (app/hosting, functions, rules, secrets), use the **`firebase
 
 Run `pnpm nx show project <project>` to see all available targets for a project.
 
-
 ## Development Workflow
 
 When making changes to TypeScript files, always run `npx tsc --noEmit` or the project's build command after edits to catch type errors immediately. Do not consider a task done until it compiles cleanly.
@@ -98,7 +97,7 @@ This is a **public core + private submodules** repository (`openkring/okr`). The
 (libs, functions, rules, public docs) is public; the tenant apps, planning docs, and
 skills are private git submodules under `bkaiser-org` (empty for non-members).
 
-- `apps` —  Angular/Ionic applications (`apps/scs-app`, `apps/*-website` are **private submodules**)
+- `apps` — Angular/Ionic applications (`apps/scs-app`, `apps/*-website` are **private submodules**)
 - `apps/functions` — Firebase Cloud Functions (Node.js/esbuild) — part of the public core
 - `libs/` — feature libraries following the `@okr/<domain>-<layer>` import alias convention (public core)
 - `planning/` — specs, plans, ideas, video-producer — **private submodule** (`bkaiser-org/okr-planning`)
@@ -110,12 +109,12 @@ Members clone with `git clone --recurse-submodules git@github.com:openkring/okr.
 
 Each domain is split into layers:
 
-| Layer | Purpose |
-|---|---|
-| `data-access` | Services, Firestore queries, RxFire subscriptions |
-| `feature` | Smart components, NgRx Signal Stores |
-| `ui` | Dumb/presentational components |
-| `util` | Pure functions, validators, model factory functions |
+| Layer         | Purpose                                             |
+| ------------- | --------------------------------------------------- |
+| `data-access` | Services, Firestore queries, RxFire subscriptions   |
+| `feature`     | Smart components, NgRx Signal Stores                |
+| `ui`          | Dumb/presentational components                      |
+| `util`        | Pure functions, validators, model factory functions |
 
 Cross-cutting domains: `shared/models`, `shared/config`, `shared/data-access`, `shared/feature`, `shared/ui`, `shared/util-core`, `shared/util-angular`, `shared/util-functions`, `shared/i18n`, `shared/pipes`.
 
@@ -175,7 +174,7 @@ All i18n work — translation keys, store wiring, passing labels to forms/ui, ne
 
 #### Component names
 
-- Name the files like this:  FEATURE[-purpose][.type].ts. Purpose may be edit/list/new/label etc. type may be e.g. pipe/model/validations/util/service/form/modal/store.
+- Name the files like this: FEATURE[-purpose][.type].ts. Purpose may be edit/list/new/label etc. type may be e.g. pipe/model/validations/util/service/form/modal/store.
 - Use the same structure in CamelCase to name the component e.g. feature-new.modal becomes FeatureNewModal
 - avoid the usage of 'Component'. e.g. use FeatureNewModal instead of FeatureNewModalComponent.
 - name the template like this okr-feature[-purpose][-type], e.g. okr-feature-new-modal.
@@ -183,7 +182,6 @@ All i18n work — translation keys, store wiring, passing labels to forms/ui, ne
 #### Classes
 
 - always use private | protected | public for all methods and variables
-
 
 ### Environment configuration
 
@@ -208,8 +206,8 @@ Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, 
 ### Build
 
 - all libaries are buildable
-- all build artefacts reside in dist/* 
-- never generate build artefacts such as *.d.ts, *.js or *.js.map into the apps or libs tree. Keep the source code in apps and libs tree clean.
+- all build artefacts reside in dist/\*
+- never generate build artefacts such as _.d.ts, _.js or \*.js.map into the apps or libs tree. Keep the source code in apps and libs tree clean.
 
 ### Deployment
 
@@ -237,7 +235,7 @@ See the **`firebase-deploy` skill** for all deployment commands and guidelines (
 - do not try to find icon assets in the code — the icons reside in the database and are loaded via url (see the **`icons` skill**).
 - Always git commit directly to main. Do not create feature branches or worktrees.
 - When creating a new library layer or feature (data-access, feature, ui, util), always create three files: `tsconfig.json`, update `tsconfig.lib.json` with `references`, and create `package.json`. Use an existing sibling lib (e.g. `libs/folder/<layer>/`) as a template. The `tsconfig.json` lists all `@okr/*` dependencies as references; the `tsconfig.lib.json` lists only intra-domain sibling lib references; the `package.json` must have `"name": "@okr/<lib-name>"` (with the `@okr/` scope) and all `@okr/*` dependencies listed. Missing or mis-named `package.json` (without `@okr/` scope) causes `TS6059 rootDir` build errors in dependent libs because Nx can't redirect imports to the compiled declaration files.
-- when creating a new libray layer or feature, create a route for the list component (*.list) and for the detail component(*.page). Use existing routes as examples and ask user about guard permissions, if you are not sure.
+- when creating a new libray layer or feature, create a route for the list component (_.list) and for the detail component(_.page). Use existing routes as examples and ask user about guard permissions, if you are not sure.
 
 ## Working Style
 
@@ -246,3 +244,27 @@ When exploring the codebase, limit exploration to 3-4 file reads before producin
 ## Debugging
 
 When fixing bugs, verify the root cause is in the correct file/service before making changes. Ask for clarification if the error source is ambiguous rather than guessing.
+
+<!-- nx configuration start-->
+<!-- Leave the start & end comments to automatically receive updates. -->
+
+## General Guidelines for working with Nx
+
+- For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
+- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
+- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- You have access to the Nx MCP server and its tools, use them to help the user
+- For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
+- NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
+
+## Scaffolding & Generators
+
+- For scaffolding tasks (creating apps, libs, project structure, setup), ALWAYS invoke the `nx-generate` skill FIRST before exploring or calling MCP tools
+
+## When to use nx_docs
+
+- USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
+- DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
+- The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
+
+<!-- nx configuration end-->
