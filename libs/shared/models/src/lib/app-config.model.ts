@@ -131,6 +131,7 @@ export class AppConfig {
   public minYear = 1850; // minimum year for date inputs
   public nameDisplay = 0; // name display format, e.g. 0 for full name, 1 for first name only
   public newsDelivery = 2; // news delivery preference, e.g. 0 for no news, 1 for email, 2 for in-app
+  public personLookupEnabled = false; // enables the search.ch person address lookup in person-new (requires app-secrets/{tenantId}.searchChApiKey)
   public personSortCriteria = 1; // sorting criteria for persons, e.g. 0 for name, 1 for date of birth
   public showArchivedData = false; // whether to show archived data
   public showDebugInfo = false; // whether to show debug information
