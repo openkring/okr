@@ -12,8 +12,6 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { ACTIVITY_I18N_KEYS, ActivityI18n } from '@okr/activity-util';
 
-import { ActivityViewModal } from './activity-view.modal';
-
 export type { ActivityI18n };
 
 export type ActivityState = {
@@ -90,6 +88,7 @@ export const ActivityStore = signalStore(
     },
 
     async view(activity: ActivityModel): Promise<void> {
+      const { ActivityViewModal } = await import('./activity-view.modal');
       const modal = await store.modalController.create({
         component: ActivityViewModal,
         componentProps: { activity },
