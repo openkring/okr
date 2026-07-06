@@ -13,7 +13,7 @@ import { of } from 'rxjs';
 import { GroupService } from '@okr/subject-group-data-access';
 import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
 import { OrgEditModal } from '@okr/subject-org-feature';
-import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { isOrgchartBlocked, nextOrgchartVisitedKeys, SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export interface OrgchartTreeNode {
   name: string;
@@ -27,12 +27,18 @@ function groupToNode(group: GroupModel): OrgchartTreeNode {
   return { name: group.name, okey: group.okey, modelType: 'group', icon: group.icon, children: [] };
 }
 
-function buildTreeNode(node: OrgchartTreeNode, allGroups: GroupModel[]): OrgchartTreeNode {
+/**
+ * Recursively walks the parentKey chain to build the ECharts tree data.
+ * `visitedKeys` is the ancestor path (including this node's own okey) — a group whose
+ * parentKey forms a cycle back onto its own path is dropped instead of recursing forever.
+ */
+function buildTreeNode(node: OrgchartTreeNode, allGroups: GroupModel[], depth = 0, visitedKeys: ReadonlySet<string> = new Set()): OrgchartTreeNode {
+  const path = nextOrgchartVisitedKeys(visitedKeys, node.okey);
   return {
     ...node,
     children: allGroups
-      .filter(g => g.parentKey === node.okey)
-      .map(child => buildTreeNode(groupToNode(child), allGroups)),
+      .filter(g => g.parentKey === node.okey && !isOrgchartBlocked(path, g.okey, depth))
+      .map(child => buildTreeNode(groupToNode(child), allGroups, depth + 1, path)),
   };
 }
 

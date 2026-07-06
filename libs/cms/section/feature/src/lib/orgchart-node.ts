@@ -3,6 +3,7 @@ import { IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/stan
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { isOrgchartBlocked, nextOrgchartVisitedKeys } from '@okr/cms-section-util';
 
 import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
 
@@ -71,6 +72,7 @@ import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
             [showName]="showName()"
             [display]="display()"
             [editMode]="editMode()"
+            [visitedKeys]="path()"
             (groupAction)="groupAction.emit($event)"
           />
         }
@@ -86,16 +88,21 @@ export class OrgchartNodeComponent {
   public showName = input(true);
   public display = input<'vertical' | 'horizontal'>('vertical');
   public editMode = input(false);
+  /** Ancestor okeys already rendered on the current path, including this node's own — guards against a circular parentKey chain. */
+  public visitedKeys = input<ReadonlySet<string>>(new Set<string>());
 
   /** Emits the tapped node so the parent OrgchartSectionComponent can open the ActionSheet. */
   public groupAction = output<OrgchartTreeNode>();
 
   protected expanded = signal(true);
 
-  /** Direct children of this node, live-computed from the shared store signal. */
+  /** This node's ancestor path, to hand down to children so a cycle is detected before it recurses forever. */
+  protected path = computed(() => nextOrgchartVisitedKeys(this.visitedKeys(), this.node().okey));
+
+  /** Direct children of this node, live-computed from the shared store signal, excluding cycles and depth-capped nodes. */
   protected children = computed(() =>
     this.orgchartStore.allGroups()
-      .filter(g => g.parentKey === this.node().okey)
+      .filter(g => g.parentKey === this.node().okey && !isOrgchartBlocked(this.path(), g.okey, this.depth()))
       .map(g => ({ name: g.name, okey: g.okey, modelType: 'group' as const, icon: g.icon, children: [] }))
   );
   protected indent = computed(() => `${this.depth() * 20}px`);
