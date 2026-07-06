@@ -25,7 +25,7 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { firstValueFrom, Observable, of, shareReplay } from 'rxjs';
+import { catchError, firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 
 import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
@@ -434,10 +434,21 @@ export class FirestoreService {
       const collectionRef = collection(this.firestore, collectionName);
       const queryRef = query(collectionRef, ...queries);
 
-      // shareReplay to cache and share the latest emitted value among multiple subscribers
-      const data$ = collectionData(queryRef, { idField: 'okey' }).pipe(
+      // shareReplay to cache and share the latest emitted value among multiple subscribers.
+      // catchError guards against ASYNC stream errors (e.g. a transient Firestore Listen
+      // PERMISSION_DENIED during token refresh, SCS-13) which the outer try/catch — synchronous
+      // only — cannot catch. Without it the error propagates into any consuming rxResource, whose
+      // .value() then re-throws inside change detection and crashes the app. We log, evict the
+      // poisoned cache entry so a later reload()/re-subscription rebuilds a fresh listener, and
+      // fall back to an empty list.
+      const data$ = (collectionData(queryRef, { idField: 'okey' }) as Observable<T[]>).pipe(
+        catchError((err) => {
+          console.error('FirestoreService.searchData stream error:', err);
+          this.queryCache.delete(cacheKey);
+          return of<T[]>([]);
+        }),
         shareReplay({ bufferSize: 1, refCount: true })
-      ) as Observable<T[]>;
+      );
 
       this.queryCache.set(cacheKey, data$);
       return data$;
