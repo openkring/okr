@@ -63,7 +63,9 @@ export function checkUrlType(url: string | undefined): UrlType | undefined {
     warn('img.util.checkUrlType -> url is undefined');
     return undefined;
   }
-  if (url.startsWith('https://bkaiser.imgix.net')) {
+  // Require the path separator so a look-alike host (e.g. https://bkaiser.imgix.net.evil.com)
+  // is not misclassified as an imgix URL (CodeQL js/incomplete-url-substring-sanitization).
+  if (url.startsWith('https://bkaiser.imgix.net/')) {
     return 'imgix';
   } else if (url.startsWith('https://')) {
     return 'https';

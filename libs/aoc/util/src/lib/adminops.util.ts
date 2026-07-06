@@ -3,7 +3,7 @@ import { ToastController } from '@ionic/angular/standalone';
 
 import { FirebaseUserModel, LogInfo, PersonModel, UserModel } from '@okr/shared-models';
 import { error, showToast } from '@okr/shared-util-angular';
-import { die, generateRandomString } from '@okr/shared-util-core';
+import { die } from '@okr/shared-util-core';
 import { getApp } from 'firebase/app';
 
 export function getLogInfo(key: string | undefined, name: string | undefined, message: string, isVerbose = true): LogInfo {
@@ -172,13 +172,29 @@ export async function updateFirebaseUser(fbUser: FirebaseUserModel, useEmulator 
 }
 
 /**
+ * Generates a cryptographically secure random string, suitable for passwords.
+ * Uses the Web Crypto API (`crypto.getRandomValues`, available in browsers and Node ≥19)
+ * instead of the predictable `Math.random()` (CodeQL js/insecure-randomness).
+ */
+function generateSecureRandomString(size: number): string {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = new Uint8Array(size);
+  crypto.getRandomValues(bytes);
+  let result = '';
+  for (let i = 0; i < size; i++) {
+    result += charset[bytes[i] % charset.length];
+  }
+  return result;
+}
+
+/**
  * Generates a password.
- * By default, the password is a 12 char long random string.
+ * By default, the password is a 12 char long cryptographically secure random string.
  * Optionally, a password can be preset.
  * @param password the preset password
  */
 export function generatePassword(password?: string): string {
-  return !password || password.length === 0 ? generateRandomString(12) : password;
+  return !password || password.length === 0 ? generateSecureRandomString(12) : password;
 }
 
 /**
