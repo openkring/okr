@@ -24,6 +24,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | `firebase-deploy` | deploying app/hosting, Cloud Functions, Firestore/Storage rules, or managing function secrets. |
 | `release` | cutting a release — version bump + prod build + full test gate + hosting deploy + `app-version` update prompt + release commit/tag/push; or a functions/rules-only deploy. Orchestrates `firebase-deploy`. |
 | `website` | editing/deploying/debugging the static marketing site (`scs-website`) served at `/web` — embedded-static pattern, self-hosted fonts + OFL licensing, the immutable-CSS cache-bust trap, the service-worker `connect-src` CSP gotcha, and why a `/web` change needs a hosting redeploy but no version bump. |
+| `brand-styleguide` | creating/refreshing a tenant's `brand-styleguide.html` (logo, colors, typography, usage rules) — the bespoke `stage`/`card`/`grid`/`swatch`/`do-dont` CSS system, sourcing real logo/color/font inputs, and why not to wire it through the tenant site's Tailwind pipeline. |
 | `eslint` | linting or fixing lint errors (and the `nx lint` heap-OOM workaround). |
 | `fix-types` | type-checking after editing TypeScript files. |
 | `testing` | writing or running tests — Vitest unit tests (only for util functions and services) or Playwright e2e; includes the `@angular/compiler` JIT-error fix. |
