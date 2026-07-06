@@ -1,0 +1,68 @@
+import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
+import * as admin from 'firebase-admin';
+import axios from 'axios';
+
+import { parseTelFeed, PersonDirectoryResult } from './parse';
+
+export type { PersonDirectoryResult };
+
+const SEARCH_CH_BASE = 'https://tel.search.ch/api/';
+
+interface SearchPersonData {
+  tenantId: string;
+  firstName: string;
+  lastName: string;
+  location?: string;
+}
+
+/**
+ * Look up a person in the search.ch directory by first + last name.
+ * The tenant's API key is read server-side from app-secrets/{tenantId} and never
+ * leaves the backend. Requires an authenticated caller and passes AppCheck.
+ */
+export const searchChSearchPerson = onCall(
+  { region: 'europe-west6', enforceAppCheck: true },
+  async (request: CallableRequest<SearchPersonData>) => {
+    const CF_NAME = 'searchChSearchPerson';
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'authentication required');
+    }
+    const { tenantId, firstName, lastName, location } = request.data;
+    if (!tenantId || tenantId.trim().length === 0) {
+      throw new HttpsError('invalid-argument', 'tenantId is required');
+    }
+    const name = `${(firstName ?? '').trim()} ${(lastName ?? '').trim()}`.trim();
+    if (name.length === 0) {
+      throw new HttpsError('invalid-argument', 'firstName or lastName is required');
+    }
+
+    // read the tenant's search.ch key (server-only doc, admin SDK bypasses rules)
+    const snap = await admin.firestore().doc(`app-secrets/${tenantId}`).get();
+    const key = snap.exists ? (snap.data()?.['searchChApiKey'] as string | undefined) : undefined;
+    if (!key || key.trim().length === 0) {
+      throw new HttpsError('failed-precondition', 'no search.ch key configured for tenant');
+    }
+
+    logger.info(`${CF_NAME}: searching "${name}" (tenant ${tenantId})`);
+    try {
+      const response = await axios.get(SEARCH_CH_BASE, {
+        params: {
+          was: name,
+          wo: (location ?? '').trim() || undefined,
+          key: key.trim(),
+          maxnum: 20,
+          lang: 'de',
+        },
+        responseType: 'text',
+      });
+      const results: PersonDirectoryResult[] = parseTelFeed(String(response.data));
+      logger.info(`${CF_NAME}: found ${results.length} result(s)`);
+      return { results };
+    } catch (error: unknown) {
+      if (error instanceof HttpsError) throw error;
+      logger.error(`${CF_NAME}: error`, error);
+      throw new HttpsError('internal', 'search.ch lookup failed');
+    }
+  }
+);

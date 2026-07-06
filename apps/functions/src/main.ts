@@ -14,6 +14,7 @@ import * as Rag from './rag';
 import * as Email from './email';
 import * as Bexio from './bexio';
 import * as Zefix from './zefix';
+import * as SearchCh from './searchch';
 import * as Location from './location';
 import * as Srv from './srv';
 import * as Flighttracker from './flighttracker';
@@ -147,6 +148,9 @@ export const updateSrvContact = Srv.updateSrvContact;
 // zefix registry lookup
 export const zefixSearch = Zefix.zefixSearch;
 export const zefixGetByUid = Zefix.zefixGetByUid;
+
+// search.ch person-address lookup
+export const searchChSearchPerson = SearchCh.searchChSearchPerson;
 
 // google file search rag
 export const getOrCreateStore = Rag.getOrCreateStore;
