@@ -14,8 +14,6 @@ import { TaskService } from '@okr/task-data-access';
 import { isTask, TASK_I18N_KEYS, TaskI18n } from '@okr/task-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
-import { TaskEditModal } from './task-edit.modal';
-
 export type TaskState = {
   calendarName: string;
   maxItems: number | undefined,
@@ -194,6 +192,7 @@ export const TaskStore = signalStore(
     },
 
     async edit(task: TaskModel, readOnly = true): Promise<void> {
+      const { TaskEditModal } = await import('./task-edit.modal');
       const modal = await store.modalController.create({
         component: TaskEditModal,
         componentProps: {

@@ -12,8 +12,6 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { ResourceService } from '@okr/resource-data-access';
 import { RESOURCE_I18N_KEYS } from '@okr/resource-util';
 
-import { ResourceEditModal } from './resource-edit.modal';
-
 export type ResourceState = {
   searchTerm: string;
   selectedTag: string;
@@ -186,6 +184,7 @@ export const ResourceStore = signalStore(
       },
 
       async edit(resource: ResourceModel, isTypeEditable = false, readOnly = true): Promise<void> {
+        const { ResourceEditModal } = await import('./resource-edit.modal');
         const modal = await store.modalController.create({
           component: ResourceEditModal,
           componentProps: {
