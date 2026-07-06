@@ -18,7 +18,7 @@ importers:
     dependencies:
       '@analogjs/vite-plugin-angular':
         specifier: 1.20.1
-        version: 1.20.1(@angular/build@21.2.9(b37fbd7153acfd7bd4aea6f71124738a))
+        version: 1.20.1(@angular/build@21.2.9(2edd24a95884c907f2fd0250c31c3b07))
       '@angular/animations':
         specifier: 21.2.9
         version: 21.2.9(@angular/core@21.2.9(@angular/compiler@21.2.9)(rxjs@7.8.2)(zone.js@0.16.2))
@@ -262,7 +262,7 @@ importers:
         version: 21.2.9(chokidar@5.0.0)
       '@angular/build':
         specifier: 21.2.9
-        version: 21.2.9(b37fbd7153acfd7bd4aea6f71124738a)
+        version: 21.2.9(2edd24a95884c907f2fd0250c31c3b07)
       '@angular/cli':
         specifier: 21.2.13
         version: 21.2.13(@types/node@24.2.0)(chokidar@5.0.0)(supports-color@8.1.1)
@@ -286,7 +286,7 @@ importers:
         version: 17.0.0(@angular/common@21.2.9(@angular/core@21.2.9(@angular/compiler@21.2.9)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.9(@angular/compiler@21.2.9)(rxjs@7.8.2)(zone.js@0.16.2))
       '@nx/angular':
         specifier: 22.7.5
-        version: 22.7.5(f51a4d7ee6f778d482d107fd65b70a4f)
+        version: 22.7.5(c41a1a368c426376490815e1ad2ecff1)
       '@nx/cypress':
         specifier: 21.3.11
         version: 21.3.11(@babel/traverse@7.29.7)(@swc-node/register@1.9.2(@swc/core@1.5.29(@swc/helpers@0.5.18))(@swc/types@0.1.25)(supports-color@8.1.1)(typescript@5.9.3))(@swc/core@1.5.29(@swc/helpers@0.5.18))(@zkochan/js-yaml@0.0.7)(cypress@13.17.0)(eslint@9.39.2(jiti@2.4.2)(supports-color@8.1.1))(nx@21.4.1(@swc-node/register@1.9.2(@swc/core@1.5.29(@swc/helpers@0.5.18))(@swc/types@0.1.25)(supports-color@8.1.1)(typescript@5.9.3))(@swc/core@1.5.29(@swc/helpers@0.5.18)))(typescript@5.9.3)
@@ -403,7 +403,7 @@ importers:
         version: 5.5.3(@types/eslint@9.6.1)(eslint-config-prettier@9.1.2(eslint@9.39.2(jiti@2.4.2)(supports-color@8.1.1)))(eslint@9.39.2(jiti@2.4.2)(supports-color@8.1.1))(prettier@2.8.8)
       firebase-tools:
         specifier: ^14.27.0
-        version: 14.27.0(@swc/core@1.5.29(@swc/helpers@0.5.18))(@types/node@24.2.0)(encoding@0.1.13)(hono@4.12.23)(supports-color@8.1.1)(typescript@5.9.3)
+        version: 14.27.0(@swc/core@1.5.29(@swc/helpers@0.5.18))(@types/node@24.2.0)(encoding@0.1.13)(hono@4.12.27)(supports-color@8.1.1)(typescript@5.9.3)
       jiti:
         specifier: 2.4.2
         version: 2.4.2
@@ -546,6 +546,9 @@ importers:
       '@types/nodemailer':
         specifier: 7.0.11
         version: 7.0.11
+      fast-xml-parser:
+        specifier: ^4.5.6
+        version: 4.5.6
 
 packages:
 
@@ -5200,9 +5203,6 @@ packages:
   '@types/node@25.2.0':
     resolution: {integrity: sha512-DZ8VwRFUNzuqJ5khrvwMXHmvPe+zGayJhr2CDNiKB1WBE1ST8Djl00D0IC4vvNmHMdj6DlbYRIaFE7WHjlDl5w==}
 
-  '@types/node@26.0.1':
-    resolution: {integrity: sha512-fc3KiUoBt6kie0N9bIW3E47vZsuaMf0PM2AaUpLCLT0s/LvX1nxAim6Fc049cNxODPpGm6qRAuUOB86SkRuPQw==}
-
   '@types/nodemailer@7.0.11':
     resolution: {integrity: sha512-E+U4RzR2dKrx+u3N4DlsmLaDC6mMZOM/TPROxA0UAPiTgI0y4CEFBmZE+coGWTjakDriRsXG368lNk1u9Q0a2g==}
 
@@ -8071,10 +8071,6 @@ packages:
   homedir-polyfill@1.0.3:
     resolution: {integrity: sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==}
     engines: {node: '>=0.10.0'}
-
-  hono@4.12.23:
-    resolution: {integrity: sha512-eIaZ9qDgu7XV0pxOCrg7/WhnQ6Ivm22UcxhXx/A3dcbqbbYgBEkc6e/J/s7j2tS96zoB0S9VBdLwQNCWwUo4LA==}
-    engines: {node: '>=16.9.0'}
 
   hono@4.12.27:
     resolution: {integrity: sha512-1yrb/+w6HWQJrUCLkJ2IF5jNIPvvFkblV5RNOYl6bV+OA6p9GLcMpHFFGTosSvHvcAUibuUukRqhlYI4z32C7Q==}
@@ -11998,9 +11994,6 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
-  undici-types@8.3.0:
-    resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
-
   undici@6.26.0:
     resolution: {integrity: sha512-4yqz8a3n5HmGTlsbADNtr/dJlhkh/55Rq798G6ibiULcXbDtaLpTl1pvdqcbFfeoj3iSi52lePFM7h9H21cw/A==}
     engines: {node: '>=18.17'}
@@ -12826,12 +12819,12 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@analogjs/vite-plugin-angular@1.20.1(@angular/build@21.2.9(b37fbd7153acfd7bd4aea6f71124738a))':
+  '@analogjs/vite-plugin-angular@1.20.1(@angular/build@21.2.9(2edd24a95884c907f2fd0250c31c3b07))':
     dependencies:
       ts-morph: 21.0.1
       vfile: 6.0.3
     optionalDependencies:
-      '@angular/build': 21.2.9(b37fbd7153acfd7bd4aea6f71124738a)
+      '@angular/build': 21.2.9(2edd24a95884c907f2fd0250c31c3b07)
 
   '@angular-devkit/architect@0.2102.13(chokidar@5.0.0)':
     dependencies:
@@ -12959,7 +12952,7 @@ snapshots:
       '@angular/core': 21.2.9(@angular/compiler@21.2.9)(rxjs@7.8.2)(zone.js@0.16.2)
       tslib: 2.8.1
 
-  '@angular/build@21.2.9(b37fbd7153acfd7bd4aea6f71124738a)':
+  '@angular/build@21.2.9(2edd24a95884c907f2fd0250c31c3b07)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2102.9(chokidar@5.0.0)
@@ -12973,7 +12966,7 @@ snapshots:
       beasties: 0.4.1
       browserslist: 4.28.1
       esbuild: 0.27.3
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       istanbul-lib-instrument: 6.0.3
       jsonc-parser: 3.3.1
       listr2: 9.0.5
@@ -15387,7 +15380,7 @@ snapshots:
   '@grpc/grpc-js@1.9.16':
     dependencies:
       '@grpc/proto-loader': 0.7.15
-      '@types/node': 26.0.1
+      '@types/node': 24.2.0
 
   '@grpc/proto-loader@0.7.15':
     dependencies:
@@ -15410,9 +15403,9 @@ snapshots:
     dependencies:
       hono: 4.12.27
 
-  '@hono/node-server@1.19.9(hono@4.12.23)':
+  '@hono/node-server@1.19.9(hono@4.12.27)':
     dependencies:
-      hono: 4.12.23
+      hono: 4.12.27
 
   '@humanfs/core@0.19.1': {}
 
@@ -16052,9 +16045,9 @@ snapshots:
 
   '@matrix-org/matrix-sdk-crypto-wasm@17.1.0': {}
 
-  '@modelcontextprotocol/sdk@1.25.3(hono@4.12.23)(zod@3.25.76)':
+  '@modelcontextprotocol/sdk@1.25.3(hono@4.12.27)(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 1.19.9(hono@4.12.23)
+      '@hono/node-server': 1.19.9(hono@4.12.27)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
@@ -16621,7 +16614,7 @@ snapshots:
     dependencies:
       agent-base: 7.1.4
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       lru-cache: 11.2.5
       socks-proxy-agent: 8.0.5
     transitivePeerDependencies:
@@ -16679,7 +16672,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@nx/angular@22.7.5(f51a4d7ee6f778d482d107fd65b70a4f)':
+  '@nx/angular@22.7.5(c41a1a368c426376490815e1ad2ecff1)':
     dependencies:
       '@angular-devkit/core': 21.2.9(chokidar@5.0.0)
       '@angular-devkit/schematics': 21.2.9(chokidar@5.0.0)
@@ -16703,7 +16696,7 @@ snapshots:
       tslib: 2.8.1
       webpack-merge: 5.10.0
     optionalDependencies:
-      '@angular/build': 21.2.9(b37fbd7153acfd7bd4aea6f71124738a)
+      '@angular/build': 21.2.9(2edd24a95884c907f2fd0250c31c3b07)
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@minify-html/node'
@@ -18676,10 +18669,6 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
-  '@types/node@26.0.1':
-    dependencies:
-      undici-types: 8.3.0
-
   '@types/nodemailer@7.0.11':
     dependencies:
       '@types/node': 24.2.0
@@ -18808,8 +18797,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.35.1(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.35.1(typescript@5.9.3)
-      '@typescript-eslint/types': 8.35.1
+      '@typescript-eslint/tsconfig-utils': 8.54.0(typescript@5.9.3)
+      '@typescript-eslint/types': 8.54.0
       debug: 4.4.3(supports-color@8.1.1)
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -21318,7 +21307,6 @@ snapshots:
   fast-xml-parser@4.5.6:
     dependencies:
       strnum: 1.1.2
-    optional: true
 
   fastest-levenshtein@1.0.16: {}
 
@@ -21513,7 +21501,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  firebase-tools@14.27.0(@swc/core@1.5.29(@swc/helpers@0.5.18))(@types/node@24.2.0)(encoding@0.1.13)(hono@4.12.23)(supports-color@8.1.1)(typescript@5.9.3):
+  firebase-tools@14.27.0(@swc/core@1.5.29(@swc/helpers@0.5.18))(@types/node@24.2.0)(encoding@0.1.13)(hono@4.12.27)(supports-color@8.1.1)(typescript@5.9.3):
     dependencies:
       '@apphosting/build': 0.1.7(@swc/core@1.5.29(@swc/helpers@0.5.18))(@types/node@24.2.0)(typescript@5.9.3)
       '@apphosting/common': 0.0.8
@@ -21522,7 +21510,7 @@ snapshots:
       '@google-cloud/cloud-sql-connector': 1.9.0
       '@google-cloud/pubsub': 5.2.2
       '@inquirer/prompts': 7.10.1(@types/node@24.2.0)
-      '@modelcontextprotocol/sdk': 1.25.3(hono@4.12.23)(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.25.3(hono@4.12.27)(zod@3.25.76)
       abort-controller: 3.0.0
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
@@ -21836,7 +21824,7 @@ snapshots:
   gaxios@6.7.1(encoding@0.1.13):
     dependencies:
       extend: 3.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       is-stream: 2.0.1
       node-fetch: 2.7.0(encoding@0.1.13)
       uuid: 9.0.1
@@ -21847,7 +21835,7 @@ snapshots:
   gaxios@7.1.3:
     dependencies:
       extend: 3.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       node-fetch: 3.3.2
       rimraf: 5.0.10
     transitivePeerDependencies:
@@ -22154,8 +22142,6 @@ snapshots:
     dependencies:
       parse-passwd: 1.0.0
 
-  hono@4.12.23: {}
-
   hono@4.12.27: {}
 
   hosted-git-info@2.8.9: {}
@@ -22339,7 +22325,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@7.0.6(supports-color@8.1.1):
+  https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
@@ -22999,7 +22985,7 @@ snapshots:
       decimal.js: 10.6.0
       html-encoding-sniffer: 4.0.0
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       is-potential-custom-element-name: 1.0.1
       nwsapi: 2.2.23
       parse5: 7.3.0
@@ -24466,7 +24452,7 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       get-uri: 6.0.5(supports-color@8.1.1)
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       pac-resolver: 7.0.1
       socks-proxy-agent: 8.0.5
     transitivePeerDependencies:
@@ -25109,7 +25095,7 @@ snapshots:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6
       lru-cache: 7.18.3
       pac-proxy-agent: 7.2.0(supports-color@8.1.1)
       proxy-from-env: 1.1.0
@@ -26259,8 +26245,7 @@ snapshots:
     dependencies:
       js-tokens: 9.0.1
 
-  strnum@1.1.2:
-    optional: true
+  strnum@1.1.2: {}
 
   stubs@3.0.0: {}
 
@@ -26792,8 +26777,6 @@ snapshots:
   undici-types@7.10.0: {}
 
   undici-types@7.16.0: {}
-
-  undici-types@8.3.0: {}
 
   undici@6.26.0: {}
 
