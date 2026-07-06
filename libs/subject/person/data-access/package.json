@@ -10,6 +10,7 @@
     "@okr/activity-data-access": "*",
     "@okr/shared-models": "*",
     "@okr/shared-config": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/subject-person-util": "*"
   }
 }
