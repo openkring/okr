@@ -75,6 +75,11 @@ export const PERSON_I18N_KEYS = {
     web_placeholder:            PFX + 'web.placeholder',
     web_helper:                 PFX + 'web.helper',
 
+    lookup_title:               PFX + 'lookup.title',
+    lookup_empty:               PFX + 'lookup.empty',
+    lookup_error:               PFX + 'lookup.error',
+    lookup_attribution:         PFX + 'lookup.attribution',
+
     add_membership_label:       PFX + 'add.membership.label',
     add_membership_confirm:     PFX + 'add.membership.confirm',
     add_membership_conf:        PFX + 'add.membership.conf',

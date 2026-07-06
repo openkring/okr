@@ -88,6 +88,13 @@
     "helper": "Eine Web Adresse (URL auf eine Website)"
   },
 
+  "lookup": {
+    "title": "Adresssuche (search.ch)",
+    "empty": "Keine Treffer gefunden.",
+    "error": "Suche fehlgeschlagen. Bitte erneut versuchen.",
+    "attribution": "Daten: Swisscom Directories AG (search.ch)"
+  },
+
   "add": {
     "membership": {
       "label": "Mitgliedschaft (optional)",
