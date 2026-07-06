@@ -16,6 +16,7 @@
     "@okr/shared-ui": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-util-core": "*",
+    "@okr/avatar-ui": "*",
     "@okr/trip-util": "*"
   }
 }

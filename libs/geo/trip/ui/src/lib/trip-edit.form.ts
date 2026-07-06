@@ -1,15 +1,15 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
-import { debugFormModel, getDurationLabel, hasRole } from '@okr/shared-util-core';
+import { debugFormModel, getAvatarName, getDurationLabel, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { Avatars } from '@okr/avatar-ui';
+import { Avatars, AvatarPipe } from '@okr/avatar-ui';
 import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
 
 
@@ -17,11 +17,17 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
   selector: 'okr-trip-edit-form',
   standalone: true,
   imports: [
-    SvgIconPipe,
-    IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonCard, IonCardContent, IonButton,
+    SvgIconPipe, AvatarPipe,
+    IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton,
+    IonList, IonAvatar, IonImg,
     NotesInput, Avatars, NumberInput
   ],
-  styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
+  styles: [`
+    ion-thumbnail { width: 30px; height: 30px; }
+    ion-avatar { width: 30px; height: 30px; }
+    ion-card-header { padding: 0; }
+    .title { font-size: 1.25rem; font-weight: 500; margin-left: 0; }
+  `],
   template: `
     <form novalidate>
 
@@ -57,7 +63,7 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
                       <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearBoat()" />
                     }
                   } @else if(!isReadOnly()) {
-                    <ion-button (click)="boatSelectClicked.emit()">
+                    <ion-button size="large" (click)="boatSelectClicked.emit()">
                       <ion-icon slot="start" src="{{'boat' | svgIcon }}" />
                       {{ i18n().select_boat_add() }}
                     </ion-button>
@@ -86,7 +92,7 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
                       <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
                     }
                   } @else if(!isReadOnly()) {
-                    <ion-button (click)="locationSelectClicked.emit()">
+                    <ion-button size="large" (click)="locationSelectClicked.emit()">
                       <ion-icon slot="start" src="{{'location' | svgIcon }}" />
                       {{ i18n().select_location_add() }}
                     </ion-button>
@@ -118,7 +124,35 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
       </ion-card>
 
       <!-- participants -->
-      @if(currentUser(); as currentUser) {
+      @if(isReadOnly()) {
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>
+              <ion-item lines="none">
+                <div class="title">{{ i18n().select_participant_title() }}</div>
+              </ion-item>
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content class="ion-no-padding">
+            @if(participants().length > 0) {
+              <ion-list>
+                @for(participant of participants(); track participant.key) {
+                  <ion-item lines="none">
+                    <ion-avatar slot="start">
+                      <ion-img src="{{ participant.modelType + '.' + participant.key | avatar }}" alt="Avatar" />
+                    </ion-avatar>
+                    <ion-label>{{ getParticipantName(participant) }}</ion-label>
+                  </ion-item>
+                }
+              </ion-list>
+            } @else {
+              <ion-item lines="none">
+                <ion-label>-</ion-label>
+              </ion-item>
+            }
+          </ion-card-content>
+        </ion-card>
+      } @else if(currentUser(); as currentUser) {
         <okr-avatars (selectClicked)="personSelectClicked.emit()"
           [avatars]="participants()"
           (avatarsChange)="onFieldChange('participants', $event)"
@@ -198,6 +232,10 @@ export class TripEditForm {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  protected getParticipantName(participant: AvatarInfo): string {
+    return getAvatarName(participant, this.currentUser()?.nameDisplay);
   }
 
   protected getIcon(boat: AvatarInfo): string {
