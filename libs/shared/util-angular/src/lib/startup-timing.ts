@@ -1,18 +1,21 @@
-import { addBreadcrumb, captureMessage } from '@sentry/angular';
+import { addBreadcrumb, setMeasurement, startInactiveSpan, startNewTrace, withActiveSpan } from '@sentry/angular';
 
 /**
- * TEMPORARY startup instrumentation (remove once the slow-startup investigation is done).
+ * Startup instrumentation feeding Sentry Performance (not the Issues stream).
  *
  * Records `performance.now()` timestamps at each boundary of the bootstrap critical path
  * (AppCheck → bootstrap → auth restore → user/categories reads → app-ready) so the gaps
  * between marks show WHERE the startup time goes — no console or Network tab needed on the
- * device, because `reportStartupTiming()` also ships the numbers to Sentry as an info-level
- * event + breadcrumb, retrievable from the dashboard on iPhone/PWA/desktop alike.
+ * device, because `reportStartupTiming()` also ships the numbers to Sentry as a standalone
+ * `app.startup` transaction (one child span per phase, plus `startup.*` attributes and
+ * total/first-script measurements), retrievable from the Performance dashboard on
+ * iPhone/PWA/desktop alike. It is emitted as a transaction rather than an `info` message so
+ * it never shows up as an Issue and is sampled by `tracesSampleRate` (not on every boot).
  *
  * `performance.now()` is milliseconds since navigation start, so the FIRST mark's `atMs`
  * already includes bundle download + parse (e.g. a large `atMs` on `appcheck:start` means
  * the app JS itself was slow to arrive — a service-worker/asset-download problem, not a
- * Firebase one).
+ * Firebase one). That leading gap is emitted as the `script-load` child span.
  */
 const startupMarks = new Map<string, number>();
 let reported = false;
@@ -91,17 +94,53 @@ export function reportStartupTiming(reason: string): void {
       message: `startup-timing mode=${displayMode} reason=${reason} total=${totalMs}ms`,
       data: marks,
     });
-    captureMessage(`startup-timing total=${totalMs}ms mode=${displayMode} reason=${reason}`, {
-      level: 'info',
-      // Tags are filterable/groupable in the Sentry dashboard (extra is not).
-      tags: {
-        'startup.mode': displayMode,
-        'startup.reason': reason,
-        'startup.net': net.effectiveType ?? 'unknown',
-        'startup.sw': String(swControlled),
-        'startup.persisted': String(storagePersisted),
-      },
-      extra: context,
+
+    // Emit a standalone `app.startup` transaction into Sentry Performance (NOT the Issues
+    // stream). `performance.timeOrigin` is the epoch ms of navigation start, so a mark's
+    // `performance.now()` value maps to an absolute time via `timeOrigin + atMs`. Using
+    // explicit start/end times lets us backfill the true boot waterfall even though this runs
+    // ~totalMs after navigation start (the browserTracing pageload transaction is long gone).
+    // A fresh trace isolates it from any lingering navigation span; sampling is governed by
+    // `tracesSampleRate`, so this no longer fires on every boot the way captureMessage did.
+    const timeOrigin = performance.timeOrigin;
+    const at = (ms: number) => new Date(timeOrigin + ms);
+
+    startNewTrace(() => {
+      const root = startInactiveSpan({
+        name: 'app.startup',
+        op: 'app.boot',
+        forceTransaction: true,
+        startTime: at(0),
+        attributes: {
+          'startup.mode': displayMode,
+          'startup.reason': reason,
+          'startup.net': net.effectiveType ?? 'unknown',
+          'startup.downlink_mbps': net.downlinkMbps,
+          'startup.rtt_ms': net.rttMs,
+          'startup.sw': swControlled,
+          'startup.persisted': storagePersisted ?? false,
+          'startup.total_ms': totalMs,
+          'startup.first_script_ms': firstScriptMs,
+        },
+      });
+
+      withActiveSpan(root, () => {
+        // Chartable numeric measurements on the transaction.
+        setMeasurement('startup.total', totalMs, 'millisecond');
+        setMeasurement('startup.first_script', firstScriptMs, 'millisecond');
+
+        // Bundle download + parse + SW (navigation start → first mark).
+        if (firstScriptMs > 0) {
+          startInactiveSpan({ name: 'script-load', op: 'app.boot.phase', startTime: at(0) }).end(at(firstScriptMs));
+        }
+        // One child span per phase, spanning the gap that leads up to each mark.
+        for (let i = 1; i < entries.length; i++) {
+          const [label, t] = entries[i];
+          startInactiveSpan({ name: label, op: 'app.boot.phase', startTime: at(entries[i - 1][1]) }).end(at(t));
+        }
+      });
+
+      root.end(at(totalMs));
     });
   });
 }
