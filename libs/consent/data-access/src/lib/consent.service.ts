@@ -56,8 +56,11 @@ export class ConsentService {
 
   public reset(): void {
     this.subject.next(DEFAULT_CONSENT);
-    if (isBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) return;
+    try {
       localStorage.removeItem(CONSENT_KEY);
+    } catch {
+      // Safari private mode / blocked storage throws SecurityError — ignore.
     }
   }
 
@@ -86,6 +89,11 @@ export class ConsentService {
 
   private persist(state: ConsentState): void {
     if (!isBrowser(this.platformId)) return;
-    localStorage.setItem(CONSENT_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(CONSENT_KEY, JSON.stringify(state));
+    } catch {
+      // Safari private mode / blocked storage (SecurityError, DOMException 18) —
+      // in-memory consent state still applies for this session; ignore.
+    }
   }
 }
