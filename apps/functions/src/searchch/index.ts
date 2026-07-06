@@ -61,7 +61,10 @@ export const searchChSearchPerson = onCall(
       return { results };
     } catch (error: unknown) {
       if (error instanceof HttpsError) throw error;
-      logger.error(`${CF_NAME}: error`, error);
+      logger.error(`${CF_NAME}: error`, {
+        message: error instanceof Error ? error.message : String(error),
+        status: axios.isAxiosError(error) ? error.response?.status : undefined,
+      });
       throw new HttpsError('internal', 'search.ch lookup failed');
     }
   }
