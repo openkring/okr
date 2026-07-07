@@ -96,7 +96,13 @@ export const zefixSearch = onCall(
       logger.info(`${CF_NAME}: found ${results.length} result(s)`);
       return { results };
     } catch (error: unknown) {
-      logger.error(`${CF_NAME}: error`, error);
+      if (error instanceof HttpsError) throw error;
+      // Never log the raw AxiosError: its `config` carries the Basic-Auth header
+      // (base64 ZEFIX_UID:ZEFIX_PWD). Log only a sanitized projection.
+      logger.error(`${CF_NAME}: error`, {
+        message: error instanceof Error ? error.message : String(error),
+        status: axios.isAxiosError(error) ? error.response?.status : undefined,
+      });
       throw new HttpsError('internal', 'Zefix search failed');
     }
   }
@@ -169,7 +175,13 @@ export const zefixGetByUid = onCall(
       logger.info(`${CF_NAME}: details retrieved for "${details.name}"`);
       return details;
     } catch (error: unknown) {
-      logger.error(`${CF_NAME}: error`, error);
+      if (error instanceof HttpsError) throw error;
+      // Never log the raw AxiosError: its `config` carries the Basic-Auth header
+      // (base64 ZEFIX_UID:ZEFIX_PWD). Log only a sanitized projection.
+      logger.error(`${CF_NAME}: error`, {
+        message: error instanceof Error ? error.message : String(error),
+        status: axios.isAxiosError(error) ? error.response?.status : undefined,
+      });
       throw new HttpsError('internal', 'Zefix lookup failed');
     }
   }
