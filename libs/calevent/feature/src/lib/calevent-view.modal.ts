@@ -159,7 +159,7 @@ export class CalEventViewModal {
   private get periodicity() {
     return {
       daily:     this.i18n.periodicity_daily,
-      workday:   this.i18n.periodicity_workday,
+      workdays:  this.i18n.periodicity_workdays,
       weekly:    this.i18n.periodicity_weekly,
       biweekly:  this.i18n.periodicity_biweekly,
       monthly:   this.i18n.periodicity_monthly,
