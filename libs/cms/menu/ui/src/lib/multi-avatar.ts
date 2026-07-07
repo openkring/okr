@@ -25,6 +25,10 @@ import { AvatarPipe } from '@okr/avatar-ui';
     ion-icon { color: var(--ion-color-dark); margin-inline-end: 8px; }
     .letter { color: black; }
 
+    /* keep each menu-item label on a single line so a max-content popover
+       (e.g. the trips-list context menu on iPad) grows to fit the full text */
+    ion-label { white-space: nowrap; }
+
     @media (prefers-color-scheme: dark) {
       ion-item:hover::part(native) {
         background: rgba(255, 255, 255, 0.12);
