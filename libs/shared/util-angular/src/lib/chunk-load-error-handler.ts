@@ -7,9 +7,16 @@ import { ErrorHandler } from '@angular/core';
  *   Firefox: "error loading dynamically imported module: https://…"
  *   Chrome/V8: "Failed to fetch dynamically imported module: https://…"
  *   Safari/WebKit: "Importing a module script failed."
+ *
+ * When the request for the missing chunk is caught by the SPA rewrite and served
+ * `index.html` (200, `text/html`) instead of a 404, the module *loads* but fails
+ * the MIME-type check — a different wording that must also be recognised (SCS-1A):
+ *   Safari/WebKit: "'text/html' is not a valid JavaScript MIME type."
+ *   Chrome/V8: 'Expected a JavaScript module script but the server responded with
+ *              a MIME type of "text/html". …'
  */
 const STALE_CHUNK_RE =
-  /error loading dynamically imported module|Failed to fetch dynamically imported module|Importing a module script failed/i;
+  /error loading dynamically imported module|Failed to fetch dynamically imported module|Importing a module script failed|is not a valid JavaScript MIME type|Expected a JavaScript module script/i;
 
 /** sessionStorage key recording when we last auto-reloaded to recover a stale chunk. */
 export const STALE_CHUNK_RELOAD_KEY = 'okr-stale-chunk-reload-at';

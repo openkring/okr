@@ -10,6 +10,19 @@ describe('isStaleChunkError', () => {
     expect(isStaleChunkError('error loading dynamically imported module')).toBe(true);
   });
 
+  it('matches the MIME-type wording emitted when the SPA rewrite serves index.html (SCS-1A)', () => {
+    // Safari/WebKit — the chunk request resolved to the index.html fallback (text/html).
+    expect(isStaleChunkError(new Error("'text/html' is not a valid JavaScript MIME type."))).toBe(true);
+    // Chrome/V8 — same failure, different wording.
+    expect(
+      isStaleChunkError(
+        new Error(
+          'Failed to load module script: Expected a JavaScript module script but the server responded with a MIME type of "text/html".',
+        ),
+      ),
+    ).toBe(true);
+  });
+
   it('ignores unrelated errors', () => {
     expect(isStaleChunkError(new Error('Cannot read properties of undefined'))).toBe(false);
     expect(isStaleChunkError(null)).toBe(false);
