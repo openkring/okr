@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, effect } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, effect, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonThumbnail, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 
@@ -40,9 +40,24 @@ import { DocumentStore } from './document.store';
         @if(showMenuButton() === true) {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
-        <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ store.i18n.documents() }}</ion-title>
-        @if(canChange()) {
-          <ion-buttons slot="end">
+        <!-- title: folder breadcrumb when filtered by folder AND the user is loaded
+             (so the folder reads aren't denied during the auth-restore window),
+             otherwise the document counts. -->
+        <ion-title>
+          @if(folderKey(); as fkey) {
+            @if(currentUser()) {
+              <okr-folder-breadcrumb [folderKey]="fkey" (folderSelected)="onFolderSelected($event)" />
+            }
+          } @else {
+            {{ filteredDocumentsCount() }}/{{ documentsCount() }} {{ store.i18n.documents() }}
+          }
+        </ion-title>
+        <ion-buttons slot="end">
+          <!-- list/grid view toggle — available to every viewer, left of the context menu -->
+          <ion-button (click)="toggleView()">
+            <ion-icon slot="icon-only" src="{{ viewIcon() | svgIcon }}" />
+          </ion-button>
+          @if(canChange()) {
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
             </ion-button>
@@ -53,23 +68,19 @@ import { DocumentStore } from './document.store';
                 </ion-content>
               </ng-template>
             </ion-popover>
-          </ion-buttons>
-        }
+          }
+        </ion-buttons>
       </ion-toolbar>
     }
 
-    <!-- folder breadcrumb (only when filtered by folder) -->
-    @if(folderKey(); as fkey) {
-      <okr-folder-breadcrumb [folderKey]="fkey" (folderSelected)="onFolderSelected($event)" />
+    <!-- search and filters — hidden by default; toggled via the context-menu 'toggleFilter' action -->
+    @if(showFilter()) {
+      <okr-list-filter
+        (searchTermChanged)="onSearchtermChange($event)"
+        (tagChanged)="onTagSelected($event)" [tags]="tags()"
+        (typeChanged)="onTypeSelected($event)" [types]="types()"
+      />
     }
-
-    <!-- search and filters -->
-    <okr-list-filter
-      (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)" [tags]="tags()"
-      (typeChanged)="onTypeSelected($event)" [types]="types()"
-      [initialView]="view()" (viewToggleChanged)="onViewChange($event)"
-    />
 
     <!-- list header -->
     @if(isListView()) {
@@ -215,12 +226,13 @@ export class DocumentList {
   protected sources = computed(() => this.store.appStore.getCategory('document_source'));
   protected readonly currentUser = computed(() => this.store.appStore.currentUser());
   protected isListView = linkedSignal(() => this.view() === 'list');
+  // filter row hidden by default; toggled via the context-menu 'toggleFilter' action
+  protected readonly showFilter = signal(false);
+  // list view → show the 'grid' icon (switch to grid); grid view → show the 'list' icon
+  protected readonly viewIcon = computed(() => this.isListView() ? 'grid' : 'list');
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()) && !this.groupAdmin());
   protected popupId = computed(() => `c_docs_${this.listId}`);
-  protected readonly folderKey = computed(() => {
-    const id = this.store.listId();
-    return id.startsWith('f:') ? id.substring(2) : null;
-  });
+  protected readonly folderKey = computed(() => this.getFolderName(this.store.listId()));
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
@@ -266,6 +278,7 @@ export class DocumentList {
       case 'addFiles': break; // handled by the toolbar label→input (Safari-compatible)
       case 'addFolder': await this.store.addFolder(); break;
       case 'exportRaw': await this.store.export('raw'); break;
+      case 'toggleFilter': this.showFilter.update(v => !v); break;
       default: error(undefined, `DocumentList.call: unknown method ${selectedMethod}`);
     }
   }
@@ -341,8 +354,8 @@ export class DocumentList {
     }
   }
 
-  protected onViewChange(showList: boolean): void {
-    this.isListView.set(showList);
+  protected toggleView(): void {
+    this.isListView.set(!this.isListView());
   }
 
   /******************************* helpers *************************************** */
@@ -352,6 +365,11 @@ export class DocumentList {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.store.currentUser());
+  }
+
+  private getFolderName(listId: string): string | undefined {
+    if (listId.startsWith('f:')) return listId.substring(2);
+    return undefined;
   }
 }
 

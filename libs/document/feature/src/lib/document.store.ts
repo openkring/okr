@@ -82,10 +82,13 @@ export const DocumentStore = signalStore(
     }),
 
     subfoldersResource: rxResource({
-      params: () => ({ listId: store.listId() }),
+      // Gate on currentUser (the loaded UserModel) so the folders query only fires once
+      // the auth token is attached. Otherwise the tenantRead() rule denies it with
+      // "Missing or insufficient permissions" during the auth-restore / reconnect window.
+      params: () => ({ listId: store.listId(), currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
         const listId = params.listId;
-        if (!listId.startsWith('f:')) return of<FolderModel[]>([]);
+        if (!params.currentUser || !listId.startsWith('f:')) return of<FolderModel[]>([]);
         return store.folderService.listByParent(listId.substring(2));
       }
     }),
@@ -376,7 +379,10 @@ export const DocumentStore = signalStore(
         const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           await store.documentService.delete(document, store.currentUser());
-          this.reset();
+          // Reload only the documents (the realtime stream drops the deleted doc). Do NOT
+          // reset() — that wiped listId/filters, which then showed ALL documents (folder
+          // navigation lost) instead of the current folder's remaining documents.
+          store.documentsResource.reload();
         }
       },
 
