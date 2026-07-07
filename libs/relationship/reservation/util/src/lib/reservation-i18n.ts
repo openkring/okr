@@ -24,6 +24,9 @@ export const RESERVATION_I18N_KEYS = {
   end_conf:                       PFX + 'end.conf',
   end_error:                      PFX + 'end.error',
 
+  cancelRes:                      PFX + 'cancelRes.label',
+  cancelRes_confirm:              PFX + 'cancelRes.confirm',
+
   select:                         PFX + 'select.label',
 
   update:                         PFX + 'update.label',
@@ -43,6 +46,7 @@ export const RESERVATION_I18N_KEYS = {
   list_header_state:              PFX + 'list.header.state',
   list_header_resource:           PFX + 'list.header.resource',
   list_header_date:               PFX + 'list.header.date',
+  list_header_nameDate:           PFX + 'list.header.nameDate',
   list_header_duration:           PFX + 'list.header.duration',
   list_header_category:           PFX + 'list.header.category',
 

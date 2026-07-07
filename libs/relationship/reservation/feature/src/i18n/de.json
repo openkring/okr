@@ -23,7 +23,11 @@
     "conf": "Die Reservation wurde beendet.",
     "error": "Die Reservation konnte nicht beendet werden."
   },
-  "select": { 
+  "cancelRes": {
+    "label": "Reservation absagen",
+    "confirm": "Möchtest du diese Reservation wirklich absagen?"
+  },
+  "select": {
     "label": "Auswählen" 
   },
   "update": {
@@ -46,6 +50,7 @@
     "header": {
       "reserver": "Wer",
       "name": "Anlass",
+      "nameDate": "Anlass / Datum",
       "state": "Status",
       "resource": "Was",
       "date": "Datum",

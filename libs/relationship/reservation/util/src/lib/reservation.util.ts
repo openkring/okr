@@ -1,8 +1,20 @@
 import { ReservationApplyModel, ReservationModel, ResourceModel, UserModel } from '@okr/shared-models';
-import { addIndexElement, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isType } from '@okr/shared-util-core';
+import { addIndexElement, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isAfterOrEqualDate, isType } from '@okr/shared-util-core';
 
 export function isReservation(reservation: unknown, tenantId: string): reservation is ReservationModel {
   return isType(reservation, new ReservationModel(tenantId));
+}
+
+/** State keys for reservations that are still "open" (not completed/cancelled/denied). */
+export const OPEN_RESERVATION_STATES = ['initial', 'applied', 'active'];
+
+/**
+ * A reservation is "open" when it is in a non-terminal state (initial/applied/active)
+ * and has not yet ended (endDate is today or later, incl. the open-ended sentinel).
+ * Only open reservations can still be cancelled by their reserver.
+ */
+export function isReservationOpen(reservation: ReservationModel): boolean {
+  return OPEN_RESERVATION_STATES.includes(reservation.state) && isAfterOrEqualDate(reservation.endDate, getTodayStr());
 }
 
 /*-------------------------- search index --------------------------------*/

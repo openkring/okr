@@ -364,6 +364,20 @@ export const ReservationStore = signalStore(
         }
       },
 
+      /**
+       * Cancel a reservation by setting its state to 'cancelled'. The record is kept for history.
+       * Used by a reserver to cancel their own still-open reservation (see isReservationOpen).
+       */
+      async cancelReservation(reservation?: ReservationModel): Promise<void> {
+        if (!reservation) return;
+        const result = await confirm(store.alertController, store.i18n.cancelRes_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        if (result === true) {
+          const cancelled = { ...reservation, state: 'cancelled' } as ReservationModel;
+          await store.reservationService.update(cancelled, store.appStore.currentUser());
+          this.reload();
+        }
+      },
+
       async delete(reservation?: ReservationModel, readOnly = true): Promise<void> {
         if (reservation && !readOnly) {
           const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);

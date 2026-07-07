@@ -8,6 +8,7 @@ import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarService } from '@okr/avatar-data-access';
+import { isReservationOpen } from '@okr/relationship-reservation-util';
 
 import { THUMBNAIL_SIZE } from '@okr/shared-constants';
 
@@ -68,71 +69,82 @@ import { ReservationStore } from './reservation.store';
     <ion-toolbar color="primary">
       <ion-grid>
         <ion-row>
+          <!-- mobile header (same for all modes): Kontakt | Anlass/Datum | Status -->
+          <ion-col size="3" class="ion-hide-md-up">
+            <ion-item lines="none" color="primary">
+              <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
+            </ion-item>
+          </ion-col>
+          <ion-col size="7" class="ion-hide-md-up">
+            <ion-item lines="none" color="primary">
+              <ion-label><strong>{{ store.i18n.list_header_nameDate() }}</strong></ion-label>
+            </ion-item>
+          </ion-col>
+          <ion-col size="2" class="ion-hide-md-up ion-text-center">
+            <ion-item lines="none" color="primary">
+              <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
+            </ion-item>
+          </ion-col>
+          <!-- desktop header per mode -->
           @if(isReservationFromPerson() || isReservationFromOrg()) {
-            <ion-col size="4" size-md="3">
+            <ion-col size-md="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="4" size-md="3">
+            <ion-col size-md="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="4" size-md="3">
+            <ion-col size-md="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="3" class="ion-hide-md-down">
+            <ion-col size-md="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else if(isReservationOfResource() || isReservationOfResourceType()) {
-            <ion-col size="4" size-md="3">
+            <ion-col size-md="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="4" size-md="3">
+            <ion-col size-md="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="4" size-md="3">
+            <ion-col size-md="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="3" class="ion-hide-md-down">
+            <ion-col size-md="3" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else { <!-- all -->
-            <ion-col size="auto" size-md="2"class="ion-hide-md-down">
+            <ion-col size-md="2" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="auto" size-md="2" class="ion-hide-md-down">
+            <ion-col size-md="2" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="3" class="ion-hide-md-up">
-              <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
-                <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
-              </ion-item>
-            </ion-col>
-            <ion-col>
+            <ion-col class="ion-hide-md-down">
               <ion-item lines="none" color="primary" class="ion-text-wrap">
                 <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="3">
+            <ion-col size="auto" class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
               </ion-item>
@@ -155,84 +167,123 @@ import { ReservationStore } from './reservation.store';
     } @else {
       <ion-grid>
         @for(reservation of filteredReservations(); track $index) {
-          <ion-row (click)="showActions(reservation)">
+          <ion-row (click)="showActions(reservation)" class="reservation-row">
             @if(isReservationFromPerson() || isReservationFromOrg()) {
-              <ion-col size="3">
+              <!-- desktop -->
+              <ion-col size-md="3" class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-avatar slot="start" style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Avatar Logo" /></ion-avatar>
-                  <ion-label class="ion-hide-md-down">{{reservation.resource?.name2}}</ion-label>
+                  <ion-avatar slot="start" class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Avatar Logo" /></ion-avatar>
+                  <ion-label>{{reservation.resource?.name2}}</ion-label>
                 </ion-item>
               </ion-col>
-              <ion-col size="5" size-md="3">
+              <ion-col size-md="3" class="ion-hide-md-down">
                 <ion-item lines="none" class="ion-text-wrap">
                   <ion-label>{{reservation.name}}</ion-label>
                 </ion-item>
               </ion-col>
-              <ion-col size="4" size-md="3">
+              <ion-col size-md="3" class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-label>{{reservation.startDate | prettyDate }}</ion-label>      
+                  <ion-label>{{reservation.startDate | prettyDate }}</ion-label>
                 </ion-item>
               </ion-col>
-              <ion-col size="3" class="ion-hide-md-down">
+              <ion-col size-md="3" class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-icon  src="{{getStateIcon(reservation.state) | svgIcon}}" />
+                  <ion-icon src="{{getStateIcon(reservation.state) | svgIcon}}" />
                 </ion-item>
+              </ion-col>
+              <!-- mobile -->
+              <ion-col size="3" class="ion-hide-md-up avatar-cell">
+                <ion-avatar class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Avatar Logo" /></ion-avatar>
+              </ion-col>
+              <ion-col size="7" class="ion-hide-md-up">
+                <ion-label class="ion-text-wrap reservation-name">
+                  <p class="date-inline">{{reservation.startDate | prettyDate }}</p>
+                  {{reservation.name}}
+                </ion-label>
+              </ion-col>
+              <ion-col size="2" class="ion-hide-md-up ion-text-center">
+                <ion-icon class="state-icon" src="{{getStateIcon(reservation.state) | svgIcon}}" />
               </ion-col>
             } @else if(isReservationOfResource() || isReservationOfResourceType()) {
-                <ion-col size="3">
-                  <ion-item lines="none">
-                    <ion-avatar slot="start" style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Avatar Logo" /></ion-avatar>
-                    <ion-label class="ion-hide-md-down">{{getReserverName(reservation)}}</ion-label>
-                  </ion-item>
-                </ion-col>
-                <ion-col size="5" size-md="3">
-                  <ion-item lines="none" class="ion-text-wrap">
-                    <ion-label>{{reservation.name}}</ion-label>
-                  </ion-item>
-                </ion-col>
-                <ion-col size="4" size-md="3">
-                  <ion-item lines="none">
-                    <ion-label>{{reservation.startDate | prettyDate }}</ion-label>      
-                  </ion-item>
-                </ion-col>
-                <ion-col size="3" class="ion-hide-md-down">
-                  <ion-item lines="none">
-                    <ion-icon  src="{{getStateIcon(reservation.state) | svgIcon}}" />
-                  </ion-item>
-                </ion-col>
-            } @else { <!-- all --> 
-              <ion-col size="3" class="ion-hide-md-down">
+              <!-- desktop -->
+              <ion-col size-md="3" class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-avatar slot="start"style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
+                  <ion-avatar slot="start" class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Avatar Logo" /></ion-avatar>
                   <ion-label>{{getReserverName(reservation)}}</ion-label>
                 </ion-item>
               </ion-col>
-              <ion-col size="auto" class="ion-hide-md-up">
-                  <ion-avatar style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
-              </ion-col>
-              <ion-col class="ion-hide-md-down">
-                <ion-item lines="none">
-                  <ion-avatar slot="start" style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
-                  <ion-label>{{getResourceName(reservation)}}</ion-label>
-                </ion-item>
-              </ion-col>
-              <ion-col size="auto" class="ion-hide-md-up">
-                  <ion-avatar style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
-              </ion-col>
-              <ion-col>
-                <ion-item lines="none"  class="ion-text-wrap">
+              <ion-col size-md="3" class="ion-hide-md-down">
+                <ion-item lines="none" class="ion-text-wrap">
                   <ion-label>{{reservation.name}}</ion-label>
                 </ion-item>
               </ion-col>
-              <ion-col size="auto">
+              <ion-col size-md="3" class="ion-hide-md-down">
+                <ion-item lines="none">
+                  <ion-label>{{reservation.startDate | prettyDate }}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size-md="3" class="ion-hide-md-down">
+                <ion-item lines="none">
+                  <ion-icon src="{{getStateIcon(reservation.state) | svgIcon}}" />
+                </ion-item>
+              </ion-col>
+              <!-- mobile -->
+              <ion-col size="3" class="ion-hide-md-up avatar-cell">
+                <ion-avatar class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Avatar Logo" /></ion-avatar>
+              </ion-col>
+              <ion-col size="7" class="ion-hide-md-up">
+                <ion-label class="ion-text-wrap reservation-name">
+                  <p class="date-inline">{{reservation.startDate | prettyDate }}</p>
+                  {{reservation.name}}
+                </ion-label>
+              </ion-col>
+              <ion-col size="2" class="ion-hide-md-up ion-text-center">
+                <ion-icon class="state-icon" src="{{getStateIcon(reservation.state) | svgIcon}}" />
+              </ion-col>
+            } @else { <!-- all -->
+              <!-- desktop -->
+              <ion-col size="3" class="ion-hide-md-down">
+                <ion-item lines="none">
+                  <ion-avatar slot="start" class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
+                  <ion-label>{{getReserverName(reservation)}}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col class="ion-hide-md-down">
+                <ion-item lines="none">
+                  <ion-avatar slot="start" class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
+                  <ion-label>{{getResourceName(reservation)}}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col class="ion-hide-md-down">
+                <ion-item lines="none" class="ion-text-wrap">
+                  <ion-label>{{reservation.name}}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="auto" class="ion-hide-md-down">
                 <ion-item lines="none">
                   <ion-label>{{reservation.startDate | prettyDate }}</ion-label>
                 </ion-item>
               </ion-col>
               <ion-col class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-icon  src="{{getStateIcon(reservation.state) | svgIcon}}" />
+                  <ion-icon src="{{getStateIcon(reservation.state) | svgIcon}}" />
                 </ion-item>
+              </ion-col>
+              <!-- mobile -->
+              <ion-col size="3" class="ion-hide-md-up avatar-cell">
+                <ion-avatar class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
+              </ion-col>
+              <ion-col size="3" class="ion-hide-md-up avatar-cell">
+                <ion-avatar class="list-avatar"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
+              </ion-col>
+              <ion-col size="4" class="ion-hide-md-up">
+                <ion-label class="ion-text-wrap reservation-name">
+                  <p class="date-inline">{{reservation.startDate | prettyDate }}</p>
+                  {{reservation.name}}
+                </ion-label>
+              </ion-col>
+              <ion-col size="2" class="ion-hide-md-up ion-text-center">
+                <ion-icon class="state-icon" src="{{getStateIcon(reservation.state) | svgIcon}}" />
               </ion-col>
             }
           </ion-row>
@@ -240,7 +291,25 @@ import { ReservationStore } from './reservation.store';
       </ion-grid>
     }
   </ion-content>
-    `
+    `,
+  styles: [`
+    .list-avatar { width: 40px; height: 40px; }
+    .avatar-cell { display: flex; justify-content: center; }
+    .date-inline {
+      font-size: 0.72rem;
+      color: var(--ion-color-medium);
+      margin: 0 0 2px;
+      line-height: 1.1;
+    }
+    .reservation-name { line-height: 1.2; }
+    .state-icon { font-size: 22px; }
+    /* compact rows on mobile (below the md breakpoint) */
+    @media (max-width: 767px) {
+      ion-content ion-grid { padding: 0; --ion-grid-column-padding: 2px; }
+      .reservation-row { align-items: center; }
+      .reservation-row ion-col { padding-top: 4px; padding-bottom: 4px; }
+    }
+  `]
 })
 export class ReservationList {
   protected store = inject(ReservationStore);
@@ -366,6 +435,10 @@ export class ReservationList {
     } else {
       actionSheetOptions.buttons.push(createActionSheetButton('reservation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
+    // a reserver may cancel their own still-open reservation, regardless of role
+    if (this.canCancelOwn(reservation)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.cancelRes', this.store.i18n.cancelRes(), this.imgixBaseUrl, 'cancel-circle'));
+    }
     if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.person_edit(), this.imgixBaseUrl, 'edit'));
     } else {
@@ -400,6 +473,9 @@ export class ReservationList {
         case 'reservation.end':
           await this.store.end(reservation, this.readOnly());
           break;
+        case 'reservation.cancelRes':
+          await this.store.cancelReservation(reservation);
+          break;
         case 'person.edit':
           await this.store.editPerson(reservation, this.readOnly());
           break;
@@ -423,6 +499,15 @@ export class ReservationList {
 
   protected isOngoing(reservation: ReservationModel): boolean {
     return isOngoing(reservation.endDate);
+  }
+
+  /**
+   * Whether the current user may cancel this reservation: it must be their own
+   * (reserver matches the current user's person) and still open (see isReservationOpen).
+   */
+  protected canCancelOwn(reservation: ReservationModel): boolean {
+    const personKey = this.currentUser()?.personKey;
+    return !!personKey && reservation.reserver?.key === personKey && isReservationOpen(reservation);
   }
 
   protected getReserverName(reservation: ReservationModel): string {

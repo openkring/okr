@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AvatarModelTypes, OrgModel, PersonModel, ReservationModel, ResourceModel, UserModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 
-import { getReservationIndex, getReservationIndexInfo, isReservation } from './reservation.util';
+import { getReservationIndex, getReservationIndexInfo, isReservation, isReservationOpen } from './reservation.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -85,6 +85,41 @@ describe('Reservation Utils', () => {
     it('should call isType with the correct parameters', () => {
       isReservation({}, tenantId);
       expect(mockIsType).toHaveBeenCalledWith({}, expect.any(ReservationModel));
+    });
+  });
+
+  describe('isReservationOpen', () => {
+    // getTodayStr is mocked to '20250904'; isAfterOrEqualDate uses the real implementation.
+    it('is open for a non-terminal state with a future end date', () => {
+      reservation.state = 'active';
+      reservation.endDate = '20251231';
+      expect(isReservationOpen(reservation)).toBe(true);
+    });
+
+    it('is open for an open-ended reservation (end sentinel 99991231)', () => {
+      reservation.state = 'initial';
+      reservation.endDate = '99991231';
+      expect(isReservationOpen(reservation)).toBe(true);
+    });
+
+    it('is open when the end date is today', () => {
+      reservation.state = 'applied';
+      reservation.endDate = '20250904';
+      expect(isReservationOpen(reservation)).toBe(true);
+    });
+
+    it('is not open when the reservation has already ended (past end date)', () => {
+      reservation.state = 'active';
+      reservation.endDate = '20250101';
+      expect(isReservationOpen(reservation)).toBe(false);
+    });
+
+    it('is not open in a terminal state (cancelled/completed/denied), even with a future end date', () => {
+      reservation.endDate = '20251231';
+      for (const state of ['cancelled', 'completed', 'denied']) {
+        reservation.state = state;
+        expect(isReservationOpen(reservation)).toBe(false);
+      }
     });
   });
 
