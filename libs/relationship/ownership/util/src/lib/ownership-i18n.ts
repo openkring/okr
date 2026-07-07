@@ -39,6 +39,11 @@ export const OWNERSHIP_I18N_KEYS = {
   update_error:                     PFX + 'update.error',
   view:                             PFX + 'view.label',
 
+  boat_edit:                        PFX + 'boatAction.edit',
+  boat_view:                        PFX + 'boatAction.view',
+  owner_edit:                       PFX + 'ownerAction.edit',
+  owner_view:                       PFX + 'ownerAction.view',
+
   list_empty:                       PFX + 'list.empty',
   list_header_ownerName:            PFX + 'list.header.ownerName',
   list_header_resourceName:         PFX + 'list.header.resourceName',

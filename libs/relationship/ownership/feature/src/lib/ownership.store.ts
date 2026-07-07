@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -7,7 +8,7 @@ import { ownerTypeMatches } from '@okr/shared-categories';
 import { AppStore } from '@okr/shared-feature';
 import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@okr/shared-models';
 import { selectDate } from '@okr/shared-ui';
-import { confirm } from '@okr/shared-util-angular';
+import { confirm, navigateByUrl } from '@okr/shared-util-angular';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, nameMatches } from '@okr/shared-util-core';
 import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
@@ -60,6 +61,7 @@ export const OwnershipStore = signalStore(
   withProps(() => ({
     ownershipService: inject(OwnershipService),
     appStore: inject(AppStore),
+    router: inject(Router),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     i18nService: inject(I18nService)
@@ -369,6 +371,27 @@ export const OwnershipStore = signalStore(
           this.reload();
         }
       },   
+
+      /**
+       * Navigate to the detail page of the owned resource (e.g. a rowing boat).
+       * @param ownership the Ownership whose resource should be opened
+       * @param readOnly whether the resource page opens in read-only (view) mode
+       */
+      async openResource(ownership: OwnershipModel, readOnly = true): Promise<void> {
+        if (!ownership.resourceKey) return;
+        await navigateByUrl(store.router, `/resource/${ownership.resourceKey}`, { readOnly });
+      },
+
+      /**
+       * Navigate to the detail page of the owner (person or org).
+       * @param ownership the Ownership whose owner should be opened
+       * @param readOnly whether the owner page opens in read-only (view) mode
+       */
+      async openOwner(ownership: OwnershipModel, readOnly = true): Promise<void> {
+        if (!ownership.ownerKey) return;
+        const path = ownership.ownerModelType === 'org' ? 'org' : 'person';
+        await navigateByUrl(store.router, `/${path}/${ownership.ownerKey}`, { readOnly });
+      },
 
       async export(type: string): Promise<void> {
         console.log(`OwnershipListStore.export(${type}) is not yet implemented.`);

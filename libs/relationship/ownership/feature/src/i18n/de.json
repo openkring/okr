@@ -45,6 +45,14 @@
   "view": {
     "label": "Nutzungs Details ansehen"
   },
+  "boatAction": {
+    "edit": "Boot bearbeiten",
+    "view": "Boot ansehen"
+  },
+  "ownerAction": {
+    "edit": "Benutzer/in bearbeiten",
+    "view": "Benutzer/in ansehen"
+  },
 
   "list": {
     "empty": "Keine Nutzungen gefunden.",

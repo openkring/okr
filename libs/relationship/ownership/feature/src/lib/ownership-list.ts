@@ -248,6 +248,23 @@ export class OwnershipList {
       actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+
+    // shortcut to open the owned rowing boat (rboat) directly
+    if (ownership.resourceType === 'rboat') {
+      if (this.hasRole('resourceAdmin')) {
+        actionSheetOptions.buttons.push(createActionSheetButton('rboat.edit', this.store.i18n.boat_edit(), this.imgixBaseUrl, 'boat'));
+      } else {
+        actionSheetOptions.buttons.push(createActionSheetButton('rboat.view', this.store.i18n.boat_view(), this.imgixBaseUrl, 'boat'));
+      }
+    }
+
+    // shortcut to open the owner (person or org) directly
+    if (this.hasRole('resourceAdmin')) {
+      actionSheetOptions.buttons.push(createActionSheetButton('owner.edit', this.store.i18n.owner_edit(), this.imgixBaseUrl, 'person'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('owner.view', this.store.i18n.owner_view(), this.imgixBaseUrl, 'person'));
+    }
+
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }
 
@@ -274,6 +291,18 @@ export class OwnershipList {
           break;
         case 'ownership.end':
           await this.store.end(ownership, this.readOnly());
+          break;
+        case 'rboat.edit':
+          await this.store.openResource(ownership, false);
+          break;
+        case 'rboat.view':
+          await this.store.openResource(ownership, true);
+          break;
+        case 'owner.edit':
+          await this.store.openOwner(ownership, false);
+          break;
+        case 'owner.view':
+          await this.store.openOwner(ownership, true);
           break;
       }
     }
