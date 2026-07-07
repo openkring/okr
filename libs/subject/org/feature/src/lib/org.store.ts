@@ -1,12 +1,14 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { Photo } from '@capacitor/camera';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { AvatarService } from '@okr/avatar-data-access';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AddressModel, CategoryListModel, OrgCollection, OrgModel } from '@okr/shared-models';
+import { AddressModel, CategoryListModel, OrgCollection, OrgModel, OrgModelName } from '@okr/shared-models';
 import { AlertService, AppNavigationService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 import { chipMatches, debugItemLoaded, debugListLoaded, getSystemQuery, isOrg, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
@@ -39,6 +41,7 @@ export const OrgStore = signalStore(
   withProps(() => ({
     orgService: inject(OrgService),
     addressService: inject(AddressService),
+    avatarService: inject(AvatarService),
     appNavigationService: inject(AppNavigationService),
     router: inject(Router),
     appStore: inject(AppStore),
@@ -212,6 +215,18 @@ export const OrgStore = signalStore(
           this.reload();
         }
       }
+    },
+
+    async save(org: OrgModel): Promise<void> {
+      await (!org.okey ?
+        store.orgService.create(org, store.currentUser()) :
+        store.orgService.update(org, store.currentUser()));
+    },
+
+    async saveAvatar(photo: Photo, okey: string): Promise<void> {
+      if (!okey) return;
+      await store.avatarService.saveAvatarPhoto(photo, okey, store.appStore.env.tenantId, OrgModelName);
+      store.orgResource.reload();
     },
 
     async delete(org?: OrgModel, readOnly = true): Promise<void> {
