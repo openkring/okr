@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GroupModel, UserModel } from '@okr/shared-models';
-import { canAccessGroup, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, userMatchesGroupVisibility } from './group.util';
+import { canAccessGroup, getGroupKeyFromName, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, userMatchesGroupVisibility } from './group.util';
 
 describe('Group Utils', () => {
   const tenantId = 'tenant-1';
@@ -10,7 +10,6 @@ describe('Group Utils', () => {
     group = new GroupModel(tenantId);
     group.okey = 'group-key-1';
     group.name = 'Test Group';
-    group.id = 'TG1';
     group.tags = 'test,group';
     group.notes = 'Some notes about the group.';
     group.hasContent = false;
@@ -30,6 +29,59 @@ describe('Group Utils', () => {
   });
 });
 
+// ─── key derivation ─────────────────────────────────────────────────────────────
+
+describe('getGroupKeyFromName', () => {
+  it('lower-cases and strips blanks and special chars', () => {
+    expect(getGroupKeyFromName('Vorstand 2026!')).toBe('vorstand2026');
+  });
+
+  it('de-accents umlauts and diacritics', () => {
+    expect(getGroupKeyFromName('Wädenswil Café')).toBe('wadenswilcafe');
+  });
+
+  it('truncates to 15 chars by default', () => {
+    expect(getGroupKeyFromName('Ressort Kommunikation und Marketing')).toBe('ressortkommunik');
+  });
+
+  it('respects a custom maxLength', () => {
+    expect(getGroupKeyFromName('Vorstand', 4)).toBe('vors');
+  });
+
+  it('returns empty string when nothing usable remains', () => {
+    expect(getGroupKeyFromName('   ')).toBe('');
+    expect(getGroupKeyFromName('🚣')).toBe('');
+    expect(getGroupKeyFromName(undefined)).toBe('');
+  });
+});
+
+describe('getUniqueGroupKey', () => {
+  it('returns the base key when it is free', () => {
+    expect(getUniqueGroupKey('Vorstand', new Set())).toBe('vorstand');
+  });
+
+  it('appends a numeric suffix on collision', () => {
+    expect(getUniqueGroupKey('Vorstand', new Set(['vorstand']))).toBe('vorstand2');
+    expect(getUniqueGroupKey('Vorstand', new Set(['vorstand', 'vorstand2']))).toBe('vorstand3');
+  });
+
+  it('treats groups and orgs as one shared key namespace', () => {
+    // 'vorstand' taken by an org → the new group must not reuse it
+    expect(getUniqueGroupKey('Vorstand', ['vorstand'])).toBe('vorstand2');
+  });
+
+  it('keeps the suffixed key within maxLength by truncating the base', () => {
+    // base 'ressortkommunik' (15) is taken → candidate must still be <= 15
+    const key = getUniqueGroupKey('Ressort Kommunikation', new Set(['ressortkommunik']));
+    expect(key.length).toBeLessThanOrEqual(15);
+    expect(key).toBe('ressortkommuni2');
+  });
+
+  it('returns empty string when the name normalizes to nothing', () => {
+    expect(getUniqueGroupKey('🚣', new Set())).toBe('');
+  });
+});
+
 // ─── visibility helpers ────────────────────────────────────────────────────────
 
 function makeGroup(visibility: string, notifyType: 'memberOnly' | 'membersAndMatchingVisibility' = 'memberOnly'): GroupModel {
@@ -41,7 +93,7 @@ function makeGroup(visibility: string, notifyType: 'memberOnly' | 'membersAndMat
 }
 
 function makeUser(roles: Partial<{ registered: boolean; privileged: boolean; admin: boolean }>): UserModel {
-  const u = new UserModel();
+  const u = new UserModel('t1');
   u.roles = { registered: false, privileged: false, admin: false, ...roles };
   return u;
 }

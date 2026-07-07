@@ -21,8 +21,6 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
   public hasTasks = true; // task id = id
   public hasFiles = true; // path of root folder = groups/id
   public filesFolder = '';
-  public hasAlbum = true;
-  public albumFolder = '';
   public hasMembers = true;
 
   /**

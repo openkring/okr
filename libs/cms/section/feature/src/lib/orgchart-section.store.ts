@@ -129,7 +129,6 @@ export const OrgchartStore = signalStore(
       newGroup.hasCalendar = false;
       newGroup.hasTasks = false;
       newGroup.hasFiles = false;
-      newGroup.hasAlbum = false;
       const modal = await store.modalController.create({
         component: store.groupEditModal,
         cssClass: 'wide-modal',

@@ -1,7 +1,7 @@
 # Group Domain
 
 ## Overview
-`GroupModel` represents a named collection of persons (members), typically belonging to an organization. Groups support an optional set of collaborative features: content page, chat room, calendar, tasks, file storage, and photo album. A group can be administered by a designated group admin person.
+`GroupModel` represents a named collection of persons (members), typically belonging to an organization. Groups support an optional set of collaborative features: content page, chat room, calendar, tasks, and file storage. A group can be administered by a designated group admin person.
 
 Groups are displayed in `GroupList` and explored in detail via `GroupViewPage`, which uses a segmented tab layout to switch between the group's features.
 
@@ -25,8 +25,6 @@ Collection name: `groups`
 | `hasTasks` | boolean | Group has a task list (task id = group okey) |
 | `hasFiles` | boolean | Group has a file folder (root path: `groups/<okey>`) |
 | `filesFolder` | string | Storage folder key for files (set to `okey` when `hasFiles = true`) |
-| `hasAlbum` | boolean | Group has a photo album folder |
-| `albumFolder` | string | Storage folder key for album (set to `a_<okey>` when `hasAlbum = true`) |
 | `hasMembers` | boolean | Group has a members list |
 | `admins` | AvatarInfo[] | Ordered list of group admin persons. The first element (`admins[0]`) is the main contact. Use `getMainContact(group)` and `isAdminMember(group, personKey)` from `@okr/subject-group-util`. |
 | `parentKey` | string | Key of the parent org or group |
@@ -77,7 +75,7 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 |---|---|
 | `GroupList` | List with search/tag filters; shows member avatars; actions via ActionSheet (show, edit, delete, addPage); requires `'memberAdmin'` role for write actions |
 | `GroupEditModal` | Ionic modal; hosts `GroupForm`; supports selecting mainContact and admin persons via `PersonSelectModal` |
-| `GroupViewPage` | Full-page view with segmented tabs: content, chat, calendar, tasks, files, album, members; resets `PageStore.pageId` on Ionic back-navigation via `ionViewWillEnter` |
+| `GroupViewPage` | Full-page view with segmented tabs: content, chat, calendar, tasks, files, members; resets `PageStore.pageId` on Ionic back-navigation via `ionViewWillEnter` |
 
 ## Segments in `GroupViewPage`
 | Segment | Component | Visibility |
@@ -87,7 +85,6 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `calendar` | `CalEventList` | when `hasCalendar` |
 | `tasks` | `TaskList` | when `hasTasks` |
 | `files` | `DocumentList` (folder: `f:<id>`) | when `hasFiles` |
-| `album` | `DocumentList` (folder: `f:a_<id>`) | when `hasAlbum` |
 | `members` | `MembershipList` | when `hasMembers` |
 
 ## Injection Token: `GROUP_EDIT_MODAL`

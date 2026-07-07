@@ -16,7 +16,6 @@ export const groupValidations = staticSuite((model: GroupModel, tenants: string,
   booleanValidations('hasCalendar', model.hasCalendar);
   booleanValidations('hasTasks', model.hasTasks);
   booleanValidations('hasFiles', model.hasFiles);
-  booleanValidations('hasAlbum', model.hasAlbum);
   booleanValidations('hasMembers', model.hasMembers);
   stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH);
   stringValidations('parentName', model.parentName, SHORT_NAME_LENGTH);

@@ -1,5 +1,45 @@
 import { AvatarInfo, GroupModel, RoleName, Roles, UserModel } from '@okr/shared-models';
-import { addIndexElement } from '@okr/shared-util-core';
+import { addIndexElement, deaccent } from '@okr/shared-util-core';
+
+/*-------------------------- key derivation --------------------------------*/
+/** Maximum length of a group key derived from the group name. */
+export const GROUP_KEY_MAX_LENGTH = 15;
+
+/**
+ * Derive a stable, storage-safe group key from a group name:
+ * de-accented, lower-cased, stripped to `[a-z0-9]` (no blanks, no special chars),
+ * truncated to `maxLength`. Returns '' when the name has no usable characters
+ * (the caller must guard against an empty key).
+ * @param name the group display name
+ * @param maxLength maximum key length (default {@link GROUP_KEY_MAX_LENGTH})
+ */
+export function getGroupKeyFromName(name: string | undefined, maxLength = GROUP_KEY_MAX_LENGTH): string {
+  return deaccent(name ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .slice(0, maxLength);
+}
+
+/**
+ * Derive a group key from the name that is unique among `takenKeys`. Group keys share
+ * a namespace with org keys (membership FKs point to org OR group), so `takenKeys`
+ * should include every existing group AND org key. On collision a numeric suffix is
+ * appended (`base`, `base2`, `base3`, …) while keeping the result within `maxLength`.
+ * @param name the group display name
+ * @param takenKeys all keys already in use (groups + orgs)
+ * @param maxLength maximum key length (default {@link GROUP_KEY_MAX_LENGTH})
+ */
+export function getUniqueGroupKey(name: string | undefined, takenKeys: Iterable<string>, maxLength = GROUP_KEY_MAX_LENGTH): string {
+  const taken = takenKeys instanceof Set ? takenKeys : new Set(takenKeys);
+  const base = getGroupKeyFromName(name, maxLength);
+  if (!base) return '';
+  if (!taken.has(base)) return base;
+  for (let i = 2; ; i++) {
+    const suffix = String(i);
+    const candidate = base.slice(0, maxLength - suffix.length) + suffix;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
 
 /*-------------------------- admins --------------------------------*/
 export function getMainContact(group?: GroupModel): AvatarInfo | undefined {

@@ -18,7 +18,7 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
 import { MatrixChatService } from '@okr/chat-data-access';
-import { getVisibleGroupKeys, GROUP_I18N_KEYS } from '@okr/subject-group-util';
+import { getUniqueGroupKey, getVisibleGroupKeys, GROUP_I18N_KEYS } from '@okr/subject-group-util';
 
 import { GroupEditModal } from './group-edit.modal';
 
@@ -208,13 +208,18 @@ export const GroupStore = signalStore(
       if (role === 'confirm' && data && !readOnly) {
         if (isGroup(data, store.tenantId())) {
           if (isNew) {
-            // Group keys are random identifiers, never derived from the (mutable, non-unique)
-            // group name. This avoids the org/group key collision on polymorphic FKs
-            // (MembershipModel.orgKey/memberKey point to org OR group) and keeps the derived
-            // folder/page/section/room/calendar ids stable even when the group is renamed.
-            data.okey = generateRandomString(20);
+            // Derive the group key from the (normalized) group name, made unique across all
+            // existing group AND org keys — membership FKs (orgKey/memberKey) point to an org
+            // OR a group, so the two share a key namespace and must not collide. The key is
+            // set once at creation and never changes on rename, keeping the derived
+            // folder/page/section/room/calendar ids stable. Falls back to a random key only
+            // if the name normalizes to nothing (e.g. all emoji).
+            const takenKeys = new Set<string>([
+              ...store.appStore.allGroups().map((g: GroupModel) => g.okey),
+              ...store.appStore.allOrgs().map((o) => o.okey),
+            ]);
+            data.okey = getUniqueGroupKey(data.name, takenKeys) || generateRandomString(20);
             data.filesFolder = data.hasFiles ? `f_${data.okey}` : '';
-            data.albumFolder = data.hasAlbum ? `a_${data.okey}` : '';
             await store.groupService.create(data, store.currentUser());
             this.setGroupKey(data.okey);
             await this.ensureAllAdminsAreMember(data);

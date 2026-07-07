@@ -12,7 +12,6 @@ export const GROUP_I18N_KEYS = {
   segment_calendar:                 PFX + 'segment.calendar',
   segment_tasks:                    PFX + 'segment.tasks',
   segment_files:                    PFX + 'segment.files',
-  segment_album:                    PFX + 'segment.album',
   segment_members:                  PFX + 'segment.members',
 
   add_page:                         PFX + 'add.page',
@@ -87,8 +86,6 @@ export const GROUP_I18N_KEYS = {
   hasTasks_helper:                 PFX + 'hasTasks.helper',
   hasFiles_label:                  PFX + 'hasFiles.label',
   hasFiles_helper:                 PFX + 'hasFiles.helper',
-  hasAlbum_label:                  PFX + 'hasAlbum.label',
-  hasAlbum_helper:                 PFX + 'hasAlbum.helper',
   hasMembers_label:                PFX + 'hasMembers.label',
   hasMembers_helper:               PFX + 'hasMembers.helper',
 } satisfies Record<string, string>;

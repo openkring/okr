@@ -1,14 +1,12 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { LowercaseWordMask } from '@okr/shared-config';
-import { WORD_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
-import { groupValidations, GroupI18n } from '@okr/subject-group-util';
+import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-group-util';
 
 @Component({
   selector: 'okr-group-form',
@@ -45,12 +43,12 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
               }
               <ion-col size="12" size-md="6">
                 @if(isNew()) {
+                  <!-- Group id is derived from the (normalized) name and shown read-only.
+                       The final, uniqueness-checked key is assigned on save. -->
                   <okr-text-input [i18n]="groupIdI18n()"
-                    [value]="okey()" (valueChange)="onFieldChange('okey', $event)"
-                    [maxLength]="maxWordLength"
-                    [mask]="mask"
-                    [showHelper]=true
-                    [readOnly]="isReadOnly()"
+                    [value]="groupIdPreview()"
+                    [readOnly]="true"
+                    [showHelper]="true"
                   />
                 } @else {
                   <ion-item lines="none">
@@ -135,13 +133,6 @@ import { groupValidations, GroupI18n } from '@okr/subject-group-util';
                 />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-checkbox [i18n]="hasAlbumI18n()"
-                  [checked]="hasAlbum()" (checkedChange)="onFieldChange('hasAlbum', $event)"
-                  [showHelper]="true"
-                  [readOnly]="isReadOnly()"
-                />
-              </ion-col>
-              <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="hasMembersI18n()"
                   [checked]="hasMembers()" (checkedChange)="onFieldChange('hasMembers', $event)"
                   [showHelper]="true"
@@ -216,7 +207,6 @@ export class GroupForm {
   protected hasCalendarI18n = computed(() => ({ name: 'hasCalendar',  label: this.i18n().hasCalendar_label(),  helper: this.i18n().hasCalendar_helper()  } as CheckboxI18n));
   protected hasTasksI18n    = computed(() => ({ name: 'hasTasks',     label: this.i18n().hasTasks_label(),     helper: this.i18n().hasTasks_helper()     } as CheckboxI18n));
   protected hasFilesI18n    = computed(() => ({ name: 'hasFiles',     label: this.i18n().hasFiles_label(),     helper: this.i18n().hasFiles_helper()     } as CheckboxI18n));
-  protected hasAlbumI18n    = computed(() => ({ name: 'hasAlbum',     label: this.i18n().hasAlbum_label(),     helper: this.i18n().hasAlbum_helper()     } as CheckboxI18n));
   protected hasMembersI18n  = computed(() => ({ name: 'hasMembers',   label: this.i18n().hasMembers_label(),   helper: this.i18n().hasMembers_helper()   } as CheckboxI18n));
 
   // inputs
@@ -246,6 +236,8 @@ export class GroupForm {
   // fields
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected okey = linkedSignal(() => this.formData().okey ?? '');
+  // Live read-only preview of the key that will be derived from the name on save.
+  protected groupIdPreview = computed(() => getGroupKeyFromName(this.name()));
   protected icon = linkedSignal(() => this.formData().icon ?? '');
 
   // admin
@@ -261,12 +253,7 @@ export class GroupForm {
   protected hasCalendar = linkedSignal(() => this.formData().hasCalendar ?? true);
   protected hasTasks = linkedSignal(() => this.formData().hasTasks ?? true);
   protected hasFiles = linkedSignal(() => this.formData().hasFiles ?? true);
-  protected hasAlbum = linkedSignal(() => this.formData().hasAlbum ?? true);
   protected hasMembers = linkedSignal(() => this.formData().hasMembers ?? true);
-
-  // passing constants to template
-  protected mask = LowercaseWordMask;
-  protected readonly maxWordLength = WORD_LENGTH;
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo[]): void {

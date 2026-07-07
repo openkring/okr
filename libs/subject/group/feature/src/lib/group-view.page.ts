@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
+import { GroupModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { isAdminMember } from '@okr/subject-group-util';
@@ -57,11 +58,6 @@ import { GroupStore } from './group.store';
         @if(hasFiles()) {
           <ion-segment-button value="files">
             <ion-label>{{ store.i18n.segment_files() }}</ion-label>
-          </ion-segment-button>
-        }
-        @if(hasAlbum()) {
-          <ion-segment-button value="album">
-            <ion-label>{{ store.i18n.segment_album() }}</ion-label>
           </ion-segment-button>
         }
         @if(hasMembers()) {
@@ -124,15 +120,6 @@ import { GroupStore } from './group.store';
               <okr-defer-error />
             }
           }
-          @case ('album') {
-            @defer (on immediate) {
-              <okr-document-list [listId]="albumId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
-            } @placeholder {
-              <div class="placeholder-center"><ion-spinner /></div>
-            } @error {
-              <okr-defer-error />
-            }
-          }
           @case ('members') {
             @defer (on immediate) {
               <okr-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" [groupAdmin]="isGroupAdmin()" />
@@ -161,13 +148,19 @@ export class GroupViewPage implements ViewWillEnter {
  // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  public formData = linkedSignal(() => safeStructuredClone(this.group()));
+  // Retain the last loaded group while group() transiently reloads to undefined
+  // (auth/token refresh, Safari long-poll reconnect). Otherwise formData → undefined →
+  // id() === '' collapses the @if and DESTROYS the segment content (e.g. the document
+  // list), which resets folder navigation back to the top view on every reconnect.
+  public formData = linkedSignal<GroupModel | undefined, GroupModel | undefined>({
+    source: () => this.group(),
+    computation: (group, previous) => group ? safeStructuredClone(group) : previous?.value,
+  });
   protected showForm = signal(true);
 
   // derived signals and fields
   protected readonly avatarTitle = computed(() => this.name() ?? DEFAULT_NAME);
   protected readonly listId = computed(() => `f:${this.groupKey()}`);
-  protected readonly albumId = computed(() => `f:a_${this.groupKey()}`);
   protected currentUser = computed(() => this.store.currentUser());
   protected isGroupAdmin = computed(() => isAdminMember(this.group(), this.currentUser()?.personKey));
   protected selectedSegment = computed(() => this.store.segment());
@@ -179,7 +172,6 @@ export class GroupViewPage implements ViewWillEnter {
   protected hasCalendar = computed(() => this.formData()?.hasCalendar ?? true);
   protected hasTasks = computed(() => this.formData()?.hasTasks ?? true);
   protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
-  protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
   protected path = computed(() => getDocumentStoragePath(this.store.tenantId(), 'group', this.group()?.okey));
   protected groupTags = computed(() => this.store.getTags());
