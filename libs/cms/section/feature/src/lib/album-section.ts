@@ -260,7 +260,7 @@ export class AlbumSectionComponent {
   }
 
   protected getBackgroundStyle(image: ImageConfig): BackgroundStyle {
-    return getBackgroundStyle(this.imgixBaseUrl(), this.imageStyle(), image.url);
+    return getBackgroundStyle(this.imgixBaseUrl(), this.imageStyle(), image.url, image);
   }
 
   protected onAlbumStyleChange(albumStyle: AlbumStyle): void {

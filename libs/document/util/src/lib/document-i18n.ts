@@ -55,6 +55,10 @@ export const DOCUMENT_I18N_KEYS = {
   altText_placeholder:           '@document/feature.altText.placeholder',
   altText_helper:                '@document/feature.altText.helper',
 
+  credit_label:                  '@document/feature.credit.label',
+  credit_placeholder:            '@document/feature.credit.placeholder',
+  credit_helper:                 '@document/feature.credit.helper',
+
   overlay_label:                 '@document/feature.overlay.label',
   overlay_placeholder:           '@document/feature.overlay.placeholder',
   overlay_helper:                '@document/feature.overlay.helper',

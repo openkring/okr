@@ -84,6 +84,11 @@
     "placeholder": "text",
     "helper": "Text, der auf dem Bild dargestellt werden soll."
   },
+  "credit": {
+    "label": "Bildquelle",
+    "placeholder": "z. B. Foto: J. Muster / Keystone",
+    "helper": "Urhebernachweis des Bildes. Wird als Quelle im Bild angezeigt, wenn aktiviert."
+  },
   "fullPath": {
     "label": "Dateipfad",
     "placeholder": "/a/b/c",

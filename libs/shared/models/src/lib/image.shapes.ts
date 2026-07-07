@@ -10,7 +10,9 @@ export const IMAGE_CONFIG_SHAPE = {
     url: DEFAULT_URL,
     actionUrl: DEFAULT_URL,
     altText: '',
-    overlay: ''
+    overlay: '',
+    documentKey: '',
+    credit: ''
 } as ImageConfig;
 
 export const IMAGE_STYLE_SHAPE = {
@@ -26,6 +28,8 @@ export const IMAGE_STYLE_SHAPE = {
     hasPriority: true,
     action: ImageActionType.None,
     zoomFactor: 2,
+    showTitle: false,
+    showSource: false,
 } as ImageStyle;
 
 export const BACKGROUND_STYLE_SHAPE = {

@@ -1,5 +1,5 @@
 import { THUMBNAIL_SIZE } from '@okr/shared-constants';
-import { ImageType } from '@okr/shared-models';
+import { ImageConfig, ImageStyle, ImageType } from '@okr/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fileUtil from './file.util';
 import {
@@ -16,6 +16,7 @@ import {
     getImgixUrlWithAutoParams,
     getSizedImgixParamsByExtension,
     getThumbnailUrl,
+    buildOverlayParams,
     IMGIX_JPG_PARAMS,
     IMGIX_JSON_PARAMS,
     IMGIX_PDF_PARAMS,
@@ -495,6 +496,44 @@ describe('img.util', () => {
     it('should handle very long paths', () => {
       const longPath = 'tenant/' + 'very/'.repeat(10) + 'deep/path/image.jpg';
       expect(checkUrlType(longPath)).toBe('storage');
+    });
+  });
+
+  describe('buildOverlayParams', () => {
+    const img = (over: Partial<ImageConfig> = {}): ImageConfig =>
+      ({ label: '', type: ImageType.Image, url: '', actionUrl: '', altText: '', overlay: '', credit: '', ...over });
+    const style = (over: Partial<ImageStyle> = {}): ImageStyle =>
+      ({ showTitle: false, showSource: false, ...over } as ImageStyle);
+
+    it('returns empty string when nothing is shown', () => {
+      expect(buildOverlayParams(img({ label: 'Sunset', credit: 'J. Doe' }), style())).toBe('');
+    });
+
+    it('renders the title when showTitle is true', () => {
+      const result = buildOverlayParams(img({ label: 'Sunset' }), style({ showTitle: true }));
+      expect(result).toContain('txt=Sunset');
+      expect(result).toContain('txt-align=bottom,left');
+    });
+
+    it('renders the credit when showSource is true', () => {
+      const result = buildOverlayParams(img({ credit: 'Photo: J. Doe' }), style({ showSource: true }));
+      expect(result).toContain(encodeURIComponent('Photo: J. Doe'));
+    });
+
+    it('joins title and credit with a newline, title first', () => {
+      const result = buildOverlayParams(img({ label: 'Sunset', credit: 'J. Doe' }), style({ showTitle: true, showSource: true }));
+      expect(result).toContain('txt=' + encodeURIComponent('Sunset\nJ. Doe'));
+    });
+
+    it('lets the free-form overlay override the composed text', () => {
+      const result = buildOverlayParams(img({ label: 'Sunset', credit: 'J. Doe', overlay: 'Custom caption' }), style({ showTitle: true, showSource: true }));
+      expect(result).toContain('txt=' + encodeURIComponent('Custom caption'));
+      expect(result).not.toContain('Sunset');
+    });
+
+    it('skips a toggled line whose value is empty', () => {
+      const result = buildOverlayParams(img({ label: 'Sunset', credit: '' }), style({ showTitle: true, showSource: true }));
+      expect(result).toContain('txt=' + encodeURIComponent('Sunset'));
     });
   });
 });

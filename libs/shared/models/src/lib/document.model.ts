@@ -31,7 +31,8 @@ export class DocumentModel implements OkrModel, SearchableModel, TaggedModel {
   public altText = ''; // alternate text for images (default = name)
 
   public type = DEFAULT_DOCUMENT_TYPE;   // marketing, doc, hr, business, finance, info, legal etc.
-  public source = DEFAULT_DOCUMENT_SOURCE;   // name, storage, external
+  public source = DEFAULT_DOCUMENT_SOURCE;   // storage origin category: name, storage, external
+  public credit = ''; // image attribution / copyright line, e.g. "Photo: J. Doe / Keystone"
   public url = DEFAULT_URL; // url: url of the original file
   public mimeType = ''; // = firestorage:  contentType
   public size = 0;

@@ -264,6 +264,9 @@ export const SECTION_I18N_KEYS = {
   image_edit_overlay_label:                 PFX + 'image.edit.overlay.label',
   image_edit_overlay_placeholder:           PFX + 'image.edit.overlay.placeholder',
   image_edit_overlay_helper:                PFX + 'image.edit.overlay.helper',
+  image_edit_credit_label:                  PFX + 'image.edit.credit.label',
+  image_edit_credit_placeholder:            PFX + 'image.edit.credit.placeholder',
+  image_edit_credit_helper:                 PFX + 'image.edit.credit.helper',
   image_edit_type_name:                     PFX + 'image.edit.type.name',
   image_edit_type_label:                    PFX + 'image.edit.type.label',
   image_edit_type_helper:                   PFX + 'image.edit.type.helper',
@@ -299,6 +302,10 @@ export const SECTION_I18N_KEYS = {
   fill_helper:                              PFX + 'image.style.fill.helper',
   hasPriority_label:                        PFX + 'image.style.hasPriority.label',
   hasPriority_helper:                       PFX + 'image.style.hasPriority.helper',
+  showTitle_label:                          PFX + 'image.style.showTitle.label',
+  showTitle_helper:                         PFX + 'image.style.showTitle.helper',
+  showSource_label:                         PFX + 'image.style.showSource.label',
+  showSource_helper:                        PFX + 'image.style.showSource.helper',
 
   // invitation
   invitation_title:                         PFX + 'invitation.title',

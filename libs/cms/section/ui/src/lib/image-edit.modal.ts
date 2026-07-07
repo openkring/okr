@@ -40,6 +40,9 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
               <okr-text-input [i18n]="overlayI18n()" [value]="overlay()" (valueChange)="onFieldChange('overlay', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
+              <okr-text-input [i18n]="creditI18n()" [value]="credit()" (valueChange)="onFieldChange('credit', $event)" [maxLength]="150" [readOnly]="readOnly()" />
+            </ion-col>
+            <ion-col size="12">
               <okr-string-select [i18n]="imageTypeI18n()" [selectedString]="typeName()" (selectedStringChange)="onTypeChange($event)" [stringList]="imageTypeNames" [readOnly]="readOnly()" />
             </ion-col>
           </ion-row>
@@ -62,6 +65,7 @@ export class ImageEditModal {
   protected actionUrl = linkedSignal(() => this.formData().actionUrl ?? '');
   protected altText = linkedSignal(() => this.formData().altText ?? '');
   protected overlay = linkedSignal(() => this.formData().overlay ?? '');
+  protected credit = linkedSignal(() => this.formData().credit ?? '');
   protected typeName = linkedSignal(() => ImageType[this.formData().type] ?? 'Image');
 
   protected imageTypeNames = IMAGE_TYPE_NAMES;
@@ -99,6 +103,13 @@ export class ImageEditModal {
     label: this.i18n().image_edit_overlay_label(),
     placeholder: this.i18n().image_edit_overlay_placeholder(),
     helper: this.i18n().image_edit_overlay_helper(),
+  } as TextInputI18n));
+
+  protected creditI18n = computed(() => ({
+    name: 'imageCredit',
+    label: this.i18n().image_edit_credit_label(),
+    placeholder: this.i18n().image_edit_credit_placeholder(),
+    helper: this.i18n().image_edit_credit_helper(),
   } as TextInputI18n));
   protected imageTypeI18n = computed(() => ({ name: 'imageType', label: this.i18n().image_edit_type_label() } as StringSelectI18n));
 

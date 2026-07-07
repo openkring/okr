@@ -3,7 +3,7 @@ import { FirebaseStorage, listAll, ref, StorageReference } from "firebase/storag
 import { firstValueFrom } from "rxjs";
 
 import { AlbumConfig, BackgroundStyle, ImageActionType, ImageConfig, ImageMetaData, ImageStyle, ImageType } from "@okr/shared-models";
-import { debugData, die, getImageType, getImgixJsonUrl, getSizedImgixParamsByExtension } from "@okr/shared-util-core";
+import { buildOverlayParams, debugData, die, getImageType, getImgixJsonUrl, getSizedImgixParamsByExtension } from "@okr/shared-util-core";
 import { DEFAULT_ALBUM_HEIGHT, DEFAULT_ALBUM_WIDTH, DEFAULT_BORDER, DEFAULT_BORDER_RADIUS, DEFAULT_SIZES, THUMBNAIL_SIZE } from "@okr/shared-constants";
 
 
@@ -150,9 +150,11 @@ export function convertThumbnailToFullImage(imageStyle: ImageStyle, width: numbe
   return image;
 }
 
-export function getBackgroundStyle(imgixBaseUrl: string, imageStyle: ImageStyle, url: string): BackgroundStyle {
+export function getBackgroundStyle(imgixBaseUrl: string, imageStyle: ImageStyle, url: string, image?: ImageConfig): BackgroundStyle {
   if (!imageStyle.width || !imageStyle.height) die('album.util.getBackgroundStyle: image width and height must be set');
-  const params = getSizedImgixParamsByExtension(url, imageStyle.width, imageStyle.height);
+  const sizeParams = getSizedImgixParamsByExtension(url, imageStyle.width, imageStyle.height);
+  const overlayParams = image ? buildOverlayParams(image, imageStyle) : '';
+  const params = overlayParams ? sizeParams + '&' + overlayParams : sizeParams;
   const fullUrl = `${imgixBaseUrl}/${url}?${params}`;
   return {
     'background-image': `url(${fullUrl})`,

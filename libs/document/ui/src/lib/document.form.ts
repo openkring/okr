@@ -53,6 +53,10 @@ import { DocumentI18n, documentValidations } from '@okr/document-util';
               <ion-col size="12">
                 <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [maxLength]=100 [readOnly]="isReadOnly()" />
               </ion-col>
+
+              <ion-col size="12">
+                <okr-text-input [i18n]="creditI18n()" [value]="credit()" (valueChange)="onFieldChange('credit', $event)" [maxLength]=150 [readOnly]="isReadOnly()" />
+              </ion-col>
             </ion-row>
 
             <ion-row>
@@ -160,6 +164,7 @@ export class DocumentForm {
   protected fullPath = linkedSignal(() => this.formData().fullPath ?? '');
   protected title = linkedSignal(() => this.formData().title ?? '');
   protected altText = linkedSignal(() => this.formData().altText ?? '');
+  protected credit = linkedSignal(() => this.formData().credit ?? '');
   protected type = linkedSignal(() => this.formData().type ?? '');
   protected source = linkedSignal(() => this.formData().source ?? '');
   protected url = linkedSignal(() => this.formData().url ?? '');
@@ -202,6 +207,13 @@ export class DocumentForm {
     label: this.i18n().altText_label(),
     placeholder: this.i18n().altText_placeholder(),
     helper: this.i18n().altText_helper()
+  } as TextInputI18n));
+
+  protected creditI18n = computed(() => ({
+    name: 'credit',
+    label: this.i18n().credit_label(),
+    placeholder: this.i18n().credit_placeholder(),
+    helper: this.i18n().credit_helper()
   } as TextInputI18n));
 
   protected urlI18n = computed(() => ({

@@ -36,6 +36,10 @@ interface ImageStyleConfigI18n {
   fill_helper:              Signal<string>;
   hasPriority_label:        Signal<string>;
   hasPriority_helper:       Signal<string>;
+  showTitle_label:          Signal<string>;
+  showTitle_helper:         Signal<string>;
+  showSource_label:         Signal<string>;
+  showSource_helper:        Signal<string>;
 }
 
 @Component({
@@ -94,6 +98,12 @@ interface ImageStyleConfigI18n {
                 <okr-checkbox [i18n]="hasPriorityI18n()" [checked]="hasPriority()" (checkedChange)="onFieldChange('hasPriority', $event)" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
+                <okr-checkbox [i18n]="showTitleI18n()" [checked]="showTitle()" (checkedChange)="onFieldChange('showTitle', $event)" [readOnly]="readOnly()" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <okr-checkbox [i18n]="showSourceI18n()" [checked]="showSource()" (checkedChange)="onFieldChange('showSource', $event)" [readOnly]="readOnly()" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="imageActionI18n()" [value]="action()" (valueChange)="onFieldChange('imageAction', $event)" [readOnly]="readOnly()" [categories]="imageActions" />
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -125,6 +135,8 @@ export class ImageStyleConfiguration {
   protected slot = linkedSignal(() => this.formData().slot ?? 'none');
   protected fill = linkedSignal(() => this.formData().fill ?? true);
   protected hasPriority = linkedSignal(() => this.formData().hasPriority ?? true);
+  protected showTitle = linkedSignal(() => this.formData().showTitle ?? false);
+  protected showSource = linkedSignal(() => this.formData().showSource ?? false);
   protected action = linkedSignal(() => this.formData().action ?? ImageActionType.None);
   protected zoomFactor = linkedSignal(() => this.formData().zoomFactor ?? 2);
 
@@ -211,6 +223,24 @@ export class ImageStyleConfiguration {
         name: 'hasPriority',
         label: this.i18n().hasPriority_label(),
         helper: this.i18n().hasPriority_helper(),
+      } as CheckboxI18n)
+  );
+
+  protected showTitleI18n = computed(
+    () =>
+      ({
+        name: 'showTitle',
+        label: this.i18n().showTitle_label(),
+        helper: this.i18n().showTitle_helper(),
+      } as CheckboxI18n)
+  );
+
+  protected showSourceI18n = computed(
+    () =>
+      ({
+        name: 'showSource',
+        label: this.i18n().showSource_label(),
+        helper: this.i18n().showSource_helper(),
       } as CheckboxI18n)
   );
 

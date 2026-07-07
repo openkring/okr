@@ -12,7 +12,9 @@ export interface ImageConfig {
   url: string; // the url of the image, a relative path to the file in Firebase storage; this is used as a basis to construct the imgix url
   actionUrl: string; // optional url used with certain actions (e.g. open link)
   altText: string; // aria text for the image
-  overlay: string; // used for text overlays on the imgix image
+  overlay: string; // free-form text overlay on the imgix image; when set it wins over the auto-composed title/source overlay
+  documentKey?: string; // FK to the corresponding DocumentModel (every image has a document entry)
+  credit?: string; // image attribution / copyright, denormalized from DocumentModel.credit; rendered when ImageStyle.showSource is true
 }
 
 
@@ -30,6 +32,8 @@ export interface ImageStyle {
     hasPriority: boolean; // if true, the image is loaded first, default is true
     action: ImageActionType; // the action to perform when clicking on the image, default is ImageAction.None
     zoomFactor: number; // the zoom factor when using the zoom action, default is 2
+    showTitle?: boolean; // if true, render the image's label as a title line in the bottom imgix overlay, default: false
+    showSource?: boolean; // if true, render the image's credit as a source line in the bottom imgix overlay, default: false
 }
 
 export interface BackgroundStyle {

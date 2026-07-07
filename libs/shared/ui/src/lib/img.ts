@@ -5,7 +5,7 @@ import { Browser } from '@capacitor/browser';
 
 import { ENV } from '@okr/shared-config';
 import { ImageActionType, ImageConfig, ImageStyle } from '@okr/shared-models';
-import { getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@okr/shared-util-core';
+import { buildOverlayParams, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { showZoomedImage } from './ui.util';
@@ -219,7 +219,9 @@ export class Img {
   // that was the original idea: we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
   // now we eplicitely add imgixBaseUrl
   protected imgixUrl = computed(() => {
-    const params = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
+    const sizeParams = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
+    const overlayParams = buildOverlayParams(this.image(), this.imageStyle());
+    const params = overlayParams ? sizeParams + '&' + overlayParams : sizeParams;
     const url = getImgixUrl(this.url(), params);
     return url.startsWith('tenant') ? this.env.services.imgixBaseUrl + '/' + url : url;
   });

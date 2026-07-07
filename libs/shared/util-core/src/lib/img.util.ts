@@ -5,7 +5,7 @@
    Firebase storage is linked as a source to imgix CDN and the images can be served from there.
 */
 import { THUMBNAIL_SIZE } from "@okr/shared-constants";
-import { ImageType } from "@okr/shared-models";
+import { ImageConfig, ImageStyle, ImageType } from "@okr/shared-models";
 import { fileExtension, fileLogo, isAudio, isDocument, isImage, isPdf, isStreamingVideo, isVideo } from './file.util';
 import { die, warn } from './log.util';
 
@@ -131,6 +131,39 @@ export function getSizedImgixParamsByExtension(pathOrExtension: string | undefin
     return arParams + '&' + params;
   }
   return '';
+}
+
+/**
+ * Builds the imgix text-overlay parameters rendered at the bottom of an image.
+ *
+ * Composition rule:
+ * - if `image.overlay` (free-form) is set, it wins verbatim (manual override);
+ * - otherwise the overlay is composed from the image's title (`label`) when
+ *   `style.showTitle` is true and its attribution (`credit`) when `style.showSource`
+ *   is true. Lines are joined with a newline; title first, source second.
+ *
+ * Returns an empty string when there is nothing to render (so callers can append
+ * it unconditionally, e.g. `params + (overlay ? '&' + overlay : '')`).
+ *
+ * @param image the image configuration (label, credit, overlay)
+ * @param style the image style (showTitle, showSource toggles)
+ * @returns imgix `txt*` params (without a leading separator), or '' when empty
+ */
+export function buildOverlayParams(image: ImageConfig, style: ImageStyle): string {
+  const manual = image.overlay?.trim() ?? '';
+  let text: string;
+  if (manual.length > 0) {
+    text = manual;
+  } else {
+    const lines: string[] = [];
+    if (style.showTitle && image.label?.trim()) lines.push(image.label.trim());
+    if (style.showSource && image.credit?.trim()) lines.push(image.credit.trim());
+    if (lines.length === 0) return '';
+    text = lines.join('\n');
+  }
+  // bottom-left aligned white text with a shadow for readability over any background.
+  const encoded = encodeURIComponent(text);
+  return `txt=${encoded}&txt-align=bottom,left&txt-color=ffffff&txt-size=14&txt-pad=15&txt-shad=6`;
 }
 
 /**

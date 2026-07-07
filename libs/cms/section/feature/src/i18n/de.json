@@ -423,7 +423,12 @@
       "overlay": {
         "label": "Überblendtext",
         "placeholder": "text",
-        "helper": "Ein Text, der auf dem Bild als Overlay angezeigt werden soll."
+        "helper": "Ein Text, der auf dem Bild als Overlay angezeigt werden soll. Überschreibt Titel/Quelle, wenn gesetzt."
+      },
+      "credit": {
+        "label": "Bildquelle",
+        "placeholder": "z. B. Foto: J. Muster / Keystone",
+        "helper": "Urhebernachweis des Bildes. Wird als Quelle im Bild angezeigt, wenn «Quelle anzeigen» aktiviert ist."
       },
       "type": {
         "name": "type",
@@ -496,9 +501,17 @@
         "label": "Füllung", 
         "helper": "Darstellungsart von Flächen" 
       },
-      "hasPriority": { 
-        "label": "Priorität", 
+      "hasPriority": {
+        "label": "Priorität",
         "helper": "Definiert höhere Priorität beim Laden von Bildern."
+      },
+      "showTitle": {
+        "label": "Titel anzeigen",
+        "helper": "Zeigt den Bildtitel als Textzeile unten im Bild an."
+      },
+      "showSource": {
+        "label": "Quelle anzeigen",
+        "helper": "Zeigt den Urhebernachweis (Bildquelle) als Textzeile unten im Bild an."
       }
     }
   },
