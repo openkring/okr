@@ -32,7 +32,11 @@ export class FolderBreadcrumb {
     effect(() => {
       const key = this.folderKey();
       if (key) {
-        this.folderService.loadBreadcrumbTrail(key).then(trail => this.breadcrumbs.set(trail));
+        this.folderService.loadBreadcrumbTrail(key)
+          .then(trail => this.breadcrumbs.set(trail))
+          // A transient permission denial (auth-restore / reconnect window) must not
+          // surface as an uncaught promise rejection; drop to an empty trail instead.
+          .catch(() => this.breadcrumbs.set([]));
       } else {
         this.breadcrumbs.set([]);
       }

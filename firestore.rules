@@ -47,8 +47,15 @@ service cloud.firestore {
     function belongsToTenant(data) {
       return data.tenants.hasAny(callerTenants()) || data.tenants.hasAny(['system']);
     }
+    // A get() on a NON-EXISTENT document evaluates rules with resource == null.
+    // Dereferencing resource.data.tenants there raises an error → the client sees
+    // "Missing or insufficient permissions" instead of a clean not-found (breaks the
+    // common read-then-create / existence-check pattern, e.g. FolderService.
+    // ensureGroupFolder). Reading a non-existent doc returns nothing, so allow it;
+    // list/query results always have a concrete resource, so belongsToTenant still
+    // fully gates real data.
     function tenantRead() {
-      return userExists() && belongsToTenant(resource.data);
+      return userExists() && (resource == null || belongsToTenant(resource.data));
     }
     function tenantCreate() {
       return userExists() && belongsToTenant(request.resource.data);

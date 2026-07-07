@@ -77,11 +77,23 @@ export class FolderService {
    * @param currentUser the user creating the folder (if it doesn't exist yet)
    */
   public async ensureGroupFolder(groupKey: string, groupName: string, tenantId: string, currentUser?: UserModel): Promise<void> {
-    const existing = await firstValueFrom(this.firestoreService.readModel<FolderModel>(FolderCollection, groupKey));
-    if (existing) return;
-    const folder = newFolderModel(tenantId, groupName);
-    folder.okey = groupKey;
-    await this.create(folder, currentUser);
+    // A get() on a not-yet-existent folder can be REJECTED by the tenantRead() rule
+    // (it dereferences resource.data.tenants on a null resource → "Missing or
+    // insufficient permissions"), so treat any read failure as "does not exist" and
+    // fall through to create. Both branches are guarded: this runs from an un-awaited
+    // caller (onSegmentChanged), so an escaping rejection would be uncaught.
+    try {
+      const existing = await firstValueFrom(this.firestoreService.readModel<FolderModel>(FolderCollection, groupKey));
+      if (existing) return;
+    } catch { /* not readable / does not exist → create below */ }
+
+    try {
+      const folder = newFolderModel(tenantId, groupName);
+      folder.okey = groupKey;
+      await this.create(folder, currentUser);
+    } catch (ex) {
+      console.error(`FolderService.ensureGroupFolder: could not create folder '${groupKey}'`, ex);
+    }
   }
 
   /*-------------------------- BREADCRUMB TRAIL --------------------------------*/
@@ -96,7 +108,12 @@ export class FolderService {
     let depth = 0;
 
     while (currentKey && depth < maxDepth) {
-      const folder: FolderModel | undefined = await firstValueFrom(this.read(currentKey));
+      let folder: FolderModel | undefined;
+      try {
+        // A get() on a non-existent ancestor rejects under tenantRead() (resource is
+        // null); stop the chain gracefully rather than reject the whole trail.
+        folder = await firstValueFrom(this.read(currentKey));
+      } catch { break; }
       if (!folder) break;
       trail.unshift(folder); // prepend → root ends up first
       currentKey = folder.parents?.[0];
