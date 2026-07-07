@@ -1,4 +1,4 @@
-import { Component, inject, input, model, Signal } from '@angular/core';
+import { Component, inject, input, model } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions,
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
@@ -16,20 +16,9 @@ import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } 
 import { IMGIX_THUMBNAIL_PARAMS } from '@okr/shared-util-core';
 import { UploadService } from '@okr/avatar-data-access';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { SectionI18n } from '@okr/cms-section-util';
 
 import { ImageEditModal } from './image-edit.modal';
-
-interface ImagesConfigurationI18n {
-  image_empty:              Signal<string>;
-  as_title:                 Signal<string>;
-  image_edit_title:         Signal<string>;
-  image_edit_title_modal:   Signal<string>;
-  image_delete:             Signal<string>;
-  image_detail:             Signal<string>;
-  image_download:           Signal<string>;
-  image_upload:             Signal<string>;
-  cancel:                   Signal<string>;
-}
 
 @Component({
   selector: 'okr-images-config',
@@ -103,7 +92,7 @@ export class ImagesConfiguration {
   public storagePath = input.required<string>();
   public currentUser = input<UserModel | undefined>();
   public readOnly = input(true);
-  public readonly i18n = input.required<ImagesConfigurationI18n>();
+  public readonly i18n = input.required<SectionI18n>();
 
   // constants
   private imgixBaseUrl = this.env.services.imgixBaseUrl;
@@ -216,7 +205,8 @@ export class ImagesConfiguration {
       component: ImageEditModal,
       componentProps: {
         formData: { ...img },
-        readOnly: this.readOnly()
+        readOnly: this.readOnly(),
+        i18n: this.i18n(),
       },
     });
     await modal.present();
