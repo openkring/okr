@@ -56,6 +56,7 @@
   },
   "delete": {
     "label": "Mitgliedschaft löschen",
+    "group": "Soll diese Gruppen-Mitgliedschaft wirklich gelöscht werden ?",
     "confirm": "Normalerweise sollte eine Mitgliedschaft beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Mitgliedschaft wirklich löschen?"
   },
   "download": {

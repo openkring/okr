@@ -622,7 +622,7 @@ export const _MembershipStore = signalStore(
          * Ask user for the end date of an existing membership and end it.
          * We do not archive memberships as we want to make them visible for entries & exits.
          * Therefore, we end an membership by setting its validTo date.
-         * @param membership the membership to delete
+         * @param membership the membership to end
          */
       async end(membership: MembershipModel, endDate?: string, readOnly = true): Promise<void> {
         if (!membership || readOnly) return;
@@ -840,7 +840,8 @@ export const _MembershipStore = signalStore(
 
       async delete(membership?: MembershipModel, readOnly = true): Promise<void> {
         if (!membership || readOnly) return;
-        const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        const confirmMessage = store.orgType() === 'group' ? store.i18n.delete_group() : store.i18n.delete_confirm();
+        const result = await confirm(store.alertController, confirmMessage, store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           await store.membershipService.delete(membership);
           this.refreshData();  
