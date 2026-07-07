@@ -25,7 +25,7 @@ describe('mergeDirectoryResultIntoForm', () => {
     expect(out.notes).toBe('Architekt');
   });
 
-  it('does not overwrite fields the user already typed (non-destructive)', () => {
+  it('result values win over existing input; occupation appends to notes without replacing', () => {
     const vm = { ...PERSON_NEW_FORM_SHAPE, city: 'Existing', notes: 'my note' };
     const out = mergeDirectoryResultIntoForm(vm, RESULT);
     expect(out.city).toBe('Schlatt'); // result value wins when present (mirrors onZefixSelected `d.x || vm.x`)

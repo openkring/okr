@@ -37,6 +37,14 @@ export const searchChSearchPerson = onCall(
       throw new HttpsError('invalid-argument', 'firstName or lastName is required');
     }
 
+    // Verify the caller actually belongs to the requested tenant — prevents using
+    // another tenant's search.ch key/quota by passing a foreign tenantId.
+    const callerSnap = await admin.firestore().collection('users').doc(request.auth.uid).get();
+    const callerTenants = callerSnap.data()?.tenants;
+    if (!Array.isArray(callerTenants) || !callerTenants.includes(tenantId)) {
+      throw new HttpsError('permission-denied', 'caller does not belong to tenant');
+    }
+
     // read the tenant's search.ch key (server-only doc, admin SDK bypasses rules)
     const snap = await admin.firestore().doc(`app-secrets/${tenantId}`).get();
     const key = snap.exists ? (snap.data()?.['searchChApiKey'] as string | undefined) : undefined;
