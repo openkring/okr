@@ -347,7 +347,15 @@ export async function forceJoinUserToRoom(roomId: string, matrixUserId: string, 
     }
   );
   if (!joinResp.ok) {
-    throw new HttpsError('internal', `Failed to join ${matrixUserId} to room ${roomId}: ${await joinResp.text()}`);
+    const errText = await joinResp.text();
+    // Idempotent: Synapse returns M_FORBIDDEN "<user> is already in the room." when the
+    // target is already a member. That is the desired end-state, not a failure — treat it
+    // as success (mirrors kickUserFromRoom tolerating M_NOT_IN_ROOM).
+    if (errText.includes('already in the room')) {
+      console.log(`forceJoinUserToRoom: ${matrixUserId} already in room ${roomId} (treated as joined)`);
+      return;
+    }
+    throw new HttpsError('internal', `Failed to join ${matrixUserId} to room ${roomId}: ${errText}`);
   }
 }
 
