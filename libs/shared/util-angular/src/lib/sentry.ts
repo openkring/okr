@@ -52,6 +52,11 @@ export function buildSentryOptions(
       // Cloud Function rejects as a FirebaseError, so nothing actionable is hidden.
       // Safari: "JSON Parse error: Unexpected EOF" · V8: "Unexpected end of JSON input" · Firefox: "unexpected end of data".
       /Unexpected EOF|Unexpected end of JSON input|unexpected end of data/i,
+      // WebKit-internal rejection, not our code: WKWebView-based in-app browsers (DuckDuckGo,
+      // Facebook, etc. on iOS) inject their own message-handler bridges; when a native handler
+      // doesn't reply in time the injected JS rejects with this. It surfaces as an
+      // onunhandledrejection with no stacktrace and nothing actionable on our side.
+      /WKWebView API client did not respond to this postMessage/i,
     ],
 
     tracesSampleRate: cfg.tracesSampleRate,
