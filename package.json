@@ -64,6 +64,7 @@
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/daygrid": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/list": "^6.1.21",
     "@fullcalendar/timegrid": "^6.1.20",
     "@google-cloud/functions-framework": "4.0.0",
     "@google/genai": "1.46.0",

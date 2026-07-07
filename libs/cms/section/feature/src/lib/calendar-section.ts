@@ -1,10 +1,11 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, viewChild } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, OnInit, PLATFORM_ID, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { format } from 'date-fns';
 
@@ -28,9 +29,9 @@ import { CalendarStore } from './calendar-section.store';
     .fc-toolbar-title { font-size: 0.5em; }
 
     @media (max-width: 600px) {
-      :host ::ng-deep .fc-toolbar-title {
-        display: none !important;
-      } 
+      /* On mobile we render the agenda/month list, which sizes to its content. */
+      full-calendar { height: auto; }
+      :host ::ng-deep .fc-toolbar-title { font-size: 1em; }
     }
   `],
   providers: [CalendarStore, CalEventStore],
@@ -66,6 +67,10 @@ export class CalendarSectionComponent implements OnInit {
   protected calendarStore = inject(CalendarStore);
   protected calEventStore = inject(CalEventStore);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** Tracks whether the viewport is narrow (phones), so the calendar can switch to a mobile-friendly agenda/month list. */
+  private readonly isMobile = signal(false);
 
   // inputs
   public section = input<CalendarSection>();
@@ -91,14 +96,18 @@ export class CalendarSectionComponent implements OnInit {
   // the section's saved properties; plugins/toolbar/locale stay as code defaults.
   protected calendarOptions = computed<CalendarOptions>(() => {
     const props = (this.section()?.properties ?? {}) as CalendarOptions;
+    const mobile = this.isMobile();
     return {
-      plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
-      initialView: props.initialView ?? 'timeGridWeek',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
-      },
+      plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
+      // Mobile opens on the agenda ("what's coming up"); a month-grid overview and tap-a-day
+      // are still reachable via the toolbar. Time-grids stay desktop-only (too cramped on phones).
+      initialView: mobile ? 'listWeek' : (props.initialView ?? 'timeGridWeek'),
+      headerToolbar: mobile
+        ? { left: 'prev,next', center: 'title', right: 'listWeek,dayGridMonth' }
+        : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+      // Tapping a day in the month grid drills into that day's agenda list.
+      navLinks: mobile,
+      navLinkDayClick: mobile ? 'listDay' : undefined,
       locale: 'de',
       firstDay: 1,
       height: 'auto',
@@ -110,6 +119,13 @@ export class CalendarSectionComponent implements OnInit {
   });
 
   constructor() {
+    if (isBrowser(this.platformId)) {
+      const mql = window.matchMedia('(max-width: 600px)');
+      this.isMobile.set(mql.matches);
+      const onChange = (e: MediaQueryListEvent) => this.isMobile.set(e.matches);
+      mql.addEventListener('change', onChange);
+      this.destroyRef.onDestroy(() => mql.removeEventListener('change', onChange));
+    }
     effect(() => {
       const name = this.section()?.name;
       if (name) {
