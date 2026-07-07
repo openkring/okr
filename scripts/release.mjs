@@ -107,6 +107,7 @@ async function releaseApp(app) {
     } else {
       console.log('  ⚠ SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT not set — source maps NOT uploaded.');
       console.log('    Stack traces for this release will be unminified in Sentry.');
+      console.log(`    Hint: export them from the .env, then re-run: set -a && source ./apps/${app}/.env && set +a`);
       if (app === PROD_APP && !(await confirm('  Deploy the production app without source maps?', false)))
         abort('Aborted: export the SENTRY_* deploy vars, then re-run.');
     }
