@@ -69,22 +69,6 @@ import { ReservationStore } from './reservation.store';
     <ion-toolbar color="primary">
       <ion-grid>
         <ion-row>
-          <!-- mobile header (same for all modes): Kontakt | Anlass/Datum | Status -->
-          <ion-col size="3" class="ion-hide-md-up">
-            <ion-item lines="none" color="primary">
-              <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
-            </ion-item>
-          </ion-col>
-          <ion-col size="7" class="ion-hide-md-up">
-            <ion-item lines="none" color="primary">
-              <ion-label><strong>{{ store.i18n.list_header_nameDate() }}</strong></ion-label>
-            </ion-item>
-          </ion-col>
-          <ion-col size="2" class="ion-hide-md-up ion-text-center">
-            <ion-item lines="none" color="primary">
-              <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
-            </ion-item>
-          </ion-col>
           <!-- desktop header per mode -->
           @if(isReservationFromPerson() || isReservationFromOrg()) {
             <ion-col size-md="3" class="ion-hide-md-down">
