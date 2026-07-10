@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonIcon, ToastController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { copyToClipboard, showToast } from '@okr/shared-util-angular';
+import { copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 export interface ButtonCopyI18n {
@@ -37,11 +37,14 @@ export class ButtonCopy {
   public readOnly = input(false);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public copyValue(): void {
+  public async copyValue(): Promise<void> {
     const value = this.value();
     if (value !== undefined && value !== null) {
-      copyToClipboard(value);
-      showToast(this.toastController, this.i18n().copy_conf);  
+      // Await + handle inside copyToClipboardWithConfirmation: on iOS Safari the clipboard
+      // fallback can reject ('execCommand copy failed'), which as a fire-and-forget call
+      // surfaced as an unhandled promise rejection (SCS-1D). This also shows the success
+      // toast only when the copy actually succeeded.
+      await copyToClipboardWithConfirmation(this.toastController, value, this.i18n().copy_conf);
     }
   }
 }
