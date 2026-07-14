@@ -19,3 +19,6 @@
 [submodule ".claude/skills"]
 	path = .claude/skills
 	url = git@github.com:bkaiser-org/okr-skills.git
+[submodule "apps/p13-app"]
+	path = apps/p13-app
+	url = git@github.com:bkaiser-org/p13-app.git
