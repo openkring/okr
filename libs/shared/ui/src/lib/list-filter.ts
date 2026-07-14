@@ -94,7 +94,7 @@ export class ListFilter {
   public categories = input<CategoryListModel>();
   public years = input<number[]>();
   public states = input<CategoryListModel>();
-  public gridIcon = input<'calendar' | 'grid'>('grid'); // the icon to show in grid view
+  public gridIcon = input<'calendar' | 'grid' | 'board'>('grid'); // the icon to show in grid view
   public initialView = input<'list' | 'grid' | undefined>();
   public strings = input<string[]>([]);
   public stringsName = input<string>('iconSet');

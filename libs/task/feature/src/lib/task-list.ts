@@ -10,7 +10,8 @@ import { convertDateFormatToString, DateFormat, getAvatarInfo, getCategoryIcon, 
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
-import { TaskStore } from './task.store';
+import { TaskBoard } from './task-board';
+import { TaskMove, TaskStore } from './task.store';
 
 /**
  * Task items can be marked as done/completed by checking the checkbox.
@@ -27,7 +28,7 @@ import { TaskStore } from './task.store';
   standalone: true,
   imports: [
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
-    EmptyList, ListFilter, Menu,
+    EmptyList, ListFilter, Menu, TaskBoard,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip, IonPopover
   ],
@@ -89,52 +90,46 @@ import { TaskStore } from './task.store';
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         (typeChanged)="onPrioritySelected($event)" [types]="priorities()"
         (stateChanged)="onStateSelected($event)" [states]="states()"
+        initialView="list" gridIcon="board" (viewToggleChanged)="onViewChange($event)"
       />
     </ion-header>
 
-  <!-- list data -->
+  <!-- list or board -->
   <ion-content #content>
-      @if(selectedTasksCount() === 0) {
-        <okr-empty-list [message]="store.i18n.empty()" />
-      } @else {
-        <ion-list lines="inset">
-          @for(task of filteredTasks(); track $index) {
-            <ion-item>
-              <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="toggleCompleted(task)" />
-              @if(task.assignee !== undefined) {
-                <ion-avatar>
-                  <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
-                </ion-avatar>
-              }
-              <div class="tags ion-hide-md-down">
-                @for (tag of task.tags.split(','); track tag) {
-                  @if(tag.length > 0) {
-                    <ion-chip color="primary">
-                      <ion-label>{{ tag }}</ion-label>
-                    </ion-chip>
-                  }
+      @if(isListView()) {
+        @if(selectedTasksCount() === 0) {
+          <okr-empty-list [message]="store.i18n.empty()" />
+        } @else {
+          <ion-list lines="inset">
+            @for(task of filteredTasks(); track $index) {
+              <ion-item>
+                <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="toggleCompleted(task)" />
+                @if(task.assignee !== undefined) {
+                  <ion-avatar>
+                    <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
+                  </ion-avatar>
                 }
-              </div>
-              <ion-label class="name" (click)="showActions(task)">{{ task.name }}</ion-label>
-              @if(task.dueDate.length > 0) {
-                <ion-label class="ion-hide-md-down ion-text-end">
-                  {{ task.dueDate | prettyDate }}
-                </ion-label>
-              }
-
-                <!-- 
-              keine gute Darstellung für Importance und Priority gefunden
-              <ion-label class="ion-hide-md-down ion-text-end">
-                 P:{{task.priority}} I:{{task.importance}}
-                 P<ion-icon slot="start" src="{{getPriorityIcon(task) | svgIcon }}" />
-              </ion-label> 
-              <ion-label class="ion-hide-md-down ion-text-end">
-                I<ion-icon slot="start" src="{{getImportanceIcon(task) | svgIcon }}" /> 
-              </ion-label> 
-              -->
-            </ion-item>
-          }
-        </ion-list>
+                <div class="tags ion-hide-md-down">
+                  @for (tag of task.tags.split(','); track tag) {
+                    @if(tag.length > 0) {
+                      <ion-chip color="primary">
+                        <ion-label>{{ tag }}</ion-label>
+                      </ion-chip>
+                    }
+                  }
+                </div>
+                <ion-label class="name" (click)="showActions(task)">{{ task.name }}</ion-label>
+                @if(task.dueDate.length > 0) {
+                  <ion-label class="ion-hide-md-down ion-text-end">
+                    {{ task.dueDate | prettyDate }}
+                  </ion-label>
+                }
+              </ion-item>
+            }
+          </ion-list>
+        }
+      } @else {
+        <okr-task-board (taskSelected)="showActions($event)" (taskMoved)="onTaskMoved($event)" />
       }
   </ion-content>
     `
@@ -166,10 +161,21 @@ export class TaskList {
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
+  protected readonly isListView = signal(true);
+
   constructor() {
     effect(() => {
       this.store.setCalendarName(this.listId());
+      this.store.setGroupAdmin(this.groupAdmin());
     });
+  }
+
+  protected onViewChange(showList: boolean): void {
+    this.isListView.set(showList);
+  }
+
+  protected async onTaskMoved(move: TaskMove): Promise<void> {
+    await this.store.moveTask(move, !this.canChange(move.task));
   }
 
   /******************************** setters (filter) ******************************************* */
@@ -361,20 +367,7 @@ export class TaskList {
 
   /******************************* helpers *************************************** */
   protected canChange(task?: TaskModel): boolean {
-    // 1) general roles
-    if (this.hasRole('privileged')) return true; 
-    if (this.hasRole('eventAdmin')) return true;
-
-    // 2) group todo: allow group admin to change
-    if (this.groupAdmin()) return true;
-
-    // 3) task data: allow author and assignee to make changes
-    const currentUser = this.store.currentUser();
-    if (task && currentUser) {
-      if (task.author?.key === currentUser.personKey) return true;
-      if (task.assignee?.key === currentUser.personKey) return true;
-    }
-    return false;
+    return this.store.canChangeTask(task);
   }
 
   protected hasRole(role: RoleName): boolean {
