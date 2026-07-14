@@ -80,6 +80,35 @@ export class TaskService {
     void this.activityService.log('task', 'delete', currentUser, payload);
   }
 
+  /*-------------------------- board (Kanban) --------------------------------*/
+  /**
+   * Persist the Kanban position of a task after a drag-and-drop: its column (state), its
+   * order within that column (rank) and the completionDate that must agree with the state.
+   *
+   * Deliberately does not go through update(): a drag is not a form save. We write only the
+   * three fields that changed, with no confirmation toast and no audit comment (updateObject
+   * only emits those when passed a confirmMessage / currentUser). The activity log still gets
+   * one entry, so the move is traceable.
+   */
+  public async saveBoardPosition(task: TaskModel, currentUser?: UserModel): Promise<void> {
+    await this.firestoreService.updateObject(TaskCollection, task.okey, {
+      state: task.state,
+      rank: task.rank,
+      completionDate: task.completionDate,
+    }, false);
+    void this.activityService.log('task', 'update', currentUser, `${task.okey}: ${task.name}/${task.state}`);
+  }
+
+  /**
+   * Persist backfilled ranks for a column whose tasks had none. Silent and unlogged: this is
+   * bookkeeping triggered by someone else's drag, not an edit they made.
+   */
+  public async saveRanks(tasks: TaskModel[]): Promise<void> {
+    await Promise.all(tasks.map(task =>
+      this.firestoreService.updateObject(TaskCollection, task.okey, { rank: task.rank }, false)
+    ));
+  }
+
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
   /**
    * List all tasks with optional sorting.
