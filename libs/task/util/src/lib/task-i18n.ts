@@ -68,6 +68,13 @@ export const TASK_I18N_KEYS = {
   state_label:                     PFX + 'task_state.label',
   state_all:                       PFX + 'task_state.all.label',
 
+  // board (Kanban)
+  board:                           PFX + 'board.label',
+  board_empty_column:              PFX + 'board.emptyColumn',
+  board_show_terminal:             PFX + 'board.showTerminal',
+  board_hide_terminal:             PFX + 'board.hideTerminal',
+  board_no_states:                 PFX + 'board.noStates',
+
   priority:                        PFX + 'priority.label',
   importance:                      PFX + 'importance.label',
 
