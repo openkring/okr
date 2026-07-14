@@ -163,8 +163,6 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           <ion-card>
             <ion-card-content>
               <div [style.display]="'block'">
-                {{ calEventsCount() }} {{ store.i18n.calevents() }}
-
                 <full-calendar #fullCalendar
                   [options]="calendarOptions" 
                   [events]="calendarEvents()" 
