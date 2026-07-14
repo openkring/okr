@@ -1,0 +1,15 @@
+# Secrets & locally-generated env — NEVER commit
+**/.env
+.env
+**/environment.ts
+**/environment.prod.ts
+environment.global.ts
+**/firebase-config.js
+set-env.js
+**/set-env.js
+!**/.env.example
+
+# Build / tooling output
+dist/
+.angular/
+**/node_modules/
