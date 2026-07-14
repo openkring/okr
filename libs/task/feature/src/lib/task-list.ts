@@ -6,7 +6,7 @@ import type { PersonSelectResult } from '@okr/shared-feature';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, getAvatarInfo, getCategoryIcon, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getAvatarInfo, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -155,7 +155,6 @@ export class TaskList {
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.tags());
   protected priorities = computed(() => this.store.appStore.getCategory('priority'));
-  protected importances = computed(() => this.store.appStore.getCategory('importance'));
   protected states = computed(() => this.store.appStore.getCategory('task_state'));
   protected currentUser = computed(() => this.store.appStore.currentUser());
 
@@ -200,13 +199,6 @@ export class TaskList {
     return task.completionDate.length > 0 ? 'checkbox-circle' : 'circle';
   }
 
-  protected getImportanceIcon(task: TaskModel): string {
-    return getCategoryIcon(this.importances(), task.importance);
-  }
-
-  protected getPriorityIcon(task: TaskModel): string {
-    return getCategoryIcon(this.priorities(), task.priority);
-  }
   /******************************* actions *************************************** */
   /**
    * This is the quick entry. It just takes the name of the task and adds it to the list.

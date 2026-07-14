@@ -48,10 +48,7 @@
   },
 
   "board": {
-    "label": "Board",
     "emptyColumn": "Keine Todos",
-    "showTerminal": "Erledigte anzeigen",
-    "hideTerminal": "Erledigte ausblenden",
     "noStates": "Es ist keine Kategorie 'task_state' definiert. Ohne Stati kann kein Board dargestellt werden."
   },
 
