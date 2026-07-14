@@ -1,6 +1,6 @@
 import './init-sentry';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { BkRoot } from './app/bk-root';
+import { OkrRoot } from './app/okr-root';
 import { appConfig } from './app/app.config';
 import { getApp } from 'firebase/app';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider, getToken } from 'firebase/app-check';
@@ -43,7 +43,7 @@ async function initializeApp() {
   }
 
   // Bootstrap the app after App Check initialization (even if it failed)
-  bootstrapApplication(BkRoot, appConfig).catch(err => console.error(err));
+  bootstrapApplication(OkrRoot, appConfig).catch(err => console.error(err));
 }
 
 initializeApp();

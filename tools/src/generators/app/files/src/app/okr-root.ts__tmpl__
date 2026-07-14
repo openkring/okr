@@ -21,7 +21,7 @@ import { ConsentService } from '@okr/consent-data-access';
     IonApp, IonSplitPane, IonMenu, IonHeader, IonContent, IonToolbar, IonRouterOutlet, IonButtons,
     IonLabel, IonItem
 ],
-  selector: 'bk-root',
+  selector: 'okr-root',
   standalone: true,
   styles: [
     `
@@ -101,33 +101,33 @@ import { ConsentService } from '@okr/consent-data-access';
         use MenuController with this.menu.enable(true, menuId) to switch the menus
       -->
     <ion-app>
-      <bk-cookie-banner />
+      <okr-cookie-banner />
       <ion-split-pane contentId="main" [disabled]="!showMenu()">
         @if(showMenu()) {
         <ion-menu side="start" menuId="main" contentId="main" type="overlay">
           <ion-header>
             <ion-toolbar color="secondary">
               <ion-buttons slot="start">
-                <bk-connection-status-button />
+                <okr-connection-status-button />
               </ion-buttons>
               <ion-item lines="none" color="secondary">
                 <ion-label>{{ appStore.appConfig().appName }}</ion-label>
               </ion-item>
               @if(appStore.currentUser(); as currentUser) {
                 <ion-buttons slot="end">
-                  <bk-avatar-user [currentUser]="currentUser" (profileClicked)="openProfile()" />
+                  <okr-avatar-user [currentUser]="currentUser" (profileClicked)="openProfile()" />
                 </ion-buttons>
               }
             </ion-toolbar>
           </ion-header>
           <ion-content>
             @if (isUserSessionReady()) {
-              <bk-menu [menuName]="mainMenuName()" />
+              <okr-menu [menuName]="mainMenuName()" />
             } @else {
-              <bk-spinner />
+              <okr-spinner />
             }
             @if(showDebugInfo()) {
-              <bk-auth-info [currentUser]="appStore.currentUser()" [fbUser]="appStore.fbUser()" [isAuthenticated]="appStore.isAuthenticated()" [isAdmin]="hasRole('admin')" />
+              <okr-auth-info [currentUser]="appStore.currentUser()" [fbUser]="appStore.fbUser()" [isAuthenticated]="appStore.isAuthenticated()" [isAdmin]="hasRole('admin')" />
             }
           <ion-item lines="none" button detail="false" (click)="openCookieSettings()">
             <ion-label color="medium" style="font-size: 13px;">Cookie-Einstellungen</ion-label>
@@ -159,7 +159,7 @@ import { ConsentService } from '@okr/consent-data-access';
           <ion-router-outlet />
           @if (!isAppReady()) {
             <div class="app-ready-overlay">
-              <bk-spinner />
+              <okr-spinner />
             </div>
           }
         </div>
@@ -176,7 +176,7 @@ import { ConsentService } from '@okr/consent-data-access';
     }
   `,
 })
-export class BkRoot {
+export class OkrRoot {
   protected appStore = inject(AppStore);
   private readonly modalController = inject(ModalController);
   protected readonly consentService = inject(ConsentService);

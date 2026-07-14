@@ -1,7 +1,7 @@
 import { bootstrapApplication, BootstrapContext } from '@angular/platform-browser';
-import { BkRoot } from './app/bk-root';
+import { OkrRoot } from './app/okr-root';
 import { config } from './app/app.config.server';
 
-const bootstrap = (context: BootstrapContext) => bootstrapApplication(BkRoot, config, context);
+const bootstrap = (context: BootstrapContext) => bootstrapApplication(OkrRoot, config, context);
 
 export default bootstrap;
