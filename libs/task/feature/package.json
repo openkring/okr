@@ -7,7 +7,9 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
+    "@angular/cdk": "*",
     "@okr/shared-models": "*",
+    "@okr/shared-constants": "*",
     "@okr/shared-config": "*",
     "@okr/shared-categories": "*",
     "@okr/shared-data-access": "*",
