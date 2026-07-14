@@ -12,10 +12,11 @@ import { ToastController } from '@ionic/angular/standalone';
 // implementation to emit data or to error like a Firestore Listen stream does
 // (e.g. an async PERMISSION_DENIED during token refresh — the SCS-13 crash).
 const collectionDataMock = vi.fn<() => Observable<unknown[]>>();
+const docDataMock = vi.fn<() => Observable<unknown>>(() => of(undefined));
 
 vi.mock('rxfire/firestore', () => ({
   collectionData: () => collectionDataMock(),
-  docData: vi.fn(() => of(undefined)),
+  docData: () => docDataMock(),
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -92,5 +93,34 @@ describe('FirestoreService.searchData', () => {
     collectionDataMock.mockReturnValue(of([{ okey: 's1' }]));
     const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
     expect(rows).toHaveLength(1);
+  });
+});
+
+describe('FirestoreService.readModel', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+    docDataMock.mockReturnValue(of(undefined));
+  });
+
+  it('emits the document on the happy path', async () => {
+    docDataMock.mockReturnValue(of({ okey: 'u1' }));
+    const svc = makeService();
+    const user = await firstValueFrom(svc.readModel('users', 'u1'));
+    expect(user).toEqual({ okey: 'u1' });
+  });
+
+  // Root cause of SCS-1E: the users/{uid} rule requires signedIn(), so a sign-out or token
+  // refresh makes the still-open docData listener fail with PERMISSION_DENIED. That async error
+  // must NOT propagate — AppStore.currentUserResource consumes this stream, and an errored
+  // resource re-throws ResourceValueError from .value() inside change detection, crashing the app.
+  // Emitting undefined instead reads as "no current user" to every downstream guard.
+  it('recovers to undefined when the stream errors asynchronously', async () => {
+    docDataMock.mockReturnValue(
+      throwError(() => new Error('Missing or insufficient permissions.')),
+    );
+    const svc = makeService();
+    const user = await firstValueFrom(svc.readModel('users', 'u1'));
+    expect(user).toBeUndefined();
   });
 });

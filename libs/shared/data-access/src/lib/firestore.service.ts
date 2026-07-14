@@ -184,7 +184,18 @@ export class FirestoreService {
     }
     try {
       // we need to add the firestore document id as okey into the model
-      return docData(doc(this.firestore, `${collectionName}/${key}`), { idField: 'okey' }) as Observable<T>;
+      // catchError guards against ASYNC stream errors the synchronous try/catch below cannot see:
+      // the docData listener stays open, so a sign-out or token refresh makes the server reject it
+      // with PERMISSION_DENIED (SCS-1E, on users/{uid} whose rule requires signedIn()). Unguarded,
+      // that error lands in the consuming rxResource, whose .value() re-throws inside change
+      // detection and crashes the app. Emitting undefined instead reads as "no current user" to the
+      // downstream guards, which then short-circuit to empty lists — the correct sign-out behaviour.
+      return (docData(doc(this.firestore, `${collectionName}/${key}`), { idField: 'okey' }) as Observable<T>).pipe(
+        catchError((err) => {
+          console.error(`FirestoreService.readModel(${collectionName}/${key}) stream error:`, err);
+          return of(undefined);
+        })
+      );
     }
     catch (ex) {
       console.error(`FirestoreService.readModel(${collectionName}/${key}) -> ERROR: `, ex);
@@ -210,7 +221,14 @@ export class FirestoreService {
       return of(this.okrError(undefined, 'FirestoreService.readObject: key is mandatory.', true));
     }
     try {
-      return docData(doc(this.firestore, `${collectionName}/${key}`)) as Observable<T>;
+      // see readModel: guards the open listener against an async PERMISSION_DENIED on sign-out /
+      // token refresh, which the synchronous try/catch below cannot catch.
+      return (docData(doc(this.firestore, `${collectionName}/${key}`)) as Observable<T>).pipe(
+        catchError((err) => {
+          console.error(`FirestoreService.readObject(${collectionName}/${key}) stream error:`, err);
+          return of(undefined);
+        })
+      );
     }
     catch (ex) {
       console.error(`FirestoreService.readObject(${collectionName}/${key}) -> ERROR: `, ex);
@@ -496,7 +514,14 @@ export class FirestoreService {
     const collectionRef = collection(this.firestore, collectionName);
     const queryRef = query(collectionRef);
     const data$ = addOkey ? collectionData(queryRef, { idField: 'okey' }) as Observable<T[]> : collectionData(queryRef) as Observable<T[]>;
-    return data$;
+    // see readModel: guards the open listener against an async PERMISSION_DENIED on sign-out /
+    // token refresh, which would otherwise re-throw inside change detection via a consuming resource.
+    return data$.pipe(
+      catchError((err) => {
+        console.error(`FirestoreService.listAllObjects(${collectionName}) stream error:`, err);
+        return of<T[]>([]);
+      })
+    );
   }
 
   // Optional: Clear cache for a specific query
