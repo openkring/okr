@@ -26,6 +26,9 @@ export class TaskModel implements OkrModel, PersistedModel, NamedModel, Searchab
   // a task can be shown on its due date in calendars
   public calendars: string[] = [];
 
+  // fractional Kanban rank within its (state) partition; '' = not yet ranked (sorts by dueDate)
+  public rank = '';
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }
