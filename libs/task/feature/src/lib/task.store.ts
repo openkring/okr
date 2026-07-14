@@ -8,15 +8,24 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CategoryListModel, PersonModel, TaskCollection, TaskModel } from '@okr/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, isPerson, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, hasRole, isPerson, nameMatches } from '@okr/shared-util-core';
 
 import { TaskService } from '@okr/task-data-access';
-import { isTask, TASK_I18N_KEYS, TaskI18n } from '@okr/task-util';
+import { assignMissingRanks, groupTasksByState, isTask, rankBetween, TASK_I18N_KEYS, TaskBoardColumn, TaskI18n } from '@okr/task-util';
 import { AvatarService } from '@okr/avatar-data-access';
+
+/** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */
+export type TaskMove = {
+  task: TaskModel;
+  targetState: string;
+  targetIndex: number;
+  columnTasks: TaskModel[];
+};
 
 export type TaskState = {
   calendarName: string;
   maxItems: number | undefined,
+  groupAdmin: boolean,          // set by the group view; a group admin may change that group's tasks
 
   // task
   taskKey: string;
@@ -31,6 +40,7 @@ export type TaskState = {
 export const initialState: TaskState = {
   calendarName: '',
   maxItems: undefined,
+  groupAdmin: false,
 
   // task
   taskKey: '',
@@ -132,6 +142,13 @@ export const TaskStore = signalStore(
     importances: computed(() => state.appStore.getCategory('importance')),
   })),
 
+  withComputed((state) => ({
+    // board: one column per task_state category item, cards ordered by rank (spec D6)
+    boardColumns: computed<TaskBoardColumn[]>(() =>
+      groupTasksByState(state.filteredTasks(), state.states())
+    ),
+  })),
+
   withMethods((store) => ({
      reset() {
       patchState(store, initialState);
@@ -167,7 +184,65 @@ export const TaskStore = signalStore(
       patchState(store, { selectedPriority });
     },
 
+    setGroupAdmin(groupAdmin: boolean) {
+      patchState(store, { groupAdmin });
+    },
+
     /******************************* actions *************************************** */
+    /**
+     * May the current user change this task?
+     * Lives in the store because both the list (ActionSheet) and the board (drag handles) need it.
+     * 1) privileged/eventAdmin roles, 2) admin of the group the list is scoped to, 3) the task's
+     * own author or assignee.
+     */
+    canChangeTask(task?: TaskModel): boolean {
+      const currentUser = store.currentUser();
+      if (hasRole('privileged', currentUser)) return true;
+      if (hasRole('eventAdmin', currentUser)) return true;
+      if (store.groupAdmin()) return true;
+      if (task && currentUser) {
+        if (task.author?.key === currentUser.personKey) return true;
+        if (task.assignee?.key === currentUser.personKey) return true;
+      }
+      return false;
+    },
+
+    /**
+     * Move a card on the Kanban board: into a new column (state) and/or to a new position within
+     * a column (rank). This is a single document write (spec D7) — the fractional rank means we
+     * never renumber the siblings.
+     *
+     * Two exceptions to "single write":
+     * - the target column may still be unranked (no task has ever been dragged there). Then we
+     *   first freeze its current dueDate order into ranks — the spec's backfill, done lazily.
+     * - the done ⇄ completionDate invariant (spec §6.2) is enforced here, on the same write.
+     */
+    async moveTask(move: TaskMove, readOnly = true): Promise<void> {
+      if (readOnly) return;
+      const { task, targetState, targetIndex, columnTasks } = move;
+
+      // lazily backfill the target column if any neighbour lacks a rank (see board.util)
+      const backfilled = assignMissingRanks(columnTasks);
+      if (backfilled.length > 0) {
+        await store.taskService.saveRanks(backfilled);
+      }
+
+      const previous = targetIndex > 0 ? columnTasks[targetIndex - 1] : undefined;
+      const next = targetIndex < columnTasks.length ? columnTasks[targetIndex] : undefined;
+      task.rank = rankBetween(previous?.rank ?? '', next?.rank ?? '');
+      task.state = targetState;
+
+      // invariant: state === 'done' <=> completionDate is set
+      if (targetState === 'done') {
+        if (task.completionDate.length === 0) task.completionDate = getTodayStr();
+      } else {
+        task.completionDate = '';
+      }
+
+      await store.taskService.saveBoardPosition(task, store.currentUser());
+      // no reload(): searchData() is an rxfire real-time stream, so the write comes back on its own
+    },
+
     async export(type: string): Promise<void> {
       console.log(`TaskListStore.export(${type}) ist not yet implemented`);
     },
