@@ -36,7 +36,6 @@
   "reconnecting": "Wieder verbinden...",
   "connectionError": "Verbindungsfehler",
   "connecting": "verbinden...",
-  "selectRoom": "Wähle einen Chat-Raum, um den Chat zu starten",
   "noRoomsError": "Keine Chat-Räume vorhanden. Erstelle einen Raum oder nimm in einem Raum teil um zu starten.",
   "createTestRoom": "Test Raum erstellen",
   "typeMessage": "Schreibe eine Nachricht...",
@@ -201,7 +200,6 @@
   "clearInput": "Eingabe löschen",
   "removeImage": "Bild entfernen",
   "toggleRoomList": "Raumliste ein-/ausblenden",
-  "roomInfo": "Raum-Informationen",
   "call": {
     "answer": "Anruf annehmen",
     "hangup": "Anruf beenden"
