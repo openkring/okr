@@ -671,5 +671,10 @@
       "conf": "Der Website Text wurde geändert.",
       "error": "Die Änderung konnte nicht gespeichert werden."
     }
+  },
+  "switcher": {
+    "title": "App wechseln",
+    "tooltip": "Zu einer anderen App wechseln",
+    "current": "Aktuell"
   }
 }

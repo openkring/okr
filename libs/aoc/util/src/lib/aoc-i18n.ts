@@ -516,4 +516,11 @@ export const AOC_I18N_KEYS = {
   search_placeholder:                 '@search.label',
 } satisfies Record<string, string>;
 
+// ─── Tenant App-Switcher ─────────────────────────────────────────────────────
+export const TENANT_SWITCHER_I18N_KEYS = {
+  switcher_title:   PFX + 'switcher.title',
+  switcher_tooltip: PFX + 'switcher.tooltip',
+  switcher_current: PFX + 'switcher.current',
+};
+
 export type AocI18n = { [K in keyof typeof AOC_I18N_KEYS]: Signal<string> };
