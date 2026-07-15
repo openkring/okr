@@ -11,6 +11,9 @@ import { IonBadge, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/a
   /* iOS places the subtitle above the title */
   ion-card-header { display: flex; flex-flow: column-reverse; padding-bottom: 0px; }
   .title-row { display: flex; align-items: center; justify-content: space-between; }
+  /* Ionic defaults ion-card-title to 1.75rem in iOS mode vs 1.25rem in md;
+     pin it so section titles are the same size on real iPhones and elsewhere. */
+  ion-card-title { font-size: 1.25rem; font-weight: 600; }
 `],
   template: `
     @if(doShowHeader()) {
