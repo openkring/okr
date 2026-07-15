@@ -1,6 +1,6 @@
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonPopover, IonContent, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonPopover, IonContent, IonSearchbar, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
@@ -11,7 +11,7 @@ import { Menu } from '@okr/cms-menu-feature';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { convertHeicToJpeg, isSupportedImageFile, MessageDraft } from '@okr/chat-util';
+import { convertHeicToJpeg, isSupportedImageFile, filterRoomsByName, MessageDraft } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -23,7 +23,7 @@ import { ChatHelpModal } from './chat-help.modal';
   imports: [
     SvgIconPipe,
     Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
-    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonPopover, IonContent, Menu
+    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonPopover, IonContent, IonSearchbar, Menu
   ],
   styles: [`
     :host {
@@ -313,8 +313,17 @@ import { ChatHelpModal } from './chat-help.modal';
                 </ion-toolbar>
               </ion-header>
 
+              @if (rooms().length > 20) {
+                <ion-searchbar
+                  [placeholder]="store.i18n.room_search_placeholder()"
+                  [debounce]="150"
+                  [value]="roomFilter()"
+                  (ionInput)="onRoomFilterChange($event)"
+                />
+              }
+
               <okr-matrix-room-list
-                [rooms]="rooms()"
+                [rooms]="filteredRooms()"
                 [selectedRoomId]="currentRoomId()"
                 [i18n]="store.i18n"
                 (roomSelected)="onRoomSelected($event)"
@@ -542,6 +551,8 @@ export class MatrixChat implements OnDestroy {
   protected isDragOver = signal(false);
   protected isThreadDragOver = signal(false);
   protected pendingImages = signal<File[]>([]);
+  protected readonly roomFilter = signal('');
+  protected readonly filteredRooms = computed(() => filterRoomsByName(this.rooms(), this.roomFilter()));
 
   // Messages signal
   protected readonly messages = computed(() => this.store.messages());
@@ -741,6 +752,10 @@ export class MatrixChat implements OnDestroy {
     this.store.loadOlderMessages().catch(err =>
       console.warn('MatrixChat: loading older messages failed (non-critical):', err)
     );
+  }
+
+  protected onRoomFilterChange(event: CustomEvent): void {
+    this.roomFilter.set(((event.detail as { value?: string }).value ?? ''));
   }
 
   onRoomSelected(roomId: string) {
