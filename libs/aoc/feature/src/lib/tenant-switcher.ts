@@ -21,6 +21,9 @@ import { TenantSwitcherGrid } from './tenant-switcher-grid';
   selector: 'okr-tenant-switcher',
   standalone: true,
   imports: [IonButton, IonContent, IonIcon, IonPopover, SvgIconPipe, TenantSwitcherGrid],
+  styles: [`
+    .switcher-title { padding: 12px 12px 0; font-size: 13px; font-weight: 600; color: var(--ion-color-medium); }
+  `],
   template: `
     @if (isVisible()) {
       <ion-button id="okr-tenant-switcher-trigger" fill="clear"
@@ -30,6 +33,7 @@ import { TenantSwitcherGrid } from './tenant-switcher-grid';
       <ion-popover #switcherPopover trigger="okr-tenant-switcher-trigger" side="bottom" alignment="end">
         <ng-template>
           <ion-content>
+            <div class="switcher-title">{{ i18n.switcher_title() }}</div>
             <okr-tenant-switcher-grid
               [entries]="entries()"
               [imgixBaseUrl]="imgixBaseUrl()"
