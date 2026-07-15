@@ -52,7 +52,7 @@ import { ApplicationStore } from './application.store';
             </ion-chip>
             @if(isAdmin()) {
               <ion-button fill="clear" slot="end" (click)="showActions($event, app)">
-                <ion-icon slot="icon-only" src="{{ 'menu' | svgIcon }}" />
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
             }
           </ion-item>
