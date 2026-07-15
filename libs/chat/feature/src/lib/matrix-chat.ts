@@ -6,11 +6,11 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
-import { MatrixMessage, RoleName } from '@okr/shared-models';
+import { LocationModel, MatrixMessage, RoleName } from '@okr/shared-models';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { convertHeicToJpeg, isSupportedImageFile } from '@okr/chat-util';
+import { convertHeicToJpeg, isSupportedImageFile, MessageDraft } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -385,6 +385,7 @@ import { PollCreateModal } from './poll-create.modal';
                   (removeImage)="onRemoveImage($event)"
                   (filesSent)="onFilesSent($event)"
                   (locationSent)="onLocationSent()"
+                  (savedLocationSent)="onSavedLocationSent($event)"
                   (surveyRequested)="onSurveyRequested()"
                   (videoCallStarted)="onVideoCallStarted()"
                   (typing)="onTyping($event)"
@@ -740,9 +741,9 @@ export class MatrixChat implements OnDestroy {
     }
   }
 
-  async onMessageSent(text: string) {
+  async onMessageSent(draft: MessageDraft) {
     try {
-      await this.store.sendReply(text);
+      await this.store.sendReply(draft.text, draft.mentions, draft.mentionRoom);
     } catch (error) {
       console.error('Failed to send message:', error);
     }
@@ -775,6 +776,14 @@ export class MatrixChat implements OnDestroy {
       (err) => console.error('Location error:', err),
       { enableHighAccuracy: true }
     );
+  }
+
+  async onSavedLocationSent(location: LocationModel) {
+    try {
+      await this.store.sendLocation(location.name, location.latitude, location.longitude);
+    } catch (error) {
+      console.error('Failed to send saved location:', error);
+    }
   }
 
   async onSurveyRequested(): Promise<void> {
@@ -913,11 +922,11 @@ export class MatrixChat implements OnDestroy {
     this.store.setSelectedThread(undefined);
   }
 
-  async onThreadMessageSent(text: string) {
+  async onThreadMessageSent(draft: MessageDraft) {
     const threadId = this.store.selectedThreadId();
     if (!threadId) return;
     try {
-      await this.store.sendMessage(text, threadId);
+      await this.store.sendMessage(draft.text, threadId, draft.mentions, draft.mentionRoom);
     } catch (error) {
       console.error('Failed to send thread message:', error);
     }
