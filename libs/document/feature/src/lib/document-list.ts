@@ -59,7 +59,7 @@ import { DocumentStore } from './document.store';
           </ion-button>
           @if(canChange()) {
             <ion-button id="{{ popupId() }}">
-              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>

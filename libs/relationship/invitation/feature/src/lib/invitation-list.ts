@@ -32,7 +32,7 @@ import { InvitationStore } from './invitation.store';
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="c-invitations">
-              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
             <ion-popover trigger="c-invitations" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>

@@ -29,7 +29,7 @@ import { PageStore } from './page.store';
         @if(!readOnly()) {
         <ion-buttons slot="end">
           <ion-button id="c_page">
-            <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
           <ion-popover trigger="c_page" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>

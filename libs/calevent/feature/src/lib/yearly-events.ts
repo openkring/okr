@@ -32,7 +32,7 @@ import { CalEventStore } from './calevent.store';
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="c-yevents">
-              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
             <ion-popover trigger="c-yevents" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>

@@ -79,7 +79,7 @@ import { PageStore } from './page.store';
                 <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
               </ion-button>
               <ion-button id="{{ popupId() }}">
-                <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
               @if(contextMenuName(); as contextMenuName) {
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >

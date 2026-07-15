@@ -29,7 +29,7 @@ import { FormDefinitionStore } from './form-definition.store';
         @if (store.canWrite()) {
           <ion-buttons slot="end">
             <ion-button id="c-forms">
-              <ion-icon slot="icon-only" src="{{ 'menu' | svgIcon }}" />
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
             <ion-popover trigger="c-forms" triggerAction="click" [showBackdrop]="true"
               [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">

@@ -33,7 +33,7 @@ import { WorkrelStore } from './workrel.store';
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
               <ion-button id="c-wrel">
-                <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
               <ion-popover trigger="c-wrel" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                 <ng-template>

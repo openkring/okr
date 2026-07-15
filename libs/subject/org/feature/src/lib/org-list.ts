@@ -38,7 +38,7 @@ import { OrgStore } from './org.store';
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c-orgs">
-            <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
           <ion-popover trigger="c-orgs" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>

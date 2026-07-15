@@ -82,7 +82,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
             @if(canChange()) {
               <ion-buttons slot="end">
                 <ion-button id="{{ popupId() }}">
-                  <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+                  <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
                 </ion-button>
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>

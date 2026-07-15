@@ -29,7 +29,7 @@ import { AocSessionStore } from './aoc-session.store';
         <ion-title>{{ filteredCount() }}/{{ totalCount() }} {{ store.i18n.session_title() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
-            <ion-icon slot="icon-only" src="{{ 'menu' | svgIcon }}" />
+            <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>

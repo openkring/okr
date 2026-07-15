@@ -33,7 +33,7 @@ import { OwnershipStore } from './ownership.store';
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
-            <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
           <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>

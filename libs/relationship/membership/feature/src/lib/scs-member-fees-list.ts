@@ -43,7 +43,7 @@ import { Menu } from '@okr/cms-menu-feature';
         @if(hasRole('treasurer')) {
           <ion-buttons slot="end">
             <ion-button [id]="popupId">
-              <ion-icon slot="icon-only" [src]="'menu' | svgIcon" />
+              <ion-icon slot="icon-only" [src]="'ellipsis-vertical' | svgIcon" />
             </ion-button>
             <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
