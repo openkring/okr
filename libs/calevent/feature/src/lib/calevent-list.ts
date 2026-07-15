@@ -11,8 +11,8 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 
-import { CalEventModel, PersonModel, RoleName } from '@okr/shared-models';
-import type { PersonSelectResult } from '@okr/shared-feature';
+import { CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
+import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, QuickEntryService } from '@okr/shared-util-angular';
@@ -195,7 +195,9 @@ export class CalEventList implements OnInit {
   private readonly alertController = inject(AlertController);
   private readonly modalController = inject(ModalController);
   private readonly quickEntryService = inject(QuickEntryService);
+  private readonly modelSelectService = inject(ModelSelectService);
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
+  private selectedQuickEntryLocation = signal<LocationModel | null>(null);
   private isSettingQuickEntryValue = false;
   private readonly matrixChatService = inject(MatrixChatService);
   private readonly injector = inject(Injector);
@@ -436,7 +438,13 @@ export class CalEventList implements OnInit {
       calevent.durationMinutes = 1440;  // full day event
     }
     calevent.name = parts.name || '';
-    calevent.locationKey = parts.location || '';
+    const pickedLocation = this.selectedQuickEntryLocation();
+    if (pickedLocation) {
+      calevent.locationKey = `${pickedLocation.okey}@${pickedLocation.name}`; // [locationKey]@[label] convention (PartPipe / LocationLabelPipe)
+      this.selectedQuickEntryLocation.set(null);
+    } else {
+      calevent.locationKey = parts.location || '';
+    }
     const person = this.selectedQuickEntryPerson();
     if (person) {
       const avatarInfo = getAvatarInfo(person, 'person');
@@ -453,6 +461,7 @@ export class CalEventList implements OnInit {
   protected clear(okrQuickEntry: IonTextarea): void {
     okrQuickEntry.value = '';
     this.selectedQuickEntryPerson.set(null);
+    this.selectedQuickEntryLocation.set(null);
   }
 
   protected async onQuickEntryInput(textarea: IonTextarea): Promise<void> {
@@ -463,21 +472,10 @@ export class CalEventList implements OnInit {
     this.isSettingQuickEntryValue = true;
     try {
       if (trigger === 'person') {
-        const { PersonSelectModal } = await import('@okr/shared-feature');
-        const modal = await this.modalController.create({
-          component: PersonSelectModal,
-          cssClass: 'list-modal',
-          componentProps: {
-            selectedTag: '',
-            currentUser: this.currentUser(),
-          },
-        });
-        await modal.present();
-        const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
-        const data = result?.kind === 'predefined' ? result.person : undefined;
-        if (role === 'confirm' && data) {
-          this.selectedQuickEntryPerson.set(data);
-          textarea.value = this.quickEntryService.replaceToken(value, '@', `@${data.firstName} ${data.lastName}`);
+        const person = await this.modelSelectService.selectPerson();
+        if (person) {
+          this.selectedQuickEntryPerson.set(person);
+          textarea.value = this.quickEntryService.replaceToken(value, '@', `@${person.firstName} ${person.lastName}`);
         } else {
           textarea.value = value.slice(0, -1); // remove stray '@'
         }
@@ -498,6 +496,14 @@ export class CalEventList implements OnInit {
           textarea.value = this.quickEntryService.replaceToken(value, '//', token);
         } else {
           textarea.value = value.slice(0, -2); // remove stray '//'
+        }
+      } else if (trigger === 'location') {
+        const result = await this.modelSelectService.selectLocation('', true, false);
+        if (result?.kind === 'predefined') {
+          this.selectedQuickEntryLocation.set(result.location);
+          textarea.value = this.quickEntryService.replaceToken(value, '!!', '');
+        } else {
+          textarea.value = value.slice(0, -2); // remove stray '!!'
         }
       }
     } finally {

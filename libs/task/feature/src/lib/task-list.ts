@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { PersonModel, RoleName, TaskModel } from '@okr/shared-models';
-import type { PersonSelectResult } from '@okr/shared-feature';
+import { ModelSelectService } from '@okr/shared-feature';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, QuickEntryService } from '@okr/shared-util-angular';
@@ -139,6 +139,7 @@ export class TaskList {
   private actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
   private readonly quickEntryService = inject(QuickEntryService);
+  private readonly modelSelectService = inject(ModelSelectService);
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
   private isSettingQuickEntryValue = false;
 
@@ -236,21 +237,10 @@ export class TaskList {
     this.isSettingQuickEntryValue = true;
     try {
       if (trigger === 'person') {
-        const { PersonSelectModal } = await import('@okr/shared-feature');
-        const modal = await this.modalController.create({
-          component: PersonSelectModal,
-          cssClass: 'list-modal',
-          componentProps: {
-            selectedTag: '',
-            currentUser: this.currentUser(),
-          },
-        });
-        await modal.present();
-        const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
-        const data = result?.kind === 'predefined' ? result.person : undefined;
-        if (role === 'confirm' && data) {
-          this.selectedQuickEntryPerson.set(data);
-          textarea.value = this.quickEntryService.replaceToken(value, '@', `@${data.firstName} ${data.lastName}`);
+        const person = await this.modelSelectService.selectPerson();
+        if (person) {
+          this.selectedQuickEntryPerson.set(person);
+          textarea.value = this.quickEntryService.replaceToken(value, '@', `@${person.firstName} ${person.lastName}`);
         } else {
           textarea.value = value.slice(0, -1);
         }
