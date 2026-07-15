@@ -52,7 +52,7 @@ import { GraphPage } from "./graph.page";
                 }
                 @case ('chat') {
                     @defer (on idle) {
-                        <okr-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [isGroupView]="isGroupView()" />
+                        <okr-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [isGroupView]="isGroupView()" [contextMenuName]="contextMenuName() ?? 'contextMenuChat'" />
                     } @placeholder {
                         <okr-spinner />
                     } @error {

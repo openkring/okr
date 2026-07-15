@@ -30,7 +30,7 @@ import { MatrixChat } from '@okr/chat-feature';
       </ion-toolbar>
     </ion-header>
     <ion-content>
-        <okr-matrix-chat-overview [isGroupView]="isGroupView()" [selectedRoom]="selectedRoom()" />
+        <okr-matrix-chat-overview [isGroupView]="isGroupView()" [selectedRoom]="selectedRoom()" [contextMenuName]="contextMenuName()" />
     </ion-content>
   `
 })
@@ -40,6 +40,7 @@ export class ChatPage {
   public color = input('secondary');
   public isGroupView = input(false);
   public selectedRoom = input<string | undefined>();
+  public contextMenuName = input<string>('contextMenuChat');
 
   // derived signals
 
