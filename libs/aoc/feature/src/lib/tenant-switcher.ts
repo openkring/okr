@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { IonButton, IonContent, IonIcon, IonPopover } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { browse } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';
 import { AppConfigService } from '@okr/shared-data-access';
@@ -84,7 +85,9 @@ export class TenantSwitcher {
   protected readonly isVisible = computed(() => this.entries().some((e) => !e.isCurrent));
 
   protected onSelect(entry: TenantSwitcherEntry, popover: IonPopover): void {
+    // `browse` (Capacitor Browser.open) works on native (in-app browser) AND web (new tab);
+    // a raw window.open('_blank') silently no-ops on native Capacitor builds.
+    void browse(entry.url);
     popover.dismiss();
-    window.open(entry.url, '_blank', 'noopener');
   }
 }
