@@ -58,10 +58,22 @@ import 'emoji-picker-element';
 
     /* ── Row 1: text input ───────────────────────────────────── */
     .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
       padding: 8px 12px 2px;
+    }
+    .input-field {
+      flex: 1;
+      min-width: 0;
       max-height: 160px;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+    }
+    .input-end-actions {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
     }
     ion-textarea {
       --padding-start: 0;
@@ -241,17 +253,27 @@ import 'emoji-picker-element';
         </div>
       }
 
-      <!-- Row 1: text input, grows line by line as you type -->
+      <!-- Row 1: text input (grows), with cancel + copy pinned to the end when there is text -->
       <div class="input-row">
-        <ion-textarea
-          #textInput
-          [(ngModel)]="messageText"
-          placeholder="{{ i18n().thread_reply_placeholder() }}"
-          [rows]="1"
-          [autoGrow]="true"
-          (ionInput)="onInput()"
-          (keydown.enter)="onEnterKey($event)"
-        ></ion-textarea>
+        <div class="input-field">
+          <ion-textarea
+            #textInput
+            [(ngModel)]="messageText"
+            placeholder="{{ i18n().thread_reply_placeholder() }}"
+            [rows]="1"
+            [autoGrow]="true"
+            (ionInput)="onInput()"
+            (keydown.enter)="onEnterKey($event)"
+          ></ion-textarea>
+        </div>
+        @if (messageText().trim().length > 0) {
+          <div class="input-end-actions">
+            <ion-button fill="clear" size="small" [attr.aria-label]="i18n().clear_input()" (click)="clearValue()">
+              <ion-icon slot="icon-only" src="{{'cancel-circle' | svgIcon }}" />
+            </ion-button>
+            <okr-button-copy [value]="messageText()" [i18n]="buttonCopyI18n()" />
+          </div>
+        }
       </div>
 
       @if (typingUsers().length > 0) {
@@ -264,15 +286,9 @@ import 'emoji-picker-element';
           <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
         </ion-button>
 
-        <ion-button fill="clear" [attr.aria-label]="i18n().clear_input()" (click)="clearValue()">
-          <ion-icon src="{{'cancel' | svgIcon }}" />
-        </ion-button>
-
         <ion-button fill="clear" class="action-button" [attr.aria-label]="i18n().mention_everyone()" (click)="mentionEveryone()">
           <ion-icon slot="icon-only" src="{{'people' | svgIcon}}"></ion-icon>
         </ion-button>
-
-        <okr-button-copy [value]="messageText()" [i18n]="buttonCopyI18n()" />
 
         <div class="emoji-picker-wrapper">
           <ion-button fill="clear" class="action-button" [attr.aria-label]="i18n().emoji_picker()" (click)="toggleEmojiPicker($event)">
