@@ -1,14 +1,16 @@
 import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA, Signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
+import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { AppStore } from '@okr/shared-feature';
+import { createActionSheetButton, createActionSheetOptions, QuickEntryService } from '@okr/shared-util-angular';
+import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { ButtonCopy } from '@okr/shared-ui';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { LocationModel, PersonModel } from '@okr/shared-models';
 
-import { isSupportedImageFile, MatrixChatI18n } from '@okr/chat-util';
+import { isSupportedImageFile, MatrixChatI18n, MessageDraft, MentionRef } from '@okr/chat-util';
 import 'emoji-picker-element';
 
 @Component({
@@ -247,7 +249,7 @@ import 'emoji-picker-element';
           placeholder="{{ i18n().thread_reply_placeholder() }}"
           [rows]="1"
           [autoGrow]="true"
-          (ionInput)="onTyping()"
+          (ionInput)="onInput()"
           (keydown.enter)="onEnterKey($event)"
         ></ion-textarea>
       </div>
@@ -264,6 +266,10 @@ import 'emoji-picker-element';
 
         <ion-button fill="clear" [attr.aria-label]="i18n().clear_input()" (click)="clearValue()">
           <ion-icon src="{{'cancel' | svgIcon }}" />
+        </ion-button>
+
+        <ion-button fill="clear" class="action-button" [attr.aria-label]="i18n().mention_everyone()" (click)="mentionEveryone()">
+          <ion-icon slot="icon-only" src="{{'people' | svgIcon}}"></ion-icon>
         </ion-button>
 
         <okr-button-copy [value]="messageText()" [i18n]="buttonCopyI18n()" />
@@ -322,6 +328,12 @@ import 'emoji-picker-element';
 export class MatrixMessageInput {
   private actionSheetController = inject(ActionSheetController);
   private appStore = inject(AppStore);
+  private modalController = inject(ModalController);
+  private quickEntryService = inject(QuickEntryService);
+  private modelSelectService = inject(ModelSelectService);
+  private isSettingQuickEntryValue = false;
+  private mentions = signal<MentionRef[]>([]);
+  private mentionRoom = signal(false);
 
   // inputs
   public i18n = input.required<MatrixChatI18n>();
@@ -333,7 +345,8 @@ export class MatrixMessageInput {
   public pendingImages = input<File[]>([]);
 
   // outputs
-  messageSent = output<string>();
+  messageSent = output<MessageDraft>();
+  savedLocationSent = output<LocationModel>();
   fileSent = output<File>();
   locationSent = output<void>();
   surveyRequested = output<void>();
@@ -464,8 +477,12 @@ export class MatrixMessageInput {
     }
     const text = this.messageText().trim();
     if (text) {
-      this.messageSent.emit(text);
+      const activeMentions = this.mentions().filter((m) => text.includes(`@${m.display}`));
+      const mentionRoom = /(^|\s)@room(\s|$)/.test(text);
+      this.messageSent.emit({ text, mentions: activeMentions, mentionRoom });
       this.messageText.set('');
+      this.mentions.set([]);
+      this.mentionRoom.set(false);
       this.typing.emit(false);
       const key = this.draftKey();
       if (key) localStorage.removeItem(key);
@@ -479,6 +496,56 @@ export class MatrixMessageInput {
       event.preventDefault();
       this.sendMessage();
     }
+  }
+
+  async onInput(): Promise<void> {
+    this.onTyping();
+    if (this.isSettingQuickEntryValue) return;
+    const value = this.messageText();
+    const trigger = this.quickEntryService.detectTrigger(value);
+    if (!trigger) return;
+    this.isSettingQuickEntryValue = true;
+    try {
+      if (trigger === 'person') {
+        const person: PersonModel | undefined = await this.modelSelectService.selectPerson();
+        if (person) {
+          const display = `${person.firstName} ${person.lastName}`;
+          this.mentions.update((list) => [...list, { personKey: person.okey, display }]);
+          this.messageText.set(this.quickEntryService.replaceToken(value, '@', `@${display}`));
+        } else {
+          this.messageText.set(value.slice(0, -1));
+        }
+      } else if (trigger === 'date') {
+        const { DateTimeSelectModal } = await import('@okr/shared-ui');
+        const modal = await this.modalController.create({ component: DateTimeSelectModal });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<string>();
+        if (role === 'confirm' && data) {
+          const datePart = data.substring(0, 10);
+          const viewDate = convertDateFormatToString(datePart, DateFormat.IsoDate, DateFormat.ViewDate);
+          const timePart = data.length >= 16 ? data.substring(11, 16) : '00:00';
+          const token = timePart === '00:00' ? viewDate : `${viewDate},${timePart.replace(':', '')}`;
+          this.messageText.set(this.quickEntryService.replaceToken(value, '//', token));
+        } else {
+          this.messageText.set(value.slice(0, -2));
+        }
+      } else if (trigger === 'location') {
+        const result = await this.modelSelectService.selectLocation('', true, false);
+        if (result?.kind === 'predefined') {
+          this.messageText.set(this.quickEntryService.replaceToken(value, '!!', ''));
+          this.savedLocationSent.emit(result.location);
+        } else {
+          this.messageText.set(value.slice(0, -2));
+        }
+      }
+    } finally {
+      this.isSettingQuickEntryValue = false;
+    }
+  }
+
+  protected mentionEveryone(): void {
+    this.mentionRoom.set(true);
+    this.messageText.update((t) => `${t}@room `);
   }
 
   onTyping() {

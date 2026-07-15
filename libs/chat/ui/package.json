@@ -14,7 +14,8 @@
     "@okr/shared-util-core": "*",
     "@okr/chat-util": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/shared-pipes": "*"
+    "@okr/shared-pipes": "*",
+    "@okr/shared-feature": "*"
   }
 }
 
