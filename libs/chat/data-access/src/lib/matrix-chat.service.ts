@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, initMatrixLogLevel } from '@okr/chat-util';
+import { convertHeicToJpeg, initMatrixLogLevel, buildMentionContent, MentionRef } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 
 import { isServiceAccount as isServiceAccountHelper } from './matrix-helpers';
@@ -1382,9 +1382,15 @@ private async buildAndEmitRoomsList(): Promise<void> {
   }
 
   /**
-   * Send a text message to a room
+   * Send a text message to a room, optionally with person/room mentions.
    */
-  async sendMessage(roomId: string, text: string, threadId?: string): Promise<ISendEventResponse> {
+  async sendMessage(
+    roomId: string,
+    text: string,
+    threadId?: string,
+    mentions?: MentionRef[],
+    mentionRoom?: boolean,
+  ): Promise<ISendEventResponse> {
     if (!this.client) throw new Error('Client not initialized');
 
     const content: IContent = {
@@ -1397,6 +1403,19 @@ private async buildAndEmitRoomsList(): Promise<void> {
         rel_type: RelationType.Thread,
         event_id: threadId,
       };
+    }
+
+    const resolved = (mentions ?? []).map((m) => ({
+      display: m.display,
+      userId: this.personKeyToMatrixUserId(m.personKey),
+    }));
+    const mc = buildMentionContent(text, resolved, !!mentionRoom);
+    if (mc) {
+      content['m.mentions'] = mc.mentions;
+      if (mc.formatted_body) {
+        content.format = 'org.matrix.custom.html';
+        content.formatted_body = mc.formatted_body;
+      }
     }
 
     return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
@@ -1671,6 +1690,13 @@ private async buildAndEmitRoomsList(): Promise<void> {
     return undefined;
   }
 
+  /** Derive a Matrix user id from a Person.okey: '@{okey-lowercased}:{homeserver}'. */
+  private personKeyToMatrixUserId(personKey: string): string {
+    if (!this.client) throw new Error('Client not initialized');
+    const hostname = new URL(this.client.baseUrl).hostname.replace('matrix.', '');
+    return `@${personKey.toLowerCase()}:${hostname}`;
+  }
+
   /**
    * Create a new direct message room, or return an existing one if it already exists.
    * @param userId full Matrix user ID (@localpart:server) or a Person.okey (converted automatically)
@@ -1685,8 +1711,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
     // If userId is a Person.okey (no leading @), convert to @localpart:server
     let matrixUserId = userId;
     if (!userId.startsWith('@')) {
-      const hostname = new URL(this.client.baseUrl).hostname.replace('matrix.', '');
-      matrixUserId = `@${userId.toLowerCase()}:${hostname}`;
+      matrixUserId = this.personKeyToMatrixUserId(userId);
     }
 
     // Find-or-create: return existing DM room if one already exists
@@ -1952,22 +1977,40 @@ private async buildAndEmitRoomsList(): Promise<void> {
   }
 
   /**
-   * Send a reply to a message (Matrix m.in_reply_to format).
+   * Send a reply to a message (Matrix m.in_reply_to format), optionally with mentions.
    */
-  async sendReply(roomId: string, text: string, replyToEventId: string, replyToBody: string, replyToSender: string, threadId?: string): Promise<ISendEventResponse> {
+  async sendReply(
+    roomId: string,
+    text: string,
+    replyToEventId: string,
+    replyToBody: string,
+    replyToSender: string,
+    threadId?: string,
+    mentions?: MentionRef[],
+    mentionRoom?: boolean,
+  ): Promise<ISendEventResponse> {
     if (!this.client) throw new Error('Client not initialized');
+
+    const resolved = (mentions ?? []).map((m) => ({
+      display: m.display,
+      userId: this.personKeyToMatrixUserId(m.personKey),
+    }));
+    const mc = buildMentionContent(text, resolved, !!mentionRoom);
+    const trailing = mc?.formatted_body ?? text;
 
     const fallback = `> <${replyToSender}> ${replyToBody}\n\n${text}`;
     const content: IContent = {
       msgtype: MsgType.Text,
       body: fallback,
       format: 'org.matrix.custom.html',
-      formatted_body: `<mx-reply><blockquote><a href="https://matrix.to/#/${roomId}/${replyToEventId}">In reply to</a> <a href="https://matrix.to/#/${replyToSender}">${replyToSender}</a><br>${replyToBody}</blockquote></mx-reply>${text}`,
+      formatted_body: `<mx-reply><blockquote><a href="https://matrix.to/#/${roomId}/${replyToEventId}">In reply to</a> <a href="https://matrix.to/#/${replyToSender}">${replyToSender}</a><br>${replyToBody}</blockquote></mx-reply>${trailing}`,
       'm.relates_to': {
         'm.in_reply_to': { event_id: replyToEventId },
         ...(threadId ? { rel_type: RelationType.Thread, event_id: threadId } : {}),
       },
     };
+    if (mc) content['m.mentions'] = mc.mentions;
+
     return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
   }
 
