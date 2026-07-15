@@ -11,7 +11,7 @@ import { Menu } from '@okr/cms-menu-feature';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { convertHeicToJpeg, isSupportedImageFile, filterRoomsByName, MessageDraft } from '@okr/chat-util';
+import { convertHeicToJpeg, isSupportedImageFile, filterRoomsByName, resolveInitialRoomId, MessageDraft } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -408,16 +408,15 @@ import { ChatHelpModal } from './chat-help.modal';
                   (cancelReplyClicked)="onCancelReply()"
                 />
               } @else {
-                <div class="empty-state">
-                  <ion-icon src="{{'chatbubbles' | svgIcon}}" size="large"></ion-icon>
-                  <div>
-                    <h3>{{ store.i18n.selectRoom() }}</h3>
-                    @if (rooms().length === 0) {
+                @if (rooms().length === 0) {
+                  <div class="empty-state">
+                    <ion-icon src="{{'chatbubbles' | svgIcon}}" size="large"></ion-icon>
+                    <div>
                       <p>{{ store.i18n.noRoomsError() }}</p>
                       <ion-button (click)="onCreateRoom()">{{ store.i18n.createTestRoom() }}</ion-button>
-                    }
+                    </div>
                   </div>
-                </div>
+                }
               }
             </div>
 
@@ -642,6 +641,29 @@ export class MatrixChat implements OnDestroy {
       if (isGroupView === undefined) isGroupView = false;
       debugMessage(`MatrixChat.isGroupView = <${isGroupView}>`, this.store.currentUser());
       this.showRoomList.set(isGroupView === false);
+    });
+
+    // Persist the last opened room so the next visit lands on it (browser only).
+    effect(() => {
+      const roomId = this.store.currentRoomId();
+      if (roomId && isBrowser(this.platformId)) {
+        localStorage.setItem('chat:lastRoomId', roomId);
+      }
+    });
+
+    // Auto-select a room so "choose a chat room" is never shown.
+    // Standalone chat view only (not group view) and only when no deep-link room is set.
+    effect(() => {
+      if (this.isGroupView() || this.selectedRoom()) return;
+      if (this.store.currentRoomId()) return;                 // respect an existing selection
+      const rooms = this.store.rooms();
+      const syncRooms = rooms.length > 0 ? rooms : this.store.getRoomsSync();
+      if (syncRooms.length === 0) return;                     // truly no rooms → keep empty state
+      const persisted = isBrowser(this.platformId)
+        ? (localStorage.getItem('chat:lastRoomId') ?? undefined)
+        : undefined;
+      const initial = resolveInitialRoomId(persisted, syncRooms);
+      if (initial) untracked(() => this.store.setCurrentRoom(initial));
     });
 
     // Attach MediaStreams to <video> elements whenever feeds change
