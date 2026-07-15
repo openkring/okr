@@ -16,7 +16,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { MATRIX_CHAT_I18N_KEYS, MatrixChatI18n } from '@okr/chat-util';
+import { MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -410,7 +410,7 @@ export const _MatrixChatStore = signalStore(
       /**
        * Send a text message
        */
-      async sendMessage(text: string, threadId?: string): Promise<void> {
+      async sendMessage(text: string, threadId?: string, mentions?: MentionRef[], mentionRoom?: boolean): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) {
           console.warn('MatrixChatStore.sendMessage: No room selected');
@@ -418,7 +418,7 @@ export const _MatrixChatStore = signalStore(
         }
 
         try {
-          await store.matrixService.sendMessage(roomId, text, threadId);
+          await store.matrixService.sendMessage(roomId, text, threadId, mentions, mentionRoom);
           debugMessage(`MatrixChatStore.sendMessage: Sent message to room ${roomId}`, store.currentUser());
         } catch (error) {
           console.error('MatrixChatStore.sendMessage: Failed to send message:', error);
@@ -557,16 +557,16 @@ export const _MatrixChatStore = signalStore(
       /**
        * Send a reply to a message (called from the chat input when replyToMessage is set).
        */
-      async sendReply(text: string): Promise<void> {
+      async sendReply(text: string, mentions?: MentionRef[], mentionRoom?: boolean): Promise<void> {
         const roomId = store.currentRoomId();
         const replyTo = store.replyToMessage();
         if (!roomId) return;
         try {
           if (replyTo) {
-            await store.matrixService.sendReply(roomId, text, replyTo.eventId, replyTo.body, replyTo.sender);
+            await store.matrixService.sendReply(roomId, text, replyTo.eventId, replyTo.body, replyTo.sender, undefined, mentions, mentionRoom);
             patchState(store, { replyToMessage: undefined });
           } else {
-            await store.matrixService.sendMessage(roomId, text);
+            await store.matrixService.sendMessage(roomId, text, undefined, mentions, mentionRoom);
           }
         } catch (error) {
           console.error('MatrixChatStore.sendReply: Failed:', error);
