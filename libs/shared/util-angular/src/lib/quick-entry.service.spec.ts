@@ -25,6 +25,14 @@ describe('QuickEntryService', () => {
       expect(service.detectTrigger('//')).toBe('date');
     });
 
+    it('returns "location" when text ends with !!', () => {
+      expect(service.detectTrigger('Team Meeting !!')).toBe('location');
+    });
+
+    it('returns "location" when text is just !!', () => {
+      expect(service.detectTrigger('!!')).toBe('location');
+    });
+
     it('returns null for regular text', () => {
       expect(service.detectTrigger('Team Meeting')).toBeNull();
     });
@@ -65,6 +73,10 @@ describe('QuickEntryService', () => {
 
     it('returns text unchanged when trigger not found', () => {
       expect(service.replaceToken('Meeting', '@', '@Anna')).toBe('Meeting');
+    });
+
+    it('strips a trailing !! trigger when replacement is empty', () => {
+      expect(service.replaceToken('Meet at !!', '!!', '')).toBe('Meet at ');
     });
   });
 });
