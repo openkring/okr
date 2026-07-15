@@ -15,6 +15,7 @@ import { convertHeicToJpeg, isSupportedImageFile, MessageDraft } from '@okr/chat
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
+import { ChatHelpModal } from './chat-help.modal';
 
 @Component({
   selector: 'okr-matrix-chat-overview',
@@ -346,13 +347,11 @@ import { PollCreateModal } from './poll-create.modal';
                     }
                     
                     <ion-title>{{ currentRoom()?.name }}</ion-title>
-                    @if(hasRole('admin')) {
-                      <ion-buttons slot="end">
-                        <ion-button [attr.aria-label]="store.i18n.room_info()" (click)="onRoomInfo()">
-                          <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
-                        </ion-button>
-                      </ion-buttons>
-                    }
+                    <ion-buttons slot="end">
+                      <ion-button [attr.aria-label]="store.i18n.help_title()" (click)="openChatHelp()">
+                        <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
+                      </ion-button>
+                    </ion-buttons>
                   </ion-toolbar>
                 </ion-header>
 
@@ -952,10 +951,10 @@ export class MatrixChat implements OnDestroy {
     }
   }
 
-  // show room info / edit (name, topic, avatar)
-  async onRoomInfo() {
-    const room = this.currentRoom();
-    if (room) await this.store.editRoom(room);
+  // open the chat help modal (shortcuts + direct-vs-group explanation)
+  protected async openChatHelp(): Promise<void> {
+    const modal = await this.modalController.create({ component: ChatHelpModal });
+    await modal.present();
   }
 
   onCancelReply() {
