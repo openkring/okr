@@ -1,4 +1,4 @@
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -8,7 +8,7 @@ export const categoryListValidations = staticSuite((model: CategoryListModel, te
   if (field) only(field);
 
   baseValidations(model, tenants, tags, field);
-  stringValidations('i18nBase', model.name, SHORT_NAME_LENGTH);
+  stringValidations('i18n', model.i18n, NAME_LENGTH);
   stringValidations('notes', model.name, DESCRIPTION_LENGTH);
   booleanValidations('translateItems', model.translateItems);
 });

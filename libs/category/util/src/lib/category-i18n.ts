@@ -47,9 +47,9 @@ export const CATEGORY_I18N_KEYS = {
   name_error:               PFX + 'name.error',
   name_helper:              PFX + 'name.helper',
 
-  i18nBase_label:           PFX + 'i18n.label',
-  i18nBase_placeholder:     PFX + 'i18n.placeholder',
-  i18nBase_helper:          PFX + 'i18n.helper',
+  i18nScope_label:          PFX + 'i18n.label',
+  i18nScope_placeholder:    PFX + 'i18n.placeholder',
+  i18nScope_helper:         PFX + 'i18n.helper',
 
   notes_label:              PFX + 'notes.label',
   notes_placeholder:        PFX + 'notes.placeholder',

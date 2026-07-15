@@ -11,10 +11,14 @@ import { addIndexElement } from "./base-model.util";
 export function getItemLabel(category: CategoryListModel, itemName?: string): string {
   if (!itemName) return '';
   if (!category.i18n || category.i18n.length === 0 || !category.translateItems) return itemName;
-  // Prefix with '@': consumers resolve this via I18nService.translate (directly or through
-  // TranslatePipe), which only translates keys starting with '@' — a bare key is returned
-  // as-is (shown untranslated). See i18n.service.ts.
-  return `@${category.i18n}.${category.name}.${itemName}.label`;
+  // `category.i18n` already carries the leading '@' scope prefix (e.g. '@task/feature') — that is
+  // the convention in every production category document and in the okr-category-select component.
+  // Pass it through unchanged; do NOT prepend another '@'. Prepending doubled it to
+  // '@@task/feature…', which I18nService.translate strips to scope '@task/feature' → a 404 on
+  // assets/i18n/@task/feature/de.json and a blank/failed label. Consumers resolve this key via
+  // I18nService.translate (directly or through TranslatePipe), which only translates keys starting
+  // with '@' — a bare key is returned as-is (shown untranslated). See i18n.service.ts.
+  return `${category.i18n}.${category.name}.${itemName}.label`;
 }
 
 /**

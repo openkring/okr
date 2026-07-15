@@ -10,7 +10,8 @@ import { OkrModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } fr
  * The categories are defined as types/interfaces instead of using enums.
  *
  * If i18n is not defined, name is shown as the label.
- * Otherwise, '@${i18n}.${name}.${item.name}.label' is translated and shown as the label.
+ * Otherwise, '${i18n}.${name}.${item.name}.label' is translated and shown as the label —
+ * where i18n already carries the leading '@' scope prefix (e.g. '@task/feature'). See getItemLabel.
  */
 export class CategoryListModel implements OkrModel, NamedModel, PersistedModel, SearchableModel, TaggedModel {
   okey = DEFAULT_KEY;

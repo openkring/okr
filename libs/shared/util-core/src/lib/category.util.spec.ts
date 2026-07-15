@@ -99,66 +99,76 @@ describe('category.util', () => {
       expect(result).toBe(itemName);
     });
 
+    // The `i18n` field already carries the leading '@' (the scoped convention, e.g. '@task/feature'),
+    // matching production category documents and the working okr-category-select component.
+    // getItemLabel passes it through — it must NOT prepend a second '@' (that produced the
+    // '@@task/feature…' → assets/i18n/@task/feature/de.json 404 board crash).
     it('should return translation key when all conditions are met', () => {
-      const category = createCategoryModel('colors', 'general.categories', true);
+      const category = createCategoryModel('colors', '@general.categories', true);
       const itemName = 'red';
-      
+
       const result = getItemLabel(category, itemName);
 
       expect(result).toBe('@general.categories.colors.red.label');
     });
 
     it('should handle category names with special characters', () => {
-      const category = createCategoryModel('user-types', 'admin.categories', true);
+      const category = createCategoryModel('user-types', '@admin.categories', true);
       const itemName = 'super-admin';
-      
+
       const result = getItemLabel(category, itemName);
-      
+
       expect(result).toBe('@admin.categories.user-types.super-admin.label');
     });
 
     it('should handle item names with special characters', () => {
-      const category = createCategoryModel('status', 'app.states', true);
+      const category = createCategoryModel('status', '@app.states', true);
       const itemName = 'in_progress';
-      
+
       const result = getItemLabel(category, itemName);
-      
+
       expect(result).toBe('@app.states.status.in_progress.label');
     });
 
+    it('should pass through a scoped (@domain/layer) i18n base without doubling the @', () => {
+      const category = createCategoryModel('task_state', '@task/feature', true);
+
+      expect(getItemLabel(category, 'initial')).toBe('@task/feature.task_state.initial.label');
+    });
+
     it('should handle nested i18n base paths', () => {
-      const category = createCategoryModel('priorities', 'ui.components.forms', true);
+      const category = createCategoryModel('priorities', '@ui.components.forms', true);
       const itemName = 'high';
-      
+
       const result = getItemLabel(category, itemName);
-      
+
       expect(result).toBe('@ui.components.forms.priorities.high.label');
     });
 
     it('should handle single character names', () => {
-      const category = createCategoryModel('a', 'x', true);
+      const category = createCategoryModel('a', '@x', true);
       const itemName = 'b';
-      
+
       const result = getItemLabel(category, itemName);
-      
+
       expect(result).toBe('@x.a.b.label');
     });
 
     it('should handle numeric names as strings', () => {
-      const category = createCategoryModel('123', 'numeric', true);
+      const category = createCategoryModel('123', '@numeric', true);
       const itemName = '456';
-      
+
       const result = getItemLabel(category, itemName);
-      
+
       expect(result).toBe('@numeric.123.456.label');
     });
 
     it('should handle whitespace in names', () => {
-      const category = createCategoryModel('my category', 'base.path', true);
+      const category = createCategoryModel('my category', '@base.path', true);
       const itemName = 'my item';
-      
+
       const result = getItemLabel(category, itemName);
-      
+
       expect(result).toBe('@base.path.my category.my item.label');
     });
 
@@ -181,20 +191,20 @@ describe('category.util', () => {
     });
 
     it('should handle complex category and item names', () => {
-      const category = createCategoryModel('document-types', 'business.admin.categories', true);
+      const category = createCategoryModel('document-types', '@business.admin.categories', true);
       const itemName = 'invoice-template-v2';
-      
+
       const result = getItemLabel(category, itemName);
-      
+
       expect(result).toBe('@business.admin.categories.document-types.invoice-template-v2.label');
     });
 
     it('should handle edge case with just spaces in itemName', () => {
-      const category = createCategoryModel('test', 'base', true);
+      const category = createCategoryModel('test', '@base', true);
       const itemName = '   ';
-      
+
       const result = getItemLabel(category, itemName);
-      
+
       expect(result).toBe('@base.test.   .label');
     });
 

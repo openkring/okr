@@ -23,10 +23,20 @@ export function isTerminalTaskState(name: string): boolean {
   return TERMINAL_TASK_STATES.includes(name);
 }
 
+/**
+ * A task's rank, tolerating legacy documents. Firestore reads (`collectionData`) return raw plain
+ * objects, so the TaskModel field initializer (`rank = ''`) never runs and tasks written before the
+ * `rank` field existed arrive with `rank === undefined`. An absent rank is semantically identical to
+ * '' — "not yet ranked" (spec §7) — so we coalesce here rather than crash on `.length`.
+ */
+function rankOf(task: TaskModel): string {
+  return task.rank ?? '';
+}
+
 /** Unranked tasks sort by dueDate; a missing dueDate sorts last. */
 function compareUnranked(a: TaskModel, b: TaskModel): number {
-  const dueA = a.dueDate.length > 0 ? a.dueDate : '99999999';
-  const dueB = b.dueDate.length > 0 ? b.dueDate : '99999999';
+  const dueA = (a.dueDate ?? '').length > 0 ? a.dueDate : '99999999';
+  const dueB = (b.dueDate ?? '').length > 0 ? b.dueDate : '99999999';
   if (dueA !== dueB) return dueA < dueB ? -1 : 1;
   return a.okey < b.okey ? -1 : a.okey > b.okey ? 1 : 0;
 }
@@ -39,10 +49,12 @@ function compareUnranked(a: TaskModel, b: TaskModel): number {
  */
 export function sortTasksByRank(tasks: TaskModel[]): TaskModel[] {
   return [...tasks].sort((a, b) => {
-    const rankedA = a.rank.length > 0;
-    const rankedB = b.rank.length > 0;
+    const rankA = rankOf(a);
+    const rankB = rankOf(b);
+    const rankedA = rankA.length > 0;
+    const rankedB = rankB.length > 0;
     if (rankedA && rankedB) {
-      if (a.rank !== b.rank) return a.rank < b.rank ? -1 : 1;
+      if (rankA !== rankB) return rankA < rankB ? -1 : 1;
       return compareUnranked(a, b);
     }
     if (rankedA) return -1;
@@ -78,7 +90,7 @@ export function groupTasksByState(tasks: TaskModel[], states?: CategoryListModel
  * than by a one-off migration script.
  */
 export function assignMissingRanks(columnTasks: TaskModel[]): TaskModel[] {
-  if (columnTasks.every(task => task.rank.length > 0)) return [];
+  if (columnTasks.every(task => rankOf(task).length > 0)) return [];
   const changed: TaskModel[] = [];
   columnTasks.forEach((task, index) => {
     const rank = rankForIndex(index);

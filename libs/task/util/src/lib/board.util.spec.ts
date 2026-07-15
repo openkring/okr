@@ -13,6 +13,17 @@ function makeTask(okey: string, state: string, rank = '', dueDate = ''): TaskMod
   return task;
 }
 
+/**
+ * A task as read from Firestore *before* the `rank` field existed: `collectionData` returns a raw
+ * plain object, so the TaskModel field initializer (`rank = ''`) never runs and the property is
+ * simply absent (undefined). Regression guard for the board.util crash on legacy documents.
+ */
+function makeLegacyTask(okey: string, state: string, dueDate = ''): TaskModel {
+  const task = makeTask(okey, state, '', dueDate);
+  delete (task as { rank?: string }).rank;
+  return task;
+}
+
 function makeStates(): CategoryListModel {
   const category = new CategoryListModel(TENANT);
   category.name = 'task_state';
@@ -59,6 +70,16 @@ describe('sortTasksByRank', () => {
     const tasks = [makeTask('b', 'doing', 'b'), makeTask('a', 'doing', 'a')];
     sortTasksByRank(tasks);
     expect(tasks.map(t => t.okey)).toEqual(['b', 'a']);
+  });
+
+  it('treats a legacy task with no rank field as unranked instead of crashing', () => {
+    const tasks = [makeLegacyTask('late', 'doing', '20260301'), makeLegacyTask('early', 'doing', '20260101')];
+    expect(sortTasksByRank(tasks).map(t => t.okey)).toEqual(['early', 'late']);
+  });
+
+  it('sorts ranked tasks ahead of legacy unranked ones', () => {
+    const tasks = [makeLegacyTask('legacy', 'doing', '20260101'), makeTask('ranked', 'doing', 'V')];
+    expect(sortTasksByRank(tasks).map(t => t.okey)).toEqual(['ranked', 'legacy']);
   });
 });
 
@@ -115,5 +136,12 @@ describe('assignMissingRanks', () => {
 
   it('handles an empty column', () => {
     expect(assignMissingRanks([])).toEqual([]);
+  });
+
+  it('backfills legacy tasks that have no rank field at all', () => {
+    const tasks = [makeLegacyTask('a', 'doing'), makeLegacyTask('b', 'doing')];
+    const changed = assignMissingRanks(tasks);
+    expect(changed).toHaveLength(2);
+    expect(tasks[0].rank < tasks[1].rank).toBe(true);
   });
 });

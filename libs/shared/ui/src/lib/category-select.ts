@@ -41,7 +41,7 @@ let id = 0;
       @if(showIcons() && selectedItem().icon.length > 0) {
         <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
       }
-      {{ getItemLabel(selectedItem()) | translate | async }}
+      {{ itemLabel(selectedItem()) | translate | async }}
       <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
     </ion-button>
   } @else {
@@ -49,7 +49,7 @@ let id = 0;
       @if(showIcons() && selectedItem().icon.length > 0) {
         <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
       }
-      <ion-label>{{ getItemLabel(selectedItem()) | translate | async }}</ion-label>
+      <ion-label>{{ itemLabel(selectedItem()) | translate | async }}</ion-label>
     </ion-item>
   }
   @if(!isReadOnly()) {
@@ -67,7 +67,7 @@ let id = 0;
               @if(shouldShowIcons()) {
                 <ion-icon slot="start" src="{{ item.icon| svgIcon }}" />
               }
-              <ion-label class="ion-text-wrap">{{ getItemLabel(item) | translate | async }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ itemLabel(item) | translate | async }}</ion-label>
             </ion-item>
             }
           </ion-list>
@@ -122,7 +122,8 @@ export class CategorySelect {
     this.selectedItemName.set(item.name);
   }
 
-  protected getItemLabel(item: CategoryItemModel): string {
-    return `${this.category().i18n}.${this.name()}.${item.name}.label`;
+  /** Adapts (item) → the shared getItemLabel(category, itemName); the single source of truth for the key. */
+  protected itemLabel(item: CategoryItemModel): string {
+    return getItemLabel(this.category(), item.name);
   }
 }

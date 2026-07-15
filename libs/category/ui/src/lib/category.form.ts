@@ -35,8 +35,8 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="i18nBaseI18n()" [value]="i18nBase()" (valueChange)="onFieldChange('i18nBase', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="i18nBaseErrors()" />
+                <okr-text-input [i18n]="i18nScopeI18n()" [value]="i18nScope()" (valueChange)="onFieldChange('i18n', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="i18nScopeErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="translateItemsI18n()" [checked]="translateItems()" (checkedChange)="onFieldChange('translateItems', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
@@ -86,11 +86,11 @@ export class CategoryListForm {
   // validation and errors
   private readonly validationResult = computed(() => categoryListValidations(this.formData(), this.tenants(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
-  protected i18nBaseErrors = computed(() => this.validationResult().getErrors('i18nBase'));
+  protected i18nScopeErrors = computed(() => this.validationResult().getErrors('i18n'));
 
   // fields
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
-  protected i18nBase = linkedSignal(() => this.formData().i18n ?? '');
+  protected i18nScope = linkedSignal(() => this.formData().i18n ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected items = linkedSignal(() => this.formData().items ?? []);
@@ -111,11 +111,11 @@ export class CategoryListForm {
     helper: this.i18n().name_helper()
   } as TextInputI18n));
 
-  protected i18nBaseI18n = computed(() => ({
-    name: 'i18nBase',
-    label: this.i18n().i18nBase_label(),
-    placeholder: this.i18n().i18nBase_placeholder(),
-    helper: this.i18n().i18nBase_helper()
+  protected i18nScopeI18n = computed(() => ({
+    name: 'i18n',
+    label: this.i18n().i18nScope_label(),
+    placeholder: this.i18n().i18nScope_placeholder(),
+    helper: this.i18n().i18nScope_helper()
   } as TextInputI18n));
 
   protected notesI18n = computed(() => ({
