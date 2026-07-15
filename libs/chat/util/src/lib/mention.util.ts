@@ -49,9 +49,12 @@ export function buildMentionContent(
   }
 
   let html = escapeHtml(text);
+  // Known limitation: replacement is per-mention first-remaining-occurrence, so if one
+  // @display is a literal prefix of another (e.g. "Al" vs "Alan") the shorter, processed
+  // first, can match inside the longer. Acceptable for "First Last" display names.
   for (const mention of mentions) {
     const needle = escapeHtml('@' + mention.display);
-    const anchor = `<a href="https://matrix.to/#/${mention.userId}">${escapeHtml(mention.display)}</a>`;
+    const anchor = `<a href="https://matrix.to/#/${escapeHtml(mention.userId)}">${escapeHtml(mention.display)}</a>`;
     html = html.replace(needle, anchor); // first remaining occurrence only
   }
   return { formatted_body: html, mentions: mMentions };

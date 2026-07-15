@@ -333,7 +333,6 @@ export class MatrixMessageInput {
   private modelSelectService = inject(ModelSelectService);
   private isSettingQuickEntryValue = false;
   private mentions = signal<MentionRef[]>([]);
-  private mentionRoom = signal(false);
 
   // inputs
   public i18n = input.required<MatrixChatI18n>();
@@ -482,7 +481,6 @@ export class MatrixMessageInput {
       this.messageSent.emit({ text, mentions: activeMentions, mentionRoom });
       this.messageText.set('');
       this.mentions.set([]);
-      this.mentionRoom.set(false);
       this.typing.emit(false);
       const key = this.draftKey();
       if (key) localStorage.removeItem(key);
@@ -544,8 +542,9 @@ export class MatrixMessageInput {
   }
 
   protected mentionEveryone(): void {
-    this.mentionRoom.set(true);
-    this.messageText.update((t) => `${t}@room `);
+    // Insert @room with a leading boundary so sendMessage's /(^|\s)@room(\s|$)/
+    // recompute detects it even mid-message (not just at start / after a space).
+    this.messageText.update((t) => (t.length && !t.endsWith(' ')) ? `${t} @room ` : `${t}@room `);
   }
 
   onTyping() {
