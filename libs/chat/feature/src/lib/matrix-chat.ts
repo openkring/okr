@@ -1,12 +1,13 @@
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonPopover, IonContent, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
 import { LocationModel, MatrixMessage, RoleName } from '@okr/shared-models';
+import { Menu } from '@okr/cms-menu-feature';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
@@ -21,7 +22,7 @@ import { PollCreateModal } from './poll-create.modal';
   imports: [
     SvgIconPipe,
     Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
-    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge
+    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonPopover, IonContent, Menu
   ],
   styles: [`
     :host {
@@ -296,9 +297,16 @@ import { PollCreateModal } from './poll-create.modal';
                   <ion-title>{{ store.i18n.rooms() }}</ion-title>
                   @if(hasRole('admin')) {
                     <ion-buttons slot="end">
-                      <ion-button [attr.aria-label]="store.i18n.room_create_header()" (click)="onCreateRoom()">
-                        <ion-icon src="{{'add-circle' | svgIcon}}"></ion-icon>
+                      <ion-button id="{{ popupId() }}" [attr.aria-label]="store.i18n.rooms()">
+                        <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon}}"></ion-icon>
                       </ion-button>
+                      <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                        <ng-template>
+                          <ion-content>
+                            <okr-menu [menuName]="contextMenuName()" />
+                          </ion-content>
+                        </ng-template>
+                      </ion-popover>
                     </ion-buttons>
                   }
                 </ion-toolbar>
@@ -517,8 +525,10 @@ export class MatrixChat implements OnDestroy {
    * else a personkey was given and a direct chat to this person requested
    */
   public selectedRoom = input<string | undefined>();
+  public contextMenuName = input<string>('contextMenuChat');
 
   // Computed values from store
+  protected readonly popupId = computed(() => 'c_chat_ctx');
   protected readonly syncState = this.store.syncState;
   protected readonly rooms = this.store.rooms;
   protected readonly currentRoom = this.store.currentRoom;
@@ -1028,6 +1038,20 @@ export class MatrixChat implements OnDestroy {
 
   async onCreateRoom(): Promise<void> {
     await this.store.createRoom();
+  }
+
+  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    switch ($event.detail.data) {
+      case 'addRoom':
+        await this.onCreateRoom();
+        break;
+      case 'editRoom': {
+        const room = this.currentRoom();
+        if (room) await this.store.editRoom(room);
+        break;
+      }
+      // dismissed without a selection → no-op
+    }
   }
 
   async onVideoCallStarted(): Promise<void> {
