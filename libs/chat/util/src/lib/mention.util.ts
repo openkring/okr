@@ -1,0 +1,58 @@
+/** A person mention as tracked by the chat input (before homeserver resolution). */
+export interface MentionRef {
+  /** PersonModel.okey */
+  personKey: string;
+  /** 'First Last' as inserted into the message text */
+  display: string;
+}
+
+/** A person mention resolved to a full Matrix user id (done in data-access). */
+export interface ResolvedMention {
+  display: string;
+  /** full Matrix user id, e.g. '@p1:example.org' */
+  userId: string;
+}
+
+/** What MatrixMessageInput emits on send. */
+export interface MessageDraft {
+  text: string;
+  mentions: MentionRef[];
+  mentionRoom: boolean;
+}
+
+const HTML_ESCAPE: Record<string, string> = {
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+};
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => HTML_ESCAPE[c]);
+}
+
+/**
+ * Build the Matrix `m.mentions` block and — when there are person mentions — the
+ * `formatted_body` HTML. Returns null when there is nothing to mention, so the caller
+ * sends a plain text message unchanged.
+ */
+export function buildMentionContent(
+  text: string,
+  mentions: ResolvedMention[],
+  mentionRoom: boolean,
+): { formatted_body?: string; mentions: { user_ids: string[]; room?: boolean } } | null {
+  const userIds = [...new Set(mentions.map((m) => m.userId))];
+  if (userIds.length === 0 && !mentionRoom) return null;
+
+  const mMentions: { user_ids: string[]; room?: boolean } = { user_ids: userIds };
+  if (mentionRoom) mMentions.room = true;
+
+  if (mentions.length === 0) {
+    return { mentions: mMentions };
+  }
+
+  let html = escapeHtml(text);
+  for (const mention of mentions) {
+    const needle = escapeHtml('@' + mention.display);
+    const anchor = `<a href="https://matrix.to/#/${mention.userId}">${escapeHtml(mention.display)}</a>`;
+    html = html.replace(needle, anchor); // first remaining occurrence only
+  }
+  return { formatted_body: html, mentions: mMentions };
+}
