@@ -50,6 +50,7 @@
     "rooms": "Chat-Räume",
     "empty": "Leerer Raum",
     "none": "Keine Chat-Räume gefunden.",
+    "searchPlaceholder": "Räume durchsuchen...",
     "create": {
       "header": "Neuen Chat-Raum erstellen",
       "conf": "Neuer Chat-Raum wurde erstellt.",
@@ -59,6 +60,23 @@
       "header": "Chat-Raum ändern",
       "conf": "Der Chat-Raum wurde geändert",
       "error": "Der Chat-Raum konnte nicht geändert werden."
+    }
+  },
+  "help": {
+    "title": "Chat – Hilfe",
+    "intro": "Im Chat schreibst du direkt (1:1) oder in Gruppenräumen mit mehreren Personen und teilst Dateien, Fotos, Standorte und Umfragen.",
+    "shortcuts": {
+      "title": "Tastenkürzel",
+      "mention": "@ – eine Person erwähnen (aus der Mitgliederliste wählen)",
+      "mentionRoom": "@room – alle im Raum benachrichtigen",
+      "date": "// – ein Datum einfügen",
+      "location": "!! – einen Ort über die Standortauswahl teilen",
+      "send": "Enter – senden · Umschalt+Enter – neue Zeile"
+    },
+    "chats": {
+      "title": "Direkt- vs. Gruppen-Chats",
+      "direct": "Ein Direkt-Chat ist ein privates Gespräch zwischen dir und einer weiteren Person.",
+      "group": "Ein Gruppen-Chat hat mehrere Mitglieder sowie einen Raumnamen und ein Thema."
     }
   },
   "message": {

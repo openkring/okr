@@ -54,6 +54,20 @@ export const MATRIX_CHAT_I18N_KEYS = {
   room_update_conf:          PFX + 'room.update.conf',
   room_update_error:         PFX + 'room.update.error',
 
+  room_search_placeholder:   PFX + 'room.searchPlaceholder',
+
+  help_title:                PFX + 'help.title',
+  help_intro:                PFX + 'help.intro',
+  help_shortcuts_title:      PFX + 'help.shortcuts.title',
+  help_shortcut_mention:     PFX + 'help.shortcuts.mention',
+  help_shortcut_mentionRoom: PFX + 'help.shortcuts.mentionRoom',
+  help_shortcut_date:        PFX + 'help.shortcuts.date',
+  help_shortcut_location:    PFX + 'help.shortcuts.location',
+  help_shortcut_send:        PFX + 'help.shortcuts.send',
+  help_chats_title:          PFX + 'help.chats.title',
+  help_chats_direct:         PFX + 'help.chats.direct',
+  help_chats_group:          PFX + 'help.chats.group',
+
   msg_edit:                  PFX + 'message.edit',
   msg_reply:                 PFX + 'message.reply.label',
   msg_reply_to:              PFX + 'message.reply.to',
