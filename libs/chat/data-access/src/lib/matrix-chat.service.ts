@@ -1,6 +1,6 @@
 
 import { effect, inject, Injectable } from '@angular/core';
-import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, type MatrixCall, type Store } from 'matrix-js-sdk';
+import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, ReceiptType, type MatrixCall, type Store } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -1611,7 +1611,10 @@ private async buildAndEmitRoomsList(): Promise<void> {
     if (!room) return;
     const event = room.findEventById(eventId);
     if (!event) return;
-    await this.client.sendReadReceipt(event);
+    // Unthreaded receipt (3rd arg): clears BOTH main-timeline and thread notifications.
+    // getUnreadNotificationCount('total') sums main + every thread, so a threaded
+    // receipt would leave thread notifications — a permanent phantom unread badge.
+    await this.client.sendReadReceipt(event, ReceiptType.Read, true);
   }
 
   /**
@@ -1628,7 +1631,10 @@ private async buildAndEmitRoomsList(): Promise<void> {
     for (let i = events.length - 1; i >= 0; i--) {
       const event = events[i];
       if (event.getId() && !event.isState()) {
-        await this.client.sendReadReceipt(event);
+        // Unthreaded receipt (3rd arg): clears BOTH main-timeline and thread
+        // notifications. getUnreadNotificationCount('total') sums main + every thread,
+        // so a threaded receipt leaves thread notifications as a phantom unread badge.
+        await this.client.sendReadReceipt(event, ReceiptType.Read, true);
         return;
       }
     }
