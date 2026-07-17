@@ -345,6 +345,7 @@ export class DashboardPage {
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
+    if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
       case 'toggleEditMode':  this.editMode.update(value => !value); break;
       case 'editPage': 

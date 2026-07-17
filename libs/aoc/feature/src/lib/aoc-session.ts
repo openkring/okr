@@ -146,6 +146,7 @@ export class AocSession {
 
   protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const method = $event.detail.data;
+    if (!method) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (method) {
       case 'exportRaw': await this.store.export('raw'); break;
       case 'showStatistics': await this.store.showStatistics(); break;

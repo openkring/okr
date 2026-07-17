@@ -102,6 +102,7 @@ export class AccountList {
   /*-------------------------- popover menu --------------------------------*/
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
+    if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
       case 'create': await this.store.addRoot(); break;
       case 'export': await this.store.exportPlan(); break;

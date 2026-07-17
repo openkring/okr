@@ -165,6 +165,7 @@ export class BlogPage {
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    if (!$event.detail.data) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch ($event.detail.data) {
       case 'toggleEditMode':  this.editMode.update(v => !v); break;
       case 'editPage': {

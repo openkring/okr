@@ -155,6 +155,7 @@ export class TripList {
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
+    if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
       case 'add': await this.store.createTrip(); break;
       case 'reportDamage': await this.store.reportDamage(this.currentUser()); break;

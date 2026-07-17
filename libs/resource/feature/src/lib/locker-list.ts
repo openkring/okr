@@ -131,6 +131,7 @@ export class LockerList {
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
+    if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
       case 'add':  await this.store.add(false, false); break;
       case 'exportRaw': await this.store.export("raw"); break;

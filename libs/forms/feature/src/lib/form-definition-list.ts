@@ -78,6 +78,7 @@ export class FormDefinitionList {
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    if (!$event.detail.data) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch ($event.detail.data) {
       case 'add': await this.store.openCreateModal(); break;
       default: this.alertService.error(`FormDefinitionList.onPopoverDismiss: unknown method ${$event.detail.data}`);

@@ -282,6 +282,7 @@ export class ScsMemberFees {
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
+    if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
       case 'reload': await this.store.generateFees(); break;
       case 'export': await this.store.export("raw"); break;

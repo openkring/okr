@@ -99,6 +99,7 @@ export class FolderList {
   /******************************* actions *************************************** */
   protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
+    if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
       case 'add': await this.store.add(); break;
       default: this.alertService.error(`FolderListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);

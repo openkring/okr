@@ -267,8 +267,9 @@ export class MembershipList {
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
+    if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
-      case 'add': 
+      case 'add':
         const group = this.group();
         if (group) {
           await this.store.addMemberToGroup(group, this.readOnly());
