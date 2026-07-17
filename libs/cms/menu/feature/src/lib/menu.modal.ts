@@ -39,7 +39,7 @@ import { MenuStore } from './menu.store';
           [readOnly]="isReadOnly()"
           [allTags]="tags()"
           [i18n]="i18n"
-          (iconSelectClicked)="selectIcon()"
+          (iconSelectClicked)="selectIcon($event)"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -93,7 +93,7 @@ export class MenuModal {
     this.formData.set(formData);
   }
 
-  protected async selectIcon(): Promise<void> {
+  protected async selectIcon(field: 'icon' | 'iconAlt' = 'icon'): Promise<void> {
     const { IconSelectModal: IconSelectModal } = await import('@okr/cms-icon-feature');
     const modal = await this.modalController.create({
       component: IconSelectModal,
@@ -107,7 +107,7 @@ export class MenuModal {
     if (role === 'confirm' && data) {
       if (data && typeof(data) === 'string') {
         const icon = data as string;
-        this.formData.update((vm) => ({ ...vm, icon }) as MenuItemModel);
+        this.formData.update((vm) => ({ ...vm, [field]: icon }) as MenuItemModel);
         this.formDirty.set(true);
       }
     }

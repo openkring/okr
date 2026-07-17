@@ -1,259 +1,268 @@
 {
-    "menus": "Menüpunkte",
-    "submenus": "Sub-Menüs",
-    "empty": "Es sind noch keine Menüpunkte erstellt worden. Erstelle einen mit Klicken des + Buttons.",
-    "link": "URL oder Menüs",
-    "action": "Aktion",
-    "edit": "Menü bearbeiten",
-    "view": "Menü Details anzeigen",
-    "create": "Neues Menu erstellen",
-    "delete": "Menü löschen",
-    "add": {
-      "submenu": "Sub-Menü hinzufügen"
+  "menus": "Menüpunkte",
+  "submenus": "Sub-Menüs",
+  "empty": "Es sind noch keine Menüpunkte erstellt worden. Erstelle einen mit Klicken des + Buttons.",
+  "link": "URL oder Menüs",
+  "action": "Aktion",
+  "edit": "Menü bearbeiten",
+  "view": "Menü Details anzeigen",
+  "create": "Neues Menu erstellen",
+  "delete": "Menü löschen",
+  "add": {
+    "submenu": "Sub-Menü hinzufügen"
+  },
+  "error": {
+    "save": "Der Menüpunkt konnte nicht gespeichert werden. Bitte versuche es erneut.",
+    "load": "Die Menüpunkte konnten nicht geladen werden. Bitte versuche es erneut.",
+    "delete": "Der Menüpunkt konnte nicht gelöscht werden. Bitte versuche es erneut."
+  },
+  "main": {
+    "aoc": {
+      "title": "AOC - Operation Centre",
+      "icon": "Icon Tests",
+      "translation": "Übersetzungs Tests",
+      "storage": "Storage Tests",
+      "admin": "Admin Operationen",
+      "auth": "Berechtigungen",
+      "content": "Content",
+      "data": "Daten",
+      "statistics": "Statistiken"
     },
-    "error": {
-      "save": "Der Menüpunkt konnte nicht gespeichert werden. Bitte versuche es erneut.",
-      "load": "Die Menüpunkte konnten nicht geladen werden. Bitte versuche es erneut.",
-      "delete": "Der Menüpunkt konnte nicht gelöscht werden. Bitte versuche es erneut."
+    "board": {
+      "docs": "Dokumente",
+      "igsport": "IG Sport Stäfa (Dateien)",
+      "groups": "Gruppen",
+      "meetings": "Vorstandssitzungen",
+      "orgs": "Organisationen",
+      "projects": "Projekte",
+      "title": "Vorstand",
+      "todos": "Aufgaben"
     },
-
-    "main": {
-      "aoc": {
-        "title": "AOC - Operation Centre",
-        "icon": "Icon Tests",
-        "translation": "Übersetzungs Tests",
-        "storage": "Storage Tests",
-        "admin": "Admin Operationen",
-        "auth": "Berechtigungen",
-        "content": "Content",
-        "data": "Daten",
-        "statistics": "Statistiken"
-      },
-      "board": {
-        "docs": "Dokumente",
-        "igsport": "IG Sport Stäfa (Dateien)",
-        "groups": "Gruppen",
-        "meetings": "Vorstandssitzungen",
-        "orgs": "Organisationen",
-        "projects": "Projekte",
-        "title": "Vorstand",
-        "todos": "Aufgaben"
-      },
-      "boat": {
-        "title": "Boote",
-        "club": "Club Boote",
-        "archived": "Archivierte Boote",
-        "private": "Privat-Skiffs",
-        "info": "Bootsstatistiken",
-        "all": "Alle Boote",
-        "test": "Test Boote"
-      },
-      "boathouse": {
-        "title": "Bootshaus Projekt",
-        "history": "Rückblick",
-        "variants": "Variantenübersicht",
-        "status": "Projektstand",
-        "1haus": "Variante 1Haus",
-        "2haus": "Variante 2Haus",
-        "compare": "Variantenvergleich",
-        "funding": "Finanzierung"
-      },
-      "calEvent": {
-        "title": "Anlässe",
-        "calendar": "Kalender",
-        "list": "Anlässe"
-      },
-      "cms": {
-        "title": "CMS - Content Management",
-        "pages": "Webseiten",
-        "sections": "Sektionen",
-        "menus": "Menüs",
-        "documents": "Dokumente",
-        "testcms": "CMS Tests",
-        "locations": "Orte",
-        "forms": "Form Builder"
-      },
-      "finance": {
-        "title": "Finanzen",
-        "fees": "Beiträge",
-        "srvFees": "SRV Gebühren",
-        "docs": "Finanzunterlagen",
-        "invoice-positions": "Rechnungspositionen"
-      },
-      "gallery": {
-        "personal": "Persönliches Album",
-        "club": "Club Album"
-      },
-      "info": {
-        "album": "Album",
-        "boathouse": "Bootshaus Projekt",
-        "club": "Clubinformationen",
-        "directives": "Statuten und Reglemente",
-        "map": "Karte",
-        "marketing": "Logos und Templates",
-        "meetings": "Generalversammlungen",
-        "title": "Informationen",
-        "training": "Trainingsunterlagen",
-        "weather": "Wetter"
-      },
-      "members": {
-        "title": "Mitglieder",
-        "info": "Mitgliederstatistiken",
-        "active": "Aktive Mitglieder",
-        "persons": "Personen",
-        "person-contacts": "Alle Personen",
-        "member-contacts": "Adressliste",
-        "applications": "Anmeldungen",
-        "birthdays": "Geburtstage",
-        "passive": "Passivmitglieder",
-        "deceased": "Verstorbene Mitglieder",
-        "srvall": "SRV Mitglieder",
-        "alumni": "Ehemalige",
-        "men": "Männer",
-        "women": "Frauen",
-        "entries": "Eintritte",
-        "exits": "Austritte",
-        "oldJuniors": "Junioren > 18"
-      },
-      "misc": {
-        "title": "Verschiedenes",
-        "impressum": "Impressum",
-        "terms": "Rechtliches",
-        "privacy": "Datenschutz",
-        "help": "Anleitung",
-        "geotracker": "GeoTracker",
-        "counter": "Stop-Uhr",
-        "tenu": "Tenüs"
-      },
-      "news": {
-        "title": "Neuigkeiten",
-        "bkoWebsite": "Website",
-        "p13Website": "Website",
-        "stuerbord": "Stüürbord"
-      },
-      "reservations": {
-        "all": "Alle Reservationen",
-        "boathouse": "Bootshaus-Reservationen"
-      },
-      "resources": {
-        "title": "Ressourcen",
-        "resources": "Ressourcen",
-        "maleLockers": "Männer-Garderobe",
-        "femaleLockers": "Frauen-Garderobe",
-        "keys": "Schlüssel",
-        "motorboats": "Motorboote",
-        "vehicle": "Fahrzeuge",
-        "other": "Andere Resourcen",
-        "archivedResources": "Archivierte Resourcen"
-      },
-      "shop": {
-        "title": "Shop",
-        "tenu": "Tenüs",
-        "beverage": "Getränke",
-        "lifeJacket": "Rettungswesten"
-      },
-      "sport": {
-        "title": "Sport",
-        "competitionLevels": "Wettkampf-Kategorien",
-        "logbook": "Logbuch",
-        "sportCategory": "Sportkategorien",
-        "training": "Trainings-Infos",
-        "regattas": "Regatten"
-      },
-      "dashboard": "Dashboard",
-      "home": "Home",
-      "login": "Anmelden",
-      "logout": "Abmelden",
-      "profile": "Profil",
-      "schedule": "Terminabstimmung starten",
-      "userSettings": "Einstellungen",
-      "title": "Hauptmenü",
-      "version": "Version"
+    "boat": {
+      "title": "Boote",
+      "club": "Club Boote",
+      "archived": "Archivierte Boote",
+      "private": "Privat-Skiffs",
+      "info": "Bootsstatistiken",
+      "all": "Alle Boote",
+      "test": "Test Boote"
     },
-
-    "context": {
-      "forms": {
-        "add": "Neues Formular erstellen"
-      }
+    "boathouse": {
+      "title": "Bootshaus Projekt",
+      "history": "Rückblick",
+      "variants": "Variantenübersicht",
+      "status": "Projektstand",
+      "1haus": "Variante 1Haus",
+      "2haus": "Variante 2Haus",
+      "compare": "Variantenvergleich",
+      "funding": "Finanzierung"
     },
-
-
-    "description": {
-      "menu": "Menu-Einträge verweisen auf interne (Navigation) oder externe (Browse) Webseiten.",
-      "label": "Beschreibung",
-      "placeholder": "ssss"
+    "calEvent": {
+      "title": "Anlässe",
+      "calendar": "Kalender",
+      "list": "Anlässe"
     },
-    "icon": {
-      "label": "Icon Name",
-      "placeholder": "Name des Icons",
-      "helper": "Der Name des Icons ist typischerweise der Dateiname des svg-Bildes."
+    "cms": {
+      "title": "CMS - Content Management",
+      "pages": "Webseiten",
+      "sections": "Sektionen",
+      "menus": "Menüs",
+      "documents": "Dokumente",
+      "testcms": "CMS Tests",
+      "locations": "Orte",
+      "forms": "Form Builder"
     },
-    "label": {
-      "label": "Bezeichnung",
-      "placeholder": "Name",
-      "helper": "Das ist der Name, der auf dem MenuItem für den User sichtbar ist."
+    "finance": {
+      "title": "Finanzen",
+      "fees": "Beiträge",
+      "srvFees": "SRV Gebühren",
+      "docs": "Finanzunterlagen",
+      "invoice-positions": "Rechnungspositionen"
     },
-    "url": {
-      "label": "URL",
-      "placeholder": "/route/to/page",
-      "helper": "Die URL verweist auf die Seite, die angezeigt werden soll."
+    "gallery": {
+      "personal": "Persönliches Album",
+      "club": "Club Album"
     },
-    "category": {
-      "plural": "Kategorien"
+    "info": {
+      "album": "Album",
+      "boathouse": "Bootshaus Projekt",
+      "club": "Clubinformationen",
+      "directives": "Statuten und Reglemente",
+      "map": "Karte",
+      "marketing": "Logos und Templates",
+      "meetings": "Generalversammlungen",
+      "title": "Informationen",
+      "training": "Trainingsunterlagen",
+      "weather": "Wetter"
     },
-    "responsibility": {
-      "export": {
-        "raw": "Verantwortlichkeiten exportieren (Rohdaten)"
-      }
+    "members": {
+      "title": "Mitglieder",
+      "info": "Mitgliederstatistiken",
+      "active": "Aktive Mitglieder",
+      "persons": "Personen",
+      "person-contacts": "Alle Personen",
+      "member-contacts": "Adressliste",
+      "applications": "Anmeldungen",
+      "birthdays": "Geburtstage",
+      "passive": "Passivmitglieder",
+      "deceased": "Verstorbene",
+      "srvall": "SRV Mitglieder",
+      "alumni": "Ehemalige",
+      "men": "Männer",
+      "women": "Frauen",
+      "entries": "Eintritte",
+      "exits": "Austritte",
+      "oldJuniors": "Junioren > 18"
     },
-    "content": {
-      "section": {
-        "plural": "Sektionen"
-      }
+    "misc": {
+      "title": "Verschiedenes",
+      "impressum": "Impressum",
+      "terms": "Rechtliches",
+      "privacy": "Datenschutz",
+      "help": "Anleitung",
+      "geotracker": "GeoTracker",
+      "counter": "Stop-Uhr",
+      "tenu": "Tenüs"
     },
-
-    "menu_action": {
-      "label": "Menü Aktion",
-      "helper": "Die Aktion, welche beim Click auf das Menü Item ausgeführt werden soll.",
-      "all": {
-        "label": "Alle Aktionen"
-      },
-      "navigate": {
-        "label": "Navigate",
-        "description": "Navigiere zu einer anderen Seite"
-      },
-      "browse": {
-        "label": "Browse",
-        "description": "Die Seite im Browser in einem externen Tab öffnen."
-      },
-      "logout": {
-        "label": "Logout",
-        "description": "Die aktuelle Sitzung beenden und sich abmelden.",
-        "confirm": "Bist du sicher ? Du musst dann wieder mit Passwort einloggen."
-      },
-      "sub": {
-        "label": "Submenu",
-        "description": "Navigiere zu einem Untermenü"
-      },
-      "context": {
-        "label": "Context Menu",
-        "description": "Kontextmenü, z.B. Export, Add auf Listen"
-      },
-      "divider": {
-        "label": "Divider",
-        "description": "Trennlinie zwischen Menüpunkten"
-      },
-      "main": {
-        "label": "Main Menu",
-        "description": "Das Top-Level Menü"
-      },
-      "login": {
-        "label": "Login",
-        "description": "Zum Login Formular navigieren"
-      },
-      "call": {
-        "label": "Funktionsaufruf",
-        "description": "Ruft eine Methode des Stores auf (z.B. add,export...)"
-      }
+    "news": {
+      "title": "Neuigkeiten",
+      "bkoWebsite": "Website",
+      "p13Website": "Website",
+      "stuerbord": "Stüürbord"
+    },
+    "reservations": {
+      "all": "Alle Reservationen",
+      "boathouse": "Bootshaus-Reservationen"
+    },
+    "resources": {
+      "title": "Ressourcen",
+      "resources": "Ressourcen",
+      "maleLockers": "Männer-Garderobe",
+      "femaleLockers": "Frauen-Garderobe",
+      "keys": "Schlüssel",
+      "motorboats": "Motorboote",
+      "vehicle": "Fahrzeuge",
+      "other": "Andere Resourcen",
+      "archivedResources": "Archivierte Resourcen"
+    },
+    "shop": {
+      "title": "Shop",
+      "tenu": "Tenüs",
+      "beverage": "Getränke",
+      "lifeJacket": "Rettungswesten"
+    },
+    "sport": {
+      "title": "Sport",
+      "competitionLevels": "Wettkampf-Kategorien",
+      "logbook": "Logbuch",
+      "sportCategory": "Sportkategorien",
+      "training": "Trainings-Infos",
+      "regattas": "Regatten"
+    },
+    "dashboard": "Dashboard",
+    "home": "Home",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "profile": "Profil",
+    "schedule": "Terminabstimmung starten",
+    "userSettings": "Einstellungen",
+    "title": "Hauptmenü",
+    "version": "Version"
+  },
+  "context": {
+    "forms": {
+      "add": "Neues Formular erstellen"
     }
+  },
+  "description": {
+    "menu": "Menu-Einträge verweisen auf interne (Navigation) oder externe (Browse) Webseiten.",
+    "label": "Beschreibung",
+    "placeholder": "ssss"
+  },
+  "icon": {
+    "label": "Icon Name",
+    "placeholder": "Name des Icons",
+    "helper": "Der Name des Icons ist typischerweise der Dateiname des svg-Bildes."
+  },
+  "icon_alt": {
+    "label": "Icon (aktiv)",
+    "placeholder": "Name des Icons",
+    "helper": "Nur bei Aktion «Toggle»: Icon für den aktiven Zustand (z.B. eye-off)."
+  },
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "Name",
+    "helper": "Das ist der Name, der auf dem MenuItem für den User sichtbar ist."
+  },
+  "label_alt": {
+    "label": "Bezeichnung (aktiv)",
+    "placeholder": "Name",
+    "helper": "Nur bei Aktion «Toggle»: Bezeichnung für den aktiven Zustand."
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "/route/to/page",
+    "helper": "Die URL verweist auf die Seite, die angezeigt werden soll."
+  },
+  "category": {
+    "plural": "Kategorien"
+  },
+  "responsibility": {
+    "export": {
+      "raw": "Verantwortlichkeiten exportieren (Rohdaten)"
+    }
+  },
+  "content": {
+    "section": {
+      "plural": "Sektionen"
+    }
+  },
+  "menu_action": {
+    "label": "Menü Aktion",
+    "helper": "Die Aktion, welche beim Click auf das Menü Item ausgeführt werden soll.",
+    "all": {
+      "label": "Alle Aktionen"
+    },
+    "navigate": {
+      "label": "Navigate",
+      "description": "Navigiere zu einer anderen Seite"
+    },
+    "browse": {
+      "label": "Browse",
+      "description": "Die Seite im Browser in einem externen Tab öffnen."
+    },
+    "logout": {
+      "label": "Logout",
+      "description": "Die aktuelle Sitzung beenden und sich abmelden.",
+      "confirm": "Bist du sicher ? Du musst dann wieder mit Passwort einloggen."
+    },
+    "sub": {
+      "label": "Submenu",
+      "description": "Navigiere zu einem Untermenü"
+    },
+    "context": {
+      "label": "Context Menu",
+      "description": "Kontextmenü, z.B. Export, Add auf Listen"
+    },
+    "divider": {
+      "label": "Divider",
+      "description": "Trennlinie zwischen Menüpunkten"
+    },
+    "main": {
+      "label": "Main Menu",
+      "description": "Das Top-Level Menü"
+    },
+    "login": {
+      "label": "Login",
+      "description": "Zum Login Formular navigieren"
+    },
+    "call": {
+      "label": "Funktionsaufruf",
+      "description": "Ruft eine Methode des Stores auf (z.B. add,export...)"
+    },
+    "toggle": {
+      "label": "Toggle",
+      "description": "Wechselt den Wert einer binären Variable (z.B. on/off)."
+    }
+  }
 }

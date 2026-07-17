@@ -52,7 +52,7 @@ import { MenuStore } from './menu.store';
                           <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                         }
                       } @else {
-                        <okr-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                        <okr-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                       }
                     }
                   </div>
@@ -72,7 +72,7 @@ import { MenuStore } from './menu.store';
                       <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                     }
                   } @else {
-                    <okr-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                    <okr-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                   }
                 }
               </ion-list>
@@ -85,13 +85,17 @@ import { MenuStore } from './menu.store';
                       <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                     }
                   } @else {
-                    <okr-menu [menuName]="menuItemName" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                    <okr-menu [menuName]="menuItemName" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                   }
                 }
               </ion-list>
             }
             @case('call') {
               <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" [safariWorkaround]="safariWorkaround()"/>
+            }
+            @case('toggle') {
+              <!-- icon/label reflect the current toggle state (from toggleStates); selecting flips it via the host feature -->
+              <okr-multi-avatar [icon]="effectiveIcon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" />
             }
           }
         } @else {
@@ -114,6 +118,8 @@ export class Menu {
   public inputDepth = input(0);
   /** Names already rendered on the current path, used to break circular references. */
   public inputVisitedKeys = input<ReadonlySet<string>>(new Set<string>());
+  /** Current state of any 'toggle' action items, keyed by their url (e.g. { toggleFilter: true }). */
+  public toggleStates = input<Record<string, boolean>>({});
 
   // derived signals
   protected safariWorkaround = computed(() => this.menuName() === 'files-add');
@@ -127,6 +133,11 @@ export class Menu {
   protected roleNeeded = computed(() => this.menuItem()?.roleNeeded);
   protected action = computed(() => this.menuItem()?.action ?? DEFAULT_MENU_ACTION);
   protected icon = computed(() => this.menuItem()?.icon ?? 'help-circle');
+  // toggle items: whether this item's toggled state is active, and the icon reflecting it
+  protected readonly toggleActive = computed(() => this.toggleStates()[this.menuItem()?.url ?? ''] ?? false);
+  protected readonly effectiveIcon = computed(() =>
+    this.toggleActive() ? (this.menuItem()?.iconAlt ?? this.icon()) : this.icon()
+  );
   protected readonly isVisible = computed(() => {
     const name = this.menuItem()?.name;
     if (name && this.excludeNames().includes(name)) return false;
@@ -138,6 +149,10 @@ export class Menu {
     effect(() => {
       this.currentUser();
       this.menuStore.setMenuName(this.menuName());
+    });
+    // keep the store's toggle state in sync so translatedMenuLabel can pick label vs labelAlt
+    effect(() => {
+      this.menuStore.setToggleActive(this.toggleActive());
     });
     // Warn (admins/debug) when a child would create a cycle, naming the offending key.
     effect(() => {

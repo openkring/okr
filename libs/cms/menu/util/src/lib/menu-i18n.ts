@@ -25,9 +25,18 @@ export const MENU_I18N_KEYS = {
   icon_placeholder:               PFX + 'icon.placeholder',
   icon_helper:                    PFX + 'icon.helper',
 
+  // action 'toggle' only: alternate icon/label for the active state
+  icon_alt_label:                 PFX + 'icon_alt.label',
+  icon_alt_placeholder:           PFX + 'icon_alt.placeholder',
+  icon_alt_helper:                PFX + 'icon_alt.helper',
+
   label_label:                    PFX + 'label.label',
   label_placeholder:              PFX + 'label.placeholder',
   label_helper:                   PFX + 'label.helper',
+
+  label_alt_label:                PFX + 'label_alt.label',
+  label_alt_placeholder:          PFX + 'label_alt.placeholder',
+  label_alt_helper:               PFX + 'label_alt.helper',
 
   url_placeholder:                PFX + 'url.placeholder',
   url_helper:                     PFX + 'url.helper',

@@ -11,6 +11,10 @@ export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, Tag
   public url = DEFAULT_URL; // the url that should be navigated to when the menu item is clicked
   public label = ''; // label (i18n), the text that the users sees in the menu
   public icon = 'help-circle'; // the icon that should be displayed in the menu
+  // action 'toggle' only: the alternate icon/label shown while the toggled state is active (true).
+  // The base icon/label are shown while it is inactive (false).
+  public iconAlt?: string; // alternate icon for the active toggle state (e.g. eye-off)
+  public labelAlt?: string; // alternate label (i18n) for the active toggle state
   public data?: BaseProperty[] = []; // URL parameters that should be passed to the url
   public menuItems?: string[] = []; // the keys of the sub menu items
   public roleNeeded?: RoleName = 'contentAdmin'; // the role that is needed to see the menu item

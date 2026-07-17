@@ -28,12 +28,14 @@ export type MenuState = {
   searchTerm: string;
   selectedCategory: string;
   name: string;
+  toggleActive: boolean; // action 'toggle' only: whether the toggled state is currently active (drives icon/label)
 };
 
 export const initialState: MenuState = {
   searchTerm: '',
   selectedCategory: 'all',
   name: '',
+  toggleActive: false,
 };
 
 export const _MenuStore = signalStore(
@@ -133,7 +135,10 @@ export const _MenuStore = signalStore(
   withProps((store) => ({
     translatedMenuLabel: toSignal(
       toObservable(computed(() => {
-        const menuLabel = store.menu()?.label ?? '';
+        const item = store.menu();
+        // toggle items show labelAlt while active; base label otherwise
+        const useAlt = item?.action === 'toggle' && store.toggleActive();
+        const menuLabel = (useAlt ? (item?.labelAlt ?? item?.label) : item?.label) ?? '';
         const expanded = expandMenuTokens(menuLabel, { version: store.versionService.getCurrentVersion() });
         if (expanded !== menuLabel) {
           return expanded;  // a dynamic token (e.g. @VERSION@) was expanded
@@ -160,6 +165,10 @@ export const _MenuStore = signalStore(
 
       setSelectedCategory(selectedCategory: string) {
         patchState(store, { selectedCategory });
+      },
+
+      setToggleActive(toggleActive: boolean) {
+        patchState(store, { toggleActive });
       },
 
       /**
@@ -280,6 +289,7 @@ export const _MenuStore = signalStore(
             await navigateByUrl(router, menuItem.url, menuItem.data);
             break;
           case 'call':
+          case 'toggle': // like 'call' — the hosting feature flips the state in its onPopoverDismiss handler
             store.popoverController.dismiss(menuItem.url);
             break;
           default:

@@ -35,16 +35,27 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
               </ion-col>
             </ion-row>
 
-            @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call') {
+            @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call' || menuAction() === 'toggle') {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-icon-input [i18n]="iconI18n()" [icon]="icon()" (iconChange)="onFieldChange('icon', $event)" (selectClicked)="iconSelectClicked.emit()" [readOnly]="isReadOnly()" />
+                  <okr-icon-input [i18n]="iconI18n()" [icon]="icon()" (iconChange)="onFieldChange('icon', $event)" (selectClicked)="iconSelectClicked.emit('icon')" [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
+
+                <!-- toggle: alternate icon/label shown while the toggled state is active -->
+                @if(menuAction() === 'toggle') {
+                  <ion-col size="12" size-md="6">
+                    <okr-icon-input [i18n]="iconAltI18n()" [icon]="iconAlt()" (iconChange)="onFieldChange('iconAlt', $event)" (selectClicked)="iconSelectClicked.emit('iconAlt')" [readOnly]="isReadOnly()" />
+                  </ion-col>
+
+                  <ion-col size="12" size-md="6">
+                    <okr-text-input [i18n]="labelAltI18n()" [value]="labelAlt()" (valueChange)="onFieldChange('labelAlt', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+                  </ion-col>
+                }
 
                 <ion-col size="12">
                   <okr-url [i18n]="urlI18n()"
@@ -130,6 +141,14 @@ export class MenuForm {
     name: 'icon', label: this.i18n().icon_label(), placeholder: this.i18n().icon_placeholder(), helper: this.i18n().icon_helper()
   } as TextInputI18n));
 
+  protected iconAltI18n = computed(() => ({
+    name: 'iconAlt', label: this.i18n().icon_alt_label(), placeholder: this.i18n().icon_alt_placeholder(), helper: this.i18n().icon_alt_helper()
+  } as TextInputI18n));
+
+  protected labelAltI18n = computed(() => ({
+    name: 'labelAlt', label: this.i18n().label_alt_label(), placeholder: this.i18n().label_alt_placeholder(), helper: this.i18n().label_alt_helper()
+  } as TextInputI18n));
+
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
@@ -144,7 +163,7 @@ export class MenuForm {
   // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
-  public iconSelectClicked = output();
+  public iconSelectClicked = output<'icon' | 'iconAlt'>();
 
   // validation and errors
   private readonly validationResult = computed(() => menuItemValidations(this.formData(), this.tenantId(), this.allTags()));
@@ -158,7 +177,9 @@ export class MenuForm {
   // fields
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected icon = linkedSignal(() => this.formData().icon ?? '');
+  protected iconAlt = linkedSignal(() => this.formData().iconAlt ?? '');
   protected label = linkedSignal(() => this.formData().label ?? '');
+  protected labelAlt = linkedSignal(() => this.formData().labelAlt ?? '');
   protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
   protected data = linkedSignal(() => this.formData().data ?? []);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
