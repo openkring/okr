@@ -225,7 +225,7 @@ export class DocumentList {
   protected types = computed(() => this.store.appStore.getCategory('document_type'));
   protected sources = computed(() => this.store.appStore.getCategory('document_source'));
   protected readonly currentUser = computed(() => this.store.appStore.currentUser());
-  protected isListView = linkedSignal(() => this.view() === 'list');
+  public isListView = linkedSignal(() => this.view() === 'list');
   // filter row hidden by default; toggled via the context-menu 'toggleFilter' action
   protected readonly showFilter = signal(false);
   // list view → show the 'grid' icon (switch to grid); grid view → show the 'list' icon
@@ -355,12 +355,13 @@ export class DocumentList {
     }
   }
 
-  protected toggleView(): void {
+  /** Flip between list and grid view. Public so a parent toolbar (group view) can drive the hoisted toggle. */
+  public toggleView(): void {
     this.isListView.set(!this.isListView());
   }
 
   /******************************* helpers *************************************** */
-  protected canChange(): boolean {
+  public canChange(): boolean {
     return !this.readOnly();
   }
 

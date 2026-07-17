@@ -34,7 +34,8 @@ import { PersonStore } from './person.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ filteredPersonsCount()}}/{{personsCount()}} {{ store.i18n.persons() }}</ion-title>
+      <ion-title class="ion-hide-sm-down">{{ filteredPersonsCount()}}/{{personsCount()}} {{ store.i18n.persons() }}</ion-title>
+      <ion-title class="ion-hide-sm-up">{{ filteredPersonsCount()}} {{ store.i18n.persons() }}</ion-title>
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c-persons">
@@ -54,7 +55,7 @@ import { PersonStore } from './person.store';
     <!-- search and filters -->
     <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()" [hideTagsOnMobile]="true"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
     />
 
@@ -116,10 +117,7 @@ export class PersonList {
   protected filteredPersonsCount = computed(() => this.filteredPersons().length);
   protected isLoading = computed(() => this.store.isLoading());
   protected readonly tags = computed(() => this.store.getTags());
-  protected readonly types = computed(() => {
-    const cat = this.store.appStore.getCategory('gender');
-    return typeof window !== 'undefined' && window.innerWidth < SIZE_MD ? undefined : cat;
-  });
+  protected readonly types = computed(() => this.store.appStore.getCategory('gender'));
   protected readonly currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   private readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));

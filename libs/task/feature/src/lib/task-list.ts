@@ -5,7 +5,7 @@ import { PersonModel, RoleName, TaskModel } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, QuickEntryService } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, getAvatarInfo, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -35,13 +35,22 @@ import { TaskMove, TaskStore } from './task.store';
   providers: [TaskStore],
   styles: [`
       ion-avatar { width: 30px; height: 30px; border: 2px solid white; transition: transform 0.2s ease; }
-      ion-textarea { margin-top: 10px;}
+      ion-textarea {
+        margin-top: 10px;
+        --background: var(--ion-color-light-tint, #f4f5f8);
+        --border-color: var(--ion-color-medium);
+        --border-width: 2px;
+        --border-radius: 8px;
+        --padding-start: 12px;
+        --padding-end: 12px;
+      }
       .name { min-width: 70% !important;}
       .tags { padding-right: 10px; }
     `],
   template: `
     <ion-header>
       <!-- title and actions -->
+      @if(showContextMenu()) {
       <ion-toolbar [color]="color()">
         @if(showMenuButton()) {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
@@ -62,6 +71,7 @@ import { TaskMove, TaskStore } from './task.store';
           </ion-buttons>
         }
       </ion-toolbar>
+      }
 
       <!-- quick entry -->
       @if(canChange()) {
@@ -80,7 +90,9 @@ import { TaskMove, TaskStore } from './task.store';
             [autoGrow]="true"
           >
           </ion-textarea>
-          <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(okrQuickEntry)" />
+          @if(quickEntryText().length > 0) {
+            <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(okrQuickEntry)" />
+          }
         </ion-item>
       }
 
@@ -90,7 +102,7 @@ import { TaskMove, TaskStore } from './task.store';
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         (typeChanged)="onPrioritySelected($event)" [types]="priorities()"
         (stateChanged)="onStateSelected($event)" [states]="states()"
-        initialView="list" gridIcon="board" (viewToggleChanged)="onViewChange($event)"
+        [initialView]="showViewToggle() ? 'list' : undefined" gridIcon="grid" (viewToggleChanged)="onViewChange($event)"
       />
     </ion-header>
 
@@ -141,12 +153,17 @@ export class TaskList {
   private readonly quickEntryService = inject(QuickEntryService);
   private readonly modelSelectService = inject(ModelSelectService);
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
+  protected quickEntryText = signal('');
   private isSettingQuickEntryValue = false;
 
   public listId = input.required<string>(); // all, my, calendarId
   public contextMenuName = input.required<string>();
   public color = input('secondary');
-  public showMenuButton = input(true);
+  // keepDefaultTrue: withComponentInputBinding() would otherwise set these to undefined on standalone
+  // routes (hiding the hamburger/toolbar/toggle); an explicit [x]="false" from the group still wins.
+  public showMenuButton = input(true, { transform: keepDefaultTrue });
+  public showContextMenu = input(true, { transform: keepDefaultTrue }); // false when the context menu is hoisted to a parent toolbar (group view)
+  public showViewToggle = input(true, { transform: keepDefaultTrue }); // false when the view toggle is hoisted to a parent toolbar (group view)
   public groupAdmin = input(false);
 
   // derived signals
@@ -161,13 +178,18 @@ export class TaskList {
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  protected readonly isListView = signal(true);
+  public readonly isListView = signal(true);
 
   constructor() {
     effect(() => {
       this.store.setCalendarName(this.listId());
       this.store.setGroupAdmin(this.groupAdmin());
     });
+  }
+
+  /** Flip between list and board view. Public so a parent toolbar (group view) can drive the hoisted toggle. */
+  public toggleView(): void {
+    this.onViewChange(!this.isListView());
   }
 
   protected onViewChange(showList: boolean): void {
@@ -227,9 +249,11 @@ export class TaskList {
     }
     await this.store.quickEntry(task);
     okrQuickEntry.value = '';
+    this.quickEntryText.set('');
   }
 
   protected async onQuickEntryInput(textarea: IonTextarea): Promise<void> {
+    this.quickEntryText.set(textarea.value ?? '');
     if (this.isSettingQuickEntryValue) return;
     const value = textarea.value ?? '';
     const trigger = this.quickEntryService.detectTrigger(value);
@@ -345,11 +369,12 @@ export class TaskList {
 
   protected clear(okrQuickEntry: IonTextarea): void {
     okrQuickEntry.value = '';
+    this.quickEntryText.set('');
     this.selectedQuickEntryPerson.set(null);
   }
 
   /******************************* helpers *************************************** */
-  protected canChange(task?: TaskModel): boolean {
+  public canChange(task?: TaskModel): boolean {
     return this.store.canChangeTask(task);
   }
 

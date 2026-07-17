@@ -15,7 +15,7 @@ import { CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, QuickEntryService } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -41,7 +41,15 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
     styles: [`
       ion-card-content { padding: 0px;}
       ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
-      ion-textarea { margin-top: 10px;}
+      ion-textarea {
+        margin-top: 10px;
+        --background: var(--ion-color-light-tint, #f4f5f8);
+        --border-color: var(--ion-color-medium);
+        --border-width: 2px;
+        --border-radius: 8px;
+        --padding-start: 12px;
+        --padding-end: 12px;
+      }
       full-calendar { width: 100%; height: 800px;}
 
       :host ::ng-deep .fc-toolbar-title {
@@ -66,6 +74,10 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         :host ::ng-deep .fc-toolbar-title {
           display: none !important;
         }
+        /* hide the search/filter toolbar on mobile — not enough room */
+        .events-filter {
+          display: none;
+        }
       }
     `,
   ],
@@ -76,7 +88,9 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         @if(contextMenuName() !== 'disable') {
           <ion-toolbar [color]="color()">
             @if(showMenuButton() === true) {
-              <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+              <!-- ion-hide-lg-up: the split-pane already shows the side menu on desktop (>=lg);
+                   autoHide=false so the button is not auto-removed on mobile, where users need it -->
+              <ion-buttons slot="start" class="ion-hide-lg-up"><ion-menu-button [autoHide]="false" /></ion-buttons>
             }
             <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ store.i18n.calevents() }}</ion-title>
             @if(canChange()) {
@@ -113,17 +127,19 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
               type="text"
               [autoGrow]="true">
             </ion-textarea>
-            <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(okrQuickEntry)" />
+            @if(quickEntryText().length > 0) {
+              <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(okrQuickEntry)" />
+            }
           </ion-item>
         }
 
-        <!-- search and filters -->
-        <okr-list-filter
+        <!-- search and filters (hidden on mobile only in the group, where the view toggle is hoisted away) -->
+        <okr-list-filter [class.events-filter]="!showViewToggle()"
           (searchTermChanged)="onSearchtermChange($event)"
           (tagChanged)="onTagSelected($event)" [tags]="tags()"
           (typeChanged)="onTypeSelected($event)" [types]="types()"
           (yearChanged)="onYearSelected($event)" [years]="years()"
-          [initialView]="view()" (viewToggleChanged)="onViewChange($event)" gridIcon="calendar"
+          [initialView]="showViewToggle() ? view() : undefined" (viewToggleChanged)="onViewChange($event)" gridIcon="calendar"
         />
 
         <!-- list header -->
@@ -198,6 +214,7 @@ export class CalEventList implements OnInit {
   private readonly modelSelectService = inject(ModelSelectService);
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
   private selectedQuickEntryLocation = signal<LocationModel | null>(null);
+  protected quickEntryText = signal('');
   private isSettingQuickEntryValue = false;
   private readonly matrixChatService = inject(MatrixChatService);
   private readonly injector = inject(Injector);
@@ -211,7 +228,10 @@ export class CalEventList implements OnInit {
   public color = input('secondary');
   public view = input<'list' | 'grid'>('grid'); // initial view mode
   public showMenu = input<boolean>(true);   // for /public/calendar
-  public showMenuButton = input<boolean>(true); // for group view
+  // withComponentInputBinding() sets unbound route inputs to undefined, overriding the input(true)
+  // default — keepDefaultTrue restores the intended default while an explicit [x]="false" still wins.
+  public showMenuButton = input(true, { transform: keepDefaultTrue }); // false in group view
+  public showViewToggle = input(true, { transform: keepDefaultTrue }); // false when the view toggle is hoisted to a parent toolbar (group view)
   public groupAdmin = input(false);
   
   // filters
@@ -229,7 +249,7 @@ export class CalEventList implements OnInit {
   protected types = computed(() => this.store.appStore.tryGetCategory('calevent_type'));
   private currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
-  protected isListView = linkedSignal(() => this.view() === 'list');
+  public isListView = linkedSignal(() => this.view() === 'list');
   protected expertMode = computed(() => this.hasRole('admin'));
   private readonly firstFutureIndex = computed(() => {
     const today = format(new Date(), 'yyyyMMdd');
@@ -455,16 +475,19 @@ export class CalEventList implements OnInit {
     }
     await this.store.quickEntry(calevent);
     okrQuickEntry.value = '';
+    this.quickEntryText.set('');
     if (!this.isListView()) this.navigateCalendarTo(calevent.startDate);
   }
 
   protected clear(okrQuickEntry: IonTextarea): void {
     okrQuickEntry.value = '';
+    this.quickEntryText.set('');
     this.selectedQuickEntryPerson.set(null);
     this.selectedQuickEntryLocation.set(null);
   }
 
   protected async onQuickEntryInput(textarea: IonTextarea): Promise<void> {
+    this.quickEntryText.set(textarea.value ?? '');
     if (this.isSettingQuickEntryValue) return;
     const value = textarea.value ?? '';
     const trigger = this.quickEntryService.detectTrigger(value);
@@ -706,6 +729,11 @@ export class CalEventList implements OnInit {
     await alert.present();
   }
 
+  /** Flip between list and calendar view. Public so a parent toolbar (group view) can drive the hoisted toggle. */
+  public toggleView(): void {
+    this.onViewChange(!this.isListView());
+  }
+
   protected onViewChange(showList: boolean): void {
     this.isListView.set(showList);
     if (showList === false) {
@@ -813,7 +841,7 @@ export class CalEventList implements OnInit {
    * @param calevent 
    * @returns 
    */
-  protected canChange(calevent?: CalEventModel): boolean {
+  public canChange(calevent?: CalEventModel): boolean {
     // 1) general roles
     if (this.hasRole('eventAdmin')) return true;
     if (this.hasRole('privileged')) return true;

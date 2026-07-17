@@ -28,7 +28,8 @@ import { WorkrelStore } from './workrel.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedWorkRelsCount()}}/{{workRelsCount()}} {{ store.i18n.workrels() }}</ion-title>
+        <ion-title class="ion-hide-sm-down">{{ selectedWorkRelsCount()}}/{{workRelsCount()}} {{ store.i18n.workrels() }}</ion-title>
+        <ion-title class="ion-hide-sm-up">{{ selectedWorkRelsCount()}} {{ store.i18n.workrels() }}</ion-title>
         <ion-buttons slot="end">
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
@@ -49,7 +50,7 @@ import { WorkrelStore } from './workrel.store';
     <!-- search and filters -->
     <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"  [hideTagsOnMobile]="true"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
       (stateChanged)="onStateSelected($event)" [states]="states()"
       [showIcons]=false

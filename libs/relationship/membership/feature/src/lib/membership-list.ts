@@ -6,7 +6,7 @@ import { TranslatePipe } from '@okr/shared-i18n';
 import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
 import { FullNamePipe, RellogPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
 import { DateFormat, getSvgIconUrl, getTodayStr, getYearList, hasRole, isOngoing } from '@okr/shared-util-core';
 import { SIZE_SM } from '@okr/shared-constants';
 
@@ -32,6 +32,7 @@ import { MembershipStore } from './membership.store';
   template: `
     <ion-header>
       <!-- title and context menu -->
+      @if(showContextMenu()) {
       <ion-toolbar [color]="color()">
         @if(view() !== 'group') {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
@@ -53,16 +54,19 @@ import { MembershipStore } from './membership.store';
                 </ion-content>
               </ng-template>
             </ion-popover>
-          </ion-buttons>          
+          </ion-buttons>
         }
       </ion-toolbar>
+      }
 
     <!-- search and filters -->
     @if(view() === 'group') {
-      <okr-list-filter
-        (searchTermChanged)="onSearchtermChange($event)"
-        (typeChanged)="onTypeSelected($event)" [types]="types()"
-      />
+      @if(membershipsCount() > 20) {
+        <okr-list-filter
+          (searchTermChanged)="onSearchtermChange($event)"
+          (typeChanged)="onTypeSelected($event)" [types]="types()"
+        />
+      }
      } @else {
       <okr-list-filter
         (searchTermChanged)="onSearchtermChange($event)"
@@ -132,6 +136,9 @@ export class MembershipList {
   public contextMenuName = input.required<string>();
   public color = input('secondary');
   public view = input<'contact' | 'mcat' | 'group'>('mcat');
+  // keepDefaultTrue: withComponentInputBinding() would otherwise set this to undefined on standalone
+  // routes (hiding the toolbar); an explicit [showContextMenu]="false" from the group still wins.
+  public showContextMenu = input(true, { transform: keepDefaultTrue }); // false when the context menu is hoisted to a parent toolbar (group view)
 
   // filters
   protected selectedCategory = linkedSignal(() => this.store.selectedMembershipCategory());
@@ -432,7 +439,7 @@ export class MembershipList {
    * Check whether the current user is allowed to make changes on the data.
    * @returns true if the current user is allowed to make changes
    */
-  protected canChange(membership?: MembershipModel): boolean {
+  public canChange(membership?: MembershipModel): boolean {
     if (this.view() === 'group') {
       if (hasRole('privileged', this.currentUser())) return true;
       if (hasRole('memberAdmin', this.currentUser())) return true;

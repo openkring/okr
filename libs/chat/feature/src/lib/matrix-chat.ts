@@ -1,13 +1,12 @@
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonPopover, IonContent, IonSearchbar, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
 import { LocationModel, MatrixMessage, RoleName } from '@okr/shared-models';
-import { Menu } from '@okr/cms-menu-feature';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
@@ -23,7 +22,7 @@ import { ChatHelpModal } from './chat-help.modal';
   imports: [
     SvgIconPipe,
     Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
-    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonPopover, IonContent, IonSearchbar, Menu
+    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar
   ],
   styles: [`
     :host {
@@ -292,24 +291,10 @@ import { ChatHelpModal } from './chat-help.modal';
                 <ion-toolbar>
                   <ion-buttons slot="start">
                     <ion-button [attr.aria-label]="store.i18n.toggle_room_list()" (click)="toggleRoomList()" [disabled]="!currentRoom()">
-                      <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
+                      <ion-icon src="{{ (showRoomList() ? 'chevron-back' : 'chevron-forward') | svgIcon }}"></ion-icon>
                     </ion-button>
                   </ion-buttons>
                   <ion-title>{{ store.i18n.rooms() }}</ion-title>
-                  @if(hasRole('admin')) {
-                    <ion-buttons slot="end">
-                      <ion-button id="{{ popupId() }}" [attr.aria-label]="store.i18n.rooms()">
-                        <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon}}"></ion-icon>
-                      </ion-button>
-                      <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-                        <ng-template>
-                          <ion-content>
-                            <okr-menu [menuName]="contextMenuName()" />
-                          </ion-content>
-                        </ng-template>
-                      </ion-popover>
-                    </ion-buttons>
-                  }
                 </ion-toolbar>
               </ion-header>
 
@@ -350,7 +335,7 @@ import { ChatHelpModal } from './chat-help.modal';
                     @if (!showRoomList() && !isGroupView()) {
                       <ion-buttons slot="start">
                         <ion-button [attr.aria-label]="store.i18n.toggle_room_list()" (click)="toggleRoomList(); $event.stopPropagation()">
-                          <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
+                          <ion-icon src="{{ (showRoomList() ? 'chevron-back' : 'chevron-forward') | svgIcon }}"></ion-icon>
                         </ion-button>
                       </ion-buttons>
                     }
@@ -534,8 +519,11 @@ export class MatrixChat implements OnDestroy {
   public selectedRoom = input<string | undefined>();
   public contextMenuName = input<string>('contextMenuChat');
 
+  // Whether the current user may manage rooms (add/edit) — read by the parent ChatPage,
+  // which hosts the hoisted context menu on the main toolbar and delegates to onPopoverDismiss().
+  public readonly canManageRooms = computed(() => this.hasRole('admin'));
+
   // Computed values from store
-  protected readonly popupId = computed(() => 'c_chat_ctx');
   protected readonly syncState = this.store.syncState;
   protected readonly rooms = this.store.rooms;
   protected readonly currentRoom = this.store.currentRoom;

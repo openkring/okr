@@ -44,6 +44,19 @@ export async function navigateByUrl(router: Router, url: string | undefined, que
     }
 }
 
+/**
+ * Input transform that preserves a `true` default under `withComponentInputBinding()`.
+ *
+ * The router's component input binding sets EVERY declared input of a route-loaded component,
+ * writing `undefined` for inputs the route does not provide — which silently overrides an
+ * `input(true)` default (a toolbar/button then disappears on standalone routes). Applied as
+ * `input(true, { transform: keepDefaultTrue })`, this restores the intended default while an
+ * explicit binding such as `[showMenuButton]="false"` still wins.
+ */
+export function keepDefaultTrue(value: boolean | undefined | null): boolean {
+    return value ?? true;
+}
+
 export function getSafeString(value: string | null | undefined, defaultValue: string): string {
     return value ?? defaultValue;
 }

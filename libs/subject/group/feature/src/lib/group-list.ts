@@ -32,7 +32,8 @@ import { GroupStore } from './group.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedGroupsCount()}}/{{groupsCount()}} {{ store.i18n.groups() }}</ion-title>
+        <ion-title class="ion-hide-sm-down">{{ selectedGroupsCount()}}/{{groupsCount()}} {{ store.i18n.groups() }}</ion-title>
+        <ion-title class="ion-hide-sm-up">{{ selectedGroupsCount()}} {{ store.i18n.groups() }}</ion-title>
         @if(hasRole('privileged') || hasRole('memberAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">

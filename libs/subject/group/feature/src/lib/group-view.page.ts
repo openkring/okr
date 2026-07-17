@@ -1,13 +1,15 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonPopover, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
 import { GroupModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { isAdminMember } from '@okr/subject-group-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@okr/shared-constants';
 
+import { Menu } from '@okr/cms-menu-feature';
 import { PageDispatcher, PageStore } from '@okr/cms-page-feature';
 import { getDocumentStoragePath } from '@okr/document-util';
 import { FolderService } from '@okr/folder-data-access';
@@ -23,8 +25,9 @@ import { GroupStore } from './group.store';
   standalone: true,
   imports: [
     ChangeConfirmation, DeferError, PageDispatcher, CalEventList, MembershipList, DocumentList, TaskList,
+    Menu, SvgIconPipe,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
-    IonHeader, IonButtons, IonTitle, IonMenuButton
+    IonHeader, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon, IonPopover
 ],
   providers: [GroupStore],
   template: `
@@ -32,6 +35,27 @@ import { GroupStore } from './group.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ name() }}</ion-title>
+        <ion-buttons slot="end">
+          <!-- view toggle of the selected segment, hoisted from the segment toolbar -->
+          @if(segmentHasViewToggle()) {
+            <ion-button (click)="toggleSegmentView()">
+              <ion-icon slot="icon-only" src="{{ viewToggleIcon() | svgIcon }}" />
+            </ion-button>
+          }
+          <!-- context menu of the selected segment, hoisted from the segment toolbar -->
+          @if(showSegmentContextMenu()) {
+            <ion-button [id]="segmentPopupId">
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover [trigger]="segmentPopupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onSegmentPopoverDismiss($event)">
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="segmentContextMenuName()!" [forceVisible]="isGroupAdmin()" />
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
+        </ion-buttons>
       </ion-toolbar>
       <ion-toolbar>
       <ion-segment [scrollable]="true" color="secondary" (ionChange)="onSegmentChanged($event)" value="content">
@@ -95,7 +119,7 @@ import { GroupStore } from './group.store';
           }
           @case ('calendar') {
             @defer (on immediate) {
-              <okr-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+              <okr-calevent-list [listId]="id" contextMenuName="disable" color="light" view="grid" [showMenuButton]="false" [showViewToggle]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             } @error {
@@ -104,7 +128,7 @@ import { GroupStore } from './group.store';
           }
           @case ('tasks') {
             @defer (on immediate) {
-               <okr-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+               <okr-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMenuButton]="false" [showContextMenu]="false" [showViewToggle]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             } @error {
@@ -113,7 +137,7 @@ import { GroupStore } from './group.store';
           }
           @case ('files') {
             @defer (on immediate) {
-              <okr-document-list [listId]="listId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+              <okr-document-list [listId]="listId()" contextMenuName="disable" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             } @error {
@@ -122,7 +146,7 @@ import { GroupStore } from './group.store';
           }
           @case ('members') {
             @defer (on immediate) {
-              <okr-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" [groupAdmin]="isGroupAdmin()" />
+              <okr-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" [showContextMenu]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             } @error {
@@ -178,6 +202,81 @@ export class GroupViewPage implements ViewWillEnter {
   protected color = computed(() => this.id().startsWith('notfall') ? 'danger' : 'light');
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
+
+  /* ---- hoisted segment toolbar (context menu + view toggle) ----
+   * Each segment renders its own context menu / view toggle inside its own toolbar; in the group we
+   * suppress that toolbar (via showContextMenu/showViewToggle/contextMenuName="disable") and render a
+   * single context-menu + view-toggle in the group toolbar, delegating the action to the active segment
+   * component queried below. content/chat go through PageDispatcher (menu lives inside the CMS page). */
+  private readonly caleventList = viewChild(CalEventList);
+  private readonly taskList = viewChild(TaskList);
+  private readonly documentList = viewChild(DocumentList);
+  private readonly membershipList = viewChild(MembershipList);
+
+  protected readonly segmentPopupId = 'group-segment-menu';
+
+  // Context menu name of the selected segment (undefined for content/chat).
+  protected readonly segmentContextMenuName = computed<string | undefined>(() => {
+    switch (this.selectedSegment()) {
+      case 'calendar': return 'c-calevents';
+      case 'tasks': return 'c-tasks';
+      case 'files': return 'c-folder';
+      case 'members': return 'c-groupmembers';
+      default: return undefined;
+    }
+  });
+
+  // Show the hoisted context-menu button only when the active segment permits changes.
+  protected readonly showSegmentContextMenu = computed(() => {
+    if (!this.segmentContextMenuName()) return false;
+    switch (this.selectedSegment()) {
+      case 'calendar': return this.caleventList()?.canChange() ?? false;
+      case 'tasks': return this.taskList()?.canChange() ?? false;
+      case 'files': return this.documentList()?.canChange() ?? false;
+      case 'members': return this.membershipList()?.canChange() ?? false;
+      default: return false;
+    }
+  });
+
+  // Only calendar/tasks/files expose a list/alternative view toggle.
+  protected readonly segmentHasViewToggle = computed(() => {
+    const seg = this.selectedSegment();
+    return seg === 'calendar' || seg === 'tasks' || seg === 'files';
+  });
+
+  protected readonly viewToggleIcon = computed(() => {
+    const seg = this.selectedSegment();
+    let isListView = true;
+    switch (seg) {
+      case 'calendar': isListView = this.caleventList()?.isListView() ?? true; break;
+      case 'tasks': isListView = this.taskList()?.isListView() ?? true; break;
+      case 'files': isListView = this.documentList()?.isListView() ?? true; break;
+    }
+    if (!isListView) return 'list'; // already in the alternative view → offer to go back to list
+    switch (seg) {
+      case 'calendar': return 'calendar';
+      case 'tasks': return 'grid';
+      case 'files': return 'grid';
+      default: return 'list';
+    }
+  });
+
+  protected toggleSegmentView(): void {
+    switch (this.selectedSegment()) {
+      case 'calendar': this.caleventList()?.toggleView(); break;
+      case 'tasks': this.taskList()?.toggleView(); break;
+      case 'files': this.documentList()?.toggleView(); break;
+    }
+  }
+
+  protected async onSegmentPopoverDismiss($event: CustomEvent): Promise<void> {
+    switch (this.selectedSegment()) {
+      case 'calendar': await this.caleventList()?.onPopoverDismiss($event); break;
+      case 'tasks': await this.taskList()?.onPopoverDismiss($event); break;
+      case 'files': await this.documentList()?.onPopoverDismiss($event); break;
+      case 'members': await this.membershipList()?.onPopoverDismiss($event); break;
+    }
+  }
 
   constructor() {
     effect(() => {

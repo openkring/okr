@@ -44,7 +44,7 @@ import { StringSelect } from './string-select';
             </ion-col>
           }
           @if(showTags()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding" [class.ion-hide-sm-down]="hideTagsOnMobile()">
               <okr-single-tag [selectedTag]="selectedTag()" (selectedTagChange)="tagChanged.emit($event)" [tags]="tags()" />
             </ion-col>
           }
@@ -111,6 +111,7 @@ export class ListFilter {
   public showSearch = input(true);
   public yearLabel = input<string>();
   public compact = input(false);
+  public hideTagsOnMobile = input(false); // hide the tag filter on small screens (sm and down)
 
   public isListView = linkedSignal(() => this.initialView() === 'list');
 

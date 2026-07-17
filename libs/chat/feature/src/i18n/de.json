@@ -49,7 +49,7 @@
     "rooms": "Chat-Räume",
     "empty": "Leerer Raum",
     "none": "Keine Chat-Räume gefunden.",
-    "searchPlaceholder": "Räume durchsuchen...",
+    "searchPlaceholder": "Raum suchen...",
     "create": {
       "header": "Neuen Chat-Raum erstellen",
       "conf": "Neuer Chat-Raum wurde erstellt.",

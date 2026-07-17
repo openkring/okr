@@ -34,7 +34,8 @@ import { OrgStore } from './org.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedOrgsCount()}}/{{orgsCount()}} {{ store.i18n.orgs() }}</ion-title>
+      <ion-title class="ion-hide-sm-down">{{ selectedOrgsCount()}}/{{orgsCount()}} {{ store.i18n.orgs() }}</ion-title>
+      <ion-title class="ion-hide-sm-up">{{ selectedOrgsCount()}} {{ store.i18n.orgs() }}</ion-title>
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c-orgs">
@@ -54,7 +55,7 @@ import { OrgStore } from './org.store';
     <!-- search and filters -->
     <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()" [hideTagsOnMobile]="true"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
     />
 

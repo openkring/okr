@@ -286,10 +286,6 @@ import 'emoji-picker-element';
           <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
         </ion-button>
 
-        <ion-button fill="clear" class="action-button" [attr.aria-label]="i18n().mention_everyone()" (click)="mentionEveryone()">
-          <ion-icon slot="icon-only" src="{{'people' | svgIcon}}"></ion-icon>
-        </ion-button>
-
         <div class="emoji-picker-wrapper">
           <ion-button fill="clear" class="action-button" [attr.aria-label]="i18n().emoji_picker()" (click)="toggleEmojiPicker($event)">
             <ion-icon slot="icon-only" src="{{'smiley' | svgIcon}}"></ion-icon>
@@ -555,12 +551,6 @@ export class MatrixMessageInput {
     } finally {
       this.isSettingQuickEntryValue = false;
     }
-  }
-
-  protected mentionEveryone(): void {
-    // Insert @room with a leading boundary so sendMessage's /(^|\s)@room(\s|$)/
-    // recompute detects it even mid-message (not just at start / after a space).
-    this.messageText.update((t) => (t.length && !t.endsWith(' ')) ? `${t} @room ` : `${t}@room `);
   }
 
   onTyping() {
