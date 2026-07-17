@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, untracked } from "@angular/core";
+import { Component, computed, effect, inject, input, untracked, viewChild } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ViewWillEnter } from '@ionic/angular';
@@ -61,7 +61,7 @@ import { GraphPage } from "./graph.page";
                 }
                 @case ('content') {
                     @defer (on idle) {
-                        <okr-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" [groupAdmin]="groupAdmin()" />
+                        <okr-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu() && !isGroupView()" [groupAdmin]="groupAdmin()" />
                     } @placeholder {
                         <okr-spinner />
                     } @error {
@@ -146,6 +146,52 @@ export class PageDispatcher implements ViewWillEnter {
     if (qp != null) return coerceBoolean(qp);
     return coerceBoolean(this.route.snapshot.data['showMenu'] ?? 'true');
   });
+
+  /* ---- hoist facade (group view) ----
+   * When embedded in the group view, content/chat suppress their own toolbar and the group toolbar
+   * hosts a single context menu (+ chat info icon). The group can't viewChild the page directly (it
+   * lives in this dispatcher's template), so the dispatcher exposes this facade and delegates to the
+   * active page component. */
+  private readonly contentPage = viewChild(ContentPage);
+  private readonly chatPage = viewChild(ChatPage);
+
+  public readonly hoistMenuName = computed<string | undefined>(() => {
+    switch (this.page()?.type) {
+      case 'content': return this.contextMenuName() ?? 'c-contentpage';
+      case 'chat': return this.contextMenuName() ?? 'contextMenuChat';
+      default: return undefined;
+    }
+  });
+
+  public readonly showHoistMenu = computed(() => {
+    switch (this.page()?.type) {
+      // group content menu is for group admins only (not global contentAdmins), matching the
+      // menu's forceVisible=isGroupAdmin. Also require the ContentPage to be resolved: this defers
+      // the hoisted button until the content view has settled (so Ionic's one-shot popover-trigger
+      // wiring binds to a stable DOM) and guarantees a delegate exists for onHoistMenuDismiss.
+      case 'content': return this.contentPage() != null && this.groupAdmin();
+      case 'chat': return this.chatPage()?.canManageRooms() ?? false;
+      default: return false;
+    }
+  });
+
+  public readonly showHoistInfo = computed(() =>
+    this.page()?.type === 'chat' && (this.chatPage()?.hasRoom() ?? false)
+  );
+
+  // toggle state for the hoisted content menu's 'toggleEditMode' item
+  public readonly contentEditActive = computed(() => this.contentPage()?.isEditModeActive() ?? false);
+
+  public async onHoistMenuDismiss($event: CustomEvent): Promise<void> {
+    switch (this.page()?.type) {
+      case 'content': await this.contentPage()?.onPopoverDismiss($event); break;
+      case 'chat': await this.chatPage()?.onContextMenuDismiss($event); break;
+    }
+  }
+
+  public async openHoistInfo(): Promise<void> {
+    await this.chatPage()?.openInfo();
+  }
 
   // computed
   protected page = computed(() => this.pageStore.page());

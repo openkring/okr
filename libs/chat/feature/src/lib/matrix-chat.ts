@@ -329,25 +329,27 @@ import { ChatHelpModal } from './chat-help.modal';
                 </div>
               }
               @if (currentRoom()) {
-                <!-- Room Header -->
-                <ion-header class="room-header">
-                  <ion-toolbar>
-                    @if (!showRoomList() && !isGroupView()) {
-                      <ion-buttons slot="start">
-                        <ion-button [attr.aria-label]="store.i18n.toggle_room_list()" (click)="toggleRoomList(); $event.stopPropagation()">
-                          <ion-icon src="{{ (showRoomList() ? 'chevron-back' : 'chevron-forward') | svgIcon }}"></ion-icon>
+                <!-- Room Header — suppressed in group view, where the info icon is hoisted to the group toolbar -->
+                @if (!isGroupView()) {
+                  <ion-header class="room-header">
+                    <ion-toolbar>
+                      @if (!showRoomList()) {
+                        <ion-buttons slot="start">
+                          <ion-button [attr.aria-label]="store.i18n.toggle_room_list()" (click)="toggleRoomList(); $event.stopPropagation()">
+                            <ion-icon src="{{ (showRoomList() ? 'chevron-back' : 'chevron-forward') | svgIcon }}"></ion-icon>
+                          </ion-button>
+                        </ion-buttons>
+                      }
+
+                      <ion-title>{{ currentRoom()?.name }}</ion-title>
+                      <ion-buttons slot="end">
+                        <ion-button [attr.aria-label]="store.i18n.help_title()" (click)="openChatHelp()">
+                          <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
                         </ion-button>
                       </ion-buttons>
-                    }
-                    
-                    <ion-title>{{ currentRoom()?.name }}</ion-title>
-                    <ion-buttons slot="end">
-                      <ion-button [attr.aria-label]="store.i18n.help_title()" (click)="openChatHelp()">
-                        <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
-                      </ion-button>
-                    </ion-buttons>
-                  </ion-toolbar>
-                </ion-header>
+                    </ion-toolbar>
+                  </ion-header>
+                }
 
                 <!-- Message List or Loading Spinner -->
                 @if (isMessagesLoading()) {
@@ -523,6 +525,9 @@ export class MatrixChat implements OnDestroy {
   // which hosts the hoisted context menu on the main toolbar and delegates to onPopoverDismiss().
   public readonly canManageRooms = computed(() => this.hasRole('admin'));
 
+  // Whether a room is currently open — read by the parent ChatPage to gate the hoisted info icon.
+  public readonly hasCurrentRoom = computed(() => !!this.store.currentRoom());
+
   // Computed values from store
   protected readonly syncState = this.store.syncState;
   protected readonly rooms = this.store.rooms;
@@ -534,7 +539,10 @@ export class MatrixChat implements OnDestroy {
 
   // Local state
   protected readonly replyToMessage = computed(() => this.store.replyToMessage());
-  protected showRoomList = signal(!this.isGroupView());
+  // Hidden initially: a room is always auto-selected (see the auto-select effect below), so the view
+  // opens straight to the conversation. The user reveals the room list via the chevron / chat-menu
+  // toggle. In group view it stays hidden (the reopen button is suppressed there).
+  protected showRoomList = signal(false);
   protected isDragOver = signal(false);
   protected isThreadDragOver = signal(false);
   protected pendingImages = signal<File[]>([]);
@@ -624,13 +632,6 @@ export class MatrixChat implements OnDestroy {
         untracked(() => this.requestRoomAccess(roomAlias));
       }
     });
-    effect(() => {
-      let isGroupView = this.isGroupView();
-      if (isGroupView === undefined) isGroupView = false;
-      debugMessage(`MatrixChat.isGroupView = <${isGroupView}>`, this.store.currentUser());
-      this.showRoomList.set(isGroupView === false);
-    });
-
     // Persist the last opened room so the next visit lands on it (browser only).
     effect(() => {
       const roomId = this.store.currentRoomId();
@@ -977,7 +978,8 @@ export class MatrixChat implements OnDestroy {
   }
 
   // open the chat help modal (shortcuts + direct-vs-group explanation)
-  protected async openChatHelp(): Promise<void> {
+  // public so the parent ChatPage can trigger it from the hoisted info icon (group view)
+  public async openChatHelp(): Promise<void> {
     const modal = await this.modalController.create({ component: ChatHelpModal });
     await modal.present();
   }

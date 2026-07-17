@@ -138,7 +138,7 @@ import { PageStore } from './page.store';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <okr-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()"/>
+                      <okr-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()" [toggleStates]="{ toggleEditMode: editMode() }"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -228,6 +228,10 @@ export class ContentPage {
   protected showDebugInfo = computed(() => this.store.showDebugInfo());
   protected popupId = computed(() => 'c_contentpage_' + this.store.page()?.okey);
   protected editMode = signal(false);
+  /** Whether edit mode is active. Public so a parent (group view) can reflect it in a hoisted toggle menu item. */
+  public isEditModeActive(): boolean {
+    return this.editMode();
+  }
   protected page = computed(() => this.store.page());
   protected sections = computed(() => this.store.pageSections());
   protected isEmptyPage = computed(() => this.sections().length === 0);

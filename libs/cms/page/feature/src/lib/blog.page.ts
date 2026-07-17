@@ -63,7 +63,7 @@ import { BlogStream } from './blog-stream';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                   <ng-template>
                     <ion-content>
-                      <okr-menu [menuName]="contextMenuName" />
+                      <okr-menu [menuName]="contextMenuName" [toggleStates]="{ toggleEditMode: editMode() }" />
                     </ion-content>
                   </ng-template>
                 </ion-popover>

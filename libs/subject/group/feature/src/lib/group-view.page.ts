@@ -42,6 +42,12 @@ import { GroupStore } from './group.store';
               <ion-icon slot="icon-only" src="{{ viewToggleIcon() | svgIcon }}" />
             </ion-button>
           }
+          <!-- info (help) icon of the chat segment, hoisted left of the context menu -->
+          @if(showSegmentInfo()) {
+            <ion-button (click)="openSegmentInfo()">
+              <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
+            </ion-button>
+          }
           <!-- context menu of the selected segment, hoisted from the segment toolbar -->
           @if(showSegmentContextMenu()) {
             <ion-button [id]="segmentPopupId">
@@ -50,7 +56,7 @@ import { GroupStore } from './group.store';
             <ion-popover [trigger]="segmentPopupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onSegmentPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
-                  <okr-menu [menuName]="segmentContextMenuName()!" [forceVisible]="isGroupAdmin()" />
+                  <okr-menu [menuName]="segmentContextMenuName()!" [forceVisible]="isGroupAdmin()" [toggleStates]="segmentToggleStates()" />
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -58,7 +64,7 @@ import { GroupStore } from './group.store';
         </ion-buttons>
       </ion-toolbar>
       <ion-toolbar>
-      <ion-segment [scrollable]="true" color="secondary" (ionChange)="onSegmentChanged($event)" value="content">
+      <ion-segment [scrollable]="true" color="secondary" (ionChange)="onSegmentChanged($event)" [value]="selectedSegment()">
         @if(hasContent()) {
           <ion-segment-button value="content">
             <ion-label>{{ store.i18n.segment_content() }}</ion-label>
@@ -110,7 +116,7 @@ import { GroupStore } from './group.store';
           }
           @case ('chat') {
             @defer (on immediate) {
-              <okr-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
+              <okr-page-dispatcher id="{{id + '_chat'}}" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             } @error {
@@ -137,7 +143,7 @@ import { GroupStore } from './group.store';
           }
           @case ('files') {
             @defer (on immediate) {
-              <okr-document-list [listId]="listId()" contextMenuName="disable" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+              <okr-document-list [listId]="listId()" contextMenuName="disable" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             } @error {
@@ -187,7 +193,8 @@ export class GroupViewPage implements ViewWillEnter {
   protected readonly listId = computed(() => `f:${this.groupKey()}`);
   protected currentUser = computed(() => this.store.currentUser());
   protected isGroupAdmin = computed(() => isAdminMember(this.group(), this.currentUser()?.personKey));
-  protected selectedSegment = computed(() => this.store.segment());
+  // Effective segment: the user's explicit choice, else the first enabled segment by priority.
+  protected selectedSegment = computed(() => this.store.segment() ?? this.defaultSegment());
   protected group = computed(() => this.store.group());
   protected name = computed(() => this.formData()?.name ?? DEFAULT_NAME);
   protected id = computed(() => this.formData()?.okey ?? DEFAULT_ID);
@@ -197,6 +204,18 @@ export class GroupViewPage implements ViewWillEnter {
   protected hasTasks = computed(() => this.formData()?.hasTasks ?? true);
   protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
+  // First enabled segment in priority order: content > chat > todos(tasks) > members, then calendar/files as fallback.
+  protected readonly defaultSegment = computed(() => {
+    const ordered: ReadonlyArray<readonly [boolean, string]> = [
+      [this.hasContent(), 'content'],
+      [this.hasChat(), 'chat'],
+      [this.hasTasks(), 'tasks'],
+      [this.hasMembers(), 'members'],
+      [this.hasCalendar(), 'calendar'],
+      [this.hasFiles(), 'files'],
+    ];
+    return ordered.find(([enabled]) => enabled)?.[1] ?? 'content';
+  });
   protected path = computed(() => getDocumentStoragePath(this.store.tenantId(), 'group', this.group()?.okey));
   protected groupTags = computed(() => this.store.getTags());
   protected color = computed(() => this.id().startsWith('notfall') ? 'danger' : 'light');
@@ -212,16 +231,20 @@ export class GroupViewPage implements ViewWillEnter {
   private readonly taskList = viewChild(TaskList);
   private readonly documentList = viewChild(DocumentList);
   private readonly membershipList = viewChild(MembershipList);
+  // content/chat render through the PageDispatcher; it exposes a hoist facade we delegate to.
+  private readonly pageDispatcher = viewChild(PageDispatcher);
 
   protected readonly segmentPopupId = 'group-segment-menu';
 
-  // Context menu name of the selected segment (undefined for content/chat).
+  // Context menu name of the selected segment.
   protected readonly segmentContextMenuName = computed<string | undefined>(() => {
     switch (this.selectedSegment()) {
       case 'calendar': return 'c-calevents';
       case 'tasks': return 'c-tasks';
       case 'files': return 'c-folder';
       case 'members': return 'c-groupmembers';
+      case 'content':
+      case 'chat': return this.pageDispatcher()?.hoistMenuName();
       default: return undefined;
     }
   });
@@ -234,8 +257,30 @@ export class GroupViewPage implements ViewWillEnter {
       case 'tasks': return this.taskList()?.canChange() ?? false;
       case 'files': return this.documentList()?.canChange() ?? false;
       case 'members': return this.membershipList()?.canChange() ?? false;
+      case 'content':
+      case 'chat': return this.pageDispatcher()?.showHoistMenu() ?? false;
       default: return false;
     }
+  });
+
+  // Chat exposes an info (help) icon, hoisted left of the context menu.
+  protected readonly showSegmentInfo = computed(() => this.pageDispatcher()?.showHoistInfo() ?? false);
+
+  // State of any 'toggle' menu items in the hoisted context menu (e.g. the files filter show/hide).
+  protected readonly segmentToggleStates = computed<Record<string, boolean>>(() => {
+    const states: Record<string, boolean> = {};
+    switch (this.selectedSegment()) {
+      case 'files':
+        states['toggleFilter'] = this.documentList()?.isFilterVisible() ?? false;
+        break;
+      case 'tasks':
+        states['toggleFilter'] = this.taskList()?.isFilterVisible() ?? false;
+        break;
+      case 'content':
+        states['toggleEditMode'] = this.pageDispatcher()?.contentEditActive() ?? false;
+        break;
+    }
+    return states;
   });
 
   // Only calendar/tasks/files expose a list/alternative view toggle.
@@ -275,7 +320,13 @@ export class GroupViewPage implements ViewWillEnter {
       case 'tasks': await this.taskList()?.onPopoverDismiss($event); break;
       case 'files': await this.documentList()?.onPopoverDismiss($event); break;
       case 'members': await this.membershipList()?.onPopoverDismiss($event); break;
+      case 'content':
+      case 'chat': await this.pageDispatcher()?.onHoistMenuDismiss($event); break;
     }
+  }
+
+  protected async openSegmentInfo(): Promise<void> {
+    await this.pageDispatcher()?.openHoistInfo();
   }
 
   constructor() {

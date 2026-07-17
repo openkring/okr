@@ -377,7 +377,7 @@ export class AocChat {
 
     opts.buttons.push(createActionSheetButton('chat.actionsheet.showDetails', this.store.i18n.chat_details(), this.imgixBaseUrl, 'info-circle'));
     if (roomId) {
-      opts.buttons.push(createActionSheetButton('chat.actionsheet.kick', this.store.i18n.chat_member_kick(), this.imgixBaseUrl, 'exit'));
+      opts.buttons.push(createActionSheetButton('chat.actionsheet.kick', this.store.i18n.chat_member_kick(), this.imgixBaseUrl, 'cancel'));
     }
     opts.buttons.push(createActionSheetButton('chat.actionsheet.deactivate', this.store.i18n.chat_user_deactivate(), this.imgixBaseUrl, 'trash'));
     opts.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));

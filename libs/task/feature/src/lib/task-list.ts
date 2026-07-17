@@ -1,11 +1,11 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, PLATFORM_ID, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { PersonModel, RoleName, TaskModel } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, getAvatarInfo, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -64,7 +64,7 @@ import { TaskMove, TaskStore } from './task.store';
             <ion-popover trigger="c-tasks" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
+                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [toggleStates]="{ toggleFilter: showFilter() }"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -96,14 +96,16 @@ import { TaskMove, TaskStore } from './task.store';
         </ion-item>
       }
 
-      <!-- search and filters -->
-      <okr-list-filter
-        (searchTermChanged)="onSearchtermChange($event)"
-        (tagChanged)="onTagSelected($event)" [tags]="tags()"
-        (typeChanged)="onPrioritySelected($event)" [types]="priorities()"
-        (stateChanged)="onStateSelected($event)" [states]="states()"
-        [initialView]="showViewToggle() ? 'list' : undefined" gridIcon="grid" (viewToggleChanged)="onViewChange($event)"
-      />
+      <!-- search and filters — hidden on small screens by default; toggled via the context-menu 'toggleFilter' action -->
+      @if(showFilter()) {
+        <okr-list-filter
+          (searchTermChanged)="onSearchtermChange($event)"
+          (tagChanged)="onTagSelected($event)" [tags]="tags()"
+          (typeChanged)="onPrioritySelected($event)" [types]="priorities()"
+          (stateChanged)="onStateSelected($event)" [states]="states()"
+          [initialView]="showViewToggle() ? 'list' : undefined" gridIcon="grid" (viewToggleChanged)="onViewChange($event)"
+        />
+      }
     </ion-header>
 
   <!-- list or board -->
@@ -152,7 +154,11 @@ export class TaskList {
   private readonly modalController = inject(ModalController);
   private readonly quickEntryService = inject(QuickEntryService);
   private readonly modelSelectService = inject(ModelSelectService);
+  private readonly platformId = inject(PLATFORM_ID);
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
+  // filter row: shown by default from Ionic's sm breakpoint (576px), hidden on smaller screens.
+  // Toggled via the context-menu 'toggleFilter' action.
+  protected readonly showFilter = signal(isBrowser(this.platformId) && window.innerWidth >= 576);
   protected quickEntryText = signal('');
   private isSettingQuickEntryValue = false;
 
@@ -190,6 +196,11 @@ export class TaskList {
   /** Flip between list and board view. Public so a parent toolbar (group view) can drive the hoisted toggle. */
   public toggleView(): void {
     this.onViewChange(!this.isListView());
+  }
+
+  /** Whether the filter row is currently visible. Public so a parent (group view) can reflect it in a hoisted toggle menu item. */
+  public isFilterVisible(): boolean {
+    return this.showFilter();
   }
 
   protected onViewChange(showList: boolean): void {
@@ -296,6 +307,7 @@ export class TaskList {
     switch (selectedMethod) {
       case 'add': await this.store.add(!this.canChange()); break;
       case 'export': await this.store.export('raw'); break;
+      case 'toggleFilter': this.showFilter.update(v => !v); break;
       default: error(undefined, `TaskList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

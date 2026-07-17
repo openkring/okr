@@ -32,7 +32,8 @@ export const initialState: GroupState = {
   searchTerm: '',
   selectedTag: '',
   groupKey: undefined,
-  selectedSegment: 'content'
+  // undefined until the user picks a segment; the group view falls back to the first enabled segment by priority.
+  selectedSegment: undefined
 };
 
 export const GroupStore = signalStore(
