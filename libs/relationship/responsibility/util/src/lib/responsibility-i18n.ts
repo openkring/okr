@@ -7,7 +7,7 @@ export const RESPONSIBILITY_I18N_KEYS = {
   responsibility:                 PFX + 'responsibility',
   responsibilities:               PFX + 'responsibilities',
   responsible:                    PFX + 'responsible',
-  delegate:                       PFX + 'delegate',
+  delegate:                       PFX + 'delegate.label',
   empty:                          PFX + 'empty',
 
   create:                         PFX + 'create.label',
@@ -52,21 +52,21 @@ export const RESPONSIBILITY_I18N_KEYS = {
   name_placeholder:                PFX + 'name.placeholder',
   name_helper:                     PFX + 'name.helper',
 
-  validFrom_label:                 PFX + 'validFrom.label',
-  validFrom_placeholder:           PFX + 'validFrom.placeholder',
-  validFrom_helper:                PFX + 'validFrom.helper',
+  validFrom_label:               PFX + 'valid.from.label',
+  validFrom_placeholder:         PFX + 'valid.from.placeholder',
+  validFrom_helper:              PFX + 'valid.from.helper',
 
-  validTo_label:                   PFX + 'validTo.label',
-  validTo_placeholder:             PFX + 'validTo.placeholder',
-  validTo_helper:                  PFX + 'validTo.helper',
+  validTo_label:                 PFX + 'valid.to.label',
+  validTo_placeholder:           PFX + 'valid.to.placeholder',
+  validTo_helper:                PFX + 'valid.to.helper',
 
-  delegateValidFrom_label:         PFX + 'delegateValidFrom.label',
-  delegateValidFrom_placeholder:   PFX + 'delegateValidFrom.placeholder',
-  delegateValidFrom_helper:        PFX + 'delegateValidFrom.helper',
-  
-  delegateValidTo_label:           PFX + 'delegateValidTo.label',
-  delegateValidTo_placeholder:     PFX + 'delegateValidTo.placeholder',
-  delegateValidTo_helper:          PFX + 'delegateValidTo.helper',
+  delegateValidFrom_label:            PFX + 'delegate.from.label',
+  delegateValidFrom_placeholder:      PFX + 'delegate.from.placeholder',
+  delegateValidFrom_helper:           PFX + 'delegate.from.helper',
+
+  delegateValidTo_label:              PFX + 'delegate.to.label',
+  delegateValidTo_placeholder:        PFX + 'delegate.to.placeholder',
+  delegateValidTo_helper:             PFX + 'delegate.to.helper',
 
   as_title:                        '@actionsheet.title',
   copy_conf:                       '@copy.conf',

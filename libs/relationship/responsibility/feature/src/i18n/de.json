@@ -4,7 +4,6 @@
   "responsibilities": "Verantwortlichkeiten",
   "responsible": "Verantwortlich",
   "desc": "Eine Zuständigkeit einer Person für gewisse Tätigkeiten.",
-  "delegate": "Stellvertretung",
   "empty": "Keine Verantwortungen gefunden.",
 
   "create": {
@@ -48,11 +47,10 @@
     }
   },
 
-
-  "okey": { 
-    "label": "Schlüssel",
-    "placeholder": "",
-    "helper": ""
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "Die eindeutige ID des Datensatzes in der Datenbank."
   },
   "notes": {
     "label": "Notizen",
@@ -60,29 +58,36 @@
     "helper": "Beliebiger Text - nur für privilegierte User sichtbar."
   },
   "name": {
-    "label": "Bezeichnung",
+    "label": "Name",
     "placeholder": "Bezeichnung eingeben",
-    "helper": ""
+    "helper": "Eine kurze Beschreibung der Verantwortung."
   },
-  "validFrom": {
-    "label": "Gültig ab",
-    "placeholder": "TT.MM.JJJJ",
-    "helper": "" 
+  "valid": {
+    "from": {
+      "label": "Gültig ab",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Ab diesem Tag ist die Verantwortung gültig."
+    },
+    "to": {
+      "label": "Gültig bis",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Bis zu diesem Tag bleibt die Verantwortung gültig."
+    }
   },
-  "validTo": {
-    "label": "Gültig bis",
-    "placeholder": "TT.MM.JJJJ",
-    "helper": "" 
+
+  "delegate": {
+    "label": "Stellvertretung",
+    "from": {
+      "label": "ab",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Die Stellvertretung startet an diesem Tag."
+    },
+    "to": {
+      "label": "bis",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "Die Stellvertretung endet an diesem Tag."
+    }
   },
-  "delegateValidFrom": {
-    "label": "Stellvertretung ab",
-    "placeholder": "TT.MM.JJJJ",
-    "helper": ""
-  },
-  "delegateValidTo": {
-    "label": "Stellvertretung bis",
-    "placeholder": "TT.MM.JJJJ",
-    "helper": ""
-  }
+
 }
 

@@ -69,5 +69,32 @@
 
   "readonly": {
     "banner": "Diese Liste ist readonly. Die Kreditoren werden in Bexio bewirtschaftet."
+  },
+
+  "bill_state": {
+    "name": "Rechnungsstatus",
+    "all": {
+      "label": "Alle Stati"
+    },
+    "draft": {
+      "label": "Entwurf",
+      "description": "Die Rechnung ist ein Entwurf und wurde noch nicht versendet."
+    },
+    "pending": {
+      "label": "Offen",
+      "description": "Die Rechnung wurde versendet und ist noch nicht bezahlt."
+    },
+    "paid": {
+      "label": "Bezahlt",
+      "description": "Die Rechnung wurde bezahlt."
+    },
+    "overdue": {
+      "label": "Überfällig",
+      "description": "Die Zahlungsfrist ist überschritten, die Rechnung ist überfällig."
+    },
+    "cancelled": {
+      "label": "Storniert",
+      "description": "Die Rechnung wurde storniert."
+    }
   }
 }

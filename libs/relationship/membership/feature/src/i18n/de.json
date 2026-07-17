@@ -3,6 +3,7 @@
   "memberships": "Mitgliedschaften",
   "description": "Beschreibt die Mitgliedschaften einer Person.",
   "members": "Mitglieder",
+  "adminMarker": "(Admin)",
   "reldesc1": "Mitgliedschaft von",
   "reldesc2": "bei",
   "newDesc": "soll Mitglied werden bei",
@@ -75,7 +76,6 @@
     "srv": "SRV-Liste",
     "address": "Adressliste"
   },
-
   "category": {
     "label": {
       "label": "Kategorie",
@@ -91,7 +91,6 @@
       "helperDate": "Das Datum, ab dem die neue Kategorie gelten soll. Die aktuelle Mitgliedschaft wird einen Tag vorher beendet. Standardmässig wird das heutige Datum vorgeschlagen."
     }
   },
-
   "invoice": {
     "create": {
       "label": "Rechnung erstellen",
@@ -148,7 +147,6 @@
       "title": "Mitgliedergebühren",
       "empty": "Keine Einträge gefunden"
     },
-
     "jb": {
       "label": "Jahresbeitrag",
       "placeholder": "nnn",
@@ -191,7 +189,6 @@
     },
     "total": "Total"
   },
-
   "list": {
     "header": {
       "name": "Name",
@@ -224,7 +221,7 @@
       "title": "Alumni"
     },
     "deceased": {
-      "title": "Verstorbene Mitglieder"
+      "title": "Verstorbene"
     },
     "entries": {
       "title": "Eintritte",
@@ -235,8 +232,6 @@
       "yearLabel": "Austrittsjahr"
     }
   },
-
-
   "memberId": {
     "label": "Mitglieder ID",
     "placeholder": "nnnnn",
@@ -312,40 +307,40 @@
     "placeholder": "+41 79 123 1234"
   },
   "streetname": {
-      "label": "Strasse",
-      "placeholder": "Strassenname ohne Nr.",
-      "error": "Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen.",
-      "helper": "Strassenname ohne die Hausnummer."
+    "label": "Strasse",
+    "placeholder": "Strassenname ohne Nr.",
+    "error": "Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen.",
+    "helper": "Strassenname ohne die Hausnummer."
   },
   "streetnumber": {
-      "label": "Nr.",
-      "placeholder": "Hausnummer an der Strasse",
-      "error": "Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen.",
-      "helper": "Nur die Hausnummer (ohne Strassenangabe)."
+    "label": "Nr.",
+    "placeholder": "Hausnummer an der Strasse",
+    "error": "Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen.",
+    "helper": "Nur die Hausnummer (ohne Strassenangabe)."
   },
   "countrycode": {
-      "label": "Land",
-      "placeholder": "CH",
-      "error": "Es muss ein 2-stelliges Landeskürzel eingegeben werden, z.B. CH für die Schweiz.",
-      "helper": "Das 2-stellige Landeskürzel gemäss ISO 3166-1 alpha 2, siehe https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes"
+    "label": "Land",
+    "placeholder": "CH",
+    "error": "Es muss ein 2-stelliges Landeskürzel eingegeben werden, z.B. CH für die Schweiz.",
+    "helper": "Das 2-stellige Landeskürzel gemäss ISO 3166-1 alpha 2, siehe https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes"
   },
   "zipcode": {
-      "label": "PLZ",
-      "placeholder": "PLZ",
-      "error": "Es muss eine vierstellige Postleitzahl eingegeben werden.",
-      "helper": "Postleitzahl"
+    "label": "PLZ",
+    "placeholder": "PLZ",
+    "error": "Es muss eine vierstellige Postleitzahl eingegeben werden.",
+    "helper": "Postleitzahl"
   },
   "city": {
-      "label": "Ort",
-      "placeholder": "Ortsname",
-      "error": "Es sind nur Buchstaben ohne Sonderzeichen oder Zahlen erlaubt.",
-      "helper": "Eine Ortsangabe, z.B. Name der Stadt oder Gemeinde."
+    "label": "Ort",
+    "placeholder": "Ortsname",
+    "error": "Es sind nur Buchstaben ohne Sonderzeichen oder Zahlen erlaubt.",
+    "helper": "Eine Ortsangabe, z.B. Name der Stadt oder Gemeinde."
   },
   "web": {
-      "label": "Webseite",
-      "placeholder": "https://www.domain.ch",
-      "helper": "Die Webseite der Organisation.",
-      "error": "Die Webseite muss in folgendem Format angegeben werden: https://www.domain.ch."
+    "label": "Webseite",
+    "placeholder": "https://www.domain.ch",
+    "helper": "Die Webseite der Organisation.",
+    "error": "Die Webseite muss in folgendem Format angegeben werden: https://www.domain.ch."
   },
   "dateOfEntry": {
     "label": "Eintrittsdatum",
@@ -372,7 +367,6 @@
     "placeholder": "dd.mm.yyyy",
     "helper": "An diesem Datum ist die Person gestorben."
   },
-
   "mcat_scs": {
     "label": "Mitglieder Kategorie",
     "labelOld": "Aktuelle Kategorie",
@@ -414,7 +408,6 @@
       "description": "Passiv Mitglied"
     }
   },
-
   "mcat_srv": {
     "label": "Mitglieder Kategorie",
     "helper": "Mitglieder Kategorie",
@@ -442,7 +435,6 @@
       "description": "Passiv Mitglied"
     }
   },
-
   "mcat_default": {
     "label": "Mitglieder Kategorie",
     "helper": "Mitglieder Kategorie",
@@ -461,7 +453,6 @@
       "label": "Jugendliche",
       "description": "Junior oder Juniorin bis max 18 Jahre."
     },
-
     "mcat_p13": {
       "all": {
         "label": "Alle",
@@ -493,7 +484,6 @@
         "description": "Passiv Mitglied"
       }
     },
-
     "state": {
       "helper": "Der Mitgliederstatus kann nicht editiert werden. Er wird automatisch von der Mitgliederkategorie abgeleitet. Der Status kann in der Kategorien-Definition pro Kategorie gesetzt werden.",
       "applied": {
