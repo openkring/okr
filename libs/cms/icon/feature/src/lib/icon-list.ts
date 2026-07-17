@@ -9,7 +9,7 @@ import {
 import { IconModel, RoleName } from '@okr/shared-models';
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
 import { ICON_SETS, IconStore } from './icon.store';
@@ -172,7 +172,8 @@ export class IconList {
   public contextMenuName = input.required<string>();
   public color = input('secondary');
   public view = input<'list' | 'grid'>('grid'); // initial view mode
-  public showMenuButton = input<boolean>(true);
+  // keepDefaultTrue: withComponentInputBinding() would otherwise set this to undefined on standalone
+  public showMenuButton = input(true, { transform: keepDefaultTrue });
 
   // filters
   protected searchTerm = linkedSignal(() => this.store.searchTerm());

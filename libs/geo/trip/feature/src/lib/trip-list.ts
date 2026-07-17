@@ -3,7 +3,7 @@ import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonChip, Ion
 
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
 import { RoleName, TripModel } from '@okr/shared-models';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -125,7 +125,8 @@ export class TripList {
   public listId = input('all');
   public contextMenuName = input.required<string>();
   public color = input('secondary');
-  public showMenuButton = input<boolean>(true);
+  // keepDefaultTrue: withComponentInputBinding() would otherwise set this to undefined on standalone
+  public showMenuButton = input(true, { transform: keepDefaultTrue });
 
   // derived
   protected readonly popupId = computed(() => 'c_trips_' + this.listId());

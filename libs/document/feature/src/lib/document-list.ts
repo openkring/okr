@@ -6,7 +6,7 @@ import { DocumentModel, RoleName } from '@okr/shared-models';
 import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
 import { FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -35,23 +35,25 @@ import { DocumentStore } from './document.store';
            (change)="onFilesSelected($event)" />
   }
   <ion-header>
-    @if(contextMenuName() !== 'disable') {
-      <ion-toolbar [color]="color()">
-        @if(showMenuButton() === true) {
-          <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        }
-        <!-- title: folder breadcrumb when filtered by folder AND the user is loaded
-             (so the folder reads aren't denied during the auth-restore window),
-             otherwise the document counts. -->
-        <ion-title>
-          @if(folderKey(); as fkey) {
-            @if(currentUser()) {
-              <okr-folder-breadcrumb [folderKey]="fkey" (folderSelected)="onFolderSelected($event)" />
-            }
-          } @else {
-            {{ filteredDocumentsCount() }}/{{ documentsCount() }} {{ store.i18n.documents() }}
+    <!-- toolbar always renders so the folder breadcrumb is visible; in group view (contextMenuName='disable')
+         the menu button, view toggle and context menu are hoisted to the group toolbar, so only the breadcrumb shows. -->
+    <ion-toolbar [color]="color()">
+      @if(contextMenuName() !== 'disable' && showMenuButton() === true) {
+        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+      }
+      <!-- title: folder breadcrumb when filtered by folder AND the user is loaded
+           (so the folder reads aren't denied during the auth-restore window),
+           otherwise the document counts. -->
+      <ion-title>
+        @if(folderKey(); as fkey) {
+          @if(currentUser()) {
+            <okr-folder-breadcrumb [folderKey]="fkey" (folderSelected)="onFolderSelected($event)" />
           }
-        </ion-title>
+        } @else {
+          {{ filteredDocumentsCount() }}/{{ documentsCount() }} {{ store.i18n.documents() }}
+        }
+      </ion-title>
+      @if(contextMenuName() !== 'disable') {
         <ion-buttons slot="end">
           <!-- list/grid view toggle — available to every viewer, left of the context menu -->
           <ion-button (click)="toggleView()">
@@ -64,14 +66,14 @@ import { DocumentStore } from './document.store';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [excludeNames]="['addFiles']"/>
+                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [excludeNames]="['addFiles']" [toggleStates]="{ toggleFilter: showFilter() }"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
           }
         </ion-buttons>
-      </ion-toolbar>
-    }
+      }
+    </ion-toolbar>
 
     <!-- search and filters — hidden by default; toggled via the context-menu 'toggleFilter' action -->
     @if(showFilter()) {
@@ -205,7 +207,8 @@ export class DocumentList {
   public readonly contextMenuName = input.required<string>();
   public color = input('secondary');
   public view = input<'list' | 'grid'>('list'); // initial view mode
-  public showMenuButton = input<boolean>(true);
+  // keepDefaultTrue: withComponentInputBinding() would otherwise set this to undefined on standalone
+  public showMenuButton = input(true, { transform: keepDefaultTrue });
   public groupAdmin = input(false);
 
   // filters
@@ -358,6 +361,11 @@ export class DocumentList {
   /** Flip between list and grid view. Public so a parent toolbar (group view) can drive the hoisted toggle. */
   public toggleView(): void {
     this.isListView.set(!this.isListView());
+  }
+
+  /** Whether the filter row is currently visible. Public so a parent (group view) can reflect it in a hoisted toggle menu item. */
+  public isFilterVisible(): boolean {
+    return this.showFilter();
   }
 
   /******************************* helpers *************************************** */
