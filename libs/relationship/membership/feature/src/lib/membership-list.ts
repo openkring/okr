@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop, IonNote } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
@@ -24,7 +24,7 @@ import { MembershipStore } from './membership.store';
     TranslatePipe, AsyncPipe, SvgIconPipe, RellogPipe, AvatarPipe, FullNamePipe,
     Spinner, ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
+    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover, IonNote
   ],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
@@ -38,9 +38,11 @@ import { MembershipStore } from './membership.store';
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
         @if (hasYearFilter()) {
-          <ion-title>{{ selectedMembershipsCount()}} {{ title() | translate | async }} {{ store.i18n.title_rel() }} {{ orgName() }}</ion-title>
+          <ion-title class="ion-hide-sm-down">{{ selectedMembershipsCount()}} {{ title() | translate | async }} {{ store.i18n.title_rel() }} {{ orgName() }}</ion-title>
+          <ion-title class="ion-hide-sm-up">{{ selectedMembershipsCount()}} {{ title() | translate | async }}</ion-title>
         } @else {
-          <ion-title>{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ store.i18n.title_rel() }} {{ orgName() }}</ion-title>
+          <ion-title class="ion-hide-sm-down">{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ store.i18n.title_rel() }} {{ orgName() }}</ion-title>
+          <ion-title class="ion-hide-sm-up">{{ selectedMembershipsCount()}} {{ title() | translate | async }}</ion-title>
         }
         @if(canChange()) {
           <ion-buttons slot="end">
@@ -67,29 +69,32 @@ import { MembershipStore } from './membership.store';
           (typeChanged)="onTypeSelected($event)" [types]="types()"
         />
       }
-     } @else {
-      <okr-list-filter
-        (searchTermChanged)="onSearchtermChange($event)"
-        (tagChanged)="onTagSelected($event)" [tags]="tags()"
-        (typeChanged)="onTypeSelected($event)" [types]="types()"
-        (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
-        (yearChanged)="onYearSelected($event)" [years]="years()"
-      />
-     }
-
-    <!-- list header -->
-    <ion-toolbar color="light" class="ion-hide-sm-down">
-      <ion-item lines="none">
-        <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
-        @if(view() === 'mcat') {
-          <ion-label><strong>{{ store.i18n.category_abbreviation() }}</strong></ion-label>
-         }
-        @if(view() === 'contact') {
-          <ion-label><strong>{{ store.i18n.phone() }}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.email() }}</strong></ion-label>
-        }
-      </ion-item>
-    </ion-toolbar>
+    } @else {
+      @if (hasYearFilter()) {
+        <okr-list-filter class="ion-hide-sm-down"
+          (searchTermChanged)="onSearchtermChange($event)"
+          (tagChanged)="onTagSelected($event)" [tags]="tags()"
+          (typeChanged)="onTypeSelected($event)" [types]="types()"
+          (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
+          (yearChanged)="onYearSelected($event)" [years]="years()"
+        />
+        <okr-list-filter class="ion-hide-sm-up"
+          (searchTermChanged)="onSearchtermChange($event)"
+          (yearChanged)="onYearSelected($event)" [years]="years()"
+        />
+      } @else {
+        <okr-list-filter class="ion-hide-sm-down"
+          (searchTermChanged)="onSearchtermChange($event)"
+          (tagChanged)="onTagSelected($event)" [tags]="tags()"
+          (typeChanged)="onTypeSelected($event)" [types]="types()"
+          (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
+        />
+        <okr-list-filter class="ion-hide-sm-up"
+          (searchTermChanged)="onSearchtermChange($event)"
+          (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
+        />
+      }
+    }
   </ion-header>
 
   <!-- list data -->
@@ -106,7 +111,19 @@ import { MembershipStore } from './membership.store';
               <ion-avatar slot="start">
                 <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
               </ion-avatar>
-              <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>
+              <ion-label>
+                @if(view() === 'mcat') {
+                  <ion-note color="medium" style="font-size:0.75rem" class="ion-hide-sm-up">
+                    {{membership.relLog | rellog}}
+                  </ion-note>
+                } 
+                <div>
+                  {{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}
+                  @if(isGroupAdmin(membership)) {
+                    <ion-note color="medium">{{ store.i18n.admin_marker() }}</ion-note>
+                  }
+                </div>
+              </ion-label>
               @if(view() === 'mcat') {
                 <ion-label class="ion-hide-sm-down">{{membership.relLog | rellog}}</ion-label>
               }
@@ -148,21 +165,15 @@ export class MembershipList {
 
   // computed
   protected hasYearFilter = computed(() => this.listId() === 'entries' || this.listId() === 'exits' || this.listId() === 'deceased'); 
-  protected membershipCategory = linkedSignal(() => this.hasYearFilter() || this.listId() !== 'active' || this.store.isLoading() ? undefined : this.store.membershipCategory());
+  protected membershipCategory = linkedSignal(() => this.listId() !== 'active' || this.store.isLoading() ? undefined : this.store.membershipCategory());
   protected genders = computed(() => this.store.genders());
   protected orgTypes = computed(() => this.store.orgTypes());
   protected readonly popupId = crypto.randomUUID();
   protected orgName = computed(() => this.store.orgName());
   protected admin = computed(() => getMainContact(this.group()));
-  protected tags = computed(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < SIZE_SM) return ''; // only show types on desktop, on mobile there is not enough space
-    return this.hasYearFilter() ? '' : this.store.getTags();
-  });
-  protected types = computed(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < SIZE_SM) return undefined; // only show types on desktop, on mobile there is not enough space
-    return this.hasYearFilter() ? undefined : (this.listId() === 'orgs' ? this.store.orgTypes() : this.store.genders());
-  });
-  protected years = computed(() => this.hasYearFilter() ? getYearList() : undefined);
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.listId() === 'orgs' ? this.store.orgTypes() : this.store.genders());
+  protected years = computed(() => getYearList());
   protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   protected readOnly = computed(() => !this.canChange());
@@ -324,7 +335,10 @@ export class MembershipList {
       }
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.person_view(), this.imgixBaseUrl, 'eye-on'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.chat_open(), this.imgixBaseUrl, 'chatbubbles'));
+    // no direct chat to oneself
+    if (membership.memberKey !== this.currentUser()?.personKey) {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.chat_open(), this.imgixBaseUrl, 'chatbubbles'));
+    }
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // privileged operations on membership
@@ -433,6 +447,11 @@ export class MembershipList {
 
   protected isOngoing(membership: MembershipModel): boolean {
     return isOngoing(membership.dateOfExit);
+  }
+
+  /** True if this member is a group admin of the current group (only meaningful in the group view). */
+  protected isGroupAdmin(membership: MembershipModel): boolean {
+    return isAdminMember(this.group(), membership.memberKey);
   }
 
   /**

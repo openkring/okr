@@ -28,7 +28,8 @@ import { PersonalRelStore } from './personal-rel.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedPersonalRelsCount()}}/{{personalRelsCount()}} {{ store.i18n.title() }}</ion-title>
+        <ion-title class="ion-hide-sm-down">{{ selectedPersonalRelsCount()}}/{{personalRelsCount()}} {{ store.i18n.title() }}</ion-title>
+        <ion-title class="ion-hide-sm-up">{{ selectedPersonalRelsCount()}} {{ store.i18n.title() }}</ion-title>
         <ion-buttons slot="end">
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
@@ -48,13 +49,17 @@ import { PersonalRelStore } from './personal-rel.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <okr-list-filter
+    <okr-list-filter  class="ion-hide-md-down"
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
       [showIcons]=false
     />
-
+    <okr-list-filter  class="ion-hide-md-up"
+      (searchTermChanged)="onSearchtermChange($event)"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+      [showIcons]=false
+    />
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
@@ -82,7 +87,7 @@ import { PersonalRelStore } from './personal-rel.store';
                     <ion-avatar slot="start">
                       <ion-img src="{{ 'person.' + personalRel.subjectKey | avatar }}" alt="avatar of first person" />
                     </ion-avatar>
-                    <ion-label class="ion-hide-md-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
+                    <ion-label class="ion-hide-sm-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
                   </ion-item>
                 </ion-col>
                 <ion-col size="6" size-md="4">
@@ -95,7 +100,7 @@ import { PersonalRelStore } from './personal-rel.store';
                     <ion-avatar slot="start">
                       <ion-img src="{{ 'person.' + personalRel.objectKey | avatar }}" alt="avatar of second person" />
                     </ion-avatar>
-                    <ion-label class="ion-hide-md-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
+                    <ion-label class="ion-hide-sm-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
                   </ion-item> 
                 </ion-col>
               </ion-row>

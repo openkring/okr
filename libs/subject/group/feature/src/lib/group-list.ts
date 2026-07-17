@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { GroupModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -21,7 +21,7 @@ import { GroupStore } from './group.store';
     AsyncPipe, SvgIconPipe, AvatarPipe, MemberAvatarsPipe,
     Spinner, EmptyList, Menu, ListFilter, AvatarDisplay,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover, IonAvatar, IonImg, IonList,
+    IonLabel, IonContent, IonItem, IonPopover, IonAvatar, IonImg, IonList,
 ],
   providers: [GroupStore],
   styles: [`
@@ -55,18 +55,7 @@ import { GroupStore } from './group.store';
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
     />
-
-      <!-- list header -->
-      <ion-toolbar color="primary">
-        <ion-grid>
-          <ion-row>
-            <ion-col>
-              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-toolbar>
-    </ion-header>
+  </ion-header>
 
   <!-- list data -->
   <ion-content #content>
