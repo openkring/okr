@@ -276,6 +276,9 @@ export class GroupViewPage implements ViewWillEnter {
       case 'tasks':
         states['toggleFilter'] = this.taskList()?.isFilterVisible() ?? false;
         break;
+      case 'calendar':
+        states['toggleFilter'] = this.caleventList()?.isFilterVisible() ?? false;
+        break;
       case 'content':
         states['toggleEditMode'] = this.pageDispatcher()?.contentEditActive() ?? false;
         break;

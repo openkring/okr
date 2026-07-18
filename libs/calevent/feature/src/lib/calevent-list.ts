@@ -74,10 +74,6 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         :host ::ng-deep .fc-toolbar-title {
           display: none !important;
         }
-        /* hide the search/filter toolbar on mobile — not enough room */
-        .events-filter {
-          display: none;
-        }
       }
     `,
   ],
@@ -93,20 +89,25 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
               <ion-buttons slot="start" class="ion-hide-lg-up"><ion-menu-button [autoHide]="false" /></ion-buttons>
             }
             <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ store.i18n.calevents() }}</ion-title>
-            @if(canChange()) {
-              <ion-buttons slot="end">
+            <ion-buttons slot="end">
+              @if(showViewToggle()) {
+                <ion-button (click)="toggleView()">
+                  <ion-icon slot="icon-only" src="{{ (isListView() ? 'calendar' : 'list') | svgIcon }}" />
+                </ion-button>
+              }
+              @if(canChange()) {
                 <ion-button id="{{ popupId() }}">
                   <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
                 </ion-button>
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
+                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [toggleStates]="{ toggleFilter: showFilter() }"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
-              </ion-buttons>
-            }
+              }
+            </ion-buttons>
           </ion-toolbar>
         }
 
@@ -133,14 +134,15 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           </ion-item>
         }
 
-        <!-- search and filters (hidden on mobile only in the group, where the view toggle is hoisted away) -->
-        <okr-list-filter [class.events-filter]="!showViewToggle()"
-          (searchTermChanged)="onSearchtermChange($event)"
-          (tagChanged)="onTagSelected($event)" [tags]="tags()"
-          (typeChanged)="onTypeSelected($event)" [types]="types()"
-          (yearChanged)="onYearSelected($event)" [years]="years()"
-          [initialView]="showViewToggle() ? view() : undefined" (viewToggleChanged)="onViewChange($event)" gridIcon="calendar"
-        />
+        <!-- search and filters — hidden on small screens by default; toggled via the context-menu 'toggleFilter' action -->
+        @if(showFilter()) {
+          <okr-list-filter
+            (searchTermChanged)="onSearchtermChange($event)"
+            (tagChanged)="onTagSelected($event)" [tags]="tags()"
+            (typeChanged)="onTypeSelected($event)" [types]="types()"
+            (yearChanged)="onYearSelected($event)" [years]="years()"
+          />
+        }
 
         <!-- list header -->
       @if(isListView()) {
@@ -368,6 +370,10 @@ export class CalEventList implements OnInit {
 
   private readonly platformId = inject(PLATFORM_ID);
 
+  // filter row: shown by default from Ionic's sm breakpoint (576px), hidden on smaller screens.
+  // Toggled via the context-menu 'toggleFilter' action.
+  protected readonly showFilter = signal(isBrowser(this.platformId) && window.innerWidth >= 576);
+
   constructor() {
     effect(() => this.store.setCalendarName(this.listId()));
 
@@ -553,6 +559,7 @@ export class CalEventList implements OnInit {
       case 'schedule':
         this.store.schedule();
         break;
+      case 'toggleFilter': this.showFilter.update(v => !v); break;
       default: error(undefined, `CalEventList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -727,6 +734,11 @@ export class CalEventList implements OnInit {
       ],
     });
     await alert.present();
+  }
+
+  /** Whether the filter row is currently visible. Public so a parent (group view) can reflect it in a hoisted toggle menu item. */
+  public isFilterVisible(): boolean {
+    return this.showFilter();
   }
 
   /** Flip between list and calendar view. Public so a parent toolbar (group view) can drive the hoisted toggle. */
