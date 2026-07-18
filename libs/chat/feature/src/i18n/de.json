@@ -66,7 +66,7 @@
     "intro": "Im Chat schreibst du direkt (1:1) oder in Gruppenräumen mit mehreren Personen und teilst Dateien, Fotos, Standorte und Umfragen.",
     "shortcuts": {
       "title": "Tastenkürzel",
-      "mention": "@ – eine Person erwähnen (aus der Mitgliederliste wählen)",
+      "mention": "@ – eine Person erwähnen (Liste erscheint beim Tippen, ↑↓ und Enter zum Wählen)",
       "mentionRoom": "@room – alle im Raum benachrichtigen",
       "date": "// – ein Datum einfügen",
       "location": "!! – einen Ort über die Standortauswahl teilen",

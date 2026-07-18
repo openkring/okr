@@ -1,4 +1,4 @@
-import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA, Signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA, Signal, Injector } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions, ModalController } from '@ionic/angular/standalone';
@@ -10,7 +10,8 @@ import { ButtonCopy } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { LocationModel, PersonModel } from '@okr/shared-models';
 
-import { isSupportedImageFile, MatrixChatI18n, MessageDraft, MentionRef } from '@okr/chat-util';
+import { isSupportedImageFile, MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
+import { MentionAutocomplete, MentionPick, MENTION_ROOM } from './mention-autocomplete';
 import 'emoji-picker-element';
 
 @Component({
@@ -23,7 +24,8 @@ import 'emoji-picker-element';
     ButtonCopy,
     IonTextarea,
     IonButton,
-    IonIcon
+    IonIcon,
+    MentionAutocomplete
 ],
   styles: [`
     :host {
@@ -64,6 +66,7 @@ import 'emoji-picker-element';
       padding: 8px 12px 2px;
     }
     .input-field {
+      position: relative;
       flex: 1;
       min-width: 0;
       max-height: 160px;
@@ -256,6 +259,16 @@ import 'emoji-picker-element';
       <!-- Row 1: text input (grows), with cancel + copy pinned to the end when there is text -->
       <div class="input-row">
         <div class="input-field">
+          @if (isMentionOpen()) {
+            <okr-mention-autocomplete
+              [query]="mentionQuery()!.query"
+              [candidates]="mentionCandidates()"
+              [showRoomOption]="canNotifyRoom()"
+              [activeIndex]="mentionActiveIndexClamped()"
+              [i18n]="i18n()"
+              (picked)="onMentionPicked($event)"
+            />
+          }
           <ion-textarea
             #textInput
             [(ngModel)]="messageText"
@@ -264,6 +277,10 @@ import 'emoji-picker-element';
             [autoGrow]="true"
             (ionInput)="onInput()"
             (keydown.enter)="onEnterKey($event)"
+            (keydown.tab)="onMentionNavigation($event, 'pick')"
+            (keydown.escape)="onMentionNavigation($event, 'close')"
+            (keydown.arrowUp)="onMentionNavigation($event, 'up')"
+            (keydown.arrowDown)="onMentionNavigation($event, 'down')"
           ></ion-textarea>
         </div>
         @if (messageText().trim().length > 0) {
@@ -345,6 +362,24 @@ export class MatrixMessageInput {
   private modelSelectService = inject(ModelSelectService);
   private isSettingQuickEntryValue = false;
   private mentions = signal<MentionRef[]>([]);
+  private injector = inject(Injector);
+
+  protected mentionQuery = signal<{ start: number; query: string } | null>(null);
+  protected mentionActiveIndex = signal(0);
+  protected mentionOverlay = viewChild(MentionAutocomplete);
+  protected isMentionOpen = computed(() => this.mentionQuery() !== null);
+
+  /**
+   * The raw `mentionActiveIndex` is only ever nudged by up/down navigation and reset on
+   * query change — it can go stale (point past the end) whenever the rendered option list
+   * shrinks for a reason that isn't itself a keystroke (e.g. `mentionCandidates` changing).
+   * Clamp it here so both the highlighted row and Enter/Tab picking always agree on a real
+   * option, and so an empty list never reports a spurious "active" index.
+   */
+  protected mentionActiveIndexClamped = computed(() => {
+    const count = this.mentionOverlay()?.options().length ?? 0;
+    return count === 0 ? 0 : Math.min(this.mentionActiveIndex(), count - 1);
+  });
 
   // inputs
   public i18n = input.required<MatrixChatI18n>();
@@ -354,6 +389,8 @@ export class MatrixMessageInput {
   public replyToMessage = input<any>();
   public fileAccept = input<string>('*/*');
   public pendingImages = input<File[]>([]);
+  public mentionCandidates = input<PersonModel[]>([]);
+  public canNotifyRoom = input<boolean>(false);
 
   // outputs
   messageSent = output<MessageDraft>();
@@ -398,6 +435,15 @@ export class MatrixMessageInput {
         const pruned = new Set([...s].filter(f => current.has(f)));
         return pruned.size === s.size ? s : pruned;
       });
+    });
+
+    // Close the mention overlay if it would render with zero options (e.g. the @-query
+    // narrows to no matches, or mentionCandidates changes out from under an open overlay).
+    // An empty floating box has nothing to pick — closing lets Enter fall through to send.
+    effect(() => {
+      if (this.isMentionOpen() && this.mentionOverlay() && this.mentionOverlay()!.options().length === 0) {
+        this.mentionQuery.set(null);
+      }
     });
 
     // Revoke all remaining object URLs on destroy
@@ -488,11 +534,12 @@ export class MatrixMessageInput {
     }
     const text = this.messageText().trim();
     if (text) {
-      const activeMentions = this.mentions().filter((m) => text.includes(`@${m.display}`));
+      const activeMentions = filterActiveMentions(text, this.mentions());
       const mentionRoom = /(^|\s)@room(\s|$)/.test(text);
       this.messageSent.emit({ text, mentions: activeMentions, mentionRoom });
       this.messageText.set('');
       this.mentions.set([]);
+      this.mentionQuery.set(null);
       this.typing.emit(false);
       const key = this.draftKey();
       if (key) localStorage.removeItem(key);
@@ -501,6 +548,12 @@ export class MatrixMessageInput {
 
   onEnterKey(event: Event) {
     const keyboardEvent = event as KeyboardEvent;
+    // While the mention overlay is open, Enter picks the highlighted entry instead of sending.
+    if (this.isMentionOpen() && (this.mentionOverlay()?.options().length ?? 0) > 0) {
+      event.preventDefault();
+      this.pickActiveMention();
+      return;
+    }
     // Send on Enter, new line on Shift+Enter
     if (!keyboardEvent.shiftKey) {
       event.preventDefault();
@@ -508,24 +561,79 @@ export class MatrixMessageInput {
     }
   }
 
+  /** Arrow/Tab/Escape handling — only active while the mention overlay is open. */
+  protected onMentionNavigation(event: Event, action: 'up' | 'down' | 'pick' | 'close'): void {
+    if (!this.isMentionOpen()) return;
+    const count = this.mentionOverlay()?.options().length ?? 0;
+    if (action === 'close') {
+      event.preventDefault();
+      this.mentionQuery.set(null);
+      return;
+    }
+    if (count === 0) return;
+    event.preventDefault();
+    const current = this.mentionActiveIndexClamped();
+    if (action === 'up') this.mentionActiveIndex.set((current - 1 + count) % count);
+    else if (action === 'down') this.mentionActiveIndex.set((current + 1) % count);
+    else this.pickActiveMention();
+  }
+
+  private pickActiveMention(): void {
+    const options = this.mentionOverlay()?.options() ?? [];
+    if (options.length === 0) return;
+    const option = options[this.mentionActiveIndexClamped()];
+    if (option) this.onMentionPicked(option);
+  }
+
+  /** Replace the @-token under the caret with the chosen mention. */
+  protected onMentionPicked(option: MentionPick): void {
+    const query = this.mentionQuery();
+    if (!query) return;
+    const text = this.messageText();
+    const textarea = this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;
+    const caret = textarea?.selectionStart ?? text.length;
+
+    let insert: string;
+    if (option.kind === 'room') {
+      insert = MENTION_ROOM;
+    } else {
+      const display = `${option.person.firstName} ${option.person.lastName}`;
+      insert = `@${display}`;
+      this.mentions.update((list) => [...list, { personKey: option.person.okey, display }]);
+    }
+
+    const next = `${text.slice(0, query.start)}${insert} ${text.slice(caret)}`;
+    this.messageText.set(next);
+    this.mentionQuery.set(null);
+    this.mentionActiveIndex.set(0);
+
+    const cursor = query.start + insert.length + 1;
+    afterNextRender(() => {
+      textarea?.focus();
+      textarea?.setSelectionRange(cursor, cursor);
+    }, { injector: this.injector });
+  }
+
+  /** Recompute the @-token under the caret; opens or closes the autocomplete overlay. */
+  private updateMentionQuery(): void {
+    const textarea = this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;
+    const text = this.messageText();
+    const caret = textarea?.selectionStart ?? text.length;
+    const query = findMentionQuery(text, caret);
+    this.mentionQuery.set(query);
+    if (query) this.mentionActiveIndex.set(0);
+  }
+
   async onInput(): Promise<void> {
     this.onTyping();
+    this.updateMentionQuery();
     if (this.isSettingQuickEntryValue) return;
     const value = this.messageText();
     const trigger = this.quickEntryService.detectTrigger(value);
     if (!trigger) return;
     this.isSettingQuickEntryValue = true;
     try {
-      if (trigger === 'person') {
-        const person: PersonModel | undefined = await this.modelSelectService.selectPerson();
-        if (person) {
-          const display = `${person.firstName} ${person.lastName}`;
-          this.mentions.update((list) => [...list, { personKey: person.okey, display }]);
-          this.messageText.set(this.quickEntryService.replaceToken(value, '@', `@${display}`));
-        } else {
-          this.messageText.set(value.slice(0, -1));
-        }
-      } else if (trigger === 'date') {
+      if (trigger === 'date') {
         const { DateTimeSelectModal } = await import('@okr/shared-ui');
         const modal = await this.modalController.create({ component: DateTimeSelectModal });
         await modal.present();
