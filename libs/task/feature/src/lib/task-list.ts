@@ -56,8 +56,13 @@ import { TaskMove, TaskStore } from './task.store';
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
         <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ store.i18n.tasks() }}</ion-title>
-        @if(canChange()) {
-          <ion-buttons slot="end">
+        <ion-buttons slot="end">
+          @if(showViewToggle()) {
+            <ion-button (click)="toggleView()">
+              <ion-icon slot="icon-only" src="{{ (isListView() ? 'grid' : 'list') | svgIcon }}" />
+            </ion-button>
+          }
+          @if(canChange()) {
             <ion-button id="c-tasks">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
@@ -68,8 +73,8 @@ import { TaskMove, TaskStore } from './task.store';
                 </ion-content>
               </ng-template>
             </ion-popover>
-          </ion-buttons>
-        }
+          }
+        </ion-buttons>
       </ion-toolbar>
       }
 
@@ -103,7 +108,6 @@ import { TaskMove, TaskStore } from './task.store';
           (tagChanged)="onTagSelected($event)" [tags]="tags()"
           (typeChanged)="onPrioritySelected($event)" [types]="priorities()"
           (stateChanged)="onStateSelected($event)" [states]="states()"
-          [initialView]="showViewToggle() ? 'list' : undefined" gridIcon="grid" (viewToggleChanged)="onViewChange($event)"
         />
       }
     </ion-header>
