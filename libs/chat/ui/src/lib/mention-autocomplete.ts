@@ -14,6 +14,14 @@ const ROOM_ALIASES = ['room', 'all', 'team', 'alle'];
 /** Maximum number of person suggestions shown at once. */
 const MAX_SUGGESTIONS = 8;
 
+/**
+ * Minimum query length before an alias match can surface @room.
+ * Below this length, short prefixes like "al" collide with person names
+ * (e.g. "Alice") because 'all'/'alle' also start with "al" — requiring
+ * 3+ chars lets persons win for short queries while still matching aliases.
+ */
+const MIN_ALIAS_QUERY_LENGTH = 3;
+
 export type MentionPick =
   | { kind: 'room' }
   | { kind: 'person'; person: PersonModel };
@@ -79,7 +87,11 @@ export class MentionAutocomplete {
   public options = computed((): MentionPick[] => {
     const query = this.query().toLowerCase();
     const result: MentionPick[] = [];
-    if (this.showRoomOption() && ROOM_ALIASES.some((alias) => alias.startsWith(query))) {
+    if (
+      this.showRoomOption() &&
+      (query.length === 0 ||
+        (query.length >= MIN_ALIAS_QUERY_LENGTH && ROOM_ALIASES.some((alias) => alias.startsWith(query))))
+    ) {
       result.push({ kind: 'room' });
     }
     const persons = this.candidates()
