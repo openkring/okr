@@ -41,6 +41,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   recording:                 PFX + 'recording',
   add_attachment:            PFX + 'addAttachment',
   mention_everyone:          PFX + 'mentionEveryone',
+  mention_me:                PFX + 'mentionMe',
   no_messages_start_conversation: PFX + 'noMessagesStartConversation',
 
   rooms:                     PFX + 'room.rooms',

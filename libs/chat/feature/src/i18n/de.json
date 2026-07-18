@@ -44,6 +44,7 @@
   "recording": "Aufnahme läuft...",
   "addAttachment": "Anhang hinzufügen",
   "mentionEveryone": "Alle im Raum erwähnen (@room)",
+  "mentionMe": "Mich selbst einfügen (@me)",
   "noMessagesStartConversation": "Es gibt noch keine Nachrichten. Starte die Konversation.",
   "room": {
     "rooms": "Chat-Räume",

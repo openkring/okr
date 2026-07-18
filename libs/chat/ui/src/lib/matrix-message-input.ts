@@ -269,6 +269,7 @@ import 'emoji-picker-element';
             [activeIndex]="mentionActiveIndex()"
             [instanceId]="instanceId"
             [i18n]="i18n()"
+            [currentUserName]="currentUserName()"
             (picked)="onMentionPicked($event)"
           />
         }
@@ -431,6 +432,17 @@ export class MatrixMessageInput {
   // derived
   private draftKey = computed(() => this.roomId() ? `chat-draft:${this.roomId()}` : undefined);
   protected buttonCopyI18n = computed(() => { return { copy_conf: this.i18n().copy_conf() } });
+  /**
+   * Current user's display name, for the `@me` mention entry.
+   * Read from the `AppStore` injection this component already has (rather than threading a
+   * new input down from the feature layer) — `currentPerson()` is the same source every other
+   * consumer (profile edit, address forms, tenant switcher, …) uses for the logged-in person's
+   * name.
+   */
+  protected currentUserName = computed(() => {
+    const person = this.appStore.currentPerson();
+    return person ? `${person.firstName} ${person.lastName}`.trim() : '';
+  });
 
   constructor() {
     // Restore draft when roomId changes
@@ -668,6 +680,10 @@ export class MatrixMessageInput {
     let insert: string;
     if (option.kind === 'room') {
       insert = MENTION_ROOM;
+    } else if (option.kind === 'me') {
+      // Plain text only — self-notification is deliberately not wanted, so no MentionRef
+      // is pushed and the Matrix send path (m.mentions) never sees this insertion.
+      insert = `@${this.currentUserName()}`;
     } else {
       // Trim: an empty lastName would otherwise yield "@Anna " + " " → a double space in the
       // message and a trailing space in the stored MentionRef.display.
