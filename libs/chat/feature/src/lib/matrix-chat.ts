@@ -379,6 +379,8 @@ import { ChatHelpModal } from './chat-help.modal';
                 <okr-matrix-message-input
                   [i18n]="store.i18n"
                   [roomId]="currentRoomId()"
+                  [mentionCandidates]="store.mentionCandidates()"
+                  [canNotifyRoom]="store.canNotifyRoom()"
                   [typingUsers]="typingUsers()"
                   [replyToMessage]="replyToMessage()"
                   [pendingImages]="pendingImages()"
@@ -458,6 +460,8 @@ import { ChatHelpModal } from './chat-help.modal';
                 <okr-matrix-message-input
                   [i18n]="store.i18n"
                   [typingUsers]="[]"
+                  [mentionCandidates]="store.mentionCandidates()"
+                  [canNotifyRoom]="store.canNotifyRoom()"
                   (messageSent)="onThreadMessageSent($event)"
                   (fileSent)="onThreadFileSent($event)"
                   (fileQueued)="onThreadFileQueued($event)"

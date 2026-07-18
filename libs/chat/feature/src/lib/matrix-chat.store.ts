@@ -8,7 +8,7 @@ import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
-import { MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@okr/shared-models';
+import { MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel, ROOM_SHAPE } from '@okr/shared-models';
 import { debugMessage } from '@okr/shared-util-core';
 import { AlertService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
@@ -180,6 +180,27 @@ export const _MatrixChatStore = signalStore(
         const threadId = state.selectedThreadId();
         if (!threadId) return undefined;
         return (state.messagesResource.value() ?? []).find(m => m.eventId === threadId);
+      }),
+
+      /**
+       * Persons that may be @-mentioned: the joined members of the current room, resolved
+       * against the tenant's person list. Recomputed when the room or the sync state
+       * changes, because the member list only fills in after the initial sync.
+       */
+      mentionCandidates: computed((): PersonModel[] => {
+        const roomId = state.currentRoomId();
+        if (!roomId || !state.isMatrixInitialized()) return [];
+        state.syncStateResource.value(); // re-run once members have synced
+        const keys = new Set(state.matrixService.getRoomMemberPersonKeys(roomId));
+        return state.appStore.allPersons().filter((p) => keys.has(p.okey?.toLowerCase() ?? ''));
+      }),
+
+      /** Whether the current user may trigger an @room notification in the current room. */
+      canNotifyRoom: computed(() => {
+        const roomId = state.currentRoomId();
+        if (!roomId || !state.isMatrixInitialized()) return false;
+        state.syncStateResource.value();
+        return state.matrixService.mayNotifyRoom(roomId);
       }),
     };
   }),
