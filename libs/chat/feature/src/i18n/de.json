@@ -67,11 +67,34 @@
     "intro": "Im Chat schreibst du direkt (1:1) oder in Gruppenräumen mit mehreren Personen und teilst Dateien, Fotos, Standorte und Umfragen.",
     "shortcuts": {
       "title": "Tastenkürzel",
-      "mention": "@ – eine Person erwähnen (Liste erscheint beim Tippen, ↑↓ und Enter zum Wählen)",
-      "mentionRoom": "@room – alle im Raum benachrichtigen",
-      "date": "// – ein Datum einfügen",
-      "location": "!! – einen Ort über die Standortauswahl teilen",
-      "send": "Enter – senden · Umschalt+Enter – neue Zeile"
+      "mention": {
+        "token": "@",
+        "desc": "In Gruppen-Chats öffnet sich beim Tippen die Liste der Raummitglieder. ↑↓ und Enter wählen eine Person aus, Escape schliesst die Liste wieder, ohne den eingegebenen Text zu verändern. In Direkt-Chats bleibt @ einfacher Text."
+      },
+      "mentionRoom": {
+        "token": "@room",
+        "desc": "Benachrichtigt alle Mitglieder des Raums. Die Kurzformen @team und @all (ab drei eingegebenen Zeichen) finden denselben Eintrag und fügen ebenfalls @room ein."
+      },
+      "mentionMe": {
+        "token": "@me",
+        "desc": "Fügt deinen eigenen Namen als Text ein, ohne dich selbst zu benachrichtigen."
+      },
+      "date": {
+        "token": "//",
+        "desc": "Öffnet die Datumsauswahl und fügt das gewählte Datum ein."
+      },
+      "location": {
+        "token": "!!",
+        "desc": "Öffnet die Standortauswahl und teilt den gewählten Ort."
+      },
+      "send": {
+        "token": "Enter",
+        "desc": "Sendet die Nachricht."
+      },
+      "newline": {
+        "token": "Umschalt+Enter",
+        "desc": "Fügt eine neue Zeile ein, ohne die Nachricht zu senden."
+      }
     },
     "chats": {
       "title": "Direkt- vs. Gruppen-Chats",
