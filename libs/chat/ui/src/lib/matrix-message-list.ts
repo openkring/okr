@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
 
 @Component({
   selector: 'okr-matrix-message-list',
@@ -390,7 +390,7 @@ import { formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, Mat
                       class="message-bubble"
                       [class.edited]="item.isEdited"
                       [class.redacted]="item.isRedacted"
-                      (click)="messageClicked.emit(item)"
+                      (click)="onBubbleClick($event, item)"
                     >
                       @if (item.isRedacted) {
                         <p class="message-text">Message deleted</p>
@@ -501,6 +501,13 @@ export class MatrixMessageList {
 
 
   messageClicked = output<MatrixMessage>();
+  /**
+   * Emits the (lowercased) Matrix-user-id localpart when a mention pill inside a
+   * received message's `formatted_body` is clicked, so the feature layer can resolve
+   * it against the person list and navigate — this component stays dumb and has no
+   * access to the person list itself.
+   */
+  personSelected = output<string>();
   imageClicked = output<{ message: MatrixMessage; group: MatrixMessage[] }>();
   reactionClicked = output<{messageId: string, emoji: string}>();
   threadClicked = output<string>();
@@ -578,6 +585,27 @@ export class MatrixMessageList {
 
   isOwnMessage(message: MatrixMessage): boolean {
     return message.sender === this.currentUserId();
+  }
+
+  /**
+   * Single click handler for the message bubble (the common ancestor of every
+   * `[innerHTML]="item.content.formatted_body"` render site — currently just the plain
+   * `m.text` case, but any future reply/edit-preview markup sharing this bubble is
+   * covered too). Intercepts clicks on a `matrix.to` person-mention anchor and routes
+   * them to `personSelected` instead of letting the browser navigate to matrix.to.
+   * Every other anchor (room links, ordinary links pasted into a message) is left
+   * untouched and falls through to the existing `messageClicked` action-sheet trigger.
+   */
+  protected onBubbleClick(event: MouseEvent, item: MatrixMessage): void {
+    const anchor = (event.target as HTMLElement | null)?.closest?.('a');
+    const href = anchor?.getAttribute('href');
+    const personKey = href ? extractMentionLocalpart(href) : undefined;
+    if (personKey) {
+      event.preventDefault();
+      this.personSelected.emit(personKey);
+      return;
+    }
+    this.messageClicked.emit(item);
   }
 
   protected isBatch(item: MessageOrBatch): item is ImageBatchGroup {

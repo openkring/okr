@@ -6,4 +6,5 @@ export * from './lib/chat-i18n';
 export * from './lib/matrix-log.util';
 export * from './lib/mention.util';
 export * from './lib/mention-query.util';
+export * from './lib/mention-link.util';
 export * from './lib/chat-view.util';

@@ -1,5 +1,6 @@
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -372,6 +373,7 @@ import { ChatHelpModal } from './chat-help.modal';
                     (threadClicked)="onThreadClicked($event)"
                     (pollVoteClicked)="onPollVoteClicked($event)"
                     (pollEndClicked)="onPollEndClicked($event)"
+                    (personSelected)="onPersonSelected($event)"
                   />
                 }
 
@@ -454,6 +456,7 @@ import { ChatHelpModal } from './chat-help.modal';
                     (threadClicked)="onThreadClicked($event)"
                     (pollVoteClicked)="onPollVoteClicked($event)"
                     (pollEndClicked)="onPollEndClicked($event)"
+                    (personSelected)="onPersonSelected($event)"
                   />
                 }
 
@@ -511,6 +514,7 @@ export class MatrixChat implements OnDestroy {
   private readonly alertService = inject(AlertService);
   private actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
+  private readonly router = inject(Router);
 
   private isInitializing = false; // Guard flag to prevent multiple initializations
   private isRequestingRoomAccess = false;
@@ -955,6 +959,30 @@ export class MatrixChat implements OnDestroy {
 
   onThreadClicked(eventId: string) {
     this.store.setSelectedThread(eventId);
+  }
+
+  /**
+   * A mention pill in a received message was clicked. `matrix-message-list` only knows
+   * the (lowercased) Matrix-user-id localpart — it has no access to the person list, so
+   * resolution happens here: match it case-insensitively against `PersonModel.okey`
+   * (mirrors how `mentionCandidates` in the store matches room members to persons,
+   * since Matrix user ids are always lowercased on creation but `okey` may not be).
+   * A route param that doesn't match a real document id would 404, so if no person is
+   * found we log and skip navigation rather than guessing.
+   *
+   * `PersonEditPage` may sit behind a role guard; we navigate unconditionally and let
+   * the guard decide (no pre-check here). If that means non-privileged users get
+   * bounced, that's a follow-up, not something to work around in this handler.
+   */
+  protected onPersonSelected(localpart: string): void {
+    const person = this.store.appStore.allPersons().find(
+      (p) => p.okey?.toLowerCase() === localpart.toLowerCase()
+    );
+    if (!person) {
+      console.warn(`MatrixChat: Could not resolve mentioned user '${localpart}' to a person`);
+      return;
+    }
+    this.router.navigate(['/person', person.okey]);
   }
 
   onCloseThread() {
