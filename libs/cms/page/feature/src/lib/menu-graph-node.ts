@@ -114,8 +114,10 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
           }
         </div>
 
-        <span class="node-name">{{node().state}}</span>
-        <span class="node-name">{{node().roleNeeded}}</span>
+        <div  class="ion-hide-sm-down">
+          <span class="node-name">{{node().state}}</span>
+          <span class="node-name">{{node().roleNeeded}}</span>
+        </div>
 
         <!-- Edit button -->
         <ion-button fill="clear" size="small" class="edit-btn" (click)="nodeEdit.emit(node())">

@@ -61,9 +61,13 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
       }
 
       <ion-toolbar>
-        <okr-list-filter 
+        <okr-list-filter class="ion-hide-sm-down"
           (searchTermChanged)="store.setSearchTerm($event)"
           (stateChanged)="store.setSelectedState($event)" [states]="states()"
+          (yearChanged)="store.setSelectedYear($event)" [years]="years()"
+        />
+        <okr-list-filter class="ion-hide-sm-up"
+          (searchTermChanged)="store.setSearchTerm($event)"
           (yearChanged)="store.setSelectedYear($event)" [years]="years()"
         />
       </ion-toolbar>
@@ -91,7 +95,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
                 <ion-label slot="end">
                   {{ trip.distance }} km
                 </ion-label>
-                <ion-chip slot="end" [color]="stateColor(trip.state)">{{ trip.state }}</ion-chip>
+                <ion-chip slot="end" class="ion-hide-sm-down" [color]="stateColor(trip.state)">{{ trip.state }}</ion-chip>
               </ion-item>
             }
           }
