@@ -8,6 +8,14 @@ import { MatrixChatI18n } from '@okr/chat-util';
 /** The canonical text inserted for a room-wide mention. */
 export const MENTION_ROOM = '@room';
 
+/** Stable DOM id of the overlay listbox — referenced by the composer's `aria-controls`. */
+export const MENTION_LISTBOX_ID = 'okr-mention-listbox';
+
+/** Deterministic DOM id of the option at `index` — referenced by `aria-activedescendant`. */
+export function mentionOptionId(index: number): string {
+  return `okr-mention-option-${index}`;
+}
+
 /** Aliases that also surface the @room entry, without ever being inserted verbatim. */
 const ROOM_ALIASES = ['room', 'all', 'team', 'alle'];
 
@@ -30,6 +38,10 @@ export type MentionPick =
   selector: 'okr-mention-autocomplete',
   standalone: true,
   imports: [IonIcon, SvgIconPipe],
+  host: {
+    'role': 'listbox',
+    '[id]': 'listboxId',
+  },
   styles: [`
     :host {
       position: absolute;
@@ -59,12 +71,16 @@ export type MentionPick =
   template: `
     @for (option of options(); track $index) {
       @if (option.kind === 'room') {
-        <div class="option room-option" [class.active]="$index === activeIndex()" (click)="picked.emit(option)">
+        <div class="option room-option" role="option" [id]="optionId($index)"
+             [attr.aria-selected]="$index === activeIndex()"
+             [class.active]="$index === activeIndex()" (click)="picked.emit(option)">
           <ion-icon src="{{ 'people' | svgIcon }}" />
           <span>{{ i18n().mention_everyone() }}</span>
         </div>
       } @else {
-        <div class="option" [class.active]="$index === activeIndex()" (click)="picked.emit(option)">
+        <div class="option" role="option" [id]="optionId($index)"
+             [attr.aria-selected]="$index === activeIndex()"
+             [class.active]="$index === activeIndex()" (click)="picked.emit(option)">
           <ion-icon src="{{ 'person' | svgIcon }}" />
           <span>{{ option.person.firstName }} {{ option.person.lastName }}</span>
         </div>
@@ -73,6 +89,12 @@ export type MentionPick =
   `,
 })
 export class MentionAutocomplete {
+  /** Host id, so the composer can point `aria-controls` at this listbox. */
+  protected readonly listboxId = MENTION_LISTBOX_ID;
+
+  /** Deterministic per-row id, matched by the composer's `aria-activedescendant`. */
+  protected optionId = mentionOptionId;
+
   // inputs
   public query = input.required<string>();
   public candidates = input.required<PersonModel[]>();

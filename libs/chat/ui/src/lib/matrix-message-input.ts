@@ -1,4 +1,4 @@
-import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA, Signal, Injector } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions, ModalController } from '@ionic/angular/standalone';
@@ -11,7 +11,7 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { LocationModel, PersonModel } from '@okr/shared-models';
 
 import { isSupportedImageFile, MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
-import { MentionAutocomplete, MentionPick, MENTION_ROOM } from './mention-autocomplete';
+import { MentionAutocomplete, MentionPick, MENTION_ROOM, MENTION_LISTBOX_ID, mentionOptionId } from './mention-autocomplete';
 import 'emoji-picker-element';
 
 @Component({
@@ -60,13 +60,16 @@ import 'emoji-picker-element';
 
     /* ── Row 1: text input ───────────────────────────────────── */
     .input-row {
+      /* Positioning context for the mention overlay. Deliberately NOT on .input-field:
+         that element is the scroll container (max-height + overflow-y:auto) and would
+         clip an overlay anchored at bottom:100%. Same pattern as .emoji-picker-wrapper. */
+      position: relative;
       display: flex;
       align-items: flex-end;
       gap: 4px;
       padding: 8px 12px 2px;
     }
     .input-field {
-      position: relative;
       flex: 1;
       min-width: 0;
       max-height: 160px;
@@ -258,21 +261,25 @@ import 'emoji-picker-element';
 
       <!-- Row 1: text input (grows), with cancel + copy pinned to the end when there is text -->
       <div class="input-row">
+        @if (isMentionOpen()) {
+          <okr-mention-autocomplete
+            [query]="mentionQuery()!.query"
+            [candidates]="mentionCandidates()"
+            [showRoomOption]="canNotifyRoom()"
+            [activeIndex]="mentionActiveIndex()"
+            [i18n]="i18n()"
+            (picked)="onMentionPicked($event)"
+          />
+        }
         <div class="input-field">
-          @if (isMentionOpen()) {
-            <okr-mention-autocomplete
-              [query]="mentionQuery()!.query"
-              [candidates]="mentionCandidates()"
-              [showRoomOption]="canNotifyRoom()"
-              [activeIndex]="mentionActiveIndexClamped()"
-              [i18n]="i18n()"
-              (picked)="onMentionPicked($event)"
-            />
-          }
           <ion-textarea
             #textInput
             [(ngModel)]="messageText"
             placeholder="{{ i18n().thread_reply_placeholder() }}"
+            role="combobox"
+            [attr.aria-expanded]="isMentionOpen()"
+            [attr.aria-controls]="MENTION_LISTBOX_ID"
+            [attr.aria-activedescendant]="mentionActiveDescendantId()"
             [rows]="1"
             [autoGrow]="true"
             (ionInput)="onInput()"
@@ -362,24 +369,36 @@ export class MatrixMessageInput {
   private modelSelectService = inject(ModelSelectService);
   private isSettingQuickEntryValue = false;
   private mentions = signal<MentionRef[]>([]);
-  private injector = inject(Injector);
 
   protected mentionQuery = signal<{ start: number; query: string } | null>(null);
+  /** The token Escape dismissed, so a caret-move recompute doesn't immediately reopen it. */
+  private mentionDismissed: { start: number; query: string } | null = null;
   protected mentionActiveIndex = signal(0);
   protected mentionOverlay = viewChild(MentionAutocomplete);
   protected isMentionOpen = computed(() => this.mentionQuery() !== null);
 
+  /** id of the overlay listbox — must match MentionAutocomplete's host id (aria-controls). */
+  protected readonly MENTION_LISTBOX_ID = MENTION_LISTBOX_ID;
+
+  /** aria-activedescendant: the id of the highlighted option, or null while closed. */
+  protected mentionActiveDescendantId = computed(() =>
+    this.isMentionOpen() ? mentionOptionId(this.mentionActiveIndex()) : null
+  );
+
   /**
-   * The raw `mentionActiveIndex` is only ever nudged by up/down navigation and reset on
-   * query change — it can go stale (point past the end) whenever the rendered option list
-   * shrinks for a reason that isn't itself a keystroke (e.g. `mentionCandidates` changing).
-   * Clamp it here so both the highlighted row and Enter/Tab picking always agree on a real
-   * option, and so an empty list never reports a spurious "active" index.
+   * Read-side clamp for the highlighted index.
+   *
+   * Deliberately a METHOD, not a computed bound in the template: it reads `options()` — a
+   * signal owned by the child component this view creates — and a parent binding that depends
+   * on child state dirties the parent view after it has been checked (NG0100). It is only
+   * called from event handlers (`pickActiveMention`, `onMentionNavigation`), never during CD.
+   * `mentionActiveIndex` itself is reset to 0 on every query change, so the bound raw value
+   * is always valid for the freshly rendered list.
    */
-  protected mentionActiveIndexClamped = computed(() => {
+  private clampedMentionIndex(): number {
     const count = this.mentionOverlay()?.options().length ?? 0;
     return count === 0 ? 0 : Math.min(this.mentionActiveIndex(), count - 1);
-  });
+  }
 
   // inputs
   public i18n = input.required<MatrixChatI18n>();
@@ -460,6 +479,23 @@ export class MatrixMessageInput {
       const save = () => {
         const ta = getNative();
         if (ta) this.savedCursorPos = ta.selectionStart;
+        // The caret can move without any `input` event (arrow keys, Home/End, a mouse click
+        // or a touch drag inside the textarea). Re-deriving the @-token here keeps
+        // `mentionQuery.start` in sync with the caret, so `onMentionPicked` never splices
+        // against a stale offset and duplicates text.
+        this.updateMentionQuery();
+      };
+      // Clicking away must not leave the overlay floating over the composer. Delay the close
+      // so a mousedown → blur → click sequence on an overlay option still reaches its handler
+      // (same trick as the emoji popover's outside-click listener), and skip it if focus came
+      // back in the meantime — picking an option refocuses the textarea on its own timeout.
+      const closeOnBlur = () => {
+        setTimeout(() => {
+          const ta = getNative();
+          const root = ta?.getRootNode() as Document | ShadowRoot | undefined;
+          if (ta && root?.activeElement === ta) return;
+          this.mentionQuery.set(null);
+        }, 200);
       };
       // ion-textarea renders async; poll briefly until the native element appears,
       // but give up after 5 s (cursor tracking is a nice-to-have, not worth an
@@ -472,10 +508,12 @@ export class MatrixMessageInput {
           ta.addEventListener('keyup', save);
           ta.addEventListener('mouseup', save);
           ta.addEventListener('touchend', save);
+          ta.addEventListener('blur', closeOnBlur);
           this._destroyRef.onDestroy(() => {
             ta.removeEventListener('keyup', save);
             ta.removeEventListener('mouseup', save);
             ta.removeEventListener('touchend', save);
+            ta.removeEventListener('blur', closeOnBlur);
           });
         } else if (++attempts >= 100) {
           clearInterval(interval);
@@ -567,12 +605,13 @@ export class MatrixMessageInput {
     const count = this.mentionOverlay()?.options().length ?? 0;
     if (action === 'close') {
       event.preventDefault();
+      this.mentionDismissed = this.mentionQuery();
       this.mentionQuery.set(null);
       return;
     }
     if (count === 0) return;
     event.preventDefault();
-    const current = this.mentionActiveIndexClamped();
+    const current = this.clampedMentionIndex();
     if (action === 'up') this.mentionActiveIndex.set((current - 1 + count) % count);
     else if (action === 'down') this.mentionActiveIndex.set((current + 1) % count);
     else this.pickActiveMention();
@@ -581,7 +620,7 @@ export class MatrixMessageInput {
   private pickActiveMention(): void {
     const options = this.mentionOverlay()?.options() ?? [];
     if (options.length === 0) return;
-    const option = options[this.mentionActiveIndexClamped()];
+    const option = options[this.clampedMentionIndex()];
     if (option) this.onMentionPicked(option);
   }
 
@@ -597,7 +636,9 @@ export class MatrixMessageInput {
     if (option.kind === 'room') {
       insert = MENTION_ROOM;
     } else {
-      const display = `${option.person.firstName} ${option.person.lastName}`;
+      // Trim: an empty lastName would otherwise yield "@Anna " + " " → a double space in the
+      // message and a trailing space in the stored MentionRef.display.
+      const display = `${option.person.firstName} ${option.person.lastName}`.trim();
       insert = `@${display}`;
       this.mentions.update((list) => [...list, { personKey: option.person.okey, display }]);
     }
@@ -608,20 +649,41 @@ export class MatrixMessageInput {
     this.mentionActiveIndex.set(0);
 
     const cursor = query.start + insert.length + 1;
-    afterNextRender(() => {
+    // `ion-textarea` is a Stencil component that writes the new value into the native
+    // textarea on its own later tick, so restoring the caret in `afterNextRender` (end of
+    // Angular's CD pass) would run against the OLD value and the caret would jump to the end.
+    // A macrotask lands after Stencil's write — same fix `onEmojiClick` already uses.
+    setTimeout(() => {
       textarea?.focus();
       textarea?.setSelectionRange(cursor, cursor);
-    }, { injector: this.injector });
+    }, 0);
   }
 
-  /** Recompute the @-token under the caret; opens or closes the autocomplete overlay. */
+  /**
+   * Recompute the @-token under the caret; opens or closes the autocomplete overlay.
+   *
+   * Runs on every input AND every caret move (see the keyup/mouseup/touchend listeners), so it
+   * must be idempotent: when the recomputed token is identical to the current one it changes
+   * nothing — otherwise the keyup that follows an ArrowUp/ArrowDown would reset the highlighted
+   * option back to 0 and make the overlay unnavigable.
+   */
   private updateMentionQuery(): void {
     const textarea = this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;
     const text = this.messageText();
     const caret = textarea?.selectionStart ?? text.length;
     const query = findMentionQuery(text, caret);
+
+    // Escape closed this exact token on purpose — don't let the trailing keyup reopen it.
+    // The dismissal lapses as soon as the caret lands on a different token.
+    const dismissed = this.mentionDismissed;
+    if (query && dismissed && dismissed.start === query.start && dismissed.query === query.query) return;
+    this.mentionDismissed = null;
+
+    const current = this.mentionQuery();
+    if (query && current && current.start === query.start && current.query === query.query) return;
+
     this.mentionQuery.set(query);
-    if (query) this.mentionActiveIndex.set(0);
+    this.mentionActiveIndex.set(0);
   }
 
   async onInput(): Promise<void> {
