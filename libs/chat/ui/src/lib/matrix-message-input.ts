@@ -11,7 +11,7 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { LocationModel, PersonModel } from '@okr/shared-models';
 
 import { isSupportedImageFile, MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
-import { MentionAutocomplete, MentionPick, MENTION_ROOM, MENTION_LISTBOX_ID, mentionOptionId } from './mention-autocomplete';
+import { MentionAutocomplete, MentionPick, MENTION_ROOM, mentionListboxId, mentionOptionId } from './mention-autocomplete';
 import 'emoji-picker-element';
 
 @Component({
@@ -267,6 +267,7 @@ import 'emoji-picker-element';
             [candidates]="mentionCandidates()"
             [showRoomOption]="canNotifyRoom()"
             [activeIndex]="mentionActiveIndex()"
+            [instanceId]="instanceId"
             [i18n]="i18n()"
             (picked)="onMentionPicked($event)"
           />
@@ -276,10 +277,6 @@ import 'emoji-picker-element';
             #textInput
             [(ngModel)]="messageText"
             placeholder="{{ i18n().thread_reply_placeholder() }}"
-            role="combobox"
-            [attr.aria-expanded]="isMentionOpen()"
-            [attr.aria-controls]="MENTION_LISTBOX_ID"
-            [attr.aria-activedescendant]="mentionActiveDescendantId()"
             [rows]="1"
             [autoGrow]="true"
             (ionInput)="onInput()"
@@ -377,27 +374,29 @@ export class MatrixMessageInput {
   protected mentionOverlay = viewChild(MentionAutocomplete);
   protected isMentionOpen = computed(() => this.mentionQuery() !== null);
 
-  /** id of the overlay listbox — must match MentionAutocomplete's host id (aria-controls). */
-  protected readonly MENTION_LISTBOX_ID = MENTION_LISTBOX_ID;
+  /**
+   * Per-instance suffix for the listbox/option DOM ids. `matrix-chat` renders two composers
+   * (main + thread panel); global ids would be duplicated across both textareas.
+   * A monotonic counter (never Math.random) keeps the ids stable and reproducible.
+   */
+  private static instanceCounter = 0;
+  protected readonly instanceId = ++MatrixMessageInput.instanceCounter;
 
-  /** aria-activedescendant: the id of the highlighted option, or null while closed. */
-  protected mentionActiveDescendantId = computed(() =>
-    this.isMentionOpen() ? mentionOptionId(this.mentionActiveIndex()) : null
-  );
+  /** id of the overlay listbox — must match MentionAutocomplete's host id (aria-controls). */
+  private readonly listboxId = mentionListboxId(this.instanceId);
+
+  /** The native <textarea> inside ion-textarea's shadow DOM, once it has rendered. */
+  private nativeTextarea = signal<HTMLTextAreaElement | null>(null);
 
   /**
-   * Read-side clamp for the highlighted index.
-   *
-   * Deliberately a METHOD, not a computed bound in the template: it reads `options()` — a
-   * signal owned by the child component this view creates — and a parent binding that depends
-   * on child state dirties the parent view after it has been checked (NG0100). It is only
-   * called from event handlers (`pickActiveMention`, `onMentionNavigation`), never during CD.
-   * `mentionActiveIndex` itself is reset to 0 on every query change, so the bound raw value
-   * is always valid for the freshly rendered list.
+   * Read-side clamp for the highlighted index — must agree with what the overlay highlights,
+   * so it simply delegates to the child's own clamp (`effectiveIndex`). Deliberately a METHOD,
+   * not a template-bound computed: it reads a signal owned by the child view, and a parent
+   * BINDING that depends on child state dirties the parent view after it was checked (NG0100).
+   * It is only called from event handlers and from an `effect()`, never during CD.
    */
   private clampedMentionIndex(): number {
-    const count = this.mentionOverlay()?.options().length ?? 0;
-    return count === 0 ? 0 : Math.min(this.mentionActiveIndex(), count - 1);
+    return this.mentionOverlay()?.effectiveIndex() ?? 0;
   }
 
   // inputs
@@ -465,6 +464,27 @@ export class MatrixMessageInput {
       }
     });
 
+    // Combobox ARIA must live on the NATIVE <textarea>, not on the <ion-textarea> host:
+    // DOM focus goes to the inner textarea, and `aria-activedescendant`/`aria-expanded` are
+    // only honoured on the focused element. Ionic's `inheritAriaAttributes` snapshots host
+    // aria-* ONCE in componentWillLoad and never recomputes (and does not forward `role` at
+    // all), so host bindings would leave a permanently stale `aria-expanded="false"` behind —
+    // worse than no ARIA. Setting them imperatively from an effect keeps them live.
+    effect(() => {
+      const ta = this.nativeTextarea();
+      if (!ta) return;
+      const open = this.isMentionOpen();
+      // Read the CHILD's clamp so the announced option is the one actually highlighted.
+      const activeId = open ? mentionOptionId(this.instanceId, this.clampedMentionIndex()) : null;
+      ta.setAttribute('role', 'combobox');
+      ta.setAttribute('aria-expanded', String(open));
+      // Only reference the listbox while it exists — otherwise it is a dangling IDREF.
+      if (open) ta.setAttribute('aria-controls', this.listboxId);
+      else ta.removeAttribute('aria-controls');
+      if (activeId) ta.setAttribute('aria-activedescendant', activeId);
+      else ta.removeAttribute('aria-activedescendant');
+    });
+
     // Revoke all remaining object URLs on destroy
     this._destroyRef.onDestroy(() => {
       this.revokeObjectUrls();
@@ -505,6 +525,8 @@ export class MatrixMessageInput {
         const ta = getNative();
         if (ta) {
           clearInterval(interval);
+          // Publish the handle so the combobox-ARIA effect can drive attributes on it.
+          this.nativeTextarea.set(ta);
           ta.addEventListener('keyup', save);
           ta.addEventListener('mouseup', save);
           ta.addEventListener('touchend', save);
@@ -577,7 +599,7 @@ export class MatrixMessageInput {
       this.messageSent.emit({ text, mentions: activeMentions, mentionRoom });
       this.messageText.set('');
       this.mentions.set([]);
-      this.mentionQuery.set(null);
+      this.resetMentionState();
       this.typing.emit(false);
       const key = this.draftKey();
       if (key) localStorage.removeItem(key);
@@ -940,5 +962,21 @@ export class MatrixMessageInput {
 
   clearValue(): void {
     this.messageText.set('');
+    // The text is gone, so any @-token — and any Escape-dismissal of one — is stale; a
+    // surviving `mentionQuery` would hold an offset into text that no longer exists.
+    this.resetMentionState();
+  }
+
+  /**
+   * Drop all @-token state. Called wherever the text is replaced wholesale (send, clear).
+   *
+   * Clearing `mentionDismissed` matters: it is keyed on {start, query}, so after
+   * Escape-dismissing "@an" and sending, PASTING the identical text in one operation would
+   * recompute a byte-identical token and the overlay would silently refuse to reopen.
+   */
+  private resetMentionState(): void {
+    this.mentionQuery.set(null);
+    this.mentionDismissed = null;
+    this.mentionActiveIndex.set(0);
   }
 }

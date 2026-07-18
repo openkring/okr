@@ -8,12 +8,21 @@ import { MatrixChatI18n } from '@okr/chat-util';
 /** The canonical text inserted for a room-wide mention. */
 export const MENTION_ROOM = '@room';
 
-/** Stable DOM id of the overlay listbox — referenced by the composer's `aria-controls`. */
-export const MENTION_LISTBOX_ID = 'okr-mention-listbox';
+/**
+ * DOM id of the overlay listbox — referenced by the composer's `aria-controls`.
+ *
+ * Per-instance: `matrix-chat` renders TWO composers (main + thread panel), so a global
+ * constant would duplicate the id across both textareas and make the IDREF ambiguous.
+ * `instanceId` comes from the composer that owns the overlay, so parent and child always
+ * derive the same string.
+ */
+export function mentionListboxId(instanceId: number): string {
+  return `okr-mention-listbox-${instanceId}`;
+}
 
 /** Deterministic DOM id of the option at `index` — referenced by `aria-activedescendant`. */
-export function mentionOptionId(index: number): string {
-  return `okr-mention-option-${index}`;
+export function mentionOptionId(instanceId: number, index: number): string {
+  return `okr-mention-option-${instanceId}-${index}`;
 }
 
 /** Aliases that also surface the @room entry, without ever being inserted verbatim. */
@@ -40,7 +49,7 @@ export type MentionPick =
   imports: [IonIcon, SvgIconPipe],
   host: {
     'role': 'listbox',
-    '[id]': 'listboxId',
+    '[id]': 'listboxId()',
   },
   styles: [`
     :host {
@@ -72,15 +81,15 @@ export type MentionPick =
     @for (option of options(); track $index) {
       @if (option.kind === 'room') {
         <div class="option room-option" role="option" [id]="optionId($index)"
-             [attr.aria-selected]="$index === activeIndex()"
-             [class.active]="$index === activeIndex()" (click)="picked.emit(option)">
+             [attr.aria-selected]="$index === effectiveIndex()"
+             [class.active]="$index === effectiveIndex()" (click)="picked.emit(option)">
           <ion-icon src="{{ 'people' | svgIcon }}" />
           <span>{{ i18n().mention_everyone() }}</span>
         </div>
       } @else {
         <div class="option" role="option" [id]="optionId($index)"
-             [attr.aria-selected]="$index === activeIndex()"
-             [class.active]="$index === activeIndex()" (click)="picked.emit(option)">
+             [attr.aria-selected]="$index === effectiveIndex()"
+             [class.active]="$index === effectiveIndex()" (click)="picked.emit(option)">
           <ion-icon src="{{ 'person' | svgIcon }}" />
           <span>{{ option.person.firstName }} {{ option.person.lastName }}</span>
         </div>
@@ -89,18 +98,20 @@ export type MentionPick =
   `,
 })
 export class MentionAutocomplete {
-  /** Host id, so the composer can point `aria-controls` at this listbox. */
-  protected readonly listboxId = MENTION_LISTBOX_ID;
-
-  /** Deterministic per-row id, matched by the composer's `aria-activedescendant`. */
-  protected optionId = mentionOptionId;
-
   // inputs
   public query = input.required<string>();
   public candidates = input.required<PersonModel[]>();
   public showRoomOption = input.required<boolean>();
   public activeIndex = input.required<number>();
   public i18n = input.required<MatrixChatI18n>();
+  /** Owning composer's instance number — makes the listbox/option ids unique per composer. */
+  public instanceId = input.required<number>();
+
+  /** Host id, so the composer can point `aria-controls` at this listbox. */
+  protected listboxId = computed(() => mentionListboxId(this.instanceId()));
+
+  /** Deterministic per-row id, matched by the composer's `aria-activedescendant`. */
+  protected optionId = (index: number): string => mentionOptionId(this.instanceId(), index);
 
   // outputs
   public picked = output<MentionPick>();
@@ -121,5 +132,19 @@ export class MentionAutocomplete {
       .slice(0, MAX_SUGGESTIONS);
     for (const person of persons) result.push({ kind: 'person', person });
     return result;
+  });
+
+  /**
+   * The highlighted index, clamped to the rendered list.
+   *
+   * `options()` depends on `candidates()`/`showRoomOption()` as well as `query`, so the list can
+   * shrink under an open overlay (async-resolving candidates) WITHOUT a query change resetting
+   * the parent's `activeIndex`. The child is the only place that sees both values in the same
+   * change-detection pass, and a child-local computed carries no NG0100 risk (that danger applies
+   * only to a PARENT binding reading child state). Empty list → 0, never -1.
+   */
+  public effectiveIndex = computed(() => {
+    const count = this.options().length;
+    return count === 0 ? 0 : Math.min(this.activeIndex(), count - 1);
   });
 }
