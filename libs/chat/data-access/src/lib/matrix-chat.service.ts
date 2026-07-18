@@ -1704,6 +1704,32 @@ private async buildAndEmitRoomsList(): Promise<void> {
   }
 
   /**
+   * Localparts of all joined members of a room — the inverse of personKeyToMatrixUserId.
+   * These are lowercased Person.okey values; the caller resolves them against the person
+   * list (compare case-insensitively). Returns [] when the client or room is not ready.
+   */
+  public getRoomMemberPersonKeys(roomId: string): string[] {
+    const room = this.client?.getRoom(roomId);
+    if (!room) return [];
+    return room
+      .getMembers()
+      .filter((m) => m.membership === 'join')
+      .map((m) => m.userId.slice(1).split(':')[0]);
+  }
+
+  /**
+   * Whether the current user is allowed to trigger an @room notification in this room.
+   * When they are not, the homeserver silently drops `m.mentions.room`, so the UI must
+   * not offer the option.
+   */
+  public mayNotifyRoom(roomId: string): boolean {
+    const userId = this.client?.getUserId();
+    const room = this.client?.getRoom(roomId);
+    if (!room || !userId) return false;
+    return room.currentState.mayTriggerNotifOfType('room', userId);
+  }
+
+  /**
    * Create a new direct message room, or return an existing one if it already exists.
    * @param userId full Matrix user ID (@localpart:server) or a Person.okey (converted automatically)
    */
