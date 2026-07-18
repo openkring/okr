@@ -196,12 +196,15 @@ export const _MatrixChatStore = signalStore(
         return state.appStore.allPersons().filter((p) => keys.has(p.okey?.toLowerCase() ?? ''));
       }),
 
-      /** Whether the current user may trigger an @room notification in the current room. */
-      canNotifyRoom: computed(() => {
+      /**
+       * Whether the current room is a direct chat. The mention overlay (persons AND @room)
+       * must never open in a DM — @ stays plain text there. Derived from the `rooms` list
+       * entry's `isDirect` flag rather than a new service method.
+       */
+      isCurrentRoomDirect: computed(() => {
         const roomId = state.currentRoomId();
-        if (!roomId || !state.isMatrixInitialized()) return false;
-        state.roomStateVersionResource.value(); // re-run on every room-state event (membership, power levels)
-        return state.matrixService.mayNotifyRoom(roomId);
+        if (!roomId) return false;
+        return state.roomsResource.value()?.find((r) => r.roomId === roomId)?.isDirect ?? false;
       }),
     };
   }),

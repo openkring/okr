@@ -265,7 +265,7 @@ import 'emoji-picker-element';
           <okr-mention-autocomplete
             [query]="mentionQuery()!.query"
             [candidates]="mentionCandidates()"
-            [showRoomOption]="canNotifyRoom()"
+            [showRoomOption]="true"
             [activeIndex]="mentionActiveIndex()"
             [instanceId]="instanceId"
             [i18n]="i18n()"
@@ -409,7 +409,13 @@ export class MatrixMessageInput {
   public fileAccept = input<string>('*/*');
   public pendingImages = input<File[]>([]);
   public mentionCandidates = input<PersonModel[]>([]);
-  public canNotifyRoom = input<boolean>(false);
+  /**
+   * True when the current room is a direct chat. The mention overlay (persons AND @room)
+   * must never open there — @ stays plain text in a DM. Gated inside updateMentionQuery()
+   * rather than at each call site, since that method is invoked from several places
+   * (ionInput, and the keyup/mouseup/touchend caret listeners).
+   */
+  public isDirectRoom = input<boolean>(false);
 
   // outputs
   messageSent = output<MessageDraft>();
@@ -717,6 +723,11 @@ export class MatrixMessageInput {
    * option back to 0 and make the overlay unnavigable.
    */
   private updateMentionQuery(): void {
+    // A direct chat never opens the overlay — neither persons nor @room. '@' stays plain text.
+    if (this.isDirectRoom()) {
+      this.mentionQuery.set(null);
+      return;
+    }
     const textarea = this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;
     const text = this.messageText();
     const caret = textarea?.selectionStart ?? text.length;

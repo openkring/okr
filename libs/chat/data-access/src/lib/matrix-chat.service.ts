@@ -1735,18 +1735,6 @@ private async buildAndEmitRoomsList(): Promise<void> {
   }
 
   /**
-   * Whether the current user is allowed to trigger an @room notification in this room.
-   * When they are not, the homeserver silently drops `m.mentions.room`, so the UI must
-   * not offer the option.
-   */
-  public mayNotifyRoom(roomId: string): boolean {
-    const userId = this.client?.getUserId();
-    const room = this.client?.getRoom(roomId);
-    if (!room || !userId) return false;
-    return room.currentState.mayTriggerNotifOfType('room', userId);
-  }
-
-  /**
    * Create a new direct message room, or return an existing one if it already exists.
    * @param userId full Matrix user ID (@localpart:server) or a Person.okey (converted automatically)
    */
