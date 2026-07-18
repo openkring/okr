@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildMentionContent } from './mention.util';
+import { buildMentionContent, filterActiveMentions } from './mention.util';
 
 describe('buildMentionContent', () => {
   it('returns null when there are no mentions and no room', () => {
@@ -75,5 +75,30 @@ describe('buildMentionContent', () => {
     expect(result?.formatted_body).toBe(
       'look &lt;b&gt; <a href="https://matrix.to/#/@ab:example.org">A&amp;B</a>',
     );
+  });
+});
+
+describe('filterActiveMentions', () => {
+  const al = { personKey: 'P1', display: 'Al Meier' };
+  const alan = { personKey: 'P2', display: 'Al Meiers' };
+
+  it('keeps a mention that is still in the text', () => {
+    expect(filterActiveMentions('hallo @Al Meier wie gehts', [al])).toEqual([al]);
+  });
+
+  it('drops a mention the user deleted from the text', () => {
+    expect(filterActiveMentions('hallo wie gehts', [al])).toEqual([]);
+  });
+
+  it('does not match a display name that is only a prefix of the typed one', () => {
+    expect(filterActiveMentions('hallo @Al Meiers', [al, alan])).toEqual([alan]);
+  });
+
+  it('keeps a mention at the very end of the text', () => {
+    expect(filterActiveMentions('hallo @Al Meier', [al])).toEqual([al]);
+  });
+
+  it('deduplicates by personKey', () => {
+    expect(filterActiveMentions('@Al Meier @Al Meier', [al, al])).toEqual([al]);
   });
 });

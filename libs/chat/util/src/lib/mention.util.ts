@@ -59,3 +59,25 @@ export function buildMentionContent(
   }
   return { formatted_body: html, mentions: mMentions };
 }
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Keep only the mentions whose `@display` still occurs in the text, matched up to a word
+ * boundary so a display name that is a literal prefix of another ("Al Meier" vs
+ * "Al Meiers") does not match the longer one. Deduplicated by personKey.
+ */
+export function filterActiveMentions(text: string, mentions: MentionRef[]): MentionRef[] {
+  const seen = new Set<string>();
+  const active: MentionRef[] = [];
+  for (const mention of mentions) {
+    if (seen.has(mention.personKey)) continue;
+    const pattern = new RegExp(`@${escapeRegExp(mention.display)}(?![\\p{L}\\p{N}])`, 'u');
+    if (!pattern.test(text)) continue;
+    seen.add(mention.personKey);
+    active.push(mention);
+  }
+  return active;
+}
