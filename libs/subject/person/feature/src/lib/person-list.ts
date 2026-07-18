@@ -178,7 +178,8 @@ export class PersonList {
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // all users
-    if (await this.store.isPersonUser(person.okey)) {
+    // no direct chat to oneself
+    if (person.okey !== this.currentUser()?.personKey && await this.store.isPersonUser(person.okey)) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.send_message(), this.imgixBaseUrl, 'chatbubbles'));
     }
     if (person.favEmail) {
