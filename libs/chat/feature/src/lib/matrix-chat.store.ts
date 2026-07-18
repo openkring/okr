@@ -190,7 +190,7 @@ export const _MatrixChatStore = signalStore(
       mentionCandidates: computed((): PersonModel[] => {
         const roomId = state.currentRoomId();
         if (!roomId || !state.isMatrixInitialized()) return [];
-        state.syncStateResource.value(); // re-run once members have synced
+        state.roomsResource.value(); // re-run when the room list rebuilds (member/power-level changes)
         const keys = new Set(state.matrixService.getRoomMemberPersonKeys(roomId));
         return state.appStore.allPersons().filter((p) => keys.has(p.okey?.toLowerCase() ?? ''));
       }),
@@ -199,7 +199,7 @@ export const _MatrixChatStore = signalStore(
       canNotifyRoom: computed(() => {
         const roomId = state.currentRoomId();
         if (!roomId || !state.isMatrixInitialized()) return false;
-        state.syncStateResource.value();
+        state.roomsResource.value(); // re-run when the room list rebuilds (member/power-level changes)
         return state.matrixService.mayNotifyRoom(roomId);
       }),
     };
