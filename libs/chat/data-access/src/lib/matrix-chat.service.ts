@@ -56,6 +56,11 @@ export class MatrixChatService {
   private readonly tokenExpired$ = new Subject<void>();
   private readonly roomListToggle$ = new Subject<void>();
   private readonly roomsUpdateTrigger$ = new Subject<void>();
+  // Bumped on every RoomStateEvent.Events (membership, power levels). The `rooms`
+  // observable's distinctUntilChanged deliberately ignores membership (members is
+  // hard-coded []), so consumers that need to react to room-state changes (e.g.
+  // mention-candidate lists) must depend on this counter instead of `rooms`.
+  private readonly roomStateVersion$ = new BehaviorSubject<number>(0);
   private roomsUpdateSub: Subscription | null = null;
   private readonly typingByRoom = new Map<string, string[]>(); // roomId -> typing userIds
   private readonly receipts$ = new Map<string, BehaviorSubject<Map<string, MatrixReadReceipt[]>>>();
@@ -121,6 +126,17 @@ export class MatrixChatService {
   /** Synchronous snapshot of the current rooms list (BehaviorSubject value). */
   get roomsCurrentValue(): MatrixRoom[] {
     return this.rooms$.value;
+  }
+
+  /**
+   * Increments on every room-state event (membership, power levels). Exists so
+   * consumers can recompute room-state-derived values (e.g. mention candidates,
+   * @room notification permission) that the `rooms` observable deliberately
+   * filters out via its distinctUntilChanged comparator (members is hard-coded
+   * `[]` there, so joins/leaves in a named room never change a compared field).
+   */
+  get roomStateVersion(): Observable<number> {
+    return this.roomStateVersion$.asObservable();
   }
 
   // ---- Credential storage helpers ----
@@ -551,6 +567,7 @@ export class MatrixChatService {
     // Room state updates (name, topic, avatar changes)
     this.client.on(RoomStateEvent.Events, (_event: MatrixEvent) => {
       this.roomsUpdateTrigger$.next();
+      this.roomStateVersion$.next(this.roomStateVersion$.value + 1);
     });
 
     // Read receipts — update room list so unread counts reflect the new read position

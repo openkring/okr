@@ -65,6 +65,7 @@ export const _MatrixChatStore = signalStore(
     i18n: store.i18nService.translateAll(MATRIX_CHAT_I18N_KEYS),
     syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),
     roomsResource: rxResource({ stream: () => store.matrixService.rooms }),
+    roomStateVersionResource: rxResource({ stream: () => store.matrixService.roomStateVersion }),
     imageUrlResource: rxResource({
       params: () => ({
         user: store.appStore.currentUser(),
@@ -190,7 +191,7 @@ export const _MatrixChatStore = signalStore(
       mentionCandidates: computed((): PersonModel[] => {
         const roomId = state.currentRoomId();
         if (!roomId || !state.isMatrixInitialized()) return [];
-        state.roomsResource.value(); // re-run when the room list rebuilds (member/power-level changes)
+        state.roomStateVersionResource.value(); // re-run on every room-state event (membership, power levels)
         const keys = new Set(state.matrixService.getRoomMemberPersonKeys(roomId));
         return state.appStore.allPersons().filter((p) => keys.has(p.okey?.toLowerCase() ?? ''));
       }),
@@ -199,7 +200,7 @@ export const _MatrixChatStore = signalStore(
       canNotifyRoom: computed(() => {
         const roomId = state.currentRoomId();
         if (!roomId || !state.isMatrixInitialized()) return false;
-        state.roomsResource.value(); // re-run when the room list rebuilds (member/power-level changes)
+        state.roomStateVersionResource.value(); // re-run on every room-state event (membership, power levels)
         return state.matrixService.mayNotifyRoom(roomId);
       }),
     };
