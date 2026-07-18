@@ -19,7 +19,9 @@ export function findMentionQuery(text: string, caret: number): MentionQuery | nu
     if (/\s/.test(char)) return null;
     if (char !== '@') continue;
     const before = i === 0 ? ' ' : text[i - 1];
-    if (!/\s/.test(before)) return null; // not a word start → email address, not a mention
+    // Reject only letters/digits: that suppresses email addresses (anna@example.com) while
+    // still opening the list after punctuation ("(@anna", "-@anna", "„@anna").
+    if (/[\p{L}\p{N}]/u.test(before)) return null;
     return { start: i, query: text.slice(i + 1, caret) };
   }
   return null;

@@ -26,6 +26,10 @@ describe('findMentionQuery', () => {
     expect(findMentionQuery('mail an anna@example.com', 24)).toBeNull();
   });
 
+  it('matches an @ that follows punctuation', () => {
+    expect(findMentionQuery('cc (@ann', 8)).toEqual({ start: 4, query: 'ann' });
+  });
+
   it('matches an @ at the start of a new line', () => {
     expect(findMentionQuery('erste zeile\n@ro', 15)).toEqual({ start: 12, query: 'ro' });
   });

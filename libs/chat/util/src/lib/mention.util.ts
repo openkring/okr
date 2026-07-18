@@ -74,7 +74,9 @@ export function filterActiveMentions(text: string, mentions: MentionRef[]): Ment
   const active: MentionRef[] = [];
   for (const mention of mentions) {
     if (seen.has(mention.personKey)) continue;
-    const pattern = new RegExp(`@${escapeRegExp(mention.display)}(?![\\p{L}\\p{N}])`, 'u');
+    // '-' is in the lookahead too: without it a mention for "Anna Meier" would falsely match
+    // inside "@Anna Meier-Muster" (hyphenated surnames are common here).
+    const pattern = new RegExp(`@${escapeRegExp(mention.display)}(?![\\p{L}\\p{N}-])`, 'u');
     if (!pattern.test(text)) continue;
     seen.add(mention.personKey);
     active.push(mention);

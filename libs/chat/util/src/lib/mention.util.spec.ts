@@ -94,6 +94,11 @@ describe('filterActiveMentions', () => {
     expect(filterActiveMentions('hallo @Al Meiers', [al, alan])).toEqual([alan]);
   });
 
+  it('does not match a display name that is only a prefix of a hyphenated surname', () => {
+    const anna = { personKey: 'P3', display: 'Anna Meier' };
+    expect(filterActiveMentions('hallo @Anna Meier-Muster', [anna])).toEqual([]);
+  });
+
   it('keeps a mention at the very end of the text', () => {
     expect(filterActiveMentions('hallo @Al Meier', [al])).toEqual([al]);
   });

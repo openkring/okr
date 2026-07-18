@@ -438,6 +438,11 @@ export class MatrixMessageInput {
       const key = this.draftKey();
       const draft = key ? (localStorage.getItem(key) ?? '') : '';
       this.messageText.set(draft);
+      // Mention refs belong to the draft that was being typed, not to the restored text.
+      // Without this, stale refs survive a reload or a room switch and would be sent as
+      // `m.mentions` for a message that no longer contains them. (Restored drafts do not
+      // re-resolve their mentions — out of scope; the point is only that refs never leak.)
+      this.resetMentionState();
     });
 
     // Revoke object URLs and clean up failed-thumb state for removed files
@@ -460,6 +465,12 @@ export class MatrixMessageInput {
     // An empty floating box has nothing to pick — closing lets Enter fall through to send.
     effect(() => {
       if (this.isMentionOpen() && this.mentionOverlay() && this.mentionOverlay()!.options().length === 0) {
+        // Record the token as dismissed BEFORE closing. Without this, the `keyup` of the very
+        // same keystroke re-runs updateMentionQuery(), sees mentionQuery() === null, recomputes
+        // the identical token and reopens the overlay — which this effect closes again, so the
+        // bordered box flashes on every keystroke. Typing a further character changes the token,
+        // the lapse logic in updateMentionQuery() clears the dismissal and the overlay reopens.
+        this.mentionDismissed = this.mentionQuery();
         this.mentionQuery.set(null);
       }
     });
@@ -715,6 +726,11 @@ export class MatrixMessageInput {
     const value = this.messageText();
     const trigger = this.quickEntryService.detectTrigger(value);
     if (!trigger) return;
+    // '@' is handled by the inline mention overlay (updateMentionQuery above), not by a
+    // quick-entry modal. Bail out before the guard so a '@' keystroke does not pointlessly
+    // flip `isSettingQuickEntryValue`. detectTrigger still returns 'person' for other
+    // consumers (task-list, calevent-list) — leave the service alone.
+    if (trigger === 'person') return;
     this.isSettingQuickEntryValue = true;
     try {
       if (trigger === 'date') {
