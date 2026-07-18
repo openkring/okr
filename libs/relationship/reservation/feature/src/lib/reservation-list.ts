@@ -31,12 +31,8 @@ import { ReservationStore } from './reservation.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title class="ion-hide-md-down">
-          {{ selectedReservationsCount()}} {{ title() }}
-        </ion-title>
-        <ion-title class="ion-hide-md-up">
-          {{ selectedReservationsCount()}}/{{reservationsCount()}} {{ title() }}
-        </ion-title>
+        <ion-title class="ion-hide-md-down">{{ selectedReservationsCount()}}/{{reservationsCount()}} {{ title() }}</ion-title>
+        <ion-title class="ion-hide-md-up">{{ selectedReservationsCount()}} BH Reservationen</ion-title>
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
