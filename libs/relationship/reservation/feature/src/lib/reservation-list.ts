@@ -62,74 +62,74 @@ import { ReservationStore } from './reservation.store';
         (yearChanged)="onYearSelected($event)" [years]="years()"
       />
     <!-- list header -->
-    <ion-toolbar color="primary">
+    <ion-toolbar color="primary" class="ion-hide-md-down">
       <ion-grid>
         <ion-row>
           <!-- desktop header per mode -->
           @if(isReservationFromPerson() || isReservationFromOrg()) {
-            <ion-col size-md="3" class="ion-hide-md-down">
+            <ion-col size-md="3">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3" class="ion-hide-md-down">
+            <ion-col size-md="3">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3" class="ion-hide-md-down">
+            <ion-col size-md="3">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3" class="ion-hide-md-down">
+            <ion-col size-md="3">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else if(isReservationOfResource() || isReservationOfResourceType()) {
-            <ion-col size-md="3" class="ion-hide-md-down">
+            <ion-col size-md="3">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3" class="ion-hide-md-down">
+            <ion-col size-md="3">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3" class="ion-hide-md-down">
+            <ion-col size-md="3">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3" class="ion-hide-md-down">
+            <ion-col size-md="3">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else { <!-- all -->
-            <ion-col size-md="2" class="ion-hide-md-down">
+            <ion-col size-md="2">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="2" class="ion-hide-md-down">
+            <ion-col size-md="2">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col class="ion-hide-md-down">
+            <ion-col>
               <ion-item lines="none" color="primary" class="ion-text-wrap">
                 <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="auto" class="ion-hide-md-down">
+            <ion-col size="auto">
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col class="ion-hide-md-down">
+            <ion-col>
               <ion-item lines="none" color="primary">
                 <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
               </ion-item>
