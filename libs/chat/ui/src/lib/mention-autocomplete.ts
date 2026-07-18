@@ -146,11 +146,13 @@ export class MentionAutocomplete {
    * The rendered options: the @room entry first (when offered and matching), then `@me`
    * (when a display name is known and matching), then persons.
    *
-   * `SELF_ALIAS` deliberately gets NO minimum-length guard (unlike `ROOM_ALIASES` /
-   * `MIN_ALIAS_QUERY_LENGTH`): it is only ever tested as `SELF_ALIAS.startsWith(query)`, so
-   * the entry stops matching the instant the query grows past "me" itself (e.g. "mei") —
-   * there is no query length at which it can rank ahead of a person like "Meier" the way a
-   * short alias prefix ("al") used to collide with "Alice".
+   * `SELF_ALIAS` matches only on an EMPTY query or an EXACT match (`SELF_ALIAS === query`) —
+   * deliberately NOT `startsWith`. A prefix match would surface `@me` for any 1-2 char query
+   * that "me" starts with, so typing "@me" while looking for a person named "Meier" would rank
+   * `@me` at index 0 and Enter would silently insert the current user's own name instead of the
+   * intended person. This is the same collision class ("al" vs "Alice") that
+   * `MIN_ALIAS_QUERY_LENGTH` fixes for the room aliases — do not "simplify" this back to
+   * `startsWith`.
    */
   public options = computed((): MentionPick[] => {
     const query = this.query().toLowerCase();
@@ -162,7 +164,7 @@ export class MentionAutocomplete {
     ) {
       result.push({ kind: 'room' });
     }
-    if (this.currentUserName() && (query.length === 0 || SELF_ALIAS.startsWith(query))) {
+    if (this.currentUserName() && (query.length === 0 || SELF_ALIAS === query)) {
       result.push({ kind: 'me' });
     }
     const persons = this.candidates()
