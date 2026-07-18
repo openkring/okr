@@ -25,7 +25,8 @@ import { ResourceStore } from './resource.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedLockersCount()}}/{{lockersCount() }} {{ store.i18n.locker_plural() }}</ion-title>
+      <ion-title class="ion-hide-sm-down">{{selectedLockersCount()}}/{{lockersCount() }} {{ store.i18n.locker_plural() }}</ion-title>
+      <ion-title class="ion-hide-sm-up">{{selectedLockersCount()}} {{ store.i18n.locker_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c_resource">
@@ -43,14 +44,17 @@ import { ResourceStore } from './resource.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <okr-list-filter 
+    <okr-list-filter class="ion-hide-sm-down"
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
      />
-
+    <okr-list-filter class="ion-hide-sm-up"
+      (searchTermChanged)="onSearchtermChange($event)"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+     />
     <!-- list header -->
-    <ion-toolbar color="primary">
+    <ion-toolbar color="primary" class="ion-hide-sm-down">
       <ion-item color="primary" lines="none">
         <ion-label><strong>{{ store.i18n.locker_nr() }}</strong></ion-label>
         <ion-label><strong>{{ store.i18n.key_nr() }}</strong></ion-label>

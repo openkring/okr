@@ -23,7 +23,7 @@ import { ReservationStore } from './reservation.store';
   providers: [ReservationStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" [showCloseButton]="false" />
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }

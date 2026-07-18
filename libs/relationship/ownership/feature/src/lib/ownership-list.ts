@@ -29,7 +29,8 @@ import { OwnershipStore } from './ownership.store';
     <ion-header>
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedOwnershipsCount()}}/{{ownershipsCount()}} {{ title() | translate | async }}</ion-title>
+      <ion-title class="ion-hide-md-down">{{ selectedOwnershipsCount()}}/{{ownershipsCount()}} {{ title() | translate | async }}</ion-title>
+      <ion-title class="ion-hide-md-up">{{ selectedOwnershipsCount()}} {{ title() | translate | async }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
@@ -47,14 +48,18 @@ import { OwnershipStore } from './ownership.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <okr-list-filter
+    <okr-list-filter class="ion-hide-md-down"
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
     />
+    <okr-list-filter class="ion-hide-md-up"
+      (searchTermChanged)="onSearchtermChange($event)"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+    />
 
     <!-- list header -->
-    <ion-toolbar color="primary">
+    <ion-toolbar color="primary" class="ion-hide-md-down">
       @if(listId() === 'scsBoats') {
         <ion-item color="primary" lines="none">
           <ion-label><strong>{{ store.i18n.boat_name() }}</strong></ion-label>

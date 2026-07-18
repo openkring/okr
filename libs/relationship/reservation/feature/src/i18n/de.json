@@ -8,7 +8,7 @@
   "newDesc": "... möchte die folgende Resource reservieren:",
 
   "create": {
-    "label": "Neue Reservation erstellen",
+    "label": "Neue Reservation",
     "conf": "Die Reservation wurde gespeichert.",
     "error": "Die Reservation konnte nicht gespeichert werden."
   },
