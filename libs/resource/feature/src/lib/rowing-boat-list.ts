@@ -42,14 +42,18 @@ import { ResourceStore } from './resource.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <okr-list-filter 
+    <okr-list-filter class="ion-hide-sm-down"
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
     />
-
+    <okr-list-filter class="ion-hide-sm-up"
+      (searchTermChanged)="onSearchtermChange($event)"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+    />
+    
     <!-- list header -->
-  <ion-toolbar color="primary">
+  <ion-toolbar color="primary" class="ion-hide-sm-down">
     <ion-item color="primary" lines="none">
       <ion-label><strong>{{ store.i18n.rboat_name() }}</strong></ion-label>
       <ion-label><strong>{{ store.i18n.rboat_type() }}</strong></ion-label>
