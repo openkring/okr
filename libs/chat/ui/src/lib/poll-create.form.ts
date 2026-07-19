@@ -3,6 +3,7 @@ import { IonItem, IonInput, IonList } from '@ionic/angular/standalone';
 
 import { AnyCharacterMask } from '@okr/shared-config';
 import { Checkbox, CheckboxI18n, StringList } from '@okr/shared-ui';
+import { QuickEntryResolver } from '@okr/shared-util-angular';
 
 import { MatrixPollData } from '@okr/chat-data-access';
 
@@ -47,6 +48,8 @@ export interface PollCreateFormI18n {
         [readOnly]="false"
         [mask]="anyCharMask"
         [maxLength]="100"
+        [lowercase]="false"
+        [quickEntryResolver]="quickEntryResolver()"
       />
 
       <!-- Multiple answers toggle -->
@@ -62,6 +65,11 @@ export class PollCreateForm implements OnInit {
   // inputs
   public readonly i18n = input.required<PollCreateFormI18n>();
   public formData = input.required<MatrixPollData>();
+  /**
+   * Quick entry for survey answers ('//' date, '!!' location). Supplied by the parent
+   * modal, because the pickers live in a feature lib this ui lib must not depend on.
+   */
+  public quickEntryResolver = input<QuickEntryResolver>();
   public formDataChange = output<MatrixPollData>();
   public valid = output<boolean>();
 

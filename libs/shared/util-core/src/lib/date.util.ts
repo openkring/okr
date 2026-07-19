@@ -642,3 +642,17 @@ export function calculateRecurringDates(startDate: string, endDate: string, peri
     }
     return dates;
 }
+
+/**
+ * Formats the ISO date-time returned by DateTimeSelectModal into the quick-entry
+ * token that is inserted into a text input (e.g. after typing '//').
+ * A midnight time is treated as "date only" and omitted.
+ * @param isoDateTime e.g. '2026-07-19T14:30' or '2026-07-19'
+ * @returns e.g. '19.07.2026,1430' or '19.07.2026'
+ */
+export function formatDateToken(isoDateTime: string): string {
+    const datePart = isoDateTime.substring(0, 10);
+    const viewDate = convertDateFormatToString(datePart, DateFormat.IsoDate, DateFormat.ViewDate);
+    const timePart = isoDateTime.length >= 16 ? isoDateTime.substring(11, 16) : '00:00';
+    return timePart === '00:00' ? viewDate : `${viewDate},${timePart.replace(':', '')}`;
+}

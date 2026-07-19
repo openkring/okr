@@ -7,6 +7,7 @@ import {
     DateFormat,
     DatePart,
     extractFromDate,
+    formatDateToken,
     getEndOfYear, getStartOfYear,
     getTodayStr,
     getYear,
@@ -183,5 +184,23 @@ describe('date.util', () => {
         expect(result.getDate()).toEqual(17);
         expect(result.getHours()).toEqual(3);
         expect(result.getMinutes()).toEqual(24);
+    });
+
+    describe('formatDateToken', () => {
+        it('should return the view date only, when the time is midnight', () => {
+            expect(formatDateToken('2026-07-19T00:00')).toEqual('19.07.2026');
+        });
+
+        it('should append the time, when it is not midnight', () => {
+            expect(formatDateToken('2026-07-19T14:30')).toEqual('19.07.2026,1430');
+        });
+
+        it('should return the view date only, when no time part is given', () => {
+            expect(formatDateToken('2026-07-19')).toEqual('19.07.2026');
+        });
+
+        it('should ignore the seconds of a full iso date time', () => {
+            expect(formatDateToken('2026-07-19T14:30:45')).toEqual('19.07.2026,1430');
+        });
     });
 });

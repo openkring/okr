@@ -8,7 +8,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
 import { NAME_LENGTH } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { okrPrompt, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
+import { okrPrompt, copyToClipboardWithConfirmation, QuickEntryService, QuickEntryToken, QuickEntryResolver } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
@@ -70,7 +70,7 @@ import { PFX } from './scope';
             <!-- we deliberately use ion-input here, because we do not want to interfere with the vest from update of strings() -->
             @if(inputStyle() === 'text') {
               <ion-item lines="none">
-                <ion-input [value]="''" (ionChange)="save($event)" #stringInput
+                <ion-input [value]="''" (ionChange)="save($event)" (ionInput)="onQuickEntryInput($event)" #stringInput
                   [label]="addLabel()"
                   labelPlacement="floating"
                   inputMode="text"
@@ -113,6 +113,7 @@ export class StringList {
   private readonly toastController = inject(ToastController);
   private readonly alertController = inject(AlertController);
   private i18nService = inject(I18nService);
+  private readonly quickEntryService = inject(QuickEntryService);
 
   // inputs
   public strings = model.required<string[]>(); // the keys of the menu items
@@ -126,11 +127,24 @@ export class StringList {
   public mask = input<MaskitoOptions>(LowercaseWordMask);
   public maxLength = input(NAME_LENGTH);
   public selectLabel = input<string>();
+  /** Set to false to keep the entry as typed (default: entries are lowercased). */
+  public lowercase = input(true);
+  /**
+   * Opt-in quick entry: when set, typing '//', '!!' or '@' in the add-input calls this
+   * resolver and replaces the token with the text it returns. Left undefined, quick
+   * entry is off. The resolver lives in the parent, because the pickers it needs sit in
+   * feature libs that this ui lib must not depend on.
+   */
+  public quickEntryResolver = input<QuickEntryResolver>();
 
   // coerced boolean inputs
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected isEditable = computed(() => coerceBoolean(this.editable()));
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected isLowercase = computed(() => coerceBoolean(this.lowercase()));
+
+  /** Guards against the programmatic value write re-entering onQuickEntryInput. */
+  private isSettingQuickEntryValue = false;
 
   // output signals
   public selectClicked = output<void>();
@@ -152,13 +166,39 @@ export class StringList {
   protected addLabel = computed(() => this.add() || this.i18n.string_add());
 
   public save($event: CustomEvent): void {
-    const newString = ($event?.detail?.value.trim() ?? '').toLowerCase();
+    const trimmed = ($event?.detail?.value ?? '').trim();
+    const newString = this.isLowercase() ? trimmed.toLowerCase() : trimmed;
     this.resetInput();
     if (newString.length === 0) return;  // prevent adding empty strings
     this.strings.update(arr => {
-      if (arr.includes(newString)) return arr; // Prevent duplicates (case-insensitive)
+      if (arr.some(s => s.toLowerCase() === newString.toLowerCase())) return arr; // Prevent duplicates (case-insensitive)
       return [...arr, newString];   // we do not sort the array, the user can reorder it as needed
     });
+  }
+
+  /**
+   * Detects a quick-entry token ('//', '!!', '@') as it is typed and asks the parent's
+   * resolver for the text to insert. A cancelled resolve (null) strips the token again.
+   */
+  protected async onQuickEntryInput($event: CustomEvent): Promise<void> {
+    const resolve = this.quickEntryResolver();
+    if (!resolve || this.isSettingQuickEntryValue) return;
+    const input = this.stringInput();
+    if (!input) return;
+    const value = String($event?.detail?.value ?? '');
+    const trigger = this.quickEntryService.detectTrigger(value);
+    if (!trigger) return;
+
+    this.isSettingQuickEntryValue = true;
+    try {
+      const replacement = await resolve(trigger);
+      const token = QuickEntryToken[trigger];
+      input.value = replacement === null
+        ? value.slice(0, -token.length)
+        : this.quickEntryService.replaceToken(value, token, replacement);
+    } finally {
+      this.isSettingQuickEntryValue = false;
+    }
   }
 
   private resetInput(): void {

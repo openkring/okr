@@ -1,7 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, DateTimeSelectModal, Header } from '@okr/shared-ui';
+import { ModelSelectService } from '@okr/shared-feature';
+import { QuickEntryResolver } from '@okr/shared-util-angular';
+import { formatDateToken } from '@okr/shared-util-core';
 
 import { MatrixPollData } from '@okr/chat-data-access';
 import { PollCreateForm } from '@okr/chat-ui';
@@ -26,13 +29,37 @@ import { MatrixChatStore } from './matrix-chat.store';
         [i18n]="store.i18n"
         (formDataChange)="onFormDataChange($event)"
         (valid)="formValid.set($event)"
+        [quickEntryResolver]="resolveQuickEntry"
       />
     </ion-content>
   `
 })
 export class PollCreateModal {
   private readonly modalController = inject(ModalController);
+  private readonly modelSelectService = inject(ModelSelectService);
   protected readonly store = inject(MatrixChatStore);
+
+  /**
+   * Quick entry for survey answers, mirroring the chat message input:
+   * '//' opens the date picker, '!!' the location picker. Unlike the message input -
+   * which sends a picked location as a separate structured event - a survey answer is
+   * plain text, so the location's name is inserted inline. '@' is not offered here.
+   */
+  protected readonly resolveQuickEntry: QuickEntryResolver = async (trigger) => {
+    if (trigger === 'date') {
+      const modal = await this.modalController.create({ component: DateTimeSelectModal });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<string>();
+      return role === 'confirm' && data ? formatDateToken(data) : null;
+    }
+    if (trigger === 'location') {
+      const result = await this.modelSelectService.selectLocation('', true, true);
+      if (result?.kind === 'predefined') return result.location.name;
+      if (result?.kind === 'custom') return result.label;
+      return null;
+    }
+    return null;
+  };
 
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
