@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonInput, IonIcon, IonItem, IonList, IonSearchbar, IonSelect, IonSelectOption, IonTitle, IonToolbar, ModalController, IonLabel } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
@@ -200,9 +200,20 @@ export class MessageCenterModal {
     }
   });
 
-  protected checkedKeys = linkedSignal(() =>
-    new Set(this.usersResource.value()?.map(u => u.okey) ?? [])
-  );
+  // Pre-checks every recipient once, when the user list first loads. This must NOT be a linkedSignal:
+  // usersResource wraps a live Firestore stream, so any re-emission would re-check everyone and
+  // silently undo the operator's deselections -- sending the message to the full list.
+  protected checkedKeys = signal<Set<string>>(new Set());
+  private hasSeededCheckedKeys = false;
+
+  constructor() {
+    effect(() => {
+      const users = this.usersResource.value();
+      if (!users || this.hasSeededCheckedKeys) return;
+      this.hasSeededCheckedKeys = true;
+      this.checkedKeys.set(new Set(users.map(u => u.okey)));
+    });
+  }
 
   protected DT = DeliveryType;
 

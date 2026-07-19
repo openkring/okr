@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 
@@ -111,8 +111,12 @@ export class ProfileEditPage {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected personFormData = linkedSignal(() => safeStructuredClone(this.currentPerson()));
-  protected userFormData = linkedSignal(() => safeStructuredClone(this.currentUser()));
+  // seeded once by the constructor effect, and re-seeded explicitly by cancel(). These must NOT be
+  // linkedSignals: currentPerson()/currentUser() are derived from live Firestore streams, so every
+  // re-emission would hand back a new object reference (or transiently undefined while the resource
+  // reloads) and silently discard whatever the user has edited so far.
+  protected personFormData = signal<PersonModel | undefined>(undefined);
+  protected userFormData = signal<UserModel | undefined>(undefined);
   protected showForm = signal(true);
 
   // derived signals
@@ -135,6 +139,18 @@ export class ProfileEditPage {
     effect(() => {
       this.store.setPersonKey(this.personKey());
     });
+    effect(() => {
+      const person = this.currentPerson();
+      const user = this.currentUser();
+      if (!person || !user) return;                                     // still loading -> wait
+      if (untracked(this.personFormData) || untracked(this.userFormData)) return;  // already seeded
+      this.seedFormData(person, user);
+    });
+  }
+
+  private seedFormData(person: PersonModel | undefined, user: UserModel | undefined): void {
+    this.personFormData.set(safeStructuredClone(person));
+    this.userFormData.set(safeStructuredClone(user));
   }
 
   /******************************* actions *************************************** */
@@ -145,8 +161,7 @@ export class ProfileEditPage {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.personFormData.set(safeStructuredClone(this.currentPerson()));  // reset
-    this.userFormData.set(safeStructuredClone(this.currentUser()));  // reset
+    this.seedFormData(this.currentPerson(), this.currentUser());  // reset to the persisted values
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

@@ -84,7 +84,6 @@ Separate NgRx Signal Store for the edit page (`resource-edit.page.ts`) used when
 | `LockerList` | Specialised list view for lockers (`type = 'locker'`) |
 | `RowingBoatList` | Specialised list view for rowing boats (`type = 'rboat'`) |
 | `ResourceEditModal` | Full-modal edit form (used by list) |
-| `ResourceEditPage` | Full-page edit form (standalone route) |
 
 ## Related Libraries
 

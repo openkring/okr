@@ -67,7 +67,6 @@ Notable store actions:
 | Component | Selector / Role |
 |---|---|
 | `DocumentList` | List view with `listId`-scoped filtering, subfolder navigation, multi-file upload |
-| `DocumentEditPage` | Detail/edit page for a single document's metadata |
 | `DocumentAccordion` | Collapsible accordion embedding a document list (used inside other features) |
 | `ImageSelectModal` | Modal for selecting an existing document/image to reference |
 

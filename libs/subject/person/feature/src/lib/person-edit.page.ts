@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter } from '@ionic/angular/standalone';
 
@@ -97,7 +97,12 @@ export class PersonEditPage implements ViewWillEnter   {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => safeStructuredClone(this.person()));
+  // seeded by the constructor effect, once per person. This must NOT be a linkedSignal: person() is
+  // derived from a live Firestore stream, so every re-emission would hand back a new object reference
+  // (or transiently undefined while the resource reloads) and silently discard the user's edits.
+  public formData = signal<PersonModel | undefined>(undefined);
+  /** okey of the person formData was seeded from -> lets us re-seed when navigating to another person */
+  private seededPersonKey: string | undefined;
   protected showForm = signal(true);
 
   // derived signals
@@ -117,6 +122,16 @@ export class PersonEditPage implements ViewWillEnter   {
     if (this.hasRole('resourceAdmin')) return false;
     return this.isReadOnly();
   });
+
+  constructor() {
+    effect(() => {
+      const person = this.person();
+      if (!person) return;                                  // still loading -> wait
+      if (this.seededPersonKey === person.okey) return;     // already seeded -> never clobber edits
+      this.seededPersonKey = person.okey;
+      this.formData.set(safeStructuredClone(person));
+    });
+  }
 
   /**
    * Lifecycle hook that is called when the view is about to enter and become the active page.
