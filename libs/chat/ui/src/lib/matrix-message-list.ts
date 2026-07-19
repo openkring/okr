@@ -502,12 +502,15 @@ export class MatrixMessageList {
 
   messageClicked = output<MatrixMessage>();
   /**
-   * Emits the (lowercased) Matrix-user-id localpart when a mention pill inside a
-   * received message's `formatted_body` is clicked, so the feature layer can resolve
-   * it against the person list and navigate — this component stays dumb and has no
-   * access to the person list itself.
+   * Emits the (lowercased) Matrix-user-id localpart, together with the owning message,
+   * when a mention pill inside a received message's `formatted_body` is clicked — this
+   * component stays dumb and has no access to the person list itself, so it cannot tell
+   * whether the localpart resolves to a known person. The message rides along so the
+   * feature layer can fall back to the normal `messageClicked` action-sheet behaviour
+   * when resolution fails (a bridged/bot account, or a member no longer in the tenant
+   * person list) instead of the tap doing nothing.
    */
-  personSelected = output<string>();
+  personSelected = output<{ localpart: string; message: MatrixMessage }>();
   imageClicked = output<{ message: MatrixMessage; group: MatrixMessage[] }>();
   reactionClicked = output<{messageId: string, emoji: string}>();
   threadClicked = output<string>();
@@ -592,9 +595,13 @@ export class MatrixMessageList {
    * `[innerHTML]="item.content.formatted_body"` render site — currently just the plain
    * `m.text` case, but any future reply/edit-preview markup sharing this bubble is
    * covered too). Intercepts clicks on a `matrix.to` person-mention anchor and routes
-   * them to `personSelected` instead of letting the browser navigate to matrix.to.
-   * Every other anchor (room links, ordinary links pasted into a message) is left
-   * untouched and falls through to the existing `messageClicked` action-sheet trigger.
+   * them to `personSelected` (localpart + owning message) instead of letting the browser
+   * navigate to matrix.to. This component has no person list, so it cannot tell whether
+   * the localpart actually resolves — the message is handed along so the feature layer
+   * can fall back to the normal action-sheet behaviour if it doesn't, rather than the tap
+   * being swallowed. Every other anchor (room links, ordinary links pasted into a
+   * message) is left untouched and falls through to the existing `messageClicked`
+   * action-sheet trigger.
    */
   protected onBubbleClick(event: MouseEvent, item: MatrixMessage): void {
     const anchor = (event.target as HTMLElement | null)?.closest?.('a');
@@ -602,7 +609,7 @@ export class MatrixMessageList {
     const personKey = href ? extractMentionLocalpart(href) : undefined;
     if (personKey) {
       event.preventDefault();
-      this.personSelected.emit(personKey);
+      this.personSelected.emit({ localpart: personKey, message: item });
       return;
     }
     this.messageClicked.emit(item);

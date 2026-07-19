@@ -10,6 +10,10 @@ describe('extractMentionLocalpart', () => {
     expect(extractMentionLocalpart('https://matrix.to/#/@anna:example.org:8448')).toBe('anna');
   });
 
+  it('extracts the whole localpart when the user id has no colon (no server part)', () => {
+    expect(extractMentionLocalpart('https://matrix.to/#/@p1')).toBe('p1');
+  });
+
   it('returns undefined for a matrix.to room link', () => {
     expect(extractMentionLocalpart('https://matrix.to/#/!roomid:example.org')).toBeUndefined();
   });

@@ -69,15 +69,15 @@
       "title": "Tastenkürzel",
       "mention": {
         "token": "@",
-        "desc": "In Gruppen-Chats öffnet sich beim Tippen die Liste der Raummitglieder. ↑↓ und Enter wählen eine Person aus, Escape schliesst die Liste wieder, ohne den eingegebenen Text zu verändern. In Direkt-Chats bleibt @ einfacher Text."
+        "desc": "In Gruppen-Chats öffnet sich beim Tippen die Liste der Raummitglieder. ↑↓ wählen einen Eintrag aus, Enter oder Tab fügen ihn ein, Escape schliesst die Liste wieder, ohne den eingegebenen Text zu verändern. In Direkt-Chats bleibt @ einfacher Text."
       },
       "mentionRoom": {
         "token": "@room",
-        "desc": "Benachrichtigt alle Mitglieder des Raums. Die Kurzformen @team und @all (ab drei eingegebenen Zeichen) finden denselben Eintrag und fügen ebenfalls @room ein."
+        "desc": "Benachrichtigt alle Mitglieder des Raums. Der Eintrag erscheint direkt nach dem @ und wieder, sobald du drei Zeichen getippt hast – die Kurzformen @team, @all und @alle finden denselben Eintrag und fügen ebenfalls @room ein."
       },
       "mentionMe": {
         "token": "@me",
-        "desc": "Fügt deinen eigenen Namen als Text ein, ohne dich selbst zu benachrichtigen."
+        "desc": "Fügt deinen eigenen Namen als Text ein, ohne dich selbst zu benachrichtigen. Der Eintrag erscheint nur bei der exakten Eingabe @me – @m oder @mei zeigen ihn nicht."
       },
       "date": {
         "token": "//",
@@ -89,7 +89,7 @@
       },
       "send": {
         "token": "Enter",
-        "desc": "Sendet die Nachricht."
+        "desc": "Sendet die Nachricht. Ist die @-Liste noch geöffnet, wählt Enter stattdessen den markierten Eintrag aus."
       },
       "newline": {
         "token": "Umschalt+Enter",

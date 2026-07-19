@@ -265,7 +265,6 @@ import 'emoji-picker-element';
           <okr-mention-autocomplete
             [query]="mentionQuery()!.query"
             [candidates]="mentionCandidates()"
-            [showRoomOption]="true"
             [activeIndex]="mentionActiveIndex()"
             [instanceId]="instanceId"
             [i18n]="i18n()"

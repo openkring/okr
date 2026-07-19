@@ -968,18 +968,28 @@ export class MatrixChat implements OnDestroy {
    * (mirrors how `mentionCandidates` in the store matches room members to persons,
    * since Matrix user ids are always lowercased on creation but `okey` may not be).
    * A route param that doesn't match a real document id would 404, so if no person is
-   * found we log and skip navigation rather than guessing.
+   * found we don't navigate.
+   *
+   * Instead of leaving the tap a dead click, an unresolvable mention (a bridged/bot
+   * account, or a member no longer in the tenant person list) falls back to the normal
+   * `onMessageClicked` action-sheet behaviour — the same thing tapping anywhere else on
+   * the message bubble does. `matrix-message-list` hands the owning message along in the
+   * event precisely so this fallback is possible from here, the only layer that knows
+   * whether the localpart actually resolves.
    *
    * `PersonEditPage` may sit behind a role guard; we navigate unconditionally and let
    * the guard decide (no pre-check here). If that means non-privileged users get
    * bounced, that's a follow-up, not something to work around in this handler.
    */
-  protected onPersonSelected(localpart: string): void {
+  protected onPersonSelected(event: { localpart: string; message: MatrixMessage }): void {
     const person = this.store.appStore.allPersons().find(
-      (p) => p.okey?.toLowerCase() === localpart.toLowerCase()
+      (p) => p.okey?.toLowerCase() === event.localpart.toLowerCase()
     );
     if (!person) {
-      console.warn(`MatrixChat: Could not resolve mentioned user '${localpart}' to a person`);
+      console.warn(`MatrixChat: Could not resolve mentioned user '${event.localpart}' to a person — falling back to the message action sheet`);
+      this.onMessageClicked(event.message).catch((err) =>
+        console.error('MatrixChat: Failed to open action sheet for unresolvable mention:', err)
+      );
       return;
     }
     this.router.navigate(['/person', person.okey]);

@@ -125,7 +125,6 @@ export class MentionAutocomplete {
   // inputs
   public query = input.required<string>();
   public candidates = input.required<PersonModel[]>();
-  public showRoomOption = input.required<boolean>();
   public activeIndex = input.required<number>();
   public i18n = input.required<MatrixChatI18n>();
   /** Owning composer's instance number — makes the listbox/option ids unique per composer. */
@@ -158,9 +157,8 @@ export class MentionAutocomplete {
     const query = this.query().toLowerCase();
     const result: MentionPick[] = [];
     if (
-      this.showRoomOption() &&
-      (query.length === 0 ||
-        (query.length >= MIN_ALIAS_QUERY_LENGTH && ROOM_ALIASES.some((alias) => alias.startsWith(query))))
+      query.length === 0 ||
+      (query.length >= MIN_ALIAS_QUERY_LENGTH && ROOM_ALIASES.some((alias) => alias.startsWith(query)))
     ) {
       result.push({ kind: 'room' });
     }
@@ -177,7 +175,7 @@ export class MentionAutocomplete {
   /**
    * The highlighted index, clamped to the rendered list.
    *
-   * `options()` depends on `candidates()`/`showRoomOption()` as well as `query`, so the list can
+   * `options()` depends on `candidates()` as well as `query`, so the list can
    * shrink under an open overlay (async-resolving candidates) WITHOUT a query change resetting
    * the parent's `activeIndex`. The child is the only place that sees both values in the same
    * change-detection pass, and a child-local computed carries no NG0100 risk (that danger applies
