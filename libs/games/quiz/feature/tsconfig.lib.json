@@ -1,14 +1,14 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../dist/libs/quiz/feature",
+    "outDir": "../../../../dist/libs/games/quiz/feature",
     "declaration": true,
     "composite": true,
     "module": "preserve",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../dist/out-tsc/quiz-feature.tsbuildinfo",
+    "tsBuildInfoFile": "../../../../dist/out-tsc/games-quiz-feature.tsbuildinfo",
     "moduleResolution": "bundler",
     "lib": ["dom", "es2022"]
   },

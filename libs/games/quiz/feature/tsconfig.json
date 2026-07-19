@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
     "types": ["node", "vitest"],
@@ -18,7 +18,7 @@
   "exclude": ["dist/**/*"],
   "references": [
     {
-      "path": "../../shared/ui/tsconfig.lib.json"
+      "path": "../../../shared/ui/tsconfig.lib.json"
     }
   ]
 }
