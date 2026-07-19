@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
-import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME } from '@okr/shared-constants';
+import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME, NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { getAvatarName, hasRole } from '@okr/shared-util-core';
@@ -67,7 +67,7 @@ import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="false" />
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="NAME_LENGTH" [autofocus]="true" [readOnly]="false" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -180,6 +180,11 @@ export class ReservationApplyForm {
 
   // signals
   public valid = output<boolean>();
+  /** labels of the fields that currently block the form -> lets the parent explain a hidden save bar */
+  public invalidFields = output<string[]>();
+
+  // must match the maxLength used by reservationApplyValidations for the name field
+  protected readonly NAME_LENGTH = NAME_LENGTH;
 
   // computed i18n field objects
   protected nameI18n = computed(() => ({ name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper() } as TextInputI18n));
@@ -224,8 +229,29 @@ export class ReservationApplyForm {
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected description = linkedSignal(() => this.formData().description ?? '');
 
+  /** maps a vest field name onto the label the user actually sees on the form */
+  private readonly fieldLabels = computed<Record<string, string>>(() => ({
+    name: this.i18n().name_label(),
+    startDate: this.i18n().startDate_label(),
+    endDate: this.i18n().endDate_label(),
+    startTime: this.i18n().startTime_label(),
+    durationMinutes: this.i18n().durationMinutes_label(),
+    participants: this.i18n().participants_label(),
+    area: this.i18n().area_label(),
+    description: this.i18n().description_label(),
+    isConfirmed: this.i18n().confirmed_label()
+  }));
+
+  private readonly invalidFieldLabels = computed(() => {
+    const labels = this.fieldLabels();
+    return Object.keys(this.validationResult().getErrors()).map((field) => labels[field] ?? field);
+  });
+
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+      this.invalidFields.emit(this.invalidFieldLabels());
+    });
   }
 
   /******************************* actions *************************************** */

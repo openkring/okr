@@ -1,5 +1,5 @@
-import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { IonContent, IonNote, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CalEventModel, PersonModelName, ReservationApplyModel, ResourceModelName, RoleName } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
@@ -18,14 +18,21 @@ import { ReservationStore } from './reservation.store';
   standalone: true,
   imports: [
     RelationshipToolbar, Header, ChangeConfirmation, ReservationApplyForm,
-    IonContent
+    IonContent, IonNote
   ],
   providers: [ReservationStore],
-  styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    .validation-hint { display: block; padding: 10px 16px; }
+  `],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+    } @else if(showValidationHint()) {
+      <ion-note color="danger" class="validation-hint">
+        Die Anmeldung kann noch nicht abgeschickt werden. Bitte prüfen: {{ invalidFields().join(', ') }}
+      </ion-note>
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
@@ -55,6 +62,7 @@ import { ReservationStore } from './reservation.store';
             [locale]="locale()"
             [periodicities]="periodicities()"
             (valid)="formValid.set($event)"
+            (invalidFields)="invalidFields.set($event)"
           />
         }
       }
@@ -70,15 +78,21 @@ export class ReservationApplyModal {
   protected readonly reasons = computed(() => this.store.appStore.getCategory('reservation_reason'));
   protected readonly periodicities = computed(() => this.store.appStore.getCategory('periodicity'));
   protected readonly locale = computed(() => this.store.appStore.appConfig().locale);
-  protected formData = linkedSignal(() => getNewReservationApply(this.currentUser(), this.resource()));
+  // seeded once, as soon as currentUser and resource are both loaded. It must NOT be a linkedSignal:
+  // defaultResource() is derived from live Firestore streams, so every re-emission would hand back a
+  // new object reference (or transiently undefined) and wipe out what the user has entered so far.
+  protected formData = signal<ReservationApplyModel | undefined>(undefined);
 
   // signals
   protected formValid = signal(false);
+  protected invalidFields = signal<string[]>([]);
   protected calevent = signal<CalEventModel | undefined>(undefined);
 
   // derived signals
   protected readonly headerTitle = computed(() => this.store.getTitleLabel(false, undefined));
   protected showConfirmation = computed(() => this.formData()?.isConfirmed === true && this.formValid());
+  // the user has accepted the contract and expects a save bar -> explain why it is still missing
+  protected showValidationHint = computed(() => this.formData()?.isConfirmed === true && !this.formValid() && this.invalidFields().length > 0);
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected readonly toolbarTitle = computed(() => this.store.i18n.reldesc1() + this.resourceName + this.store.i18n.reldesc1() + this.reserverName());
   protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.reserver);
@@ -89,6 +103,16 @@ export class ReservationApplyModal {
   protected readonly tenantId = computed(() => this.store.tenantId());
   protected readonly subjectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
   protected readonly objectDefaultIcon = computed(() => this.store.appStore.getDefaultIcon(PersonModelName));
+
+  constructor() {
+    effect(() => {
+      const currentUser = this.currentUser();
+      const resource = this.resource();
+      if (!currentUser || !resource) return;          // still loading -> wait
+      if (untracked(this.formData)) return;           // already seeded -> never clobber user input
+      this.formData.set(getNewReservationApply(currentUser, resource));
+    });
+  }
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -101,8 +125,7 @@ export class ReservationApplyModal {
   }
 
   public async cancel(): Promise<void> {
-    this.formData.set(getNewReservationApply(this.currentUser(), this.resource()));  // reset the form
-    this.modalController?.dismiss(null, 'cancel');
+    this.modalController?.dismiss(null, 'cancel');  // the modal is destroyed -> no need to reset the form
   }
 
   protected onFormDataChange(formData: ReservationApplyModel): void {
