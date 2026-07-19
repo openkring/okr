@@ -1,6 +1,6 @@
 // libs/aoc/feature/src/lib/aoc-session.ts
 import { Component, computed, inject } from '@angular/core';
-import { ActionSheetController, IonBadge, IonButton, IonButtons, IonCard, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
+import { ActionSheetController, IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, PopoverController } from '@ionic/angular/standalone';
 
 import { SessionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -18,7 +18,7 @@ import { AocSessionStore } from './aoc-session.store';
     SvgIconPipe,
     Spinner, EmptyList, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonButton, IonTitle, IonIcon,
-    IonContent, IonCard, IonCardHeader, IonCardTitle, IonList, IonItem, IonLabel, IonBadge, IonPopover,
+    IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonChip, IonList, IonItem, IonLabel, IonBadge, IonPopover,
   ],
   providers: [AocSessionStore],
   template: `
@@ -88,6 +88,25 @@ import { AocSessionStore } from './aoc-session.store';
               {{ store.activeCount() }} active
             </ion-card-title>
           </ion-card-header>
+
+          <!-- currently logged-in users: click a chip to filter the list below -->
+          @if (loggedInUsers().length > 0) {
+            <ion-card-content>
+              <ion-label color="medium">{{ store.i18n.session_logged_in() }} ({{ loggedInUsers().length }})</ion-label>
+              <div class="chips">
+                @for (user of loggedInUsers(); track user.userKey) {
+                  <ion-chip
+                    color="success"
+                    [outline]="user.userKey !== selectedUserKey()"
+                    (click)="store.toggleUserFilter(user.userKey)"
+                  >
+                    <ion-icon src="{{ 'person' | svgIcon }}" />
+                    <ion-label>{{ user.userEmail || store.i18n.session_anonymous() }}</ion-label>
+                  </ion-chip>
+                }
+              </div>
+            </ion-card-content>
+          }
         </ion-card>
 
         @if (sessions().length === 0) {
@@ -111,6 +130,14 @@ import { AocSessionStore } from './aoc-session.store';
       }
     </ion-content>
   `,
+  styles: `
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+  `,
 })
 export class AocSession {
   protected readonly store = inject(AocSessionStore);
@@ -123,6 +150,8 @@ export class AocSession {
   protected readonly filteredCount = computed(() => this.store.filteredSessions().length);
   protected readonly totalCount = computed(() => this.store.allSessions().length);
   protected readonly popupId = computed(() => `c_sessions_${generateRandomString(5)}`);
+  protected readonly loggedInUsers = computed(() => this.store.loggedInUsers());
+  protected readonly selectedUserKey = computed(() => this.store.selectedUserKey());
 
   private readonly statusValues: ReadonlyArray<'all' | 'active' | 'stale' | 'orphaned' | 'ended'> = ['all', 'active', 'stale', 'orphaned', 'ended'];
   protected readonly statusLabels = computed<Record<string, string>>(() => ({

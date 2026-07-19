@@ -442,6 +442,7 @@
     "title": "Sessions",
     "empty": "Keine Sessions im gewählten Zeitraum",
     "anonymous": "anonym",
+    "loggedIn": "Angemeldet",
     "col": {
       "user": "Benutzer",
       "browser": "Browser",

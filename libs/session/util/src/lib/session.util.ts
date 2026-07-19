@@ -39,6 +39,36 @@ export function getSessionStatus(session: SessionModel, nowMs: number): SessionS
   return 'active';
 }
 
+/*-------------------------- logged-in users -----------------------------*/
+export type LoggedInUser = {
+  userKey: string;
+  userEmail: string;
+  startedAt: string;   // StoreDateTime of the most recent active session
+};
+
+/**
+ * Derive the distinct users that are currently logged in, i.e. that have at least one
+ * session with status 'active'. Anonymous sessions (no userKey) are ignored — they are
+ * visitors, not logged-in users. A user with several active sessions (multiple tabs or
+ * devices) appears once, represented by the most recently started session.
+ * @param nowMs current time in millis (injected for testability)
+ */
+export function getLoggedInUsers(sessions: SessionModel[], nowMs: number): LoggedInUser[] {
+  const byUser = new Map<string, LoggedInUser>();
+  for (const session of sessions) {
+    if (!session.userKey) continue;
+    if (getSessionStatus(session, nowMs) !== 'active') continue;
+    const previous = byUser.get(session.userKey);
+    if (previous && previous.startedAt >= session.startedAt) continue;
+    byUser.set(session.userKey, {
+      userKey: session.userKey,
+      userEmail: session.userEmail,
+      startedAt: session.startedAt,
+    });
+  }
+  return [...byUser.values()].sort((a, b) => a.userEmail.localeCompare(b.userEmail));
+}
+
 export function getSessionStatusColor(status: SessionStatus): string {
   switch (status) {
     case 'active': return 'success';

@@ -12,7 +12,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { SessionCollection, SessionModel } from '@okr/shared-models';
 import { DateFormat, convertDateFormatToString, getTodayStr, subDuration } from '@okr/shared-util-core';
 import { exportCsv, getExportFileName, navigateByUrl, showToast } from '@okr/shared-util-angular';
-import { getSessionStatus, SessionStatus } from '@okr/session-util';
+import { getLoggedInUsers, getSessionStatus, SessionStatus } from '@okr/session-util';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 import { UserService } from '@okr/user-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
@@ -22,6 +22,7 @@ export type StatusFilter = 'all' | SessionStatus;
 export type AocSessionState = {
   searchTerm: string;
   selectedStatus: StatusFilter;
+  selectedUserKey: string;   // '' = no user filter; set by clicking a logged-in-user chip
   fromDateTime: string;   // StoreDateTime
   toDateTime: string;     // StoreDateTime
   hiddenUserKeys: string[];
@@ -37,6 +38,7 @@ function lastWeekFrom(): string {
 const initialState: AocSessionState = {
   searchTerm: '',
   selectedStatus: 'all',
+  selectedUserKey: '',
   fromDateTime: lastWeekFrom(),
   toDateTime: getTodayStr(DateFormat.StoreDateTime),
   hiddenUserKeys: [],
@@ -84,8 +86,10 @@ export const AocSessionStore = signalStore(
       const term = state.searchTerm();
       const status = state.selectedStatus();
       const hidden = new Set(state.hiddenUserKeys());
+      const userKey = state.selectedUserKey();
       return state.allSessions().filter(s => {
         if (s.userKey && hidden.has(s.userKey)) return false;
+        if (userKey && s.userKey !== userKey) return false;
         if (status !== 'all' && getSessionStatus(s, now) !== status) return false;
         if (term) {
           const idx = (s.index || `${s.userEmail} ${s.browser} ${s.os}`).toLowerCase();
@@ -97,6 +101,11 @@ export const AocSessionStore = signalStore(
     activeCount: computed(() => state.allSessions().filter(s => s.isActive).length),
     uniqueUserCount: computed(() => new Set(state.allSessions().filter(s => s.userKey).map(s => s.userKey)).size),
     anonymousCount: computed(() => state.allSessions().filter(s => !s.userKey).length),
+    // hidden users are not advertised at the top either
+    loggedInUsers: computed(() => {
+      const hidden = new Set(state.hiddenUserKeys());
+      return getLoggedInUsers(state.allSessions(), Date.now()).filter(u => !hidden.has(u.userKey));
+    }),
   })),
   withMethods(store => ({
     /* ---------------- filters ---------------- */
@@ -109,10 +118,18 @@ export const AocSessionStore = signalStore(
     setDuration(from: string, to: string): void {
       patchState(store, { fromDateTime: from, toDateTime: to });
     },
+    /** Toggle the list filter for a single user; clicking the selected chip again clears it. */
+    toggleUserFilter(userKey: string): void {
+      patchState(store, { selectedUserKey: store.selectedUserKey() === userKey ? '' : userKey });
+    },
     hideUser(session: SessionModel): void {
       if (!session.userKey) return;
       if (store.hiddenUserKeys().includes(session.userKey)) return;
-      patchState(store, { hiddenUserKeys: [...store.hiddenUserKeys(), session.userKey] });
+      patchState(store, {
+        hiddenUserKeys: [...store.hiddenUserKeys(), session.userKey],
+        // don't leave the list filtered to a user that is no longer shown
+        selectedUserKey: store.selectedUserKey() === session.userKey ? '' : store.selectedUserKey(),
+      });
     },
     clearHidden(): void {
       patchState(store, { hiddenUserKeys: [] });

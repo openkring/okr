@@ -345,6 +345,7 @@ export const AOC_I18N_KEYS = {
   session_title:                          PFX + 'session.title',
   session_empty:                          PFX + 'session.empty',
   session_anonymous:                      PFX + 'session.anonymous',
+  session_logged_in:                      PFX + 'session.loggedIn',
   session_col_user:                       PFX + 'session.col.user',
   session_col_browser:                    PFX + 'session.col.browser',
   session_col_os:                         PFX + 'session.col.os',
