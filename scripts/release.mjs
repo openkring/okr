@@ -36,16 +36,55 @@ const run = (cmd, args, opts = {}) =>
 const capture = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, { cwd: repoRoot, encoding: 'utf8', ...opts }).trim();
 
-function ask(q) {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((res) => rl.question(q, (a) => { rl.close(); res(a.trim()); }));
+// Prompting has two modes, because a release is driven both by a human and by scripts/CI.
+//
+// TTY (a human at a terminal): one readline interface per prompt, closed immediately after.
+//   stdin stays free between questions, so child processes (nx build, `firebase deploy`) own
+//   fd 0 and can prompt for themselves. This is the original behaviour — keep it.
+//
+// Non-TTY (answers piped in): one persistent interface plus a line QUEUE. Two traps here, both
+//   of which silently mis-drive the release if you use the TTY approach:
+//   1. readline reads stdin in chunks, so it emits lines that arrive before question() is called
+//      — those are dropped unless queued. (Symptom: an answer is skipped and the caller silently
+//      takes its default.)
+//   2. Closing the interface leaves stdin at EOF, so the NEXT question's callback never fires.
+//      The await then hangs, Node's event loop drains, and the process exits 0 mid-release with
+//      nothing built or deployed. Once stdin ends, answer '' so callers fall back to defaults.
+const piped = !process.stdin.isTTY;
+let rl;
+const queued = [];
+let waiting = null;
+let stdinEnded = false;
+
+function initPipedPrompts() {
+  if (rl) return;
+  rl = createInterface({ input: process.stdin, output: process.stdout });
+  const deliver = (line) => {
+    if (waiting) { const res = waiting; waiting = null; res(line); }
+    else queued.push(line);
+  };
+  rl.on('line', (l) => deliver(l.trim()));
+  rl.on('close', () => { stdinEnded = true; if (waiting) { const res = waiting; waiting = null; res(''); } });
 }
+
+function ask(q) {
+  if (!piped) {
+    const once = createInterface({ input: process.stdin, output: process.stdout });
+    return new Promise((res) => once.question(q, (a) => { once.close(); res(a.trim()); }));
+  }
+  initPipedPrompts();
+  process.stdout.write(q);
+  if (queued.length) return Promise.resolve(queued.shift());
+  if (stdinEnded) return Promise.resolve('');
+  return new Promise((res) => { waiting = res; });
+}
+const closePrompts = () => { rl?.close(); rl = undefined; };
 async function confirm(q, def = true) {
   const a = (await ask(`${q} ${def ? '[Y/n]' : '[y/N]'} `)).toLowerCase();
   if (!a) return def;
   return a === 'y' || a === 'yes';
 }
-function abort(msg) { console.error(`\n✖ ${msg}`); process.exit(1); }
+function abort(msg) { closePrompts(); console.error(`\n✖ ${msg}`); process.exit(1); }
 function bump(v, kind) {
   const [maj, min, pat] = v.split('.').map(Number);
   if (kind === 'major') return `${maj + 1}.0.0`;
@@ -206,4 +245,4 @@ async function main() {
   else abort(`Unknown target '${target}'.`);
 }
 
-main().catch((e) => abort(e.message ?? String(e)));
+main().then(closePrompts).catch((e) => abort(e.message ?? String(e)));
