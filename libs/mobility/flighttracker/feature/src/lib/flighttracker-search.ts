@@ -11,7 +11,7 @@ import { isBrowser } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 
-import { FlightInfoResponse } from '@okr/flighttracker-data-access';
+import { FlightInfoResponse } from '@okr/mobility-flighttracker-data-access';
 import { FlightDetailModal } from './flighttracker-detail.modal';
 import { FlightTrackerStore } from './flighttracker.store';
 

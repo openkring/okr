@@ -1,5 +1,5 @@
 {
-  "name": "@okr/flighttracker-data-access",
+  "name": "@okr/mobility-flighttracker-util",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

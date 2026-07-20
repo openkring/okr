@@ -1,0 +1,24 @@
+{
+  "name": "mobility-flighttracker-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/mobility/flighttracker/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:mobility", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/mobility/flighttracker/data-access",
+        "main": "libs/mobility/flighttracker/data-access/src/index.ts",
+        "tsConfig": "libs/mobility/flighttracker/data-access/tsconfig.lib.json",
+        "assets": ["libs/mobility/flighttracker/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

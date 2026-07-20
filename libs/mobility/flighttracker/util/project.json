@@ -1,18 +1,18 @@
 {
-  "name": "geo-flighttracker-util",
+  "name": "mobility-flighttracker-util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/geo/flighttracker/util/src",
+  "sourceRoot": "libs/mobility/flighttracker/util/src",
   "prefix": "okr",
   "projectType": "library",
-  "tags": ["type:util", "scope:flighttracker", "platform:mobile", "platform:web"],
+  "tags": ["type:util", "scope:mobility", "platform:mobile", "platform:web"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/geo/flighttracker/util",
-        "main": "libs/geo/flighttracker/util/src/index.ts",
-        "tsConfig": "libs/geo/flighttracker/util/tsconfig.lib.json",
+        "outputPath": "dist/libs/mobility/flighttracker/util",
+        "main": "libs/mobility/flighttracker/util/src/index.ts",
+        "tsConfig": "libs/mobility/flighttracker/util/tsconfig.lib.json",
         "assets": [],
         "updateBuildableProjectDepsInPackageJson": false
       }

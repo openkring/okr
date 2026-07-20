@@ -1,0 +1,24 @@
+{
+  "name": "mobility-flighttracker-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/mobility/flighttracker/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:mobility", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/mobility/flighttracker/feature",
+        "main": "libs/mobility/flighttracker/feature/src/index.ts",
+        "tsConfig": "libs/mobility/flighttracker/feature/tsconfig.lib.json",
+        "assets": ["libs/mobility/flighttracker/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

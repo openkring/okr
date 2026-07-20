@@ -2,13 +2,13 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../../dist/libs/flighttracker/data-access",
+    "outDir": "../../../../dist/libs/mobility/flighttracker/data-access",
     "declaration": true,
     "composite": true,
     "module": "preserve",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../../dist/out-tsc/flighttracker-data-access.tsbuildinfo",
+    "tsBuildInfoFile": "../../../../dist/out-tsc/mobility-flighttracker-data-access.tsbuildinfo",
     "moduleResolution": "bundler",
     "lib": ["dom", "es2022"]
   },

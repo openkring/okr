@@ -2,8 +2,8 @@ import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { I18nService } from '@okr/shared-i18n';
-import { FlightInfoResponse, FlightTrackerService } from '@okr/flighttracker-data-access';
-import { FLIGHTTRACKER_I18N_KEYS, FlighttrackerI18n } from '@okr/geo-flighttracker-util';
+import { FlightInfoResponse, FlightTrackerService } from '@okr/mobility-flighttracker-data-access';
+import { FLIGHTTRACKER_I18N_KEYS, FlighttrackerI18n } from '@okr/mobility-flighttracker-util';
 export type { FlighttrackerI18n };
 
 export type FlightTrackerState = {
@@ -52,7 +52,7 @@ export const FlightTrackerStore = signalStore(
         );
         patchState(store, { flightData: data, isLoading: false });
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : '@flighttracker.error.generic';
+        const message = err instanceof Error ? err.message : store.i18n.errorGeneric();
         patchState(store, { error: message, isLoading: false });
       }
     },

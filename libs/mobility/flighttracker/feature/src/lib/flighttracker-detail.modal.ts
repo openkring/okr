@@ -5,7 +5,7 @@ import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, ModalController
 import { Header } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
-import { FlightInfoResponse } from '@okr/flighttracker-data-access';
+import { FlightInfoResponse } from '@okr/mobility-flighttracker-data-access';
 
 import { FlightTrackerStore } from './flighttracker.store';
 

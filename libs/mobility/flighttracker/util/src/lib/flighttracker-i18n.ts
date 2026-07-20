@@ -1,7 +1,7 @@
 import { Signal } from '@angular/core';
 
-const PFX = '@flighttracker.';
-const DPFX = '@flighttracker.detail.';
+const PFX = '@mobility/flighttracker/feature.';
+const DPFX = PFX + 'detail.';
 
 export const FLIGHTTRACKER_I18N_KEYS = {
   title:        PFX + 'title',
@@ -23,6 +23,7 @@ export const FLIGHTTRACKER_I18N_KEYS = {
   altitude:     DPFX + 'altitude',
   direction:    DPFX + 'direction',
   speed:        DPFX + 'speed',
+  errorGeneric: PFX + 'error.generic',
 } satisfies Record<string, string>;
 
 export type FlighttrackerI18n = { [K in keyof typeof FLIGHTTRACKER_I18N_KEYS]: Signal<string> };
