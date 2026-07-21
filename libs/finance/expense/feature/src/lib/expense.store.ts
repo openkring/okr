@@ -161,6 +161,11 @@ export const ExpenseStore = signalStore(
         }
       } catch (e) {
         console.error('[expense-submit] Upload step failed', e);
+        // Don't delete the expense — some receipts may already have uploaded and will still
+        // flow through the OCR pipeline; flipping to 'error' is an honest signal for the
+        // treasurer, and the pipeline will legitimately override it to 'validated' for anything
+        // that did upload + extract successfully.
+        if (expenseKey) await compensateExpense(store.expenseService, expenseKey, currentUser);
         if (newAddressKey) await compensateAddress(store.addressService, newAddressKey, currentUser);
         patchState(store, { submitStep: 'error', submitError: 'Upload step failed' });
         return;
@@ -180,5 +185,25 @@ async function compensateAddress(
   try {
     const addr = await firstValueFrom(addressService.read(addressKey));
     if (addr) await addressService.delete(addr, currentUser);
+  } catch { /* best-effort */ }
+}
+
+// Flip an already-created expense to 'error' instead of deleting it: some receipts may already
+// have uploaded successfully and will still flow through the OCR pipeline, so the expense record
+// (and any partial receipts) must survive. 'error' is an honest signal for the treasurer, and the
+// pipeline will legitimately override it back to 'validated' for anything that did upload +
+// extract successfully. Best-effort — a failure here just leaves the expense stuck as
+// 'processing', which is no worse than before this compensation existed.
+async function compensateExpense(
+  expenseService: ExpenseService,
+  expenseKey: string,
+  currentUser: Parameters<typeof expenseService.update>[1]
+): Promise<void> {
+  try {
+    const savedExpense = await firstValueFrom(expenseService.read(expenseKey));
+    if (savedExpense) {
+      savedExpense.status = 'error';
+      await expenseService.update(savedExpense, currentUser);
+    }
   } catch { /* best-effort */ }
 }
