@@ -57,6 +57,9 @@
       "path": "../../chat/util/tsconfig.lib.json"
     },
     {
+      "path": "../../chat/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../calevent/util/tsconfig.lib.json"
     },
     {

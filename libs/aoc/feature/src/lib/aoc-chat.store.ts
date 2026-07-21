@@ -12,6 +12,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { showToast } from '@okr/shared-util-angular';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 import { getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
+import { MatrixMediaService } from '@okr/chat-data-access';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
 export interface AdminRoom {
@@ -75,7 +76,8 @@ export interface AvatarRepairEntry {
 
 export interface AvatarRepairResult {
   scanned: number;
-  repaired: AvatarRepairEntry[];
+  repaired: AvatarRepairEntry[];      // blank avatar → filled with the person avatar (mxc)
+  migratedHttp: AvatarRepairEntry[];  // legacy https avatar → re-uploaded to the media repo as mxc
   skippedNoAvatar: string[];
   skippedHasAvatar: number;
   applied: boolean;
@@ -129,6 +131,7 @@ export const AocChatStore = signalStore(
     alertController: inject(AlertController),
     toastController: inject(ToastController),
     i18nService: inject(I18nService),
+    media: inject(MatrixMediaService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
@@ -208,6 +211,50 @@ export const AocChatStore = signalStore(
     members: computed(() => state.membersResource.value() ?? []),
     roomDetails: computed(() => state.roomDetailsResource.value()),
     memberDetails: computed(() => state.memberDetailsResource.value()),
+  })),
+
+  // ─── avatar resolution (mxc:// → authenticated blob URL) ─────────────────────
+  withProps(store => ({
+    // Resolve the selected member/room avatar for <img>. http/blob values pass through
+    // unchanged; an mxc:// URI is fetched with the admin's Matrix access token and turned
+    // into a cached blob URL by MatrixMediaService (the same path the room list uses).
+    // Resolves to undefined when the Matrix client is not initialized — the view then
+    // falls back to the person icon instead of a broken image.
+    memberAvatarResource: rxResource({
+      params: () => ({ url: store.memberDetails()?.avatarUrl }),
+      stream: ({ params }) => {
+        const url = params.url;
+        if (!url) return of<string | undefined>(undefined);
+        if (!url.startsWith('mxc://')) return of<string | undefined>(url);
+        return from(store.media.resolveMediaUrl(url).then(b => b || undefined));
+      },
+    }),
+    roomAvatarResource: rxResource({
+      params: () => ({ url: store.roomDetails()?.avatarUrl }),
+      stream: ({ params }) => {
+        const url = params.url;
+        if (!url) return of<string | undefined>(undefined);
+        if (!url.startsWith('mxc://')) return of<string | undefined>(url);
+        return from(store.media.resolveMediaUrl(url).then(b => b || undefined));
+      },
+    }),
+    // Member-list avatars: resolve each mxc:// avatar to a blob URL so the list shows the
+    // photo (isPhotoUrl accepts blob:) instead of an icon. MatrixMediaService caches, so
+    // repeated members/rooms don't refetch. http/blob avatars pass through untouched.
+    membersResolvedResource: rxResource({
+      params: () => ({ members: store.members() }),
+      stream: ({ params }) => from(Promise.all(params.members.map(async m => {
+        if (!m.avatarUrl?.startsWith('mxc://')) return m;
+        const blob = await store.media.resolveMediaUrl(m.avatarUrl);
+        return { ...m, avatarUrl: blob || undefined };
+      }))),
+    }),
+  })),
+  withComputed(state => ({
+    memberAvatarUrl: computed(() => state.memberAvatarResource.value()),
+    roomAvatarUrl: computed(() => state.roomAvatarResource.value()),
+    // Falls back to the raw members while resolution is in flight (icons, never broken).
+    resolvedMembers: computed(() => state.membersResolvedResource.value() ?? state.members()),
   })),
 
   // ─── methods ────────────────────────────────────────────────────────────────
@@ -456,7 +503,8 @@ export const AocChatStore = signalStore(
         );
         const dry = await fn({ dryRun: true });
         patchState(store, {
-          avatarRepairPreview: dry.data.repaired,
+          // Both blank-fills and legacy-https→mxc migrations will change; show them together.
+          avatarRepairPreview: [...dry.data.repaired, ...dry.data.migratedHttp],
           avatarRepairSkippedHas: dry.data.skippedHasAvatar,
         });
       } catch (e) {
@@ -496,7 +544,7 @@ export const AocChatStore = signalStore(
         );
         const applied = await fn({ dryRun: false });
         const conf = await firstValueFrom(
-          store.i18nService.translate('@aoc/feature.chat.repair.avatars.conf', { count: applied.data.repaired.length })
+          store.i18nService.translate('@aoc/feature.chat.repair.avatars.conf', { count: applied.data.repaired.length + applied.data.migratedHttp.length })
         );
         patchState(store, { avatarRepairPreview: [], avatarRepairSkippedHas: applied.data.skippedHasAvatar });
         store.membersResource.reload();

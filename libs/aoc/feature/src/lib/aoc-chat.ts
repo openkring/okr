@@ -333,7 +333,7 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
               <div class="empty-state">{{ store.i18n.chat_no_members() }}</div>
             }
             <ion-list lines="inset">
-              @for (member of members(); track member.userId) {
+              @for (member of resolvedMembers(); track member.userId) {
                 <ion-item
                   button
                   class="member-item"
@@ -381,10 +381,10 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
                     <span class="details-value">{{ roomDetails()!.aliases.join(', ') }}</span>
                   </div>
                 }
-                @if (roomDetails()!.avatarUrl) {
+                @if (roomAvatarUrl(); as avatarUrl) {
                   <div class="details-row">
-                    <span class="details-key">{{ avatar() }}</span>
-                    <span class="details-value"><img [src]="roomDetails()!.avatarUrl" style="width:48px;height:48px;object-fit:cover" /></span>
+                    <span class="details-key">{{ store.i18n.chat_avatar() }}</span>
+                    <span class="details-value"><img [src]="avatarUrl" style="width:48px;height:48px;object-fit:cover" /></span>
                   </div>
                 }
               </div>
@@ -397,10 +397,10 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
                 @if (memberDetails()!.membership) {
                   <div class="details-row"><span class="details-key">{{ store.i18n.membership() }}</span><span class="details-value">{{ memberDetails()!.membership }}</span></div>
                 }
-                @if (memberDetails()!.avatarUrl) {
+                @if (memberAvatarUrl(); as avatarUrl) {
                   <div class="details-row">
-                    <span class="details-key">{{ avatar() }}</span>
-                    <span class="details-value"><img [src]="memberDetails()!.avatarUrl" style="width:48px;height:48px;object-fit:cover;border-radius:50%" /></span>
+                    <span class="details-key">{{ store.i18n.chat_avatar() }}</span>
+                    <span class="details-value"><img [src]="avatarUrl" style="width:48px;height:48px;object-fit:cover;border-radius:50%" /></span>
                   </div>
                 }
               </div>
@@ -426,8 +426,13 @@ export class AocChat {
   // exposed signals from store
   protected readonly rooms = computed(() => this.store.rooms());
   protected readonly members = computed(() => this.store.members());
+  // Members with mxc:// avatars resolved to blob URLs (photo in the list, not an icon).
+  protected readonly resolvedMembers = computed(() => this.store.resolvedMembers());
   protected readonly roomDetails = computed(() => this.store.roomDetails());
   protected readonly memberDetails = computed(() => this.store.memberDetails());
+  // Renderable avatar URLs (mxc:// resolved to a blob URL; http/blob passed through).
+  protected readonly memberAvatarUrl = computed(() => this.store.memberAvatarUrl());
+  protected readonly roomAvatarUrl = computed(() => this.store.roomAvatarUrl());
   protected readonly isLoadingRooms = computed(() => this.store.isLoadingRooms());
   protected readonly isLoadingMembers = computed(() => this.store.isLoadingMembers());
   protected readonly selectedRoomId = computed(() => this.store.selectedRoomId());

@@ -20,6 +20,7 @@
     "@okr/auth-data-access": "*",
     "@okr/aoc-util": "*",
     "@okr/chat-util": "*",
+    "@okr/chat-data-access": "*",
     "@okr/user-data-access": "*",
     "@okr/cms-section-feature": "*",
     "@okr/subject-person-data-access": "*",
