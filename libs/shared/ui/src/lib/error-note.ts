@@ -6,6 +6,7 @@ import { Observable, of } from 'rxjs';
 
 import { ColorsIonic } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
 
 @Component({
   selector: 'okr-error-note',
@@ -23,6 +24,7 @@ import { ColorIonic } from '@okr/shared-models';
 })
 export class ErrorNote {
   private readonly translocoService = inject(TranslocoService);
+  private readonly i18nService = inject(I18nService);
 
   // inputs
   public errors = input.required<string[]>();
@@ -44,7 +46,9 @@ export class ErrorNote {
     if (!keys || keys.length === 0) return of('');
     const key = keys[0];
     if (key.startsWith('@')) {
-      return this.translocoService.selectTranslate(key.substring(1));
+      // Delegate to I18nService so lazy-loaded scoped keys (e.g. '@finance/expense/feature.validation.x')
+      // are resolved correctly — it loads the scope first, which plain selectTranslate does not.
+      return this.i18nService.translate(key);
     } else {
       return this.translocoService.selectTranslate(`validation.${key}`);
     }
