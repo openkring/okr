@@ -11,6 +11,7 @@ import * as Auth from './auth';
 import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as Rag from './rag';
+import * as Ocr from './ocr';
 import * as Email from './email';
 import * as Bexio from './bexio';
 import * as Zefix from './zefix';
@@ -160,6 +161,9 @@ export const queryRag = Rag.queryRag;
 // storage triggers: auto-index/remove files at tenant/{tenantId}/rag/{fileName}
 export const onRagFileCreated = Rag.onRagFileCreated;
 export const onRagFileDeleted = Rag.onRagFileDeleted;
+// storage + firestore triggers: OCR pipeline at tenant/{tenantId}/ocr/{ocrUsage}/...
+export const onOcrFileFinalized = Ocr.onOcrFileFinalized;
+export const onOcrResultWritten = Ocr.onOcrResultWritten;
 
 // address
 export const generateQrBill = Address.generateQrBill;
