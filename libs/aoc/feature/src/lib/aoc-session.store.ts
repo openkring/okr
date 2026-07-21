@@ -26,6 +26,7 @@ export type AocSessionState = {
   fromDateTime: string;   // StoreDateTime
   toDateTime: string;     // StoreDateTime
   hiddenUserKeys: string[];
+  hiddenAnonymous: boolean;   // hide all sessions without a userKey
 };
 
 // NOTE: subDuration in shared-util-core has a bug — it uses date-fns `add()` instead of `sub()`.
@@ -42,6 +43,7 @@ const initialState: AocSessionState = {
   fromDateTime: lastWeekFrom(),
   toDateTime: getTodayStr(DateFormat.StoreDateTime),
   hiddenUserKeys: [],
+  hiddenAnonymous: false,
 };
 
 export const AocSessionStore = signalStore(
@@ -86,8 +88,10 @@ export const AocSessionStore = signalStore(
       const term = state.searchTerm();
       const status = state.selectedStatus();
       const hidden = new Set(state.hiddenUserKeys());
+      const hideAnon = state.hiddenAnonymous();
       const userKey = state.selectedUserKey();
       return state.allSessions().filter(s => {
+        if (!s.userKey && hideAnon) return false;
         if (s.userKey && hidden.has(s.userKey)) return false;
         if (userKey && s.userKey !== userKey) return false;
         if (status !== 'all' && getSessionStatus(s, now) !== status) return false;
@@ -131,8 +135,12 @@ export const AocSessionStore = signalStore(
         selectedUserKey: store.selectedUserKey() === session.userKey ? '' : store.selectedUserKey(),
       });
     },
+    /** Hide every anonymous (no-userKey) session from the list. */
+    hideAnonymous(): void {
+      patchState(store, { hiddenAnonymous: true });
+    },
     clearHidden(): void {
-      patchState(store, { hiddenUserKeys: [] });
+      patchState(store, { hiddenUserKeys: [], hiddenAnonymous: false });
     },
     reload(): void {
       store.sessionsResource.reload();

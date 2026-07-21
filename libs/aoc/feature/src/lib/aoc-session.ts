@@ -191,6 +191,8 @@ export class AocSession {
       options.buttons.push(createActionSheetButton('session.editUser', this.store.i18n.session_edit_user(), this.imgixBaseUrl, 'edit'));
       options.buttons.push(createActionSheetButton('session.editPerson', this.store.i18n.session_edit_person(), this.imgixBaseUrl, 'person'));
       options.buttons.push(createActionSheetButton('session.hideUser', this.store.i18n.session_hide_user(), this.imgixBaseUrl, 'eye-off'));
+    } else {
+      options.buttons.push(createActionSheetButton('session.hideAnonymous', this.store.i18n.session_hide_anonymous(), this.imgixBaseUrl, 'eye-off'));
     }
     options.buttons.push(createActionSheetButton('cancel', 'Abbrechen', this.imgixBaseUrl, 'cancel'));
 
@@ -203,6 +205,7 @@ export class AocSession {
       case 'session.editUser': await this.store.editUser(session); break;
       case 'session.editPerson': await this.store.editPerson(session); break;
       case 'session.hideUser': this.store.hideUser(session); break;
+      case 'session.hideAnonymous': this.store.hideAnonymous(); break;
     }
   }
 
