@@ -70,7 +70,7 @@ import { PFX } from './scope';
             <!-- we deliberately use ion-input here, because we do not want to interfere with the vest from update of strings() -->
             @if(inputStyle() === 'text') {
               <ion-item lines="none">
-                <ion-input [value]="''" (ionChange)="save($event)" (ionInput)="onQuickEntryInput($event)" #stringInput
+                <ion-input [value]="''" (ionChange)="save($event)" (keyup.enter)="onEnter()" (ionInput)="onQuickEntryInput($event)" #stringInput
                   [label]="addLabel()"
                   labelPlacement="floating"
                   inputMode="text"
@@ -166,7 +166,20 @@ export class StringList {
   protected addLabel = computed(() => this.add() || this.i18n.string_add());
 
   public save($event: CustomEvent): void {
-    const trimmed = ($event?.detail?.value ?? '').trim();
+    this.addString($event?.detail?.value ?? '');
+  }
+
+  /**
+   * Add the current input value on Enter. Needed because a quick-entry ('//', '!!', '@')
+   * sets the value programmatically, so `ionChange` does not fire on the following Enter
+   * and the entry would never be added.
+   */
+  protected onEnter(): void {
+    this.addString(this.stringInput()?.value ?? '');
+  }
+
+  private addString(rawValue: string | number): void {
+    const trimmed = String(rawValue ?? '').trim();
     const newString = this.isLowercase() ? trimmed.toLowerCase() : trimmed;
     this.resetInput();
     if (newString.length === 0) return;  // prevent adding empty strings

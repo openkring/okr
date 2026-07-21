@@ -192,7 +192,7 @@ describe('date.util', () => {
         });
 
         it('should append the time, when it is not midnight', () => {
-            expect(formatDateToken('2026-07-19T14:30')).toEqual('19.07.2026,1430');
+            expect(formatDateToken('2026-07-19T14:30')).toEqual('19.07.2026 14:30');
         });
 
         it('should return the view date only, when no time part is given', () => {
@@ -200,7 +200,7 @@ describe('date.util', () => {
         });
 
         it('should ignore the seconds of a full iso date time', () => {
-            expect(formatDateToken('2026-07-19T14:30:45')).toEqual('19.07.2026,1430');
+            expect(formatDateToken('2026-07-19T14:30:45')).toEqual('19.07.2026 14:30');
         });
     });
 });
