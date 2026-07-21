@@ -20,6 +20,7 @@ import {
   resolvePersonAvatarUrl,
   personAvatarUrl,
   setMatrixAvatarUrl,
+  uploadUrlToMatrixMedia,
   serverHostname,
 } from './shared';
 
@@ -76,9 +77,10 @@ export const getMatrixCredentials = onCall(
         userRecord.email?.split('@')[0] ||
         firebaseUid;
 
-      // Desired Matrix avatar: the person's avatar (avatars/person.<personKey>) is the
-      // source of truth, falling back to the Firebase profile photo. Stored as a plain
-      // https URL — the app's Matrix client renders it via mxcUrlToHttp(allowDirectLinks).
+      // Desired Matrix avatar SOURCE: the person's avatar (avatars/person.<personKey>) is
+      // the source of truth, falling back to the Firebase profile photo. This https URL is
+      // the image we upload to the Synapse media repo to obtain the spec-compliant mxc://
+      // URI actually stored in avatar_url (see the fill block below).
       const desiredAvatarUrl =
         (await resolvePersonAvatarUrl(personKey)) ||
         userRecord.photoURL ||
@@ -124,7 +126,6 @@ export const getMatrixCredentials = onCall(
             },
             body: JSON.stringify({
               displayname: desiredDisplayName,
-              avatar_url: desiredAvatarUrl,
               admin: false,
               deactivated: false,
             }),
@@ -179,11 +180,19 @@ export const getMatrixCredentials = onCall(
         );
       }
 
-      // Set the Matrix avatar for existing accounts that have none, from the person's
-      // avatar. Only fills an empty avatar — never overwrites a custom one the user set.
-      if (matrixUserExists && !existingAvatarUrl && desiredAvatarUrl) {
-        await setMatrixAvatarUrl(matrixUserId, desiredAvatarUrl, matrixAdminToken.value());
-        console.log(`getMatrixCredentials: set avatar for ${matrixUserId} → ${desiredAvatarUrl}`);
+      // Fill an empty avatar (newly-created OR legacy account) from the person's avatar,
+      // stored as a spec-compliant mxc:// URI (uploaded to the Synapse media repo) so
+      // Element and bridges render it — not just this app. Only fills when empty — never
+      // overwrites a custom avatar the user set. Best-effort: an upload failure logs and
+      // never breaks the token exchange.
+      if (!existingAvatarUrl && desiredAvatarUrl) {
+        try {
+          const mxc = await uploadUrlToMatrixMedia(desiredAvatarUrl, matrixAdminToken.value());
+          await setMatrixAvatarUrl(matrixUserId, mxc, matrixAdminToken.value());
+          console.log(`getMatrixCredentials: set avatar for ${matrixUserId} → ${mxc}`);
+        } catch (e) {
+          console.warn(`getMatrixCredentials: avatar mxc sync failed for ${matrixUserId}: ${(e as Error).message}`);
+        }
       }
 
       return {
@@ -373,6 +382,8 @@ export const syncFirebaseProfileToMatrix = onCall(
       }
 
       // Fill an empty Matrix avatar from the person's avatar (never overwrite a custom one).
+      // Stored as a spec-compliant mxc:// URI (uploaded to the Synapse media repo) so
+      // Element and bridges render it. Best-effort — an upload failure never breaks the sync.
       const desiredAvatarUrl = await resolvePersonAvatarUrl(personKey);
       if (desiredAvatarUrl) {
         const checkResp = await fetch(
@@ -383,7 +394,12 @@ export const syncFirebaseProfileToMatrix = onCall(
           ? ((await checkResp.json() as { avatar_url?: string }).avatar_url ?? undefined)
           : undefined;
         if (!existingAvatarUrl) {
-          await setMatrixAvatarUrl(matrixUserId, desiredAvatarUrl, matrixAdminToken.value());
+          try {
+            const mxc = await uploadUrlToMatrixMedia(desiredAvatarUrl, matrixAdminToken.value());
+            await setMatrixAvatarUrl(matrixUserId, mxc, matrixAdminToken.value());
+          } catch (e) {
+            console.warn(`syncFirebaseProfileToMatrix: avatar mxc sync failed for ${matrixUserId}: ${(e as Error).message}`);
+          }
         }
       }
 
@@ -524,20 +540,25 @@ interface AvatarRepairEntry {
 
 interface AvatarRepairResult {
   scanned: number;
-  repaired: AvatarRepairEntry[];
+  repaired: AvatarRepairEntry[];      // blank avatar → filled with the person avatar (mxc)
+  migratedHttp: AvatarRepairEntry[];  // legacy https avatar → re-uploaded to the media repo as mxc
   skippedNoAvatar: string[];   // no person avatar available for the account
-  skippedHasAvatar: number;    // account already has an avatar — left untouched
+  skippedHasAvatar: number;    // account already has an mxc avatar — left untouched
   applied: boolean;
 }
 
 /**
- * Bulk-set Matrix avatars for accounts that have none (admin only).
+ * Bulk-repair Matrix avatars to spec-compliant mxc:// URIs (admin only).
  *
- * Legacy accounts were created before the person avatar was synced, so many carry no
- * `avatar_url` and render as a blank/initials placeholder. This scans every Synapse
- * user and, for each one WITHOUT an avatar, sets it to the person's avatar resolved
- * from `avatars/person.<personKey>` (the same doc the app reads). Accounts that already
- * carry an avatar are never overwritten (counted under `skippedHasAvatar`).
+ * Two cases are fixed so avatars render everywhere (this app, Element, bridges), not just
+ * in our own client:
+ *  - Accounts WITHOUT an avatar are filled from the person's avatar
+ *    (`avatars/person.<personKey>`, the same doc the app reads).
+ *  - Accounts carrying a legacy https `avatar_url` (an imgix URL an earlier version set,
+ *    which only our client renders) are migrated: the image is re-uploaded to the Synapse
+ *    media repo and `avatar_url` is rewritten to the resulting mxc:// URI.
+ * Accounts that already carry an mxc:// avatar are never overwritten (counted under
+ * `skippedHasAvatar`) — this preserves any custom avatar a user set in Element.
  *
  * The localpart→avatar mapping is built from a single `avatars` collection scan
  * (doc id `person.<personKey>`, localpart = personKey lowercased).
@@ -572,6 +593,7 @@ export const repairMatrixAvatars = onCall(
     const result: AvatarRepairResult = {
       scanned: 0,
       repaired: [],
+      migratedHttp: [],
       skippedNoAvatar: [],
       skippedHasAvatar: 0,
       applied: !dryRun,
@@ -601,22 +623,43 @@ export const repairMatrixAvatars = onCall(
         const matrixUserId = u.name; // @localpart:server
         const localpart = matrixUserId.replace(/^@/, '').split(':')[0];
 
-        // Requirement: only fill accounts that have no avatar; never overwrite.
-        if ((u.avatar_url ?? '').trim() !== '') {
+        const current = (u.avatar_url ?? '').trim();
+
+        // Already a spec-compliant mxc avatar (migrated, or a custom avatar the user set in
+        // Element) — never overwrite.
+        if (current.startsWith('mxc://')) {
           result.skippedHasAvatar++;
           continue;
         }
 
-        const desired = avatarByLocalpart.get(localpart);
-        if (!desired) {
-          result.skippedNoAvatar.push(matrixUserId);
+        // Legacy https avatar (one WE set — the imgix URL) — migrate it to mxc by
+        // re-uploading the same image to the Synapse media repo so Element and bridges render it.
+        if (current.startsWith('http')) {
+          try {
+            const mxc = dryRun ? current : await uploadUrlToMatrixMedia(current, adminToken);
+            if (!dryRun) await setMatrixAvatarUrl(matrixUserId, mxc, adminToken);
+            result.migratedHttp.push({ matrixUserId, avatarUrl: mxc });
+          } catch (e) {
+            console.warn(`repairMatrixAvatars: http→mxc failed for ${matrixUserId}: ${(e as Error).message}`);
+            result.skippedNoAvatar.push(matrixUserId);
+          }
           continue;
         }
 
-        if (!dryRun) {
-          await setMatrixAvatarUrl(matrixUserId, desired, adminToken);
+        // No avatar at all — fill from the person avatar, uploaded as mxc.
+        const desiredHttp = avatarByLocalpart.get(localpart);
+        if (!desiredHttp) {
+          result.skippedNoAvatar.push(matrixUserId);
+          continue;
         }
-        result.repaired.push({ matrixUserId, avatarUrl: desired });
+        try {
+          const mxc = dryRun ? desiredHttp : await uploadUrlToMatrixMedia(desiredHttp, adminToken);
+          if (!dryRun) await setMatrixAvatarUrl(matrixUserId, mxc, adminToken);
+          result.repaired.push({ matrixUserId, avatarUrl: mxc });
+        } catch (e) {
+          console.warn(`repairMatrixAvatars: fill failed for ${matrixUserId}: ${(e as Error).message}`);
+          result.skippedNoAvatar.push(matrixUserId);
+        }
       }
 
       if (data.next_token === undefined) break;
@@ -625,7 +668,8 @@ export const repairMatrixAvatars = onCall(
 
     console.log(
       `repairMatrixAvatars: scanned=${result.scanned} ` +
-      `repaired=${result.repaired.length} noAvatar=${result.skippedNoAvatar.length} ` +
+      `repaired=${result.repaired.length} migratedHttp=${result.migratedHttp.length} ` +
+      `noAvatar=${result.skippedNoAvatar.length} ` +
       `hasAvatar=${result.skippedHasAvatar} applied=${result.applied}`
     );
     return result;

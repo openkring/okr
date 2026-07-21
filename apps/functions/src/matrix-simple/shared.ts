@@ -161,6 +161,52 @@ export async function setMatrixAvatarUrl(
 }
 
 /**
+ * Download an image from `imageUrl` and upload it to the Synapse media repo, returning
+ * the resulting `mxc://` content URI. Used to convert an app-hosted imgix avatar into a
+ * spec-compliant Matrix `avatar_url` that Element and bridges can render (a plain https
+ * `avatar_url` renders only in our own client, which opts into mxcUrlToHttp allowDirectLinks).
+ *
+ * `token` must be a Matrix *access token* (the admin user's token works — it has
+ * media-upload capability). Throws on any non-OK response so callers can decide whether
+ * to swallow the error (best-effort avatar sync) or surface it.
+ */
+export async function uploadUrlToMatrixMedia(imageUrl: string, token: string): Promise<string> {
+  const imgResp = await fetch(imageUrl);
+  if (!imgResp.ok) throw new Error(`uploadUrlToMatrixMedia: source fetch failed ${imgResp.status}`);
+  const contentType = imgResp.headers.get('content-type') || 'image/jpeg';
+  const bytes = Buffer.from(await imgResp.arrayBuffer());
+
+  const uploadResp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/media/v3/upload?filename=avatar.jpg`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': contentType },
+      body: bytes,
+    }
+  );
+  if (!uploadResp.ok) {
+    throw new Error(`uploadUrlToMatrixMedia: upload failed ${uploadResp.status}: ${await uploadResp.text()}`);
+  }
+  const { content_uri } = await uploadResp.json() as { content_uri: string };
+  if (!content_uri?.startsWith('mxc://')) {
+    throw new Error(`uploadUrlToMatrixMedia: unexpected content_uri "${content_uri}"`);
+  }
+  return content_uri;
+}
+
+/**
+ * Resolve a person's avatar as an `mxc://` URI: look up the imgix URL from
+ * `avatars/person.<personKey>` (via {@link resolvePersonAvatarUrl}) and upload it to the
+ * Synapse media repo. Returns undefined when the person has no avatar. May throw on upload
+ * failure; callers wrap it so avatar sync never breaks the surrounding flow.
+ */
+export async function resolvePersonAvatarMxc(personKey: string, token: string): Promise<string | undefined> {
+  const httpUrl = await resolvePersonAvatarUrl(personKey);
+  if (!httpUrl) return undefined;
+  return uploadUrlToMatrixMedia(httpUrl, token);
+}
+
+/**
  * Load the caller's roles map from users/{uid}. Empty object if the doc is missing.
  * Authorization in this project is derived from the user document's `roles` map
  * (the same model the client and Firestore rules use) — NOT from Firebase Auth
