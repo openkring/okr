@@ -1,10 +1,9 @@
-import { Component, Signal, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, Signal, computed, effect, input, linkedSignal, model, output, signal } from '@angular/core';
 import {
   IonButton, IonCol, IonGrid, IonIcon, IonItem, IonLabel,
   IonList, IonRow, IonSelect, IonSelectOption, IonTextarea,
 } from '@ionic/angular/standalone';
 
-import { AddressModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { formatIban, IbanFormat } from '@okr/shared-util-angular';
@@ -15,8 +14,13 @@ export interface ExpenseFormI18n {
   abstract_label: Signal<string>;
   amount_label: Signal<string>;
   currency_label: Signal<string>;
+  transfer_label: Signal<string>;
+  transfer_me: Signal<string>;
+  transfer_issuer: Signal<string>;
   iban_label: Signal<string>;
-  iban_new: Signal<string>;
+  iban_on: Signal<string>;
+  iban_profile_hint: Signal<string>;
+  iban_change: Signal<string>;
   category_label: Signal<string>;
   costcenter_label: Signal<string>;
   note_label: Signal<string>;
@@ -50,7 +54,7 @@ export interface ExpenseFormI18n {
         <ion-row>
           <ion-col size="8">
             <okr-text-input [i18n]="amountI18n()" [value]="amountCHFStr()"
-              (valueChange)="onAmountChange($event)" [readOnly]="false" />
+              (valueChange)="onAmountChange($event)" [maxLength]="10" [readOnly]="false" />
             <okr-error-note [errors]="amountErrors()" />
           </ion-col>
           <ion-col size="4">
@@ -68,23 +72,36 @@ export interface ExpenseFormI18n {
         <ion-row>
           <ion-col size="12">
             <ion-item>
-              <ion-label>{{ i18n().iban_label() }}</ion-label>
-              <ion-select [value]="ibanSelectValue()" (ionChange)="setIbanSelect($event.detail.value)">
-                @for (addr of ibans(); track addr.okey) {
-                  <ion-select-option [value]="addr.iban">
-                    {{ addr.isFavorite ? '★ ' : '' }}{{ formatIban(addr.iban) }}
-                  </ion-select-option>
-                }
-                <ion-select-option value="__new__">{{ i18n().iban_new() }}</ion-select-option>
+              <ion-label>{{ i18n().transfer_label() }}</ion-label>
+              <ion-select [value]="transferTo()" (ionChange)="onFieldChange('transferTo', $event.detail.value)">
+                <ion-select-option value="me">{{ i18n().transfer_me() }}</ion-select-option>
+                <ion-select-option value="issuer">{{ i18n().transfer_issuer() }}</ion-select-option>
               </ion-select>
             </ion-item>
-            @if (showIbanInput()) {
-              <okr-text-input [i18n]="ibanI18n()" [value]="iban()"
-                (valueChange)="onFieldChange('iban', $event)" [readOnly]="false" />
-              <okr-error-note [errors]="ibanErrors()" />
-            }
           </ion-col>
         </ion-row>
+
+        @if (transferTo() === 'me') {
+          <ion-row>
+            <ion-col size="12">
+              @if (hasFavoriteIban() && !editingIban()) {
+                <ion-item lines="none">
+                  <ion-label>
+                    <h3>{{ i18n().iban_on() }} {{ formatIban(favoriteIban()) }}</h3>
+                    <p class="hint">{{ i18n().iban_profile_hint() }}</p>
+                  </ion-label>
+                  <ion-button slot="end" fill="clear" (click)="startEditIban()" [title]="i18n().iban_change()">
+                    <ion-icon slot="icon-only" color="medium" src="{{ 'cancel-circle' | svgIcon }}" />
+                  </ion-button>
+                </ion-item>
+              } @else {
+                <okr-text-input [i18n]="ibanI18n()" [value]="iban()"
+                  (valueChange)="onFieldChange('iban', $event)" [maxLength]="34" [readOnly]="false" />
+                <okr-error-note [errors]="ibanErrors()" />
+              }
+            </ion-col>
+          </ion-row>
+        }
 
         <ion-row>
           <ion-col size="12">
@@ -130,7 +147,8 @@ export interface ExpenseFormI18n {
 })
 export class ExpenseForm {
   public readonly i18n = input.required<ExpenseFormI18n>();
-  public readonly ibans = input<AddressModel[]>([]);
+  /** The current user's favorite bank-account IBAN (''=none → the user must enter a new one). */
+  public readonly favoriteIban = input<string>('');
   public formData = model.required<ExpenseFormValue>();
   public files = model<File[]>([]);
 
@@ -150,23 +168,19 @@ export class ExpenseForm {
   protected abstract    = linkedSignal(() => this.formData().abstract);
   protected amountCHF   = linkedSignal(() => this.formData().amountCHF);
   protected currency    = linkedSignal(() => this.formData().currency);
+  protected transferTo  = linkedSignal(() => this.formData().transferTo);
   protected iban        = linkedSignal(() => this.formData().iban);
   protected note        = linkedSignal(() => this.formData().note);
 
   protected amountCHFStr  = computed(() => this.amountCHF() > 0 ? String(this.amountCHF()) : '');
-  protected showIbanInput = computed(() => this.ibans().length === 0 || this.iban() === '' || !this.ibans().some(a => a.iban === this.iban()));
+  protected readonly hasFavoriteIban = computed(() => this.favoriteIban().trim().length > 0);
+  /** True once the user chose to redirect the transfer to a different IBAN than their saved one. */
+  protected readonly editingIban = signal(false);
 
-  protected readonly ibanSelectValue = computed(() => {
-    const saved = this.ibans().find(a => a.iban === this.iban());
-    return saved ? this.iban() : (this.iban() ? '__new__' : '');
-  });
-
-  protected setIbanSelect(v: string): void {
-    if (v === '__new__') {
-      this.onFieldChange('iban', '');
-    } else {
-      this.onFieldChange('iban', v);
-    }
+  /** Switch from the saved-IBAN display to a blank input so the user can enter a different IBAN. */
+  protected startEditIban(): void {
+    this.editingIban.set(true);
+    this.onFieldChange('iban', '');
   }
 
   constructor() {

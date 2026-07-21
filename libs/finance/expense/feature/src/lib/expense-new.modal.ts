@@ -1,13 +1,14 @@
-import { Component, inject, model, signal } from '@angular/core';
+import { Component, computed, effect, inject, model, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   ModalController, ToastController,
-  IonButton, IonButtons, IonContent, IonFooter,
-  IonHeader, IonTitle, IonToolbar,
+  IonContent,
 } from '@ionic/angular/standalone';
 
+import { PersonModelName } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 
 import { UploadService } from '@okr/avatar-data-access';
 import { AddressService } from '@okr/subject-address-data-access';
@@ -23,40 +24,33 @@ const EXPENSE_MIMETYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/
   selector: 'okr-expense-new-modal',
   standalone: true,
   imports: [
-    ExpenseForm,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonFooter,
+    Header, ChangeConfirmation, ExpenseForm,
+    IonContent,
   ],
   providers: [ExpenseStore],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ i18n.title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="dismiss()">{{ i18n.cancel() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: i18n.title() }" [isModal]="true" />
+    @if (showConfirmation()) {
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()"
+        (cancelClicked)="dismiss()" (saveClicked)="onSubmit()" />
+    }
     <ion-content>
+      @if (store.submitStep() !== 'idle') {
+        <p style="text-align:center; padding: 8px;">{{ store.submitLabel() }}</p>
+      } @else if (files().length === 0) {
+        <p style="text-align:center; padding: 8px; color: var(--ion-color-medium);">{{ i18n.receipt_hint() }}</p>
+      }
       <okr-expense-form
         [i18n]="formI18n"
-        [ibans]="ibans()"
+        [favoriteIban]="favoriteIban()"
         [(formData)]="formValue"
         [(files)]="files"
         (pickFiles)="onPickFiles()"
         (takePhoto)="onTakePhoto()"
+        (dirty)="formDirty.set($event)"
         (valid)="isValid.set($event)"
       />
     </ion-content>
-    <ion-footer>
-      @if (store.submitStep() !== 'idle') {
-        <p style="text-align:center; padding: 8px;">{{ store.submitLabel() }}</p>
-      }
-      <ion-button expand="block"
-        [disabled]="!isValid() || files().length === 0 || !store.canSubmit()"
-        (click)="onSubmit()">
-        {{ i18n.submit() }}
-      </ion-button>
-    </ion-footer>
   `,
 })
 export class ExpenseNewModal {
@@ -71,12 +65,18 @@ export class ExpenseNewModal {
   protected readonly i18n = this.i18nService.translateAll({
     title:          PFX + 'new.title',
     cancel:         PFX + 'new.cancel',
-    submit:         PFX + 'new.submit',
+    save:           PFX + 'new.save',
+    receipt_hint:   PFX + 'new.receiptHint',
     abstract_label: PFX + 'field.abstract',
     amount_label:   PFX + 'field.amount',
     currency_label: PFX + 'field.currency',
+    transfer_label: PFX + 'field.transfer.label',
+    transfer_me:    PFX + 'field.transfer.me',
+    transfer_issuer: PFX + 'field.transfer.issuer',
     iban_label:     PFX + 'field.iban.label',
-    iban_new:       PFX + 'field.iban.new',
+    iban_on:        PFX + 'field.iban.on',
+    iban_profile_hint: PFX + 'field.iban.profileHint',
+    iban_change:    PFX + 'field.iban.change',
     category_label: PFX + 'field.category',
     costcenter_label: PFX + 'field.costcenter',
     note_label:     PFX + 'field.note',
@@ -88,28 +88,46 @@ export class ExpenseNewModal {
   });
 
   protected formValue = model<ExpenseFormValue>({
-    abstract: '', amountCHF: 0, currency: 'CHF', iban: '', category: '', costCenterId: '', note: '',
+    abstract: '', amountCHF: 0, currency: 'CHF', transferTo: 'me', iban: '', category: '', costCenterId: '', note: '',
   });
   protected files = model<File[]>([]);
   protected readonly isValid = signal(false);
+  protected readonly formDirty = signal(false);
 
   private readonly ibansResource = rxResource({
     stream: () => {
-      const user = this.appStore.currentUser();
-      return this.addressService.listBankAccounts(user?.okey ?? '');
+      // Bank-account addresses are linked to the person via 'person.<key>' (modelType-prefixed).
+      const parentKey = `${PersonModelName}.${this.appStore.currentUser()?.personKey ?? ''}`;
+      return this.addressService.listBankAccounts(parentKey);
     },
   });
 
-  protected ibans() {
-    return this.ibansResource.value() ?? [];
-  }
+  /** The user's favorite bank-account IBAN, or '' if none is stored. */
+  protected readonly favoriteIban = computed(() =>
+    (this.ibansResource.value() ?? []).find(a => a.isFavorite)?.iban ?? ''
+  );
+
+  // The Vest suite already requires a valid IBAN when transferTo='me', so isValid() covers it.
+  protected readonly showConfirmation = computed(() =>
+    this.isValid() && this.formDirty() && this.files().length > 0 && this.store.canSubmit()
+  );
+
+  protected readonly changeConfirmationI18n = computed<ChangeConfirmationI18n>(() => ({
+    cancel: this.i18n.cancel(),
+    save: this.i18n.save(),
+  }));
 
   protected readonly formI18n: ExpenseFormI18n = {
     abstract_label:   this.i18n.abstract_label,
     amount_label:     this.i18n.amount_label,
     currency_label:   this.i18n.currency_label,
+    transfer_label:   this.i18n.transfer_label,
+    transfer_me:      this.i18n.transfer_me,
+    transfer_issuer:  this.i18n.transfer_issuer,
     iban_label:       this.i18n.iban_label,
-    iban_new:         this.i18n.iban_new,
+    iban_on:          this.i18n.iban_on,
+    iban_profile_hint: this.i18n.iban_profile_hint,
+    iban_change:      this.i18n.iban_change,
     category_label:   this.i18n.category_label,
     costcenter_label: this.i18n.costcenter_label,
     note_label:       this.i18n.note_label,
@@ -118,9 +136,25 @@ export class ExpenseNewModal {
     belege_photo:     this.i18n.belege_photo,
   };
 
+  private ibanPrefilled = false;
+
+  constructor() {
+    // Seed the form's IBAN with the user's favorite once it loads, so it is used for
+    // validation/submission. Seed ONCE only — otherwise a resource re-emit would overwrite
+    // an IBAN the user deliberately changed via "Andere IBAN verwenden".
+    effect(() => {
+      const fav = this.favoriteIban();
+      if (fav && !this.ibanPrefilled) {
+        this.ibanPrefilled = true;
+        this.formValue.update(v => ({ ...v, iban: fav }));
+      }
+    });
+  }
+
   protected async onPickFiles(): Promise<void> {
     const picked = await this.uploadService.pickMultipleFiles(EXPENSE_MIMETYPES);
     if (picked.length > 0) {
+      this.formDirty.set(true);
       this.files.update(fs => [...fs, ...picked].slice(0, 10));
     }
   }
@@ -131,6 +165,7 @@ export class ExpenseNewModal {
       const response = await fetch(photo.webPath);
       const blob = await response.blob();
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      this.formDirty.set(true);
       this.files.update(fs => [...fs, file].slice(0, 10));
     }
   }

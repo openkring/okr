@@ -1,9 +1,14 @@
 {
-  "list": { "title": "Auslagen" },
+  "list": {
+    "titleMy": "Meine Spesen",
+    "titleAll": "Alle Spesen",
+    "empty": "Keine Spesen-Abrechnungen gefunden"
+  },
   "new": {
-    "title": "Neue Auslage",
+    "title": "Spesen einreichen",
     "cancel": "Abbrechen",
-    "submit": "Einreichen"
+    "save": "Speichern",
+    "receiptHint": "Bitte mindestens einen Beleg anhängen."
   },
   "detail": {
     "title": "Auslage",
@@ -17,11 +22,18 @@
   },
   "field": {
     "abstract": "Betreff",
-    "amount": "Betrag (CHF)",
+    "amount": "Gesamtbetrag",
     "currency": "Währung",
+    "transfer": {
+      "label": "Überweisung",
+      "me": "an mich",
+      "issuer": "an Rechnungssteller"
+    },
     "iban": {
       "label": "IBAN",
-      "new": "+ Neue IBAN"
+      "on": "auf IBAN",
+      "profileHint": "aus meinem Profil",
+      "change": "Andere IBAN verwenden"
     },
     "category": "Kategorie",
     "costcenter": "Kostenstelle",
@@ -53,6 +65,7 @@
     "abstractMax": "Betreff darf maximal 200 Zeichen lang sein.",
     "amountRequired": "Betrag muss grösser als 0 sein.",
     "amountMax": "Betrag ist zu gross.",
+    "ibanRequired": "IBAN ist erforderlich.",
     "currencyRequired": "Währung ist erforderlich.",
     "currencyInvalid": "Ungültige Währung."
   }

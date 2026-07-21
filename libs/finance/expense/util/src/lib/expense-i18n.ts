@@ -3,7 +3,9 @@ import { Signal } from '@angular/core';
 const PFX = '@finance/expense/feature.';
 
 export const EXPENSE_I18N_KEYS = {
-  list_title:         PFX + 'list.title',
+  list_title_my:      PFX + 'list.titleMy',
+  list_title_all:     PFX + 'list.titleAll',
+  list_empty:         PFX + 'list.empty',
   new_title:          PFX + 'new.title',
   detail_title:       PFX + 'detail.title',
   submit_iban:        PFX + 'submit.iban',

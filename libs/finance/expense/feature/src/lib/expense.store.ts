@@ -7,7 +7,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AddressModel, BookingLineModel, BookingModel, ExpenseModel } from '@okr/shared-models';
+import { AddressModel, BookingLineModel, BookingModel, ExpenseModel, PersonModelName } from '@okr/shared-models';
 import { getTodayStr } from '@okr/shared-util-core';
 
 import { AddressService } from '@okr/subject-address-data-access';
@@ -21,15 +21,18 @@ import { chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, newExpens
 
 export type SubmitStep = 'idle' | 'iban' | 'upload' | 'saving' | 'booking' | 'done' | 'error';
 
+export type ExpenseListId = 'all' | 'my';
+
 export type { ExpenseI18n };
 
 export interface ExpenseState {
   submitStep: SubmitStep;
   submitError: string;
+  listId: ExpenseListId;
 }
 
 export const ExpenseStore = signalStore(
-  withState<ExpenseState>({ submitStep: 'idle', submitError: '' }),
+  withState<ExpenseState>({ submitStep: 'idle', submitError: '', listId: 'my' }),
   withProps(() => ({
     env:                     inject(ENV),
     appStore:                inject(AppStore),
@@ -49,8 +52,8 @@ export const ExpenseStore = signalStore(
       stream: () => {
         const user = store.appStore.currentUser();
         if (!user) return store.expenseService.listForUser('');
-        const isTreasurer = user.roles?.privileged === true || user.roles?.admin === true;
-        return isTreasurer
+        // 'all' shows every expense (treasurer view); 'my' only the current user's.
+        return store.listId() === 'all'
           ? store.expenseService.listAll()
           : store.expenseService.listForUser(user.okey);
       },
@@ -87,6 +90,10 @@ export const ExpenseStore = signalStore(
       await modal.present();
     },
 
+    setListId(listId: ExpenseListId): void {
+      patchState(store, { listId });
+    },
+
     resetSubmit(): void {
       patchState(store, { submitStep: 'idle', submitError: '' });
     },
@@ -98,6 +105,8 @@ export const ExpenseStore = signalStore(
 
       const tenantId = store.tenantId();
       const userId = currentUser.okey;
+      // Addresses are linked to the person via 'person.<key>' (modelType-prefixed), not the user.
+      const addressParentKey = `${PersonModelName}.${currentUser.personKey}`;
       const accountingTenantId = tenantId;
 
       const accountingConfig = await firstValueFrom(
@@ -112,19 +121,25 @@ export const ExpenseStore = signalStore(
       const documentKeys: string[] = [];
       let expenseKey: string | undefined;
 
-      // Step 1 — IBAN
+      // Step 1 — IBAN (only for transfers to the employee; 'issuer' transfers need no IBAN here)
       patchState(store, { submitStep: 'iban' });
       try {
-        const normalizedIban = normalizeIban(formValue.iban);
-        const existingIbans = await firstValueFrom(store.addressService.listBankAccounts(userId));
-        const exists = existingIbans.some(a => normalizeIban(a.iban) === normalizedIban);
-        if (!exists) {
-          const addr = new AddressModel(tenantId);
-          addr.addressChannel = 'bankaccount';
-          addr.iban = normalizedIban;
-          addr.parentKey = userId;
-          addr.isFavorite = existingIbans.length === 0;
-          newAddressKey = await store.addressService.create(addr, currentUser);
+        const normalizedIban = normalizeIban(formValue.iban ?? '');
+        if (formValue.transferTo === 'me' && normalizedIban.length > 0) {
+          const existingIbans = await firstValueFrom(store.addressService.listBankAccounts(addressParentKey));
+          // Avoid duplicates: only create a bank-account address if the (normalized) IBAN is not
+          // already stored on the person. Coalesce a.iban — legacy docs may miss the field.
+          const alreadyExists = existingIbans.some(a => normalizeIban(a.iban ?? '') === normalizedIban);
+          if (!alreadyExists) {
+            // A newly entered IBAN is stored as a bank-account address on the user's person,
+            // becoming the favorite only if the person has none yet.
+            const addr = new AddressModel(tenantId);
+            addr.addressChannel = 'bankaccount';
+            addr.iban = normalizedIban;
+            addr.parentKey = addressParentKey;
+            addr.isFavorite = !existingIbans.some(a => a.isFavorite);
+            newAddressKey = await store.addressService.create(addr, currentUser);
+          }
         }
       } catch {
         patchState(store, { submitStep: 'error', submitError: 'IBAN step failed' });
@@ -158,7 +173,8 @@ export const ExpenseStore = signalStore(
         expense.abstract     = formValue.abstract;
         expense.amountTotal  = chfToCents(formValue.amountCHF);
         expense.currency     = formValue.currency;
-        expense.iban         = normalizeIban(formValue.iban);
+        expense.transferTo   = formValue.transferTo;
+        expense.iban         = formValue.transferTo === 'me' ? normalizeIban(formValue.iban) : '';
         expense.category     = formValue.category;
         expense.costCenterId = formValue.costCenterId;
         expense.note         = formValue.note;

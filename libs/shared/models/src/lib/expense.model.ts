@@ -4,6 +4,9 @@ import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 
 export type ExpenseStatus = 'draft' | 'processing' | 'validated' | 'error' | 'posted';
 
+/** Where the reimbursement is paid: 'me' = to the employee (needs an IBAN), 'issuer' = to the invoice issuer. */
+export type ExpenseTransferTo = 'me' | 'issuer';
+
 export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
@@ -15,6 +18,7 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public abstract = '';
   public amountTotal = 0;
   public currency = DEFAULT_CURRENCY;
+  public transferTo: ExpenseTransferTo = 'me';
   public iban = '';
   public category = '';
   public costCenterId = '';

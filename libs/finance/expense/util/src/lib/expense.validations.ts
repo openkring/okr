@@ -1,13 +1,17 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
+import { ExpenseTransferTo } from '@okr/shared-models';
 import { ibanValidations } from '@okr/subject-address-util';
 
 import { ALLOWED_CURRENCIES } from './expense.util';
+
+export type { ExpenseTransferTo };
 
 export interface ExpenseFormValue {
   abstract: string;
   amountCHF: number;
   currency: string;
+  transferTo: ExpenseTransferTo;
   iban: string;
   category: string;
   costCenterId: string;
@@ -41,5 +45,11 @@ export const expenseValidations = staticSuite((model: ExpenseFormValue, field?: 
     enforce(model.currency).isIn([...ALLOWED_CURRENCIES]);
   });
 
-  ibanValidations('iban', model.iban);
+  // An IBAN is only required (and validated) when the transfer goes to the employee.
+  omitWhen(model.transferTo !== 'me', () => {
+    test('iban', '@finance/expense/feature.validation.ibanRequired', () => {
+      enforce(model.iban).isNotBlank();
+    });
+    ibanValidations('iban', model.iban);
+  });
 });
