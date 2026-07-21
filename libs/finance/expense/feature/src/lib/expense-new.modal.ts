@@ -15,7 +15,7 @@ import { AddressService } from '@okr/subject-address-data-access';
 
 import { ExpenseFormValue } from '@okr/finance-expense-util';
 import { ExpenseForm, ExpenseFormI18n } from '@okr/finance-expense-ui';
-import { ExpenseStore } from './expense.store';
+import { ExpenseStore, SUBMIT_ERR_NO_CONFIG } from './expense.store';
 import { PFX } from './scope';
 
 const EXPENSE_MIMETYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic'];
@@ -85,6 +85,7 @@ export class ExpenseNewModal {
     belege_photo:   PFX + 'field.belege.photo',
     toast_success:  PFX + 'submit.done',
     toast_error:    PFX + 'submit.error',
+    toast_not_configured: PFX + 'submit.notConfigured',
   });
 
   protected formValue = model<ExpenseFormValue>({
@@ -183,8 +184,13 @@ export class ExpenseNewModal {
       await toast.present();
       await this.modalController.dismiss(null, 'confirm');
     } else if (this.store.submitStep() === 'error') {
+      // Pre-write failures (no accounting config) never rolled anything back — show an accurate,
+      // actionable message instead of the generic "Vorgang wurde zurückgerollt".
+      const message = this.store.submitError() === SUBMIT_ERR_NO_CONFIG
+        ? this.i18n.toast_not_configured()
+        : this.i18n.toast_error();
       const toast = await this.toastController.create({
-        message: this.i18n.toast_error(),
+        message,
         duration: 4000,
         color: 'danger',
       });

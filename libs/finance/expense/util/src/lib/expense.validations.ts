@@ -42,7 +42,7 @@ export const expenseValidations = staticSuite((model: ExpenseFormValue, field?: 
     enforce(model.currency).isNotEmpty();
   });
   test('currency', '@finance/expense/feature.validation.currencyInvalid', () => {
-    enforce(model.currency).isIn([...ALLOWED_CURRENCIES]);
+    enforce(model.currency).inside([...ALLOWED_CURRENCIES]);
   });
 
   // An IBAN is only required (and validated) when the transfer goes to the employee.

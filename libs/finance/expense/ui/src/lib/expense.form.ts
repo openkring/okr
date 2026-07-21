@@ -66,6 +66,7 @@ export interface ExpenseFormI18n {
                 }
               </ion-select>
             </ion-item>
+            <okr-error-note [errors]="currencyErrors()" />
           </ion-col>
         </ion-row>
 
@@ -94,6 +95,9 @@ export interface ExpenseFormI18n {
                     <ion-icon slot="icon-only" color="medium" src="{{ 'cancel-circle' | svgIcon }}" />
                   </ion-button>
                 </ion-item>
+                <!-- Surface IBAN errors even while the saved favorite is shown read-only,
+                     so an invalid stored IBAN can't silently block the save banner. -->
+                <okr-error-note [errors]="ibanErrors()" />
               } @else {
                 <okr-text-input [i18n]="ibanI18n()" [value]="iban()"
                   (valueChange)="onFieldChange('iban', $event)" [maxLength]="34" [readOnly]="false" />
@@ -163,6 +167,7 @@ export class ExpenseForm {
   private readonly result = computed(() => expenseValidations(this.formData()));
   protected readonly abstractErrors = computed(() => this.result().getErrors('abstract'));
   protected readonly amountErrors   = computed(() => this.result().getErrors('amountCHF'));
+  protected readonly currencyErrors = computed(() => this.result().getErrors('currency'));
   protected readonly ibanErrors     = computed(() => this.result().getErrors('iban'));
 
   protected abstract    = linkedSignal(() => this.formData().abstract);

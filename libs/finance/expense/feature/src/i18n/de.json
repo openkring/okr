@@ -50,14 +50,16 @@
     "saving": "Auslage wird gespeichert…",
     "booking": "Buchung wird erstellt…",
     "done": "Auslage eingereicht",
-    "error": "Fehler — Vorgang wurde zurückgerollt"
+    "error": "Fehler — Vorgang wurde zurückgerollt",
+    "notConfigured": "Die Buchhaltung ist für diesen Verein noch nicht eingerichtet. Bitte wende dich an den Administrator."
   },
   "status": {
     "draft": "Entwurf",
     "processing": "In Bearbeitung",
     "validated": "Validiert",
     "error": "Fehler",
-    "posted": "Verbucht"
+    "posted": "Verbucht",
+    "pendingExport": "Bereit für Export"
   },
   "validation": {
     "abstractRequired": "Betreff ist erforderlich.",

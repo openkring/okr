@@ -21,6 +21,13 @@ import { chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, newExpens
 
 export type SubmitStep = 'idle' | 'iban' | 'upload' | 'saving' | 'booking' | 'done' | 'error';
 
+/**
+ * Stable `submitError` code for the pre-write "accounting not configured" failure, so the modal
+ * can show an accurate message. Distinct from the mid-transaction step failures, which DO roll
+ * back and legitimately show the generic "Vorgang wurde zurückgerollt" toast.
+ */
+export const SUBMIT_ERR_NO_CONFIG = 'no-accounting-config';
+
 export type ExpenseListId = 'all' | 'my';
 
 export type { ExpenseI18n };
@@ -113,9 +120,15 @@ export const ExpenseStore = signalStore(
         store.accountingConfigService.read(accountingTenantId)
       );
       if (!accountingConfig) {
-        patchState(store, { submitStep: 'error', submitError: 'No accounting config found' });
+        console.error(`[expense-submit] no accounting-config found for accountingTenantId '${accountingTenantId}' — cannot create the booking`);
+        patchState(store, { submitStep: 'error', submitError: SUBMIT_ERR_NO_CONFIG });
         return;
       }
+
+      // 'native' = okr owns the ledger → write a local booking (Step 4). External backends
+      // ('bexio'/'datev') own the ledger and okr's bookings are a read-only sync of theirs, so
+      // we must NOT write a local booking; the expense is marked 'pending-export' instead.
+      const isNativeBackend = accountingConfig.accountingBackend === 'native';
 
       let newAddressKey: string | undefined;
       const documentKeys: string[] = [];
@@ -141,7 +154,8 @@ export const ExpenseStore = signalStore(
             newAddressKey = await store.addressService.create(addr, currentUser);
           }
         }
-      } catch {
+      } catch (e) {
+        console.error('[expense-submit] IBAN step failed', e);
         patchState(store, { submitStep: 'error', submitError: 'IBAN step failed' });
         return;
       }
@@ -159,7 +173,8 @@ export const ExpenseStore = signalStore(
           if (!docKey) throw new Error('DocumentModel creation failed for ' + file.name);
           documentKeys.push(docKey);
         }
-      } catch {
+      } catch (e) {
+        console.error('[expense-submit] Upload step failed', e);
         await compensateDocuments(store.documentService, documentKeys, currentUser);
         if (newAddressKey) await compensateAddress(store.addressService, newAddressKey, currentUser);
         patchState(store, { submitStep: 'error', submitError: 'Upload step failed' });
@@ -187,14 +202,34 @@ export const ExpenseStore = signalStore(
           const expDoc = newExpenseDocumentModel(tenantId, expenseKey, docKey);
           await store.expenseDocService.create(expDoc, currentUser);
         }
-      } catch {
+      } catch (e) {
+        console.error('[expense-submit] Save step failed', e);
         await compensateDocuments(store.documentService, documentKeys, currentUser);
         if (newAddressKey) await compensateAddress(store.addressService, newAddressKey, currentUser);
         patchState(store, { submitStep: 'error', submitError: 'Save step failed' });
         return;
       }
 
-      // Step 4 — Create booking
+      // Step 4 — Create the local booking (native backend only).
+      // For external backends the expense is recorded for export instead; the accounting entry
+      // is made in the external system (e.g. Bexio) and flows back via the read-only journal sync.
+      if (!isNativeBackend) {
+        try {
+          const savedExpense = await firstValueFrom(store.expenseService.read(expenseKey!));
+          if (savedExpense) {
+            savedExpense.status = 'pending-export';
+            await store.expenseService.update(savedExpense, currentUser);
+          }
+        } catch (e) {
+          // The expense + receipts are already saved; only the status flip failed. Log, but do
+          // not roll back — losing the receipts would be worse than a stale 'draft' status.
+          console.error('[expense-submit] pending-export status update failed', e);
+        }
+        patchState(store, { submitStep: 'done' });
+        store.expensesResource.reload();
+        return;
+      }
+
       patchState(store, { submitStep: 'booking' });
       try {
         const debitAccountKey  = formValue.category || accountingConfig.defaultExpenseAccountKey;
@@ -225,7 +260,8 @@ export const ExpenseStore = signalStore(
           savedExpense.status = 'posted';
           await store.expenseService.update(savedExpense, currentUser);
         }
-      } catch {
+      } catch (e) {
+        console.error('[expense-submit] Booking step failed', e);
         if (expenseKey) {
           try {
             const savedExpense = await firstValueFrom(store.expenseService.read(expenseKey));
