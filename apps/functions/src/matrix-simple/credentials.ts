@@ -10,11 +10,14 @@ import { getFirestore } from 'firebase-admin/firestore';
 import {
   matrixAdminToken,
   MATRIX_HOMESERVER,
-  requireMatrixLocalpart,
+  requireUserPersonKey,
   requireProvisionedUser,
   requireRole,
   requireParam,
   checkRateLimit,
+  resolvePersonDisplayName,
+  setMatrixDisplayName,
+  serverHostname,
 } from './shared';
 
 export interface MatrixAuthResponse {
@@ -54,11 +57,26 @@ export const getMatrixCredentials = onCall(
       // without a users/{uid}.personKey instead of minting a UID-based duplicate account.
       const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
       checkRateLimit(firebaseUid, 'getMatrixCredentials', 10); // token minting — tightest limit
-      const localpart = await requireMatrixLocalpart(firebaseUid, 'getMatrixCredentials');
+      // Raw personKey is needed to look up persons/{personKey} (case-sensitive);
+      // the Matrix localpart is that key lowercased.
+      const personKey = await requireUserPersonKey(firebaseUid, 'getMatrixCredentials');
+      const localpart = personKey.toLowerCase();
       const matrixUserId = `@${localpart}:${hostname}`;
 
-      // Check if Matrix user exists
+      // Desired Matrix display name: the person's real name is the source of truth
+      // (persons/{personKey}), falling back to the Firebase profile only when the
+      // person doc has no name. Password users have no Firebase Auth displayName, so
+      // without the person lookup accounts would fall back to the raw localpart/uid.
+      const desiredDisplayName =
+        (await resolvePersonDisplayName(personKey)) ||
+        userRecord.displayName ||
+        userRecord.email?.split('@')[0] ||
+        firebaseUid;
+
+      // Check if Matrix user exists, and capture its current display name so we only
+      // rewrite it when it actually drifts.
       let matrixUserExists = false;
+      let existingDisplayName: string | undefined;
       try {
         const checkUserResponse = await fetch(
           `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
@@ -73,6 +91,8 @@ export const getMatrixCredentials = onCall(
 
         if (checkUserResponse.ok) {
           matrixUserExists = true;
+          const existing = await checkUserResponse.json() as { displayname?: string };
+          existingDisplayName = existing.displayname ?? undefined;
           console.log(`Matrix user ${matrixUserId} already exists`);
         }
       } catch (error) {
@@ -81,8 +101,6 @@ export const getMatrixCredentials = onCall(
 
       // Create Matrix user if doesn't exist
       if (!matrixUserExists) {
-        const displayName = userRecord.displayName || userRecord.email?.split('@')[0] || firebaseUid;
-        
         const createUserResponse = await fetch(
           `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
           {
@@ -92,7 +110,7 @@ export const getMatrixCredentials = onCall(
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              displayname: displayName,
+              displayname: desiredDisplayName,
               avatar_url: userRecord.photoURL || undefined,
               admin: false,
               deactivated: false,
@@ -105,7 +123,7 @@ export const getMatrixCredentials = onCall(
           throw new HttpsError('internal', `Failed to create Matrix user: ${errorText}`);
         }
 
-        console.log(`Created Matrix user: ${matrixUserId}`);
+        console.log(`Created Matrix user: ${matrixUserId} (${desiredDisplayName})`);
       }
 
       // Generate Matrix access token for the user
@@ -135,35 +153,17 @@ export const getMatrixCredentials = onCall(
 
       console.log(`Generated Matrix access token for ${matrixUserId}`);
 
-      // Update user profile in Matrix (in case it changed in Firebase)
-      if (userRecord.displayName || userRecord.photoURL) {
-        try {
-          // Update display name
-          if (userRecord.displayName) {
-            await fetch(
-              `${MATRIX_HOMESERVER}/_matrix/client/v3/profile/${matrixUserId}/displayname`,
-              {
-                method: 'PUT',
-                headers: {
-                  'Authorization': `Bearer ${loginData.access_token}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  displayname: userRecord.displayName,
-                }),
-              }
-            );
-          }
-
-          // Update avatar
-          if (userRecord.photoURL) {
-            // Note: This would require uploading the avatar to Matrix media repo first
-            // For now, we skip this step
-          }
-        } catch (error) {
-          console.warn('Failed to update Matrix profile:', error);
-          // Non-fatal error, continue
-        }
+      // Self-heal the Matrix display name for existing accounts (SCS-13). Legacy
+      // accounts were created before the person name was used, so many show the raw
+      // MXID (empty display name) or an email-localpart placeholder. Rewrite it from
+      // the person's real name whenever it has drifted — but never when it already
+      // matches (avoids a needless admin write on every login).
+      if (matrixUserExists && existingDisplayName !== desiredDisplayName) {
+        await setMatrixDisplayName(matrixUserId, desiredDisplayName, matrixAdminToken.value());
+        console.log(
+          `getMatrixCredentials: synced display name for ${matrixUserId} ` +
+          `("${existingDisplayName ?? ''}" → "${desiredDisplayName}")`
+        );
       }
 
       return {
@@ -335,55 +335,149 @@ export const syncFirebaseProfileToMatrix = onCall(
       }
 
       const userRecord = await getAuth().getUser(firebaseUid);
-      const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+      const hostname = serverHostname();
       checkRateLimit(firebaseUid, 'syncFirebaseProfileToMatrix', 10);
-      const localpart = await requireMatrixLocalpart(firebaseUid, 'syncFirebaseProfileToMatrix');
-      const matrixUserId = `@${localpart}:${hostname}`;
+      const personKey = await requireUserPersonKey(firebaseUid, 'syncFirebaseProfileToMatrix');
+      const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
 
-      // First, get Matrix access token for the user
-      const loginResponse = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/login`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${matrixAdminToken.value()}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            valid_until_ms: Date.now() + (1000 * 60 * 5), // 5 minutes (just for syncing)
-          }),
-        }
-      );
+      // Prefer the person's real name (persons/{personKey}); fall back to the Firebase
+      // profile. Set via the Synapse admin API so it works for password users too (who
+      // carry no Firebase Auth displayName).
+      const desiredDisplayName =
+        (await resolvePersonDisplayName(personKey)) ||
+        userRecord.displayName ||
+        userRecord.email?.split('@')[0];
 
-      if (!loginResponse.ok) {
-        throw new HttpsError('internal', 'Failed to get Matrix access token for profile sync');
+      if (desiredDisplayName) {
+        await setMatrixDisplayName(matrixUserId, desiredDisplayName, matrixAdminToken.value());
       }
 
-      const { access_token } = await loginResponse.json() as { access_token: string };
-
-      // Update display name
-      if (userRecord.displayName) {
-        await fetch(
-          `${MATRIX_HOMESERVER}/_matrix/client/v3/profile/${matrixUserId}/displayname`,
-          {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              displayname: userRecord.displayName,
-            }),
-          }
-        );
-      }
-
-      console.log(`Synced Firebase profile to Matrix for ${matrixUserId}`);
+      console.log(`Synced profile to Matrix for ${matrixUserId} ("${desiredDisplayName ?? ''}")`);
 
       return { success: true };
     } catch (error) {
       console.error('Error syncing profile to Matrix:', error);
       throw error;
     }
+  }
+);
+
+interface DisplayNameRepairEntry {
+  matrixUserId: string;
+  from: string;
+  to: string;
+}
+
+interface DisplayNameRepairResult {
+  scanned: number;
+  repaired: DisplayNameRepairEntry[];
+  skippedNoPerson: string[];
+  skippedCustomName: DisplayNameRepairEntry[];
+  applied: boolean;
+}
+
+/**
+ * Bulk-repair Matrix display names (SCS-13, admin only).
+ *
+ * Many legacy accounts show the bare MXID because their Synapse display name is empty
+ * or a placeholder (the localpart / an email-localpart) — the display name was never
+ * synced from the person's real name. This scans every Synapse user and, for each one
+ * whose display name is a placeholder, rewrites it to "Firstname Lastname" from
+ * `persons/{personKey}`.
+ *
+ * The localpart→person mapping is built from a single `persons` collection scan
+ * (localpart = doc id lowercased), which lets us recover the case-sensitive person doc
+ * from the lowercased Matrix localpart.
+ *
+ * `dryRun` (default true) reports what WOULD change without writing — use it to review
+ * the list first, then call again with `dryRun: false` to apply. Accounts that already
+ * carry a real, non-placeholder custom name are never overwritten (reported under
+ * `skippedCustomName`).
+ */
+export const repairMatrixDisplayNames = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<DisplayNameRepairResult> => {
+    await requireRole(request, 'repairMatrixDisplayNames', ['admin']);
+    const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun !== false; // default true
+    const adminToken = matrixAdminToken.value();
+
+    // 1. Build localpart → "Firstname Lastname" from a single persons scan.
+    const nameByLocalpart = new Map<string, string>();
+    const personsSnap = await getFirestore().collection('persons').get();
+    personsSnap.forEach((doc) => {
+      const d = doc.data();
+      const full = [d['firstName'], d['lastName']].filter(Boolean).join(' ').trim();
+      if (full) nameByLocalpart.set(doc.id.toLowerCase(), full);
+    });
+
+    const result: DisplayNameRepairResult = {
+      scanned: 0,
+      repaired: [],
+      skippedNoPerson: [],
+      skippedCustomName: [],
+      applied: !dryRun,
+    };
+
+    // 2. Page through all Synapse users.
+    let from = 0;
+    const limit = 100;
+    for (;;) {
+      const resp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users?from=${from}&limit=${limit}&guests=false&deactivated=false`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (!resp.ok) {
+        throw new HttpsError('internal', `Failed to list Matrix users: ${await resp.text()}`);
+      }
+      const data = await resp.json() as {
+        users: Array<{ name: string; displayname?: string; user_type?: string | null }>;
+        next_token?: string;
+      };
+
+      for (const u of data.users) {
+        // Only touch normal local users (skip appservice/bots/support users).
+        if (u.user_type) continue;
+        result.scanned++;
+
+        const matrixUserId = u.name; // @localpart:server
+        const localpart = matrixUserId.replace(/^@/, '').split(':')[0];
+        const current = (u.displayname ?? '').trim();
+        const desired = nameByLocalpart.get(localpart);
+
+        if (!desired) {
+          result.skippedNoPerson.push(matrixUserId);
+          continue;
+        }
+        if (current === desired) continue; // already correct
+
+        // A placeholder is an empty name, the bare localpart, or the full MXID.
+        const isPlaceholder = current === '' || current === localpart || current === matrixUserId;
+        if (!isPlaceholder) {
+          // A real custom name that differs from the person name — leave it alone.
+          result.skippedCustomName.push({ matrixUserId, from: current, to: desired });
+          continue;
+        }
+
+        if (!dryRun) {
+          await setMatrixDisplayName(matrixUserId, desired, adminToken);
+        }
+        result.repaired.push({ matrixUserId, from: current, to: desired });
+      }
+
+      if (data.next_token === undefined) break;
+      from = Number(data.next_token);
+    }
+
+    console.log(
+      `repairMatrixDisplayNames: scanned=${result.scanned} ` +
+      `repaired=${result.repaired.length} noPerson=${result.skippedNoPerson.length} ` +
+      `customName=${result.skippedCustomName.length} applied=${result.applied}`
+    );
+    return result;
   }
 );

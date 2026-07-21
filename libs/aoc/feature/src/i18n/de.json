@@ -246,6 +246,15 @@
       "view": {
         "label": "Mitglieder anzeigen"
       }
+    },
+    "repair": {
+      "names": {
+        "label": "Anzeigenamen reparieren",
+        "action": "Reparieren",
+        "none": "Alle Anzeigenamen sind korrekt – nichts zu reparieren.",
+        "confirm": "${count} Konten ohne gültigen Anzeigenamen gefunden. Jetzt aus den Personennamen setzen?",
+        "conf": "${count} Anzeigenamen repariert."
+      }
     }
   },
   "content": {

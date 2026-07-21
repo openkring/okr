@@ -91,6 +91,7 @@ export const invitePersonToGroupRoom = MatrixSimple.invitePersonToGroupRoom;
 export const kickPersonFromGroupRoom = MatrixSimple.kickPersonFromGroupRoom;
 export const deleteMatrixRoom = MatrixSimple.deleteMatrixRoom;
 export const deactivateMatrixUser = MatrixSimple.deactivateMatrixUser;
+export const repairMatrixDisplayNames = MatrixSimple.repairMatrixDisplayNames;
 export const listMatrixRooms = MatrixSimple.listMatrixRooms;
 export const getRoomDetails = MatrixSimple.getRoomDetails;
 export const getAllMembersFromRoom = MatrixSimple.getAllMembersFromRoom;

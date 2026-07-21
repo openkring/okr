@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonBadge, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
@@ -19,7 +19,7 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
     FormsModule, 
     SvgIconPipe,
     Header, AvatarSelect,
-    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSelect, IonSelectOption
+    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSelect, IonSelectOption, IonButton
   ],
   providers: [AocChatStore],
   styles: [`
@@ -139,6 +139,10 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
             <ion-select-option [value]="level">{{ level }}</ion-select-option>
           }
         </ion-select>
+        <ion-button size="small" fill="outline" (click)="onRepairNames()">
+          <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+          {{ store.i18n.chat_repair_names() }}
+        </ion-button>
       </div>
 
       <!-- 3-column layout -->
@@ -325,6 +329,10 @@ export class AocChat {
 
   protected onLogLevelChange(event: CustomEvent): void {
     this.store.setLogLevel(event.detail.value as MatrixLogLevel);
+  }
+
+  protected onRepairNames(): void {
+    this.store.repairDisplayNames();
   }
 
   // ─── room click → action sheet ──────────────────────────────────────────────

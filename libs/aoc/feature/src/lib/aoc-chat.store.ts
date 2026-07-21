@@ -53,6 +53,20 @@ export interface MemberDetails {
   membership?: string;
   avatarUrl?: string;
 }
+
+export interface DisplayNameRepairEntry {
+  matrixUserId: string;
+  from: string;
+  to: string;
+}
+
+export interface DisplayNameRepairResult {
+  scanned: number;
+  repaired: DisplayNameRepairEntry[];
+  skippedNoPerson: string[];
+  skippedCustomName: DisplayNameRepairEntry[];
+  applied: boolean;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type DetailsTarget = 'room' | 'member';
@@ -328,6 +342,50 @@ export const AocChatStore = signalStore(
         );
         const result = await fn({ personKey: pk });
         await showToast(store.toastController, `${store.i18n.chat_user_provision_conf()}: ${result.data.matrixUserId}`);
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      }
+    },
+
+    /**
+     * Bulk-repair Matrix display names (SCS-13). Runs a dry-run first to count the
+     * accounts with a missing/placeholder display name, asks for confirmation, then
+     * applies the fix (setting each name from the linked person's real name).
+     */
+    async repairDisplayNames(): Promise<void> {
+      try {
+        const fn = httpsCallable<{ dryRun?: boolean }, DisplayNameRepairResult>(
+          getFn(), 'repairMatrixDisplayNames'
+        );
+        // 1. dry-run — how many would change?
+        const dry = await fn({ dryRun: true });
+        const count = dry.data.repaired.length;
+        if (count === 0) {
+          await showToast(store.toastController, store.i18n.chat_repair_names_none());
+          return;
+        }
+        const message = await firstValueFrom(
+          store.i18nService.translate('@aoc/feature.chat.repair.names.confirm', { count })
+        );
+        const alert = await store.alertController.create({
+          header: store.i18n.chat_repair_names(),
+          message,
+          buttons: [
+            { text: store.i18n.cancel(), role: 'cancel' },
+            { text: store.i18n.chat_repair_names_action(), role: 'confirm' },
+          ],
+        });
+        await alert.present();
+        const { role } = await alert.onDidDismiss();
+        if (role !== 'confirm') return;
+
+        // 2. apply
+        const applied = await fn({ dryRun: false });
+        const conf = await firstValueFrom(
+          store.i18nService.translate('@aoc/feature.chat.repair.names.conf', { count: applied.data.repaired.length })
+        );
+        store.membersResource.reload();
+        await showToast(store.toastController, conf);
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }

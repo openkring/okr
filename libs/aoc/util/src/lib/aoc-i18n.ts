@@ -175,6 +175,10 @@ export const AOC_I18N_KEYS = {
   chat_user_provision_action:               PFX + 'chat.user.provision.action',
   chat_user_provision_conf:                 PFX + 'chat.user.provision.conf',
 
+  chat_repair_names:                        PFX + 'chat.repair.names.label',
+  chat_repair_names_action:                 PFX + 'chat.repair.names.action',
+  chat_repair_names_none:                   PFX + 'chat.repair.names.none',
+
   chat_user_deactivate:                     PFX + 'chat.user.deactivate.label',
   chat_user_deactivate_confirm:             PFX + 'chat.user.deactivate.confirm',
   chat_user_deactivate_action:              PFX + 'chat.user.deactivate.action',

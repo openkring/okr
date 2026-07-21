@@ -38,7 +38,7 @@ export const PUSH_GATEWAY_BASE = process.env.MATRIX_PUSH_GATEWAY_BASE || 'https:
  * caller without a personKey must be fixed in provisioning, not given a stray
  * Matrix account.
  */
-export async function requireMatrixLocalpart(firebaseUid: string, fnName: string): Promise<string> {
+export async function requireUserPersonKey(firebaseUid: string, fnName: string): Promise<string> {
   const doc = await getFirestore().collection('users').doc(firebaseUid).get();
   if (!doc.exists) {
     console.error(`${fnName}: uid ${firebaseUid} has no user profile`);
@@ -49,7 +49,57 @@ export async function requireMatrixLocalpart(firebaseUid: string, fnName: string
     console.error(`${fnName}: uid ${firebaseUid} has no personKey on its user profile`);
     throw new HttpsError('failed-precondition', 'User profile has no linked person.');
   }
-  return personKey.toLowerCase();
+  return personKey;
+}
+
+/**
+ * Like {@link requireUserPersonKey} but returns the value lowercased, ready to use as
+ * the Matrix localpart. NOTE: Matrix localparts are lowercased, but Firestore doc IDs
+ * are case-sensitive — do NOT use the return value to look up `persons/{personKey}`;
+ * use {@link requireUserPersonKey} (the raw key) for that.
+ */
+export async function requireMatrixLocalpart(firebaseUid: string, fnName: string): Promise<string> {
+  return (await requireUserPersonKey(firebaseUid, fnName)).toLowerCase();
+}
+
+/**
+ * Resolve a Matrix display name ("Firstname Lastname") from `persons/{personKey}`.
+ * The `personKey` must be the raw (case-sensitive) Firestore doc id, not the lowercased
+ * Matrix localpart. Returns undefined when the person doc is missing or has no name.
+ */
+export async function resolvePersonDisplayName(personKey: string): Promise<string | undefined> {
+  try {
+    const d = (await getFirestore().collection('persons').doc(personKey).get()).data();
+    const full = [d?.['firstName'], d?.['lastName']].filter(Boolean).join(' ').trim();
+    return full || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Set a Matrix user's display name via the Synapse admin API (idempotent).
+ * Best-effort by default: on failure it logs and returns false rather than throwing,
+ * so a display-name sync never breaks the surrounding flow (e.g. token exchange).
+ */
+export async function setMatrixDisplayName(
+  matrixUserId: string,
+  displayName: string,
+  adminToken: string,
+): Promise<boolean> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayname: displayName }),
+    }
+  );
+  if (!resp.ok) {
+    console.warn(`setMatrixDisplayName: failed for ${matrixUserId} → ${resp.status}: ${await resp.text()}`);
+    return false;
+  }
+  return true;
 }
 
 /**
