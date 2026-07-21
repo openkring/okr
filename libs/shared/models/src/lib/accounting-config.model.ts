@@ -44,6 +44,7 @@ export class AccountingConfigModel implements OkrModel {
   public depreciationProRata: DepreciationProRata = 'daily';
   public defaultExpenseAccountKey = '';
   public employeePayablesAccountKey = '';
+  public reviewAssigneePersonKey = ''; // treasurer person.okey who reviews OCR bookings; '' → first treasurer
 
   constructor(tenantId: string, accountingTenantId: string) {
     this.tenants = [tenantId];

@@ -3,7 +3,8 @@ import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, 
 import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarInfo } from './avatar-info';
 
-export type BookingStatus = 'draft' | 'posted' | 'cancelled';
+// 'forReview' = created by the OCR pipeline, awaiting treasurer approval (not yet in the ledger).
+export type BookingStatus = 'draft' | 'forReview' | 'posted' | 'cancelled';
 
 // Header record for a double-entry booking. All amounts live in BookingLineModel.
 // Every booking has at least two BookingLineModel entries (debit + credit sides).

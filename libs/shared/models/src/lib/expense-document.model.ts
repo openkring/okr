@@ -4,6 +4,10 @@ import { OkrModel } from './base.model';
 
 export type OcrStatus = 'pending' | 'completed' | 'failed' | 'manual';
 
+/**
+ * @deprecated Superseded by OcrResultModel (`ocr-results`). The OCR pipeline writes extraction
+ * results to `ocr-results`; this collection is no longer written by the expense feature.
+ */
 export class ExpenseDocumentModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
