@@ -9,7 +9,7 @@ import * as path from 'path';
 import { tmpdir } from 'os';
 
 import { parseOcrPath } from './ocr-path.util';
-import { toCents, ocrResultId } from './ocr-extract.util';
+import { toCents, ocrResultId, matchRule, resolveDebitAccount, isBalanced, type OcrRuleLite } from './ocr-extract.util';
 import { geminiExtract } from './gemini-extract';
 
 const REGION = 'europe-west6';
@@ -19,6 +19,44 @@ const geminiApiKey = defineSecret('GEMINI_API_KEY');
 const OCR_RESULT_COLLECTION = 'ocr-results';
 const DOCS_COLLECTION = 'docs';
 const ACCOUNTS_COLLECTION = 'accounts';
+const OCR_RULE_COLLECTION = 'ocr-rules';
+const ACCOUNTING_CONFIG_COLLECTION = 'accounting-configs';
+const BOOKING_COLLECTION = 'bookings';
+const BOOKING_LINE_COLLECTION = 'booking-lines';
+const TASK_COLLECTION = 'tasks';
+const USERS_COLLECTION = 'users';
+const EXPENSE_COLLECTION = 'expenses';
+
+/** Resolve an account NUMBER (id) to its account doc key for the tenant, or '' if not found. */
+async function accountKeyById(accountingTenantId: string, accountId: string): Promise<string> {
+  if (!accountId) return '';
+  const db = getFirestore();
+  const snap = await db.collection(ACCOUNTS_COLLECTION)
+    .where('accountingTenantId', '==', accountingTenantId)
+    .where('id', '==', accountId)
+    .limit(1).get();
+  return snap.empty ? '' : snap.docs[0].id;
+}
+
+/** Find the treasurer person key + name to assign the review task to. */
+async function resolveTreasurer(tenantId: string, reviewAssigneePersonKey: string):
+  Promise<{ key: string; name1: string; name2: string } | null> {
+  const db = getFirestore();
+  if (reviewAssigneePersonKey) {
+    const snap = await db.collection(USERS_COLLECTION).where('personKey', '==', reviewAssigneePersonKey).limit(1).get();
+    if (!snap.empty) {
+      const u = snap.docs[0].data();
+      return { key: reviewAssigneePersonKey, name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
+    }
+  }
+  const snap = await db.collection(USERS_COLLECTION)
+    .where('tenants', 'array-contains', tenantId)
+    .where('roles.treasurer', '==', true)
+    .limit(1).get();
+  if (snap.empty) return null;
+  const u = snap.docs[0].data();
+  return { key: u['personKey'] ?? '', name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
+}
 
 /** Build a compact "id name" chart-of-accounts list of leaf accounts for the LLM account hint. */
 async function loadLeafAccountList(accountingTenantId: string): Promise<string> {
@@ -138,3 +176,150 @@ export const onOcrFileFinalized = onObjectFinalized(
     }
   },
 );
+
+interface OcrResultDoc {
+  ocrUsage: string;
+  status: string;
+  storagePath: string;
+  correlationKey: string;
+  documentKey: string;
+  vendor: string;
+  invoiceDate: string;
+  grossAmount: number;
+  currency: string;
+  subject: string;
+  llmProposedAccountId?: string;
+  bookingKey: string;
+  tenants: string[];
+}
+
+export const onOcrResultWritten = onDocumentWritten(
+  { document: `${OCR_RESULT_COLLECTION}/{resultId}`, region: REGION },
+  async (event) => {
+    const after = event.data?.after?.data() as OcrResultDoc | undefined;
+    if (!after) return; // delete
+
+    // Only act on a freshly extracted result that has no booking yet, for a finance usage.
+    if (after.status !== 'extracted' || after.bookingKey) return;
+    if (after.ocrUsage !== 'expense' && after.ocrUsage !== 'invoice') {
+      // paper (or anything non-finance): mark processed, nothing else.
+      if (after.ocrUsage === 'paper') {
+        await event.data!.after!.ref.set({ status: 'processed' }, { merge: true });
+      }
+      return;
+    }
+
+    const tenantId = after.tenants?.[0];
+    if (!tenantId) return;
+    const accountingTenantId = tenantId;
+    const db = getFirestore();
+    const resultRef = event.data!.after!.ref;
+
+    // Guard: accounting must be configured and native (external backends own their ledger).
+    const cfgSnap = await db.collection(ACCOUNTING_CONFIG_COLLECTION).doc(accountingTenantId).get();
+    const cfg = cfgSnap.data();
+    if (!cfg) {
+      await resultRef.set({ status: 'failed', error: 'no accounting-config' }, { merge: true });
+      await createReviewTask(tenantId, cfg?.['reviewAssigneePersonKey'] ?? '', 'OCR: keine Buchhaltungs-Konfiguration', after);
+      return;
+    }
+    if ((cfg['accountingBackend'] ?? 'native') !== 'native') {
+      await resultRef.set({ status: 'processed' }, { merge: true }); // external backend: no local booking
+      return;
+    }
+
+    // Resolve the debit account: rule → llm hint → default.
+    const rulesSnap = await db.collection(OCR_RULE_COLLECTION).where('tenants', 'array-contains', tenantId).get();
+    const rules = rulesSnap.docs.map(d => ({ okey: d.id, ...(d.data() as Record<string, unknown>) })) as unknown as OcrRuleLite[];
+
+    const rule = matchRule(rules, after.ocrUsage, after.vendor);
+    const llmAccountKey = await accountKeyById(accountingTenantId, after.llmProposedAccountId ?? '');
+    const defaultDebit = cfg['defaultExpenseAccountKey'] ?? '';
+    const debitAccountKey = resolveDebitAccount(rule?.accountKey ?? '', llmAccountKey, defaultDebit);
+    const creditAccountKey = cfg['employeePayablesAccountKey'] ?? '';
+
+    const amountCents = after.grossAmount ?? 0;
+    const currency = after.currency || 'CHF';
+    const bookingDate = after.invoiceDate || '';
+
+    // forReview bookings are unnumbered (0); the treasurer's approve/post step assigns the sequence.
+    const bookingNo = 0;
+
+    if (!isBalanced([{ debit: amountCents, credit: 0 }, { debit: 0, credit: amountCents }])) {
+      await resultRef.set({ status: 'failed', error: 'unbalanced' }, { merge: true });
+      return;
+    }
+
+    // Write booking header + two lines atomically.
+    const bookingRef = db.collection(BOOKING_COLLECTION).doc();
+    const debitRef = db.collection(BOOKING_LINE_COLLECTION).doc();
+    const creditRef = db.collection(BOOKING_LINE_COLLECTION).doc();
+    const batch = db.batch();
+    batch.set(bookingRef, {
+      tenants: [tenantId], isArchived: false,
+      title: (after.subject || after.vendor || 'OCR-Buchung').slice(0, 200),
+      date: bookingDate, bookingNo,
+      periodKey: '', documentKey: after.documentKey,
+      status: 'forReview', accountingTenantId,
+      counterparty: after.vendor ? { key: '', name1: '', name2: after.vendor, modelType: 'org', type: '', subType: '', label: after.vendor } : null,
+    });
+    batch.set(debitRef, {
+      tenants: [tenantId], isArchived: false,
+      bookingKey: bookingRef.id, accountKey: debitAccountKey,
+      debitAmount: { amount: amountCents, currency, periodicity: 'one-time' },
+      accountingTenantId,
+    });
+    batch.set(creditRef, {
+      tenants: [tenantId], isArchived: false,
+      bookingKey: bookingRef.id, accountKey: creditAccountKey,
+      creditAmount: { amount: amountCents, currency, periodicity: 'one-time' },
+      accountingTenantId,
+    });
+    await batch.commit();
+
+    // Latch: write resolution back + mark processed (idempotency — re-delivery sees bookingKey set).
+    await resultRef.set({
+      status: 'processed',
+      matchedRuleKey: rule?.okey ?? '',
+      accountKey: debitAccountKey,
+      llmProposedAccountKey: llmAccountKey,
+      bookingKey: bookingRef.id,
+    }, { merge: true });
+
+    // Link back to the expense record if this came from the expense feature.
+    if (after.ocrUsage === 'expense' && after.correlationKey) {
+      await db.collection(EXPENSE_COLLECTION).doc(after.correlationKey)
+        .set({ bookingKey: bookingRef.id, status: 'validated' }, { merge: true })
+        .catch(err => logger.warn('onOcrResultWritten: expense link failed', err));
+    }
+
+    // Open a review task for the treasurer (existing onTaskWritten sends the FCM push).
+    await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
+      `Beleg prüfen: ${after.vendor} ${(amountCents / 100).toFixed(2)} ${currency}`, after);
+
+    logger.info(`onOcrResultWritten: booking ${bookingRef.id} forReview (rule=${rule?.okey ?? 'none'})`);
+  },
+);
+
+/** Create a TaskModel assigned to the treasurer. */
+async function createReviewTask(
+  tenantId: string, reviewAssigneePersonKey: string, name: string, result: OcrResultDoc,
+): Promise<void> {
+  const db = getFirestore();
+  const treasurer = await resolveTreasurer(tenantId, reviewAssigneePersonKey);
+  if (!treasurer || !treasurer.key) {
+    logger.warn(`createReviewTask: no treasurer for tenant ${tenantId} — task not created`);
+    return;
+  }
+  await db.collection(TASK_COLLECTION).doc().set({
+    tenants: [tenantId], isArchived: false,
+    name: name.slice(0, 200), index: '', tags: '',
+    notes: `OCR-Beleg: ${result.storagePath}`,
+    author: null,
+    assignee: { key: treasurer.key, name1: treasurer.name1, name2: treasurer.name2, modelType: 'person', type: '', subType: '', label: `${treasurer.name1} ${treasurer.name2}`.trim() },
+    state: 'initial',
+    dueDate: '', completionDate: '',
+    priority: 'medium', importance: 'medium',
+    calendars: [], rank: '',
+  });
+}
