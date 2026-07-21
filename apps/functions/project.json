@@ -31,7 +31,7 @@
         "outputPath": "dist/apps/functions",
         "main": "apps/functions/src/main.ts",
         "tsConfig": "apps/functions/tsconfig.app.json",
-        "assets": ["apps/functions/src/assets", "apps/functions/package.json"],
+        "assets": ["apps/functions/src/assets", "apps/functions/package.json", "apps/functions/pnpm-workspace.yaml"],
         "generatePackageJson": true,
         "bundle": true,
         "thirdParty": true,

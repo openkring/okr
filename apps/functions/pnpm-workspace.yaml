@@ -1,0 +1,26 @@
+# Shipped inside dist/apps/functions and used ONLY by the Firebase functions
+# deploy (Google Cloud buildpack runs `pnpm install --prod` with CI=true here).
+# pnpm v10+ reads these settings from pnpm-workspace.yaml, not package.json's
+# "pnpm" field, and this pruned artifact has no other workspace config, so both
+# settings must live here.
+#
+#  - `overrides`: gives the pruned pnpm-lock.yaml's `overrides:` section a
+#    matching config source; without it the frozen install fails with
+#    ERR_PNPM_LOCKFILE_CONFIG_MISMATCH.
+#  - `dangerouslyAllowAllBuilds`: under CI=true, pnpm 11 turns ignored install
+#    scripts into a fatal ERR_PNPM_IGNORED_BUILDS. `onlyBuiltDependencies` does
+#    NOT suppress it in a `--prod` install (verified pnpm 11.9.0); only this
+#    flag does. It is safe here: the dependency tree is fully pinned by the
+#    lockfile (already supply-chain-policy checked) and is our own — this only
+#    restores the normal "build the locked deps" behavior for the deploy.
+#
+# Keep `overrides` in sync with the repo-root pnpm-workspace.yaml.
+overrides:
+  'protobufjs@<7.5.5': ^7.5.5
+  'fast-xml-parser@<4.5.4': ^4.5.4
+  'basic-ftp@<5.2.0': ^5.2.0
+  'vitest@<3.2.6': ^3.2.6
+  '@vitest/ui@<3.2.6': ^3.2.6
+  '@vitest/coverage-v8@<3.2.6': ^3.2.6
+
+dangerouslyAllowAllBuilds: true
