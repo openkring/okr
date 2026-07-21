@@ -166,6 +166,10 @@ export class StringList {
   protected addLabel = computed(() => this.add() || this.i18n.string_add());
 
   public save($event: CustomEvent): void {
+    // Opening a quick-entry picker ('//', '!!', '@') blurs the input, which fires ionChange
+    // with the still-bare token. Skip it so the raw token is not committed as an entry;
+    // the resolved value is committed on Enter (onEnter) once the picker returns.
+    if (this.isSettingQuickEntryValue) return;
     this.addString($event?.detail?.value ?? '');
   }
 
@@ -212,6 +216,17 @@ export class StringList {
     } finally {
       this.isSettingQuickEntryValue = false;
     }
+    // Return focus to the input with the cursor after the inserted text, so the user
+    // can just press Return to add the entry without reaching back to the input first.
+    await this.focusInputEnd(input);
+  }
+
+  /** Focuses the ion-input and places the caret at the end of its current value. */
+  private async focusInputEnd(input: IonInput): Promise<void> {
+    await input.setFocus();
+    const native = await input.getInputElement();
+    const end = native.value.length;
+    native.setSelectionRange(end, end);
   }
 
   private resetInput(): void {

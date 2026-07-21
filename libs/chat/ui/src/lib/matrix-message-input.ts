@@ -8,7 +8,7 @@ import { createActionSheetButton, createActionSheetOptions, QuickEntryService } 
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { ButtonCopy } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
-import { LocationModel, PersonModel } from '@okr/shared-models';
+import { PersonModel } from '@okr/shared-models';
 
 import { isSupportedImageFile, MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
 import { MentionAutocomplete, MentionPick, MENTION_ROOM, mentionListboxId, mentionOptionId } from './mention-autocomplete';
@@ -418,7 +418,6 @@ export class MatrixMessageInput {
 
   // outputs
   messageSent = output<MessageDraft>();
-  savedLocationSent = output<LocationModel>();
   fileSent = output<File>();
   locationSent = output<void>();
   surveyRequested = output<void>();
@@ -699,18 +698,41 @@ export class MatrixMessageInput {
 
     const next = `${text.slice(0, query.start)}${insert} ${text.slice(caret)}`;
     this.messageText.set(next);
+    this.persistDraft(next);
     this.mentionQuery.set(null);
     this.mentionActiveIndex.set(0);
 
-    const cursor = query.start + insert.length + 1;
-    // `ion-textarea` is a Stencil component that writes the new value into the native
-    // textarea on its own later tick, so restoring the caret in `afterNextRender` (end of
-    // Angular's CD pass) would run against the OLD value and the caret would jump to the end.
-    // A macrotask lands after Stencil's write — same fix `onEmojiClick` already uses.
-    setTimeout(() => {
-      textarea?.focus();
-      textarea?.setSelectionRange(cursor, cursor);
-    }, 0);
+    // Caret goes right after the inserted mention and its trailing space.
+    this.restoreCaret(query.start + insert.length + 1);
+  }
+
+  /**
+   * Refocus the textarea and place the caret at `pos`.
+   *
+   * `ion-textarea` is a Stencil component that writes the new value into the native textarea on
+   * its OWN render tick (a `requestAnimationFrame`), so restoring the caret synchronously — or on
+   * a plain `setTimeout(0)` that races that write — sets the selection against the OLD value; the
+   * subsequent Stencil write then resets the caret to the end. A `//`/`!!` modal's async delay
+   * happens to outlast the write, but a synchronous mention pick does not, so the caret jumped.
+   *
+   * So poll across animation frames until the native textarea's value matches the text we just
+   * set, and only THEN focus + set the caret — nothing overwrites it afterwards. The node is
+   * re-queried each frame because Stencil may replace it while re-rendering.
+   */
+  private restoreCaret(pos: number): void {
+    const target = this.messageText();
+    let frames = 0;
+    const apply = () => {
+      const ta = this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;
+      if (ta && ta.value === target) {
+        ta.focus();
+        ta.setSelectionRange(pos, pos);
+        return;
+      }
+      // Give up after ~20 frames (~1/3 s) rather than poll forever if the value never lands.
+      if (++frames < 20) requestAnimationFrame(apply);
+    };
+    requestAnimationFrame(apply);
   }
 
   /**
@@ -769,28 +791,61 @@ export class MatrixMessageInput {
           const viewDate = convertDateFormatToString(datePart, DateFormat.IsoDate, DateFormat.ViewDate);
           const timePart = data.length >= 16 ? data.substring(11, 16) : '00:00';
           const token = timePart === '00:00' ? viewDate : `${viewDate},${timePart.replace(':', '')}`;
-          this.messageText.set(this.quickEntryService.replaceToken(value, '//', token));
+          this.setTextAndDraft(this.quickEntryService.replaceToken(value, '//', token));
         } else {
-          this.messageText.set(value.slice(0, -2));
+          this.setTextAndDraft(value.slice(0, -2));
         }
       } else if (trigger === 'location') {
         const result = await this.modelSelectService.selectLocation('', true, false);
         if (result?.kind === 'predefined') {
-          this.messageText.set(this.quickEntryService.replaceToken(value, '!!', ''));
-          this.savedLocationSent.emit(result.location);
+          // Write the location NAME into the message text (like '//' writes the date), rather
+          // than sending it as a separate position message.
+          this.setTextAndDraft(this.quickEntryService.replaceToken(value, '!!', result.location.name));
         } else {
-          this.messageText.set(value.slice(0, -2));
+          this.setTextAndDraft(value.slice(0, -2));
         }
       }
     } finally {
       this.isSettingQuickEntryValue = false;
+      this.restoreCaretToEnd();
     }
+  }
+
+  /**
+   * After a quick-entry modal (`//` date, `!!` location) resolves, the textarea has lost focus
+   * and the caret is stale, so the user cannot keep typing where they left off. The token is only
+   * ever detected at the END of the text (`detectTrigger` uses `endsWith`), so the resolved value
+   * — or the stripped token on cancel — always lands at the end; returning the caret there places
+   * it right after the inserted text.
+   */
+  private restoreCaretToEnd(): void {
+    this.restoreCaret(this.messageText().length);
+  }
+
+  /**
+   * Keep the per-room draft (`localStorage['chat-draft:<roomId>']`) in sync with the text.
+   * Must run for EVERY programmatic change to `messageText` (quick-entry resolution, clear,
+   * emoji, mention pick) — none of those fire `ionInput`, so `onTyping()` never runs for them.
+   * Without this, the bare '//'/'!!' token that the opening keystroke persisted stays in the
+   * draft and reappears on every room switch. Empty text removes the key, so a cleared field
+   * restores as empty rather than as the stale token.
+   */
+  private persistDraft(text: string): void {
+    const key = this.draftKey();
+    if (!key) return;
+    if (text.length > 0) localStorage.setItem(key, text);
+    else localStorage.removeItem(key);
+  }
+
+  /** Set the text programmatically and keep the room draft in sync (see persistDraft). */
+  private setTextAndDraft(text: string): void {
+    this.messageText.set(text);
+    this.persistDraft(text);
   }
 
   onTyping() {
     // Persist draft
-    const key = this.draftKey();
-    if (key) localStorage.setItem(key, this.messageText());
+    this.persistDraft(this.messageText());
 
     // Emit typing notification
     this.typing.emit(true);
@@ -999,11 +1054,14 @@ export class MatrixMessageInput {
     } else {
       this.messageText.update(t => t + emoji);
     }
+    this.persistDraft(this.messageText());
     this.showEmojiPicker.set(false);
   }
 
   clearValue(): void {
-    this.messageText.set('');
+    // setTextAndDraft removes the draft key too, so the cleared field does not restore
+    // as a stale value (e.g. a leftover '//'/'!!') on the next room switch.
+    this.setTextAndDraft('');
     // The text is gone, so any @-token — and any Escape-dismissal of one — is stale; a
     // surviving `mentionQuery` would hold an offset into text that no longer exists.
     this.resetMentionState();

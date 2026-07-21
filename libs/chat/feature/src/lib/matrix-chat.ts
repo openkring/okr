@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
-import { LocationModel, MatrixMessage, RoleName } from '@okr/shared-models';
+import { MatrixMessage, RoleName } from '@okr/shared-models';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
@@ -392,7 +392,6 @@ import { ChatHelpModal } from './chat-help.modal';
                   (removeImage)="onRemoveImage($event)"
                   (filesSent)="onFilesSent($event)"
                   (locationSent)="onLocationSent()"
-                  (savedLocationSent)="onSavedLocationSent($event)"
                   (surveyRequested)="onSurveyRequested()"
                   (videoCallStarted)="onVideoCallStarted()"
                   (typing)="onTyping($event)"
@@ -819,14 +818,6 @@ export class MatrixChat implements OnDestroy {
       (err) => console.error('Location error:', err),
       { enableHighAccuracy: true }
     );
-  }
-
-  async onSavedLocationSent(location: LocationModel) {
-    try {
-      await this.store.sendLocation(location.name, location.latitude, location.longitude);
-    } catch (error) {
-      console.error('Failed to send saved location:', error);
-    }
   }
 
   async onSurveyRequested(): Promise<void> {
