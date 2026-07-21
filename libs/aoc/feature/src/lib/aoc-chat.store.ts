@@ -77,6 +77,11 @@ export type AocChatState = {
   selectedMemberId: string | undefined;
   detailsTarget: DetailsTarget | undefined;
   logLevel: MatrixLogLevel;
+  // display-name repair (SCS-13)
+  repairPreview: DisplayNameRepairEntry[] | undefined; // undefined = not yet scanned
+  repairSkippedCustom: number;
+  repairScanning: boolean;
+  repairApplying: boolean;
 };
 
 const initialState: AocChatState = {
@@ -85,6 +90,10 @@ const initialState: AocChatState = {
   selectedMemberId: undefined,
   detailsTarget: undefined,
   logLevel: getMatrixLogLevel(),
+  repairPreview: undefined,
+  repairSkippedCustom: 0,
+  repairScanning: false,
+  repairApplying: false,
 };
 
 function getFn() {
@@ -348,46 +357,67 @@ export const AocChatStore = signalStore(
     },
 
     /**
-     * Bulk-repair Matrix display names (SCS-13). Runs a dry-run first to count the
-     * accounts with a missing/placeholder display name, asks for confirmation, then
-     * applies the fix (setting each name from the linked person's real name).
+     * Dry-run the display-name repair (SCS-13): scans all Matrix accounts and stores
+     * the list of accounts whose display name would be set from the linked person's
+     * real name. Shows the result in the repair card without writing anything.
      */
-    async repairDisplayNames(): Promise<void> {
+    async previewDisplayNameRepair(): Promise<void> {
+      patchState(store, { repairScanning: true });
       try {
         const fn = httpsCallable<{ dryRun?: boolean }, DisplayNameRepairResult>(
           getFn(), 'repairMatrixDisplayNames'
         );
-        // 1. dry-run — how many would change?
         const dry = await fn({ dryRun: true });
-        const count = dry.data.repaired.length;
-        if (count === 0) {
-          await showToast(store.toastController, store.i18n.chat_repair_names_none());
-          return;
-        }
-        const message = await firstValueFrom(
-          store.i18nService.translate('@aoc/feature.chat.repair.names.confirm', { count })
-        );
-        const alert = await store.alertController.create({
-          header: store.i18n.chat_repair_names(),
-          message,
-          buttons: [
-            { text: store.i18n.cancel(), role: 'cancel' },
-            { text: store.i18n.chat_repair_names_action(), role: 'confirm' },
-          ],
+        patchState(store, {
+          repairPreview: dry.data.repaired,
+          repairSkippedCustom: dry.data.skippedCustomName.length,
         });
-        await alert.present();
-        const { role } = await alert.onDidDismiss();
-        if (role !== 'confirm') return;
+      } catch (e) {
+        patchState(store, { repairPreview: undefined, repairSkippedCustom: 0 });
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { repairScanning: false });
+      }
+    },
 
-        // 2. apply
+    /**
+     * Apply the previewed display-name repair. Confirms, then re-runs the scan with
+     * dryRun=false so the applied set reflects the current state at write time.
+     */
+    async applyDisplayNameRepair(): Promise<void> {
+      const preview = store.repairPreview();
+      if (!preview || preview.length === 0) return;
+      const message = await firstValueFrom(
+        store.i18nService.translate('@aoc/feature.chat.repair.names.confirm', { count: preview.length })
+      );
+      const alert = await store.alertController.create({
+        header: store.i18n.chat_repair_names(),
+        message,
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.chat_repair_names_action(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+
+      patchState(store, { repairApplying: true });
+      try {
+        const fn = httpsCallable<{ dryRun?: boolean }, DisplayNameRepairResult>(
+          getFn(), 'repairMatrixDisplayNames'
+        );
         const applied = await fn({ dryRun: false });
         const conf = await firstValueFrom(
           store.i18nService.translate('@aoc/feature.chat.repair.names.conf', { count: applied.data.repaired.length })
         );
+        patchState(store, { repairPreview: [], repairSkippedCustom: applied.data.skippedCustomName.length });
         store.membersResource.reload();
         await showToast(store.toastController, conf);
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { repairApplying: false });
       }
     },
 

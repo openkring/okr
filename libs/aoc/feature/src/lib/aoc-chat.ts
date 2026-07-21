@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
@@ -19,7 +19,8 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
     FormsModule, 
     SvgIconPipe,
     Header, AvatarSelect,
-    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSelect, IonSelectOption, IonButton
+    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSelect, IonSelectOption, IonButton,
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
   providers: [AocChatStore],
   styles: [`
@@ -44,9 +45,28 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
     .three-columns {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      height: calc(100% - 56px);
+      height: 60vh;
       overflow: hidden;
     }
+
+    .admin-cards {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .admin-cards > ion-card { flex: 1 1 320px; }
+    .log-card { margin: 8px 12px; }
+    .repair-card { margin: 8px 12px; }
+    .repair-desc { margin: 0 0 8px; font-size: 0.8125rem; color: var(--ion-color-medium); }
+    .repair-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .repair-preview-title {
+      margin-top: 12px;
+      font-weight: 600;
+      font-size: 0.8125rem;
+    }
+    .repair-list { max-height: 300px; overflow-y: auto; }
+    .repair-skipped { display: block; margin-top: 8px; font-size: 0.75rem; }
 
     .column {
       border-right: 1px solid var(--ion-border-color, #dedede);
@@ -127,22 +147,85 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
           (selectClicked)="onPersonSelectClicked()"
           (clearClicked)="onClearPerson()"
         />
-        <ion-select
-          label="Log"
-          labelPlacement="stacked"
-          interface="popover"
-          [value]="logLevel()"
-          (ionChange)="onLogLevelChange($event)"
-          style="max-width: 120px"
-        >
-          @for (level of logLevels; track level) {
-            <ion-select-option [value]="level">{{ level }}</ion-select-option>
+      </div>
+
+      <div class="admin-cards">
+
+      <!-- Matrix SDK log level (debug aid) -->
+      <ion-card class="log-card">
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.chat_log_title() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="repair-desc">{{ store.i18n.chat_log_description() }}</p>
+          <ion-select
+            [label]="store.i18n.chat_log_title()"
+            labelPlacement="stacked"
+            interface="popover"
+            [value]="logLevel()"
+            (ionChange)="onLogLevelChange($event)"
+            style="max-width: 160px"
+          >
+            @for (level of logLevels; track level) {
+              <ion-select-option [value]="level">{{ level }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Display-name repair (SCS-13) -->
+      <ion-card class="repair-card">
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.chat_repair_names() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="repair-desc">{{ store.i18n.chat_repair_names_description() }}</p>
+          <div class="repair-actions">
+            <ion-button size="small" fill="outline" (click)="onPreviewRepair()" [disabled]="repairScanning() || repairApplying()">
+              @if (repairScanning()) {
+                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+              } @else {
+                <ion-icon slot="start" src="{{'search' | svgIcon}}" />
+              }
+              {{ store.i18n.chat_repair_names_scan() }}
+            </ion-button>
+            @if (repairPreview()?.length) {
+              <ion-button size="small" color="primary" (click)="onApplyRepair()" [disabled]="repairApplying()">
+                @if (repairApplying()) {
+                  <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+                } @else {
+                  <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+                }
+                {{ store.i18n.chat_repair_names_action() }} ({{ repairPreview()!.length }})
+              </ion-button>
+            }
+          </div>
+
+          @if (repairPreview(); as preview) {
+            @if (preview.length === 0) {
+              <ion-note color="medium">{{ store.i18n.chat_repair_names_none() }}</ion-note>
+            } @else {
+              <div class="repair-preview-title">{{ store.i18n.chat_repair_names_preview() }} ({{ preview.length }})</div>
+              <ion-list lines="inset" class="repair-list">
+                @for (entry of preview; track entry.matrixUserId) {
+                  <ion-item>
+                    <ion-label>
+                      <div>{{ entry.to }}</div>
+                      <ion-note color="medium" style="font-size:0.75rem">
+                        {{ entry.matrixUserId }}@if (entry.from) { — „{{ entry.from }}"}
+                      </ion-note>
+                    </ion-label>
+                  </ion-item>
+                }
+              </ion-list>
+            }
+            @if (repairSkippedCustom() > 0) {
+              <ion-note color="medium" class="repair-skipped">{{ repairSkippedCustom() }} {{ store.i18n.chat_repair_names_skipped() }}</ion-note>
+            }
           }
-        </ion-select>
-        <ion-button size="small" fill="outline" (click)="onRepairNames()">
-          <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
-          {{ store.i18n.chat_repair_names() }}
-        </ion-button>
+        </ion-card-content>
+      </ion-card>
+
       </div>
 
       <!-- 3-column layout -->
@@ -302,6 +385,12 @@ export class AocChat {
   protected readonly logLevel = computed(() => this.store.logLevel());
   protected readonly logLevels = MATRIX_LOG_LEVELS;
 
+  // display-name repair (SCS-13)
+  protected readonly repairPreview = computed(() => this.store.repairPreview());
+  protected readonly repairSkippedCustom = computed(() => this.store.repairSkippedCustom());
+  protected readonly repairScanning = computed(() => this.store.repairScanning());
+  protected readonly repairApplying = computed(() => this.store.repairApplying());
+
   // constants
   private imgixBaseUrl = this.store.imgixBaseUrl();
   protected isPhotoUrl = isMatrixPhotoUrl;
@@ -331,8 +420,12 @@ export class AocChat {
     this.store.setLogLevel(event.detail.value as MatrixLogLevel);
   }
 
-  protected onRepairNames(): void {
-    this.store.repairDisplayNames();
+  protected onPreviewRepair(): void {
+    this.store.previewDisplayNameRepair();
+  }
+
+  protected onApplyRepair(): void {
+    this.store.applyDisplayNameRepair();
   }
 
   // ─── room click → action sheet ──────────────────────────────────────────────

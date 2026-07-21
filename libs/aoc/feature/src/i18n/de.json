@@ -198,7 +198,7 @@
       },
       "delete": {
         "label": "Raum löschen",
-        "confirm": "Raum ${roomId} wirklich löschen ? Alle Nachrichten werden entfernt.",
+        "confirm": "Raum {{ roomId }} wirklich löschen ? Alle Nachrichten werden entfernt.",
         "action": "Löschen",
         "conf": "Raum gelöscht."
       },
@@ -227,7 +227,7 @@
       },
       "deactivate": {
         "label": "Matrix User deaktivieren",
-        "confirm": "${userId} deaktivieren? Der User kann sich danach nicht mehr anmelden.",
+        "confirm": "{{ userId }} deaktivieren? Der User kann sich danach nicht mehr anmelden.",
         "action": "Deaktivieren",
         "conf": "deaktiviert",
         "notfound": "User nicht gefunden"
@@ -239,7 +239,7 @@
       },
       "kick": {
         "label": "Mitglied entfernen",
-        "confirm": "${userId} aus dem Raum entfernen ?",
+        "confirm": "{{ userId }} aus dem Raum entfernen ?",
         "action": "Entfernen",
         "conf": "entfernt."
       },
@@ -247,13 +247,21 @@
         "label": "Mitglieder anzeigen"
       }
     },
+    "log": {
+      "title": "Matrix SDK Log-Level",
+      "description": "Steuert, wie ausführlich das Matrix-SDK (matrix-js-sdk) in die Browser-Konsole schreibt – nur zur Fehlersuche im Chat. Die Auswahl bleibt über Reloads hinweg gespeichert. Standard: warn. Auf trace/debug stellen für ausführliche Logs, auf silent für keine."
+    },
     "repair": {
       "names": {
         "label": "Anzeigenamen reparieren",
+        "description": "Setzt fehlende Matrix-Anzeigenamen aus dem Personennamen (Vorname Nachname). Konten mit eigenem Namen bleiben unberührt.",
+        "scan": "Prüfen",
         "action": "Reparieren",
         "none": "Alle Anzeigenamen sind korrekt – nichts zu reparieren.",
-        "confirm": "${count} Konten ohne gültigen Anzeigenamen gefunden. Jetzt aus den Personennamen setzen?",
-        "conf": "${count} Anzeigenamen repariert."
+        "preview": "Zu reparierende Konten",
+        "skipped_custom": "Konten mit eigenem Anzeigenamen übersprungen.",
+        "confirm": "{{ count }} Anzeigenamen jetzt aus den Personennamen setzen?",
+        "conf": "{{ count }} Anzeigenamen repariert."
       }
     }
   },
@@ -481,7 +489,8 @@
       "person": "Person bearbeiten"
     },
     "hide": {
-      "user": "Diesen Benutzer ausblenden"
+      "user": "Diesen Benutzer ausblenden",
+      "anonymous": "Anonyme Sessions ausblenden"
     },
     "export": {
       "empty": "Keine Sessions zum Exportieren.",

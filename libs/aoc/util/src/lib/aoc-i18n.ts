@@ -147,6 +147,8 @@ export const AOC_I18N_KEYS = {
   chat_display_name:                        PFX + 'chat.display_name',
   chat_level:                               PFX + 'chat.level',
   chat_choose_room_or_member:               PFX + 'chat.choose_room_or_member',
+  chat_log_title:                           PFX + 'chat.log.title',
+  chat_log_description:                      PFX + 'chat.log.description',
   chat_select_roomMember:                   PFX + 'chat.select.roomMember.label',
   chat_select_roomMember_description:       PFX + 'chat.select.roomMember.description',
 
@@ -176,8 +178,12 @@ export const AOC_I18N_KEYS = {
   chat_user_provision_conf:                 PFX + 'chat.user.provision.conf',
 
   chat_repair_names:                        PFX + 'chat.repair.names.label',
+  chat_repair_names_description:             PFX + 'chat.repair.names.description',
+  chat_repair_names_scan:                    PFX + 'chat.repair.names.scan',
   chat_repair_names_action:                 PFX + 'chat.repair.names.action',
   chat_repair_names_none:                   PFX + 'chat.repair.names.none',
+  chat_repair_names_preview:                PFX + 'chat.repair.names.preview',
+  chat_repair_names_skipped:                PFX + 'chat.repair.names.skipped_custom',
 
   chat_user_deactivate:                     PFX + 'chat.user.deactivate.label',
   chat_user_deactivate_confirm:             PFX + 'chat.user.deactivate.confirm',
@@ -369,6 +375,7 @@ export const AOC_I18N_KEYS = {
   session_edit_user:                      PFX + 'session.edit.user',
   session_edit_person:                    PFX + 'session.edit.person',
   session_hide_user:                      PFX + 'session.hide.user',
+  session_hide_anonymous:                 PFX + 'session.hide.anonymous',
   session_export_empty:                   PFX + 'session.export.empty',
   session_export_conf:                    PFX + 'session.export.conf',
   session_detail_title:                   PFX + 'session.detail.title',
