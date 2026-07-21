@@ -17,6 +17,9 @@ import {
   checkRateLimit,
   resolvePersonDisplayName,
   setMatrixDisplayName,
+  resolvePersonAvatarUrl,
+  personAvatarUrl,
+  setMatrixAvatarUrl,
   serverHostname,
 } from './shared';
 
@@ -73,10 +76,19 @@ export const getMatrixCredentials = onCall(
         userRecord.email?.split('@')[0] ||
         firebaseUid;
 
-      // Check if Matrix user exists, and capture its current display name so we only
-      // rewrite it when it actually drifts.
+      // Desired Matrix avatar: the person's avatar (avatars/person.<personKey>) is the
+      // source of truth, falling back to the Firebase profile photo. Stored as a plain
+      // https URL — the app's Matrix client renders it via mxcUrlToHttp(allowDirectLinks).
+      const desiredAvatarUrl =
+        (await resolvePersonAvatarUrl(personKey)) ||
+        userRecord.photoURL ||
+        undefined;
+
+      // Check if Matrix user exists, and capture its current display name + avatar so we
+      // only rewrite them when they actually need it.
       let matrixUserExists = false;
       let existingDisplayName: string | undefined;
+      let existingAvatarUrl: string | undefined;
       try {
         const checkUserResponse = await fetch(
           `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
@@ -91,8 +103,9 @@ export const getMatrixCredentials = onCall(
 
         if (checkUserResponse.ok) {
           matrixUserExists = true;
-          const existing = await checkUserResponse.json() as { displayname?: string };
+          const existing = await checkUserResponse.json() as { displayname?: string; avatar_url?: string };
           existingDisplayName = existing.displayname ?? undefined;
+          existingAvatarUrl = existing.avatar_url ?? undefined;
           console.log(`Matrix user ${matrixUserId} already exists`);
         }
       } catch (error) {
@@ -111,7 +124,7 @@ export const getMatrixCredentials = onCall(
             },
             body: JSON.stringify({
               displayname: desiredDisplayName,
-              avatar_url: userRecord.photoURL || undefined,
+              avatar_url: desiredAvatarUrl,
               admin: false,
               deactivated: false,
             }),
@@ -164,6 +177,13 @@ export const getMatrixCredentials = onCall(
           `getMatrixCredentials: synced display name for ${matrixUserId} ` +
           `("${existingDisplayName ?? ''}" → "${desiredDisplayName}")`
         );
+      }
+
+      // Set the Matrix avatar for existing accounts that have none, from the person's
+      // avatar. Only fills an empty avatar — never overwrites a custom one the user set.
+      if (matrixUserExists && !existingAvatarUrl && desiredAvatarUrl) {
+        await setMatrixAvatarUrl(matrixUserId, desiredAvatarUrl, matrixAdminToken.value());
+        console.log(`getMatrixCredentials: set avatar for ${matrixUserId} → ${desiredAvatarUrl}`);
       }
 
       return {
@@ -352,6 +372,21 @@ export const syncFirebaseProfileToMatrix = onCall(
         await setMatrixDisplayName(matrixUserId, desiredDisplayName, matrixAdminToken.value());
       }
 
+      // Fill an empty Matrix avatar from the person's avatar (never overwrite a custom one).
+      const desiredAvatarUrl = await resolvePersonAvatarUrl(personKey);
+      if (desiredAvatarUrl) {
+        const checkResp = await fetch(
+          `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+          { headers: { Authorization: `Bearer ${matrixAdminToken.value()}` } }
+        );
+        const existingAvatarUrl = checkResp.ok
+          ? ((await checkResp.json() as { avatar_url?: string }).avatar_url ?? undefined)
+          : undefined;
+        if (!existingAvatarUrl) {
+          await setMatrixAvatarUrl(matrixUserId, desiredAvatarUrl, matrixAdminToken.value());
+        }
+      }
+
       console.log(`Synced profile to Matrix for ${matrixUserId} ("${desiredDisplayName ?? ''}")`);
 
       return { success: true };
@@ -477,6 +512,121 @@ export const repairMatrixDisplayNames = onCall(
       `repairMatrixDisplayNames: scanned=${result.scanned} ` +
       `repaired=${result.repaired.length} noPerson=${result.skippedNoPerson.length} ` +
       `customName=${result.skippedCustomName.length} applied=${result.applied}`
+    );
+    return result;
+  }
+);
+
+interface AvatarRepairEntry {
+  matrixUserId: string;
+  avatarUrl: string;
+}
+
+interface AvatarRepairResult {
+  scanned: number;
+  repaired: AvatarRepairEntry[];
+  skippedNoAvatar: string[];   // no person avatar available for the account
+  skippedHasAvatar: number;    // account already has an avatar — left untouched
+  applied: boolean;
+}
+
+/**
+ * Bulk-set Matrix avatars for accounts that have none (admin only).
+ *
+ * Legacy accounts were created before the person avatar was synced, so many carry no
+ * `avatar_url` and render as a blank/initials placeholder. This scans every Synapse
+ * user and, for each one WITHOUT an avatar, sets it to the person's avatar resolved
+ * from `avatars/person.<personKey>` (the same doc the app reads). Accounts that already
+ * carry an avatar are never overwritten (counted under `skippedHasAvatar`).
+ *
+ * The localpart→avatar mapping is built from a single `avatars` collection scan
+ * (doc id `person.<personKey>`, localpart = personKey lowercased).
+ *
+ * `dryRun` (default true) reports what WOULD change without writing — review the list,
+ * then call again with `dryRun: false` to apply.
+ */
+export const repairMatrixAvatars = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<AvatarRepairResult> => {
+    await requireRole(request, 'repairMatrixAvatars', ['admin']);
+    const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun !== false; // default true
+    const adminToken = matrixAdminToken.value();
+
+    // 1. Build localpart → avatar URL from a single avatars scan. Only person avatars
+    //    (doc id `person.<key>`) map to Matrix users; skip org/resource/etc. avatars.
+    const avatarByLocalpart = new Map<string, string>();
+    const avatarsSnap = await getFirestore().collection('avatars').get();
+    avatarsSnap.forEach((doc) => {
+      if (!doc.id.startsWith('person.')) return;
+      const storagePath = doc.data()['storagePath'] as string | undefined;
+      if (!storagePath) return;
+      const personKey = doc.id.slice('person.'.length);
+      avatarByLocalpart.set(personKey.toLowerCase(), personAvatarUrl(storagePath));
+    });
+
+    const result: AvatarRepairResult = {
+      scanned: 0,
+      repaired: [],
+      skippedNoAvatar: [],
+      skippedHasAvatar: 0,
+      applied: !dryRun,
+    };
+
+    // 2. Page through all Synapse users.
+    let from = 0;
+    const limit = 100;
+    for (;;) {
+      const resp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users?from=${from}&limit=${limit}&guests=false&deactivated=false`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (!resp.ok) {
+        throw new HttpsError('internal', `Failed to list Matrix users: ${await resp.text()}`);
+      }
+      const data = await resp.json() as {
+        users: Array<{ name: string; avatar_url?: string; user_type?: string | null }>;
+        next_token?: string;
+      };
+
+      for (const u of data.users) {
+        // Only touch normal local users (skip appservice/bots/support users).
+        if (u.user_type) continue;
+        result.scanned++;
+
+        const matrixUserId = u.name; // @localpart:server
+        const localpart = matrixUserId.replace(/^@/, '').split(':')[0];
+
+        // Requirement: only fill accounts that have no avatar; never overwrite.
+        if ((u.avatar_url ?? '').trim() !== '') {
+          result.skippedHasAvatar++;
+          continue;
+        }
+
+        const desired = avatarByLocalpart.get(localpart);
+        if (!desired) {
+          result.skippedNoAvatar.push(matrixUserId);
+          continue;
+        }
+
+        if (!dryRun) {
+          await setMatrixAvatarUrl(matrixUserId, desired, adminToken);
+        }
+        result.repaired.push({ matrixUserId, avatarUrl: desired });
+      }
+
+      if (data.next_token === undefined) break;
+      from = Number(data.next_token);
+    }
+
+    console.log(
+      `repairMatrixAvatars: scanned=${result.scanned} ` +
+      `repaired=${result.repaired.length} noAvatar=${result.skippedNoAvatar.length} ` +
+      `hasAvatar=${result.skippedHasAvatar} applied=${result.applied}`
     );
     return result;
   }

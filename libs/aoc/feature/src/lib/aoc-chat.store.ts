@@ -67,6 +67,19 @@ export interface DisplayNameRepairResult {
   skippedCustomName: DisplayNameRepairEntry[];
   applied: boolean;
 }
+
+export interface AvatarRepairEntry {
+  matrixUserId: string;
+  avatarUrl: string;
+}
+
+export interface AvatarRepairResult {
+  scanned: number;
+  repaired: AvatarRepairEntry[];
+  skippedNoAvatar: string[];
+  skippedHasAvatar: number;
+  applied: boolean;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type DetailsTarget = 'room' | 'member';
@@ -82,6 +95,11 @@ export type AocChatState = {
   repairSkippedCustom: number;
   repairScanning: boolean;
   repairApplying: boolean;
+  // avatar repair — fill Matrix avatars from avatars/person.<key>
+  avatarRepairPreview: AvatarRepairEntry[] | undefined; // undefined = not yet scanned
+  avatarRepairSkippedHas: number;
+  avatarRepairScanning: boolean;
+  avatarRepairApplying: boolean;
 };
 
 const initialState: AocChatState = {
@@ -94,6 +112,10 @@ const initialState: AocChatState = {
   repairSkippedCustom: 0,
   repairScanning: false,
   repairApplying: false,
+  avatarRepairPreview: undefined,
+  avatarRepairSkippedHas: 0,
+  avatarRepairScanning: false,
+  avatarRepairApplying: false,
 };
 
 function getFn() {
@@ -418,6 +440,71 @@ export const AocChatStore = signalStore(
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       } finally {
         patchState(store, { repairApplying: false });
+      }
+    },
+
+    /**
+     * Dry-run the avatar repair: scans all Matrix accounts and stores the list of
+     * accounts that have no avatar and would receive the person's avatar
+     * (avatars/person.<key>). Writes nothing.
+     */
+    async previewAvatarRepair(): Promise<void> {
+      patchState(store, { avatarRepairScanning: true });
+      try {
+        const fn = httpsCallable<{ dryRun?: boolean }, AvatarRepairResult>(
+          getFn(), 'repairMatrixAvatars'
+        );
+        const dry = await fn({ dryRun: true });
+        patchState(store, {
+          avatarRepairPreview: dry.data.repaired,
+          avatarRepairSkippedHas: dry.data.skippedHasAvatar,
+        });
+      } catch (e) {
+        patchState(store, { avatarRepairPreview: undefined, avatarRepairSkippedHas: 0 });
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { avatarRepairScanning: false });
+      }
+    },
+
+    /**
+     * Apply the previewed avatar repair. Confirms, then re-runs the scan with
+     * dryRun=false so the applied set reflects the current state at write time.
+     */
+    async applyAvatarRepair(): Promise<void> {
+      const preview = store.avatarRepairPreview();
+      if (!preview || preview.length === 0) return;
+      const message = await firstValueFrom(
+        store.i18nService.translate('@aoc/feature.chat.repair.avatars.confirm', { count: preview.length })
+      );
+      const alert = await store.alertController.create({
+        header: store.i18n.chat_repair_avatars(),
+        message,
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.chat_repair_avatars_action(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+
+      patchState(store, { avatarRepairApplying: true });
+      try {
+        const fn = httpsCallable<{ dryRun?: boolean }, AvatarRepairResult>(
+          getFn(), 'repairMatrixAvatars'
+        );
+        const applied = await fn({ dryRun: false });
+        const conf = await firstValueFrom(
+          store.i18nService.translate('@aoc/feature.chat.repair.avatars.conf', { count: applied.data.repaired.length })
+        );
+        patchState(store, { avatarRepairPreview: [], avatarRepairSkippedHas: applied.data.skippedHasAvatar });
+        store.membersResource.reload();
+        await showToast(store.toastController, conf);
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { avatarRepairApplying: false });
       }
     },
 

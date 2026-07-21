@@ -103,6 +103,64 @@ export async function setMatrixDisplayName(
 }
 
 /**
+ * imgix CDN host that serves avatar images from Firebase Storage. Same base the app
+ * (`env.services.imgixBaseUrl`) and the vCard export use — kept as a constant here
+ * because Cloud Functions don't load the per-tenant client environment.
+ */
+const AVATAR_IMGIX_BASE = process.env.MATRIX_AVATAR_IMGIX_BASE || 'https://bkaiser.imgix.net';
+
+/**
+ * Build the public avatar URL for an avatar `storagePath`. The resulting https URL
+ * renders directly in the app's Matrix client (its `getAvatarUrl` calls
+ * `mxcUrlToHttp(..., allowDirectLinks=true)`), which is why we can store an https
+ * URL in Matrix's `avatar_url` instead of uploading to the Synapse media repo.
+ */
+export function personAvatarUrl(storagePath: string): string {
+  return `${AVATAR_IMGIX_BASE}/${storagePath}?fm=jpg&w=256&h=256&fit=crop&crop=faces&auto=compress`;
+}
+
+/**
+ * Resolve a person's avatar URL from `avatars/person.<personKey>` (the same doc id
+ * the app builds as `${PersonModelName}.${personKey}`). The `personKey` must be the
+ * raw (case-sensitive) Firestore doc id. Returns undefined when the person has no
+ * avatar doc or the doc carries no `storagePath`.
+ */
+export async function resolvePersonAvatarUrl(personKey: string): Promise<string | undefined> {
+  try {
+    const snap = await getFirestore().collection('avatars').doc(`person.${personKey}`).get();
+    const storagePath = snap.data()?.['storagePath'] as string | undefined;
+    return storagePath ? personAvatarUrl(storagePath) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Set a Matrix user's avatar_url via the Synapse admin API (idempotent).
+ * Best-effort by default: on failure it logs and returns false rather than throwing,
+ * so an avatar sync never breaks the surrounding flow (e.g. token exchange).
+ */
+export async function setMatrixAvatarUrl(
+  matrixUserId: string,
+  avatarUrl: string,
+  adminToken: string,
+): Promise<boolean> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar_url: avatarUrl }),
+    }
+  );
+  if (!resp.ok) {
+    console.warn(`setMatrixAvatarUrl: failed for ${matrixUserId} → ${resp.status}: ${await resp.text()}`);
+    return false;
+  }
+  return true;
+}
+
+/**
  * Load the caller's roles map from users/{uid}. Empty object if the doc is missing.
  * Authorization in this project is derived from the user document's `roles` map
  * (the same model the client and Firestore rules use) — NOT from Firebase Auth

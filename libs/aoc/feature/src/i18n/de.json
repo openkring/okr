@@ -262,6 +262,17 @@
         "skipped_custom": "Konten mit eigenem Anzeigenamen übersprungen.",
         "confirm": "{{ count }} Anzeigenamen jetzt aus den Personennamen setzen?",
         "conf": "{{ count }} Anzeigenamen repariert."
+      },
+      "avatars": {
+        "label": "Avatare reparieren",
+        "description": "Setzt fehlende Matrix-Avatare aus dem Personen-Avatar. Konten mit eigenem Avatar bleiben unberührt.",
+        "scan": "Prüfen",
+        "action": "Reparieren",
+        "none": "Alle Konten haben einen Avatar – nichts zu reparieren.",
+        "preview": "Zu reparierende Konten",
+        "skipped_has": "Konten mit eigenem Avatar übersprungen.",
+        "confirm": "{{ count }} Avatare jetzt aus den Personen-Avataren setzen?",
+        "conf": "{{ count }} Avatare repariert."
       }
     }
   },

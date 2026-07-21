@@ -226,6 +226,59 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
         </ion-card-content>
       </ion-card>
 
+      <!-- Avatar repair — fill Matrix avatars from the person avatar -->
+      <ion-card class="repair-card">
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.chat_repair_avatars() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="repair-desc">{{ store.i18n.chat_repair_avatars_description() }}</p>
+          <div class="repair-actions">
+            <ion-button size="small" fill="outline" (click)="onPreviewAvatarRepair()" [disabled]="avatarRepairScanning() || avatarRepairApplying()">
+              @if (avatarRepairScanning()) {
+                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+              } @else {
+                <ion-icon slot="start" src="{{'search' | svgIcon}}" />
+              }
+              {{ store.i18n.chat_repair_avatars_scan() }}
+            </ion-button>
+            @if (avatarRepairPreview()?.length) {
+              <ion-button size="small" color="primary" (click)="onApplyAvatarRepair()" [disabled]="avatarRepairApplying()">
+                @if (avatarRepairApplying()) {
+                  <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+                } @else {
+                  <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+                }
+                {{ store.i18n.chat_repair_avatars_action() }} ({{ avatarRepairPreview()!.length }})
+              </ion-button>
+            }
+          </div>
+
+          @if (avatarRepairPreview(); as preview) {
+            @if (preview.length === 0) {
+              <ion-note color="medium">{{ store.i18n.chat_repair_avatars_none() }}</ion-note>
+            } @else {
+              <div class="repair-preview-title">{{ store.i18n.chat_repair_avatars_preview() }} ({{ preview.length }})</div>
+              <ion-list lines="inset" class="repair-list">
+                @for (entry of preview; track entry.matrixUserId) {
+                  <ion-item>
+                    <ion-thumbnail slot="start">
+                      <img [src]="entry.avatarUrl" [alt]="entry.matrixUserId" />
+                    </ion-thumbnail>
+                    <ion-label>
+                      <ion-note color="medium" style="font-size:0.75rem">{{ entry.matrixUserId }}</ion-note>
+                    </ion-label>
+                  </ion-item>
+                }
+              </ion-list>
+            }
+            @if (avatarRepairSkippedHas() > 0) {
+              <ion-note color="medium" class="repair-skipped">{{ avatarRepairSkippedHas() }} {{ store.i18n.chat_repair_avatars_skipped() }}</ion-note>
+            }
+          }
+        </ion-card-content>
+      </ion-card>
+
       </div>
 
       <!-- 3-column layout -->
@@ -391,6 +444,12 @@ export class AocChat {
   protected readonly repairScanning = computed(() => this.store.repairScanning());
   protected readonly repairApplying = computed(() => this.store.repairApplying());
 
+  // avatar repair
+  protected readonly avatarRepairPreview = computed(() => this.store.avatarRepairPreview());
+  protected readonly avatarRepairSkippedHas = computed(() => this.store.avatarRepairSkippedHas());
+  protected readonly avatarRepairScanning = computed(() => this.store.avatarRepairScanning());
+  protected readonly avatarRepairApplying = computed(() => this.store.avatarRepairApplying());
+
   // constants
   private imgixBaseUrl = this.store.imgixBaseUrl();
   protected isPhotoUrl = isMatrixPhotoUrl;
@@ -426,6 +485,14 @@ export class AocChat {
 
   protected onApplyRepair(): void {
     this.store.applyDisplayNameRepair();
+  }
+
+  protected onPreviewAvatarRepair(): void {
+    this.store.previewAvatarRepair();
+  }
+
+  protected onApplyAvatarRepair(): void {
+    this.store.applyAvatarRepair();
   }
 
   // ─── room click → action sheet ──────────────────────────────────────────────
