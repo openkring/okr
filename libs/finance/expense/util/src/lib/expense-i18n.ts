@@ -11,7 +11,6 @@ export const EXPENSE_I18N_KEYS = {
   submit_iban:        PFX + 'submit.iban',
   submit_upload:      PFX + 'submit.upload',
   submit_saving:      PFX + 'submit.saving',
-  submit_booking:     PFX + 'submit.booking',
   submit_done:        PFX + 'submit.done',
   submit_error:       PFX + 'submit.error',
   status_draft:       PFX + 'status.draft',

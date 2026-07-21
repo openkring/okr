@@ -48,10 +48,8 @@
     "iban": "Bankverbindung wird gespeichert…",
     "upload": "Belege werden hochgeladen…",
     "saving": "Auslage wird gespeichert…",
-    "booking": "Buchung wird erstellt…",
-    "done": "Auslage eingereicht",
-    "error": "Fehler — Vorgang wurde zurückgerollt",
-    "notConfigured": "Die Buchhaltung ist für diesen Verein noch nicht eingerichtet. Bitte wende dich an den Administrator."
+    "done": "Gespeichert — der Kassier prüft den Beleg.",
+    "error": "Fehler — Vorgang wurde zurückgerollt"
   },
   "status": {
     "draft": "Entwurf",
