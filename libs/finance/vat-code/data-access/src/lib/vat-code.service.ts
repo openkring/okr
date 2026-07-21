@@ -8,14 +8,19 @@ import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
 
-// Standard Swiss VAT codes seeded on tenant creation
+// Standard Swiss VAT codes seeded on tenant creation.
+// accountKey is a reference to an AccountModel by its okey (a random per-tenant
+// document id), so it can't be hardcoded here — the chart of accounts doesn't
+// exist yet at seed time. It is left empty and linked per tenant via the UI once
+// the accounts exist. The intended standard link is noted per row (USt → 2200
+// Umsatzsteuer, VST → 1170 Vorsteuer).
 export const CH_STANDARD_VAT_CODES: Omit<VatCodeModel, 'okey' | 'tenants' | 'isArchived' | 'accountingTenantId'>[] = [
-  { name: 'MWST 8.1% Umsatzsteuer',  code: 'UST_81',  rate: 8.1,  validFrom: '20240101', validTo: '', accountKey: '2200', method: 'effective', direction: 'output' },
-  { name: 'MWST 2.6% Sondersteuer',  code: 'UST_26',  rate: 2.6,  validFrom: '20240101', validTo: '', accountKey: '2200', method: 'effective', direction: 'output' },
-  { name: 'MWST 3.8% Beherbergung',  code: 'UST_38',  rate: 3.8,  validFrom: '20240101', validTo: '', accountKey: '2200', method: 'effective', direction: 'output' },
-  { name: 'Vorsteuer 8.1%',          code: 'VST_81',  rate: 8.1,  validFrom: '20240101', validTo: '', accountKey: '1170', method: 'effective', direction: 'input'  },
-  { name: 'Vorsteuer 2.6%',          code: 'VST_26',  rate: 2.6,  validFrom: '20240101', validTo: '', accountKey: '1170', method: 'effective', direction: 'input'  },
-  { name: 'Steuerbefreit',           code: 'EXEMPT',  rate: 0,    validFrom: '19900101', validTo: '', accountKey: '',     method: 'exempt',    direction: 'output' },
+  { name: 'MWST 8.1% Umsatzsteuer',  code: 'UST_81',  rate: 8.1,  validFrom: '20240101', validTo: '', accountKey: '', method: 'effective', direction: 'output' }, // → acct 2200
+  { name: 'MWST 2.6% Sondersteuer',  code: 'UST_26',  rate: 2.6,  validFrom: '20240101', validTo: '', accountKey: '', method: 'effective', direction: 'output' }, // → acct 2200
+  { name: 'MWST 3.8% Beherbergung',  code: 'UST_38',  rate: 3.8,  validFrom: '20240101', validTo: '', accountKey: '', method: 'effective', direction: 'output' }, // → acct 2200
+  { name: 'Vorsteuer 8.1%',          code: 'VST_81',  rate: 8.1,  validFrom: '20240101', validTo: '', accountKey: '', method: 'effective', direction: 'input'  }, // → acct 1170
+  { name: 'Vorsteuer 2.6%',          code: 'VST_26',  rate: 2.6,  validFrom: '20240101', validTo: '', accountKey: '', method: 'effective', direction: 'input'  }, // → acct 1170
+  { name: 'Steuerbefreit',           code: 'EXEMPT',  rate: 0,    validFrom: '19900101', validTo: '', accountKey: '', method: 'exempt',    direction: 'output' },
 ];
 
 @Injectable({ providedIn: 'root' })
