@@ -62,7 +62,15 @@ const distPkg = JSON.parse(readFileSync(distPkgPath, 'utf8'));
 distPkg.packageManager = `pnpm@${pin}`;
 writeFileSync(distPkgPath, JSON.stringify(distPkg, null, 2));
 try {
-  run('pnpm', ['install', '--prod', '--ignore-workspace', '--no-frozen-lockfile'], { cwd: distDir });
+  // NOTE: do NOT pass --ignore-workspace here. The pruned artifact ships its own
+  // dist/apps/functions/pnpm-workspace.yaml (see commit "ship pnpm-workspace.yaml in deploy
+  // artifact"), which carries the supply-chain `overrides` AND `dangerouslyAllowAllBuilds`.
+  // --ignore-workspace makes pnpm ignore that file, so the generated lockfile OMITS the
+  // overrides section while the shipped workspace file still declares it → the buildpack's
+  // frozen install fails with ERR_PNPM_LOCKFILE_CONFIG_MISMATCH. Reading the local workspace
+  // file bakes the overrides into the lockfile (matching config) and stays a single-package
+  // install because that file declares no `packages:` globs.
+  run('pnpm', ['install', '--prod', '--no-frozen-lockfile'], { cwd: distDir });
 } catch (e) {
   if (pin !== verified) abort(upgradeFailedHelp('Local prune'));
   throw e;
