@@ -1,4 +1,4 @@
-import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_ADDRESS_USAGE, DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@okr/shared-constants';
+import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_ADDRESS_USAGE, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@okr/shared-constants';
 import { OkrModel, TaggedModel } from './base.model';
 
 export class AddressModel implements OkrModel, TaggedModel {
@@ -13,6 +13,10 @@ export class AddressModel implements OkrModel, TaggedModel {
   public email = DEFAULT_EMAIL;
   public phone = DEFAULT_PHONE;
   public iban = '';
+  // sensitive scalar channels (spec 1.19: addresses are the PII vault) —
+  // one doc per person, no favorite/label semantics; floors in CHANNEL_SENSITIVITY_FLOOR
+  public ssn = '';            // addressChannel 'ssn': the AHV number (formatAhv Electronic)
+  public dob = DEFAULT_DATE;  // addressChannel 'dob': date of birth (StoreDate YYYYMMDD)
   public streetName = DEFAULT_NAME;
   public streetNumber = '';
   public addressValue2 = ''; // optional address, e.g. c/o, company
