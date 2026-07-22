@@ -3,7 +3,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
-import { PersonCollection, UserCollection } from '@okr/shared-models';
+import { AddressCollection, PersonCollection, UserCollection } from '@okr/shared-models';
 import { addIndexElement } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import type {
@@ -32,6 +32,31 @@ async function requireMemberAdmin(uid: string | undefined, fnName: string): Prom
     throw new HttpsError('permission-denied', `Requires one of roles: ${ALLOWED_ROLES.join(', ')}.`);
   }
   return Array.isArray(data.tenants) ? data.tenants : [];
+}
+
+/**
+ * Upsert a sensitive scalar-channel address (ssn/dob) for a person (spec 1.19 Phase 3).
+ * Idempotent; skips when the vault value already matches. Admin SDK, bypasses rules.
+ */
+async function upsertVaultScalar(
+  db: FirebaseFirestore.Firestore,
+  personId: string,
+  channel: 'ssn' | 'dob',
+  value: string,
+  tenants: string[],
+): Promise<void> {
+  if (!value) return;
+  const parentKey = `person.${personId}`;
+  const existing = await db.collection(AddressCollection)
+    .where('parentKey', '==', parentKey).where('addressChannel', '==', channel).limit(1).get();
+  if (!existing.empty) {
+    if (existing.docs[0].data()[channel] !== value) await existing.docs[0].ref.update({ [channel]: value });
+    return;
+  }
+  await db.collection(AddressCollection).add({
+    addressChannel: channel, [channel]: value, parentKey, isFavorite: false, isArchived: false,
+    tenants: Array.isArray(tenants) && tenants.length ? tenants : ['system'], index: '',
+  });
 }
 
 /** Mirror of getPersonIndex (subject-person-util) — keep field order in sync. */
@@ -89,6 +114,26 @@ export const findPersonDuplicates = onCall(
       if (!value) continue;
       const snap = await db.collection(PersonCollection).where(field, '==', value).limit(50).get();
       snap.forEach((doc) => found.set(doc.id, doc.data()));
+    }
+
+    // ssn/dob may already live only in the addresses vault (spec 1.19 Phase 3):
+    // match there too and resolve back to the owning persons via parentKey.
+    const vaultMatches: Array<['ssn' | 'dob', string | undefined]> = [
+      ['ssn', ssnId],
+      ['dob', dateOfBirth],
+    ];
+    for (const [channel, value] of vaultMatches) {
+      if (!value) continue;
+      const addrSnap = await db.collection(AddressCollection)
+        .where('addressChannel', '==', channel).where(channel, '==', value).limit(50).get();
+      for (const addr of addrSnap.docs) {
+        const parentKey = String(addr.data().parentKey ?? '');
+        if (!parentKey.startsWith('person.')) continue;
+        const personId = parentKey.slice('person.'.length);
+        if (found.has(personId)) continue;
+        const personDoc = await db.collection(PersonCollection).doc(personId).get();
+        if (personDoc.exists) found.set(personId, personDoc.data() as FsData);
+      }
     }
 
     if (lastName && firstName) {
@@ -150,6 +195,12 @@ export const mergePersonIntoTenant = onCall(
       tenants: FieldValue.arrayUnion(tenantId),
       index: buildPersonIndex(merged),
     });
+
+    // Dual-write the resolved sensitive fields into the vault (spec 1.19 Phase 3).
+    const mergedTenants: string[] = Array.isArray(merged.tenants)
+      ? Array.from(new Set([...merged.tenants, tenantId])) : [tenantId];
+    if ('ssnId' in safeFields) await upsertVaultScalar(db, personKey, 'ssn', safeFields.ssnId, mergedTenants);
+    if ('dateOfBirth' in safeFields) await upsertVaultScalar(db, personKey, 'dob', safeFields.dateOfBirth, mergedTenants);
     return { okey: personKey };
   },
 );
