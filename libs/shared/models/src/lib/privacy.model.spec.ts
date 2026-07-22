@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHANNEL_SENSITIVITY_FLOOR, getChannelFloor, getEffectiveAccessor } from './privacy.model';
+import { CHANNEL_SENSITIVITY_FLOOR, getChannelFloor, getEffectiveAccessor, isSensitiveScalarChannel, SENSITIVE_SCALAR_CHANNELS } from './privacy.model';
 import { PrivacyUsage } from './enums/privacy-usage.enum';
 
 describe('CHANNEL_SENSITIVITY_FLOOR / getChannelFloor', () => {
@@ -16,6 +16,20 @@ describe('CHANNEL_SENSITIVITY_FLOOR / getChannelFloor', () => {
     expect(getChannelFloor('web')).toBe('public');
     expect(getChannelFloor('twint')).toBe('public');
     expect(getChannelFloor('some-future-channel')).toBe('public');
+  });
+});
+
+describe('SENSITIVE_SCALAR_CHANNELS / isSensitiveScalarChannel', () => {
+  it('flags ssn and dob as sensitive scalar (non-contact) channels', () => {
+    expect(SENSITIVE_SCALAR_CHANNELS).toEqual(['ssn', 'dob']);
+    expect(isSensitiveScalarChannel('ssn')).toBe(true);
+    expect(isSensitiveScalarChannel('dob')).toBe(true);
+  });
+  it('treats real contact channels (incl. bankaccount) as not sensitive-scalar', () => {
+    expect(isSensitiveScalarChannel('email')).toBe(false);
+    expect(isSensitiveScalarChannel('phone')).toBe(false);
+    expect(isSensitiveScalarChannel('postal')).toBe(false);
+    expect(isSensitiveScalarChannel('bankaccount')).toBe(false);
   });
 });
 

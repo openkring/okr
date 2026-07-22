@@ -11,7 +11,7 @@ import { getDownloadURL, ref } from 'firebase/storage';
 import { FirestoreService } from '@okr/shared-data-access';
 import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
-import { AddressCollection, AddressModel, AddressModelName, CategoryListModel, DefaultLanguage, DocumentModel, OrgModel, PersonModel } from '@okr/shared-models';
+import { AddressCollection, AddressModel, AddressModelName, CategoryListModel, DefaultLanguage, DocumentModel, isSensitiveScalarChannel, OrgModel, PersonModel } from '@okr/shared-models';
 import { AlertService, downloadToBrowser } from '@okr/shared-util-angular';
 import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@okr/shared-util-core';
 import { Languages } from '@okr/shared-categories';
@@ -88,10 +88,15 @@ export const AddressStore = signalStore(
   })),
 
   withComputed((store) => {
+    // Exclude the sensitive scalar channels (ssn/dob) from the contact UI — they
+    // share the person's parentKey but are not contact channels (spec 1.19).
+    const contactAddresses = computed(() =>
+      store.addressesResource.value()?.filter((a: AddressModel) => !isSensitiveScalarChannel(a.addressChannel))
+    );
     return {
-      addresses: computed(() => store.addressesResource.value()),
+      addresses: contactAddresses,
       filteredAddresses: computed(() =>
-        store.addressesResource.value()?.filter((address: AddressModel) =>
+        contactAddresses()?.filter((address: AddressModel) =>
           nameMatches(address.index, store.searchTerm()) &&
           nameMatches(address.addressChannel, store.selectedChannel()) &&
           chipMatches(address.tags, store.selectedTag())

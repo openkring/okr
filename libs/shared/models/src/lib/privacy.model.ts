@@ -28,6 +28,19 @@ export function getChannelFloor(channel: string): PrivacyAccessor {
 }
 
 /**
+ * Address channels that are NOT contact channels: they carry sensitive scalar
+ * identity data (spec 1.19 vault) and must be excluded from the contact
+ * accordion/list/count. They live under the same parentKey as the real contact
+ * channels, so "all addresses of a person" stays a single query — the contact UI
+ * just doesn't render these two.
+ */
+export const SENSITIVE_SCALAR_CHANNELS: readonly string[] = ['ssn', 'dob'];
+
+export function isSensitiveScalarChannel(channel: string): boolean {
+  return SENSITIVE_SCALAR_CHANNELS.includes(channel);
+}
+
+/**
  * Compute who may see an address channel value (spec 1.19 §A3).
  * @param channel      the addressChannel ('email' | 'phone' | 'postal' | 'web' | 'bankaccount' | 'ssn' | 'dob' | …)
  * @param parentType   'person' (preference = usage* flag, Restricted when absent — Firestore
