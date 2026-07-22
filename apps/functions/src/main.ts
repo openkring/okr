@@ -12,6 +12,7 @@ import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
+import * as Expense from './expense';
 import * as Email from './email';
 import * as Bexio from './bexio';
 import * as Zefix from './zefix';
@@ -164,6 +165,8 @@ export const onRagFileDeleted = Rag.onRagFileDeleted;
 // storage + firestore triggers: OCR pipeline at tenant/{tenantId}/ocr/{ocrUsage}/...
 export const onOcrFileFinalized = Ocr.onOcrFileFinalized;
 export const onOcrResultWritten = Ocr.onOcrResultWritten;
+// expense creation (CF-only writes to the `expenses` collection)
+export const createExpense = Expense.createExpense;
 
 // address
 export const generateQrBill = Address.generateQrBill;
