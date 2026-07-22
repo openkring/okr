@@ -8,6 +8,7 @@ import {
     DatePart,
     extractFromDate,
     formatDateToken,
+    getBirthYear,
     getEndOfYear, getStartOfYear,
     getTodayStr,
     getYear,
@@ -201,6 +202,18 @@ describe('date.util', () => {
 
         it('should ignore the seconds of a full iso date time', () => {
             expect(formatDateToken('2026-07-19T14:30:45')).toEqual('19.07.2026 14:30');
+        });
+    });
+
+    // getBirthYear (privacy 1.19: degraded-precision replica)
+    describe('getBirthYear', () => {
+        it('extracts YYYY from a StoreDate', () => {
+            expect(getBirthYear('19851231')).toBe('1985');
+        });
+        it('returns empty for missing/invalid input', () => {
+            expect(getBirthYear('')).toBe('');
+            expect(getBirthYear(undefined)).toBe('');
+            expect(getBirthYear('1985')).toBe('');
         });
     });
 });

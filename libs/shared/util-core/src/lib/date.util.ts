@@ -162,6 +162,15 @@ export function getAge(dateOfBirth: string, byDecade = false, refYear = getYear(
   return byDecade === true ? Math.floor(ageInYears / 10) : ageInYears;
 }
 
+/**
+ * Extract the birth year (YYYY) from a StoreDate (yyyymmdd) date of birth.
+ * Degraded-precision replica for privacy (spec 1.19): replicas carry the year only.
+ */
+export function getBirthYear(dateOfBirth?: string): string {
+  if (!dateOfBirth || dateOfBirth.length !== 8) return '';
+  return dateOfBirth.substring(0, 4);
+}
+
 export function getDifferenceInHours(date1: Date, date2: Date): number {
   return differenceInHours(date1, date2);
 }
