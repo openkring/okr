@@ -34,6 +34,9 @@
     },
     {
       "path": "../../../subject/person/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/address/util/tsconfig.lib.json"
     }
   ]
 }

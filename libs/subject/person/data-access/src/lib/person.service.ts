@@ -6,7 +6,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { PersonCollection, PersonModel, UserModel } from '@okr/shared-models';
+import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserModel } from '@okr/shared-models';
 import { getFullName, getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -20,6 +20,7 @@ import {
   ReconcilableField,
 } from '@okr/subject-person-util';
 import { ActivityService } from '@okr/activity-data-access';
+import { getAddressIndex } from '@okr/subject-address-util';
 import { PFX } from './scope';
 
 @Injectable({
@@ -54,7 +55,48 @@ export class PersonService {
     const key = await this.firestoreService.createModel<PersonModel>(PersonCollection, person, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${getFullName(person.firstName, person.lastName)}`;
     void this.activityService.log('person', 'create', currentUser, payload);
+    if (key) await this.syncSensitiveChannels(key, person, currentUser);
     return key;
+  }
+
+  /**
+   * Dual-write of the sensitive scalar fields into the addresses vault
+   * (spec 1.19 Phase 3): ssnId → 'ssn' channel, dateOfBirth → 'dob' channel.
+   * The person fields stay populated until Phase 4 strips them.
+   * Uses FirestoreService directly (not AddressService) — cross-scope data-access
+   * imports violate the Nx module boundaries; this mirrors how person.store
+   * already queries the addresses collection.
+   */
+  private async syncSensitiveChannels(key: string, person: PersonModel, currentUser?: UserModel): Promise<void> {
+    const parentKey = `person.${key}`;
+    await this.upsertScalarChannel(parentKey, 'ssn', person.ssnId ?? '', currentUser);
+    await this.upsertScalarChannel(parentKey, 'dob', person.dateOfBirth ?? '', currentUser);
+  }
+
+  /**
+   * Upsert a sensitive scalar-channel address (one doc per parent and channel,
+   * no favorite/label semantics). Empty value or unchanged value → no-op (idempotent).
+   */
+  private async upsertScalarChannel(parentKey: string, channel: 'ssn' | 'dob', value: string, currentUser?: UserModel): Promise<void> {
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'parentKey', operator: '==', value: parentKey });
+    query.push({ key: 'addressChannel', operator: '==', value: channel });
+    const existing = await this.firestoreService.getDataOnce<AddressModel>(AddressCollection, query, 'none');
+    const current = existing[0];
+    if (!current) {
+      if (!value) return;                              // nothing to store
+      const address = new AddressModel(this.env.tenantId);
+      address.addressChannel = channel;
+      address[channel] = value;
+      address.parentKey = parentKey;
+      address.isFavorite = false;
+      address.index = getAddressIndex(address);
+      await this.firestoreService.createModel<AddressModel>(AddressCollection, address, undefined, undefined, currentUser);
+    } else if (value && current[channel] !== value) {
+      current[channel] = value;
+      current.index = getAddressIndex(current);
+      await this.firestoreService.updateModel<AddressModel>(AddressCollection, current, false, undefined, undefined, currentUser);
+    }
   }
   
   /**
@@ -93,6 +135,7 @@ export class PersonService {
     const key = await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${getFullName(person.firstName, person.lastName)}`;
     void this.activityService.log('person', 'update', currentUser, payload);
+    if (key) await this.syncSensitiveChannels(key, person, currentUser);
     return key;
   }
 

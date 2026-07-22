@@ -11,6 +11,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-config": "*",
     "@okr/shared-util-core": "*",
+    "@okr/subject-address-util": "*",
     "@okr/subject-person-util": "*"
   }
 }
