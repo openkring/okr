@@ -221,6 +221,9 @@ export const vcardExport = Vcard.vcardExport;
 export const findPersonDuplicates = Person.findPersonDuplicates;
 export const mergePersonIntoTenant = Person.mergePersonIntoTenant;
 
+// privacy 1.19 Phase 3: one-time backfill of the ssn/dob vault + memberBirthYear
+export { migrateSensitiveData } from './person/migrate-sensitive-data';
+
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';
 export { setManualRate } from './exchange-rate/set-manual-rate';
