@@ -1,0 +1,24 @@
+{
+  "name": "instruments-ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/instruments/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:instruments", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/instruments/ui",
+        "main": "libs/instruments/ui/src/index.ts",
+        "tsConfig": "libs/instruments/ui/tsconfig.lib.json",
+        "assets": ["libs/instruments/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

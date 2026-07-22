@@ -41,6 +41,7 @@ export * from './lib/group.model';
 export * from './lib/icon.model';
 export * from './lib/image.model';
 export * from './lib/image.shapes';
+export * from './lib/instrument.model';
 export * from './lib/invitation.model';
 export * from './lib/invoice-position.model';
 export * from './lib/invoice.model';

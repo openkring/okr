@@ -1,0 +1,78 @@
+{
+  "instrument": "Instrument",
+  "instruments": "Instrumente",
+  "plural": "Instrumente",
+  "desc": "Visuelle Strategie- und Entscheidungs-Instrumente",
+  "empty": "Noch keine Instrumente vorhanden",
+  "type": {
+    "swot": "SWOT-Analyse",
+    "pestel": "PESTEL-Analyse",
+    "bmc": "Business Model Canvas",
+    "eisenhower": "Eisenhower-Matrix"
+  },
+  "create": {
+    "label": "Neu",
+    "conf": "Instrument erstellt",
+    "error": "Instrument konnte nicht erstellt werden"
+  },
+  "update": {
+    "label": "Bearbeiten",
+    "conf": "Instrument gespeichert",
+    "error": "Instrument konnte nicht gespeichert werden"
+  },
+  "delete": {
+    "label": "Löschen",
+    "confirm": "Instrument wirklich löschen?",
+    "conf": "Instrument gelöscht",
+    "error": "Instrument konnte nicht gelöscht werden"
+  },
+  "view": { "label": "Ansicht" },
+  "done": "Fertig",
+  "board": {
+    "emptyCell": "Leer",
+    "addTopic": "Karte hinzufügen"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name des Instruments",
+    "helper": "z.B. Strategie 2026"
+  },
+  "description": {
+    "label": "Beschreibung",
+    "placeholder": "Optionale Beschreibung"
+  },
+  "topic": {
+    "label": { "label": "Titel", "placeholder": "Kurzer Titel", "helper": "Worum geht es?" },
+    "description": { "label": "Beschreibung", "placeholder": "Optionale Notiz" },
+    "impact": { "label": "Bedeutung" },
+    "horizon": { "label": "Zeithorizont" },
+    "color": { "label": "Farbe" }
+  },
+  "score": { "unset": "—", "low": "Niedrig", "medium": "Mittel", "high": "Hoch" },
+  "horizon": { "short": "Kurzfristig", "medium": "Mittelfristig", "long": "Langfristig" },
+  "cell": {
+    "strengths": "Stärken",
+    "weaknesses": "Schwächen",
+    "opportunities": "Chancen",
+    "threats": "Risiken",
+    "do": "Sofort erledigen",
+    "schedule": "Terminieren",
+    "delegate": "Delegieren",
+    "delete": "Weglassen",
+    "political": "Politisch",
+    "economic": "Ökonomisch",
+    "social": "Soziokulturell",
+    "technological": "Technologisch",
+    "environmental": "Ökologisch",
+    "legal": "Rechtlich",
+    "keyPartners": "Schlüsselpartner",
+    "keyActivities": "Schlüsselaktivitäten",
+    "keyResources": "Schlüsselressourcen",
+    "valuePropositions": "Nutzenversprechen",
+    "customerRelationships": "Kundenbeziehungen",
+    "channels": "Kanäle",
+    "customerSegments": "Kundensegmente",
+    "costStructure": "Kostenstruktur",
+    "revenueStreams": "Einnahmequellen"
+  }
+}

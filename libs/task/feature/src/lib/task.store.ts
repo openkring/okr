@@ -8,10 +8,10 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CategoryListModel, PersonModel, TaskCollection, TaskModel } from '@okr/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, hasRole, isPerson, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, hasRole, isPerson, nameMatches, rankBetween } from '@okr/shared-util-core';
 
 import { TaskService } from '@okr/task-data-access';
-import { assignMissingRanks, groupTasksByState, isTask, rankBetween, TASK_I18N_KEYS, TaskBoardColumn, TaskI18n } from '@okr/task-util';
+import { assignMissingRanks, groupTasksByState, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskI18n } from '@okr/task-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
 /** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */

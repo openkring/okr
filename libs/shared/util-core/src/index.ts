@@ -13,6 +13,7 @@ export * from './lib/icon.util';
 export * from './lib/img.util';
 export * from './lib/log.util';
 export * from './lib/query.util';
+export * from './lib/rank.util';
 export * from './lib/regasoft.util';
 export * from './lib/search.util';
 export * from './lib/sentry-redact.util';
