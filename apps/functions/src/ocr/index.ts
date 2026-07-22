@@ -423,13 +423,14 @@ async function handleExpenseResult(
   // Amount-mismatch warning: once all expected receipts have been extracted, compare their
   // summed OCR gross amount against the user-entered total. Best-effort — never fails the result.
   try {
+    // Single-field equality only — auto-indexed, no composite index needed (correlationKey is
+    // per-expense so this is already selective). Tenant filtering happens in memory below.
     const resultsSnap = await db.collection(OCR_RESULT_COLLECTION)
       .where('correlationKey', '==', correlationKey)
-      .where('tenants', 'array-contains', tenantId)
       .get();
     const relevant = resultsSnap.docs
       .map(d => d.data() as OcrResultDoc)
-      .filter(r => r.status === 'extracted' || r.status === 'processed');
+      .filter(r => r.tenants?.includes(tenantId) && (r.status === 'extracted' || r.status === 'processed'));
     const receiptCount = expense['receiptCount'] ?? 0;
     if (relevant.length >= receiptCount) {
       const sum = relevant.reduce((s, r) => s + (r.grossAmount ?? 0), 0);
