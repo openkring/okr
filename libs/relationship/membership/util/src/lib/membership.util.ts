@@ -1,6 +1,6 @@
 import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { AddressModel, AvatarInfo, CategoryItemModel, GroupModel, GroupModelName, MembershipModel, MoneyModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@okr/shared-models';
-import { addIndexElement, convertDateFormatToString, DateFormat, die, getTodayStr } from '@okr/shared-util-core';
+import { addIndexElement, convertDateFormatToString, DateFormat, die, getBirthYear, getTodayStr } from '@okr/shared-util-core';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@okr/subject-address-util';
@@ -16,6 +16,7 @@ export function createGroupMembership(group: GroupModel, person: PersonModel, te
   membership.memberModelType = 'person';
   membership.memberType = person.gender;
   membership.memberDateOfBirth = person.dateOfBirth;
+  membership.memberBirthYear = getBirthYear(person.dateOfBirth);
   membership.memberDateOfDeath = person.dateOfDeath;
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
@@ -40,6 +41,7 @@ export function newMembershipForPerson(person: PersonModel, orgKey: string, orgN
   membership.memberModelType = 'person';
   membership.memberType = person.gender;
   membership.memberDateOfBirth = person.dateOfBirth;
+  membership.memberBirthYear = getBirthYear(person.dateOfBirth);
   membership.memberDateOfDeath = person.dateOfDeath;
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
@@ -136,6 +138,7 @@ export function addPersonInfoToMembership(membership: MembershipModel, person: P
   membership.memberModelType = PersonModelName;
   membership.memberType = person.gender;
   membership.memberDateOfBirth = person.dateOfBirth;
+  membership.memberBirthYear = getBirthYear(person.dateOfBirth);
   membership.memberDateOfDeath = person.dateOfDeath;
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
@@ -561,6 +564,7 @@ export function convertNewMemberFormToMembership(vm: MemberNewFormModel, personK
   member.memberModelType = 'person';
   member.memberType = vm.gender ?? DEFAULT_GENDER;
   member.memberDateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
+  member.memberBirthYear = getBirthYear(vm.dateOfBirth ?? DEFAULT_DATE);
   member.memberDateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
   member.memberZipCode = vm.zipCode ?? DEFAULT_ZIP;
   member.memberBexioId = vm.bexioId ?? DEFAULT_ID;

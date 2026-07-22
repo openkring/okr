@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { CategoryListModel, MembershipModel, ScsMemberFeesCollection, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
-import { getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat, getYear } from '@okr/shared-util-core';
+import { getBirthYear, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat, getYear } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 import { BEXIO_INVOICE_TEMPLATES } from '@okr/relationship-membership-util';
 
@@ -89,6 +89,7 @@ export function convertMembershipToFee(
     label: getFullName(membership.memberName1, membership.memberName2),
   };
   fee.memberDateOfBirth = membership.memberDateOfBirth;
+  fee.memberBirthYear = membership.memberBirthYear || getBirthYear(membership.memberDateOfBirth);
   fee.memberBexioId = membership.memberBexioId;
   fee.dateOfEntry = membership.dateOfEntry;
   fee.category = membership.category;

@@ -1,6 +1,6 @@
 import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { AddressModel, MembershipModel, OrgModel, PersonModel } from '@okr/shared-models';
-import { addIndexElement, die, getTodayStr } from '@okr/shared-util-core';
+import { addIndexElement, die, getBirthYear, getTodayStr } from '@okr/shared-util-core';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@okr/subject-address-util';
 
@@ -71,6 +71,7 @@ export function convertNewPersonFormToMembership(vm: PersonNewFormModel, personK
   member.memberNickName = DEFAULT_NAME;
   member.memberAbbreviation = '';
   member.memberDateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
+  member.memberBirthYear = getBirthYear(vm.dateOfBirth ?? DEFAULT_DATE);
   member.memberDateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
   member.memberZipCode = vm.zipCode ?? DEFAULT_ZIP;
   member.memberBexioId = vm.bexioId ?? DEFAULT_ID;

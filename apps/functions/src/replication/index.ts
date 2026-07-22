@@ -12,6 +12,7 @@ import {
   hasChanged,
   updateFavoriteAddressInfo
 } from "@okr/shared-util-functions";
+import { getBirthYear } from "@okr/shared-util-core";
 
 const firestore = admin.firestore();
 
@@ -193,6 +194,7 @@ export const onPersonChange = onDocumentWritten(
         memberName2: person.lastName,
         memberType: person.gender,
         memberDateOfBirth: person.dateOfBirth,
+        memberBirthYear: getBirthYear(person.dateOfBirth),
         memberDateOfDeath: person.dateOfDeath,
         memberZipCode: person.favZipCode,
         memberBexioId: person.bexioId,
