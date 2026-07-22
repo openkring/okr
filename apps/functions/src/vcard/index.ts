@@ -178,9 +178,14 @@ async function assembleRecord(
   if (kind === 'person') {
     const displayName = `${data!['firstName'] ?? ''} ${data!['lastName'] ?? ''}`.trim() || (data!['lastName'] ?? key);
 
-    if (scope.birthday && data!['dateOfBirth']) {
-      const iso = convertDateFormatToString(data!['dateOfBirth'], DateFormat.StoreDate, DateFormat.IsoDate, false);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) bday = iso;
+    if (scope.birthday) {
+      // Prefer the dob vault channel (spec 1.19 Phase 3), fall back to the person field.
+      const dobAddr = addresses.find((a) => a['addressChannel'] === 'dob');
+      const dob = String(dobAddr?.['dob'] ?? data!['dateOfBirth'] ?? '');
+      if (dob) {
+        const iso = convertDateFormatToString(dob, DateFormat.StoreDate, DateFormat.IsoDate, false);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) bday = iso;
+      }
     }
 
     if (scope.workRels) {

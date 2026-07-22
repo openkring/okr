@@ -19,7 +19,26 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
       .limit(1)
       .get();
 
-    const org = orgSnap.empty ? null : orgSnap.docs[0].data();
+    const orgDoc = orgSnap.empty ? null : orgSnap.docs[0];
+    const org = orgDoc?.data() ?? null;
+
+    // Org contact from the favorite email/phone addresses (spec 1.19 Phase 3),
+    // falling back to the denormalized org.fav* fields (removed in Phase 4).
+    let favEmail = '';
+    let favPhone = '';
+    if (orgDoc) {
+      const addrSnap = await db.collection('addresses')
+        .where('parentKey', '==', `org.${orgDoc.id}`)
+        .where('isFavorite', '==', true)
+        .get();
+      for (const a of addrSnap.docs) {
+        const d = a.data();
+        if (d['addressChannel'] === 'email' && !favEmail) favEmail = String(d['email'] ?? '');
+        if (d['addressChannel'] === 'phone' && !favPhone) favPhone = String(d['phone'] ?? '');
+      }
+    }
+    favEmail = favEmail || String(org?.['favEmail'] ?? '');
+    favPhone = favPhone || String(org?.['favPhone'] ?? '');
 
     const contentSnap = await db.collection('websiteContent')
       .where('tenants', 'array-contains', tenantId)
@@ -48,8 +67,8 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
         country: 'CH',
       },
       contact: {
-        email: org?.['favEmail'] ?? '',
-        phone: org?.['favPhone'] ?? '',
+        email: favEmail,
+        phone: favPhone,
       },
       social: {
         instagram: content['org.instagram']?.de ?? '',

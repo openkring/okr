@@ -3,8 +3,10 @@ import * as os from 'os';
 import * as path from 'path';
 import { createWriteStream } from 'fs';
 
+import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { AddressCollection } from '@okr/shared-models';
 import * as logger from 'firebase-functions/logger';
 import PDFDocument from 'pdfkit';
 import { SwissQRBill } from 'swissqrbill/pdf';
@@ -46,6 +48,15 @@ export const generateQrBill = onCall<GenerateQrBillRequest, Promise<GenerateQrBi
     if (!data?.creditor || !data?.currency) {
       throw new HttpsError('invalid-argument', 'data.creditor and data.currency are required');
     }
+
+    // Resolve the creditor IBAN server-side from the stored bankaccount address
+    // (spec 1.19 Phase 3): the client no longer sends it. The server value always wins.
+    const addrDoc = await getFirestore().collection(AddressCollection).doc(addressOkey).get();
+    const iban = addrDoc.exists ? String(addrDoc.data()?.['iban'] ?? '') : '';
+    if (!iban) {
+      throw new HttpsError('failed-precondition', `Address ${addressOkey} has no IBAN to generate a QR bill.`);
+    }
+    data.creditor.account = iban;
 
     const fileName = `qr-bill-${Date.now()}.pdf`;
     const tempPath = path.join(os.tmpdir(), fileName);

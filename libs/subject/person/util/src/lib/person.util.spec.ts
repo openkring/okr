@@ -31,20 +31,21 @@ describe('Person Utils', () => {
   });
 
   describe('getPersonIndex', () => {
-    it('builds an index from name, zip, firstName, bexioId and dateOfBirth', () => {
-      expect(getPersonIndex(person)).toBe('n:Doe z:8000 fn:John bx:42 dob:19900101');
+    // dob dropped from the index in spec 1.19 Phase 3 (moves to the privileged vault).
+    it('builds an index from name, zip, firstName and bexioId', () => {
+      expect(getPersonIndex(person)).toBe('n:Doe z:8000 fn:John bx:42');
     });
 
     it('skips empty values', () => {
       person.favZipCode = '';
       person.bexioId = '';
-      expect(getPersonIndex(person)).toBe('n:Doe fn:John dob:19900101');
+      expect(getPersonIndex(person)).toBe('n:Doe fn:John');
     });
   });
 
   describe('getPersonIndexInfo', () => {
     it('describes the index structure', () => {
-      expect(getPersonIndexInfo()).toBe('n:name z:zipCode fn:firstName dob:dateOfBirth bx:bexioId');
+      expect(getPersonIndexInfo()).toBe('n:name z:zipCode fn:firstName bx:bexioId');
     });
   });
 });

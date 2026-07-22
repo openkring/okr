@@ -66,7 +66,7 @@ function buildPersonIndex(p: FsData): string {
   index = addIndexElement(index, 'z', p.favZipCode ?? '');
   index = addIndexElement(index, 'fn', p.firstName ?? '');
   index = addIndexElement(index, 'bx', p.bexioId ?? '');
-  index = addIndexElement(index, 'dob', p.dateOfBirth ?? '');
+  // dob dropped from the search index (spec 1.19 Phase 3) — keep in sync with getPersonIndex.
   return index;
 }
 

@@ -296,7 +296,9 @@ export const AddressStore = signalStore(
         const data: Record<string, unknown> = {
           currency: store.i18n.currency(),
           creditor: {
-            account: address.iban,
+            // The CF resolves the iban server-side from the stored bankaccount
+            // address (spec 1.19 Phase 3); the client no longer sends it.
+            account: '',
             name: creditorName,
             address: `${creditorStreet} ${creditorStreetNumber}`,
             city: creditorCity,
