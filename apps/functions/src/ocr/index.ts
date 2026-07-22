@@ -9,7 +9,7 @@ import * as path from 'path';
 import { tmpdir } from 'os';
 
 import { parseOcrPath } from './ocr-path.util';
-import { toCents, ocrResultId, matchRule, resolveDebitAccount, isBalanced, type OcrRuleLite } from './ocr-extract.util';
+import { toCents, ocrResultId, matchRule, resolveDebitAccount, type OcrRuleLite } from './ocr-extract.util';
 import { geminiExtract } from './gemini-extract';
 
 const REGION = 'europe-west6';
@@ -49,12 +49,21 @@ async function resolveTreasurer(tenantId: string, reviewAssigneePersonKey: strin
       return { key: reviewAssigneePersonKey, name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
     }
   }
-  const snap = await db.collection(USERS_COLLECTION)
+  const treasurerSnap = await db.collection(USERS_COLLECTION)
     .where('tenants', 'array-contains', tenantId)
     .where('roles.treasurer', '==', true)
     .limit(1).get();
-  if (snap.empty) return null;
-  const u = snap.docs[0].data();
+  if (!treasurerSnap.empty) {
+    const u = treasurerSnap.docs[0].data();
+    return { key: u['personKey'] ?? '', name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
+  }
+  // Fallback: no dedicated treasurer configured — assign to the first tenant admin.
+  const adminSnap = await db.collection(USERS_COLLECTION)
+    .where('tenants', 'array-contains', tenantId)
+    .where('roles.admin', '==', true)
+    .limit(1).get();
+  if (adminSnap.empty) return null;
+  const u = adminSnap.docs[0].data();
   return { key: u['personKey'] ?? '', name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
 }
 
@@ -128,10 +137,13 @@ export const onOcrFileFinalized = onObjectFinalized(
       await admin.storage().bucket(bucketName).file(objectName).download({ destination: tempFilePath });
 
       const accountingTenantId = tenantId; // convention: accountingTenantId === tenantId
-      const documentKey = await createVoucher(tenantId, objectName, bucketName, contentType, size, downloadToken);
       const accountList = ocrUsage === 'paper' ? '' : await loadLeafAccountList(accountingTenantId);
 
       const raw = await geminiExtract(geminiApiKey.value(), tempFilePath, contentType, ocrUsage, accountList);
+
+      // Create the voucher only once extraction has succeeded — a failed extraction must not
+      // leave an orphan voucher doc lying around (documentKey stays '' on the failure path below).
+      const documentKey = await createVoucher(tenantId, objectName, bucketName, contentType, size, downloadToken);
 
       await resultRef.set({
         tenants: [tenantId],
@@ -228,6 +240,19 @@ export const onOcrResultWritten = onDocumentWritten(
       return;
     }
 
+    // Expense usage: aggregate ALL receipts of one expense into a single forReview booking,
+    // keyed deterministically by the expense's own key (idempotent across redeliveries).
+    if (after.ocrUsage === 'expense') {
+      if (!after.correlationKey) {
+        await resultRef.set({ status: 'processed' }, { merge: true });
+        return;
+      }
+      await handleExpenseResult(tenantId, accountingTenantId, cfg, after, resultRef);
+      return;
+    }
+
+    // ---- invoice: unchanged Round-1 per-file booking (random doc id, amount = OCR grossAmount) ----
+
     // Resolve the debit account: rule → llm hint → default.
     const rulesSnap = await db.collection(OCR_RULE_COLLECTION).where('tenants', 'array-contains', tenantId).get();
     const rules = rulesSnap.docs.map(d => ({ okey: d.id, ...(d.data() as Record<string, unknown>) })) as unknown as OcrRuleLite[];
@@ -244,11 +269,6 @@ export const onOcrResultWritten = onDocumentWritten(
 
     // forReview bookings are unnumbered (0); the treasurer's approve/post step assigns the sequence.
     const bookingNo = 0;
-
-    if (!isBalanced([{ debit: amountCents, credit: 0 }, { debit: 0, credit: amountCents }])) {
-      await resultRef.set({ status: 'failed', error: 'unbalanced' }, { merge: true });
-      return;
-    }
 
     // Write booking header + two lines atomically.
     const bookingRef = db.collection(BOOKING_COLLECTION).doc();
@@ -286,13 +306,6 @@ export const onOcrResultWritten = onDocumentWritten(
       bookingKey: bookingRef.id,
     }, { merge: true });
 
-    // Link back to the expense record if this came from the expense feature.
-    if (after.ocrUsage === 'expense' && after.correlationKey) {
-      await db.collection(EXPENSE_COLLECTION).doc(after.correlationKey)
-        .set({ bookingKey: bookingRef.id, status: 'validated' }, { merge: true })
-        .catch(err => logger.warn('onOcrResultWritten: expense link failed', err));
-    }
-
     // Open a review task for the treasurer (existing onTaskWritten sends the FCM push).
     await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
       `Beleg prüfen: ${after.vendor} ${(amountCents / 100).toFixed(2)} ${currency}`, after);
@@ -301,12 +314,143 @@ export const onOcrResultWritten = onDocumentWritten(
   },
 );
 
+/**
+ * Expense usage: aggregate all receipts belonging to one expense into exactly ONE forReview
+ * booking, keyed deterministically by the expense's own key so redelivery of any receipt's
+ * OCR result is idempotent (the transaction below sees the booking already exists and skips
+ * re-creating it). The booking is posted at the user's ENTERED amount (expense.amountTotal),
+ * not the OCR-extracted amount — the two are only compared for a best-effort mismatch warning.
+ */
+async function handleExpenseResult(
+  tenantId: string,
+  accountingTenantId: string,
+  cfg: FirebaseFirestore.DocumentData,
+  after: OcrResultDoc,
+  resultRef: FirebaseFirestore.DocumentReference,
+): Promise<void> {
+  const db = getFirestore();
+  const correlationKey = after.correlationKey;
+
+  const expenseRef = db.collection(EXPENSE_COLLECTION).doc(correlationKey);
+  const expenseSnap = await expenseRef.get();
+  const expense = expenseSnap.data();
+  if (!expense) {
+    await resultRef.set({ status: 'processed' }, { merge: true });
+    return;
+  }
+
+  // Resolve the debit account: rule → llm hint → default (reads only — must happen before the transaction).
+  const rulesSnap = await db.collection(OCR_RULE_COLLECTION).where('tenants', 'array-contains', tenantId).get();
+  const rules = rulesSnap.docs.map(d => ({ okey: d.id, ...(d.data() as Record<string, unknown>) })) as unknown as OcrRuleLite[];
+  const rule = matchRule(rules, after.ocrUsage, after.vendor);
+  const llmAccountKey = await accountKeyById(accountingTenantId, after.llmProposedAccountId ?? '');
+  const debitAccountKey = resolveDebitAccount(rule?.accountKey ?? '', llmAccountKey, cfg['defaultExpenseAccountKey'] ?? '');
+  const creditAccountKey = cfg['employeePayablesAccountKey'] ?? '';
+
+  const amountCents = expense['amountTotal'] ?? 0;
+  const currency = expense['currency'] || after.currency || 'CHF';
+
+  // Guard: booking must have a positive amount and both accounts resolved — else route to a human.
+  if (amountCents <= 0 || !debitAccountKey || !creditAccountKey) {
+    await resultRef.set({
+      status: 'failed',
+      error: 'Beleg konnte nicht automatisch verarbeitet werden — bitte manuell erfassen.',
+    }, { merge: true });
+    await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '', 'Beleg manuell erfassen', after);
+    return;
+  }
+
+  // Resolve the treasurer NOW — resolveTreasurer runs queries, which a transaction cannot do.
+  const treasurer = await resolveTreasurer(tenantId, cfg['reviewAssigneePersonKey'] ?? '');
+
+  // Deterministic ids (= expenseKey) make redelivery of any receipt idempotent: the transaction
+  // below always targets the SAME booking/lines, so a second (or Nth) receipt for the same
+  // expense just attaches its amount-mismatch check, never a second booking.
+  const bookingRef = db.collection(BOOKING_COLLECTION).doc(correlationKey);
+  const debitRef = db.collection(BOOKING_LINE_COLLECTION).doc(`${correlationKey}-d`);
+  const creditRef = db.collection(BOOKING_LINE_COLLECTION).doc(`${correlationKey}-c`);
+
+  const created = await db.runTransaction(async (tx) => {
+    // All reads before any write — required by Firestore transactions.
+    const bookingSnap = await tx.get(bookingRef);
+    if (bookingSnap.exists) return false;
+
+    tx.set(bookingRef, {
+      tenants: [tenantId], isArchived: false,
+      title: (expense['abstract'] || after.vendor || 'OCR-Beleg').slice(0, 200),
+      date: after.invoiceDate || '',
+      bookingNo: 0, // forReview bookings are unnumbered; the treasurer's approve/post step assigns the sequence.
+      periodKey: '', documentKey: after.documentKey,
+      status: 'forReview', accountingTenantId,
+      counterparty: after.vendor
+        ? { key: '', name1: '', name2: after.vendor, modelType: 'org', type: '', subType: '', label: after.vendor }
+        : null,
+      notes: '',
+    });
+    tx.set(debitRef, {
+      tenants: [tenantId], isArchived: false,
+      bookingKey: correlationKey, accountKey: debitAccountKey,
+      debitAmount: { amount: amountCents, currency, periodicity: 'one-time' },
+      accountingTenantId,
+    });
+    tx.set(creditRef, {
+      tenants: [tenantId], isArchived: false,
+      bookingKey: correlationKey, accountKey: creditAccountKey,
+      creditAmount: { amount: amountCents, currency, periodicity: 'one-time' },
+      accountingTenantId,
+    });
+    tx.set(expenseRef, { bookingKey: correlationKey, status: 'validated' }, { merge: true });
+    return true;
+  });
+
+  // Task creation is I/O outside the transaction, and only on first creation of the booking.
+  if (created) {
+    await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
+      `Beleg prüfen: ${after.vendor} ${(amountCents / 100).toFixed(2)} ${currency}`, after, treasurer);
+  }
+
+  // Latch: write resolution back + mark processed (idempotency — re-delivery sees bookingKey set).
+  await resultRef.set({
+    status: 'processed',
+    matchedRuleKey: rule?.okey ?? '',
+    accountKey: debitAccountKey,
+    llmProposedAccountKey: llmAccountKey,
+    bookingKey: correlationKey,
+  }, { merge: true });
+
+  logger.info(`onOcrResultWritten: expense booking ${correlationKey} forReview (created=${created}, rule=${rule?.okey ?? 'none'})`);
+
+  // Amount-mismatch warning: once all expected receipts have been extracted, compare their
+  // summed OCR gross amount against the user-entered total. Best-effort — never fails the result.
+  try {
+    const resultsSnap = await db.collection(OCR_RESULT_COLLECTION)
+      .where('correlationKey', '==', correlationKey)
+      .where('tenants', 'array-contains', tenantId)
+      .get();
+    const relevant = resultsSnap.docs
+      .map(d => d.data() as OcrResultDoc)
+      .filter(r => r.status === 'extracted' || r.status === 'processed');
+    const receiptCount = expense['receiptCount'] ?? 0;
+    if (relevant.length >= receiptCount) {
+      const sum = relevant.reduce((s, r) => s + (r.grossAmount ?? 0), 0);
+      if (sum !== amountCents) {
+        await bookingRef.set({
+          notes: `OCR-Summe CHF ${(sum / 100).toFixed(2)} weicht vom erfassten Betrag CHF ${(amountCents / 100).toFixed(2)} ab — bitte prüfen.`,
+        }, { merge: true });
+      }
+    }
+  } catch (err) {
+    logger.warn(`handleExpenseResult: amount-mismatch check failed for expense ${correlationKey}`, err);
+  }
+}
+
 /** Create a TaskModel assigned to the treasurer. */
 async function createReviewTask(
   tenantId: string, reviewAssigneePersonKey: string, name: string, result: OcrResultDoc,
+  resolvedTreasurer?: { key: string; name1: string; name2: string } | null,
 ): Promise<void> {
   const db = getFirestore();
-  const treasurer = await resolveTreasurer(tenantId, reviewAssigneePersonKey);
+  const treasurer = resolvedTreasurer !== undefined ? resolvedTreasurer : await resolveTreasurer(tenantId, reviewAssigneePersonKey);
   if (!treasurer || !treasurer.key) {
     logger.warn(`createReviewTask: no treasurer for tenant ${tenantId} — task not created`);
     return;
