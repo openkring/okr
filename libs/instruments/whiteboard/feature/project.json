@@ -1,0 +1,24 @@
+{
+  "name": "instruments-whiteboard-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/instruments/whiteboard/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:instruments", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/instruments/whiteboard/feature",
+        "main": "libs/instruments/whiteboard/feature/src/index.ts",
+        "tsConfig": "libs/instruments/whiteboard/feature/tsconfig.lib.json",
+        "assets": ["libs/instruments/whiteboard/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

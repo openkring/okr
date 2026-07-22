@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Whiteboard hinzufügen",
+    "conf": "Das Whiteboard wurde hinzugefügt.",
+    "error": "Das Whiteboard konnte nicht hinzugefügt werden."
+  },
+  "update": {
+    "conf": "Das Whiteboard wurde geändert.",
+    "error": "Das Whiteboard konnte nicht geändert werden."
+  },
+  "delete": {
+    "conf": "Das Whiteboard wurde gelöscht.",
+    "confirm": "Soll das Whiteboard wirklich gelöscht werden ?",
+    "error": "Das Whiteboard konnte nicht gelöscht werden."
+  }
+}

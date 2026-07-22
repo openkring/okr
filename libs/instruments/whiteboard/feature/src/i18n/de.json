@@ -1,0 +1,33 @@
+{
+  "whiteboard": "Whiteboard",
+  "plural": "Whiteboards",
+  "desc": "Eine Wand für Post-its und Notizen.",
+  "empty": "Noch keine Whiteboards vorhanden.",
+  "done": "Fertig",
+  "operation": {
+    "create": { "label": "Whiteboard erstellen" },
+    "edit": { "label": "Whiteboard ändern" },
+    "view": { "label": "Whiteboard anzeigen" },
+    "delete": { "confirm": "Soll das Whiteboard wirklich gelöscht werden ?" }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
+  },
+  "actionsheet": {
+    "choose": "Wähle eine Aktion",
+    "open": "Öffnen",
+    "edit": "Umbenennen",
+    "delete": "Löschen"
+  },
+  "editor": {
+    "addSticker": "Sticker hinzufügen",
+    "addLabel": "Text hinzufügen",
+    "chooseTemplate": "Vorlage",
+    "zoomIn": "Vergrössern",
+    "zoomOut": "Verkleinern",
+    "zoomReset": "Ansicht zurücksetzen",
+    "emptyCanvas": "Tippe auf «+», um einen Sticker hinzuzufügen."
+  }
+}
