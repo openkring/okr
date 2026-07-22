@@ -1,4 +1,5 @@
 import { onCall } from 'firebase-functions/v2/https';
+import { checkAdminRole, checkRoles } from '@okr/shared-util-functions';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
@@ -304,6 +305,8 @@ export const showInvoicePdf = onCall(
     const CF_NAME = 'showInvoicePdf';
 
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+    // Invoice PDFs carry recipient PII — treasurer flows + privileged/admin (privacy inventory §7.2).
+    await checkRoles(request, CF_NAME, ['treasurer', 'privileged']);
     const { invoiceId } = request.data;
     if (!invoiceId) throw new HttpsError('invalid-argument', 'invoiceId is required');
 
@@ -349,6 +352,8 @@ export const syncBexioInvoices = onCall(
   },
   async (request: CallableRequest<{ fromDate?: string }>) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+    // Full-collection person/org read + invoice import is an AOC admin operation (privacy inventory §7.2).
+    await checkAdminRole(request, 'syncBexioInvoices');
     const fromDate = request.data?.fromDate ?? '2000-01-01 00:00:00';
     return runInvoiceSync(fromDate, bexioTenantId.value(), 'syncBexioInvoices');
   }
@@ -396,6 +401,8 @@ export const createBexioInvoice = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
+    // Creates invoices for member contacts — treasurer flows + privileged/admin (privacy inventory §7.2).
+    await checkRoles(request, CF_NAME, ['treasurer', 'privileged']);
 
     const { title, bexioId, header = '', footer = '', positions = [], template_slug = '' } = request.data;
 

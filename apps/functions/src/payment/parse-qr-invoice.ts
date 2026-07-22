@@ -39,7 +39,8 @@ export const parseQrInvoice = onCall(
     if (!qrContent) throw new HttpsError('invalid-argument', 'qrContent is required');
     try {
       const parsed = parseQrContent(qrContent);
-      logger.info(`parseQrInvoice: parsed IBAN ${parsed.iban} amount ${parsed.amount}`);
+      // Do NOT log the IBAN — PII (privacy inventory §7.2).
+      logger.info(`parseQrInvoice: parsed QR invoice, amount ${parsed.amount}`);
       return parsed;
     } catch (err) {
       throw new HttpsError('invalid-argument', `Could not parse QR content: ${(err as Error).message}`);

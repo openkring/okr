@@ -129,10 +129,8 @@ export const createFirebaseUser = functions.onCall(
   },
   async (request: functions.CallableRequest<{ email: string; password: string; displayName: string }>) => {
     const CF_NAME = 'createFirebaseUser';
+    // Do NOT log email/password/displayName — PII + credential (privacy inventory §7.1).
     logger.info(`${CF_NAME}: Processing request`, {
-      email: request.data.email,
-      password: request.data.password,
-      displayName: request.data.displayName,
       authUid: request.auth?.uid,
       appCheck: !!request.app,
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
@@ -169,8 +167,8 @@ export const getUidByEmail = functions.onCall(
   },
   async (request: functions.CallableRequest<{ email: string }>) => {
     const CF_NAME = 'getUidByEmail';
+    // Do NOT log the looked-up email — PII (privacy inventory §7.2).
     logger.info(`${CF_NAME}: Processing request`, {
-      email: request.data.email,
       authUid: request.auth?.uid,
       appCheck: !!request.app,
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
@@ -246,9 +244,9 @@ export const setPassword = functions.onCall(
   },
   async (request: functions.CallableRequest<{ uid: string; password: string }>) => {
     const CF_NAME = 'setPassword';
+    // Do NOT log the password — credential in plaintext (privacy inventory §7.1).
     logger.info(`${CF_NAME}: Processing request`, {
       uid: request.data.uid,
-      password: request.data.password,
       authUid: request.auth?.uid,
       appCheck: !!request.app,
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
@@ -285,14 +283,11 @@ export const updateFirebaseUser = functions.onCall(
   },
   async (request: functions.CallableRequest<{ uid: string; email: string; displayName: string; emailVerified: boolean; disabled: boolean; phone: string; photoUrl: string }>) => {
     const CF_NAME = 'updateFirebaseUser';
+    // Do NOT log email/displayName/phone/photoUrl — PII (privacy inventory §7.2).
     logger.info(CF_NAME + ': Processing request', {
       uid: request.data.uid,
-      email: request.data.email,
-      displayName: request.data.displayName,
       emailVerified: request.data.emailVerified,
       disabled: request.data.disabled,
-      phone: request.data.phone,
-      photoUrl: request.data.photoUrl,
       authUid: request.auth?.uid,
       appCheck: !!request.app,
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
@@ -477,14 +472,15 @@ export const sendEmail = functions.onCall(
     if (!from) throw new functions.HttpsError('invalid-argument', 'from is required.');
     if (!subject) throw new functions.HttpsError('invalid-argument', 'subject is required.');
 
-    logger.info(`${CF_NAME}: sending via ${provider} to=${to.join(', ')} (appId=${appId}, template=${template ?? 'none'})`);
+    // Log recipient COUNT, not addresses — PII (privacy inventory §7.2).
+    logger.info(`${CF_NAME}: sending via ${provider} to ${to.length} recipient(s) (appId=${appId}, template=${template ?? 'none'})`);
 
     // Attachments are resolved server-side from Storage (never on the password-reset path).
     const resolvedAttachments = isPasswordReset ? [] : await resolveAttachments(attachments, CF_NAME);
 
     try {
       await sendEmailViaProvider(provider, { from, to, cc, bcc, subject, html: html ?? '', template, templateVariables, attachments: resolvedAttachments });
-      logger.info(`${CF_NAME}: email sent to ${to.join(', ')}${resolvedAttachments.length ? ` with ${resolvedAttachments.length} attachment(s)` : ''}`);
+      logger.info(`${CF_NAME}: email sent to ${to.length} recipient(s)${resolvedAttachments.length ? ` with ${resolvedAttachments.length} attachment(s)` : ''}`);
       return { success: true };
     } catch (error: any) {
       logger.error(`${CF_NAME}: failed to send email`, { error: error.message });

@@ -1,4 +1,5 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { checkAdminRole } from '@okr/shared-util-functions';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 
@@ -44,6 +45,8 @@ export const createBexioContact = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
+    // bexio contact PII sync is an AOC admin operation (privacy inventory §7.2).
+    await checkAdminRole(request, CF_NAME);
 
     const { name_1, name_2, street_name, house_number, postcode, city, mail, contact_type_id } = request.data;
     if (!name_1) {
@@ -101,6 +104,8 @@ export const updateBexioContact = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
+    // bexio contact PII sync is an AOC admin operation (privacy inventory §7.2).
+    await checkAdminRole(request, CF_NAME);
 
     const { id, name_1, name_2, street_name, house_number, postcode, city, mail, contact_type_id } = request.data;
     if (!id || !name_1) {
@@ -159,6 +164,8 @@ export const getBexioContacts = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
+    // bexio contact PII sync is an AOC admin operation (privacy inventory §7.2).
+    await checkAdminRole(request, CF_NAME);
 
     logger.info(`${CF_NAME}: fetching all contacts (paginated)`);
 

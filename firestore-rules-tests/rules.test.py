@@ -94,6 +94,7 @@ def list_query(coll, tenant=None, token=None):
 seed("users/uidA", {"tenants": ["t1"], "roles": {}, "firstName": "A"})
 seed("users/uidB", {"tenants": ["t2"], "roles": {"admin": True}, "firstName": "B"})
 seed("users/uidC", {"tenants": ["t1"], "roles": {"contentAdmin": True}, "firstName": "C"})
+seed("users/uidD", {"tenants": ["t1"], "roles": {"admin": True}, "firstName": "D"})
 seed("persons/pA", {"tenants": ["t1"], "isArchived": False, "lastName": "AA"})
 seed("persons/pB", {"tenants": ["t2"], "isArchived": False, "lastName": "BB"})
 seed("memberships/mA", {"tenants": ["t1"], "isArchived": False, "x": "1"})
@@ -108,7 +109,7 @@ seed("tags/tgA",     {"tenants": ["t1"], "isArchived": False, "tagModel": "x"})
 seed("pages/home",   {"tenants": ["t1"], "isArchived": False, "title": "Home"})
 seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"})
 
-A, B, C = jwt("uidA"), jwt("uidB"), jwt("uidC")
+A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 GET, PATCH, POST = "GET", "PATCH", "POST"
 
 
@@ -123,6 +124,11 @@ single_cases = [
      body({"isActive": True, "userKey": "forged", "tenants": ["t1"]}), ["userKey"]),
     ("anon PATCH sessions heartbeat -> ALLOW", True, PATCH, "sessions/sX", None,
      body({"isActive": True, "userKey": "", "tenants": ["t1"]}), ["isActive"]),
+    # privacy §7.1: sessions carry userEmail — read is admin-only, tenant-scoped
+    ("anon GET sessions/sX -> DENY", False, GET, "sessions/sX", None, None, None),
+    ("userA(no role) GET sessions/sX -> DENY (was signedIn)", False, GET, "sessions/sX", A, None, None),
+    ("userB(admin t2) GET sessions/sX (t1) -> DENY (cross-tenant)", False, GET, "sessions/sX", B, None, None),
+    ("userD(admin t1) GET sessions/sX -> ALLOW", True, GET, "sessions/sX", D, None, None),
     # C-1: tenant isolation
     ("userA GET persons/pA (own tenant) -> ALLOW", True, GET, "persons/pA", A, None, None),
     ("userA GET persons/pB (other tenant) -> DENY", False, GET, "persons/pB", A, None, None),

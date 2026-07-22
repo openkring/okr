@@ -52,7 +52,8 @@ export const searchChSearchPerson = onCall(
       throw new HttpsError('failed-precondition', 'no search.ch key configured for tenant');
     }
 
-    logger.info(`${CF_NAME}: searching "${name}" (tenant ${tenantId})`);
+    // Do NOT log the searched person name — PII (privacy inventory §7.2).
+    logger.info(`${CF_NAME}: searching (tenant ${tenantId})`);
     try {
       const response = await axios.get(SEARCH_CH_BASE, {
         params: {

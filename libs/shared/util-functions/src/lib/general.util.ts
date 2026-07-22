@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -38,6 +37,26 @@ export async function checkAdminRole(request: functions.CallableRequest, nameOfC
   if (roles?.['admin'] === true) return;
   logger.error(`${nameOfCallingFunction}: user ${uid} must be an admin`);
   throw new functions.HttpsError('permission-denied', 'This operation requires the admin role.');
+}
+
+/**
+ * Authorize a callable for a set of roles. Like checkAdminRole, the source of
+ * truth is the caller's users/{uid}.roles map; `admin` always passes. Added for
+ * the SRV/bexio callables that previously required only authentication
+ * (privacy inventory §7.2).
+ */
+export async function checkRoles(request: functions.CallableRequest, nameOfCallingFunction: string, allowedRoles: string[]): Promise<void> {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    logger.error(`${nameOfCallingFunction}: user is not authenticated`);
+    throw new functions.HttpsError('unauthenticated', 'user must be authenticated.');
+  }
+  if (request.auth?.token?.['admin'] === true) return;   // legacy custom claim
+  const snap = await getFirestore().collection('users').doc(uid).get();
+  const roles = snap.data()?.['roles'] as Record<string, boolean> | undefined;
+  if (roles?.['admin'] === true || allowedRoles.some((r) => roles?.[r] === true)) return;
+  logger.error(`${nameOfCallingFunction}: user ${uid} lacks required role(s): ${allowedRoles.join(', ')}`);
+  throw new functions.HttpsError('permission-denied', `This operation requires one of the roles: ${allowedRoles.join(', ')}.`);
 }
 
 export function checkStringField(request: functions.CallableRequest, nameOfCallingFunction: string, fieldName: string): string {

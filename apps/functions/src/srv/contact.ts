@@ -1,4 +1,5 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { checkRoles } from '@okr/shared-util-functions';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import { storeDateToRegasoftDate, regasoftDateToStoreDate } from '@okr/shared-util-core';
@@ -29,6 +30,8 @@ export const getSrvContacts = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
+    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+    await checkRoles(request, CF_NAME, ['memberAdmin']);
 
     logger.info(`${CF_NAME}: fetching all SRV members`);
 
@@ -94,6 +97,8 @@ export const getSrvLicensedMembers = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
+    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+    await checkRoles(request, CF_NAME, ['memberAdmin']);
 
     logger.info(`${CF_NAME}: fetching licensed SRV members`);
 
@@ -146,6 +151,8 @@ export const getSrvMemberDetail = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
+    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+    await checkRoles(request, CF_NAME, ['memberAdmin']);
 
     const { rids } = request.data;
     if (!Array.isArray(rids) || rids.length === 0) {
@@ -210,6 +217,8 @@ export const createSrvContact = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
+    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+    await checkRoles(request, CF_NAME, ['memberAdmin']);
 
     const { firstName, lastName, email, mobile, dateOfBirth, gender } = request.data;
     if (!firstName || !lastName) {
@@ -280,6 +289,8 @@ export const updateSrvContact = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
+    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+    await checkRoles(request, CF_NAME, ['memberAdmin']);
 
     const { srvId, firstName, lastName, email, mobile, dateOfBirth, gender,
             membershipType, street, postcode, city, dateOfDeath, leavingDate } = request.data;

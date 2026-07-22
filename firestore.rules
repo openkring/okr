@@ -295,7 +295,10 @@ service cloud.firestore {
     // ============================================================================
 
     match /sessions/{sessionId} {
-      allow read:   if signedIn();
+      // Sessions carry userEmail — only the AOC admin console reads them, so
+      // restrict to same-tenant admins (was: any signed-in user, cross-tenant —
+      // privacy inventory §7.1).
+      allow read:   if isAdmin() && (resource == null || belongsToTenant(resource.data));
       // Anonymous create: inactive userKey, single tenant.
       allow create: if request.resource.data.isActive == true
                      && request.resource.data.userKey == ''
