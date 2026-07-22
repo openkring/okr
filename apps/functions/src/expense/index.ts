@@ -10,7 +10,6 @@ const USERS_COLLECTION = 'users';
 
 interface CreateExpenseData {
   tenantId: string;
-  accountingTenantId: string;
   abstract: string;
   amountTotal: number;   // cents
   currency: string;
@@ -45,18 +44,19 @@ export const createExpense = onCall(
     if (!(user['tenants'] as string[] | undefined)?.includes(d.tenantId)) {
       throw new HttpsError('permission-denied', 'not a member of this tenant');
     }
+    const receiptCount = Number.isInteger(d.receiptCount) && d.receiptCount >= 0 ? d.receiptCount : 0;
     const ref = db.collection(EXPENSE_COLLECTION).doc();
     await ref.set({
       tenants: [d.tenantId], isArchived: false, index: '', tags: '', notes: '',
       abstract: d.abstract ?? '',
       amountTotal: d.amountTotal, currency: d.currency || 'CHF',
-      transferTo: d.transferTo ?? 'me', iban: d.iban ?? '',
+      transferTo: d.transferTo === 'issuer' ? 'issuer' : 'me', iban: d.iban ?? '',
       category: d.category ?? '', costCenterId: d.costCenterId ?? '', note: d.note ?? '',
       status: 'processing', bookingKey: '',
-      userId: uid, accountingTenantId: d.accountingTenantId || d.tenantId,
-      receiptCount: d.receiptCount ?? 0,
+      userId: uid, accountingTenantId: d.tenantId,
+      receiptCount,
     });
-    logger.info(`createExpense: ${ref.id} for tenant ${d.tenantId} (receipts=${d.receiptCount})`);
+    logger.info(`createExpense: ${ref.id} for tenant ${d.tenantId} (receipts=${receiptCount})`);
     return { expenseKey: ref.id };
   },
 );
