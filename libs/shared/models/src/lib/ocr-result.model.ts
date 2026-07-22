@@ -43,6 +43,7 @@ export class OcrResultModel implements OkrModel, SearchableModel {
   public matchedRuleKey = '';       // '' if no rule matched
   public accountKey = '';           // resolved debit account (rule → llm → default)
   public llmProposedAccountKey = ''; // low-confidence hint when no rule matched
+  public llmProposedAccountId = ''; // transient: the account NUMBER Gemini proposed; stage ② resolves it to llmProposedAccountKey
 
   // post-processing
   public bookingKey = '';           // set by stage ②; '' guards idempotency

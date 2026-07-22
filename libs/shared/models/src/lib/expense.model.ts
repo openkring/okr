@@ -30,6 +30,7 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public bookingKey = '';
   public userId = DEFAULT_KEY;
   public accountingTenantId = '';
+  public receiptCount = 0; // number of receipt files uploaded to the OCR pipeline; lets stage ② know when all receipts are in
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
