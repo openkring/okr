@@ -211,6 +211,15 @@ service cloud.firestore {
     match /i18nDefault/{id}       { allow read: if tenantRead(); allow write: if false; }
     match /swissCities/{id}       { allow read: if tenantRead(); allow write: if false; }
 
+    // ============================================================================
+    //  OCR pipeline — ocr-results are written only by the OCR Cloud Functions
+    //  (admin SDK bypasses rules); ocr-rules (vendor→account matching rules) are
+    //  authored by treasurer/admin.
+    // ============================================================================
+
+    match /ocr-results/{id} { allow read: if tenantRead(); allow write: if false; }
+    match /ocr-rules/{id}   { allow read: if tenantRead(); allow create, update: if (hasRole('treasurer') || isAdmin()) && belongsToTenant(request.resource.data); allow delete: if (hasRole('treasurer') || isAdmin()) && belongsToTenant(resource.data); }
+
     // Reference data that may have an admin authoring UI — allow privileged writes.
     match /assets/{id}             { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
     match /asset-categories/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
