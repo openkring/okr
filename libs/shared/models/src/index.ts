@@ -57,6 +57,7 @@ export * from './lib/ownership.model';
 export * from './lib/page.model';
 export * from './lib/person.model';
 export * from './lib/personal-rel.model';
+export * from './lib/privacy.model';
 export * from './lib/regasoft.model';
 export * from './lib/reservation.model';
 export * from './lib/reservation-apply.model';
