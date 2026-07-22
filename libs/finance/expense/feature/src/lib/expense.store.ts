@@ -13,7 +13,7 @@ import { AddressService } from '@okr/subject-address-data-access';
 import { UploadService } from '@okr/avatar-data-access';
 
 import { ExpenseService } from '@okr/finance-expense-data-access';
-import { chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, newExpenseModel, normalizeIban } from '@okr/finance-expense-util';
+import { chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, normalizeIban } from '@okr/finance-expense-util';
 
 export type SubmitStep = 'idle' | 'iban' | 'upload' | 'saving' | 'done' | 'error';
 
@@ -95,10 +95,8 @@ export const ExpenseStore = signalStore(
       if (!currentUser) return;
 
       const tenantId = store.tenantId();
-      const userId = currentUser.okey;
       // Addresses are linked to the person via 'person.<key>' (modelType-prefixed), not the user.
       const addressParentKey = `${PersonModelName}.${currentUser.personKey}`;
-      const accountingTenantId = tenantId;
 
       let newAddressKey: string | undefined;
       let expenseKey: string | undefined;
@@ -129,20 +127,24 @@ export const ExpenseStore = signalStore(
         return;
       }
 
-      // Step 2 — Persist the expense first, so its key can correlate the OCR upload.
+      // Step 2 — Persist the expense first, so its key can correlate the OCR upload. The
+      // 'expenses' collection is CF-write-only: creation goes through the 'createExpense'
+      // callable (it derives accountingTenantId server-side and owns the initial 'processing'
+      // status) instead of a direct client SDK write.
       patchState(store, { submitStep: 'saving' });
       try {
-        const expense = newExpenseModel(tenantId, userId, accountingTenantId);
-        expense.abstract     = formValue.abstract;
-        expense.amountTotal  = chfToCents(formValue.amountCHF);
-        expense.currency     = formValue.currency;
-        expense.transferTo   = formValue.transferTo;
-        expense.iban         = formValue.transferTo === 'me' ? normalizeIban(formValue.iban) : '';
-        expense.category     = formValue.category;
-        expense.costCenterId = formValue.costCenterId;
-        expense.note         = formValue.note;
-        expense.status       = 'processing'; // pipeline will set 'validated' + bookingKey
-        expenseKey = await store.expenseService.create(expense, currentUser);
+        expenseKey = await store.expenseService.createViaFunction({
+          tenantId,
+          abstract:     formValue.abstract,
+          amountTotal:  chfToCents(formValue.amountCHF),
+          currency:     formValue.currency,
+          transferTo:   formValue.transferTo,
+          iban:         formValue.transferTo === 'me' ? normalizeIban(formValue.iban) : '',
+          category:     formValue.category,
+          costCenterId: formValue.costCenterId,
+          note:         formValue.note,
+          receiptCount: files.length,
+        });
         if (!expenseKey) throw new Error('ExpenseModel creation failed');
       } catch (e) {
         console.error('[expense-submit] Save step failed', e);
@@ -161,11 +163,10 @@ export const ExpenseStore = signalStore(
         }
       } catch (e) {
         console.error('[expense-submit] Upload step failed', e);
-        // Don't delete the expense — some receipts may already have uploaded and will still
-        // flow through the OCR pipeline; flipping to 'error' is an honest signal for the
-        // treasurer, and the pipeline will legitimately override it to 'validated' for anything
-        // that did upload + extract successfully.
-        if (expenseKey) await compensateExpense(store.expenseService, expenseKey, currentUser);
+        // The 'expenses' collection is CF-write-only, so the client can no longer flip the
+        // expense's status on failure (that would permission-deny). This leaves the
+        // CF-created 'processing' expense in place — accepted limitation: it has no receipts,
+        // so the pipeline never books it, and there is no client-side cleanup path.
         if (newAddressKey) await compensateAddress(store.addressService, newAddressKey, currentUser);
         patchState(store, { submitStep: 'error', submitError: 'Upload step failed' });
         return;
@@ -185,25 +186,5 @@ async function compensateAddress(
   try {
     const addr = await firstValueFrom(addressService.read(addressKey));
     if (addr) await addressService.delete(addr, currentUser);
-  } catch { /* best-effort */ }
-}
-
-// Flip an already-created expense to 'error' instead of deleting it: some receipts may already
-// have uploaded successfully and will still flow through the OCR pipeline, so the expense record
-// (and any partial receipts) must survive. 'error' is an honest signal for the treasurer, and the
-// pipeline will legitimately override it back to 'validated' for anything that did upload +
-// extract successfully. Best-effort — a failure here just leaves the expense stuck as
-// 'processing', which is no worse than before this compensation existed.
-async function compensateExpense(
-  expenseService: ExpenseService,
-  expenseKey: string,
-  currentUser: Parameters<typeof expenseService.update>[1]
-): Promise<void> {
-  try {
-    const savedExpense = await firstValueFrom(expenseService.read(expenseKey));
-    if (savedExpense) {
-      savedExpense.status = 'error';
-      await expenseService.update(savedExpense, currentUser);
-    }
   } catch { /* best-effort */ }
 }

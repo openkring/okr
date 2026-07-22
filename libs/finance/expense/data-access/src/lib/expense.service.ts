@@ -1,5 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -8,6 +10,19 @@ import { getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { PFX } from './scope';
+
+export interface CreateExpensePayload {
+  tenantId: string;
+  abstract: string;
+  amountTotal: number;
+  currency: string;
+  transferTo: 'me' | 'issuer';
+  iban: string;
+  category: string;
+  costCenterId: string;
+  note: string;
+  receiptCount: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ExpenseService {
@@ -26,6 +41,15 @@ export class ExpenseService {
     return this.firestoreService.createModel<ExpenseModel>(
       ExpenseCollection, expense, this.i18n.create_conf(), this.i18n.create_error(), currentUser
     );
+  }
+
+  // The 'expenses' collection is CF-write-only: creation goes through the 'createExpense'
+  // callable, which derives accountingTenantId server-side (= tenantId) and owns the initial
+  // 'processing' status. Do NOT write 'expenses' from the client SDK.
+  public async createViaFunction(payload: CreateExpensePayload): Promise<string> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'createExpense');
+    const result = await fn(payload);
+    return (result.data as { expenseKey: string }).expenseKey;
   }
 
   public async update(expense: ExpenseModel, currentUser?: UserModel): Promise<string | undefined> {
