@@ -104,6 +104,69 @@ async function createVoucher(
   return ref.id;
 }
 
+/**
+ * Extract ONE receipt file: download → Gemini → write the ocr-results doc (status 'extracted'),
+ * or on failure write status 'failed' + open a treasurer task (and, for expense usage, latch its
+ * taskKey onto the expense). No idempotency guard here — callers (onOcrFileFinalized / redoExpenseOcr)
+ * decide whether to (re)run. Shared by the storage trigger and the treasurer redo callable.
+ */
+async function extractReceipt(opts: {
+  objectName: string; bucketName: string; contentType: string; size: number;
+  downloadToken: string; generation: string; apiKey: string;
+}): Promise<void> {
+  const { objectName, bucketName, contentType, size, downloadToken, generation, apiKey } = opts;
+  const parsed = parseOcrPath(objectName);
+  if (!parsed) return;
+  const { tenantId, ocrUsage, correlationKey } = parsed;
+  const db = getFirestore();
+  const resultRef = db.collection(OCR_RESULT_COLLECTION).doc(ocrResultId(objectName, generation));
+  const tempFilePath = path.join(tmpdir(), path.basename(objectName));
+  try {
+    await admin.storage().bucket(bucketName).file(objectName).download({ destination: tempFilePath });
+    const accountingTenantId = tenantId;
+    const accountList = ocrUsage === 'paper' ? '' : await loadLeafAccountList(accountingTenantId);
+    const raw = await geminiExtract(apiKey, tempFilePath, contentType, ocrUsage, accountList);
+    const documentKey = await createVoucher(tenantId, objectName, bucketName, contentType, size, downloadToken);
+    await resultRef.set({
+      tenants: [tenantId], isArchived: false, index: '', ocrUsage,
+      storagePath: objectName, correlationKey, documentKey,
+      status: 'extracted',
+      vendor: raw.vendor ?? '',
+      invoiceDate: (raw.invoiceDate ?? '').replace(/\D/g, '').slice(0, 8),
+      grossAmount: toCents(raw.grossAmount),
+      currency: raw.currency || 'CHF',
+      vatLines: (raw.vatLines ?? []).map(v => ({ rate: v.rate ?? 0, amount: toCents(v.amount) })),
+      subject: raw.subject ?? '',
+      confidence: raw.confidence ?? {},
+      matchedRuleKey: '', accountKey: '', llmProposedAccountKey: '',
+      llmProposedAccountId: raw.llmProposedAccountId ?? '',
+      bookingKey: '', error: '',
+    });
+    logger.info(`extractReceipt: wrote result ${resultRef.id} (vendor="${raw.vendor}")`);
+  } catch (error: unknown) {
+    logger.error(`extractReceipt: extraction failed for "${objectName}":`, error);
+    await resultRef.set({
+      tenants: [tenantId], isArchived: false, index: '', ocrUsage,
+      storagePath: objectName, correlationKey, documentKey: '',
+      status: 'failed', bookingKey: '',
+      error: error instanceof Error ? error.message : String(error),
+    }, { merge: true });
+    // Notify the treasurer (FCM via onTaskWritten) and, for expense usage, latch the task onto the expense.
+    if (ocrUsage === 'expense' || ocrUsage === 'invoice') {
+      try {
+        const taskKey = await createReviewTask(tenantId, '', 'OCR fehlgeschlagen — Beleg manuell erfassen', { storagePath: objectName });
+        if (taskKey && ocrUsage === 'expense' && correlationKey) {
+          await db.collection(EXPENSE_COLLECTION).doc(correlationKey).set({ taskKey }, { merge: true });
+        }
+      } catch (taskErr) {
+        logger.error(`extractReceipt: could not create failure review task for "${objectName}"`, taskErr);
+      }
+    }
+  } finally {
+    await fs.unlink(tempFilePath).catch(() => undefined);
+  }
+}
+
 export const onOcrFileFinalized = onObjectFinalized(
   { region: REGION, secrets: [geminiApiKey] },
   async (event) => {
@@ -112,94 +175,21 @@ export const onOcrFileFinalized = onObjectFinalized(
     const contentType = event.data.contentType ?? 'application/octet-stream';
     const generation = String(event.data.generation ?? '');
     const size = Number(event.data.size ?? 0);
-    const downloadToken =
-      (event.data.metadata?.['firebaseStorageDownloadTokens'] ?? '').split(',')[0] ?? '';
+    const downloadToken = (event.data.metadata?.['firebaseStorageDownloadTokens'] ?? '').split(',')[0] ?? '';
 
     const parsed = parseOcrPath(objectName);
     if (!parsed) return; // not an OCR path — ignore silently
 
-    const { tenantId, ocrUsage, correlationKey } = parsed;
     const resultId = ocrResultId(objectName, generation);
     const db = getFirestore();
-    const resultRef = db.collection(OCR_RESULT_COLLECTION).doc(resultId);
-
-    // Idempotency: a redelivered event must not re-extract if we already produced a result.
-    const existing = await resultRef.get();
+    const existing = await db.collection(OCR_RESULT_COLLECTION).doc(resultId).get();
     if (existing.exists) {
       logger.info(`onOcrFileFinalized: result ${resultId} already exists — skip`);
       return;
     }
 
-    logger.info(`onOcrFileFinalized: "${objectName}" usage=${ocrUsage}`);
-
-    const tempFilePath = path.join(tmpdir(), path.basename(objectName));
-    try {
-      await admin.storage().bucket(bucketName).file(objectName).download({ destination: tempFilePath });
-
-      const accountingTenantId = tenantId; // convention: accountingTenantId === tenantId
-      const accountList = ocrUsage === 'paper' ? '' : await loadLeafAccountList(accountingTenantId);
-
-      const raw = await geminiExtract(geminiApiKey.value(), tempFilePath, contentType, ocrUsage, accountList);
-
-      // Create the voucher only once extraction has succeeded — a failed extraction must not
-      // leave an orphan voucher doc lying around (documentKey stays '' on the failure path below).
-      const documentKey = await createVoucher(tenantId, objectName, bucketName, contentType, size, downloadToken);
-
-      await resultRef.set({
-        tenants: [tenantId],
-        isArchived: false,
-        index: '',
-        ocrUsage,
-        storagePath: objectName,
-        correlationKey,
-        documentKey,
-        status: 'extracted',
-        vendor: raw.vendor ?? '',
-        invoiceDate: (raw.invoiceDate ?? '').replace(/\D/g, '').slice(0, 8),
-        grossAmount: toCents(raw.grossAmount),
-        currency: raw.currency || 'CHF',
-        vatLines: (raw.vatLines ?? []).map(v => ({ rate: v.rate ?? 0, amount: toCents(v.amount) })),
-        subject: raw.subject ?? '',
-        confidence: raw.confidence ?? {},
-        matchedRuleKey: '',
-        accountKey: '',
-        llmProposedAccountKey: '', // resolved to an account key by stage ② (raw returns the account NUMBER)
-        llmProposedAccountId: raw.llmProposedAccountId ?? '', // transient hint, resolved in stage ②
-        bookingKey: '',
-        error: '',
-      });
-      logger.info(`onOcrFileFinalized: wrote result ${resultId} (vendor="${raw.vendor}")`);
-    } catch (error: unknown) {
-      logger.error(`onOcrFileFinalized: extraction failed for "${objectName}":`, error);
-      await resultRef.set({
-        tenants: [tenantId],
-        isArchived: false,
-        index: '',
-        ocrUsage,
-        storagePath: objectName,
-        correlationKey,
-        documentKey: '',
-        status: 'failed',
-        bookingKey: '',
-        error: error instanceof Error ? error.message : String(error),
-      }, { merge: true });
-
-      // A failed extraction is a dead end for the automatic pipeline: no retry, no booking, and
-      // onOcrResultWritten ignores non-'extracted' results — so without this the expense stays
-      // 'processing' forever and nobody is told. Open a review task for the treasurer (onTaskWritten
-      // sends the FCM push) so a human can investigate and record the receipt manually. Finance
-      // usages only; best-effort so a task error can't re-throw — the result doc already exists, so a
-      // retried event would hit the idempotency guard above and skip, leaving no task at all.
-      if (ocrUsage === 'expense' || ocrUsage === 'invoice') {
-        try {
-          await createReviewTask(tenantId, '', 'OCR fehlgeschlagen — Beleg manuell erfassen', { storagePath: objectName });
-        } catch (taskErr) {
-          logger.error(`onOcrFileFinalized: could not create failure review task for "${objectName}"`, taskErr);
-        }
-      }
-    } finally {
-      await fs.unlink(tempFilePath).catch(() => undefined);
-    }
+    logger.info(`onOcrFileFinalized: "${objectName}" usage=${parsed.ocrUsage}`);
+    await extractReceipt({ objectName, bucketName, contentType, size, downloadToken, generation, apiKey: geminiApiKey.value() });
   },
 );
 
