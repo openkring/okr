@@ -1,0 +1,27 @@
+{
+  "name": "finance-ocr-rule-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/ocr-rule/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/ocr-rule/util",
+        "main": "libs/finance/ocr-rule/util/src/index.ts",
+        "tsConfig": "libs/finance/ocr-rule/util/tsconfig.lib.json",
+        "assets": ["libs/finance/ocr-rule/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": { "configFile": "libs/finance/ocr-rule/util/vite.config.ts" }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}
