@@ -218,13 +218,20 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
       display: flex;
       gap: 4px;
       flex-wrap: wrap;
-      margin-top: 4px;
+      /* Pull the chips up so they overlap the bubble's bottom edge and read as
+         attached to the message they belong to. */
+      margin-top: -10px;
+      padding: 0 4px;
+      position: relative;
+      z-index: 1;
     }
 
     .reaction-chip {
       --background: var(--ion-color-light-shade);
-      height: 24px;
-      font-size: 0.875rem;
+      height: 22px;
+      min-height: 22px;
+      font-size: 0.8rem;
+      border: 1px solid var(--ion-background-color, #fff);
     }
 
     .thread-indicator {
@@ -440,7 +447,6 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
                               [message]="item"
                               [currentUserId]="currentUserId() ?? ''"
                               (voteClicked)="pollVoteClicked.emit($event)"
-                              (endPollClicked)="pollEndClicked.emit($event)"
                               [i18n]="i18n()"
                             />
                           }
@@ -450,10 +456,6 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
                         }
                       }
                     </div>
-                    <div class="message-timestamp">{{ formatTime(item.timestamp) }}</div>
-                    @if (receiptsByEventId().get(item.eventId); as receipts) {
-                      <okr-matrix-read-receipt-strip [receipts]="receipts" />
-                    }
                     @if (item.reactions && item.reactions.size > 0) {
                       <div class="message-reactions">
                         @for (reaction of getReactions(item); track reaction.emoji) {
@@ -462,6 +464,10 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
                           </ion-chip>
                         }
                       </div>
+                    }
+                    <div class="message-timestamp">{{ formatTime(item.timestamp) }}</div>
+                    @if (receiptsByEventId().get(item.eventId); as receipts) {
+                      <okr-matrix-read-receipt-strip [receipts]="receipts" />
                     }
                     @if (threadReplyCounts().get(item.eventId); as replyCount) {
                       <div class="thread-indicator" role="button" tabindex="0" [attr.aria-label]="i18n().thread_open()" (click)="threadClicked.emit(item.eventId)" (keydown.enter)="threadClicked.emit(item.eventId)">
@@ -515,7 +521,6 @@ export class MatrixMessageList {
   reactionClicked = output<{messageId: string, emoji: string}>();
   threadClicked = output<string>();
   pollVoteClicked = output<{ pollEventId: string; answerIds: string[] }>();
-  pollEndClicked = output<{ pollEventId: string }>();
   loadOlder = output<void>();
 
   messagesContainer = viewChild<ElementRef>('messagesContainer');

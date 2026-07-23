@@ -588,7 +588,7 @@ export const _MatrixChatStore = signalStore(
         if (!roomId) return;
         try {
           if (replyTo) {
-            await store.matrixService.sendReply(roomId, text, replyTo.eventId, replyTo.body, replyTo.sender, undefined, mentions, mentionRoom);
+            await store.matrixService.sendReply(roomId, text, replyTo.eventId, replyTo.body, replyTo.sender, replyTo.senderName, undefined, mentions, mentionRoom);
             patchState(store, { replyToMessage: undefined });
           } else {
             await store.matrixService.sendMessage(roomId, text, undefined, mentions, mentionRoom);

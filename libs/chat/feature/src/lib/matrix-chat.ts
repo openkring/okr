@@ -6,10 +6,10 @@ import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, I
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole } from '@okr/shared-util-core';
-import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
-import { MatrixMessage, RoleName } from '@okr/shared-models';
+import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
+import { MatrixMessage, PersonModelName, RoleName } from '@okr/shared-models';
 
-import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@okr/chat-ui';
+import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
 import { convertHeicToJpeg, isSupportedImageFile, filterRoomsByName, resolveInitialRoomId, MessageDraft } from '@okr/chat-util';
 
@@ -372,7 +372,6 @@ import { ChatHelpModal } from './chat-help.modal';
                     (reactionClicked)="onReactionClicked($event)"
                     (threadClicked)="onThreadClicked($event)"
                     (pollVoteClicked)="onPollVoteClicked($event)"
-                    (pollEndClicked)="onPollEndClicked($event)"
                     (personSelected)="onPersonSelected($event)"
                   />
                 }
@@ -454,7 +453,6 @@ import { ChatHelpModal } from './chat-help.modal';
                     (reactionClicked)="onReactionClicked($event)"
                     (threadClicked)="onThreadClicked($event)"
                     (pollVoteClicked)="onPollVoteClicked($event)"
-                    (pollEndClicked)="onPollEndClicked($event)"
                     (personSelected)="onPersonSelected($event)"
                   />
                 }
@@ -860,7 +858,7 @@ export class MatrixChat implements OnDestroy {
    * @param message 
    */
   protected async onMessageClicked(message: MatrixMessage): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, message);
     await this.executeActions(actionSheetOptions, message);
   }
@@ -968,11 +966,11 @@ export class MatrixChat implements OnDestroy {
    * event precisely so this fallback is possible from here, the only layer that knows
    * whether the localpart actually resolves.
    *
-   * `PersonEditPage` may sit behind a role guard; we navigate unconditionally and let
-   * the guard decide (no pre-check here). If that means non-privileged users get
-   * bounced, that's a follow-up, not something to work around in this handler.
+   * The person opens in a modal overlaid on the chat (not a `/person` route push): tapping a mention or
+   * reply link should return here when the user closes it. A bare router navigation has no Ionic nav
+   * stack to go "back" to, so the header back/cancel lands on the welcome page instead of the chat.
    */
-  protected onPersonSelected(event: { localpart: string; message: MatrixMessage }): void {
+  protected async onPersonSelected(event: { localpart: string; message: MatrixMessage }): Promise<void> {
     const person = this.store.appStore.allPersons().find(
       (p) => p.okey?.toLowerCase() === event.localpart.toLowerCase()
     );
@@ -983,7 +981,20 @@ export class MatrixChat implements OnDestroy {
       );
       return;
     }
-    this.router.navigate(['/person', person.okey]);
+    const { PersonEditModal } = await import('@okr/subject-person-feature');
+    const modal = await this.modalController.create({
+      component: PersonEditModal,
+      componentProps: {
+        person,
+        currentUser: this.store.appStore.currentUser(),
+        tags: this.store.appStore.getTags(PersonModelName),
+        tenantId: this.store.appStore.tenantId(),
+        genders: this.store.appStore.getCategory('gender'),
+        readOnly: true,
+      },
+    });
+    await modal.present();
+    await modal.onDidDismiss();
   }
 
   onCloseThread() {
@@ -1138,14 +1149,36 @@ export class MatrixChat implements OnDestroy {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, message: MatrixMessage): void {
     const currentUserId = this.matrixUserId();
     const isAuthor = !!currentUserId && message.sender === currentUserId;
+    const isPoll = message.type === 'org.matrix.msc3381.poll.start';
 
-    if (isAuthor) { // author of message
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.store.i18n.msg_edit(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
-    } else {  // receiver of message
+    // Poll-specific actions are merged into this single message action sheet (no separate poll sheet):
+    // everyone can view the results, react, reply and open a thread; the author can end a running poll.
+    // Layout: [results, end] | [react, reply, thread] | [message operations] — two dividers separate them.
+    if (isPoll) {
+      actionSheetOptions.buttons.push(createActionSheetButton('poll.viewVotes', this.store.i18n.results_title(), this.imgixBaseUrl, 'chart'));
+      if (isAuthor && !message.pollEnded) {
+        actionSheetOptions.buttons.push(createActionSheetButton('poll.end', this.store.i18n.survey_end(), this.imgixBaseUrl, 'cancel-circle'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetDivider());
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.msg_reply(), this.imgixBaseUrl, 'return_reply'));
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.store.i18n.thread_open(), this.imgixBaseUrl, 'branch'));
+      actionSheetOptions.buttons.push(createActionSheetDivider());
+    }
+
+    if (isAuthor) { // author of message
+      // Polls are intentionally not editable (like WhatsApp/Telegram): once sent they can only be ended
+      // or deleted, so answer ids can never drift out from under already-cast votes.
+      if (!isPoll) {
+        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.store.i18n.msg_edit(), this.imgixBaseUrl, 'edit'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
+    } else if (!isPoll) {  // receiver of a non-poll message (poll react/reply/thread already added above)
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.msg_reply(), this.imgixBaseUrl, 'return_reply'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.store.i18n.thread_open(), this.imgixBaseUrl, 'branch'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.msg_report_header(), this.imgixBaseUrl, 'alert-circle'));
+    } else {  // receiver of a poll message
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.msg_report_header(), this.imgixBaseUrl, 'alert-circle'));
     }
     if (message.type === 'm.file' && !!(message.mediaUrl ?? message.content.url)) { // file attachment → offer share (+ download on web)
@@ -1206,8 +1239,28 @@ export class MatrixChat implements OnDestroy {
         case 'chat.message.delete':
           await this.store.deleteMessage(message);
           break;
+        case 'poll.viewVotes':
+          await this.openPollDetail(message);
+          break;
+        case 'poll.end':
+          await this.onPollEndClicked({ pollEventId: message.eventId });
+          break;
       }
     }
+  }
+
+  /** Open the read-only poll results modal (voters per answer). Invoked from the message action sheet. */
+  private async openPollDetail(message: MatrixMessage): Promise<void> {
+    const modal = await this.modalController.create({
+      component: PollDetailModal,
+      componentProps: {
+        pollAnswers: message.pollAnswers ?? [],
+        pollVotes: message.pollVotes ?? {},
+        pollVoters: message.pollVoters ?? {},
+        i18n: this.store.i18n,
+      },
+    });
+    await modal.present();
   }
 
   protected hasRole(role: RoleName): boolean {

@@ -1,12 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, Signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, ModalController } from '@ionic/angular/standalone';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import { MatrixMessage } from '@okr/shared-models';
-import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { ENV } from '@okr/shared-config';
 import { hashUserIdToColor, MatrixChatI18n } from '@okr/chat-util';
-
-import { PollDetailModal } from './poll-detail.modal';
 
 @Component({
   selector: 'okr-poll-message',
@@ -105,7 +100,9 @@ import { PollDetailModal } from './poll-detail.modal';
     }
   `],
   template: `
-    <div class="poll-question" (click)="onHeaderClick(); $event.stopPropagation()">{{ question() }}</div>
+    <!-- No own click handler: a tap on the poll (except the answer rows, which vote) bubbles up to the
+         message bubble and opens the single, unified message action sheet (results / edit / end / delete …). -->
+    <div class="poll-question">{{ question() }}</div>
     <div class="poll-hint">{{ hint() }}</div>
 
     @for (answer of message().pollAnswers ?? []; track answer.id) {
@@ -159,10 +156,6 @@ import { PollDetailModal } from './poll-detail.modal';
   `
 })
 export class PollMessage {
-  private readonly actionSheetController = inject(ActionSheetController);
-  private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
-
   // inputs
   public message = input.required<MatrixMessage>();
   public currentUserId = input.required<string>();
@@ -170,7 +163,6 @@ export class PollMessage {
 
   // outputs
   public voteClicked = output<{ pollEventId: string; answerIds: string[] }>();
-  public endPollClicked = output<{ pollEventId: string }>();
 
   // computed
   protected readonly question = computed(() => {
@@ -242,40 +234,4 @@ export class PollMessage {
     }
   }
 
-  protected async onHeaderClick(): Promise<void> {
-    const url = this.env.services.imgixBaseUrl;
-    const opts: ActionSheetOptions = createActionSheetOptions(this.i18n().as_title());
-    opts.buttons.push(createActionSheetButton('poll.viewVotes', this.i18n().results_title(), url, 'chart'));
-    if (!this.message().pollEnded && this.message().sender === this.currentUserId()) {
-      opts.buttons.push(createActionSheetButton('poll.end', this.i18n().survey_end(), url, 'cancel-circle'));
-    }
-    opts.buttons.push(createActionSheetButton('cancel', this.i18n().cancel(), url, 'cancel'));
-
-    const sheet = await this.actionSheetController.create(opts);
-    await sheet.present();
-    const { data } = await sheet.onDidDismiss();
-    if (!data) return;
-
-    switch (data.action) {
-      case 'poll.viewVotes':
-        await this.openPollDetail();
-        break;
-      case 'poll.end':
-        this.endPollClicked.emit({ pollEventId: this.message().eventId });
-        break;
-    }
-  }
-
-  private async openPollDetail(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: PollDetailModal,
-      componentProps: {
-        pollAnswers: this.message().pollAnswers ?? [],
-        pollVotes: this.message().pollVotes ?? {},
-        pollVoters: this.message().pollVoters ?? {},
-        i18n: this.i18n()
-      }
-    });
-    await modal.present();
-  }
 }

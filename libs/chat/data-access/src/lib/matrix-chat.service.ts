@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, initMatrixLogLevel, buildMentionContent, MentionRef } from '@okr/chat-util';
+import { convertHeicToJpeg, initMatrixLogLevel, buildMentionContent, escapeHtml, MentionRef } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 
 import { isServiceAccount as isServiceAccountHelper } from './matrix-helpers';
@@ -2022,6 +2022,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
     replyToEventId: string,
     replyToBody: string,
     replyToSender: string,
+    replyToSenderName: string,
     threadId?: string,
     mentions?: MentionRef[],
     mentionRoom?: boolean,
@@ -2035,12 +2036,17 @@ private async buildAndEmitRoomsList(): Promise<void> {
     const mc = buildMentionContent(text, resolved, !!mentionRoom);
     const trailing = mc?.formatted_body ?? text;
 
+    // The rich-reply header shows the OKR person's display name (not the raw Matrix id) but keeps the
+    // matrix.to/<mxid> href — the message list intercepts that anchor (extractMentionLocalpart →
+    // personSelected) and routes the tap to the OKR person page. The plain-text `body` fallback keeps the
+    // mxid form (`> <@user:server>`) required by the spec for reply-fallback stripping in other clients.
+    const senderLink = `<a href="https://matrix.to/#/${escapeHtml(replyToSender)}">${escapeHtml(replyToSenderName)}</a>`;
     const fallback = `> <${replyToSender}> ${replyToBody}\n\n${text}`;
     const content: IContent = {
       msgtype: MsgType.Text,
       body: fallback,
       format: 'org.matrix.custom.html',
-      formatted_body: `<mx-reply><blockquote><a href="https://matrix.to/#/${roomId}/${replyToEventId}">In reply to</a> <a href="https://matrix.to/#/${replyToSender}">${replyToSender}</a><br>${replyToBody}</blockquote></mx-reply>${trailing}`,
+      formatted_body: `<mx-reply><blockquote><a href="https://matrix.to/#/${roomId}/${replyToEventId}">In reply to</a> ${senderLink}<br>${replyToBody}</blockquote></mx-reply>${trailing}`,
       'm.relates_to': {
         'm.in_reply_to': { event_id: replyToEventId },
         ...(threadId ? { rel_type: RelationType.Thread, event_id: threadId } : {}),
