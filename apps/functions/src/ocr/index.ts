@@ -1,5 +1,6 @@
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -8,6 +9,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { tmpdir } from 'os';
 
+import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { parseOcrPath } from './ocr-path.util';
 import { toCents, ocrResultId, matchRule, resolveDebitAccount, type OcrRuleLite } from './ocr-extract.util';
 import { geminiExtract } from './gemini-extract';
@@ -476,3 +478,65 @@ async function createReviewTask(
   });
   return ref.id;
 }
+
+/**
+ * Treasurer-only: re-run OCR extraction for an expense whose extraction failed (no booking yet).
+ * Deletes the expense's existing ocr-results, resets status to 'processing', and re-extracts each
+ * receipt via extractReceipt() — the resulting writes drive onOcrResultWritten (booking + task).
+ * Refused once the expense is booked (bookingKey set).
+ */
+export const redoExpenseOcr = onCall(
+  { region: REGION, enforceAppCheck: true, cors: true, secrets: [geminiApiKey] },
+  async (request: CallableRequest<{ expenseKey: string }>): Promise<{ reprocessed: number }> => {
+    checkAppCheckToken(request as any, 'redoExpenseOcr');
+    checkAuthentication(request as any, 'redoExpenseOcr');
+    const uid = request.auth!.uid;
+    const expenseKey = request.data?.expenseKey;
+    if (!expenseKey) throw new HttpsError('invalid-argument', 'expenseKey is required');
+
+    const db = getFirestore();
+    const expRef = db.collection(EXPENSE_COLLECTION).doc(expenseKey);
+    const expSnap = await expRef.get();
+    if (!expSnap.exists) throw new HttpsError('not-found', 'expense not found');
+    const expense = expSnap.data()!;
+    const tenantId = (expense['tenants'] as string[] | undefined)?.[0] ?? '';
+
+    const userSnap = await db.collection(USERS_COLLECTION).doc(uid).get();
+    const user = userSnap.data() ?? {};
+    const isMember = (user['tenants'] as string[] | undefined)?.includes(tenantId) ?? false;
+    if (!isMember || user['roles']?.['treasurer'] !== true) {
+      throw new HttpsError('permission-denied', 'treasurer role required');
+    }
+    if (expense['bookingKey']) {
+      throw new HttpsError('failed-precondition', 'expense is already booked — redo not allowed');
+    }
+
+    // Delete prior ocr-results for this expense so extractReceipt re-writes fresh docs.
+    const priorResults = await db.collection(OCR_RESULT_COLLECTION).where('correlationKey', '==', expenseKey).get();
+    const batch = db.batch();
+    priorResults.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+
+    await expRef.set({ status: 'processing' }, { merge: true });
+
+    // Re-extract every receipt in the expense's OCR folder.
+    const bucket = admin.storage().bucket();
+    const [files] = await bucket.getFiles({ prefix: `tenant/${tenantId}/ocr/expense/${expenseKey}/` });
+    let reprocessed = 0;
+    for (const file of files) {
+      const [metadata] = await file.getMetadata();
+      await extractReceipt({
+        objectName: file.name,
+        bucketName: bucket.name,
+        contentType: metadata.contentType ?? 'application/octet-stream',
+        size: Number(metadata.size ?? 0),
+        downloadToken: (metadata.metadata?.['firebaseStorageDownloadTokens'] as string ?? '').split(',')[0] ?? '',
+        generation: String(metadata.generation ?? ''),
+        apiKey: geminiApiKey.value(),
+      });
+      reprocessed++;
+    }
+    logger.info(`redoExpenseOcr: re-extracted ${reprocessed} receipt(s) for expense ${expenseKey}`);
+    return { reprocessed };
+  },
+);

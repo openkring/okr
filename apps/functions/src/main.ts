@@ -169,8 +169,10 @@ export const onRagFileDeleted = Rag.onRagFileDeleted;
 // storage + firestore triggers: OCR pipeline at tenant/{tenantId}/ocr/{ocrUsage}/...
 export const onOcrFileFinalized = Ocr.onOcrFileFinalized;
 export const onOcrResultWritten = Ocr.onOcrResultWritten;
+export const redoExpenseOcr = Ocr.redoExpenseOcr;
 // expense creation (CF-only writes to the `expenses` collection)
 export const createExpense = Expense.createExpense;
+export const deleteExpense = Expense.deleteExpense;
 
 // address
 export const generateQrBill = Address.generateQrBill;
