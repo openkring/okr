@@ -62,3 +62,36 @@ export const createExpense = onCall(
     return { expenseKey: ref.id };
   },
 );
+
+/**
+ * Soft-delete an expense (isArchived=true). The expenses collection is CF-write-only, so this is the
+ * only client-reachable delete. Allowed for the expense's author (userId === caller) or a treasurer.
+ */
+export const deleteExpense = onCall(
+  { region: REGION, enforceAppCheck: true, cors: true },
+  async (request: CallableRequest<{ expenseKey: string }>): Promise<{ ok: true }> => {
+    checkAppCheckToken(request as any, 'deleteExpense');
+    checkAuthentication(request as any, 'deleteExpense');
+    const uid = request.auth!.uid;
+    const expenseKey = request.data?.expenseKey;
+    if (!expenseKey) throw new HttpsError('invalid-argument', 'expenseKey is required');
+
+    const db = getFirestore();
+    const expSnap = await db.collection(EXPENSE_COLLECTION).doc(expenseKey).get();
+    if (!expSnap.exists) throw new HttpsError('not-found', 'expense not found');
+    const expense = expSnap.data()!;
+
+    const userSnap = await db.collection(USERS_COLLECTION).doc(uid).get();
+    const user = userSnap.data() ?? {};
+    const tenantId = (expense['tenants'] as string[] | undefined)?.[0] ?? '';
+    const isMember = (user['tenants'] as string[] | undefined)?.includes(tenantId) ?? false;
+    const isTreasurer = user['roles']?.['treasurer'] === true;
+    const isAuthor = expense['userId'] === uid;
+    if (!isMember || !(isTreasurer || isAuthor)) {
+      throw new HttpsError('permission-denied', 'not allowed to delete this expense');
+    }
+
+    await expSnap.ref.set({ isArchived: true }, { merge: true });
+    return { ok: true };
+  },
+);
