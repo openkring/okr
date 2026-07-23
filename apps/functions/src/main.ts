@@ -15,7 +15,7 @@ import * as Ocr from './ocr';
 import * as Expense from './expense';
 import * as Email from './email';
 import * as Bexio from './bexio';
-import * as Zefix from './zefix';
+import * as Gateway from './_gateway';
 import * as SearchCh from './searchch';
 import * as Location from './location';
 import * as Srv from './srv';
@@ -150,8 +150,12 @@ export const createSrvContact = Srv.createSrvContact;
 export const updateSrvContact = Srv.updateSrvContact;
 
 // zefix registry lookup
-export const zefixSearch = Zefix.zefixSearch;
-export const zefixGetByUid = Zefix.zefixGetByUid;
+// external-data-gateway: zefix retrofitted onto the gateway (cache + quota + attribution)
+export const zefixSearch = Gateway.zefixSearch;
+export const zefixGetByUid = Gateway.zefixGetByUid;
+
+// external-data-gateway: OECD statistics (2.59) — first new consumer
+export const oecdQuery = Gateway.oecdQuery;
 
 // search.ch person-address lookup
 export const searchChSearchPerson = SearchCh.searchChSearchPerson;
