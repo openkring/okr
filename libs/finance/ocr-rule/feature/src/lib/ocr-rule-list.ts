@@ -34,7 +34,7 @@ import { OcrRuleStore } from './ocr-rule.store';
             <ion-item button (click)="store.openEdit(rule, store.isReadOnly())">
               <ion-label>
                 <h3>{{ rule.party }} → {{ rule.accountKey || '—' }}</h3>
-                <p>{{ rule.ocrUsage }} · Rang {{ rule.rank }}{{ (rule.aliases ?? []).length ? ' · ' + (rule.aliases ?? []).join(', ') : '' }}</p>
+                <p>{{ usageLabel(rule.ocrUsage) }} · Rang {{ rule.rank }}{{ (rule.aliases ?? []).length ? ' · ' + (rule.aliases ?? []).join(', ') : '' }}</p>
               </ion-label>
               @if (!rule.active) {
                 <ion-badge slot="end" color="medium">{{ store.i18n.inactive() }}</ion-badge>
@@ -56,6 +56,16 @@ import { OcrRuleStore } from './ocr-rule.store';
 export class OcrRuleList {
   protected readonly store = inject(OcrRuleStore);
   private readonly route = inject(ActivatedRoute);
+
+  /** Translated label for an OcrUsage value (falls back to the raw enum). */
+  protected usageLabel(usage: string): string {
+    switch (usage) {
+      case 'invoice': return this.store.i18n.usage_invoice();
+      case 'expense': return this.store.i18n.usage_expense();
+      case 'paper': return this.store.i18n.usage_paper();
+      default: return usage;
+    }
+  }
 
   constructor() {
     // Standalone route (not under AccountingShell): seed the accounting tenant from the param

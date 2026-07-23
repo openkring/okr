@@ -106,6 +106,7 @@ export class OcrRuleEditModal implements OnInit {
 
   protected async save(): Promise<void> {
     this.edit.aliases = this.aliasText.split(',').map(a => a.trim()).filter(a => a.length > 0);
+    this.edit.rank = Number(this.edit.rank) || 0; // ngModel on type=number yields a string; keep it numeric
     await this.modalController.dismiss(this.edit, 'confirm');
   }
 }
