@@ -114,6 +114,13 @@ export function makeGatewayCallable<P, R, M>(adapter: ProviderAdapter<P, R, M>) 
       }
       const token = request.auth?.token as Record<string, unknown> | undefined;
       const ctx: GatewayContext = {
+        // SECURITY — client-supplied tenantId. Safe ONLY while every adapter is
+        // `scope: 'shared'` (tenantId never enters the cache key) and
+        // `requiresAuth: true` (so the quota key uses uid, not this fallback).
+        // Before adding any `scope: 'tenant'` or `scope: 'user'` adapter, derive
+        // tenantId server-side from the auth token / user record — a client
+        // could otherwise send another tenant's id and read/poison its cache
+        // partition (cross-tenant leak). See spec PENDING §1.18.
         tenantId: (request.data as { tenantId?: string })?.tenantId ?? 'scs',
         uid: request.auth?.uid ?? null,
         isAdmin: token?.['admin'] === true || token?.['contentAdmin'] === true,
