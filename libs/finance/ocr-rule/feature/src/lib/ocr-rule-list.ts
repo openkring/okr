@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonBadge, IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
-  IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+  IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 
@@ -13,7 +13,7 @@ import { OcrRuleStore } from './ocr-rule.store';
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent,
-    IonList, IonItem, IonLabel, IonNote, IonBadge, IonFab, IonFabButton, IonIcon,
+    IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon,
     SvgIconPipe,
   ],
   providers: [OcrRuleStore],
@@ -34,7 +34,7 @@ import { OcrRuleStore } from './ocr-rule.store';
             <ion-item button (click)="store.openEdit(rule, store.isReadOnly())">
               <ion-label>
                 <h3>{{ rule.party }} → {{ rule.accountKey || '—' }}</h3>
-                <p>{{ rule.ocrUsage }} · Rang {{ rule.rank }}{{ rule.aliases.length ? ' · ' + rule.aliases.join(', ') : '' }}</p>
+                <p>{{ rule.ocrUsage }} · Rang {{ rule.rank }}{{ (rule.aliases ?? []).length ? ' · ' + (rule.aliases ?? []).join(', ') : '' }}</p>
               </ion-label>
               @if (!rule.active) {
                 <ion-badge slot="end" color="medium">{{ store.i18n.inactive() }}</ion-badge>
