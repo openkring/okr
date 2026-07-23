@@ -1,0 +1,16 @@
+{
+  "template": {
+    "blank": {
+      "label": "Leere Wand",
+      "desc": "Eine leere Fläche für Post-its und Notizen."
+    },
+    "fourQuadrant": {
+      "label": "Vier Quadranten",
+      "desc": "Ordne Notizen in vier Feldern an (z. B. Wirkung / Aufwand).",
+      "q1": "Oben links",
+      "q2": "Oben rechts",
+      "q3": "Unten links",
+      "q4": "Unten rechts"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "instruments-data-access",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/instruments/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:instruments", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/instruments/data-access",
+        "main": "libs/instruments/data-access/src/index.ts",
+        "tsConfig": "libs/instruments/data-access/tsconfig.lib.json",
+        "assets": ["libs/instruments/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

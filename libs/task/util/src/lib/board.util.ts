@@ -1,5 +1,5 @@
 import { CategoryListModel, TaskModel } from '@okr/shared-models';
-import { rankForIndex } from './rank.util';
+import { rankForIndex } from '@okr/shared-util-core';
 
 /**
  * A single Kanban column. The board is a *view*, not an entity (spec D6): columns are derived

@@ -1,0 +1,19 @@
+{
+  "name": {
+    "label": "Name",
+    "placeholder": "Name des Whiteboards",
+    "helper": ""
+  },
+  "description": {
+    "label": "Beschreibung",
+    "placeholder": ""
+  },
+  "item": {
+    "text": {
+      "label": "Text",
+      "placeholder": "Text eingeben"
+    },
+    "color": { "label": "Farbe" },
+    "owner": { "label": "Zuständig" }
+  }
+}
