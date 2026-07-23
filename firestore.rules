@@ -257,6 +257,16 @@ service cloud.firestore {
     match /_rateLimits/{docId} {
       allow read, write: if false;
     }
+    // External Data Gateway — provider response cache. Admin-SDK only.
+    // Configure a Firestore TTL policy on `apiCache.expiresAt`.
+    match /apiCache/{docId} {
+      allow read, write: if false;
+    }
+    // External Data Gateway — durable monthly per-provider usage counters.
+    // Configure a Firestore TTL policy on `_apiQuota.expiresAt`.
+    match /_apiQuota/{docId} {
+      allow read, write: if false;
+    }
     match /stats_boats/{boatKey}/years/{year} {
       allow read:  if signedIn();
       allow write: if false;
