@@ -370,7 +370,8 @@ async function handleExpenseResult(
       status: 'failed',
       error: 'Beleg konnte nicht automatisch verarbeitet werden — bitte manuell erfassen.',
     }, { merge: true });
-    await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '', 'Beleg manuell erfassen', after);
+    const taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '', 'Beleg manuell erfassen', after);
+    if (taskKey) await expenseRef.set({ taskKey }, { merge: true });
     return;
   }
 
@@ -419,8 +420,9 @@ async function handleExpenseResult(
 
   // Task creation is I/O outside the transaction, and only on first creation of the booking.
   if (created) {
-    await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
+    const taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
       `Beleg prüfen: ${after.vendor} ${(amountCents / 100).toFixed(2)} ${currency}`, after, treasurer);
+    if (taskKey) await expenseRef.set({ taskKey }, { merge: true });
   }
 
   // Latch: write resolution back + mark processed (idempotency — re-delivery sees bookingKey set).
@@ -459,18 +461,19 @@ async function handleExpenseResult(
   }
 }
 
-/** Create a TaskModel assigned to the treasurer. */
+/** Create a TaskModel assigned to the treasurer. Returns the new task's doc id, or '' if none created. */
 async function createReviewTask(
   tenantId: string, reviewAssigneePersonKey: string, name: string, result: Pick<OcrResultDoc, 'storagePath'>,
   resolvedTreasurer?: { key: string; name1: string; name2: string } | null,
-): Promise<void> {
+): Promise<string> {
   const db = getFirestore();
   const treasurer = resolvedTreasurer !== undefined ? resolvedTreasurer : await resolveTreasurer(tenantId, reviewAssigneePersonKey);
   if (!treasurer || !treasurer.key) {
     logger.warn(`createReviewTask: no treasurer for tenant ${tenantId} — task not created`);
-    return;
+    return '';
   }
-  await db.collection(TASK_COLLECTION).doc().set({
+  const ref = db.collection(TASK_COLLECTION).doc();
+  await ref.set({
     tenants: [tenantId], isArchived: false,
     name: name.slice(0, 200), index: '', tags: '',
     notes: `OCR-Beleg: ${result.storagePath}`,
@@ -481,4 +484,5 @@ async function createReviewTask(
     priority: 'medium', importance: 'medium',
     calendars: [], rank: '',
   });
+  return ref.id;
 }
