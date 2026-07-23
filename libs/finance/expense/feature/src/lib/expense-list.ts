@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import {
   ModalController, ToastController,
-  IonButton, IonButtons, IonContent, IonHeader, IonIcon,
+  IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
@@ -24,7 +24,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
     SvgIconPipe,
     Spinner, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonMenuButton,
-    IonContent, IonList, IonItem, IonLabel, IonPopover,
+    IonContent, IonList, IonItem, IonLabel, IonPopover, IonFab, IonFabButton,
   ],
   providers: [ExpenseStore],
   template: `
@@ -68,6 +68,13 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
           }
         </ion-list>
       }
+      @if (canAdd()) {
+        <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+          <ion-fab-button (click)="openNew()">
+            <ion-icon src="{{ 'add' | svgIcon }}" />
+          </ion-fab-button>
+        </ion-fab>
+      }
     </ion-content>
   `,
 })
@@ -108,7 +115,7 @@ export class ExpenseList {
     return hasRole(role, this.currentUser());
   }
 
-  private async openNew(): Promise<void> {
+  protected async openNew(): Promise<void> {
     const modal = await this.modalController.create({ component: ExpenseNewModal });
     await modal.present();
     const { role } = await modal.onDidDismiss();

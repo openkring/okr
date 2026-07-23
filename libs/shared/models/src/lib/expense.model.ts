@@ -1,4 +1,4 @@
-import { DEFAULT_CURRENCY, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_DATETIME, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 
 import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 
@@ -17,6 +17,7 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
   public notes = DEFAULT_NOTES;
+  public creationDateTime = DEFAULT_DATETIME; // StoreDateTime (yyyyMMddHHmmss); set server-side by createExpense CF. Sortable lexicographically for newest-first ordering.
 
   public abstract = '';
   public amountTotal = 0;

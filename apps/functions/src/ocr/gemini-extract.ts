@@ -5,8 +5,10 @@ import { logger } from 'firebase-functions/v2';
 import { OCR_RESPONSE_SCHEMA, buildOcrPrompt, type OcrRawExtraction } from './ocr-schema';
 import type { OcrUsage } from './ocr-path.util';
 
-// GA multimodal model (accepts PDF/image). Kept in one place; can be aligned with rag/index.ts RAG_MODEL.
-export const OCR_MODEL = 'gemini-2.5-flash';
+// GA multimodal model (accepts PDF/image), pinned to a concrete version so the structured-output
+// (responseSchema) extraction stays stable. gemini-2.5-flash was retired (404 "no longer available");
+// gemini-3.6-flash is Google's recommended stable replacement (verified available via ListModels).
+export const OCR_MODEL = 'gemini-3.6-flash';
 
 /**
  * Run Gemini multimodal extraction on a local file. Inline base64 (recommended for ≤~20MB single-shot).

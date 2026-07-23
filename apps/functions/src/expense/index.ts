@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'createExpense';
@@ -48,6 +49,7 @@ export const createExpense = onCall(
     const ref = db.collection(EXPENSE_COLLECTION).doc();
     await ref.set({
       tenants: [d.tenantId], isArchived: false, index: '', tags: '', notes: '',
+      creationDateTime: getTodayStr(DateFormat.StoreDateTime),
       abstract: d.abstract ?? '',
       amountTotal: d.amountTotal, currency: d.currency || 'CHF',
       transferTo: d.transferTo === 'issuer' ? 'issuer' : 'me', iban: d.iban ?? '',

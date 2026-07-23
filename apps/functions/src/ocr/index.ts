@@ -183,6 +183,20 @@ export const onOcrFileFinalized = onObjectFinalized(
         bookingKey: '',
         error: error instanceof Error ? error.message : String(error),
       }, { merge: true });
+
+      // A failed extraction is a dead end for the automatic pipeline: no retry, no booking, and
+      // onOcrResultWritten ignores non-'extracted' results — so without this the expense stays
+      // 'processing' forever and nobody is told. Open a review task for the treasurer (onTaskWritten
+      // sends the FCM push) so a human can investigate and record the receipt manually. Finance
+      // usages only; best-effort so a task error can't re-throw — the result doc already exists, so a
+      // retried event would hit the idempotency guard above and skip, leaving no task at all.
+      if (ocrUsage === 'expense' || ocrUsage === 'invoice') {
+        try {
+          await createReviewTask(tenantId, '', 'OCR fehlgeschlagen — Beleg manuell erfassen', { storagePath: objectName });
+        } catch (taskErr) {
+          logger.error(`onOcrFileFinalized: could not create failure review task for "${objectName}"`, taskErr);
+        }
+      }
     } finally {
       await fs.unlink(tempFilePath).catch(() => undefined);
     }
@@ -447,7 +461,7 @@ async function handleExpenseResult(
 
 /** Create a TaskModel assigned to the treasurer. */
 async function createReviewTask(
-  tenantId: string, reviewAssigneePersonKey: string, name: string, result: OcrResultDoc,
+  tenantId: string, reviewAssigneePersonKey: string, name: string, result: Pick<OcrResultDoc, 'storagePath'>,
   resolvedTreasurer?: { key: string; name1: string; name2: string } | null,
 ): Promise<void> {
   const db = getFirestore();

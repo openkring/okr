@@ -1,14 +1,15 @@
 import { Component, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { from } from 'rxjs';
 import {
   ModalController,
   IonBadge, IonButton, IonButtons, IonContent,
   IonHeader, IonItem, IonLabel, IonList, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { ExpenseDocumentModel, ExpenseModel } from '@okr/shared-models';
+import { ExpenseModel } from '@okr/shared-models';
 import { centsToCHF } from '@okr/finance-expense-util';
-import { ExpenseDocumentService } from '@okr/finance-expense-data-access';
+import { ExpenseReceipt, ExpenseService } from '@okr/finance-expense-data-access';
 
 @Component({
   selector: 'okr-expense-detail-modal',
@@ -62,11 +63,14 @@ import { ExpenseDocumentService } from '@okr/finance-expense-data-access';
         }
       </ion-list>
 
-      @if (docs().length > 0) {
+      @if (receipts().length > 0) {
         <ion-list>
-          @for (doc of docs(); track doc.okey; let i = $index) {
-            <ion-item>
-              <ion-label>Beleg {{ i + 1 }}</ion-label>
+          @for (receipt of receipts(); track receipt.url; let i = $index) {
+            <ion-item button (click)="open(receipt.url)">
+              <ion-label>
+                <h3>Beleg {{ i + 1 }}</h3>
+                <p>{{ receipt.name }}</p>
+              </ion-label>
             </ion-item>
           }
         </ion-list>
@@ -78,16 +82,22 @@ export class ExpenseDetailModal {
   public readonly expense = input.required<ExpenseModel>();
 
   private readonly modalController = inject(ModalController);
-  private readonly expenseDocService = inject(ExpenseDocumentService);
+  private readonly expenseService = inject(ExpenseService);
 
   protected readonly toCHF = centsToCHF;
 
-  private readonly docsResource = rxResource<ExpenseDocumentModel[], unknown>({
-    stream: () => this.expenseDocService.listForExpense(this.expense().okey),
+  // Receipts are read straight from Storage (tenant/{tenantId}/ocr/expense/{expenseKey}/) — there
+  // is no Firestore record per file. listReceipts() is a Promise, wrapped via `from` for rxResource.
+  private readonly receiptsResource = rxResource<ExpenseReceipt[], unknown>({
+    stream: () => from(this.expenseService.listReceipts(this.expense().okey)),
   });
 
-  protected docs(): ExpenseDocumentModel[] {
-    return this.docsResource.value() ?? [];
+  protected receipts(): ExpenseReceipt[] {
+    return this.receiptsResource.value() ?? [];
+  }
+
+  protected open(url: string): void {
+    window.open(url, '_blank', 'noopener');
   }
 
   protected async dismiss(): Promise<void> {

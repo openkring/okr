@@ -12,7 +12,9 @@ import { checkAppCheckToken, checkAuthentication, checkStringField } from '@okr/
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
-const RAG_MODEL = 'gemini-3-flash-preview';
+// Pinned stable model. gemini-3-flash-preview (preview) is flagged for deprecation; gemini-3.6-flash
+// is Google's recommended stable replacement (same one used by the OCR extractor).
+const RAG_MODEL = 'gemini-3.6-flash';
 
 /** Storage path prefix watched for RAG documents. */
 const RAG_PATH_PREFIX = 'tenant/';

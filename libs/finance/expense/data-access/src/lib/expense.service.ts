@@ -2,8 +2,9 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getDownloadURL, getMetadata, listAll, ref } from 'firebase/storage';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { ExpenseCollection, ExpenseModel, UserModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
@@ -24,9 +25,17 @@ export interface CreateExpensePayload {
   receiptCount: number;
 }
 
+/** A receipt file uploaded for an expense, read straight from Firebase Storage. */
+export interface ExpenseReceipt {
+  name: string;
+  url: string;
+  contentType: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ExpenseService {
   private readonly env = inject(ENV);
+  private readonly storage = inject(STORAGE);
   private readonly firestoreService = inject(FirestoreService);
   private readonly i18n = inject(I18nService).translateAll({
     create_conf:  PFX + 'create.conf',
@@ -68,21 +77,47 @@ export class ExpenseService {
     return this.firestoreService.readModel<ExpenseModel>(ExpenseCollection, key);
   }
 
-  public listAll(orderBy = 'okey', sortOrder = 'desc'): Observable<ExpenseModel[]> {
+  // Order by creationDateTime (StoreDateTime, yyyyMMddHHmmss — lexicographically = chronologically
+  // sortable), NOT by 'okey'. okey is the document id, stripped before write and re-attached on read
+  // (idField), so no expense doc stores an 'okey' field — and Firestore's orderBy silently EXCLUDES
+  // documents missing the ordering field, which is why orderBy('okey') returned an empty list.
+  public listAll(orderBy = 'creationDateTime', sortOrder = 'desc'): Observable<ExpenseModel[]> {
     return this.firestoreService.searchData<ExpenseModel>(
       ExpenseCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder
     );
   }
 
-  public listForUser(userId: string, orderBy = 'okey', sortOrder = 'desc'): Observable<ExpenseModel[]> {
+  public listForUser(userId: string, orderBy = 'creationDateTime', sortOrder = 'desc'): Observable<ExpenseModel[]> {
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'userId', operator: '==', value: userId });
     return this.firestoreService.searchData<ExpenseModel>(ExpenseCollection, query, orderBy, sortOrder);
   }
 
-  public listForTenant(accountingTenantId: string, orderBy = 'okey', sortOrder = 'desc'): Observable<ExpenseModel[]> {
+  public listForTenant(accountingTenantId: string, orderBy = 'creationDateTime', sortOrder = 'desc'): Observable<ExpenseModel[]> {
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'accountingTenantId', operator: '==', value: accountingTenantId });
     return this.firestoreService.searchData<ExpenseModel>(ExpenseCollection, query, orderBy, sortOrder);
+  }
+
+  /**
+   * List the receipt files uploaded for an expense. The submit flow uploads receipts straight to
+   * Storage under tenant/{tenantId}/ocr/expense/{expenseKey}/ with NO Firestore record per file,
+   * so we read them directly from that Storage folder. Returns [] if the folder is empty/absent.
+   */
+  public async listReceipts(expenseKey: string): Promise<ExpenseReceipt[]> {
+    if (!expenseKey) return [];
+    const dir = `tenant/${this.env.tenantId}/ocr/expense/${expenseKey}`;
+    try {
+      const listing = await listAll(ref(this.storage, dir));
+      return await Promise.all(
+        listing.items.map(async item => {
+          const [url, metadata] = await Promise.all([getDownloadURL(item), getMetadata(item)]);
+          return { name: item.name, url, contentType: metadata.contentType ?? '' };
+        })
+      );
+    } catch (e) {
+      console.error(`ExpenseService.listReceipts: failed to list ${dir}`, e);
+      return [];
+    }
   }
 }
