@@ -1,0 +1,93 @@
+import { computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { ModalController } from '@ionic/angular/standalone';
+import { signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { of } from 'rxjs';
+
+import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { OcrRuleModel } from '@okr/shared-models';
+
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountService } from '@okr/finance-account-data-access';
+import { VatCodeService } from '@okr/finance-vat-code-data-access';
+import { OcrRuleService } from '@okr/finance-ocr-rule-data-access';
+import { OCR_RULE_I18N_KEYS, leafAccounts, normalizeParty } from '@okr/finance-ocr-rule-util';
+
+import { OcrRuleEditModal } from './ocr-rule-edit.modal';
+
+export const OcrRuleStore = signalStore(
+  withState({}),
+  withProps(() => ({
+    ocrRuleService: inject(OcrRuleService),
+    accountService: inject(AccountService),
+    vatCodeService: inject(VatCodeService),
+    accountingStore: inject(AccountingStore),
+    appStore: inject(AppStore),
+    modalController: inject(ModalController),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll(OCR_RULE_I18N_KEYS),
+    rulesResource: rxResource({
+      stream: () => store.ocrRuleService.list(),
+    }),
+    accountsResource: rxResource({
+      stream: () => {
+        const id = store.accountingStore.accountingTenantId();
+        return id ? store.accountService.list(id) : of([]);
+      },
+    }),
+    vatCodesResource: rxResource({
+      stream: () => {
+        const id = store.accountingStore.accountingTenantId();
+        return id ? store.vatCodeService.list(id) : of([]);
+      },
+    }),
+  })),
+  withComputed(store => ({
+    rules: computed(() => store.rulesResource.value() ?? []),
+    isLoading: computed(() => store.rulesResource.isLoading()),
+    accounts: computed(() => leafAccounts(store.accountsResource.value() ?? [])),
+    vatCodes: computed(() => store.vatCodesResource.value() ?? []),
+    currentUser: computed(() => store.appStore.currentUser()),
+    isReadOnly: computed(() => store.accountingStore.isExternallyManaged()),
+  })),
+  withMethods(store => ({
+    setAccountingTenant(id: string): void {
+      store.accountingStore.setTenant(id);
+    },
+
+    async openEdit(rule: OcrRuleModel, readOnly = true): Promise<void> {
+      const modal = await store.modalController.create({
+        component: OcrRuleEditModal,
+        componentProps: { rule, readOnly, accounts: store.accounts(), vatCodes: store.vatCodes() },
+      });
+      modal.present();
+      const { data, role } = await modal.onDidDismiss();
+      if (role === 'confirm' && data && !store.isReadOnly()) {
+        const edited = data as OcrRuleModel;
+        edited.party = normalizeParty(edited.party);
+        edited.aliases = (edited.aliases ?? []).map(a => normalizeParty(a)).filter(a => a.length > 0);
+        if (edited.okey?.length > 0) {
+          await store.ocrRuleService.update(edited, store.currentUser());
+        } else {
+          await store.ocrRuleService.create(edited, store.currentUser());
+        }
+        store.rulesResource.reload();
+      }
+    },
+
+    async openCreate(): Promise<void> {
+      if (store.isReadOnly()) return;
+      const rule = new OcrRuleModel(store.appStore.tenantId());
+      await this.openEdit(rule, false);
+    },
+
+    async delete(rule: OcrRuleModel): Promise<void> {
+      if (store.isReadOnly()) return;
+      await store.ocrRuleService.delete(rule, store.currentUser());
+      store.rulesResource.reload();
+    },
+  })),
+);
