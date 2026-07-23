@@ -1,0 +1,12 @@
+{
+  "list": {
+    "title": "OCR-Regeln"
+  },
+  "empty": "Noch keine OCR-Regeln erfasst.",
+  "usage": {
+    "invoice": "Rechnung",
+    "expense": "Spesen",
+    "paper": "Beleg"
+  },
+  "inactive": "inaktiv"
+}
