@@ -80,10 +80,20 @@ export const zefixSearchAdapter: ProviderAdapter<{ name: string; tenantId?: stri
 };
 
 // ---------- details by uid ----------
+/**
+ * Unwrap Zefix's details payload (a single object or a one-element array) to the
+ * company record, or null when the register returned no match. Zefix answers an
+ * unknown UID with HTTP 200 and an empty/absent body (not a 404), so `fetch`
+ * uses this to raise a proper `not-found` instead of returning a blank record —
+ * preserving the guard the pre-gateway `zefix/index.ts` had.
+ */
+export function zefixCompanyOrNull(raw: unknown): Record<string, unknown> | null {
+  const c = Array.isArray(raw) ? raw[0] : raw;
+  return c && typeof c === 'object' ? (c as Record<string, unknown>) : null;
+}
+
 export function mapZefixDetails(raw: unknown): ZefixCompanyDetails {
-  const c: Record<string, unknown> = Array.isArray(raw)
-    ? (raw[0] as Record<string, unknown>)
-    : (raw as Record<string, unknown>);
+  const c: Record<string, unknown> = zefixCompanyOrNull(raw) ?? {};
   const address = (c?.['address'] as Record<string, unknown>) ?? {};
   const legalFormId =
     typeof c?.['legalFormId'] === 'number'
@@ -122,6 +132,14 @@ export const zefixDetailsAdapter: ProviderAdapter<{ uid: string; tenantId?: stri
       method: 'GET',
       headers: { Authorization: basicAuthHeader() },
     });
+    // Zefix returns HTTP 200 + empty body for an unknown UID — surface a clear
+    // not-found rather than caching/returning a blank company record.
+    if (!zefixCompanyOrNull(res.data)) {
+      throw new (await import('firebase-functions/v2/https')).HttpsError(
+        'not-found',
+        `No company found for uid "${uid}"`,
+      );
+    }
     return res.data;
   },
   map: mapZefixDetails,

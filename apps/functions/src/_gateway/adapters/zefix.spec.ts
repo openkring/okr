@@ -1,6 +1,21 @@
 // apps/functions/src/_gateway/adapters/zefix.spec.ts
 import { describe, it, expect } from 'vitest';
-import { mapZefixSearch, mapZefixDetails } from './zefix';
+import { mapZefixSearch, mapZefixDetails, zefixCompanyOrNull } from './zefix';
+
+describe('zefixCompanyOrNull', () => {
+  it('returns null for an empty 200 body (unknown uid)', () => {
+    expect(zefixCompanyOrNull([])).toBeNull();
+    expect(zefixCompanyOrNull(undefined)).toBeNull();
+    expect(zefixCompanyOrNull(null)).toBeNull();
+    expect(zefixCompanyOrNull('')).toBeNull();
+  });
+  it('returns the record for a single object', () => {
+    expect(zefixCompanyOrNull({ name: 'Acme AG' })).toEqual({ name: 'Acme AG' });
+  });
+  it('unwraps a one-element array', () => {
+    expect(zefixCompanyOrNull([{ name: 'X' }])).toEqual({ name: 'X' });
+  });
+});
 
 describe('mapZefixSearch', () => {
   it('maps a list payload', () => {
