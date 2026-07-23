@@ -5,16 +5,16 @@
 // caching, quota, logging and attribution. Adapters MUST NOT import
 // `firebase-functions` — they are plain data + two functions.
 
-// NOTE: apps/functions pins firebase-functions@^6.3.2 (resolved 6.4.0), whose
-// `firebase-functions/params` entry point imports SecretParam from './types'
-// but does not re-export it — so the type is unreachable from the documented
-// subpath in this installed version (it IS re-exported starting at 7.0.5,
-// which the workspace root already uses). Importing straight from the lib's
-// './types' module is the only way to name the type today; it still resolves
-// under moduleResolution:"node" (package.json `exports` gates are not
-// enforced) and the same path exists in 7.0.5, so this stays valid if/when
-// apps/functions is bumped to match the root's firebase-functions version.
-import type { SecretParam } from 'firebase-functions/lib/params/types';
+// NOTE: derive the secret-param type from the PUBLIC `defineSecret` export
+// rather than importing `SecretParam` by name. apps/functions pins
+// firebase-functions@^6.3.2 (resolved 6.4.0), whose `firebase-functions/params`
+// entry point imports SecretParam from './types' but does not re-export the type
+// (it IS re-exported starting at 7.0.5). `defineSecret` is a stable public export
+// in both versions, so `ReturnType<typeof defineSecret>` names the same type
+// without reaching into an unexported internal path — and stays valid under any
+// moduleResolution setting.
+import type { defineSecret } from 'firebase-functions/params';
+type SecretParam = ReturnType<typeof defineSecret>;
 
 /** Where a cache entry may be shared. Getting this wrong leaks data across
  *  tenants, so every adapter must declare it explicitly. */
