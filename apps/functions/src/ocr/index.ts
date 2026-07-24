@@ -242,7 +242,9 @@ export const onOcrResultWritten = onDocumentWritten(
       return;
     }
     if ((cfg['accountingBackend'] ?? 'native') !== 'native') {
-      await resultRef.set({ status: 'processed' }, { merge: true }); // external backend: no local booking
+      // External backend owns the ledger — no local booking, but the treasurer must still be
+      // notified to book the receipt in the external system (e.g. Bexio). See §11 "External backends".
+      await handleExternalBackendResult(tenantId, cfg, after, resultRef);
       return;
     }
 
@@ -451,6 +453,64 @@ async function handleExpenseResult(
   } catch (err) {
     logger.warn(`handleExpenseResult: amount-mismatch check failed for expense ${correlationKey}`, err);
   }
+}
+
+/**
+ * External accounting backend (e.g. Bexio owns the ledger): we do NOT create a local booking, but the
+ * treasurer must still be told to book the receipt in the external system. For `expense` usage we create
+ * exactly ONE review task per expense — deterministic task id = expenseKey, so redelivery of any receipt
+ * (and every additional receipt of the same expense) collapses to the same task instead of spamming N.
+ * Other usages (invoice/paper) just store the extraction. The full Bexio integration (document upload +
+ * prepared payment) is a separate spec — see 2026-07-21-ocr-cloud-function-design.md §11.
+ */
+async function handleExternalBackendResult(
+  tenantId: string,
+  cfg: FirebaseFirestore.DocumentData,
+  after: OcrResultDoc,
+  resultRef: FirebaseFirestore.DocumentReference,
+): Promise<void> {
+  const db = getFirestore();
+  const correlationKey = after.correlationKey;
+
+  // Only expense uploads carry a correlationKey to key the task by; other usages store extraction only.
+  if (after.ocrUsage !== 'expense' || !correlationKey) {
+    await resultRef.set({ status: 'processed' }, { merge: true });
+    return;
+  }
+
+  const expenseRef = db.collection(EXPENSE_COLLECTION).doc(correlationKey);
+  const expense = (await expenseRef.get()).data();
+  const amountCents = expense?.['amountTotal'] ?? after.grossAmount ?? 0;
+  const currency = expense?.['currency'] || after.currency || 'CHF';
+
+  // Resolve the treasurer NOW — resolveTreasurer runs queries, which a transaction cannot do.
+  const treasurer = await resolveTreasurer(tenantId, cfg['reviewAssigneePersonKey'] ?? '');
+
+  // Deterministic task id = expenseKey → exactly one task per expense (idempotent, create-if-absent).
+  const taskRef = db.collection(TASK_COLLECTION).doc(correlationKey);
+  const created = treasurer?.key
+    ? await db.runTransaction(async (tx) => {
+        if ((await tx.get(taskRef)).exists) return false;
+        tx.set(taskRef, {
+          tenants: [tenantId], isArchived: false,
+          name: `Beleg in Bexio erfassen: ${after.vendor} ${(amountCents / 100).toFixed(2)} ${currency}`.slice(0, 200),
+          index: '', tags: '',
+          notes: `Externe Buchhaltung — bitte manuell verbuchen. OCR-Beleg: ${after.storagePath}`,
+          author: null,
+          assignee: { key: treasurer.key, name1: treasurer.name1, name2: treasurer.name2, modelType: 'person', type: '', subType: '', label: `${treasurer.name1} ${treasurer.name2}`.trim() },
+          state: 'initial',
+          dueDate: '', completionDate: '',
+          priority: 'medium', importance: 'medium',
+          calendars: [], rank: '',
+        });
+        tx.set(expenseRef, { taskKey: correlationKey }, { merge: true });
+        return true;
+      })
+    : false;
+
+  if (!treasurer?.key) logger.warn(`handleExternalBackendResult: no treasurer for tenant ${tenantId} — task not created`);
+  await resultRef.set({ status: 'processed' }, { merge: true });
+  logger.info(`onOcrResultWritten: external-backend review task ${correlationKey} (created=${created})`);
 }
 
 /** Create a TaskModel assigned to the treasurer. Returns the new task's doc id, or '' if none created. */
