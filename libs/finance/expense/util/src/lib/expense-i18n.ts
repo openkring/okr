@@ -18,6 +18,16 @@ export const EXPENSE_I18N_KEYS = {
   status_validated:   PFX + 'status.validated',
   status_error:       PFX + 'status.error',
   status_posted:      PFX + 'status.posted',
+  as_title:           PFX + 'action.title',
+  action_view:        PFX + 'action.view',
+  action_delete:      PFX + 'action.delete',
+  action_redoOcr:     PFX + 'action.redoOcr',
+  action_openTask:    PFX + 'action.openTask',
+  action_openBooking: PFX + 'action.openBooking',
+  action_cancel:      PFX + 'action.cancel',
+  delete_confirm:     PFX + 'delete.confirm',
+  redo_conf:          PFX + 'redo.conf',
+  redo_error:         PFX + 'redo.error',
 } satisfies Record<string, string>;
 
 export type ExpenseI18n = { [K in keyof typeof EXPENSE_I18N_KEYS]: Signal<string> };

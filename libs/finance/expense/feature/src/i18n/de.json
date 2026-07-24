@@ -68,5 +68,21 @@
     "ibanRequired": "IBAN ist erforderlich.",
     "currencyRequired": "Währung ist erforderlich.",
     "currencyInvalid": "Ungültige Währung."
+  },
+  "action": {
+    "title": "Aktion wählen",
+    "view": "Anzeigen",
+    "delete": "Löschen",
+    "redoOcr": "OCR erneut ausführen",
+    "openTask": "Aufgabe öffnen",
+    "openBooking": "Buchung öffnen",
+    "cancel": "Abbrechen"
+  },
+  "redo": {
+    "conf": "OCR-Scan neu gestartet.",
+    "error": "OCR konnte nicht neu gestartet werden."
+  },
+  "delete": {
+    "confirm": "Diese Spese wirklich löschen?"
   }
 }
