@@ -6,7 +6,10 @@ import { getDownloadURL, getMetadata, listAll, ref } from 'firebase/storage';
 
 import { ENV, STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { ExpenseCollection, ExpenseModel, UserModel } from '@okr/shared-models';
+import {
+  BookingCollection, BookingLineCollection, BookingLineModel, BookingModel,
+  ExpenseCollection, ExpenseModel, TaskCollection, TaskModel, UserModel,
+} from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -75,6 +78,36 @@ export class ExpenseService {
 
   public read(key: string): Observable<ExpenseModel | undefined> {
     return this.firestoreService.readModel<ExpenseModel>(ExpenseCollection, key);
+  }
+
+  /** Soft-delete an expense via the deleteExpense CF (client can't write the expenses collection). */
+  public async deleteViaFunction(expenseKey: string): Promise<void> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'deleteExpense');
+    await fn({ expenseKey });
+  }
+
+  /** Treasurer-only: re-run OCR for a failed (unbooked) expense. Returns the number of receipts re-processed. */
+  public async redoOcrViaFunction(expenseKey: string): Promise<number> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'redoExpenseOcr');
+    const result = await fn({ expenseKey });
+    return (result.data as { reprocessed: number }).reprocessed;
+  }
+
+  /** Load the review TaskModel linked from expense.taskKey. */
+  public readTask(taskKey: string): Observable<TaskModel | undefined> {
+    return this.firestoreService.readModel<TaskModel>(TaskCollection, taskKey);
+  }
+
+  /** Load the BookingModel linked from expense.bookingKey. */
+  public readBooking(bookingKey: string): Observable<BookingModel | undefined> {
+    return this.firestoreService.readModel<BookingModel>(BookingCollection, bookingKey);
+  }
+
+  /** Load the booking's lines. */
+  public listBookingLines(bookingKey: string): Observable<BookingLineModel[]> {
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'bookingKey', operator: '==', value: bookingKey });
+    return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
   }
 
   // Order by creationDateTime (StoreDateTime, yyyyMMddHHmmss — lexicographically = chronologically
