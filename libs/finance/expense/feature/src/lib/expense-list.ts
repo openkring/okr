@@ -1,18 +1,18 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import {
-  ModalController, ToastController,
+  ActionSheetController, ModalController, ToastController,
   IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { RoleName } from '@okr/shared-models';
+import { ExpenseModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
-import { AlertService } from '@okr/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
-import { centsToCHF } from '@okr/finance-expense-util';
+import { canDeleteExpense, canOpenBooking, canOpenTask, canRedoOcr, canViewExpense, centsToCHF } from '@okr/finance-expense-util';
 
 import { ExpenseNewModal } from './expense-new.modal';
 import { ExpenseListId, ExpenseStore } from './expense.store';
@@ -59,7 +59,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
       } @else {
         <ion-list>
           @for (expense of store.expenses(); track expense.okey) {
-            <ion-item (click)="store.openDetail(expense)">
+            <ion-item button (click)="openActions(expense)">
               <ion-label>
                 <h3>{{ expense.abstract }}</h3>
                 <p>{{ toCHF(expense.amountTotal) }} {{ expense.currency }} · {{ expense.status }}</p>
@@ -83,6 +83,8 @@ export class ExpenseList {
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
   private readonly alertService = inject(AlertService);
+  private readonly actionSheetController = inject(ActionSheetController);
+  private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   // route inputs
   public readonly listId = input<ExpenseListId>('my');
@@ -120,6 +122,32 @@ export class ExpenseList {
     await modal.present();
     const { role } = await modal.onDidDismiss();
     if (role === 'confirm') this.store.expensesResource.reload();
+  }
+
+  protected async openActions(expense: ExpenseModel): Promise<void> {
+    const user = this.currentUser();
+    const i = this.store.i18n;
+    const options = createActionSheetOptions(i.as_title());
+    if (canViewExpense(expense, user))    options.buttons.push(createActionSheetButton('expense.view', i.action_view(), this.imgixBaseUrl, 'eye-on'));
+    if (canOpenTask(expense, user))       options.buttons.push(createActionSheetButton('expense.openTask', i.action_openTask(), this.imgixBaseUrl, 'checkbox'));
+    if (canOpenBooking(expense, user))    options.buttons.push(createActionSheetButton('expense.openBooking', i.action_openBooking(), this.imgixBaseUrl, 'booking'));
+    if (canRedoOcr(expense, user))        options.buttons.push(createActionSheetButton('expense.redoOcr', i.action_redoOcr(), this.imgixBaseUrl, 'reload'));
+    if (canDeleteExpense(expense, user)) {
+      options.buttons.push(createActionSheetDivider());
+      options.buttons.push(createActionSheetButton('expense.delete', i.action_delete(), this.imgixBaseUrl, 'trash'));
+    }
+    options.buttons.push(createActionSheetButton('cancel', i.action_cancel(), this.imgixBaseUrl, 'cancel'));
+
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    switch (data?.action) {
+      case 'expense.view':        await this.store.openDetail(expense); break;
+      case 'expense.openTask':    await this.store.openTask(expense); break;
+      case 'expense.openBooking': await this.store.openBooking(expense); break;
+      case 'expense.redoOcr':     await this.store.redoOcr(expense); break;
+      case 'expense.delete':      await this.store.deleteExpense(expense); break;
+    }
   }
 
   private async exportExpenses(): Promise<void> {
