@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -33,6 +33,7 @@ export const ExpenseStore = signalStore(
     env:                     inject(ENV),
     appStore:                inject(AppStore),
     modalController:         inject(ModalController),
+    alertController:         inject(AlertController),
     addressService:          inject(AddressService),
     uploadService:           inject(UploadService),
     expenseService:          inject(ExpenseService),
@@ -77,6 +78,67 @@ export const ExpenseStore = signalStore(
       const modal = await store.modalController.create({
         component: ExpenseDetailModal,
         componentProps: { expense },
+      });
+      await modal.present();
+    },
+
+    async deleteExpense(expense: ExpenseModel): Promise<void> {
+      const alert = await store.alertController.create({
+        header: store.i18n.action_delete(),
+        message: store.i18n.delete_confirm(),
+        buttons: [
+          { text: store.i18n.action_cancel(), role: 'cancel' },
+          { text: store.i18n.action_delete(), role: 'destructive' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'destructive') return;
+      await store.expenseService.deleteViaFunction(expense.okey);
+      store.expensesResource.reload();
+    },
+
+    async redoOcr(expense: ExpenseModel): Promise<void> {
+      try {
+        await store.expenseService.redoOcrViaFunction(expense.okey);
+        store.expensesResource.reload();
+      } catch (e) {
+        console.error('ExpenseStore.redoOcr failed', e);
+      }
+    },
+
+    async openTask(expense: ExpenseModel): Promise<void> {
+      if (!expense.taskKey) return;
+      const task = await firstValueFrom(store.expenseService.readTask(expense.taskKey));
+      if (!task) return;
+      const { TaskEditModal } = await import('@okr/task-feature');
+      const modal = await store.modalController.create({
+        component: TaskEditModal,
+        componentProps: {
+          task,
+          currentUser: store.appStore.currentUser(),
+          tags: store.appStore.getTags('task'),
+          states: store.appStore.getCategory('task_state'),
+          priorities: store.appStore.getCategory('priority'),
+          importances: store.appStore.getCategory('importance'),
+          tenantId: store.env.tenantId,
+          readOnly: true,
+        },
+      });
+      await modal.present();
+    },
+
+    async openBooking(expense: ExpenseModel): Promise<void> {
+      if (!expense.bookingKey) return;
+      const [booking, lines] = await Promise.all([
+        firstValueFrom(store.expenseService.readBooking(expense.bookingKey)),
+        firstValueFrom(store.expenseService.listBookingLines(expense.bookingKey)),
+      ]);
+      if (!booking) return;
+      const { BookingEditModal } = await import('@okr/finance-booking-feature');
+      const modal = await store.modalController.create({
+        component: BookingEditModal,
+        componentProps: { booking, lines: lines ?? [], readOnly: true },
       });
       await modal.present();
     },
