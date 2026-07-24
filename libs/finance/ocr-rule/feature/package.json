@@ -11,10 +11,13 @@
     "@okr/shared-config": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
     "@okr/shared-feature": "*",
     "@okr/shared-pipes": "*",
+    "@okr/cms-menu-feature": "*",
     "@okr/finance-accounting-feature": "*",
     "@okr/finance-account-data-access": "*",
+    "@okr/finance-account-feature": "*",
     "@okr/finance-vat-code-data-access": "*",
     "@okr/finance-ocr-rule-data-access": "*",
     "@okr/finance-ocr-rule-util": "*"

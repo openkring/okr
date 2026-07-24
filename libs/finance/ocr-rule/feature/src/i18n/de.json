@@ -8,5 +8,11 @@
     "expense": "Spesen",
     "paper": "Beleg"
   },
-  "inactive": "inaktiv"
+  "inactive": "inaktiv",
+  "actionsheet": {
+    "title": "Aktion wählen",
+    "edit": "Regel bearbeiten",
+    "delete": "Regel löschen",
+    "account": "Buchungskonto bearbeiten"
+  }
 }

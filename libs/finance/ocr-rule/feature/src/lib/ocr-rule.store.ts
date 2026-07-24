@@ -7,9 +7,11 @@ import { of } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { OcrRuleModel } from '@okr/shared-models';
+import { downloadTextFile } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { AccountService } from '@okr/finance-account-data-access';
+import { AccountStore } from '@okr/finance-account-feature';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { OcrRuleService } from '@okr/finance-ocr-rule-data-access';
 import { OCR_RULE_I18N_KEYS, leafAccounts, normalizeParty } from '@okr/finance-ocr-rule-util';
@@ -21,6 +23,7 @@ export const OcrRuleStore = signalStore(
   withProps(() => ({
     ocrRuleService: inject(OcrRuleService),
     accountService: inject(AccountService),
+    accountStore: inject(AccountStore),
     vatCodeService: inject(VatCodeService),
     accountingStore: inject(AccountingStore),
     appStore: inject(AppStore),
@@ -88,6 +91,18 @@ export const OcrRuleStore = signalStore(
       if (store.isReadOnly()) return;
       await store.ocrRuleService.delete(rule, store.currentUser());
       store.rulesResource.reload();
+    },
+
+    /** Open the chart-of-accounts editor for the account this rule books to. */
+    async editBookingAccount(rule: OcrRuleModel): Promise<void> {
+      const account = store.accountStore.accounts().find(a => a.okey === rule.accountKey);
+      if (!account) return; // rule has no (resolvable) account — nothing to edit
+      await store.accountStore.edit(account, store.isReadOnly());
+    },
+
+    /** Download all rules of the current tenant as a pretty-printed JSON file. */
+    async export(): Promise<void> {
+      await downloadTextFile(JSON.stringify(store.rules(), null, 2), 'ocr-rules.json');
     },
   })),
 );

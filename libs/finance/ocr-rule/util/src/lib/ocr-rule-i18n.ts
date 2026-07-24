@@ -7,6 +7,10 @@ export const OCR_RULE_I18N_KEYS = {
   usage_expense: '@finance/ocr-rule/feature.usage.expense',
   usage_paper:   '@finance/ocr-rule/feature.usage.paper',
   inactive:      '@finance/ocr-rule/feature.inactive',
+  as_title:      '@finance/ocr-rule/feature.actionsheet.title',
+  action_edit:   '@finance/ocr-rule/feature.actionsheet.edit',
+  action_delete: '@finance/ocr-rule/feature.actionsheet.delete',
+  action_account:'@finance/ocr-rule/feature.actionsheet.account',
   save:          '@save.label',
   cancel:        '@cancel',
 } satisfies Record<string, string>;
