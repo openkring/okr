@@ -510,6 +510,23 @@ export class MatrixChatService {
       }
     });
 
+    // Timeline reset — rebuild the open room's message list from the FRESH live timeline.
+    // When an incremental /sync comes back with `timeline.limited: true` (a gap, e.g. after
+    // the device dropped connectivity and reconnected — very common on iOS, where the app is
+    // backgrounded/killed and resumes with an incremental sync from the persisted `since`
+    // token), matrix-js-sdk calls room.resetLiveTimeline() and emits RoomEvent.TimelineReset
+    // (sync.js). That discards the room's live timeline. Our message list is built once from
+    // the timeline and then only APPENDED to by handleNewMessage, so without re-reading the
+    // new timeline here the events delivered across the gap are never merged in — leaving a
+    // permanent hole spanning the offline period (bug: messages visible on desktop but not on
+    // the phone). Only rebuild rooms the user has actually opened (those with a message subject).
+    this.client.on(RoomEvent.TimelineReset, (room: Room | undefined) => {
+      if (!room) return;
+      if (!this.messages$.has(room.roomId)) return;
+      debugMessage(`MatrixChatService: Timeline reset for room ${room.roomId} — rebuilding message list from fresh timeline`, this.appStore.currentUser());
+      this.loadMessagesForRoom(room.roomId);
+    });
+
     // When a sent message is confirmed by the server, replace the local-echo entry
     // (temp ID like ~!room:id.$local) with the confirmed event (real server ID).
     this.client.on(RoomEvent.LocalEchoUpdated, (event: MatrixEvent, room: Room, oldEventId?: string) => {
