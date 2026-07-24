@@ -17,11 +17,13 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/cms-menu-feature": "*",
+    "@okr/task-feature": "*",
     "@okr/subject-address-data-access": "*",
     "@okr/avatar-data-access": "*",
     "@okr/document-data-access": "*",
     "@okr/finance-accounting-data-access": "*",
     "@okr/finance-booking-data-access": "*",
+    "@okr/finance-booking-feature": "*",
     "@okr/finance-expense-data-access": "*",
     "@okr/finance-expense-util": "*",
     "@okr/finance-expense-ui": "*"
