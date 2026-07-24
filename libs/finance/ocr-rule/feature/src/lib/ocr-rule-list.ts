@@ -112,16 +112,13 @@ export class OcrRuleList {
   }
 
   private addActionSheetButtons(options: ActionSheetOptions): void {
-    if (this.store.isReadOnly()) {
-      options.buttons.push(createActionSheetButton('ocrRule.view', this.store.i18n.action_edit(), this.imgixBaseUrl, 'eye-on'));
-    } else {
-      options.buttons.push(createActionSheetButton('ocrRule.edit', this.store.i18n.action_edit(), this.imgixBaseUrl, 'edit'));
-      options.buttons.push(createActionSheetButton('ocrRule.account', this.store.i18n.action_account(), this.imgixBaseUrl, 'booking'));
-      options.buttons.push(createActionSheetDivider());
-      options.buttons.push(createActionSheetButton('ocrRule.delete', this.store.i18n.action_delete(), this.imgixBaseUrl, 'trash'));
-    }
+    // Rules are local config → always editable (route is treasurer-guarded); external ledger
+    // management does not gate them. "edit booking account" opens the account read-only when synced.
+    options.buttons.push(createActionSheetButton('ocrRule.edit', this.store.i18n.action_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('ocrRule.account', this.store.i18n.action_account(), this.imgixBaseUrl, 'booking'));
+    options.buttons.push(createActionSheetDivider());
+    options.buttons.push(createActionSheetButton('ocrRule.delete', this.store.i18n.action_delete(), this.imgixBaseUrl, 'trash'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-    if (options.buttons.length === 1) options.buttons = [];
   }
 
   private async executeActions(options: ActionSheetOptions, rule: OcrRuleModel): Promise<void> {

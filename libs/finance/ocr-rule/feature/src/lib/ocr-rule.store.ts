@@ -54,7 +54,10 @@ export const OcrRuleStore = signalStore(
     accounts: computed(() => leafAccounts(store.accountsResource.value() ?? [])),
     vatCodes: computed(() => store.vatCodesResource.value() ?? []),
     currentUser: computed(() => store.appStore.currentUser()),
-    isReadOnly: computed(() => store.accountingStore.isExternallyManaged()),
+    // OCR rules are LOCAL config (vendor→account mapping for the OCR pipeline), not data synced
+    // from an external ledger — so rule editing is never gated by this. It is used only to open the
+    // (Bexio-synced) chart-of-accounts editor read-only.
+    accountingExternallyManaged: computed(() => store.accountingStore.isExternallyManaged()),
   })),
   withMethods(store => ({
     setAccountingTenant(id: string): void {
@@ -68,7 +71,7 @@ export const OcrRuleStore = signalStore(
       });
       modal.present();
       const { data, role } = await modal.onDidDismiss();
-      if (role === 'confirm' && data && !store.isReadOnly()) {
+      if (role === 'confirm' && data) {
         const edited = data as OcrRuleModel;
         edited.party = normalizeParty(edited.party);
         edited.aliases = (edited.aliases ?? []).map(a => normalizeParty(a)).filter(a => a.length > 0);
@@ -82,22 +85,23 @@ export const OcrRuleStore = signalStore(
     },
 
     async openCreate(): Promise<void> {
-      if (store.isReadOnly()) return;
       const rule = new OcrRuleModel(store.appStore.tenantId());
       await this.openEdit(rule, false);
     },
 
     async delete(rule: OcrRuleModel): Promise<void> {
-      if (store.isReadOnly()) return;
       await store.ocrRuleService.delete(rule, store.currentUser());
       store.rulesResource.reload();
     },
 
-    /** Open the chart-of-accounts editor for the account this rule books to. */
+    /**
+     * Open the chart-of-accounts editor for the account this rule books to. The account itself is
+     * read-only when the ledger is externally managed (it is synced from e.g. Bexio, not editable here).
+     */
     async editBookingAccount(rule: OcrRuleModel): Promise<void> {
       const account = store.accountStore.accounts().find(a => a.okey === rule.accountKey);
       if (!account) return; // rule has no (resolvable) account — nothing to edit
-      await store.accountStore.edit(account, store.isReadOnly());
+      await store.accountStore.edit(account, store.accountingExternallyManaged());
     },
 
     /** Download all rules of the current tenant as a pretty-printed JSON file. */
