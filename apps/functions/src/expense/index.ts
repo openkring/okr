@@ -85,9 +85,9 @@ export const deleteExpense = onCall(
     const user = userSnap.data() ?? {};
     const tenantId = (expense['tenants'] as string[] | undefined)?.[0] ?? '';
     const isMember = (user['tenants'] as string[] | undefined)?.includes(tenantId) ?? false;
-    const isTreasurer = user['roles']?.['treasurer'] === true;
+    const isPrivileged = user['roles']?.['treasurer'] === true || user['roles']?.['admin'] === true;
     const isAuthor = expense['userId'] === uid;
-    if (!isMember || !(isTreasurer || isAuthor)) {
+    if (!isMember || !(isPrivileged || isAuthor)) {
       throw new HttpsError('permission-denied', 'not allowed to delete this expense');
     }
 

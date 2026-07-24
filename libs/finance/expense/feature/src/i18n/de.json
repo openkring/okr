@@ -83,6 +83,7 @@
     "error": "OCR konnte nicht neu gestartet werden."
   },
   "delete": {
-    "confirm": "Diese Spese wirklich löschen?"
+    "confirm": "Diese Spese wirklich löschen?",
+    "error": "Spese konnte nicht gelöscht werden."
   }
 }

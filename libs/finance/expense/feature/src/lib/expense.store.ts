@@ -1,12 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
+import { showToast } from '@okr/shared-util-angular';
 import { AddressModel, ExpenseModel, PersonModelName } from '@okr/shared-models';
 
 import { AddressService } from '@okr/subject-address-data-access';
@@ -34,6 +35,7 @@ export const ExpenseStore = signalStore(
     appStore:                inject(AppStore),
     modalController:         inject(ModalController),
     alertController:         inject(AlertController),
+    toastController:         inject(ToastController),
     addressService:          inject(AddressService),
     uploadService:           inject(UploadService),
     expenseService:          inject(ExpenseService),
@@ -94,16 +96,23 @@ export const ExpenseStore = signalStore(
       await alert.present();
       const { role } = await alert.onDidDismiss();
       if (role !== 'destructive') return;
-      await store.expenseService.deleteViaFunction(expense.okey);
-      store.expensesResource.reload();
+      try {
+        await store.expenseService.deleteViaFunction(expense.okey);
+        store.expensesResource.reload();
+      } catch (e) {
+        console.error('ExpenseStore.deleteExpense failed', e);
+        await showToast(store.toastController, store.i18n.delete_error());
+      }
     },
 
     async redoOcr(expense: ExpenseModel): Promise<void> {
       try {
         await store.expenseService.redoOcrViaFunction(expense.okey);
         store.expensesResource.reload();
+        await showToast(store.toastController, store.i18n.redo_conf());
       } catch (e) {
         console.error('ExpenseStore.redoOcr failed', e);
+        await showToast(store.toastController, store.i18n.redo_error());
       }
     },
 

@@ -26,6 +26,7 @@ export const EXPENSE_I18N_KEYS = {
   action_openBooking: PFX + 'action.openBooking',
   action_cancel:      PFX + 'action.cancel',
   delete_confirm:     PFX + 'delete.confirm',
+  delete_error:       PFX + 'delete.error',
   redo_conf:          PFX + 'redo.conf',
   redo_error:         PFX + 'redo.error',
 } satisfies Record<string, string>;

@@ -504,7 +504,8 @@ export const redoExpenseOcr = onCall(
     const userSnap = await db.collection(USERS_COLLECTION).doc(uid).get();
     const user = userSnap.data() ?? {};
     const isMember = (user['tenants'] as string[] | undefined)?.includes(tenantId) ?? false;
-    if (!isMember || user['roles']?.['treasurer'] !== true) {
+    const isPrivileged = user['roles']?.['treasurer'] === true || user['roles']?.['admin'] === true;
+    if (!isMember || !isPrivileged) {
       throw new HttpsError('permission-denied', 'treasurer role required');
     }
     if (expense['bookingKey']) {
