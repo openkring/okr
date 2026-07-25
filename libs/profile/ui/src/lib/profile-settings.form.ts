@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from "@angular/core";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 
-import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
+import { AvatarUsages, DeliveryTypes, LanguageCategory, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
@@ -37,9 +37,11 @@ import { ProfileI18n } from "@okr/profile-util";
             </ion-row>
             <ion-row> 
               @if(hasRole('admin')) {
-                <ion-col size="12">
-                  <okr-category-old [i18n]="languageI18n()" [value]="language()" (valueChange)="onFieldChange('language', $event)"  [categories]="languages" [readOnly]="isReadOnly()" />                                                             
-                </ion-col>
+                @if(languages().length > 1) {
+                  <ion-col size="12">
+                    <okr-category-old [i18n]="languageI18n()" [value]="language()" (valueChange)="onFieldChange('language', $event)"  [categories]="languages()" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                }
                 <ion-col size="12" size-md="6">
                   <okr-checkbox [i18n]="showDebugInfoI18n()" [checked]="showDebugInfo()" (checkedChange)="onFieldChange('showDebugInfo', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
                 </ion-col>
@@ -149,6 +151,7 @@ export class ProfileSettingsAccordion {
   public readonly tags = input.required<string>();
   public readonly readOnly = input<boolean>(true);
   public readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  public readonly languages = input<LanguageCategory[]>(Languages);
 
   // signals
   public dirty = output<boolean>();
@@ -179,7 +182,6 @@ export class ProfileSettingsAccordion {
   protected nameDisplays = NameDisplays;
   protected personSortCriterias = PersonSortCriterias;
   protected deliveryTypes = DeliveryTypes;
-  protected languages = Languages;
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));
