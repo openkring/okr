@@ -109,7 +109,7 @@ export const DocumentStore = signalStore(
       folderDocumentCounts: computed(() => {
         const counts = new Map<string, number>();
         for (const doc of state.documents()) {
-          for (const key of doc.folderKeys) {
+          for (const key of doc.folderKeys ?? []) {
             counts.set(key, (counts.get(key) ?? 0) + 1);
           }
         }
@@ -131,10 +131,10 @@ export const DocumentStore = signalStore(
             filtered = filtered.filter(d => d.fullPath.startsWith(value)) ?? [];
             break;
           case 't:': // tag
-            filtered = filtered.filter(d => d.tags.includes(value)) ?? [];
+            filtered = filtered.filter(d => (d.tags ?? '').includes(value)) ?? [];
             break;
           case 'f:': // folderKey
-            filtered = filtered.filter(d => d.folderKeys.includes(value)) ?? [];
+            filtered = filtered.filter(d => (d.folderKeys ?? []).includes(value)) ?? [];
             break;
           default:
             console.warn(`DocumentStore: unknown listId prefix '${prefix}' in listId '${listId}'. Supported: p:ath t:ag f:older`);

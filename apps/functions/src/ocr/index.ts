@@ -102,6 +102,11 @@ async function createVoucher(
     type: 'finance',
     source: 'storage',
     description: path.basename(objectName),
+    // Write a COMPLETE DocumentModel: without these, a group-view Files segment
+    // (listId 'f:<key>') iterates all docs and crashes on `folderKeys.includes()`.
+    folderKeys: [],
+    tags: '',
+    index: '',
   });
   return ref.id;
 }
