@@ -165,7 +165,20 @@ service cloud.firestore {
 
     match /accounting-configs/{id} { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /accounts/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /activities/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    // Activities are the audit log. Authenticated tenant members write normal activities.
+    // Auth-scope events (login/logout) are logged by ActivityService.logAuth pre-auth or
+    // during the post-signIn token-propagation race, i.e. with request.auth == null. Allow
+    // that ONE shape-constrained anonymous create (empty author.key, single tenant) so failed
+    // and racing logins still land in the audit trail — mirrors the sessions anonymous create.
+    match /activities/{id} {
+      allow read:   if tenantRead();
+      allow create: if tenantCreate()
+                     || (request.resource.data.scope == 'auth'
+                          && request.resource.data.author.key == ''
+                          && request.resource.data.tenants.size() == 1);
+      allow update: if tenantCreate();
+      allow delete: if tenantDelete();
+    }
     match /addresses/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /avatars/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }

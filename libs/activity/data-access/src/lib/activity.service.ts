@@ -47,7 +47,8 @@ export class ActivityService {
       activity.roleNeeded = getActivityRoleNeeded(scope, action);
       activity.index = getActivityIndex(activity);
 
-      return await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, currentUser);
+      // Audit logging is best-effort: a failed write must never surface a toast to the user.
+      return await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, currentUser, true);
     } catch (ex) {
       console.warn(`ActivityService.log(${scope}/${action}): failed (check Firestore rules for activities collection):`, ex);
       return undefined;
@@ -68,7 +69,9 @@ export class ActivityService {
       activity.author = { ...AVATAR_INFO_SHAPE, key: '', name1: '', name2: '', modelType: 'user' };
       activity.roleNeeded = 'admin';
       activity.index = getActivityIndex(activity);
-      await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, undefined);
+      // Pre-auth / post-signIn race: this write may run without a settled auth token.
+      // It is best-effort — a failed write must never surface a toast to the user.
+      await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, undefined, true);
     } catch (ex) {
       console.warn('ActivityService.logAuth: failed to log auth event (check Firestore rules for activities collection):', ex);
     }

@@ -72,15 +72,19 @@ export class FirestoreService {
    * If the document does exist, its contents will be overwritten with the newly provided data.
    * @param collectionName the name of the Firestore collection to create the model in
    * @param model the data to save. if its key is valid, it will be used as the document ID in Firestore. Otherwise, a new document ID will be generated.
+   * @param suppressErrorToast when true, a failed write does NOT pop a user-facing toast (it is
+   *        still logged to the console). Use for best-effort background writes (e.g. audit logs)
+   *        whose failure must never surface to the user.
    * @return a Promise of the key of the newly stored model
    */
   public async createModel<T extends OkrModel>(
-    collectionName: string, 
-    model: T, 
+    collectionName: string,
+    model: T,
     confirmMessage?: string,
     errorMessage?: string,
-    currentUser?: UserModel
-  ): Promise<string | undefined> 
+    currentUser?: UserModel,
+    suppressErrorToast = false
+  ): Promise<string | undefined>
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
     if (!isBrowser(this.platformId)) {
@@ -116,8 +120,8 @@ export class FirestoreService {
     }
     catch (ex) {
       console.error(`FirestoreService.createModel(${collectionName}/${ref.id}) -> ERROR:`, ex);
-      const message = errorMessage ? errorMessage : `Could not create model ${collectionName}/${ref.id} in the database.`;      
-      return this.okrError(this.toastController, message);
+      const message = errorMessage ? errorMessage : `Could not create model ${collectionName}/${ref.id} in the database.`;
+      return this.okrError(suppressErrorToast ? undefined : this.toastController, message);
     }
   }
 
