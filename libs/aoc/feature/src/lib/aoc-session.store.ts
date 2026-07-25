@@ -23,8 +23,8 @@ export type AocSessionState = {
   searchTerm: string;
   selectedStatus: StatusFilter;
   selectedUserKey: string;   // '' = no user filter; set by clicking a logged-in-user chip
-  fromDateTime: string;   // StoreDateTime
-  toDateTime: string;     // StoreDateTime
+  fromDateTime: string;   // StoreDateTime (lower bound)
+  toDateTime: string;     // StoreDateTime upper bound; '' = open-ended (live "now"), so newly started sessions keep streaming in
   hiddenUserKeys: string[];
   hiddenAnonymous: boolean;   // hide all sessions without a userKey
 };
@@ -41,7 +41,10 @@ const initialState: AocSessionState = {
   selectedStatus: 'all',
   selectedUserKey: '',
   fromDateTime: lastWeekFrom(),
-  toDateTime: getTodayStr(DateFormat.StoreDateTime),
+  // Open-ended by default: a frozen upper bound would exclude every session that (re)starts
+  // after the page was opened — including the admin's own current session, which is torn down
+  // and recreated on every tab-hide/app-background. A custom range (changeDuration) sets a real 'to'.
+  toDateTime: '',
   hiddenUserKeys: [],
   hiddenAnonymous: false,
 };
@@ -68,11 +71,13 @@ export const AocSessionStore = signalStore(
       }),
       stream: ({ params }): Observable<SessionModel[]> => {
         // No isArchived clause -> matches the existing (tenants CONTAINS, startedAt DESC) index.
+        // The upper bound is only applied for an explicit custom range; the default view is
+        // open-ended so live/newly-started sessions keep streaming in.
         const query = [
           { key: 'tenants', operator: 'array-contains', value: params.tenantId },
           { key: 'startedAt', operator: '>=', value: params.from },
-          { key: 'startedAt', operator: '<=', value: params.to },
         ];
+        if (params.to) query.push({ key: 'startedAt', operator: '<=', value: params.to });
         return store.firestoreService.searchData<SessionModel>(SessionCollection, query, 'startedAt', 'desc');
       },
     }),
@@ -182,7 +187,7 @@ export const AocSessionStore = signalStore(
         cssClass: 'duration-picker-modal',
         componentProps: {
           fromDateTime: store.fromDateTime(),
-          toDateTime: store.toDateTime(),
+          toDateTime: store.toDateTime() || getTodayStr(DateFormat.StoreDateTime),
           showDate: true,
           showTime: false,
           i18n: {
