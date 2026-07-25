@@ -265,6 +265,14 @@ export const _MatrixChatStore = signalStore(
       },
 
       setCurrentRoom(roomId: string | undefined): void {
+        // A pending reply and an open thread both point at a message in a *specific* room.
+        // When the user switches rooms, that context no longer applies (and a reply would
+        // even target an event that does not exist in the new room), so discard it — matching
+        // every mainstream chat client. Only reset on an actual room change, so re-selecting
+        // the current room does not nuke an in-progress reply.
+        if (roomId !== store.currentRoomId()) {
+          patchState(store, { replyToMessage: undefined, selectedThreadId: undefined });
+        }
         patchState(store, { currentRoomId: roomId, hasMoreHistory: true });
         if (roomId) {
           store.matrixService.markRoomAsRead(roomId).catch(err =>
