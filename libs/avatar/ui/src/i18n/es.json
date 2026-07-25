@@ -17,5 +17,9 @@
       "description": "La tarea normalmente es visible para el autor, el responsable y los usuarios privilegiados. Con el contexto, la visibilidad se puede ampliar a un grupo."
     },
     "state": "Estado"
+  },
+  "avatars": {
+    "title": "Avatares",
+    "edit": "Editar nombre"
   }
 }

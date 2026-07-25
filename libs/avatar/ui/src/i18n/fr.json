@@ -17,5 +17,9 @@
       "description": "La tâche est normalement visible par l'auteur, le responsable et les utilisateurs privilégiés. Le contexte permet d'étendre la visibilité à un groupe."
     },
     "state": "Statut"
+  },
+  "avatars": {
+    "title": "Avatars",
+    "edit": "Modifier le nom"
   }
 }

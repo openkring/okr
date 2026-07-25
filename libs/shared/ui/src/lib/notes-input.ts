@@ -62,10 +62,6 @@ export interface NotesInputI18n {
             [rows]="rows()"
             [readonly]="isReadOnly()"
           />
-          <!--
-            labelPlacement="floating"
-            label="{{'@input.' + name() + '.label' | translate | async }}"
-            -->
         </ion-item>
         <ion-item lines="none">
           @if (isClearable()) {

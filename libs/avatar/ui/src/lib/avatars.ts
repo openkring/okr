@@ -4,6 +4,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 import { NAME_LENGTH } from '@okr/shared-constants';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarName } from '@okr/shared-util-core';
@@ -89,6 +90,11 @@ import { AvatarPipe } from './avatar.pipe';
 export class Avatars {
   private readonly toastController = inject(ToastController);
   private readonly alertService = inject(AlertService);
+  // own @avatar/ui scope (replacing the legacy global @input.avatar.* keys)
+  private readonly avatarsI18n = inject(I18nService).translateAll({
+    title: '@avatar/ui.avatars.title',
+    edit:  '@avatar/ui.avatars.edit',
+  });
 
   // inputs
   public avatars = model.required<AvatarInfo[]>(); // the keys of the menu items
@@ -113,7 +119,7 @@ export class Avatars {
   public selectClicked = output<void>();
 
   // computed labels
-  protected cardTitle = computed(() => this.title() || `@input.${this.name()}.label`);
+  protected cardTitle = computed(() => this.title() || this.avatarsI18n.title());
 
   public add(newAvatar: AvatarInfo): void {
     this.avatars.update(arr => [...arr, newAvatar])
@@ -129,7 +135,7 @@ export class Avatars {
   }
 
   public async edit(avatar: AvatarInfo, index: number): Promise<void> {
-    const changedName = await this.alertService.okrPrompt('@input.avatar.edit', '', this.getAvatarName(avatar));
+    const changedName = await this.alertService.okrPrompt(this.avatarsI18n.edit(), '', this.getAvatarName(avatar));
     if (changedName) {
       // do not use set here, because the set on an array would not be signalled to the parent component
       this.avatars.update(arr => {  

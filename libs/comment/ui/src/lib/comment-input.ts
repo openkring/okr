@@ -1,5 +1,7 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { IonCol, IonRow, IonTextarea } from '@ionic/angular/standalone';
+
+import { CommentListI18n } from '@okr/comment-util';
 
 @Component({
   selector: 'okr-comment-input',
@@ -13,9 +15,9 @@ import { IonCol, IonRow, IonTextarea } from '@ionic/angular/standalone';
         <ion-textarea #okrComment 
           [value]="value()"
           (keyup.enter)="changed.emit(okrComment.value?.trim() ?? '')"
-          label = "{{label() }}"
+          label = "{{ i18n().input_label() }}"
           labelPlacement = "floating"
-          placeholder = "{{placeholder() }}"
+          placeholder = "{{ i18n().input_placeholder() }}"
           [counter]="true"
           fill="outline"
           [maxlength]="1000"
@@ -29,10 +31,9 @@ import { IonCol, IonRow, IonTextarea } from '@ionic/angular/standalone';
 `
 })
 export class CommentInput {
+  public readonly i18n = input.required<CommentListI18n>();
   public name = input('comment'); // mandatory name for the form control
   public value = input<string | undefined>(''); // optional value for the form control
-  protected label = computed(() => `@input.${this.name()}.label`);
-  protected placeholder = computed(() => `@input.${this.name()}.placeholder`);
 
   public changed = output<string>();
 }

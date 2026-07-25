@@ -17,5 +17,9 @@
       "description": "L'attività è normalmente visibile all'autore, al responsabile e agli utenti privilegiati. Con il contesto, la visibilità può essere estesa a un gruppo."
     },
     "state": "Stato"
+  },
+  "avatars": {
+    "title": "Avatar",
+    "edit": "Modifica nome"
   }
 }

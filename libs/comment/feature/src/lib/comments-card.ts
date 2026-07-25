@@ -25,9 +25,9 @@ import { CommentListStore } from './comment-list.store';
       <ion-card-content>
         <ion-grid style="width: 100%; height: 100%;">
           @if (!readOnly()) {
-            <okr-comment-input [name]="name()" [value]="" (changed)="addComment($event)" />
+            <okr-comment-input [i18n]="store.i18n" [name]="name()" [value]="" (changed)="addComment($event)" />
           }
-          <okr-comment-header />
+          <okr-comment-header [i18n]="store.i18n" />
           <okr-comments-list [comments]="comments()" [empty]="store.i18n.empty()" />
         </ion-grid>
       </ion-card-content>

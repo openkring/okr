@@ -34,7 +34,7 @@ import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membe
                 </ion-col>
               </ion-row>
 
-              <!-- fee amounts — name maps to @input.{name}.label i18n key -->
+              <!-- fee amounts -->
               <ion-row>
                 <ion-col size="6" size-md="4">
                   <okr-number-input [i18n]="jbI18n()" [value]="fd.jb" (valueChange)="onFieldChange('jb', $event, fd)" [readOnly]="readOnly()" />

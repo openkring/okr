@@ -1,4 +1,4 @@
-import { Component, computed, input, output, viewChild } from '@angular/core';
+import { Component, input, output, viewChild } from '@angular/core';
 import { IonButton, IonInput, IonItem } from '@ionic/angular/standalone';
 
 import { NAME_LENGTH } from '@okr/shared-constants';
@@ -22,16 +22,6 @@ import { generateRandomString, newAvatarInfo } from '@okr/shared-util-core';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <ion-item lines="none">
-        <!-- we deliberately use ion-input here, because we do not want to interfere with the vest from update of avatars() -->
-<!--         <ion-input [value]="''" (ionChange)="add($event)" #stringInput
-            label="{{ addLabel() | translate | async }}"
-            labelPlacement="floating"
-            inputMode="text"
-            type="text"
-            [counter]="true"
-            [maxlength]="maxLength()"
-            placeholder="ssssss"
-            /> -->
         <ion-button slot="end" fill="clear" (click)="selectClicked.emit()">{{ '@select.subject' }}</ion-button>
     </ion-item>
   `
@@ -47,10 +37,6 @@ export class AvatarInput {
   // outputs
   public avatarAdded = output<AvatarInfo>();
   public selectClicked = output<void>();
-
-  // computed labels
-  protected addLabel = computed(() => `@input.${this.name()}.addString`);
-
 
   public add($event: CustomEvent): void {
     const name = $event?.detail?.value?.trim() as string;

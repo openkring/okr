@@ -3,7 +3,8 @@
     "comment": {
       "date": "Fecha",
       "authorName": "Autor",
-      "label": "Comentario"
+      "label": "Comentario",
+      "placeholder": "Escribe un comentario..."
     }
   },
   "general": {

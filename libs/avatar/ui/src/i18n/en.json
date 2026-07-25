@@ -17,5 +17,9 @@
       "description": "The task is normally visible to the author, the assignee and privileged users. With the context, the visibility can be extended to a group."
     },
     "state": "Status"
+  },
+  "avatars": {
+    "title": "Avatars",
+    "edit": "Edit name"
   }
 }

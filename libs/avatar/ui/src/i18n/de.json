@@ -17,5 +17,9 @@
       "description": "Die Aufgabe ist normalerweise sichtbar für Autor/in, Zuständige/n und Privilegierte User. Mit dem Kontext kann die Sichtbarkeit auf eine Gruppe erweitert werden."
     },
     "state": "Status"
+  },
+  "avatars": {
+    "title": "Avatare",
+    "edit": "Name bearbeiten"
   }
 }
