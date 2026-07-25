@@ -120,7 +120,7 @@ import { ArticleStore } from './article-section.store';
                           <div class="carousel">
                             @for(img of images(); track img.url) {
                               <div class="carousel-slide">
-                                <okr-img [image]="img" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                                <okr-img [image]="img" [imageStyle]="imageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
                               </div>
                             }
                           </div>

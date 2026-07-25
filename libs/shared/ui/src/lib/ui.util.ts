@@ -2,7 +2,7 @@ import { Browser } from "@capacitor/browser";
 import { ModalController } from "@ionic/angular/standalone";
 import { getDownloadURL, getMetadata, getStorage, ref, updateMetadata } from "firebase/storage";
 
-import { Dimensions, ImageStyle, UserModel } from "@okr/shared-models";
+import { Dimensions, ImageConfig, ImageStyle, UserModel } from "@okr/shared-models";
 import { DateFormat, debugMessage, getTodayStr, warn } from "@okr/shared-util-core";
 
 import { DateSelectModal } from "./date-select.modal";
@@ -25,8 +25,10 @@ export interface ValidationInfoDictionary {
   terms: ValidationInfo[],
 }
 
-// show a zoomed version of the image in a modal
-export async function showZoomedImage(modalController: ModalController, url: string, title: string, style: ImageStyle, altText = '', cssClass = 'zoom-modal'): Promise<void> {
+// show a zoomed version of the image in a modal.
+// When `gallery` holds more than one image, the modal shows prev/next buttons (and ArrowLeft/ArrowRight
+// keyboard support) to page through the list, starting at `startIndex`.
+export async function showZoomedImage(modalController: ModalController, url: string, title: string, style: ImageStyle, altText = '', cssClass = 'zoom-modal', gallery: ImageConfig[] = [], startIndex = 0): Promise<void> {
   const modal = await modalController.create({
     component: ImageViewModal,
    // cssClass: cssClass,
@@ -34,7 +36,9 @@ export async function showZoomedImage(modalController: ModalController, url: str
       title,
       altText,
       url,
-      style
+      style,
+      images: gallery,
+      startIndex
     }
   });
   modal.present();

@@ -148,7 +148,7 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
                 <div class="carousel" #carouselEl>
                     @for(image of images(); track image.url) {
                         <div class="carousel-slide">
-                            <okr-img [image]="image" [imageStyle]="carouselImageStyle()" />
+                            <okr-img [image]="image" [imageStyle]="carouselImageStyle()" [gallery]="images()" />
                         </div>
                     }
                 </div>

@@ -140,6 +140,9 @@ export class Img {
   public imageStyle = input.required<ImageStyle>();
   public editMode = input<boolean>(false);
   public zoomTitle = input('Zoom');
+  // Optional sibling images (e.g. the enclosing carousel/slider). When set, zooming this image
+  // opens the full-screen viewer with prev/next navigation across the whole gallery.
+  public gallery = input<ImageConfig[]>([]);
 
   protected imageContainer = viewChild('.image-container', { read: ElementRef });
 
@@ -233,9 +236,12 @@ export class Img {
   protected async onImageClicked(): Promise<void> {
     if (this.editMode()) return;
     switch(this.actionType()) {
-      case ImageActionType.Zoom:
-        await showZoomedImage(this.modalController, this.url(), this.zoomTitle(), this.imageStyle(), this.altText(), 'full-modal');
+      case ImageActionType.Zoom: {
+        const gallery = this.gallery();
+        const startIndex = Math.max(0, gallery.findIndex((img) => img.url === this.image().url));
+        await showZoomedImage(this.modalController, this.url(), this.zoomTitle(), this.imageStyle(), this.altText(), 'full-modal', gallery, startIndex);
         break;
+      }
       case ImageActionType.FollowLink:
         await Browser.open({ url: this.actionUrl() });
         break;
