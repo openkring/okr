@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  IonBadge, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonIcon, IonItem,
+  IonBadge, IonButtons, IonContent, IonFab, IonFabButton, IonIcon, IonItem,
   IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonNote, IonToolbar,
 } from '@ionic/angular/standalone';
 
@@ -28,7 +28,7 @@ function coerceType(value: string): InstrumentType {
   imports: [
     Header, SvgIconPipe,
     IonContent, IonList, IonItem, IonItemSliding, IonItemOptions, IonItemOption,
-    IonLabel, IonNote, IonBadge, IonButton, IonButtons, IonIcon, IonFab, IonFabButton, IonToolbar,
+    IonLabel, IonNote, IonBadge, IonButtons, IonIcon, IonFab, IonFabButton, IonToolbar,
   ],
   providers: [InstrumentStore],
   template: `

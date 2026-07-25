@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 
 import { InstrumentTopic } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
@@ -19,7 +19,7 @@ import { InstrumentI18n, topicValidations } from '@okr/instruments-util';
   standalone: true,
   imports: [
     TextInput, NotesInput,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonSelect, IonSelectOption,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonSelect, IonSelectOption,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `

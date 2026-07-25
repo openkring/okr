@@ -2,7 +2,6 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { AppStore } from '@okr/shared-feature';
 import { AuthCredentials } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { navigateByUrl } from '@okr/shared-util-angular';
