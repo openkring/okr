@@ -47,7 +47,11 @@ import { ActivityStore } from './activity.store';
               <ion-icon slot="start" src="{{ getScopeIcon(activity) | svgIcon }}" />
               <ion-label class="scope">{{ activity.scope }}</ion-label>
               <ion-label class="action">{{ activity.action }}</ion-label>
-              <ion-label class="author">{{ activity.author?.name1 }} {{ activity.author?.name2 }}</ion-label>
+              @if(activity.scope === 'auth') {
+                <ion-label class="author">{{ activity.payload }}</ion-label>
+              } @else {
+                <ion-label class="author">{{ activity.author?.name1 }} {{ activity.author?.name2 }}</ion-label>
+              }
               <ion-label class="ts" slot="end">{{ formatTimestamp(activity.timestamp) }}</ion-label>
             </ion-item>
           }
