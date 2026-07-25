@@ -278,6 +278,15 @@ export const AppStore = signalStore(
     // in the DOM — destroying the outlet mid-transition crashes Ionic's StackController
     // ("can't access property 'commit'").
     isAppReady: computed(() => store.isDataReady() || store.readinessTimedOut()),
+    // Authenticated, but the UserModel never loaded and the readiness watchdog has since
+    // fired — i.e. the users/{uid} read stalled rather than returning. In practice this is a
+    // slow/blocked network (e.g. Firefox under strict tracking protection forcing long-polling).
+    // Surface a "slow network, please retry" state instead of silently dropping the user into a
+    // role-less, data-less shell that looks like an app bug. Scoped to the timeout path only: a
+    // fast missing-doc / permission-denied read settles isDataReady WITHOUT firing the watchdog,
+    // so that genuinely-broken-account case never shows the (misleading) slow-network message.
+    // Self-healing: if the read finally resolves, currentUser is set and this flips back to false.
+    isDegradedSession: computed(() => store.readinessTimedOut() && !!store.fbUser() && !store.currentUser()),
   })),
 
   withMethods((store) => {
