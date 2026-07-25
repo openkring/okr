@@ -5,6 +5,7 @@
 */
 
 import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_TITLE, DEFAULT_URL } from "@okr/shared-constants";
+import { AvailableLanguages } from "./enums/language.enum";
 
 export type PrivacyAccessor = 'admin' | 'privileged' | 'registered' | 'public';
 
@@ -78,6 +79,9 @@ export class AppConfig {
 
   // i18n settings
   public locale = 'de-ch'; // default locale for the application
+  // Subset of AvailableLanguages this tenant exposes in the language switcher.
+  // Empty/undefined ⇒ all supported languages (see AppStore.enabledLanguageCodes).
+  public enabledLanguages: string[] = [...AvailableLanguages];
 
   // git repository information
   public gitRepo = DEFAULT_NAME; //  git repository name
