@@ -627,7 +627,7 @@ export const _MembershipStore = signalStore(
       async end(membership: MembershipModel, endDate?: string, readOnly = true): Promise<void> {
         if (!membership || readOnly) return;
         if (!endDate) {
-          endDate =  await selectDate(store.modalController, getTodayStr(DateFormat.IsoDate), '@membership.operation.end.select', '@membership.operation.end.intro');
+          endDate =  await selectDate(store.modalController, getTodayStr(DateFormat.IsoDate), store.i18n.end_select(), store.i18n.end_intro());
         }
         if (!endDate) { 
           warn('MembershipStore.end: no end date selected, cannot end membership');
