@@ -8,7 +8,7 @@ import { ImageActionType, ImageConfig, ImageStyle } from '@okr/shared-models';
 import { buildOverlayParams, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
-import { showZoomedImage } from './ui.util';
+import { showImageSlider, showZoomedImage } from './ui.util';
 
 /**
  * This image loading implementation is based on Angular's NgOptimizedImage together with Imgix CDN to provide optimized images.
@@ -242,6 +242,13 @@ export class Img {
         await showZoomedImage(this.modalController, this.url(), this.zoomTitle(), this.imageStyle(), this.altText(), 'full-modal', gallery, startIndex);
         break;
       }
+      case ImageActionType.OpenSlider: {
+        const gallery = this.gallery();
+        const images = gallery.length > 0 ? gallery : [this.image()];
+        const startIndex = Math.max(0, images.findIndex((img) => img.url === this.image().url));
+        await showImageSlider(this.modalController, images, startIndex);
+        break;
+      }
       case ImageActionType.FollowLink:
         await Browser.open({ url: this.actionUrl() });
         break;
@@ -249,7 +256,6 @@ export class Img {
         await downloadToBrowser(this.url());
         break;
       case ImageActionType.OpenDirectory:
-      case ImageActionType.OpenSlider:
       case ImageActionType.None:
       default:
         // do nothing

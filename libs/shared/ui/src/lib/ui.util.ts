@@ -7,6 +7,7 @@ import { DateFormat, debugMessage, getTodayStr, warn } from "@okr/shared-util-co
 
 import { DateSelectModal } from "./date-select.modal";
 import { ImageViewModal } from "./image-view.modal";
+import { ImageSliderModal } from "./image-slider.modal";
 
 export interface ValidationInfo {
   type: string,
@@ -31,13 +32,28 @@ export interface ValidationInfoDictionary {
 export async function showZoomedImage(modalController: ModalController, url: string, title: string, style: ImageStyle, altText = '', cssClass = 'zoom-modal', gallery: ImageConfig[] = [], startIndex = 0): Promise<void> {
   const modal = await modalController.create({
     component: ImageViewModal,
-   // cssClass: cssClass,
+    cssClass,
     componentProps: {
       title,
       altText,
       url,
       style,
       images: gallery,
+      startIndex
+    }
+  });
+  modal.present();
+  await modal.onWillDismiss();
+}
+
+// Open the full-screen image slider overlay (edge-to-edge, dark) starting at `startIndex`.
+// Prev/next buttons and ArrowLeft/ArrowRight/Escape keys page through / close the gallery.
+export async function showImageSlider(modalController: ModalController, images: ImageConfig[], startIndex = 0): Promise<void> {
+  const modal = await modalController.create({
+    component: ImageSliderModal,
+    cssClass: 'full-modal',
+    componentProps: {
+      images,
       startIndex
     }
   });

@@ -6,7 +6,8 @@ import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, AlbumStyle, ImageConfig, ImageType } from '@okr/shared-models';
-import { debugMessage, die } from '@okr/shared-util-core';
+import { debugMessage } from '@okr/shared-util-core';
+import { showImageSlider } from '@okr/shared-ui';
 
 import { getImageMetaData, listAllFilesFromDirectory, SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
@@ -119,22 +120,8 @@ export const AlbumStore = signalStore(
 
       async openGallery(files: ImageConfig[], title = '', initialSlide = 0): Promise<void> {
         const images = files.filter((file) => file.type === ImageType.Image);
-        const effect = store.config().effect ?? die('AlbumStore.openGallery: gallery effect is mandatory.');
-        console.log('AlbumSection.openGallery: not yet implemented');
-/*         const modal = await store.modalController.create({
-          component: GalleryModal,
-          cssClass: 'full-modal',
-          componentProps: {
-            images,
-            imageStyle: store.imageStyle(),
-            initialSlide: initialSlide,
-            title: title,
-            effect: getCategoryName(GalleryEffects, effect)
-          }
-        });
-        modal.present();
-    
-        await modal.onWillDismiss(); */
+        const startIndex = Math.max(0, Math.min(initialSlide, images.length - 1));
+        await showImageSlider(store.modalController, images, startIndex);
       }
     }
   })

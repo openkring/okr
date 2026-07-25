@@ -104,7 +104,7 @@ interface ImageStyleConfigI18n {
                 <okr-checkbox [i18n]="showSourceI18n()" [checked]="showSource()" (checkedChange)="onFieldChange('showSource', $event)" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-category-old [i18n]="imageActionI18n()" [value]="action()" (valueChange)="onFieldChange('imageAction', $event)" [readOnly]="readOnly()" [categories]="imageActions" />
+                <okr-category-old [i18n]="imageActionI18n()" [value]="action()" (valueChange)="onFieldChange('action', $event)" [readOnly]="readOnly()" [categories]="imageActions" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-number-input [i18n]="zoomFactorI18n()" [value]="zoomFactor()" (valueChange)="onFieldChange('zoomFactor', $event)" [readOnly]="readOnly()" [showHelper]="true" />
@@ -137,7 +137,7 @@ export class ImageStyleConfiguration {
   protected hasPriority = linkedSignal(() => this.formData().hasPriority ?? true);
   protected showTitle = linkedSignal(() => this.formData().showTitle ?? false);
   protected showSource = linkedSignal(() => this.formData().showSource ?? false);
-  protected action = linkedSignal(() => this.formData().action ?? ImageActionType.None);
+  protected action = linkedSignal(() => this.formData().action ?? ImageActionType.OpenSlider);
   protected zoomFactor = linkedSignal(() => this.formData().zoomFactor ?? 2);
 
   // passing constants to template

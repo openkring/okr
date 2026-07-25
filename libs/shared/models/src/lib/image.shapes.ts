@@ -26,7 +26,7 @@ export const IMAGE_STYLE_SHAPE = {
     slot: 'none' as Slot,
     fill: true,
     hasPriority: true,
-    action: ImageActionType.None,
+    action: ImageActionType.OpenSlider,
     zoomFactor: 2,
     showTitle: false,
     showSource: false,

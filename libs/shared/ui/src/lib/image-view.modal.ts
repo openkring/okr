@@ -5,7 +5,7 @@ import { IonButton, IonContent, IonIcon } from '@ionic/angular/standalone';
 import { ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { getImgixUrl, getSizedImgixParamsByExtension } from '@okr/shared-util-core';
+import { getImgixUrl } from '@okr/shared-util-core';
 
 import { Header } from './header';
 
@@ -20,11 +20,13 @@ import { Header } from './header';
     provideImgixLoader('https://bkaiser.imgix.net')
   ],
   styles: [`
+    ion-content {
+      --background: #000;
+    }
     .image-container {
       position: relative;
-      max-width: 600px;
-      max-height: 80dvh;
-      margin: auto;
+      width: 100%;
+      min-height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -34,8 +36,8 @@ import { Header } from './header';
       width: auto;
       height: auto;
       max-width: 100%;
-      max-height: 100%;
-      object-fit: contain
+      max-height: 85dvh;
+      object-fit: contain;
     }
     .nav-button {
       position: absolute;
@@ -72,10 +74,7 @@ import { Header } from './header';
                 <ion-icon slot="icon-only" src="{{ 'chevron-back' | svgIcon }}" />
               </ion-button>
             }
-            <img [src]="imgixUrl()"
-              [alt]="currentAltText()"
-              style="max-width: 100%; max-height: 100%; object-fit: contain;"
-            />
+            <img [src]="imgixUrl()" [alt]="currentAltText()" />
             @if (hasMultiple()) {
               <ion-button class="nav-button next" fill="solid" color="light" (click)="next()" aria-label="Next image">
                 <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
@@ -119,13 +118,12 @@ export class ImageViewModal {
   protected currentAltText = computed(() => this.current().altText);
 
   // computed
-  protected width = computed(() => this.style().width ?? '160');
-  protected height = computed(() => this.style().height ?? '90');
-
+  // Full-screen view: request the whole image (fit=max, no aspect-ratio crop) up to a large
+  // width; `object-fit: contain` then letterboxes it. Prepend the imgix base URL only for
+  // storage paths ('tenant/...') — external/asset/imgix URLs are already absolute.
   protected imgixUrl = computed(() => {
-    const params = getSizedImgixParamsByExtension(this.currentUrl(), this.width(), this.height());
-    const prefix = this.currentUrl().startsWith('/') ? this.imgixBaseUrl : this.imgixBaseUrl + '/';
-    return prefix + getImgixUrl(this.currentUrl(), params);
+    const url = getImgixUrl(this.currentUrl(), 'auto=format,compress,enhance&fit=max&w=2000');
+    return url.startsWith('tenant') ? this.imgixBaseUrl + '/' + url : url;
   });
 
   protected next(): void {
