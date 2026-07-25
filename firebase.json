@@ -95,6 +95,15 @@
           ]
         },
         {
+          "source": "**/assets/i18n/**/*.json",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
           "source": "**/*.@(jpg|jpeg|png|gif|svg|webp|avif|woff|woff2|ttf|otf|ico)",
           "headers": [
             {
