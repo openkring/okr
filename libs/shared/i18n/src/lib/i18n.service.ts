@@ -6,7 +6,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { selectLanguage } from './i18n.util';
 import { reportI18nIssue } from './i18n-sentry';
 
-import { AvailableLanguages } from '@okr/shared-models';
+import { AvailableLanguages, DefaultLanguageCode } from '@okr/shared-models';
 
 @Injectable({
   providedIn: 'root'
@@ -20,9 +20,10 @@ export class I18nService {
   }
 
   // language is optional: omit it (or pass undefined) to seed from the browser language.
-  // selectLanguage falls back browser → defaultLanguage when the requested code is unsupported.
-  public setActiveLang(language?: string, defaultLanguage = 'de') {
-  const selectedLanguage = selectLanguage(AvailableLanguages, defaultLanguage, language);
+  // availableLanguages defaults to the full supported set; pass a tenant's enabled subset to
+  // restrict seeding. selectLanguage falls back browser → defaultLanguage when unsupported.
+  public setActiveLang(language?: string, defaultLanguage = DefaultLanguageCode, availableLanguages: string[] = AvailableLanguages) {
+  const selectedLanguage = selectLanguage(availableLanguages, defaultLanguage, language);
   this.translocoService.setActiveLang(selectedLanguage);
   }
 

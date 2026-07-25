@@ -31,6 +31,20 @@ describe('selectLanguage', () => {
     (getBrowserLang as any).mockReturnValue('');
     expect(() => selectLanguage(['en'], 'en')).toThrow(/browser language can not be determined/);
   });
+
+  it('falls back to default when the browser language is not in the enabled subset', () => {
+    // browser lang mocked to 'fr', which is outside the ['de', 'en'] subset
+    (getBrowserLang as any).mockReturnValue('fr');
+    expect(selectLanguage(['de', 'en'], 'de', undefined)).toBe('de');
+  });
+
+  it('keeps a configured language that is in the enabled subset', () => {
+    expect(selectLanguage(['de', 'fr'], 'de', 'fr')).toBe('fr');
+  });
+
+  it('drops a configured language that is not in the enabled subset', () => {
+    expect(selectLanguage(['de', 'en'], 'de', 'fr')).toBe('de');
+  });
 });
 
 describe('getLabel', () => {

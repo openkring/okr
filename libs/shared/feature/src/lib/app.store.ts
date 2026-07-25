@@ -8,7 +8,7 @@ import { App } from '@capacitor/app';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
-import { AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@okr/shared-models';
+import { AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, replacePlaceholders } from '@okr/shared-util-core';
 import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
@@ -199,6 +199,12 @@ export const AppStore = signalStore(
   withComputed((state) => ({
     defaultOrg: computed(() => state.allOrgs().find((org: OrgModel) => org.okey === state.tenantId())),
     defaultResource: computed(() => state.allResources().find((resource: ResourceModel) => resource.okey === state.appConfig().defaultResourceId)),
+    // Codes this tenant exposes in the language switcher. appConfig() re-applies the class
+    // default, so this is normally populated; coalesce empty → all for safety.
+    enabledLanguageCodes: computed(() => {
+      const configured = state.appConfig().enabledLanguages;
+      return configured && configured.length > 0 ? configured : AvailableLanguages;
+    }),
     privacySettings: computed(() => {
         return {
           showName: state.appConfig().showName,
@@ -444,7 +450,7 @@ export const AppStore = signalStore(
       effect(() => {
         const user = store.currentUser();
         const code = user ? AvailableLanguages[user.userLanguage ?? DefaultLanguage] : undefined;
-        store.i18nService.setActiveLang(code, 'de');
+        store.i18nService.setActiveLang(code, DefaultLanguageCode, store.enabledLanguageCodes());
       });
 
       // Start anonymous session immediately on bootstrap
