@@ -52,7 +52,7 @@ import { OcrRuleStore } from './ocr-rule.store';
             <ion-item button [detail]="false" (click)="showActions(rule)">
               <ion-label>
                 <h3>{{ rule.party }} → {{ rule.accountKey || '—' }}</h3>
-                <p>{{ usageLabel(rule.ocrUsage) }} · Rang {{ rule.rank }}{{ (rule.aliases ?? []).length ? ' · ' + (rule.aliases ?? []).join(', ') : '' }}</p>
+                <p>{{ usageLabel(rule.ocrUsage) }} · Rang {{ rule.rank }}{{ (rule.aliases).length ? ' · ' + (rule.aliases).join(', ') : '' }}</p>
               </ion-label>
               @if (!rule.active) {
                 <ion-badge slot="end" color="medium">{{ store.i18n.inactive() }}</ion-badge>

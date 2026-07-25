@@ -49,7 +49,9 @@ export const OcrRuleStore = signalStore(
     }),
   })),
   withComputed(store => ({
-    rules: computed(() => store.rulesResource.value() ?? []),
+    // Coalesce aliases at the read boundary: Firestore reads skip model defaults, so a hand-seeded
+    // rule doc may omit `aliases` — guaranteeing it here keeps template access (`rule.aliases.length`) safe.
+    rules: computed(() => (store.rulesResource.value() ?? []).map(r => ({ ...r, aliases: r.aliases ?? [] }))),
     isLoading: computed(() => store.rulesResource.isLoading()),
     accounts: computed(() => leafAccounts(store.accountsResource.value() ?? [])),
     vatCodes: computed(() => store.vatCodesResource.value() ?? []),
